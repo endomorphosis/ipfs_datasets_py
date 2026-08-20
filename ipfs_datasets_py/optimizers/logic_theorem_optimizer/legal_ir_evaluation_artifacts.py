@@ -41,6 +41,25 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cac
     LegalIREvaluationCacheKey,
     stable_digest,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator import (
+    evaluate_latent_clustering_strata,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_metric_lineage import (
+    LATENT_DIAGNOSTIC_ALLOWED_SPLITS,
+    LATENT_DIAGNOSTIC_PROHIBITED_SPLITS,
+    LATENT_DIAGNOSTIC_SPLIT_IDENTITY,
+    LegalIRMetricLineage,
+    attach_metric_lineage,
+    build_latent_diagnostic_metric_lineage,
+    representation_content_digest,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_semantic_metrics import (
+    coerce_latent_records,
+    evaluate_latent_diagnostics,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_uncertainty import (
+    evaluate_legal_ir_calibration,
+)
 
 
 LEGAL_IR_ARTIFACT_GRAPH_SCHEMA_VERSION: Final = "legal-ir-evaluation-artifact-graph-v1"
@@ -76,6 +95,20 @@ LEGAL_IR_ARTIFACT_CONSUMER_ROLES: Final[tuple[str, ...]] = (
     "leanstral",
     "promotion",
 )
+LEGAL_IR_LATENT_DIAGNOSTIC_KEY: Final = "_legal_ir_latent_diagnostics"
+LEGAL_IR_COLLAPSE_TRIGGER_KEY: Final = "_legal_ir_collapse_triggers"
+LEGAL_IR_LATENT_DIAGNOSTIC_REPORT_SCHEMA_VERSION: Final = "legal-ir-latent-diagnostic-report-v1"
+TRIGGER_LOW_EFFECTIVE_RANK: Final = "low_effective_rank"
+TRIGGER_HIGH_ANISOTROPY: Final = "high_spectral_anisotropy"
+TRIGGER_DUPLICATE_MEMORIZATION: Final = "duplicate_memorization"
+TRIGGER_FALSE_NEIGHBORHOODS: Final = "false_neighborhoods"
+TRIGGER_LOW_LATENT_USE: Final = "low_latent_use"
+TRIGGER_HIGH_ECE: Final = "high_expected_calibration_error"
+TRIGGER_HIGH_BRIER: Final = "high_brier_score"
+TRIGGER_UNKNOWN_DENOMINATOR: Final = "unknown_denominator"
+TRIGGER_FAMILY_IMBALANCE: Final = "family_imbalance"
+TRIGGER_HIDDEN_TEST_SPLIT: Final = "hidden_test_split"
+TRIGGER_CENTERED_DEGENERACY: Final = "centered_spectrum_degeneracy"
 
 
 class LegalIRArtifactGraphError(RuntimeError):
@@ -151,10 +184,7 @@ def _source_text(sample: Any) -> str:
         return sample
     if isinstance(sample, Mapping):
         return str(
-            sample.get("normalized_text")
-            or sample.get("text")
-            or sample.get("source_text")
-            or ""
+            sample.get("normalized_text") or sample.get("text") or sample.get("source_text") or ""
         )
     return str(
         getattr(sample, "normalized_text", None)
@@ -200,9 +230,7 @@ def _default_embedding_model(sample: Any) -> str:
 
 def _modal_document(compilation_result: Any, sample: Any) -> Any:
     return (
-        getattr(compilation_result, "modal_ir", None)
-        or getattr(sample, "modal_ir", None)
-        or sample
+        getattr(compilation_result, "modal_ir", None) or getattr(sample, "modal_ir", None) or sample
     )
 
 
@@ -354,9 +382,7 @@ class LegalIRArtifactNode:
             kind=str(payload.get("kind") or ""),
             key_digest=str(payload.get("key_digest") or ""),
             payload=(
-                payload.get("payload", {})
-                if isinstance(payload.get("payload"), Mapping)
-                else {}
+                payload.get("payload", {}) if isinstance(payload.get("payload"), Mapping) else {}
             ),
             dependencies=tuple(str(item) for item in payload.get("dependencies", ()) or ()),
             producer_id=str(payload.get("producer_id") or ""),
@@ -438,9 +464,7 @@ class LegalIRArtifactGraphBundle:
             {
                 "complete_digest": self.complete_digest,
                 "key": self.key.to_dict(),
-                "node_payloads": {
-                    kind: node.payload_sha256 for kind, node in self.nodes.items()
-                },
+                "node_payloads": {kind: node.payload_sha256 for kind, node in self.nodes.items()},
                 "schema_version": self.schema_version,
             }
         )
@@ -763,9 +787,7 @@ class LegalIRArtifactGraphStore:
                 "avoided_graph_materializations": int(
                     stats.get("avoided_graph_materializations", 0)
                 ),
-                "avoided_node_materializations": int(
-                    stats.get("avoided_node_materializations", 0)
-                ),
+                "avoided_node_materializations": int(stats.get("avoided_node_materializations", 0)),
                 "provenance_rejections": int(stats.get("provenance_rejections", 0)),
                 "memory_evictions": int(stats.get("memory_evictions", 0)),
                 "saved_wall_time_seconds": round(self._saved_wall_time_seconds, 9),
@@ -994,12 +1016,423 @@ def legal_ir_evaluation_artifact_from_compilation(
     ).to_evaluation_artifact()
 
 
+@dataclass(frozen=True, slots=True)
+class CollapseTriggerConfig:
+    """Fail-closed thresholds for latent collapse and miscalibration."""
+
+    min_effective_rank: float = 1.5
+    max_spectral_anisotropy: float = 0.85
+    max_duplicate_intra_cosine: float = 0.98
+    max_false_neighborhood_rate: float = 0.35
+    min_latent_use_rate: float = 0.5
+    max_expected_calibration_error: float = 0.08
+    max_brier_score: float = 0.25
+    min_family_balance_ratio: float = 0.25
+    neighbor_k: int = 3
+    reliability_bin_count: int = 10
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "max_brier_score": self.max_brier_score,
+            "max_duplicate_intra_cosine": self.max_duplicate_intra_cosine,
+            "max_expected_calibration_error": self.max_expected_calibration_error,
+            "max_false_neighborhood_rate": self.max_false_neighborhood_rate,
+            "max_spectral_anisotropy": self.max_spectral_anisotropy,
+            "min_effective_rank": self.min_effective_rank,
+            "min_family_balance_ratio": self.min_family_balance_ratio,
+            "min_latent_use_rate": self.min_latent_use_rate,
+            "neighbor_k": self.neighbor_k,
+            "reliability_bin_count": self.reliability_bin_count,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CollapseTrigger:
+    """One explicit collapse or calibration trigger."""
+
+    trigger_id: str
+    metric: str
+    actual: Optional[float]
+    threshold: Optional[float]
+    severity: str
+    reason: str
+    unknown_denominator: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "actual": None if self.actual is None else round(float(self.actual), 12),
+            "metric": self.metric,
+            "reason": self.reason,
+            "severity": self.severity,
+            "threshold": None if self.threshold is None else round(float(self.threshold), 12),
+            "trigger_id": self.trigger_id,
+            "unknown_denominator": bool(self.unknown_denominator),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LegalIRLatentDiagnosticReport:
+    """Content-bound diagnostic/calibration report with collapse triggers."""
+
+    latent: Mapping[str, Any]
+    clustering: Mapping[str, Any]
+    calibration: Mapping[str, Any]
+    collapse_triggers: tuple[CollapseTrigger, ...]
+    unknown_denominators: tuple[str, ...]
+    metric_lineage: Mapping[str, Any]
+    representation_digest: str
+    split_identity: str = LATENT_DIAGNOSTIC_SPLIT_IDENTITY
+    schema_version: str = LEGAL_IR_LATENT_DIAGNOSTIC_REPORT_SCHEMA_VERSION
+    prohibited_split_count: int = 0
+
+    @property
+    def collapsed(self) -> bool:
+        return any(trigger.severity == "hard" for trigger in self.collapse_triggers)
+
+    @property
+    def digest(self) -> str:
+        return stable_digest(self.to_dict(include_digest=False))
+
+    def metric_vector(self) -> dict[str, float]:
+        values: dict[str, float] = {}
+        spectrum = self.latent.get("spectrum", {})
+        if isinstance(spectrum, Mapping):
+            for key, value in spectrum.items():
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    number = float(value)
+                    if math.isfinite(number):
+                        values[str(key)] = round(number, 12)
+        neighborhoods = self.latent.get("false_neighborhoods", {})
+        if isinstance(neighborhoods, Mapping):
+            rate = neighborhoods.get("false_neighborhood_rate")
+            if isinstance(rate, (int, float)) and math.isfinite(float(rate)):
+                values["false_neighborhood_rate"] = round(float(rate), 12)
+        for key in (
+            "brier_score",
+            "expected_calibration_error",
+            "success_conditioned_confidence",
+            "failure_conditioned_confidence",
+        ):
+            value = self.calibration.get(key)
+            if isinstance(value, (int, float)) and math.isfinite(float(value)):
+                values[key] = round(float(value), 12)
+        values["collapse_trigger_count"] = float(len(self.collapse_triggers))
+        values["hard_collapse_trigger_count"] = float(
+            sum(1 for trigger in self.collapse_triggers if trigger.severity == "hard")
+        )
+        return values
+
+    def to_dict(self, *, include_digest: bool = True) -> dict[str, Any]:
+        payload = {
+            "calibration": _plain(self.calibration),
+            "clustering": _plain(self.clustering),
+            "collapse_triggers": [trigger.to_dict() for trigger in self.collapse_triggers],
+            "collapsed": self.collapsed,
+            "confidence_is_not_authority": True,
+            "latent": _plain(self.latent),
+            "latent_similarity_is_not_equivalence": True,
+            "metric_lineage": _plain(self.metric_lineage),
+            "prohibited_split_count": self.prohibited_split_count,
+            "representation_digest": self.representation_digest,
+            "schema_version": self.schema_version,
+            "split_identity": self.split_identity,
+            "unknown_denominators": list(self.unknown_denominators),
+        }
+        if include_digest:
+            payload["report_digest"] = self.digest
+        return payload
+
+
+def evaluate_collapse_triggers(
+    *,
+    latent: Mapping[str, Any],
+    clustering: Mapping[str, Any],
+    calibration: Mapping[str, Any],
+    prohibited_split_count: int,
+    config: CollapseTriggerConfig,
+) -> tuple[CollapseTrigger, ...]:
+    """Emit explicit collapse/calibration triggers, including unknown denominators."""
+
+    triggers: list[CollapseTrigger] = []
+    spectrum = latent.get("spectrum", {}) if isinstance(latent.get("spectrum"), Mapping) else {}
+    neighborhoods = (
+        latent.get("false_neighborhoods", {})
+        if isinstance(latent.get("false_neighborhoods"), Mapping)
+        else {}
+    )
+    unknown = list(spectrum.get("unknown_denominators") or ())
+    unknown.extend(neighborhoods.get("unknown_denominators") or ())
+    unknown.extend(calibration.get("unknown_denominators") or ())
+    if prohibited_split_count:
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_HIDDEN_TEST_SPLIT,
+                metric="prohibited_split_count",
+                actual=float(prohibited_split_count),
+                threshold=0.0,
+                severity="hard",
+                reason="latent diagnostics may use development/calibration only",
+            )
+        )
+    if "spectrum:centered_matrix_is_zero" in unknown:
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_CENTERED_DEGENERACY,
+                metric="effective_rank",
+                actual=None,
+                threshold=config.min_effective_rank,
+                severity="hard",
+                reason="centered representation matrix is degenerate",
+                unknown_denominator=True,
+            )
+        )
+    effective_rank = spectrum.get("effective_rank")
+    if effective_rank is None:
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_UNKNOWN_DENOMINATOR,
+                metric="effective_rank",
+                actual=None,
+                threshold=config.min_effective_rank,
+                severity="hard",
+                reason="effective rank denominator is unknown",
+                unknown_denominator=True,
+            )
+        )
+    elif float(effective_rank) < config.min_effective_rank:
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_LOW_EFFECTIVE_RANK,
+                metric="effective_rank",
+                actual=float(effective_rank),
+                threshold=config.min_effective_rank,
+                severity="hard",
+                reason="effective rank collapsed below threshold",
+            )
+        )
+    anisotropy = spectrum.get("spectral_anisotropy")
+    if anisotropy is not None and float(anisotropy) > config.max_spectral_anisotropy:
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_HIGH_ANISOTROPY,
+                metric="spectral_anisotropy",
+                actual=float(anisotropy),
+                threshold=config.max_spectral_anisotropy,
+                severity="hard",
+                reason="spectral mass is concentrated on one direction",
+            )
+        )
+    latent_use = spectrum.get("latent_use_rate")
+    if latent_use is not None and float(latent_use) < config.min_latent_use_rate:
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_LOW_LATENT_USE,
+                metric="latent_use_rate",
+                actual=float(latent_use),
+                threshold=config.min_latent_use_rate,
+                severity="hard",
+                reason="latent was unused for too many records",
+            )
+        )
+    false_rate = neighborhoods.get("false_neighborhood_rate")
+    if false_rate is not None and float(false_rate) > config.max_false_neighborhood_rate:
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_FALSE_NEIGHBORHOODS,
+                metric="false_neighborhood_rate",
+                actual=float(false_rate),
+                threshold=config.max_false_neighborhood_rate,
+                severity="hard",
+                reason="nearest neighbors mix families; similarity is not equivalence",
+            )
+        )
+    duplicate = clustering.get("axes", {}).get("duplicate", {}) if isinstance(clustering, Mapping) else {}
+    intra = duplicate.get("intra_cosine") if isinstance(duplicate, Mapping) else None
+    if intra is not None and float(intra) >= config.max_duplicate_intra_cosine:
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_DUPLICATE_MEMORIZATION,
+                metric="duplicate_intra_cosine",
+                actual=float(intra),
+                threshold=config.max_duplicate_intra_cosine,
+                severity="hard",
+                reason="duplicate groups occupy identical neighborhoods",
+            )
+        )
+    family = clustering.get("axes", {}).get("family", {}) if isinstance(clustering, Mapping) else {}
+    balance = family.get("balance_ratio") if isinstance(family, Mapping) else None
+    missing = list(clustering.get("missing_families") or ())
+    if missing or (balance is not None and float(balance) < config.min_family_balance_ratio):
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_FAMILY_IMBALANCE,
+                metric="family_balance_ratio",
+                actual=None if balance is None else float(balance),
+                threshold=config.min_family_balance_ratio,
+                severity="hard",
+                reason="family strata are missing or unbalanced",
+                unknown_denominator=balance is None,
+            )
+        )
+    ece = calibration.get("expected_calibration_error")
+    if ece is None:
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_UNKNOWN_DENOMINATOR,
+                metric="expected_calibration_error",
+                actual=None,
+                threshold=config.max_expected_calibration_error,
+                severity="diagnostic",
+                reason="ECE denominator is unknown",
+                unknown_denominator=True,
+            )
+        )
+    elif float(ece) > config.max_expected_calibration_error:
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_HIGH_ECE,
+                metric="expected_calibration_error",
+                actual=float(ece),
+                threshold=config.max_expected_calibration_error,
+                severity="hard",
+                reason="expected calibration error exceeds the diagnostic bound",
+            )
+        )
+    brier = calibration.get("brier_score")
+    if brier is not None and float(brier) > config.max_brier_score:
+        triggers.append(
+            CollapseTrigger(
+                trigger_id=TRIGGER_HIGH_BRIER,
+                metric="brier_score",
+                actual=float(brier),
+                threshold=config.max_brier_score,
+                severity="hard",
+                reason="Brier score exceeds the diagnostic bound",
+            )
+        )
+    return tuple(triggers)
+
+
+def materialize_latent_diagnostic_report(
+    records: Sequence[Any],
+    *,
+    config: Optional[CollapseTriggerConfig] = None,
+    required_families: Sequence[str] = (),
+    checkpoint_identity: str = "",
+    state_hash: str = "",
+    compiler_commit: str = "compiler-independent",
+    cache_key: str = "not-cached",
+) -> LegalIRLatentDiagnosticReport:
+    """Build a content-bound diagnostic/calibration report and collapse triggers."""
+
+    policy = config or CollapseTriggerConfig()
+    batch = coerce_latent_records(records)
+    prohibited = [item for item in batch if item.split in LATENT_DIAGNOSTIC_PROHIBITED_SPLITS]
+    allowed = [
+        item
+        for item in batch
+        if item.split in LATENT_DIAGNOSTIC_ALLOWED_SPLITS
+        or item.split not in LATENT_DIAGNOSTIC_PROHIBITED_SPLITS
+    ]
+    diagnostic_batch = allowed if not prohibited else allowed
+    latent = evaluate_latent_diagnostics(diagnostic_batch, neighbor_k=policy.neighbor_k)
+    clustering = evaluate_latent_clustering_strata(
+        diagnostic_batch,
+        required_families=required_families,
+        min_balance_ratio=policy.min_family_balance_ratio,
+    )
+    calibration = evaluate_legal_ir_calibration(
+        diagnostic_batch,
+        bin_count=policy.reliability_bin_count,
+    )
+    lineage = build_latent_diagnostic_metric_lineage(
+        diagnostic_batch,
+        state_hash=state_hash,
+        compiler_commit=compiler_commit,
+        checkpoint_identity=checkpoint_identity,
+        cache_key=cache_key,
+        config_payload=policy.to_dict(),
+    )
+    latent_payload = latent.to_dict()
+    clustering_payload = clustering.to_dict()
+    calibration_payload = calibration.to_dict()
+    triggers = evaluate_collapse_triggers(
+        latent=latent_payload,
+        clustering=clustering_payload,
+        calibration=calibration_payload,
+        prohibited_split_count=len(prohibited),
+        config=policy,
+    )
+    unknown = list(latent.spectrum.unknown_denominators)
+    unknown.extend(latent.false_neighborhoods.unknown_denominators)
+    unknown.extend(calibration.unknown_denominators)
+    for axis in clustering.axes.values():
+        unknown.extend(axis.unknown_denominators)
+    unknown.extend(clustering.ood.unknown_denominators)
+    report = LegalIRLatentDiagnosticReport(
+        latent=latent_payload,
+        clustering=clustering_payload,
+        calibration=calibration_payload,
+        collapse_triggers=triggers,
+        unknown_denominators=tuple(dict.fromkeys(unknown)),
+        metric_lineage=lineage.to_dict(),
+        representation_digest=representation_content_digest(diagnostic_batch),
+        prohibited_split_count=len(prohibited),
+    )
+    return report
+
+
+def attach_latent_diagnostics(
+    artifact: LegalIREvaluationArtifact,
+    report: LegalIRLatentDiagnosticReport,
+) -> LegalIREvaluationArtifact:
+    """Attach a diagnostic report without mutating the required artifact DAG."""
+
+    if not isinstance(artifact, LegalIREvaluationArtifact):
+        raise TypeError("artifact must be LegalIREvaluationArtifact")
+    compiler_payload = dict(_plain(artifact.compiler_artifact))
+    compiler_payload[LEGAL_IR_LATENT_DIAGNOSTIC_KEY] = report.to_dict()
+    compiler_payload[LEGAL_IR_COLLAPSE_TRIGGER_KEY] = [
+        trigger.to_dict() for trigger in report.collapse_triggers
+    ]
+    metadata = dict(_plain(artifact.metadata))
+    metadata["latent_diagnostic_digest"] = report.digest
+    metadata["collapse_triggered"] = report.collapsed
+    metadata["latent_similarity_is_not_equivalence"] = True
+    metadata["confidence_is_not_authority"] = True
+    metrics = dict(_plain(artifact.metrics))
+    metrics.update(report.metric_vector())
+    attached = attach_metric_lineage(metrics, _lineage_from_report(report))
+    return LegalIREvaluationArtifact(
+        key=artifact.key,
+        compiler_artifact=compiler_payload,
+        embedding=artifact.embedding,
+        metrics=attached,
+        per_view_metrics=artifact.per_view_metrics,
+        metadata=metadata,
+        compilation_seconds=artifact.compilation_seconds,
+        embedding_seconds=artifact.embedding_seconds,
+        metric_seconds=artifact.metric_seconds,
+        created_at=artifact.created_at,
+    )
+
+
+def _lineage_from_report(report: LegalIRLatentDiagnosticReport) -> LegalIRMetricLineage:
+    return LegalIRMetricLineage.from_mapping(report.metric_lineage)
+
+
 __all__ = [
     "BASELINE_METRIC_NODE",
     "COMPILATION_NODE",
+    "CollapseTrigger",
+    "CollapseTriggerConfig",
     "EMBEDDING_NODE",
     "LEGAL_IR_ARTIFACT_CONSUMER_ROLES",
     "LEGAL_IR_ARTIFACT_GRAPH_KEY",
+    "LEGAL_IR_COLLAPSE_TRIGGER_KEY",
+    "LEGAL_IR_LATENT_DIAGNOSTIC_KEY",
+    "LEGAL_IR_LATENT_DIAGNOSTIC_REPORT_SCHEMA_VERSION",
+    "LegalIRLatentDiagnosticReport",
     "MAX_EVALUATION_GRAPH_OBLIGATIONS",
     "LEGAL_IR_ARTIFACT_GRAPH_SCHEMA_VERSION",
     "LEGAL_IR_ARTIFACT_NODE_KINDS",
@@ -1014,7 +1447,21 @@ __all__ = [
     "NORMALIZATION_NODE",
     "OBLIGATION_NODE",
     "TOKENIZATION_NODE",
+    "TRIGGER_CENTERED_DEGENERACY",
+    "TRIGGER_DUPLICATE_MEMORIZATION",
+    "TRIGGER_FALSE_NEIGHBORHOODS",
+    "TRIGGER_FAMILY_IMBALANCE",
+    "TRIGGER_HIDDEN_TEST_SPLIT",
+    "TRIGGER_HIGH_ANISOTROPY",
+    "TRIGGER_HIGH_BRIER",
+    "TRIGGER_HIGH_ECE",
+    "TRIGGER_LOW_EFFECTIVE_RANK",
+    "TRIGGER_LOW_LATENT_USE",
+    "TRIGGER_UNKNOWN_DENOMINATOR",
     "VIEW_CONTRACT_NODE",
+    "attach_latent_diagnostics",
     "build_legal_ir_artifact_graph_bundle",
+    "evaluate_collapse_triggers",
     "legal_ir_evaluation_artifact_from_compilation",
+    "materialize_latent_diagnostic_report",
 ]

@@ -48,9 +48,9 @@ def test_extraction_config_randomized_roundtrip_invariants() -> None:
         assert ExtractionConfig.from_dict(as_dict).to_dict() == as_dict
         from_json_dict = ExtractionConfig.from_json(cfg.to_json()).to_dict()
         assert from_json_dict["custom_rules"] == [list(rule) for rule in as_dict["custom_rules"]]
-        assert {
-            k: v for k, v in from_json_dict.items() if k != "custom_rules"
-        } == {k: v for k, v in as_dict.items() if k != "custom_rules"}
+        assert {k: v for k, v in from_json_dict.items() if k != "custom_rules"} == {
+            k: v for k, v in as_dict.items() if k != "custom_rules"
+        }
         assert cfg.clone().to_dict() == as_dict
 
 

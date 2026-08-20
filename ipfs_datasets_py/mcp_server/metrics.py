@@ -113,8 +113,13 @@ class Histogram:
 
     DEFAULT_BUCKETS = (0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0)
 
-    def __init__(self, name: str, help_text: str, labels: Optional[List[str]] = None,
-                 buckets: Optional[tuple] = None):
+    def __init__(
+        self,
+        name: str,
+        help_text: str,
+        labels: Optional[List[str]] = None,
+        buckets: Optional[tuple] = None,
+    ):
         self.name = name
         self.help_text = help_text
         self.labels = labels or []
@@ -153,7 +158,7 @@ class Histogram:
                     full_label = f"{label_str},{le_label}" if label_str else le_label
                     lines.append(f"{self.name}_bucket{{{full_label}}} {cumulative}")
 
-                inf_label = f"{label_str},le=\"+Inf\"" if label_str else 'le="+Inf"'
+                inf_label = f'{label_str},le="+Inf"' if label_str else 'le="+Inf"'
                 lines.append(f"{self.name}_bucket{{{inf_label}}} {self._totals[key]}")
 
                 sum_label = f"{{{label_str}}}" if label_str else ""
@@ -165,6 +170,7 @@ class Histogram:
 # ---------------------------------------------------------------------------
 # Global Metrics Registry
 # ---------------------------------------------------------------------------
+
 
 class MetricsRegistry:
     """Singleton registry for all MCP++ metrics."""

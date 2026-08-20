@@ -1,0 +1,24 @@
+{
+  "allow_auto_detected_schema": false,
+  "append_only": true,
+  "default_publication_admission": "deny",
+  "lease_fence_template": "hf-publication:{repository_id}",
+  "license_id": "other",
+  "metadata": {
+    "goal_id": "PGIR-G100",
+    "task_id": "PGIR-090"
+  },
+  "pointer_path": "runtime/ir_learning_release_pointer.json",
+  "release_prefix_template": "data/ir_learning/{release_id}",
+  "repository_id": "Publicus/proof-grounded-ir-learning",
+  "repository_type": "dataset",
+  "require_complete_cards": true,
+  "require_explicit_p1_configs": true,
+  "require_human_approval": true,
+  "require_p4_evidence": true,
+  "require_publication_lease": true,
+  "require_qualification": true,
+  "require_source_derived_separation": true,
+  "schema": "IRPublicationPolicy@1",
+  "trust_remote_code": false
+}

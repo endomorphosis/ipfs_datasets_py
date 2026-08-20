@@ -10,6 +10,7 @@ This module demonstrates best practices for unit testing based on:
 - No magic numbers or strings
 - Proper use of constants and fixtures
 """
+
 import pytest
 from unittest.mock import MagicMock
 import copy
@@ -62,7 +63,7 @@ def temp_dir():
 def normal_test_file(temp_dir):
     """Create a normal test file."""
     file_path = os.path.join(temp_dir, "test_file.txt")
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         f.write(EXPECTED_TEXT_FILE_CONTENT)
     return file_path
 
@@ -71,7 +72,7 @@ def normal_test_file(temp_dir):
 def large_test_file(temp_dir):
     """Create a large test file that exceeds size limits."""
     file_path = os.path.join(temp_dir, "large_file.txt")
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         f.write("A" * EXPECTED_LARGE_FILE_SIZE_BYTES)
     return file_path
 
@@ -80,7 +81,7 @@ def large_test_file(temp_dir):
 def executable_test_file(temp_dir):
     """Create an executable test file."""
     file_path = os.path.join(temp_dir, f"test_script{EXPECTED_EXECUTABLE_EXTENSION}")
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         f.write(EXPECTED_SCRIPT_CONTENT)
     os.chmod(file_path, EXPECTED_EXECUTABLE_PERMISSIONS)
     return file_path
@@ -162,8 +163,10 @@ class TestSecurityResultConstruction:
         THEN is_safe equals True
         """
         result = SecurityResult(is_safe=EXPECTED_SAFE_TRUE)
-        
-        assert result.is_safe is EXPECTED_SAFE_TRUE, f"Expected is_safe {EXPECTED_SAFE_TRUE}, got {result.is_safe}"
+
+        assert result.is_safe is EXPECTED_SAFE_TRUE, (
+            f"Expected is_safe {EXPECTED_SAFE_TRUE}, got {result.is_safe}"
+        )
 
     def test_when_creating_security_result_with_safe_true_then_issues_length_equals_zero(self):
         """
@@ -172,8 +175,10 @@ class TestSecurityResultConstruction:
         THEN issues length equals zero
         """
         result = SecurityResult(is_safe=EXPECTED_SAFE_TRUE)
-        
-        assert len(result.issues) == EXPECTED_ZERO_ISSUES, f"Expected issues count {EXPECTED_ZERO_ISSUES}, got {len(result.issues)}"
+
+        assert len(result.issues) == EXPECTED_ZERO_ISSUES, (
+            f"Expected issues count {EXPECTED_ZERO_ISSUES}, got {len(result.issues)}"
+        )
 
     def test_when_creating_security_result_with_safe_true_then_risk_level_equals_low(self):
         """
@@ -182,8 +187,10 @@ class TestSecurityResultConstruction:
         THEN risk_level equals low
         """
         result = SecurityResult(is_safe=EXPECTED_SAFE_TRUE)
-        
-        assert result.risk_level == EXPECTED_LOW_RISK, f"Expected risk level {EXPECTED_LOW_RISK}, got {result.risk_level}"
+
+        assert result.risk_level == EXPECTED_LOW_RISK, (
+            f"Expected risk level {EXPECTED_LOW_RISK}, got {result.risk_level}"
+        )
 
     def test_when_creating_security_result_with_safe_true_then_metadata_length_equals_zero(self):
         """
@@ -192,8 +199,10 @@ class TestSecurityResultConstruction:
         THEN metadata length equals zero
         """
         result = SecurityResult(is_safe=EXPECTED_SAFE_TRUE)
-        
-        assert len(result.metadata) == EXPECTED_ZERO_METADATA, f"Expected metadata count {EXPECTED_ZERO_METADATA}, got {len(result.metadata)}"
+
+        assert len(result.metadata) == EXPECTED_ZERO_METADATA, (
+            f"Expected metadata count {EXPECTED_ZERO_METADATA}, got {len(result.metadata)}"
+        )
 
     def test_when_creating_security_result_with_safe_false_then_is_safe_equals_false(self):
         """
@@ -205,10 +214,12 @@ class TestSecurityResultConstruction:
             is_safe=EXPECTED_SAFE_FALSE,
             issues=["Issue 1", "Issue 2"],
             risk_level=EXPECTED_HIGH_RISK,
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
-        
-        assert result.is_safe is EXPECTED_SAFE_FALSE, f"Expected is_safe {EXPECTED_SAFE_FALSE}, got {result.is_safe}"
+
+        assert result.is_safe is EXPECTED_SAFE_FALSE, (
+            f"Expected is_safe {EXPECTED_SAFE_FALSE}, got {result.is_safe}"
+        )
 
     def test_when_creating_security_result_with_two_issues_then_issues_length_equals_two(self):
         """
@@ -220,10 +231,12 @@ class TestSecurityResultConstruction:
             is_safe=EXPECTED_SAFE_FALSE,
             issues=["Issue 1", "Issue 2"],
             risk_level=EXPECTED_HIGH_RISK,
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
-        
-        assert len(result.issues) == EXPECTED_TWO_ISSUES, f"Expected issues count {EXPECTED_TWO_ISSUES}, got {len(result.issues)}"
+
+        assert len(result.issues) == EXPECTED_TWO_ISSUES, (
+            f"Expected issues count {EXPECTED_TWO_ISSUES}, got {len(result.issues)}"
+        )
 
     def test_when_creating_security_result_with_high_risk_then_risk_level_equals_high(self):
         """
@@ -235,10 +248,12 @@ class TestSecurityResultConstruction:
             is_safe=EXPECTED_SAFE_FALSE,
             issues=["Issue 1", "Issue 2"],
             risk_level=EXPECTED_HIGH_RISK,
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
-        
-        assert result.risk_level == EXPECTED_HIGH_RISK, f"Expected risk level {EXPECTED_HIGH_RISK}, got {result.risk_level}"
+
+        assert result.risk_level == EXPECTED_HIGH_RISK, (
+            f"Expected risk level {EXPECTED_HIGH_RISK}, got {result.risk_level}"
+        )
 
 
 @pytest.mark.unit
@@ -255,12 +270,14 @@ class TestSecurityResultToDict:
             is_safe=EXPECTED_SAFE_FALSE,
             issues=["Issue 1", "Issue 2"],
             risk_level=EXPECTED_HIGH_RISK,
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
-        
+
         result = security_result.to_dict()
-        
-        assert result["is_safe"] is EXPECTED_SAFE_FALSE, f"Expected is_safe {EXPECTED_SAFE_FALSE}, got {result['is_safe']}"
+
+        assert result["is_safe"] is EXPECTED_SAFE_FALSE, (
+            f"Expected is_safe {EXPECTED_SAFE_FALSE}, got {result['is_safe']}"
+        )
 
     def test_when_converting_security_result_to_dict_then_issues_length_equals_two(self):
         """
@@ -272,12 +289,14 @@ class TestSecurityResultToDict:
             is_safe=EXPECTED_SAFE_FALSE,
             issues=["Issue 1", "Issue 2"],
             risk_level=EXPECTED_HIGH_RISK,
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
-        
+
         result = security_result.to_dict()
-        
-        assert len(result["issues"]) == EXPECTED_TWO_ISSUES, f"Expected issues count {EXPECTED_TWO_ISSUES}, got {len(result['issues'])}"
+
+        assert len(result["issues"]) == EXPECTED_TWO_ISSUES, (
+            f"Expected issues count {EXPECTED_TWO_ISSUES}, got {len(result['issues'])}"
+        )
 
     def test_when_converting_security_result_to_dict_then_risk_level_equals_high(self):
         """
@@ -289,12 +308,14 @@ class TestSecurityResultToDict:
             is_safe=EXPECTED_SAFE_FALSE,
             issues=["Issue 1", "Issue 2"],
             risk_level=EXPECTED_HIGH_RISK,
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
-        
+
         result = security_result.to_dict()
-        
-        assert result["risk_level"] == EXPECTED_HIGH_RISK, f"Expected risk level {EXPECTED_HIGH_RISK}, got {result['risk_level']}"
+
+        assert result["risk_level"] == EXPECTED_HIGH_RISK, (
+            f"Expected risk level {EXPECTED_HIGH_RISK}, got {result['risk_level']}"
+        )
 
     def test_when_converting_security_result_to_dict_then_metadata_key_equals_value(self):
         """
@@ -306,126 +327,178 @@ class TestSecurityResultToDict:
             is_safe=EXPECTED_SAFE_FALSE,
             issues=["Issue 1", "Issue 2"],
             risk_level=EXPECTED_HIGH_RISK,
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
-        
+
         result = security_result.to_dict()
-        
-        assert result["metadata"]["key"] == "value", f"Expected metadata key 'value', got {result['metadata']['key']}"
+
+        assert result["metadata"]["key"] == "value", (
+            f"Expected metadata key 'value', got {result['metadata']['key']}"
+        )
 
 
 @pytest.mark.unit
 class TestSecurityMonitorConstruction:
     """Test SecurityMonitor construction functionality."""
 
-    def test_when_creating_security_monitor_then_returns_security_monitor_instance(self, valid_resources, valid_configs):
+    def test_when_creating_security_monitor_then_returns_security_monitor_instance(
+        self, valid_resources, valid_configs
+    ):
         """
         GIVEN valid resources and valid configs
         WHEN SecurityMonitor constructor is called
         THEN returns SecurityMonitor instance
         """
         result = SecurityMonitor(resources=valid_resources, configs=valid_configs)
-        
-        assert isinstance(result, SecurityMonitor), f"Expected SecurityMonitor instance, got {type(result)}"
 
-    def test_when_creating_security_monitor_then_allowed_formats_length_equals_zero(self, security_monitor):
+        assert isinstance(result, SecurityMonitor), (
+            f"Expected SecurityMonitor instance, got {type(result)}"
+        )
+
+    def test_when_creating_security_monitor_then_allowed_formats_length_equals_zero(
+        self, security_monitor
+    ):
         """
         GIVEN valid resources and configs
         WHEN SecurityMonitor is constructed
         THEN allowed_formats length equals zero
         """
         result = len(security_monitor.allowed_formats)
-        
-        assert result == EXPECTED_ZERO_ISSUES, f"Expected allowed formats count {EXPECTED_ZERO_ISSUES}, got {result}"
+
+        assert result == EXPECTED_ZERO_ISSUES, (
+            f"Expected allowed formats count {EXPECTED_ZERO_ISSUES}, got {result}"
+        )
 
 
 @pytest.mark.unit
 class TestSecurityMonitorValidateSecurityNormalFile:
     """Test SecurityMonitor validate_security functionality with normal files."""
 
-    def test_when_validating_normal_file_then_is_safe_equals_true(self, security_monitor, normal_test_file):
+    def test_when_validating_normal_file_then_is_safe_equals_true(
+        self, security_monitor, normal_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and normal test file
         WHEN validate_security is called with plain format
         THEN result is_safe equals True
         """
-        result = security_monitor.validate_security(normal_test_file, format_name=EXPECTED_PLAIN_FORMAT)
-        
-        assert result.is_safe is EXPECTED_SAFE_TRUE, f"Expected is_safe {EXPECTED_SAFE_TRUE}, got {result.is_safe}"
+        result = security_monitor.validate_security(
+            normal_test_file, format_name=EXPECTED_PLAIN_FORMAT
+        )
 
-    def test_when_validating_normal_file_then_issues_length_equals_zero(self, security_monitor, normal_test_file):
+        assert result.is_safe is EXPECTED_SAFE_TRUE, (
+            f"Expected is_safe {EXPECTED_SAFE_TRUE}, got {result.is_safe}"
+        )
+
+    def test_when_validating_normal_file_then_issues_length_equals_zero(
+        self, security_monitor, normal_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and normal test file
         WHEN validate_security is called with plain format
         THEN result issues length equals zero
         """
-        result = security_monitor.validate_security(normal_test_file, format_name=EXPECTED_PLAIN_FORMAT)
-        
-        assert len(result.issues) == EXPECTED_ZERO_ISSUES, f"Expected issues count {EXPECTED_ZERO_ISSUES}, got {len(result.issues)}"
+        result = security_monitor.validate_security(
+            normal_test_file, format_name=EXPECTED_PLAIN_FORMAT
+        )
 
-    def test_when_validating_normal_file_then_risk_level_equals_low(self, security_monitor, normal_test_file):
+        assert len(result.issues) == EXPECTED_ZERO_ISSUES, (
+            f"Expected issues count {EXPECTED_ZERO_ISSUES}, got {len(result.issues)}"
+        )
+
+    def test_when_validating_normal_file_then_risk_level_equals_low(
+        self, security_monitor, normal_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and normal test file
         WHEN validate_security is called with plain format
         THEN result risk_level equals low
         """
-        result = security_monitor.validate_security(normal_test_file, format_name=EXPECTED_PLAIN_FORMAT)
-        
-        assert result.risk_level == EXPECTED_LOW_RISK, f"Expected risk level {EXPECTED_LOW_RISK}, got {result.risk_level}"
+        result = security_monitor.validate_security(
+            normal_test_file, format_name=EXPECTED_PLAIN_FORMAT
+        )
 
-    def test_when_validating_normal_file_then_metadata_file_path_equals_file_path(self, security_monitor, normal_test_file):
+        assert result.risk_level == EXPECTED_LOW_RISK, (
+            f"Expected risk level {EXPECTED_LOW_RISK}, got {result.risk_level}"
+        )
+
+    def test_when_validating_normal_file_then_metadata_file_path_equals_file_path(
+        self, security_monitor, normal_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and normal test file
         WHEN validate_security is called with plain format
         THEN result metadata file_path equals file path
         """
-        result = security_monitor.validate_security(normal_test_file, format_name=EXPECTED_PLAIN_FORMAT)
-        
-        assert result.metadata["file_path"] == normal_test_file, f"Expected file path {normal_test_file}, got {result.metadata['file_path']}"
+        result = security_monitor.validate_security(
+            normal_test_file, format_name=EXPECTED_PLAIN_FORMAT
+        )
 
-    def test_when_validating_normal_file_then_metadata_format_equals_plain(self, security_monitor, normal_test_file):
+        assert result.metadata["file_path"] == normal_test_file, (
+            f"Expected file path {normal_test_file}, got {result.metadata['file_path']}"
+        )
+
+    def test_when_validating_normal_file_then_metadata_format_equals_plain(
+        self, security_monitor, normal_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and normal test file
         WHEN validate_security is called with plain format
         THEN result metadata format equals plain
         """
-        result = security_monitor.validate_security(normal_test_file, format_name=EXPECTED_PLAIN_FORMAT)
-        
-        assert result.metadata["format"] == EXPECTED_PLAIN_FORMAT, f"Expected format {EXPECTED_PLAIN_FORMAT}, got {result.metadata['format']}"
+        result = security_monitor.validate_security(
+            normal_test_file, format_name=EXPECTED_PLAIN_FORMAT
+        )
+
+        assert result.metadata["format"] == EXPECTED_PLAIN_FORMAT, (
+            f"Expected format {EXPECTED_PLAIN_FORMAT}, got {result.metadata['format']}"
+        )
 
 
 @pytest.mark.unit
 class TestSecurityMonitorValidateSecurityLargeFile:
     """Test SecurityMonitor validate_security functionality with large files."""
 
-    def test_when_validating_large_file_then_is_safe_equals_false(self, security_monitor, large_test_file):
+    def test_when_validating_large_file_then_is_safe_equals_false(
+        self, security_monitor, large_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and large test file
         WHEN validate_security is called with plain format
         THEN result is_safe equals False
         """
-        result = security_monitor.validate_security(large_test_file, format_name=EXPECTED_PLAIN_FORMAT)
-        
+        result = security_monitor.validate_security(
+            large_test_file, format_name=EXPECTED_PLAIN_FORMAT
+        )
+
         assert result.is_safe is EXPECTED_SAFE_FALSE
 
-    def test_when_validating_large_file_then_issues_length_equals_one(self, security_monitor, large_test_file):
+    def test_when_validating_large_file_then_issues_length_equals_one(
+        self, security_monitor, large_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and large test file
         WHEN validate_security is called with plain format
         THEN result issues length equals one
         """
-        result = security_monitor.validate_security(large_test_file, format_name=EXPECTED_PLAIN_FORMAT)
-        
+        result = security_monitor.validate_security(
+            large_test_file, format_name=EXPECTED_PLAIN_FORMAT
+        )
+
         assert len(result.issues) == EXPECTED_SINGLE_ISSUE
 
-    def test_when_validating_large_file_then_first_issue_contains_exceeds_limit(self, security_monitor, large_test_file):
+    def test_when_validating_large_file_then_first_issue_contains_exceeds_limit(
+        self, security_monitor, large_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and large test file
         WHEN validate_security is called with plain format
         THEN result first issue contains exceeds limit text
         """
-        result = security_monitor.validate_security(large_test_file, format_name=EXPECTED_PLAIN_FORMAT)
-        
+        result = security_monitor.validate_security(
+            large_test_file, format_name=EXPECTED_PLAIN_FORMAT
+        )
+
         assert "exceeds limit" in result.issues[0]
 
 
@@ -433,44 +506,52 @@ class TestSecurityMonitorValidateSecurityLargeFile:
 class TestSecurityMonitorValidateSecurityExecutableFile:
     """Test SecurityMonitor validate_security functionality with executable files."""
 
-    def test_when_validating_executable_file_then_is_safe_equals_false(self, security_monitor, executable_test_file):
+    def test_when_validating_executable_file_then_is_safe_equals_false(
+        self, security_monitor, executable_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and executable test file
         WHEN validate_security is called
         THEN result is_safe equals False
         """
         result = security_monitor.validate_security(executable_test_file)
-        
+
         assert result.is_safe is EXPECTED_SAFE_FALSE
 
-    def test_when_validating_executable_file_then_issues_length_equals_one(self, security_monitor, executable_test_file):
+    def test_when_validating_executable_file_then_issues_length_equals_one(
+        self, security_monitor, executable_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and executable test file
         WHEN validate_security is called
         THEN result issues length equals one
         """
         result = security_monitor.validate_security(executable_test_file)
-        
+
         assert len(result.issues) == EXPECTED_SINGLE_ISSUE
 
-    def test_when_validating_executable_file_then_first_issue_contains_executable(self, security_monitor, executable_test_file):
+    def test_when_validating_executable_file_then_first_issue_contains_executable(
+        self, security_monitor, executable_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and executable test file
         WHEN validate_security is called
         THEN result first issue contains executable text
         """
         result = security_monitor.validate_security(executable_test_file)
-        
+
         assert "executable" in result.issues[0]
 
-    def test_when_validating_executable_file_then_risk_level_equals_medium(self, security_monitor, executable_test_file):
+    def test_when_validating_executable_file_then_risk_level_equals_medium(
+        self, security_monitor, executable_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and executable test file
         WHEN validate_security is called
         THEN result risk_level equals medium
         """
         result = security_monitor.validate_security(executable_test_file)
-        
+
         assert result.risk_level == EXPECTED_MEDIUM_RISK
 
 
@@ -478,44 +559,52 @@ class TestSecurityMonitorValidateSecurityExecutableFile:
 class TestSecurityMonitorValidateSecurityNonexistentFile:
     """Test SecurityMonitor validate_security functionality with nonexistent files."""
 
-    def test_when_validating_nonexistent_file_then_is_safe_equals_false(self, security_monitor, nonexistent_file_path):
+    def test_when_validating_nonexistent_file_then_is_safe_equals_false(
+        self, security_monitor, nonexistent_file_path
+    ):
         """
         GIVEN a SecurityMonitor instance and nonexistent file path
         WHEN validate_security is called
         THEN result is_safe equals False
         """
         result = security_monitor.validate_security(nonexistent_file_path)
-        
+
         assert result.is_safe is EXPECTED_SAFE_FALSE
 
-    def test_when_validating_nonexistent_file_then_issues_length_equals_one(self, security_monitor, nonexistent_file_path):
+    def test_when_validating_nonexistent_file_then_issues_length_equals_one(
+        self, security_monitor, nonexistent_file_path
+    ):
         """
         GIVEN a SecurityMonitor instance and nonexistent file path
         WHEN validate_security is called
         THEN result issues length equals one
         """
         result = security_monitor.validate_security(nonexistent_file_path)
-        
+
         assert len(result.issues) == EXPECTED_SINGLE_ISSUE
 
-    def test_when_validating_nonexistent_file_then_first_issue_contains_does_not_exist(self, security_monitor, nonexistent_file_path):
+    def test_when_validating_nonexistent_file_then_first_issue_contains_does_not_exist(
+        self, security_monitor, nonexistent_file_path
+    ):
         """
         GIVEN a SecurityMonitor instance and nonexistent file path
         WHEN validate_security is called
         THEN result first issue contains does not exist text
         """
         result = security_monitor.validate_security(nonexistent_file_path)
-        
+
         assert "does not exist" in result.issues[0]
 
-    def test_when_validating_nonexistent_file_then_risk_level_equals_high(self, security_monitor, nonexistent_file_path):
+    def test_when_validating_nonexistent_file_then_risk_level_equals_high(
+        self, security_monitor, nonexistent_file_path
+    ):
         """
         GIVEN a SecurityMonitor instance and nonexistent file path
         WHEN validate_security is called
         THEN result risk_level equals high
         """
         result = security_monitor.validate_security(nonexistent_file_path)
-        
+
         assert result.risk_level == EXPECTED_HIGH_RISK
 
 
@@ -523,24 +612,28 @@ class TestSecurityMonitorValidateSecurityNonexistentFile:
 class TestSecurityMonitorIsFileSafe:
     """Test SecurityMonitor is_file_safe functionality."""
 
-    def test_when_checking_normal_file_safety_then_returns_true(self, security_monitor, normal_test_file):
+    def test_when_checking_normal_file_safety_then_returns_true(
+        self, security_monitor, normal_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and normal test file
         WHEN is_file_safe is called
         THEN returns True
         """
         result = security_monitor.is_file_safe(normal_test_file)
-        
+
         assert result is EXPECTED_SAFE_TRUE
 
-    def test_when_checking_executable_file_safety_then_returns_false(self, security_monitor, executable_test_file):
+    def test_when_checking_executable_file_safety_then_returns_false(
+        self, security_monitor, executable_test_file
+    ):
         """
         GIVEN a SecurityMonitor instance and executable test file
         WHEN is_file_safe is called
         THEN returns False
         """
         result = security_monitor.is_file_safe(executable_test_file)
-        
+
         assert result is EXPECTED_SAFE_FALSE
 
 
@@ -548,54 +641,74 @@ class TestSecurityMonitorIsFileSafe:
 class TestSecurityMonitorSetAllowedFormats:
     """Test SecurityMonitor set_allowed_formats functionality."""
 
-    def test_when_setting_allowed_formats_then_allowed_formats_length_equals_three(self, security_monitor_with_formats):
+    def test_when_setting_allowed_formats_then_allowed_formats_length_equals_three(
+        self, security_monitor_with_formats
+    ):
         """
         GIVEN a SecurityMonitor instance
         WHEN set_allowed_formats is called with three formats
         THEN allowed_formats length equals three
         """
         result = len(security_monitor_with_formats.allowed_formats)
-        
-        assert result == EXPECTED_THREE_FORMATS, f"Expected formats count {EXPECTED_THREE_FORMATS}, got {result}"
 
-    def test_when_setting_allowed_formats_then_contains_html_format(self, security_monitor_with_formats):
+        assert result == EXPECTED_THREE_FORMATS, (
+            f"Expected formats count {EXPECTED_THREE_FORMATS}, got {result}"
+        )
+
+    def test_when_setting_allowed_formats_then_contains_html_format(
+        self, security_monitor_with_formats
+    ):
         """
         GIVEN a SecurityMonitor instance
         WHEN set_allowed_formats is called with HTML format
         THEN allowed_formats contains HTML format
         """
-        assert EXPECTED_HTML_FORMAT in security_monitor_with_formats.allowed_formats, f"Expected {EXPECTED_HTML_FORMAT} in allowed formats {security_monitor_with_formats.allowed_formats}"
+        assert EXPECTED_HTML_FORMAT in security_monitor_with_formats.allowed_formats, (
+            f"Expected {EXPECTED_HTML_FORMAT} in allowed formats {security_monitor_with_formats.allowed_formats}"
+        )
 
-    def test_when_setting_allowed_formats_then_contains_pdf_format(self, security_monitor_with_formats):
+    def test_when_setting_allowed_formats_then_contains_pdf_format(
+        self, security_monitor_with_formats
+    ):
         """
         GIVEN a SecurityMonitor instance
         WHEN set_allowed_formats is called with PDF format
         THEN allowed_formats contains PDF format
         """
-        assert EXPECTED_PDF_FORMAT in security_monitor_with_formats.allowed_formats, f"Expected {EXPECTED_PDF_FORMAT} in allowed formats {security_monitor_with_formats.allowed_formats}"
+        assert EXPECTED_PDF_FORMAT in security_monitor_with_formats.allowed_formats, (
+            f"Expected {EXPECTED_PDF_FORMAT} in allowed formats {security_monitor_with_formats.allowed_formats}"
+        )
 
-    def test_when_setting_allowed_formats_then_contains_plain_format(self, security_monitor_with_formats):
+    def test_when_setting_allowed_formats_then_contains_plain_format(
+        self, security_monitor_with_formats
+    ):
         """
         GIVEN a SecurityMonitor instance
         WHEN set_allowed_formats is called with plain format
         THEN allowed_formats contains plain format
         """
-        assert EXPECTED_PLAIN_FORMAT in security_monitor_with_formats.allowed_formats, f"Expected {EXPECTED_PLAIN_FORMAT} in allowed formats {security_monitor_with_formats.allowed_formats}"
+        assert EXPECTED_PLAIN_FORMAT in security_monitor_with_formats.allowed_formats, (
+            f"Expected {EXPECTED_PLAIN_FORMAT} in allowed formats {security_monitor_with_formats.allowed_formats}"
+        )
 
-    def test_when_resetting_allowed_formats_to_empty_then_length_equals_zero(self, security_monitor_with_formats):
+    def test_when_resetting_allowed_formats_to_empty_then_length_equals_zero(
+        self, security_monitor_with_formats
+    ):
         """
         GIVEN a SecurityMonitor instance with set allowed formats
         WHEN set_allowed_formats is called with empty list
         THEN allowed_formats length equals zero
         """
         security_monitor_with_formats.set_allowed_formats([])
-        
+
         result = len(security_monitor_with_formats.allowed_formats)
-        
-        assert result == EXPECTED_ZERO_ISSUES, f"Expected formats count {EXPECTED_ZERO_ISSUES}, got {result}"
+
+        assert result == EXPECTED_ZERO_ISSUES, (
+            f"Expected formats count {EXPECTED_ZERO_ISSUES}, got {result}"
+        )
 
 
-@pytest.mark.unit  
+@pytest.mark.unit
 class TestSecurityMonitorSetFileSizeLimits:
     """Test SecurityMonitor set_file_size_limits functionality."""
 
@@ -607,11 +720,11 @@ class TestSecurityMonitorSetFileSizeLimits:
         """
         new_limits = {
             "text": EXPECTED_NEW_MEMORY_LIMIT_BYTES,
-            "new_category": EXPECTED_NEW_CATEGORY_LIMIT_BYTES
+            "new_category": EXPECTED_NEW_CATEGORY_LIMIT_BYTES,
         }
-        
+
         security_monitor.set_file_size_limits(new_limits)
-        
+
         # Access through public interface by testing behavior rather than private attributes
         # This test verifies the limit was set by checking if a large file would be rejected
         # We can't test private attributes directly, so we verify the behavior
@@ -625,10 +738,10 @@ class TestSecurityMonitorSetFileSizeLimits:
         """
         new_limits = {
             "text": EXPECTED_NEW_MEMORY_LIMIT_BYTES,
-            "new_category": EXPECTED_NEW_CATEGORY_LIMIT_BYTES
+            "new_category": EXPECTED_NEW_CATEGORY_LIMIT_BYTES,
         }
-        
+
         security_monitor.set_file_size_limits(new_limits)
-        
+
         # Note: Testing through public contracts would require behavior verification
         pass

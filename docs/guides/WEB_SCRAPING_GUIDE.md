@@ -31,21 +31,23 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
     search_common_crawl,
     search_wayback_machine,
     archive_to_archive_is,
-    create_autoscraper_model
+    create_autoscraper_model,
 )
+
 
 async def example_usage():
     # Search Common Crawl for domain content
     cc_results = await search_common_crawl("example.com", limit=10)
     print(f"Found {cc_results['count']} records in Common Crawl")
-    
+
     # Search Wayback Machine for historical captures
     wb_results = await search_wayback_machine("example.com", limit=10)
     print(f"Found {wb_results['count']} historical captures")
-    
+
     # Archive a page to Archive.is
     archive_result = await archive_to_archive_is("http://example.com")
     print(f"Archived to: {archive_result['archive_url']}")
+
 
 asyncio.run(example_usage())
 ```
@@ -60,7 +62,7 @@ Access billions of web pages from Common Crawl's monthly datasets.
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools.common_crawl_search import (
     search_common_crawl,
     get_common_crawl_content,
-    list_common_crawl_indexes
+    list_common_crawl_indexes,
 )
 
 # Search for domain content
@@ -69,13 +71,12 @@ results = await search_common_crawl(
     crawl_id="CC-MAIN-2024-10",  # Optional: specific crawl
     limit=100,
     from_timestamp="20240101",
-    to_timestamp="20240331"
+    to_timestamp="20240331",
 )
 
 # Get actual content from WARC files
 content = await get_common_crawl_content(
-    url="http://example.com/page.html",
-    timestamp="20240101120000"
+    url="http://example.com/page.html", timestamp="20240101120000"
 )
 
 # List available crawl indexes
@@ -90,7 +91,7 @@ Enhanced integration with Internet Archive's Wayback Machine.
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools.wayback_machine_search import (
     search_wayback_machine,
     get_wayback_content,
-    archive_to_wayback
+    archive_to_wayback,
 )
 
 # Search for historical captures
@@ -99,14 +100,12 @@ captures = await search_wayback_machine(
     from_date="20200101",
     to_date="20240101",
     limit=50,
-    collapse="timestamp:8"  # Daily snapshots
+    collapse="timestamp:8",  # Daily snapshots
 )
 
 # Get historical content
 content = await get_wayback_content(
-    url="http://example.com",
-    timestamp="20230615120000",
-    closest=True
+    url="http://example.com", timestamp="20230615120000", closest=True
 )
 
 # Submit URL for archiving
@@ -122,33 +121,24 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools.ipwb_integration import
     index_warc_to_ipwb,
     start_ipwb_replay,
     search_ipwb_archive,
-    get_ipwb_content
+    get_ipwb_content,
 )
 
 # Index a WARC file to IPFS
 index_result = await index_warc_to_ipwb(
-    warc_path="/path/to/archive.warc",
-    ipfs_endpoint="http://localhost:5001",
-    encrypt=True
+    warc_path="/path/to/archive.warc", ipfs_endpoint="http://localhost:5001", encrypt=True
 )
 
 # Start IPWB replay server
-replay_server = await start_ipwb_replay(
-    cdxj_path=index_result['cdxj_path'],
-    port=5000
-)
+replay_server = await start_ipwb_replay(cdxj_path=index_result["cdxj_path"], port=5000)
 
 # Search IPFS archives
 search_results = await search_ipwb_archive(
-    cdxj_path=index_result['cdxj_path'],
-    url_pattern="example.com"
+    cdxj_path=index_result["cdxj_path"], url_pattern="example.com"
 )
 
 # Get content from IPFS
-content = await get_ipwb_content(
-    ipfs_hash="QmYourHashHere",
-    ipfs_endpoint="http://localhost:5001"
-)
+content = await get_ipwb_content(ipfs_hash="QmYourHashHere", ipfs_endpoint="http://localhost:5001")
 ```
 
 ### 4. AutoScraper Integration
@@ -159,31 +149,28 @@ Intelligent web scraping with machine learning.
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools.autoscraper_integration import (
     create_autoscraper_model,
     scrape_with_autoscraper,
-    batch_scrape_with_autoscraper
+    batch_scrape_with_autoscraper,
 )
 
 # Train a scraping model
 model_result = await create_autoscraper_model(
     sample_url="http://example.com/product/123",
     wanted_data=["Product Name", "$99.99", "In Stock"],
-    model_name="product_scraper"
+    model_name="product_scraper",
 )
 
 # Use the model to scrape similar pages
 scrape_results = await scrape_with_autoscraper(
-    model_path=model_result['model_path'],
-    target_urls=[
-        "http://example.com/product/124",
-        "http://example.com/product/125"
-    ]
+    model_path=model_result["model_path"],
+    target_urls=["http://example.com/product/124", "http://example.com/product/125"],
 )
 
 # Batch scrape from URL file
 batch_result = await batch_scrape_with_autoscraper(
-    model_path=model_result['model_path'],
+    model_path=model_result["model_path"],
     urls_file="/path/to/urls.txt",
     output_format="json",
-    batch_size=50
+    batch_size=50,
 )
 ```
 
@@ -196,32 +183,25 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools.archive_is_integration 
     archive_to_archive_is,
     search_archive_is,
     get_archive_is_content,
-    batch_archive_to_archive_is
+    batch_archive_to_archive_is,
 )
 
 # Archive a single URL
 archive_result = await archive_to_archive_is(
-    url="http://example.com/important-page",
-    wait_for_completion=True,
-    timeout=300
+    url="http://example.com/important-page", wait_for_completion=True, timeout=300
 )
 
 # Search archived content by domain
-search_results = await search_archive_is(
-    domain="example.com",
-    limit=50
-)
+search_results = await search_archive_is(domain="example.com", limit=50)
 
 # Get archived content
-content = await get_archive_is_content(
-    archive_url="https://archive.is/abc123"
-)
+content = await get_archive_is_content(archive_url="https://archive.is/abc123")
 
 # Batch archive multiple URLs
 batch_result = await batch_archive_to_archive_is(
     urls=["http://example.com/page1", "http://example.com/page2"],
     delay_seconds=2.0,
-    max_concurrent=3
+    max_concurrent=3,
 )
 ```
 
@@ -238,17 +218,15 @@ config = ArchivingConfig(
     enable_internet_archive=True,
     enable_archive_is=True,
     enable_common_crawl=True,  # New
-    enable_ipwb=True,          # New
-    autoscraper_model="product_scraper"  # New
+    enable_ipwb=True,  # New
+    autoscraper_model="product_scraper",  # New
 )
 
 archiver = AdvancedWebArchiver(config)
 
 # Archive with multiple services
 collection = await archiver.archive_website_collection(
-    root_urls=["http://example.com"],
-    crawl_depth=2,
-    include_media=True
+    root_urls=["http://example.com"], crawl_depth=2, include_media=True
 )
 
 print(f"Archived {collection.archived_resources} resources")
@@ -295,29 +273,28 @@ sudo apt-get install chromium-browser
 ```python
 async def create_comprehensive_dataset(domain):
     results = {}
-    
+
     # Get current content
     cc_results = await search_common_crawl(domain, limit=100)
-    results['common_crawl'] = cc_results
-    
+    results["common_crawl"] = cc_results
+
     # Get historical content
     wb_results = await search_wayback_machine(domain, limit=50)
-    results['wayback'] = wb_results
-    
+    results["wayback"] = wb_results
+
     # Archive current state
     archive_result = await archive_to_archive_is(f"http://{domain}")
-    results['archived'] = archive_result
-    
+    results["archived"] = archive_result
+
     # Extract structured data if model exists
     try:
         scraped = await scrape_with_autoscraper(
-            "/tmp/autoscraper_models/general.pkl",
-            [f"http://{domain}"]
+            "/tmp/autoscraper_models/general.pkl", [f"http://{domain}"]
         )
-        results['structured_data'] = scraped
+        results["structured_data"] = scraped
     except:
         pass
-    
+
     return results
 ```
 
@@ -328,14 +305,11 @@ async def verify_archive_integrity():
     # Verify Common Crawl accessibility
     cc_indexes = await list_common_crawl_indexes()
     print(f"Available CC indexes: {len(cc_indexes['indexes'])}")
-    
+
     # Verify IPWB archives
-    ipwb_result = await verify_ipwb_archive(
-        "/path/to/archive.cdxj",
-        sample_size=10
-    )
+    ipwb_result = await verify_ipwb_archive("/path/to/archive.cdxj", sample_size=10)
     print(f"IPWB integrity: {ipwb_result['success_rate']:.2%}")
-    
+
     # Test Wayback Machine access
     wb_test = await get_wayback_content("http://example.com")
     print(f"Wayback access: {'OK' if wb_test['status'] == 'success' else 'FAILED'}")
@@ -358,18 +332,11 @@ Use batch functions for large-scale operations:
 
 ```python
 # Batch archive 1000 URLs
-batch_result = await batch_archive_to_archive_is(
-    urls=url_list,
-    delay_seconds=2.0,
-    max_concurrent=3
-)
+batch_result = await batch_archive_to_archive_is(urls=url_list, delay_seconds=2.0, max_concurrent=3)
 
 # Batch scrape with AutoScraper
 batch_scrape = await batch_scrape_with_autoscraper(
-    model_path="/path/to/model.pkl",
-    urls_file="/path/to/urls.txt",
-    batch_size=50,
-    delay_seconds=1.0
+    model_path="/path/to/model.pkl", urls_file="/path/to/urls.txt", batch_size=50, delay_seconds=1.0
 )
 ```
 
@@ -386,7 +353,7 @@ All functions include comprehensive error handling:
 ```python
 try:
     result = await search_common_crawl("example.com")
-    if result['status'] == 'error':
+    if result["status"] == "error":
         print(f"Error: {result['error']}")
     else:
         print(f"Success: {result['count']} records")

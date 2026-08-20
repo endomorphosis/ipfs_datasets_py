@@ -59,11 +59,13 @@ for all new development and when updating existing code.
 ```python
 # Old import from legacy monolithic module
 from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.embedding_tools import (
-    generate_embeddings, semantic_search
+    generate_embeddings,
+    semantic_search,
 )
 
 from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.vector_store_tools import (
-    create_vector_index, search_vector_store
+    create_vector_index,
+    search_vector_store,
 )
 ```
 
@@ -71,12 +73,11 @@ from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.vector_store_tools impor
 
 ```python
 # New imports from category directories
-from ipfs_datasets_py.mcp_server.tools.embedding_tools import (
-    generate_embeddings, semantic_search
-)
+from ipfs_datasets_py.mcp_server.tools.embedding_tools import generate_embeddings, semantic_search
 
 from ipfs_datasets_py.mcp_server.tools.vector_store_tools import (
-    create_vector_index, search_vector_store
+    create_vector_index,
+    search_vector_store,
 )
 ```
 
@@ -117,11 +118,12 @@ To add a deprecation warning to a legacy file:
 ```python
 # At the top of the legacy file, after imports:
 import warnings
+
 warnings.warn(
     "legacy_mcp_tools.embedding_tools is deprecated. "
     "Use ipfs_datasets_py.mcp_server.tools.embedding_tools instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 ```
 

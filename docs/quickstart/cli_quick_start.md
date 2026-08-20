@@ -127,10 +127,10 @@ The CLI wasn't available because the package setup was missing console script en
 
 **In `setup.py`:**
 ```python
-entry_points={
-    'console_scripts': [
-        'ipfs-datasets=ipfs_datasets_cli:cli_main',
-        'ipfs-datasets-cli=ipfs_datasets_cli:cli_main',
+entry_points = {
+    "console_scripts": [
+        "ipfs-datasets=ipfs_datasets_cli:cli_main",
+        "ipfs-datasets-cli=ipfs_datasets_cli:cli_main",
     ],
 }
 ```
@@ -147,6 +147,7 @@ ipfs-datasets-cli = "ipfs_datasets_cli:cli_main"
 def cli_main():
     """Entry point wrapper for console scripts."""
     import asyncio
+
     asyncio.run(main())
 ```
 

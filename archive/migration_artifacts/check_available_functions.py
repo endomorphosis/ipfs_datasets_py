@@ -5,7 +5,9 @@ Check what functions are actually available in each tool module.
 
 import sys
 import importlib
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
+
 
 def check_module_functions(module_path):
     """Check what functions are available in a module."""
@@ -14,14 +16,18 @@ def check_module_functions(module_path):
         module = importlib.import_module(module_path)
 
         # Get all callable functions (not private)
-        functions = [name for name in dir(module)
-                    if not name.startswith('_') and callable(getattr(module, name))]
+        functions = [
+            name
+            for name in dir(module)
+            if not name.startswith("_") and callable(getattr(module, name))
+        ]
 
         print(f"Available functions: {functions}")
         return functions
     except Exception as e:
         print(f"Error importing {module_path}: {e}")
         return []
+
 
 if __name__ == "__main__":
     modules_to_check = [

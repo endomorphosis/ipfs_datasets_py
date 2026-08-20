@@ -151,7 +151,7 @@ class TestComputeEntityStats:
         """Test with empty ontology."""
         ontology = {"entities": [], "relationships": []}
         stats = compute_entity_stats(ontology)
-        
+
         assert stats.total_count == 0
         assert stats.type_distribution == {}
         assert stats.avg_properties_per_entity == 0.0
@@ -163,7 +163,7 @@ class TestComputeEntityStats:
             "relationships": [],
         }
         stats = compute_entity_stats(ontology)
-        
+
         assert stats.total_count == 1
         assert stats.type_distribution["Person"] == 1
         assert stats.property_coverage_ratio == 0.0
@@ -179,11 +179,11 @@ class TestComputeEntityStats:
             "relationships": [],
         }
         stats = compute_entity_stats(ontology)
-        
+
         assert stats.total_count == 3
         assert stats.type_distribution["Person"] == 2
-        assert stats.property_coverage_ratio == pytest.approx(2/3)
-        assert stats.avg_properties_per_entity == pytest.approx(3/3)
+        assert stats.property_coverage_ratio == pytest.approx(2 / 3)
+        assert stats.avg_properties_per_entity == pytest.approx(3 / 3)
 
     def test_orphaned_entities(self):
         """Test orphaned entity detection."""
@@ -193,12 +193,10 @@ class TestComputeEntityStats:
                 {"id": "e2", "type": "Person"},
                 {"id": "e3", "type": "Place"},
             ],
-            "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e2"}
-            ],
+            "relationships": [{"id": "r1", "source_id": "e1", "target_id": "e2"}],
         }
         stats = compute_entity_stats(ontology)
-        
+
         assert stats.orphaned_count == 1  # e3 is orphaned
 
 
@@ -209,7 +207,7 @@ class TestComputeRelationshipStats:
         """Test with empty ontology."""
         ontology = {"entities": [], "relationships": []}
         stats = compute_relationship_stats(ontology)
-        
+
         assert stats.total_count == 0
         assert stats.relationship_density == 0.0
 
@@ -220,12 +218,10 @@ class TestComputeRelationshipStats:
                 {"id": "e1"},
                 {"id": "e2"},
             ],
-            "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}
-            ],
+            "relationships": [{"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}],
         }
         stats = compute_relationship_stats(ontology)
-        
+
         assert stats.total_count == 1
         assert stats.type_distribution["knows"] == 1
         assert stats.avg_relationships_per_entity == 0.5
@@ -246,7 +242,7 @@ class TestComputeRelationshipStats:
             ],
         }
         stats = compute_relationship_stats(ontology)
-        
+
         assert stats.total_count == 2
         assert len(stats.type_distribution) == 2
         assert stats.type_distribution["knows"] == 1
@@ -271,9 +267,9 @@ class TestComputeQualityMetrics:
             avg_relationships_per_entity=1.5,
             relationship_density=0.15,
         )
-        
+
         quality = compute_quality_metrics(entity_stats, rel_stats)
-        
+
         assert quality.overall_quality >= 0.5  # Decent quality
         assert len(quality.suggestions) >= 0
         assert len(quality.issues) == 0
@@ -293,9 +289,9 @@ class TestComputeQualityMetrics:
             avg_relationships_per_entity=0.2,
             relationship_density=0.02,  # Very sparse
         )
-        
+
         quality = compute_quality_metrics(entity_stats, rel_stats)
-        
+
         assert quality.is_low_quality()
         assert len(quality.issues) > 0
         assert len(quality.suggestions) > 0
@@ -317,9 +313,9 @@ class TestComputeOntologyStats:
                 {"id": "r2", "source_id": "e2", "target_id": "e3", "type": "lives_in"},
             ],
         }
-        
+
         stats = compute_ontology_stats(ontology)
-        
+
         assert stats.entities.total_count == 3
         assert stats.relationships.total_count == 2
         assert stats.unique_property_names == 2  # age, name
@@ -341,9 +337,9 @@ class TestGenerateStatsReport:
                 {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"},
             ],
         }
-        
+
         report = generate_stats_report(ontology, verbose=False)
-        
+
         assert "ONTOLOGY STATISTICS REPORT" in report
         assert "Entity" in report or "ENTITY" in report
         assert "Relationship" in report or "RELATIONSHIP" in report
@@ -358,9 +354,9 @@ class TestGenerateStatsReport:
             ],
             "relationships": [],  # No relationships
         }
-        
+
         report = generate_stats_report(ontology, verbose=True)
-        
+
         assert "ONTOLOGY STATISTICS REPORT" in report
         # Sparse graph should generate suggestions
         if "💡" in report or "SUGGESTION" in report:
@@ -381,9 +377,9 @@ class TestGetEntityTypeDistribution:
             ],
             "relationships": [],
         }
-        
+
         dist = get_entity_type_distribution(ontology)
-        
+
         assert dist["Person"] == pytest.approx(0.5)
         assert dist["Place"] == pytest.approx(0.5)
 
@@ -391,7 +387,7 @@ class TestGetEntityTypeDistribution:
         """Test with empty ontology."""
         ontology = {"entities": [], "relationships": []}
         dist = get_entity_type_distribution(ontology)
-        
+
         assert dist == {}
 
 
@@ -408,11 +404,11 @@ class TestGetRelationshipTypeDistribution:
                 {"id": "r3", "source_id": "e1", "target_id": "e3", "type": "sees"},
             ],
         }
-        
+
         dist = get_relationship_type_distribution(ontology)
-        
-        assert dist["knows"] == pytest.approx(2/3)
-        assert dist["sees"] == pytest.approx(1/3)
+
+        assert dist["knows"] == pytest.approx(2 / 3)
+        assert dist["sees"] == pytest.approx(1 / 3)
 
     def test_empty_relationships(self):
         """Test with no relationships."""
@@ -421,7 +417,7 @@ class TestGetRelationshipTypeDistribution:
             "relationships": [],
         }
         dist = get_relationship_type_distribution(ontology)
-        
+
         assert dist == {}
 
 
@@ -446,9 +442,9 @@ class TestIdentifyBottlenecks:
                 {"id": "r5", "source_id": "e2", "target_id": "e3"},
             ],
         }
-        
+
         bottlenecks = identify_bottlenecks(ontology)
-        
+
         assert "high_degree_entities" in bottlenecks
         # e1 should be detected as high-degree hub (degree 4)
         if bottlenecks["high_degree_entities"]:
@@ -470,9 +466,9 @@ class TestIdentifyBottlenecks:
                 {"id": "r4", "source_id": "e1", "target_id": "e2", "type": "sees"},
             ],
         }
-        
+
         bottlenecks = identify_bottlenecks(ontology)
-        
+
         assert "bottleneck_relationship_types" in bottlenecks
         assert bottlenecks["bottleneck_relationship_types"]["knows"] == 3
 
@@ -480,7 +476,7 @@ class TestIdentifyBottlenecks:
         """Test with empty ontology."""
         ontology = {"entities": [], "relationships": []}
         bottlenecks = identify_bottlenecks(ontology)
-        
+
         # Returns dict with empty dicts instead of empty dict
         assert isinstance(bottlenecks, dict)
         assert "high_degree_entities" in bottlenecks
@@ -494,18 +490,46 @@ class TestIntegration:
         """Test complete analysis of complex ontology."""
         ontology = {
             "entities": [
-                {"id": "e1", "type": "Person", "properties": {"name": "Alice", "age": 30}, "confidence": 0.95},
+                {
+                    "id": "e1",
+                    "type": "Person",
+                    "properties": {"name": "Alice", "age": 30},
+                    "confidence": 0.95,
+                },
                 {"id": "e2", "type": "Person", "properties": {"name": "Bob"}, "confidence": 0.90},
-                {"id": "e3", "type": "Organization", "properties": {"sector": "tech"}, "confidence": 0.85},
+                {
+                    "id": "e3",
+                    "type": "Organization",
+                    "properties": {"sector": "tech"},
+                    "confidence": 0.85,
+                },
                 {"id": "e4", "type": "Place", "confidence": 0.88},
             ],
             "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows", "confidence": 0.9},
-                {"id": "r2", "source_id": "e1", "target_id": "e3", "type": "works_at", "confidence": 0.85},
-                {"id": "r3", "source_id": "e3", "target_id": "e4", "type": "located_in", "confidence": 0.8},
+                {
+                    "id": "r1",
+                    "source_id": "e1",
+                    "target_id": "e2",
+                    "type": "knows",
+                    "confidence": 0.9,
+                },
+                {
+                    "id": "r2",
+                    "source_id": "e1",
+                    "target_id": "e3",
+                    "type": "works_at",
+                    "confidence": 0.85,
+                },
+                {
+                    "id": "r3",
+                    "source_id": "e3",
+                    "target_id": "e4",
+                    "type": "located_in",
+                    "confidence": 0.8,
+                },
             ],
         }
-        
+
         # Compute all stats
         stats = compute_ontology_stats(ontology)
         quality = compute_quality_metrics(stats.entities, stats.relationships)
@@ -513,7 +537,7 @@ class TestIntegration:
         bottlenecks = identify_bottlenecks(ontology)
         entity_dist = get_entity_type_distribution(ontology)
         rel_dist = get_relationship_type_distribution(ontology)
-        
+
         # Verify consistency
         assert stats.entities.total_count == 4
         assert stats.relationships.total_count == 3

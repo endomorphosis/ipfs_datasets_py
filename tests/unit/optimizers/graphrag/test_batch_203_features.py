@@ -12,6 +12,7 @@ Tests cover:
 - OntologyLearningAdapter.feedback_relative_std()
 - OntologyPipeline.run_score_relative_improvement()
 """
+
 from __future__ import annotations
 
 import math
@@ -39,6 +40,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic,
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_result(
     confidences: list[float] | None = None,
@@ -80,11 +82,14 @@ def _make_critic_score(overall: float = 0.7) -> CriticScore:
 def _make_mediator() -> OntologyMediator:
     gen = MagicMock()
     critic = MagicMock()
+
     # Make refine_ontology return a dict
     def _fake_refine(ontology, feedback, context):
         import copy
+
         result = copy.deepcopy(ontology)
         return result
+
     m = OntologyMediator(generator=gen, critic=critic)
     return m
 
@@ -115,6 +120,7 @@ def _make_mock_ctx() -> MagicMock:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.apply_config
 # ---------------------------------------------------------------------------
+
 
 class TestApplyConfig:
     def setup_method(self):
@@ -201,6 +207,7 @@ class TestApplyConfig:
 # OntologyMediator.retry_last_round
 # ---------------------------------------------------------------------------
 
+
 class TestRetryLastRound:
     def test_empty_undo_stack_refines_current(self, ontology_builder):
         """With no undo stack, refines the ontology as-is."""
@@ -215,6 +222,7 @@ class TestRetryLastRound:
         """With a snapshot in the undo stack, the rollback is used."""
         mediator = _make_mediator()
         import copy
+
         snapshot = ontology_builder(n=2)
         mediator._undo_stack.append(copy.deepcopy(snapshot))
         ont = ontology_builder(n=5)
@@ -241,6 +249,7 @@ class TestRetryLastRound:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_coefficient_of_variation
 # ---------------------------------------------------------------------------
+
 
 class TestScoreCoefficientOfVariation:
     def test_empty_returns_zero(self):
@@ -280,6 +289,7 @@ class TestScoreCoefficientOfVariation:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_relative_improvement
 # ---------------------------------------------------------------------------
+
 
 class TestScoreRelativeImprovement:
     def test_empty_returns_zero(self):
@@ -328,6 +338,7 @@ class TestScoreRelativeImprovement:
 # OntologyOptimizer.score_to_mean_ratio
 # ---------------------------------------------------------------------------
 
+
 class TestScoreToMeanRatio:
     def test_empty_returns_zero(self):
         opt = OntologyOptimizer()
@@ -370,6 +381,7 @@ class TestScoreToMeanRatio:
 # OntologyLearningAdapter.feedback_std
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackStd:
     def test_no_feedback(self):
         adapter = OntologyLearningAdapter(domain="test")
@@ -401,6 +413,7 @@ class TestFeedbackStd:
 # OntologyLearningAdapter.feedback_coefficient_of_variation
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackCoefficientOfVariation:
     def test_no_feedback(self):
         adapter = OntologyLearningAdapter(domain="test")
@@ -427,6 +440,7 @@ class TestFeedbackCoefficientOfVariation:
 # OntologyLearningAdapter.feedback_relative_std (alias)
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackRelativeStd:
     def test_alias_matches_cv(self):
         adapter = _adapter_with([0.4, 0.6, 0.8])
@@ -441,9 +455,11 @@ class TestFeedbackRelativeStd:
 # OntologyPipeline.run_score_relative_improvement
 # ---------------------------------------------------------------------------
 
+
 class TestRunScoreRelativeImprovement:
     def _pipeline_with_scores(self, scores: list[float]):
         from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
         pipeline = OntologyPipeline()
         for s in scores:
             score = _make_critic_score(s)

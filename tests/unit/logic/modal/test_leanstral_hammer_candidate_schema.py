@@ -180,4 +180,3 @@ def test_leanstral_candidate_with_unknown_hammer_obligation_is_rejected_before_l
     assert validation.accepted is False
     assert "unknown_drafted_logic_proof_obligation_id" in validation.reasons
     assert "lean_executable_unavailable" not in validation.reasons
-

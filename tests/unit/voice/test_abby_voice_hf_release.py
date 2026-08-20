@@ -226,9 +226,7 @@ def test_generic_helpers_write_sharded_zstd_parquet_descriptors(tmp_path: Path):
     write_zstd_parquet(path, table, max_rows=2)
     assert path.read_bytes()[:4] == b"PAR1"
     assert validate_zstd_parquet(path, max_rows=2, expected_row_count=0) == 0
-    compressions = {
-        pq.ParquetFile(path).metadata.row_group(0).column(0).compression
-    }
+    compressions = {pq.ParquetFile(path).metadata.row_group(0).column(0).compression}
     assert compressions == {"ZSTD"}
 
     descriptor = describe_file(
@@ -361,9 +359,7 @@ def test_deterministic_release_construction_five_configs_and_descriptors(tmp_pat
 
     # Provenance uses shard_rows=2 over 5 rows => multiple ZSTD shards.
     provenance_shards = [
-        item
-        for item in parquet_descriptors
-        if item.config_name == ABBY_VOICE_PROVENANCE_V2
+        item for item in parquet_descriptors if item.config_name == ABBY_VOICE_PROVENANCE_V2
     ]
     assert len(provenance_shards) >= 2
     assert all(item.row_count <= 2 for item in provenance_shards)
@@ -501,23 +497,17 @@ def test_byte_identical_rebuild_is_order_independent(tmp_path: Path):
         repository_commit="commit:test",
     )
     result_a = builder.build(output_dir=first, release_id="release-byte-id", **fixture)
-    result_b = builder.build(
-        output_dir=second, release_id="release-byte-id", **reversed_fixture
-    )
+    result_b = builder.build(output_dir=second, release_id="release-byte-id", **reversed_fixture)
     assert result_a.manifest_sha256 == result_b.manifest_sha256
     assert result_a.release_cid == result_b.release_cid
     assert result_a.graph_cid == result_b.graph_cid
     assert result_a.index_cid == result_b.index_cid
 
     files_a = sorted(
-        path.relative_to(first).as_posix()
-        for path in first.rglob("*")
-        if path.is_file()
+        path.relative_to(first).as_posix() for path in first.rglob("*") if path.is_file()
     )
     files_b = sorted(
-        path.relative_to(second).as_posix()
-        for path in second.rglob("*")
-        if path.is_file()
+        path.relative_to(second).as_posix() for path in second.rglob("*") if path.is_file()
     )
     assert files_a == files_b
     for relative in files_a:

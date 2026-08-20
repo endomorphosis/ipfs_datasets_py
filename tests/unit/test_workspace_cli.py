@@ -15,7 +15,9 @@ from ipfs_datasets_py.processors.legal_data import (
 
 
 def _load_workspace_cli_module():
-    module_path = Path(__file__).resolve().parents[2] / "ipfs_datasets_py" / "cli" / "workspace_cli.py"
+    module_path = (
+        Path(__file__).resolve().parents[2] / "ipfs_datasets_py" / "cli" / "workspace_cli.py"
+    )
     spec = importlib.util.spec_from_file_location("workspace_cli_under_test", module_path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -87,7 +89,9 @@ def _build_google_voice_manifest_json(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     enrichment_path.write_text("Generated Google Voice enrichment transcript.", encoding="utf-8")
-    attachment_text_path.write_text("Inspection notes attached to the Google Voice event.", encoding="utf-8")
+    attachment_text_path.write_text(
+        "Inspection notes attached to the Google Voice event.", encoding="utf-8"
+    )
     source_html_path.write_text("<html><body>voice event</body></html>", encoding="utf-8")
     event_json_path.write_text(
         json.dumps(
@@ -99,9 +103,20 @@ def _build_google_voice_manifest_json(tmp_path: Path) -> Path:
                 "phone_numbers": ["(503) 555-0100"],
                 "attachments": [
                     {"path": str(bundle_dir / "audio.mp3"), "kind": "audio"},
-                    {"path": str(attachment_text_path), "kind": "document", "content_type": "text/plain", "filename": "inspection_notes.txt"},
+                    {
+                        "path": str(attachment_text_path),
+                        "kind": "document",
+                        "content_type": "text/plain",
+                        "filename": "inspection_notes.txt",
+                    },
                 ],
-                "enrichments": [{"path": str(enrichment_path), "kind": "transcription", "source_attachment": str(bundle_dir / "audio.mp3")}],
+                "enrichments": [
+                    {
+                        "path": str(enrichment_path),
+                        "kind": "transcription",
+                        "source_attachment": str(bundle_dir / "audio.mp3"),
+                    }
+                ],
                 "source_kind": "takeout",
                 "source_html_path": str(source_html_path),
             }
@@ -188,13 +203,15 @@ def test_workspace_cli_can_emit_summary_json(tmp_path: Path) -> None:
 
     output = io.StringIO()
     with redirect_stdout(output):
-        result = module.main([
-            "--input-path",
-            str(bundle_path),
-            "--action",
-            "summary",
-            "--json",
-        ])
+        result = module.main(
+            [
+                "--input-path",
+                str(bundle_path),
+                "--action",
+                "summary",
+                "--json",
+            ]
+        )
 
     assert result == 0
     payload = json.loads(output.getvalue())
@@ -208,14 +225,16 @@ def test_workspace_cli_can_emit_inspection_field_subset_text(tmp_path: Path) -> 
 
     output = io.StringIO()
     with redirect_stdout(output):
-        result = module.main([
-            "--input-path",
-            str(bundle_path),
-            "--action",
-            "inspect",
-            "--fields",
-            "workspace_id,row_count,sections",
-        ])
+        result = module.main(
+            [
+                "--input-path",
+                str(bundle_path),
+                "--action",
+                "inspect",
+                "--fields",
+                "workspace_id,row_count,sections",
+            ]
+        )
 
     rendered = output.getvalue()
     assert result == 0
@@ -231,14 +250,16 @@ def test_workspace_cli_can_render_markdown_report(tmp_path: Path) -> None:
 
     output = io.StringIO()
     with redirect_stdout(output):
-        result = module.main([
-            "--input-path",
-            str(bundle_path),
-            "--action",
-            "report",
-            "--report-format",
-            "markdown",
-        ])
+        result = module.main(
+            [
+                "--input-path",
+                str(bundle_path),
+                "--action",
+                "report",
+                "--report-format",
+                "markdown",
+            ]
+        )
 
     rendered = output.getvalue()
     assert result == 0
@@ -458,7 +479,9 @@ def test_workspace_cli_can_package_imap_summary_without_input_type(tmp_path: Pat
     assert summary["source_type"] == "imap_snippets"
 
 
-def test_ipfs_datasets_cli_dispatches_workspace_package_command(tmp_path: Path, monkeypatch) -> None:
+def test_ipfs_datasets_cli_dispatches_workspace_package_command(
+    tmp_path: Path, monkeypatch
+) -> None:
     export_path = _build_discord_export_json(tmp_path)
     output_dir = tmp_path / "discord_package_dispatch"
 
@@ -628,7 +651,11 @@ def test_workspace_cli_can_search_google_voice_bundle_with_grouped_results(tmp_p
     assert payload["result_count"] == 2
     assert payload["group_count"] == 1
     assert payload["grouped_results"][0]["group_id"] == "google_voice_bundle_voice_1"
-    assert payload["grouped_results"][0]["document_ids"] == ["voice_1", "voice_1_attachment_2", "voice_1_enrichment_1"]
+    assert payload["grouped_results"][0]["document_ids"] == [
+        "voice_1",
+        "voice_1_attachment_2",
+        "voice_1_enrichment_1",
+    ]
 
     text_output = io.StringIO()
     with redirect_stdout(text_output):
@@ -653,7 +680,9 @@ def test_workspace_cli_can_search_google_voice_bundle_with_grouped_results(tmp_p
     assert "* voice_1: Text conversation with advocate" in rendered
 
 
-def test_workspace_cli_can_search_packaged_google_voice_bundle_with_grouped_results(tmp_path: Path) -> None:
+def test_workspace_cli_can_search_packaged_google_voice_bundle_with_grouped_results(
+    tmp_path: Path,
+) -> None:
     module = _load_workspace_cli_module()
     export_path = _build_google_voice_manifest_json(tmp_path)
 
@@ -703,7 +732,9 @@ def test_workspace_cli_can_search_packaged_google_voice_bundle_with_grouped_resu
     assert payload["grouped_results"][0]["source_type"] == "google_voice_bundle"
 
 
-def test_workspace_cli_can_search_google_voice_bundle_with_grouped_vector_results(tmp_path: Path) -> None:
+def test_workspace_cli_can_search_google_voice_bundle_with_grouped_vector_results(
+    tmp_path: Path,
+) -> None:
     module = _load_workspace_cli_module()
     export_path = _build_google_voice_manifest_json(tmp_path)
     output_parquet = tmp_path / "google_voice_search_vector_bundle.parquet"
@@ -746,7 +777,11 @@ def test_workspace_cli_can_search_google_voice_bundle_with_grouped_vector_result
     assert payload["result_count"] >= 1
     assert payload["group_count"] == 1
     assert payload["grouped_results"][0]["group_id"] == "google_voice_bundle_voice_1"
-    assert payload["grouped_results"][0]["document_ids"] == ["voice_1", "voice_1_attachment_2", "voice_1_enrichment_1"]
+    assert payload["grouped_results"][0]["document_ids"] == [
+        "voice_1",
+        "voice_1_attachment_2",
+        "voice_1_enrichment_1",
+    ]
 
     text_output = io.StringIO()
     with redirect_stdout(text_output):
@@ -770,7 +805,9 @@ def test_workspace_cli_can_search_google_voice_bundle_with_grouped_vector_result
     assert "google_voice_bundle_voice_1 [google_voice_bundle]" in rendered
 
 
-def test_workspace_cli_can_search_packaged_google_voice_bundle_with_grouped_vector_results(tmp_path: Path) -> None:
+def test_workspace_cli_can_search_packaged_google_voice_bundle_with_grouped_vector_results(
+    tmp_path: Path,
+) -> None:
     module = _load_workspace_cli_module()
     export_path = _build_google_voice_manifest_json(tmp_path)
 
@@ -950,7 +987,9 @@ def test_ipfs_datasets_cli_dispatches_workspace_export_command(tmp_path: Path, m
     assert Path(payload["export"]["parquet_path"]).is_file()
 
 
-def test_ipfs_datasets_cli_dispatches_workspace_export_google_voice_autodetect(tmp_path: Path, monkeypatch) -> None:
+def test_ipfs_datasets_cli_dispatches_workspace_export_google_voice_autodetect(
+    tmp_path: Path, monkeypatch
+) -> None:
     export_path = _build_google_voice_manifest_json(tmp_path)
     output_parquet = tmp_path / "voice_bundle_dispatch.parquet"
 
@@ -991,7 +1030,9 @@ def test_ipfs_datasets_cli_dispatches_workspace_export_google_voice_autodetect(t
     assert Path(payload["export"]["parquet_path"]).is_file()
 
 
-def test_ipfs_datasets_cli_dispatches_workspace_export_discord_autodetect(tmp_path: Path, monkeypatch) -> None:
+def test_ipfs_datasets_cli_dispatches_workspace_export_discord_autodetect(
+    tmp_path: Path, monkeypatch
+) -> None:
     export_path = _build_discord_export_json(tmp_path)
     output_parquet = tmp_path / "discord_bundle_dispatch.parquet"
 
@@ -1030,7 +1071,9 @@ def test_ipfs_datasets_cli_dispatches_workspace_export_discord_autodetect(tmp_pa
     assert Path(payload["export"]["parquet_path"]).is_file()
 
 
-def test_ipfs_datasets_cli_dispatches_workspace_search_google_voice_grouped_results(tmp_path: Path, monkeypatch) -> None:
+def test_ipfs_datasets_cli_dispatches_workspace_search_google_voice_grouped_results(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_workspace_cli_module()
     export_path = _build_google_voice_manifest_json(tmp_path)
     output_parquet = tmp_path / "voice_bundle_search_dispatch.parquet"
@@ -1088,7 +1131,9 @@ def test_ipfs_datasets_cli_dispatches_workspace_search_google_voice_grouped_resu
     assert payload["grouped_results"][0]["group_id"] == "google_voice_bundle_voice_1"
 
 
-def test_ipfs_datasets_cli_dispatches_workspace_vector_search_google_voice_grouped_results(tmp_path: Path, monkeypatch) -> None:
+def test_ipfs_datasets_cli_dispatches_workspace_vector_search_google_voice_grouped_results(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_workspace_cli_module()
     export_path = _build_google_voice_manifest_json(tmp_path)
     output_parquet = tmp_path / "voice_bundle_vector_search_dispatch.parquet"
@@ -1146,7 +1191,9 @@ def test_ipfs_datasets_cli_dispatches_workspace_vector_search_google_voice_group
     assert payload["grouped_results"][0]["group_id"] == "google_voice_bundle_voice_1"
 
 
-def test_ipfs_datasets_cli_workspace_help_mentions_search_actions(tmp_path: Path, monkeypatch) -> None:
+def test_ipfs_datasets_cli_workspace_help_mentions_search_actions(
+    tmp_path: Path, monkeypatch
+) -> None:
     module_path = Path(__file__).resolve().parents[2] / "ipfs_datasets_cli.py"
     spec = importlib.util.spec_from_file_location("ipfs_datasets_cli_under_test", module_path)
     assert spec and spec.loader
@@ -1175,6 +1222,8 @@ def test_workspace_cli_help_mentions_vector_search_actions() -> None:
             assert exc.code == 0
 
     rendered = output.getvalue()
-    assert "Inspect, search, export, and package workspace datasets and packaged bundles." in rendered
+    assert (
+        "Inspect, search, export, and package workspace datasets and packaged bundles." in rendered
+    )
     assert "search-vector" in rendered
     assert "package-search-vector" in rendered

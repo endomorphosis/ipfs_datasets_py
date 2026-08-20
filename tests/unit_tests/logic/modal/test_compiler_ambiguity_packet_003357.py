@@ -223,8 +223,7 @@ def test_compiler_exposes_packet_003357_explicit_adaptive_ambiguities() -> None:
             family_margin=family_margin,
         )
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         ambiguities = compiler._adaptive_family_margin_ambiguities(
             encoding,
@@ -254,6 +253,5 @@ def test_compiler_exposes_packet_003357_explicit_adaptive_ambiguities() -> None:
         assert ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         assert ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
         assert (
-            abs(float(ambiguity.metadata["priority"]) - (abs(family_margin) + threshold))
-            <= 1e-12
+            abs(float(ambiguity.metadata["priority"]) - (abs(family_margin) + threshold)) <= 1e-12
         )

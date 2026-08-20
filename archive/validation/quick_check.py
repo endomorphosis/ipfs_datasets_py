@@ -1,4 +1,5 @@
 import os
+
 print("Migration Integration Status Check")
 print("=" * 40)
 
@@ -6,7 +7,7 @@ base_path = "ipfs_datasets_py/mcp_server/tools"
 
 files_to_check = [
     "tool_wrapper.py",
-    "tool_registration.py", 
+    "tool_registration.py",
     "fastapi_integration.py",
     "auth_tools/auth_tools.py",
     "session_tools/session_tools.py",
@@ -16,7 +17,7 @@ files_to_check = [
     "analysis_tools/analysis_tools.py",
     "rate_limiting_tools/rate_limiting_tools.py",
     "sparse_embedding_tools/sparse_embedding_tools.py",
-    "index_management_tools/index_management_tools.py"
+    "index_management_tools/index_management_tools.py",
 ]
 
 existing = 0

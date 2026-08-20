@@ -4,6 +4,7 @@ PDF Entity Extraction Tool - thin MCP wrapper.
 Business logic is in:
     ipfs_datasets_py.processors.specialized.pdf.entity_extraction_engine
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Union
@@ -18,6 +19,7 @@ try:
     from ipfs_datasets_py.processors.specialized.pdf.entity_extraction_engine import (
         pdf_extract_entities as _engine_fn,
     )
+
     _ENGINE_AVAILABLE = True
 except ImportError:
     _engine_fn = None
@@ -54,7 +56,9 @@ async def pdf_extract_entities(
             return error
         document_id = data.get("document_id")
         if not document_id:
-            return mcp_error_response("Missing required field: document_id", error_type="validation")
+            return mcp_error_response(
+                "Missing required field: document_id", error_type="validation"
+            )
         if GraphRAGIntegrator is None:
             return mcp_error_response("GraphRAGIntegrator is not available")
         try:

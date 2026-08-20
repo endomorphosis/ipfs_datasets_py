@@ -41,12 +41,17 @@ def test_provekit_package_data_allowlists_only_read_only_backend_assets():
     assert "processors/provekit_backend/build.sh" in package_data
     assert "logic/zkp/provekit/circuits/*/Nargo.toml" in package_data
     assert "logic/zkp/provekit/circuits/*/src/*.nr" in package_data
-    assert "recursive-include ipfs_datasets_py/logic/zkp/provekit/circuits Nargo.toml *.nr" in manifest
+    assert (
+        "recursive-include ipfs_datasets_py/logic/zkp/provekit/circuits Nargo.toml *.nr" in manifest
+    )
     assert "*.pkp" not in package_data
     assert "*.pkv" not in package_data
     assert "*.np" not in package_data
     assert "Prover.toml" not in package_data
-    assert "recursive-exclude ipfs_datasets_py/logic/zkp/provekit/circuits *.pkp *.pkv *.np Prover.toml" in manifest
+    assert (
+        "recursive-exclude ipfs_datasets_py/logic/zkp/provekit/circuits *.pkp *.pkv *.np Prover.toml"
+        in manifest
+    )
 
 
 def test_provekit_build_script_is_manual_checkable_and_non_networked():

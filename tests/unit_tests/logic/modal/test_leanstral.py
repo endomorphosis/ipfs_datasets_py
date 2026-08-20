@@ -29,9 +29,7 @@ class _GuidanceAutoencoder:
             "feature_groups": {"compiler_contract": ["modal:deontic"]},
             "legal_ir_view_gap_distribution": {"deontic_norms": 0.1},
             "legal_ir_view_metrics": {"cross_entropy_loss": 0.2},
-            "ranked_guidance_features": [
-                {"feature": "modal:deontic", "score": 1.0}
-            ],
+            "ranked_guidance_features": [{"feature": "modal:deontic", "score": 1.0}],
             "synthesis_focus": ["legal_ir_multiview"],
         }
 
@@ -131,7 +129,10 @@ def test_shadow_runner_validates_a_fixed_lean_goal_and_persists_artifact(tmp_pat
     assert "legal_ir_view_metrics" in task_payload["autoencoder_evidence"]
     assert task_payload["projection_evidence"]["source_span_hashes"]
     assert task_payload["compiler_change_spec"]["patchable"] is True
-    assert "ipfs_datasets_py/logic/modal/codec.py" in task_payload["compiler_change_spec"]["allowed_paths"]
+    assert (
+        "ipfs_datasets_py/logic/modal/codec.py"
+        in task_payload["compiler_change_spec"]["allowed_paths"]
+    )
 
 
 def test_shadow_runner_rejects_proof_that_changes_the_trusted_boundary() -> None:

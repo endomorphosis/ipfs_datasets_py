@@ -17,7 +17,7 @@ result = await check_access_permission(
     principal="user_42",
     action="dataset.write",
     resource="legal_corpus_v2",
-    context={"ip": "192.168.1.1", "session_id": "abc123"}
+    context={"ip": "192.168.1.1", "session_id": "abc123"},
 )
 # Returns: {"allowed": True, "reason": "user has write:datasets scope", "policy": "rbac_v2"}
 ```

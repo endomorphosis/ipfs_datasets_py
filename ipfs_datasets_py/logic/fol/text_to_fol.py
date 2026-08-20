@@ -29,14 +29,14 @@ async def convert_text_to_fol(
 ) -> Dict[str, Any]:
     """
     Convert natural language text to First-Order Logic (FOL).
-    
+
     DEPRECATED: Use FOLConverter instead for better performance and features.
-    
+
     This function is maintained for backward compatibility. New code should use:
         from ipfs_datasets_py.logic.fol import FOLConverter
         converter = FOLConverter(use_nlp=True, use_cache=True)
         result = await converter.convert_async(text)
-    
+
     Args:
         text_input: Text string or dataset dictionary
         domain_predicates: Optional list of domain-specific predicates
@@ -44,27 +44,28 @@ async def convert_text_to_fol(
         confidence_threshold: Minimum confidence for including results
         include_metadata: Whether to include metadata in output
         use_nlp: Whether to use NLP-enhanced extraction (spaCy) vs regex fallback
-        
+
     Returns:
         Dictionary with FOL formulas and metadata
     """
     # Issue deprecation warning
     warnings.warn(
-        "convert_text_to_fol() is deprecated and will be removed in v2.0. "
-        "Use FOLConverter instead",
+        "convert_text_to_fol() is deprecated and will be removed in v2.0. Use FOLConverter instead",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
-    
+
     # Validate confidence threshold before entering try/except
     if not 0.0 <= confidence_threshold <= 1.0:
-        raise ValueError(f"Confidence threshold must be between 0.0 and 1.0, got {confidence_threshold}")
+        raise ValueError(
+            f"Confidence threshold must be between 0.0 and 1.0, got {confidence_threshold}"
+        )
 
     try:
         # Handle None input
         if text_input is None:
             text_input = ""
-        
+
         # Extract text from dataset format if needed
         if isinstance(text_input, dict):
             texts = extract_text_from_dataset(text_input)
@@ -75,11 +76,11 @@ async def convert_text_to_fol(
             texts = [stripped]
         else:
             raise ValueError("Text input must be a string or dictionary")
-        
+
         # Check if all texts are empty
         if not texts or all(not t.strip() for t in texts):
             return _empty_success_result(output_format, confidence_threshold)
-        
+
         # Create FOLConverter with appropriate settings
         converter = FOLConverter(
             use_cache=True,
@@ -87,53 +88,59 @@ async def convert_text_to_fol(
             use_nlp=use_nlp,
             enable_monitoring=False,
             confidence_threshold=confidence_threshold,
-            output_format=output_format
+            output_format=output_format,
         )
-        
+
         # Convert all texts
         results = []
         total_processed = 0
         successful_conversions = 0
-        
+
         for text in texts:
             text = text.strip()
             if not text:
                 continue
-            
+
             total_processed += 1
-            
+
             # Convert using FOLConverter
             conversion_result = await converter.convert_async(text)
-            
+
             if conversion_result.success:
                 successful_conversions += 1
-                
+
                 # Convert to legacy dict format
                 formula_dict = _convert_result_to_legacy_format(
-                    conversion_result,
-                    text,
-                    output_format,
-                    include_metadata
+                    conversion_result, text, output_format, include_metadata
                 )
-                
+
                 # Only include if confidence meets threshold
-                if conversion_result.output and conversion_result.output.confidence >= confidence_threshold:
+                if (
+                    conversion_result.output
+                    and conversion_result.output.confidence >= confidence_threshold
+                ):
                     results.append(formula_dict)
-        
+
         # Build summary
         summary = {
             "total_statements": total_processed,
             "successful_conversions": successful_conversions,
             "conversion_rate": successful_conversions / max(1, total_processed),
             "average_confidence": sum(r["confidence"] for r in results) / max(1, len(results)),
-            "unique_predicates": list(set(p for r in results for p in r.get("predicates_used", []))),
+            "unique_predicates": list(
+                set(p for r in results for p in r.get("predicates_used", []))
+            ),
             "quantifier_distribution": _get_quantifier_distribution(results),
             "operator_distribution": _get_operator_distribution(results),
         }
-        
+
         if total_processed > 0:
-            logger.info("Successfully converted %s/%s statements to FOL", successful_conversions, total_processed)
-        
+            logger.info(
+                "Successfully converted %s/%s statements to FOL",
+                successful_conversions,
+                total_processed,
+            )
+
         return {
             "status": "success",
             "fol_formulas": results,
@@ -145,7 +152,7 @@ async def convert_text_to_fol(
                 "confidence_threshold": confidence_threshold,
             },
         }
-    
+
     except Exception as exc:
         logger.error(f"Error in convert_text_to_fol: {exc}")
         return {
@@ -187,27 +194,33 @@ def _empty_success_result(output_format: str, confidence_threshold: float) -> Di
     }
 
 
-def _convert_result_to_legacy_format(conversion_result, original_text: str, output_format: str, include_metadata: bool) -> Dict[str, Any]:
+def _convert_result_to_legacy_format(
+    conversion_result, original_text: str, output_format: str, include_metadata: bool
+) -> Dict[str, Any]:
     """Convert ConversionResult to legacy dict format."""
     from .utils.fol_parser import convert_to_prolog, convert_to_tptp
-    
+
     fol_formula = conversion_result.output
-    
+
     result = {
         "original_text": original_text,
         "fol_formula": fol_formula.formula_string,
         "fol": fol_formula.formula_string,  # alias for backward compatibility
         "confidence": fol_formula.confidence,
         "predicates_used": fol_formula.get_predicate_names(),
-        "quantifiers": [q.value if hasattr(q, 'value') else str(q) for q in fol_formula.quantifiers],
-        "logical_operators": [op.value if hasattr(op, 'value') else str(op) for op in fol_formula.operators],
+        "quantifiers": [
+            q.value if hasattr(q, "value") else str(q) for q in fol_formula.quantifiers
+        ],
+        "logical_operators": [
+            op.value if hasattr(op, "value") else str(op) for op in fol_formula.operators
+        ],
     }
-    
+
     if output_format in ["prolog", "all"]:
         result["prolog_form"] = convert_to_prolog(fol_formula.formula_string)
     if output_format in ["tptp", "all"]:
         result["tptp_form"] = convert_to_tptp(fol_formula.formula_string)
-    
+
     if include_metadata:
         result["validation"] = {"valid": True}
         result["linguistic_analysis"] = {
@@ -216,7 +229,7 @@ def _convert_result_to_legacy_format(conversion_result, original_text: str, outp
             "operators": fol_formula.operators,
             "relations": [],
         }
-    
+
     return result
 
 
@@ -249,7 +262,7 @@ def _get_operator_distribution(results: List[Dict[str, Any]]) -> Dict[str, int]:
 def extract_text_from_dataset(dataset: Dict[str, Any]) -> List[str]:
     """Extract text content from various dataset formats."""
     texts: List[str] = []
-    
+
     if "text" in dataset:
         text = dataset["text"]
         if isinstance(text, str):
@@ -279,12 +292,14 @@ def extract_text_from_dataset(dataset: Dict[str, Any]) -> List[str]:
                 for item in value:
                     if isinstance(item, str):
                         texts.append(item.strip())
-    
+
     return [t for t in texts if t]
 
 
 # Helper functions maintained for backward compatibility
-def calculate_conversion_confidence(text: str, formula: str, predicates: List, quantifiers: List) -> float:
+def calculate_conversion_confidence(
+    text: str, formula: str, predicates: List, quantifiers: List
+) -> float:
     """Calculate confidence score. DEPRECATED."""
     confidence = 0.5
     if predicates:
@@ -304,7 +319,7 @@ def extract_predicate_names(predicates: List) -> List[str]:
     for p in predicates:
         if isinstance(p, dict):
             names.append(p.get("name", ""))
-        elif hasattr(p, 'name'):
+        elif hasattr(p, "name"):
             names.append(p.name)
         elif isinstance(p, str):
             names.append(p)

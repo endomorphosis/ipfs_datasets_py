@@ -487,14 +487,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from benchmarks.standard_datasets import get_dataset
 
+
 def benchmark_my_feature():
     """Run benchmark."""
     dataset = get_dataset("legal_employment_simple")
-    
+
     start = time.time()
     # ... do work ...
     elapsed = time.time() - start
-    
+
     print(f"My Feature Benchmark: {elapsed:.2f}s")
     return elapsed
 
@@ -511,9 +512,7 @@ Edit `benchmarks/bench_graphrag_suite.py`:
 ```python
 BENCHMARKS = [
     # ... existing benchmarks ...
-    
-    ("bench_my_feature.py", "extraction",
-     "My new feature performance"),
+    ("bench_my_feature.py", "extraction", "My new feature performance"),
 ]
 ```
 

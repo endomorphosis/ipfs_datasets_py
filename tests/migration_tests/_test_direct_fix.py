@@ -56,8 +56,8 @@ print(f"Found optimize_query method with length {len(method_content)} characters
 # 1. Create a modified method with try-except and fallback
 modified_method = re.sub(
     r"def optimize_query\(self, query: Dict\[str, Any\], priority: str = \"normal\", graph_processor: Any = None\) -> Dict\[str, Any\]:",
-    "def optimize_query(self, query: Dict[str, Any], priority: str = \"normal\", graph_processor: Any = None) -> Dict[str, Any]:\n        try:",
-    method_content
+    'def optimize_query(self, query: Dict[str, Any], priority: str = "normal", graph_processor: Any = None) -> Dict[str, Any]:\n        try:',
+    method_content,
 )
 
 # 2. Indent everything in the method body by one level (4 spaces)
@@ -83,7 +83,7 @@ return_pattern = r"return (\w+)"
 modified_method = re.sub(
     return_pattern,
     r"# Safety check\n            if \1 is None:\n                return self._create_fallback_plan(query=query, priority=priority, error='\1 was None')\n            \n            return \1",
-    modified_method
+    modified_method,
 )
 
 # 5. Add safety check for optimize_query results
@@ -105,7 +105,11 @@ print(f"Successfully updated {file_path} with fixes to prevent None returns.")
 print("\nRunning test to verify fix...\n")
 
 try:
-    from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, GraphRAGQueryOptimizer, GraphRAGQueryStats
+    from ipfs_datasets_py.rag.rag_query_optimizer import (
+        UnifiedGraphRAGQueryOptimizer,
+        GraphRAGQueryOptimizer,
+        GraphRAGQueryStats,
+    )
     from collections import defaultdict
     import numpy as np
 
@@ -117,14 +121,16 @@ try:
 
     class MockMetricsCollector:
         def start_query_tracking(self, *args, **kwargs):
-            return 'test-id-123'
+            return "test-id-123"
 
         def time_phase(self, *args, **kwargs):
             class TimerContext:
                 def __enter__(self):
                     return self
+
                 def __exit__(self, *args):
                     pass
+
             return TimerContext()
 
         def record_additional_metric(self, *args, **kwargs):
@@ -135,7 +141,7 @@ try:
 
     class MockBudgetManager:
         def allocate_budget(self, *args, **kwargs):
-            return {'vector_search_ms': 500, 'graph_traversal_ms': 1000}
+            return {"vector_search_ms": 500, "graph_traversal_ms": 1000}
 
     class MockRewriter:
         def rewrite_query(self, query, *args, **kwargs):
@@ -150,18 +156,18 @@ try:
             self.rewriter = MockRewriter()
             self.query_stats = GraphRAGQueryStats()
             self.base_optimizer = NoneReturningOptimizer()
-            self._specific_optimizers = {'general': NoneReturningOptimizer()}
+            self._specific_optimizers = {"general": NoneReturningOptimizer()}
             self._traversal_stats = {
-                'paths_explored': [],
-                'path_scores': {},
-                'entity_frequency': defaultdict(int),
-                'entity_connectivity': {},
-                'relation_usefulness': defaultdict(float)
+                "paths_explored": [],
+                "path_scores": {},
+                "entity_frequency": defaultdict(int),
+                "entity_connectivity": {},
+                "relation_usefulness": defaultdict(float),
             }
             self.graph_info = {}
 
         def detect_graph_type(self, query):
-            return 'general'
+            return "general"
 
         def _detect_entity_types(self, query_text, predefined_types=None):
             return []
@@ -170,16 +176,16 @@ try:
             return query
 
         def _estimate_query_complexity(self, query):
-            return 'medium'
+            return "medium"
 
     # Create our test instance
     optimizer = TestOptimizer()
 
     # Create a test query
     test_query = {
-        'query_text': 'test query',
-        'query_vector': np.array([0.1, 0.2, 0.3]),
-        'traversal': {'max_depth': 2}
+        "query_text": "test query",
+        "query_vector": np.array([0.1, 0.2, 0.3]),
+        "traversal": {"max_depth": 2},
     }
 
     print("Calling optimize_query with test query...")
@@ -191,7 +197,7 @@ try:
     else:
         print("TEST PASSED: optimize_query returned a valid result")
         print(f"Result type: {type(result)}")
-        if hasattr(result, 'keys'):
+        if hasattr(result, "keys"):
             print(f"Result keys: {sorted(list(result.keys()))}")
         print(f"Is fallback: {result.get('fallback', False)}")
 

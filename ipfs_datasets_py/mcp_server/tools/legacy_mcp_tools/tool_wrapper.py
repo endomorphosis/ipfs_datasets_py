@@ -1,11 +1,10 @@
-
 # DEPRECATED: This legacy module is superseded by
 #   ipfs_datasets_py.mcp_server.tools
 # See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
 import warnings
+
 warnings.warn(
-    "legacy_mcp_tools.tool_wrapper is deprecated. "
-    "Use ipfs_datasets_py.mcp_server.tools instead.",
+    "legacy_mcp_tools.tool_wrapper is deprecated. Use ipfs_datasets_py.mcp_server.tools instead.",
     DeprecationWarning,
     stacklevel=2,
 )
@@ -17,6 +16,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Optional, Union, get_type_hints
 
 from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
+
 
 class FunctionTool(ClaudeMCPTool):
     """
@@ -42,7 +42,15 @@ class FunctionTool(ClaudeMCPTool):
     def _python_type_to_json_type(self, python_type) -> str:
         if python_type == inspect.Parameter.empty:
             return "string"
-        mapping = {str: "string", int: "integer", float: "number", bool: "boolean", list: "array", dict: "object", type(None): "null"}
+        mapping = {
+            str: "string",
+            int: "integer",
+            float: "number",
+            bool: "boolean",
+            list: "array",
+            dict: "object",
+            type(None): "null",
+        }
         if python_type in mapping:
             return mapping[python_type]
         if hasattr(python_type, "__origin__"):
@@ -75,7 +83,10 @@ class FunctionTool(ClaudeMCPTool):
             required = []
             for name, param in sig.parameters.items():
                 ptype = hints.get(name, param.annotation)
-                entry: Dict[str, Any] = {"type": self._python_type_to_json_type(ptype), "description": f"Parameter {name}"}
+                entry: Dict[str, Any] = {
+                    "type": self._python_type_to_json_type(ptype),
+                    "description": f"Parameter {name}",
+                }
                 if param.default is inspect.Parameter.empty:
                     required.append(name)
                 else:
@@ -96,11 +107,13 @@ class FunctionTool(ClaudeMCPTool):
                 result = self.function(**parameters)
             if not isinstance(result, dict):
                 result = {"result": result}
-            result.update({
-                "tool_name": self.name,
-                "executed_at": datetime.now(tz=timezone.utc).isoformat(),
-                "success": result.get("success", True),
-            })
+            result.update(
+                {
+                    "tool_name": self.name,
+                    "executed_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "success": result.get("success", True),
+                }
+            )
             return result
         except Exception as e:
             return {
@@ -109,6 +122,7 @@ class FunctionTool(ClaudeMCPTool):
                 "tool_name": self.name,
                 "executed_at": datetime.now(tz=timezone.utc).isoformat(),
             }
+
 
 def wrap_function_as_tool(*args, **kwargs) -> Union[FunctionTool, Callable]:
     """
@@ -129,7 +143,13 @@ def wrap_function_as_tool(*args, **kwargs) -> Union[FunctionTool, Callable]:
         category: str = args[2] if len(args) > 2 else kwargs.get("category", "general")
         description: Optional[str] = kwargs.get("description")
         tags: Optional[list] = kwargs.get("tags")
-        return FunctionTool(function=function, tool_name=tool_name, category=category, description=description, tags=tags)
+        return FunctionTool(
+            function=function,
+            tool_name=tool_name,
+            category=category,
+            description=description,
+            tags=tags,
+        )
 
     name: Optional[str] = kwargs.get("name") or (args[0] if args else None)
     category: str = kwargs.get("category", "general")

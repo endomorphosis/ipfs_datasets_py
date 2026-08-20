@@ -92,9 +92,7 @@ def _candidate_payload(
         "promotion_allowed": promotion_allowed,
         "promotion_block_reason": "" if promotion_allowed else "quality_gate_fail",
         "quality_gate": "pass" if promotion_allowed else "fail",
-        "recommended_mode": (
-            "promote_deterministic_rules" if promotion_allowed else "canary_only"
-        ),
+        "recommended_mode": ("promote_deterministic_rules" if promotion_allowed else "canary_only"),
         "guidance_attribution": {"basis": "source-free-current-replay"},
         "top_feature_groups": {"logic_view_contract": 4},
         "top_todo_routes": {"repair_deontic_bridge_quality_gate": 4},
@@ -178,12 +176,8 @@ def test_signed_current_revalidation_emits_content_addressed_bounded_update(
     def revalidator(report, context):
         return _receipt_mapping(report, context)
 
-    first = LegalIRGuidanceReplay(
-        policy=policy, revalidator=revalidator
-    ).run(inventory)
-    second = LegalIRGuidanceReplay(
-        policy=policy, revalidator=revalidator
-    ).run(inventory)
+    first = LegalIRGuidanceReplay(policy=policy, revalidator=revalidator).run(inventory)
+    second = LegalIRGuidanceReplay(policy=policy, revalidator=revalidator).run(inventory)
 
     assert first.to_dict() == second.to_dict()
     assert first.audited_report_count == 1
@@ -215,16 +209,12 @@ def test_old_promotion_flag_is_only_candidate_eligibility(tmp_path) -> None:
         calls += 1
         return _receipt_mapping(report, context)
 
-    result = LegalIRGuidanceReplay(
-        policy=policy, revalidator=revalidator
-    ).run(inventory)
+    result = LegalIRGuidanceReplay(policy=policy, revalidator=revalidator).run(inventory)
 
     assert calls == 1  # reconstruction was attempted, but cannot grant trust
     assert result.replay_candidate_count == 1
     assert result.accepted_count == 0
-    assert GuidanceReplayRejection.UNSIGNED.value in (
-        result.outcomes[0].rejection_reasons
-    )
+    assert GuidanceReplayRejection.UNSIGNED.value in (result.outcomes[0].rejection_reasons)
     assert result.feature_updates == ()
 
 
@@ -241,14 +231,11 @@ def test_audits_exact_historical_142_and_replays_only_17(tmp_path) -> None:
             "promotion_allowed": candidate,
             "promotion_block_reason": "" if candidate else "quality_gate_warn",
             "quality_gate": "pass" if candidate else "warn",
-            "recommended_mode": (
-                "promote_deterministic_rules" if candidate else "canary_only"
-            ),
+            "recommended_mode": ("promote_deterministic_rules" if candidate else "canary_only"),
             "top_todo_routes": {"repair_deontic_bridge_quality_gate": index + 1},
         }
         _write_report(
-            tmp_path
-            / f"historical-{index:03d}.compiler-guidance-distillation.json",
+            tmp_path / f"historical-{index:03d}.compiler-guidance-distillation.json",
             payload,
         )
 
@@ -264,8 +251,7 @@ def test_audits_exact_historical_142_and_replays_only_17(tmp_path) -> None:
     assert all(
         GuidanceReplayRejection.UNSIGNED.value in item.rejection_reasons
         and GuidanceReplayRejection.STALE.value in item.rejection_reasons
-        and GuidanceReplayRejection.NONRECONSTRUCTIBLE.value
-        in item.rejection_reasons
+        and GuidanceReplayRejection.NONRECONSTRUCTIBLE.value in item.rejection_reasons
         for item in result.outcomes
     )
     assert "top_todo_routes" not in serialized
@@ -298,9 +284,7 @@ def test_every_source_field_is_reported_by_path_but_never_copied(tmp_path) -> No
     result = LegalIRGuidanceReplay(policy=policy).run(inventory)
     serialized = json.dumps(result.to_dict(), sort_keys=True)
 
-    assert GuidanceReplayRejection.SOURCE_BEARING.value in (
-        result.outcomes[0].rejection_reasons
-    )
+    assert GuidanceReplayRejection.SOURCE_BEARING.value in (result.outcomes[0].rejection_reasons)
     paths = result.audits[0].source_bearing_field_paths
     assert "$.prompt" in paths
     assert "$.decoded_text" in paths
@@ -322,9 +306,7 @@ def test_stale_contradictory_and_lineage_mismatched_report_collects_all_reasons(
         lineage_id="other-lineage",
         promotion_block_reason="should-not-be-set",
         guidance_attribution={
-            "todo_routes": {
-                "repair_deontic": {"quality_gate": "fail", "count": 3}
-            }
+            "todo_routes": {"repair_deontic": {"quality_gate": "fail", "count": 3}}
         },
     )
     payload["signature"] = sign_guidance_replay_payload(
@@ -395,9 +377,7 @@ def test_current_gate_failures_never_emit_update(tmp_path, overrides, expected) 
     def revalidator(report, context):
         return _receipt_mapping(report, context, **overrides)
 
-    result = LegalIRGuidanceReplay(
-        policy=policy, revalidator=revalidator
-    ).run(inventory)
+    result = LegalIRGuidanceReplay(policy=policy, revalidator=revalidator).run(inventory)
 
     assert expected.value in result.outcomes[0].rejection_reasons
     assert result.outcomes[0].accepted is False
@@ -412,13 +392,9 @@ def test_tampered_receipt_signature_fails_closed(tmp_path) -> None:
         receipt["compiler_valid"] = False  # mutate after signing
         return receipt
 
-    result = LegalIRGuidanceReplay(
-        policy=policy, revalidator=revalidator
-    ).run(inventory)
+    result = LegalIRGuidanceReplay(policy=policy, revalidator=revalidator).run(inventory)
 
-    assert GuidanceReplayRejection.RECEIPT_UNSIGNED.value in (
-        result.outcomes[0].rejection_reasons
-    )
+    assert GuidanceReplayRejection.RECEIPT_UNSIGNED.value in (result.outcomes[0].rejection_reasons)
     assert result.accepted_count == 0
 
 
@@ -447,9 +423,7 @@ def test_inventory_count_mismatch_blocks_otherwise_valid_candidate(tmp_path) -> 
     def revalidator(report, context):
         return _receipt_mapping(report, context)
 
-    result = LegalIRGuidanceReplay(
-        policy=policy, revalidator=revalidator
-    ).run(inventory)
+    result = LegalIRGuidanceReplay(policy=policy, revalidator=revalidator).run(inventory)
 
     assert len(result.inventory_errors) == 2
     assert GuidanceReplayRejection.INVENTORY_MISMATCH.value in (
@@ -470,9 +444,7 @@ def test_non_candidate_is_audited_but_never_sent_to_revalidator(tmp_path) -> Non
         calls += 1
         raise AssertionError("non-candidate must not be replayed")
 
-    result = LegalIRGuidanceReplay(
-        policy=policy, revalidator=revalidator
-    ).run([tmp_path])
+    result = LegalIRGuidanceReplay(policy=policy, revalidator=revalidator).run([tmp_path])
 
     assert calls == 0
     assert result.audited_report_count == 1
@@ -509,22 +481,14 @@ def test_receipt_requires_current_schema_even_when_other_gates_pass(tmp_path) ->
             schema_version="legacy-revalidation-schema",
         )
 
-    result = LegalIRGuidanceReplay(
-        policy=policy, revalidator=revalidator
-    ).run(inventory)
+    result = LegalIRGuidanceReplay(policy=policy, revalidator=revalidator).run(inventory)
 
-    assert LEGAL_IR_GUIDANCE_REVALIDATION_SCHEMA_VERSION != (
-        "legacy-revalidation-schema"
-    )
-    assert GuidanceReplayRejection.SCHEMA_MISMATCH.value in (
-        result.outcomes[0].rejection_reasons
-    )
+    assert LEGAL_IR_GUIDANCE_REVALIDATION_SCHEMA_VERSION != ("legacy-revalidation-schema")
+    assert GuidanceReplayRejection.SCHEMA_MISMATCH.value in (result.outcomes[0].rejection_reasons)
     assert result.accepted_count == 0
 
 
-def test_cli_consumes_signed_current_receipt_and_writes_safe_report(
-    tmp_path, capsys
-) -> None:
+def test_cli_consumes_signed_current_receipt_and_writes_safe_report(tmp_path, capsys) -> None:
     policy = _policy(expected_report_count=None, expected_candidate_count=None)
     report_path = tmp_path / "cli.compiler-guidance-distillation.json"
     _write_report(report_path, _candidate_payload(policy))

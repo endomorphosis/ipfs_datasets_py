@@ -110,9 +110,7 @@ def _require_immutable_commit_sha(commit_sha: str) -> str:
     if raw.startswith("commit:"):
         return raw
     if not _COMMIT_SHA_RE.fullmatch(candidate):
-        raise AbbyVoiceReleaseLoaderError(
-            f"revision must be an immutable commit SHA, got {raw!r}"
-        )
+        raise AbbyVoiceReleaseLoaderError(f"revision must be an immutable commit SHA, got {raw!r}")
     return candidate.lower()
 
 
@@ -233,9 +231,7 @@ class AbbyVoiceReleaseLoader:
         )
         unknown = [name for name in configs if name not in FIVE_FLAT_ABBY_CONFIGS]
         if unknown:
-            raise AbbyVoiceReleaseLoaderError(
-                f"unknown release configs requested: {unknown}"
-            )
+            raise AbbyVoiceReleaseLoaderError(f"unknown release configs requested: {unknown}")
         self.selected_configs = configs
         self.require_full_validation = bool(require_full_validation)
         self.streaming_loader_factory = streaming_loader_factory
@@ -285,16 +281,12 @@ class AbbyVoiceReleaseLoader:
             try:
                 validation_receipt = validate_abby_voice_hf_release(root)
             except AbbyVoiceHFReleaseError as exc:
-                raise AbbyVoiceReleaseLoaderError(
-                    f"release validation failed: {exc}"
-                ) from exc
+                raise AbbyVoiceReleaseLoaderError(f"release validation failed: {exc}") from exc
         else:
             validation_receipt = {"valid": False, "skipped": True}
 
         selected_paths: list[str] = []
-        config_rows: dict[str, list[dict[str, Any]]] = {
-            name: [] for name in self.selected_configs
-        }
+        config_rows: dict[str, list[dict[str, Any]]] = {name: [] for name in self.selected_configs}
         for descriptor in descriptors:
             if not descriptor.relative_path.endswith(".parquet"):
                 continue
@@ -412,8 +404,7 @@ class AbbyVoiceReleaseLoader:
             from datasets import load_dataset
         except ImportError as exc:  # pragma: no cover
             raise ImportError(
-                "revision-pinned Hub streaming requires the optional "
-                "'datasets' package"
+                "revision-pinned Hub streaming requires the optional 'datasets' package"
             ) from exc
 
         try:
@@ -462,15 +453,12 @@ class AbbyVoiceReleaseLoader:
             raise AbbyVoiceReleaseLoaderError("release_manifest must be a mapping")
         if release_manifest.get("schema_version") != ABBY_VOICE_HF_RELEASE_SCHEMA:
             raise AbbyVoiceReleaseLoaderError(
-                f"unsupported release schema_version "
-                f"{release_manifest.get('schema_version')!r}"
+                f"unsupported release schema_version {release_manifest.get('schema_version')!r}"
             )
 
         raw_descriptors = release_manifest.get("descriptors") or ()
         descriptors: list[FileDescriptor] = []
-        if isinstance(raw_descriptors, Sequence) and not isinstance(
-            raw_descriptors, (str, bytes)
-        ):
+        if isinstance(raw_descriptors, Sequence) and not isinstance(raw_descriptors, (str, bytes)):
             for item in raw_descriptors:
                 if isinstance(item, Mapping):
                     descriptors.append(FileDescriptor.from_dict(item))
@@ -485,9 +473,7 @@ class AbbyVoiceReleaseLoader:
         responses = _parse_rows(response_rows, schema_version=ABBY_VOICE_RESPONSE_V2)
         templates = _parse_rows(template_rows, schema_version=ABBY_VOICE_TEMPLATE_V2)
         audio = _parse_rows(audio_rows, schema_version=ABBY_VOICE_AUDIO_V2)
-        provenance = _parse_rows(
-            provenance_rows, schema_version=ABBY_VOICE_PROVENANCE_V2
-        )
+        provenance = _parse_rows(provenance_rows, schema_version=ABBY_VOICE_PROVENANCE_V2)
 
         return AbbyVoiceReleaseLoadResult(
             release_id=str(release_manifest.get("release_id") or ""),
@@ -495,9 +481,7 @@ class AbbyVoiceReleaseLoader:
             release_cid=str(release_manifest.get("release_cid") or ""),
             graph_cid=graphrag_index.graph_cid,
             index_cid=graphrag_index.index_cid,
-            dataset_repo_id=str(
-                dataset_repo_id or release_manifest.get("dataset_repo_id") or ""
-            ),
+            dataset_repo_id=str(dataset_repo_id or release_manifest.get("dataset_repo_id") or ""),
             local_root=str(local_root or ""),
             graphrag_index=graphrag_index,
             responses=responses,  # type: ignore[arg-type]
@@ -529,9 +513,7 @@ def load_abby_voice_release(
 ) -> AbbyVoiceReleaseLoadResult:
     """Module-level convenience wrapper around :class:`AbbyVoiceReleaseLoader`."""
 
-    return AbbyVoiceReleaseLoader(**kwargs).load_local(
-        release_dir, commit_sha=commit_sha
-    )
+    return AbbyVoiceReleaseLoader(**kwargs).load_local(release_dir, commit_sha=commit_sha)
 
 
 __all__ = [

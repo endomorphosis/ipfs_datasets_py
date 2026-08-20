@@ -34,7 +34,7 @@ class TestLogicVerifierIntegration:
         THEN: Should initialize with basic axioms
         """
         verifier = LogicVerifier()
-        
+
         assert verifier is not None
         assert len(verifier.known_axioms) > 0  # Should have basic axioms
 
@@ -45,7 +45,7 @@ class TestLogicVerifierIntegration:
         THEN: Should use fallback methods
         """
         verifier = LogicVerifier(use_symbolic_ai=False)
-        
+
         assert verifier is not None
         assert not verifier.use_symbolic_ai
 
@@ -57,13 +57,11 @@ class TestLogicVerifierIntegration:
         """
         verifier = LogicVerifier()
         axiom = LogicAxiom(
-            name="custom_rule",
-            formula="P → Q",
-            description="Custom implication rule"
+            name="custom_rule", formula="P → Q", description="Custom implication rule"
         )
-        
+
         result = verifier.add_axiom(axiom)
-        
+
         assert isinstance(result, bool)
 
     def test_consistency_check_simple(self):
@@ -74,9 +72,9 @@ class TestLogicVerifierIntegration:
         """
         verifier = LogicVerifier()
         formulas = ["P", "Q"]
-        
+
         result = verifier.check_consistency(formulas)
-        
+
         assert isinstance(result, ConsistencyCheck)
         assert isinstance(result.is_consistent, bool)
 
@@ -88,9 +86,9 @@ class TestLogicVerifierIntegration:
         """
         verifier = LogicVerifier()
         formulas = ["P", "¬P"]
-        
+
         result = verifier.check_consistency(formulas)
-        
+
         assert isinstance(result, ConsistencyCheck)
         # May detect contradiction
         if not result.is_consistent:
@@ -105,9 +103,9 @@ class TestLogicVerifierIntegration:
         verifier = LogicVerifier()
         premises = ["P → Q", "P"]
         conclusion = "Q"
-        
+
         result = verifier.check_entailment(premises, conclusion)
-        
+
         assert isinstance(result, EntailmentResult)
         assert result.premises == premises
         assert result.conclusion == conclusion
@@ -121,9 +119,9 @@ class TestLogicVerifierIntegration:
         verifier = LogicVerifier()
         premises = ["P → Q", "P"]
         conclusion = "Q"
-        
+
         result = verifier.generate_proof(premises, conclusion)
-        
+
         assert isinstance(result, ProofResult)
         assert result.conclusion == conclusion
 
@@ -135,9 +133,9 @@ class TestLogicVerifierIntegration:
         """
         verifier = LogicVerifier()
         formula = "∀x(P(x) → Q(x))"
-        
+
         result = verifier.verify_formula_syntax(formula)
-        
+
         assert isinstance(result, dict)
         assert "status" in result
 
@@ -149,9 +147,9 @@ class TestLogicVerifierIntegration:
         """
         verifier = LogicVerifier()
         formula = "P ∨ Q"
-        
+
         result = verifier.check_satisfiability(formula)
-        
+
         assert isinstance(result, dict)
         assert "satisfiable" in result
 
@@ -163,9 +161,9 @@ class TestLogicVerifierIntegration:
         """
         verifier = LogicVerifier()
         formula = "P ∨ ¬P"  # Law of excluded middle
-        
+
         result = verifier.check_validity(formula)
-        
+
         assert isinstance(result, dict)
         assert "valid" in result
 
@@ -176,9 +174,9 @@ class TestLogicVerifierIntegration:
         THEN: Should filter correctly
         """
         verifier = LogicVerifier()
-        
+
         built_in_axioms = verifier.get_axioms(axiom_type="built_in")
-        
+
         assert isinstance(built_in_axioms, list)
         assert all(isinstance(a, LogicAxiom) for a in built_in_axioms)
 
@@ -189,18 +187,14 @@ class TestLogicVerifierIntegration:
         THEN: Should clear without error
         """
         verifier = LogicVerifier()
-        
+
         # Add some cached data
         verifier.proof_cache["test"] = ProofResult(
-            is_valid=True,
-            conclusion="Q",
-            steps=[],
-            confidence=1.0,
-            method_used="test"
+            is_valid=True, conclusion="Q", steps=[], confidence=1.0, method_used="test"
         )
-        
+
         verifier.clear_cache()
-        
+
         assert len(verifier.proof_cache) == 0
 
     def test_get_statistics(self):
@@ -210,9 +204,9 @@ class TestLogicVerifierIntegration:
         THEN: Should return stats dictionary
         """
         verifier = LogicVerifier()
-        
+
         stats = verifier.get_statistics()
-        
+
         assert isinstance(stats, dict)
         assert "axiom_count" in stats
         assert "symbolic_ai_available" in stats
@@ -228,9 +222,9 @@ class TestConvenienceFunctions:
         THEN: Should check consistency
         """
         formulas = ["P", "Q", "R"]
-        
+
         result = verify_consistency(formulas)
-        
+
         assert isinstance(result, ConsistencyCheck)
 
     def test_verify_entailment_wrapper(self):
@@ -241,9 +235,9 @@ class TestConvenienceFunctions:
         """
         premises = ["P → Q", "P"]
         conclusion = "Q"
-        
+
         result = verify_entailment(premises, conclusion)
-        
+
         assert isinstance(result, EntailmentResult)
 
     def test_generate_proof_wrapper(self):
@@ -254,9 +248,9 @@ class TestConvenienceFunctions:
         """
         premises = ["P", "P → Q"]
         conclusion = "Q"
-        
+
         result = generate_proof(premises, conclusion)
-        
+
         assert isinstance(result, ProofResult)
 
 
@@ -274,9 +268,9 @@ class TestTypeSystemIntegration:
             formula="∀x P(x)",
             description="Test axiom",
             axiom_type="user_defined",
-            confidence=0.95
+            confidence=0.95,
         )
-        
+
         assert axiom.name == "test_axiom"
         assert axiom.confidence == 0.95
 
@@ -286,13 +280,8 @@ class TestTypeSystemIntegration:
         WHEN: Creating proof step
         THEN: Should create valid step object
         """
-        step = ProofStep(
-            step_number=1,
-            formula="P",
-            justification="Given",
-            rule_applied="premise"
-        )
-        
+        step = ProofStep(step_number=1, formula="P", justification="Given", rule_applied="premise")
+
         assert step.step_number == 1
         assert step.formula == "P"
 
@@ -303,13 +292,9 @@ class TestTypeSystemIntegration:
         THEN: Should create valid result object
         """
         result = ProofResult(
-            is_valid=True,
-            conclusion="Q",
-            steps=[],
-            confidence=0.9,
-            method_used="symbolic"
+            is_valid=True, conclusion="Q", steps=[], confidence=0.9, method_used="symbolic"
         )
-        
+
         assert result.is_valid
         assert result.confidence == 0.9
 
@@ -320,11 +305,9 @@ class TestTypeSystemIntegration:
         THEN: Should create valid check object
         """
         check = ConsistencyCheck(
-            is_consistent=True,
-            confidence=0.95,
-            explanation="No conflicts found"
+            is_consistent=True, confidence=0.95, explanation="No conflicts found"
         )
-        
+
         assert check.is_consistent
         assert check.confidence == 0.95
 
@@ -335,12 +318,9 @@ class TestTypeSystemIntegration:
         THEN: Should create valid result object
         """
         result = EntailmentResult(
-            entails=True,
-            premises=["P", "P → Q"],
-            conclusion="Q",
-            confidence=1.0
+            entails=True, premises=["P", "P → Q"], conclusion="Q", confidence=1.0
         )
-        
+
         assert result.entails
         assert len(result.premises) == 2
 
@@ -359,7 +339,7 @@ class TestBackwardCompatibility:
             LogicAxiom,
             ProofResult,
         )
-        
+
         assert LogicVerifier is not None
         assert LogicAxiom is not None
         assert ProofResult is not None
@@ -375,7 +355,7 @@ class TestBackwardCompatibility:
             LogicAxiom,
             ProofStep,
         )
-        
+
         assert VerificationResult is not None
         assert LogicAxiom is not None
         assert ProofStep is not None
@@ -391,7 +371,7 @@ class TestBackwardCompatibility:
             verify_entailment,
             create_logic_verifier,
         )
-        
+
         assert verify_consistency is not None
         assert verify_entailment is not None
         assert create_logic_verifier is not None

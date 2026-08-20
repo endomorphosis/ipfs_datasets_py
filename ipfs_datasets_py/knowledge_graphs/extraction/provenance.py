@@ -45,8 +45,10 @@ from typing import Any, Dict, List, Optional, Tuple
 # Event type enum
 # ---------------------------------------------------------------------------
 
+
 class ProvenanceEventType(str, Enum):
     """Types of provenance events recorded in the chain."""
+
     ENTITY_CREATED = "entity_created"
     ENTITY_MODIFIED = "entity_modified"
     ENTITY_REMOVED = "entity_removed"
@@ -59,6 +61,7 @@ class ProvenanceEventType(str, Enum):
 # ---------------------------------------------------------------------------
 # ProvenanceEvent dataclass
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ProvenanceEvent:
@@ -166,6 +169,7 @@ class ProvenanceEvent:
 # ---------------------------------------------------------------------------
 # ProvenanceChain
 # ---------------------------------------------------------------------------
+
 
 class ProvenanceChain:
     """Append-only, content-addressed provenance chain for a knowledge graph.
@@ -477,8 +481,7 @@ class ProvenanceChain:
             expected_cid = evt._compute_cid()
             if evt.cid != expected_cid:
                 errors.append(
-                    f"Event {idx}: CID tampered — "
-                    f"expected {expected_cid!r}, got {evt.cid!r}"
+                    f"Event {idx}: CID tampered — expected {expected_cid!r}, got {evt.cid!r}"
                 )
             prev_cid = evt.cid
         return (len(errors) == 0), errors

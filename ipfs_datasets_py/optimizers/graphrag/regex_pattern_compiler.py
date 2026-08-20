@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PrecompiledPattern:
     """Container for pre-compiled regex patterns."""
+
     compiled_pattern: re.Pattern[str]
     entity_type: str
     original_pattern: str
@@ -36,9 +37,9 @@ class RegexPatternCompiler:
     def _compile_base_patterns(cls) -> List[PrecompiledPattern]:
         """
         Compile base patterns once at class level.
-        
+
         These domain-agnostic patterns are used across all extractions.
-        
+
         Returns:
             List of pre-compiled patterns
         """
@@ -47,14 +48,23 @@ class RegexPatternCompiler:
 
         # Base patterns (domain-agnostic)
         base_pattern_strings = [
-            (r'\b(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*', 'Person'),
-            (r'\b[A-Z][A-Za-z&\s]*(?:LLC|Ltd|Inc|Corp|GmbH|PLC|Co\.)\b', 'Organization'),
-            (r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', 'Date'),
-            (r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b', 'Date'),
-            (r'\b(?:USD|EUR|GBP)\s*[\d,]+(?:\.\d{2})?\b', 'MonetaryAmount'),
-            (r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Street|Avenue|Road|City|County|State|Country|Region|District)\b', 'Location'),
-            (r'\b(?:the\s+)?(?:obligation|duty|right|liability|breach|claim|penalty)\s+(?:of\s+)?[A-Z][a-z]+\b', 'Obligation'),
-            (r'\b[A-Z][A-Za-z]{3,}\b', 'Concept'),
+            (r"\b(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*", "Person"),
+            (r"\b[A-Z][A-Za-z&\s]*(?:LLC|Ltd|Inc|Corp|GmbH|PLC|Co\.)\b", "Organization"),
+            (r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b", "Date"),
+            (
+                r"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b",
+                "Date",
+            ),
+            (r"\b(?:USD|EUR|GBP)\s*[\d,]+(?:\.\d{2})?\b", "MonetaryAmount"),
+            (
+                r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Street|Avenue|Road|City|County|State|Country|Region|District)\b",
+                "Location",
+            ),
+            (
+                r"\b(?:the\s+)?(?:obligation|duty|right|liability|breach|claim|penalty)\s+(?:of\s+)?[A-Z][a-z]+\b",
+                "Obligation",
+            ),
+            (r"\b[A-Z][A-Za-z]{3,}\b", "Concept"),
         ]
 
         # Compile and cache
@@ -74,7 +84,7 @@ class RegexPatternCompiler:
     def _compile_domain_patterns(cls) -> dict[str, List[PrecompiledPattern]]:
         """
         Compile domain-specific patterns once at class level.
-        
+
         Returns:
             Dict mapping domain name to list of pre-compiled patterns
         """
@@ -82,25 +92,37 @@ class RegexPatternCompiler:
             return cls._domain_patterns_compiled
 
         domain_pattern_strings = {
-            'legal': [
-                (r'\b(?:plaintiff|defendant|claimant|respondent|petitioner)\b', 'LegalParty'),
-                (r'\b(?:Article|Section|Clause|Schedule|Appendix)\s+\d+[\w.]*', 'LegalReference'),
-                (r'\b(?:indemnif(?:y|ication)|warranty|waiver|covenant|arbitration)\b', 'LegalConcept'),
+            "legal": [
+                (r"\b(?:plaintiff|defendant|claimant|respondent|petitioner)\b", "LegalParty"),
+                (r"\b(?:Article|Section|Clause|Schedule|Appendix)\s+\d+[\w.]*", "LegalReference"),
+                (
+                    r"\b(?:indemnif(?:y|ication)|warranty|waiver|covenant|arbitration)\b",
+                    "LegalConcept",
+                ),
             ],
-            'medical': [
-                (r'\b(?:diagnosis|prognosis|symptom|syndrome|disorder|disease|condition)\b', 'MedicalConcept'),
-                (r'\b\d+\s*(?:mg|mcg|ml|IU|units?)\b', 'Dosage'),
-                (r'\b(?:patient|physician|surgeon|nurse|therapist|specialist)\b', 'MedicalRole'),
+            "medical": [
+                (
+                    r"\b(?:diagnosis|prognosis|symptom|syndrome|disorder|disease|condition)\b",
+                    "MedicalConcept",
+                ),
+                (r"\b\d+\s*(?:mg|mcg|ml|IU|units?)\b", "Dosage"),
+                (r"\b(?:patient|physician|surgeon|nurse|therapist|specialist)\b", "MedicalRole"),
             ],
-            'technical': [
-                (r'\b(?:API|REST|HTTP|JSON|XML|SQL|NoSQL|GraphQL)\b', 'Protocol'),
-                (r'\b(?:microservice|endpoint|middleware|container|pipeline|daemon)\b', 'TechnicalComponent'),
-                (r'\bv?\d+\.\d+(?:\.\d+)*(?:-\w+)?\b', 'Version'),
+            "technical": [
+                (r"\b(?:API|REST|HTTP|JSON|XML|SQL|NoSQL|GraphQL)\b", "Protocol"),
+                (
+                    r"\b(?:microservice|endpoint|middleware|container|pipeline|daemon)\b",
+                    "TechnicalComponent",
+                ),
+                (r"\bv?\d+\.\d+(?:\.\d+)*(?:-\w+)?\b", "Version"),
             ],
-            'financial': [
-                (r'\b(?:asset|liability|equity|debit|credit|balance|principal|interest)\b', 'FinancialConcept'),
-                (r'\b\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*(?:USD|EUR|GBP|JPY)?\b', 'MonetaryValue'),
-                (r'\b(?:IBAN|SWIFT|BIC|routing\s+number)\b', 'BankIdentifier'),
+            "financial": [
+                (
+                    r"\b(?:asset|liability|equity|debit|credit|balance|principal|interest)\b",
+                    "FinancialConcept",
+                ),
+                (r"\b\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*(?:USD|EUR|GBP|JPY)?\b", "MonetaryValue"),
+                (r"\b(?:IBAN|SWIFT|BIC|routing\s+number)\b", "BankIdentifier"),
             ],
         }
 
@@ -116,7 +138,9 @@ class RegexPatternCompiler:
                 for pat_str, ent_type in patterns_list
             ]
 
-        logger.debug(f"Compiled domain-specific patterns for {len(cls._domain_patterns_compiled)} domains")
+        logger.debug(
+            f"Compiled domain-specific patterns for {len(cls._domain_patterns_compiled)} domains"
+        )
         return cls._domain_patterns_compiled
 
     @classmethod
@@ -127,14 +151,14 @@ class RegexPatternCompiler:
     ) -> List[PrecompiledPattern]:
         """
         Build final list of pre-compiled patterns for extraction.
-        
+
         Combines base patterns + domain patterns + custom rules, all pre-compiled.
         This avoids re-compiling patterns on each extraction call.
-        
+
         Args:
             domain: Domain name (legal, medical, technical, financial, or general)
             custom_rules: Optional custom rules as list of (pattern_str, entity_type) tuples
-            
+
         Returns:
             List of PrecompiledPattern objects ready for use
         """
@@ -179,11 +203,11 @@ class RegexPatternCompiler:
     ) -> List[dict[str, Any]]:
         """
         Extract entities using pre-compiled patterns.
-        
+
         Uses pre-compiled regex patterns to avoid repeated compilation.
         Includes Priority 2 optimization: pre-compute lowercase stopwords to avoid
         repeated .lower() calls per match.
-        
+
         Args:
             text: Text to extract from
             precompiled_patterns: List of PrecompiledPattern objects
@@ -191,7 +215,7 @@ class RegexPatternCompiler:
             min_len: Minimum entity text length
             stopwords: Set of stopwords to filter
             max_confidence: Maximum confidence score
-            
+
         Returns:
             List of entity dicts with id, type, text, confidence, span
         """
@@ -200,7 +224,7 @@ class RegexPatternCompiler:
 
         entities = []
         seen_texts: Set[str] = set()
-        
+
         # OPTIMIZATION (Priority 2): Pre-compute lowercase stopwords once
         # Avoid repeated .lower() calls for each stopword check
         lowercase_stopwords: Set[str] = {sw.lower() for sw in stopwords} if stopwords else set()
@@ -215,7 +239,7 @@ class RegexPatternCompiler:
             entity_type = precomp.entity_type
 
             # Set confidence based on entity type
-            confidence = 0.5 if entity_type == 'Concept' else 0.75
+            confidence = 0.5 if entity_type == "Concept" else 0.75
             confidence = min(confidence, max_confidence)
 
             # Search using pre-compiled pattern
@@ -229,14 +253,16 @@ class RegexPatternCompiler:
                     continue
 
                 seen_texts.add(key)
-                entities.append({
-                    'id': f"e_{uuid.uuid4().hex[:8]}",
-                    'type': entity_type,
-                    'text': raw,
-                    'confidence': confidence,
-                    'span': (match.start(), match.end()),
-                    'timestamp': time.time(),
-                })
+                entities.append(
+                    {
+                        "id": f"e_{uuid.uuid4().hex[:8]}",
+                        "type": entity_type,
+                        "text": raw,
+                        "confidence": confidence,
+                        "span": (match.start(), match.end()),
+                        "timestamp": time.time(),
+                    }
+                )
 
         return entities
 

@@ -16,7 +16,9 @@ multi-backend vector stores (FAISS, Qdrant, Elasticsearch). Engine logic in
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.vector_store_tools import (
-    create_vector_index, upsert_vectors, search_vectors
+    create_vector_index,
+    upsert_vectors,
+    search_vectors,
 )
 
 # Create an index
@@ -24,7 +26,7 @@ index = await create_vector_index(
     name="legal_embeddings",
     dimensions=384,
     metric="cosine",
-    backend="faiss"            # "faiss" | "qdrant" | "elasticsearch"
+    backend="faiss",  # "faiss" | "qdrant" | "elasticsearch"
 )
 
 # Upsert vectors
@@ -33,7 +35,7 @@ await upsert_vectors(
     vectors=[
         {"id": "doc_1", "vector": [0.1, 0.2, ...], "metadata": {"title": "Contract v1"}},
         {"id": "doc_2", "vector": [0.3, 0.1, ...], "metadata": {"title": "Privacy Policy"}},
-    ]
+    ],
 )
 
 # Search
@@ -41,7 +43,7 @@ results = await search_vectors(
     index_name="legal_embeddings",
     query_vector=[0.15, 0.25, ...],
     top_k=10,
-    filter={"category": "contract"}   # Optional metadata filter
+    filter={"category": "contract"},  # Optional metadata filter
 )
 ```
 
@@ -49,14 +51,14 @@ results = await search_vectors(
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.vector_store_tools import (
-    bulk_upsert, filtered_search, get_collection_stats
+    bulk_upsert,
+    filtered_search,
+    get_collection_stats,
 )
 
 # Bulk upsert from embeddings file
 await bulk_upsert(
-    index_name="legal_embeddings",
-    source_file="/data/embeddings.parquet",
-    batch_size=1000
+    index_name="legal_embeddings", source_file="/data/embeddings.parquet", batch_size=1000
 )
 
 # Filtered search with metadata conditions
@@ -64,7 +66,7 @@ results = await filtered_search(
     index_name="legal_embeddings",
     query="employment contract obligations",
     filters={"year": {"gte": 2020}, "jurisdiction": "US-CA"},
-    top_k=20
+    top_k=20,
 )
 
 # Collection statistics

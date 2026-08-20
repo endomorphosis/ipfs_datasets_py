@@ -125,6 +125,7 @@ https://github.com/endomorphosis/ipfs_datasets_py/actions
 import pytest
 import torch
 
+
 @pytest.mark.gpu
 def test_model_training():
     """This runs on your GPU runner"""
@@ -132,11 +133,13 @@ def test_model_training():
     model = MyModel().cuda()
     # ... train on GPU
 
+
 @pytest.mark.multi_gpu
 def test_distributed():
     """This uses both RTX 3090s"""
     assert torch.cuda.device_count() >= 2
     # ... distributed training
+
 
 def test_data_processing():
     """This runs on GitHub's free runner"""

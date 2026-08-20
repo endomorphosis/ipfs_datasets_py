@@ -22,13 +22,9 @@ def test_state_compaction_accepts_per_group_policy_without_changing_old_api() ->
             "frame": 2.0,
         },
     )
-    policy = FeatureCapacityPolicy.evidence_aware(
-        group_budgets={"feature": 1, "legal_ir_view": 2}
-    )
+    policy = FeatureCapacityPolicy.evidence_aware(group_budgets={"feature": 1, "legal_ir_view": 2})
 
-    assert state.generalizable_capacity_exceeded(
-        capacity_policy=policy
-    ) is True
+    assert state.generalizable_capacity_exceeded(capacity_policy=policy) is True
     report = state.compact_generalizable_capacity(
         capacity_policy=policy,
         capacity_evidence={
@@ -47,9 +43,7 @@ def test_state_compaction_accepts_per_group_policy_without_changing_old_api() ->
     assert set(state.legal_ir_view_logits) == {"deontic", "frame"}
     assert report["groups"]["feature"]["budget"] == 1
     assert report["groups"]["legal_ir_view"]["budget"] == 2
-    assert state.generalizable_capacity_exceeded(
-        capacity_policy=policy
-    ) is False
+    assert state.generalizable_capacity_exceeded(capacity_policy=policy) is False
 
 
 def test_zero_risk_sparse_state_policy_is_non_mutating() -> None:
@@ -65,13 +59,9 @@ def test_zero_risk_sparse_state_policy_is_non_mutating() -> None:
         group_budgets={"semantic_slot": 0},
     )
 
-    report = state.compact_generalizable_capacity(
-        capacity_policy=baseline_policy
-    )
+    report = state.compact_generalizable_capacity(capacity_policy=baseline_policy)
 
     assert state.to_dict() == before
-    assert state.generalizable_capacity_exceeded(
-        capacity_policy=baseline_policy
-    ) is False
+    assert state.generalizable_capacity_exceeded(capacity_policy=baseline_policy) is False
     assert report["compacted"] is False
     assert report["policy"]["mode"] == "accepted_state_v2"

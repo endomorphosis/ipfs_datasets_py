@@ -6,17 +6,20 @@ Methods under test:
   - OntologyOptimizer.score_streak(direction)
   - OntologyOptimizer.recent_best_score(n)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -54,6 +57,7 @@ def ontology_builder(ontology_dict_factory):
 # ---------------------------------------------------------------------------
 # LogicValidator.max_in_degree
 # ---------------------------------------------------------------------------
+
 
 class TestMaxInDegree:
     def test_empty_entities_returns_none(self):
@@ -96,6 +100,7 @@ class TestMaxInDegree:
 # LogicValidator.max_out_degree
 # ---------------------------------------------------------------------------
 
+
 class TestMaxOutDegree:
     def test_empty_entities_returns_none(self):
         v = _make_validator()
@@ -136,6 +141,7 @@ class TestMaxOutDegree:
 # OntologyOptimizer.score_streak
 # ---------------------------------------------------------------------------
 
+
 class TestScoreStreak:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -168,6 +174,7 @@ class TestScoreStreak:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.recent_best_score
 # ---------------------------------------------------------------------------
+
 
 class TestRecentBestScore:
     def test_empty_returns_zero(self):

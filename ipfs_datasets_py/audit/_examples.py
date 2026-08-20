@@ -11,18 +11,25 @@ import logging
 from datetime import datetime, timedelta
 
 from ipfs_datasets_py.audit.audit_logger import (
-    AuditLogger, AuditEvent, AuditLevel, AuditCategory, AuditHandler
+    AuditLogger,
+    AuditEvent,
+    AuditLevel,
+    AuditCategory,
+    AuditHandler,
 )
 from ipfs_datasets_py.audit.handlers import (
-    FileAuditHandler, JSONAuditHandler, SyslogAuditHandler,
-    ElasticsearchAuditHandler, AlertingAuditHandler
+    FileAuditHandler,
+    JSONAuditHandler,
+    SyslogAuditHandler,
+    ElasticsearchAuditHandler,
+    AlertingAuditHandler,
 )
 from ipfs_datasets_py.audit.compliance import (
-    ComplianceReport, ComplianceStandard, GDPRComplianceReporter
+    ComplianceReport,
+    ComplianceStandard,
+    GDPRComplianceReporter,
 )
-from ipfs_datasets_py.audit.intrusion import (
-    IntrusionDetection, SecurityAlert, SecurityAlertManager
-)
+from ipfs_datasets_py.audit.intrusion import IntrusionDetection, SecurityAlert, SecurityAlertManager
 
 
 def setup_basic_audit_logging():
@@ -43,7 +50,7 @@ def setup_basic_audit_logging():
         file_path="logs/audit.log",
         min_level=AuditLevel.INFO,
         rotate_size_mb=10,
-        rotate_count=5
+        rotate_count=5,
     )
     audit_logger.add_handler(file_handler)
 
@@ -54,7 +61,7 @@ def setup_basic_audit_logging():
         min_level=AuditLevel.INFO,
         pretty=False,
         rotate_size_mb=10,
-        rotate_count=5
+        rotate_count=5,
     )
     audit_logger.add_handler(json_handler)
 
@@ -68,10 +75,7 @@ def setup_compliance_monitoring():
 
     # Create a file handler for storing compliance-relevant events
     compliance_handler = JSONAuditHandler(
-        name="compliance",
-        file_path="logs/compliance.json",
-        min_level=AuditLevel.INFO,
-        pretty=False
+        name="compliance", file_path="logs/compliance.json", min_level=AuditLevel.INFO, pretty=False
     )
 
     # Add the handler to the audit logger
@@ -125,14 +129,15 @@ def demonstrate_audit_logging():
     print("Logging example audit events...")
 
     # Authentication events
-    audit_logger.auth("login", status="success",
-                   details={"method": "password", "mfa_used": True})
+    audit_logger.auth("login", status="success", details={"method": "password", "mfa_used": True})
 
     # Data access events
-    audit_logger.data_access("read",
-                          resource_id="dataset123",
-                          resource_type="dataset",
-                          details={"rows_accessed": 1000, "query": "SELECT * FROM table"})
+    audit_logger.data_access(
+        "read",
+        resource_id="dataset123",
+        resource_type="dataset",
+        details={"rows_accessed": 1000, "query": "SELECT * FROM table"},
+    )
 
     # Configuration change
     audit_logger.log(
@@ -143,20 +148,22 @@ def demonstrate_audit_logging():
         resource_type="system_config",
         details={
             "changes": {"log_level": "DEBUG", "retention_days": 90},
-            "reason": "Increased logging for security audit"
-        }
+            "reason": "Increased logging for security audit",
+        },
     )
 
     # Security event
-    audit_logger.security("permission_change",
-                       level=AuditLevel.WARNING,
-                       resource_id="role123",
-                       resource_type="role",
-                       details={
-                           "target_user": "jane_doe",
-                           "permissions_added": ["admin"],
-                           "permissions_removed": []
-                       })
+    audit_logger.security(
+        "permission_change",
+        level=AuditLevel.WARNING,
+        resource_id="role123",
+        resource_type="role",
+        details={
+            "target_user": "jane_doe",
+            "permissions_added": ["admin"],
+            "permissions_removed": [],
+        },
+    )
 
     # Error event
     audit_logger.error(
@@ -165,8 +172,8 @@ def demonstrate_audit_logging():
         details={
             "process": "data_import",
             "error": "Database connection timeout",
-            "retry_count": 3
-        }
+            "retry_count": 3,
+        },
     )
 
     print("Events logged successfully to logs/audit.log and logs/audit.json")
@@ -187,22 +194,32 @@ def demonstrate_compliance_reporting():
     print("Logging compliance-relevant events...")
 
     # Log events relevant to GDPR Article 30 (Records of processing)
-    audit_logger.data_access("read",
-                          resource_id="personal_data_123",
-                          resource_type="personal_data",
-                          details={"purpose": "customer_support", "legal_basis": "legitimate_interest"})
+    audit_logger.data_access(
+        "read",
+        resource_id="personal_data_123",
+        resource_type="personal_data",
+        details={"purpose": "customer_support", "legal_basis": "legitimate_interest"},
+    )
 
     # Log events relevant to GDPR Article 32 (Security)
-    audit_logger.security("encryption_check",
-                       resource_id="database",
-                       resource_type="storage",
-                       details={"encryption_status": "enabled", "algorithm": "AES-256"})
+    audit_logger.security(
+        "encryption_check",
+        resource_id="database",
+        resource_type="storage",
+        details={"encryption_status": "enabled", "algorithm": "AES-256"},
+    )
 
     # Log events relevant to GDPR Article 15 (Right of access)
-    audit_logger.data_access("subject_access_request",
-                          resource_id="user_456",
-                          resource_type="user_data",
-                          details={"request_id": "sar123", "fulfilled": True, "fulfill_date": datetime.now().isoformat()})
+    audit_logger.data_access(
+        "subject_access_request",
+        resource_id="user_456",
+        resource_type="user_data",
+        details={
+            "request_id": "sar123",
+            "fulfilled": True,
+            "fulfill_date": datetime.now().isoformat(),
+        },
+    )
 
     # Generate a compliance report
     # In a real scenario, we would load historical events from storage
@@ -215,7 +232,7 @@ def demonstrate_compliance_reporting():
         generated_at=datetime.now().isoformat(),
         time_period={
             "start": (datetime.now() - timedelta(days=30)).isoformat(),
-            "end": datetime.now().isoformat()
+            "end": datetime.now().isoformat(),
         },
         requirements=[
             {
@@ -223,30 +240,30 @@ def demonstrate_compliance_reporting():
                 "description": "Records of processing activities",
                 "status": "Compliant",
                 "evidence_count": 5,
-                "notes": "Processing activities properly recorded"
+                "notes": "Processing activities properly recorded",
             },
             {
                 "id": "GDPR-Art32",
                 "description": "Security of processing",
                 "status": "Partial",
                 "evidence_count": 3,
-                "notes": "Encryption in place, but regular testing not evidenced"
-            }
+                "notes": "Encryption in place, but regular testing not evidenced",
+            },
         ],
         summary={
             "total_requirements": 2,
             "compliant_count": 1,
             "non_compliant_count": 0,
             "partial_count": 1,
-            "compliance_rate": 50.0
+            "compliance_rate": 50.0,
         },
         compliant=False,
         remediation_suggestions={
             "GDPR-Art32": [
                 "Implement regular security testing",
-                "Document test results in audit logs"
+                "Document test results in audit logs",
             ]
-        }
+        },
     )
 
     # Save report in various formats
@@ -274,31 +291,37 @@ def demonstrate_intrusion_detection():
 
     # Simulate brute force login attempts
     for i in range(6):
-        audit_logger.auth("login",
-                       user="attacker",
-                       client_ip="192.168.1.100",
-                       status="failure",
-                       details={"reason": "invalid_password", "attempt": i+1})
+        audit_logger.auth(
+            "login",
+            user="attacker",
+            client_ip="192.168.1.100",
+            status="failure",
+            details={"reason": "invalid_password", "attempt": i + 1},
+        )
 
     # Simulate multiple access denials
     for i in range(4):
-        audit_logger.authz("access_denied",
-                        user="suspicious_user",
-                        resource_id=f"sensitive_resource_{i}",
-                        resource_type="financial_data",
-                        details={"reason": "insufficient_permissions"})
+        audit_logger.authz(
+            "access_denied",
+            user="suspicious_user",
+            resource_id=f"sensitive_resource_{i}",
+            resource_type="financial_data",
+            details={"reason": "insufficient_permissions"},
+        )
 
     # Simulate privilege escalation
-    audit_logger.security("permission_change",
-                       user="malicious_admin",
-                       resource_id="user_role",
-                       resource_type="role",
-                       details={
-                           "target_user": "compromised_account",
-                           "permissions_added": ["admin", "system"],
-                           "permissions_removed": [],
-                           "justification": "emergency access"
-                       })
+    audit_logger.security(
+        "permission_change",
+        user="malicious_admin",
+        resource_id="user_role",
+        resource_type="role",
+        details={
+            "target_user": "compromised_account",
+            "permissions_added": ["admin", "system"],
+            "permissions_removed": [],
+            "justification": "emergency access",
+        },
+    )
 
     # Simulate unauthorized configuration change
     audit_logger.log(
@@ -311,8 +334,8 @@ def demonstrate_intrusion_detection():
         status="failure",
         details={
             "changes": {"audit_enabled": False, "firewall_enabled": False},
-            "reason": "unauthorized"
-        }
+            "reason": "unauthorized",
+        },
     )
 
     # Process events through intrusion detection
@@ -325,8 +348,9 @@ def demonstrate_intrusion_detection():
 def main():
     """Main entry point for the example."""
     # Configure logging
-    logging.basicConfig(level=logging.INFO,
-                      format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
     print("===== Audit Logging System Examples =====\n")
 

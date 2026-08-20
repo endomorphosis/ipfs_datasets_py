@@ -111,19 +111,17 @@ class SouthDakotaScraper(BaseStateScraper):
     ]
 
     _TITLE_START_SECTIONS = [f"{title}-1-1" for title in range(1, 75)]
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for South Dakota's legislative website."""
         return "https://sdlegislature.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for South Dakota."""
-        return [{
-            "name": "South Dakota Codified Laws",
-            "url": f"{self.get_base_url()}/",
-            "type": "Code"
-        }]
-    
+        return [
+            {"name": "South Dakota Codified Laws", "url": f"{self.get_base_url()}/", "type": "Code"}
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -131,11 +129,11 @@ class SouthDakotaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from South Dakota's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -150,9 +148,13 @@ class SouthDakotaScraper(BaseStateScraper):
             return api_statutes
 
         max_sections = limit if limit is not None else 1000000
-        return await self._generic_scrape(code_name, code_url, "S.D. Codified Laws", max_sections=max_sections)
+        return await self._generic_scrape(
+            code_name, code_url, "S.D. Codified Laws", max_sections=max_sections
+        )
 
-    async def _scrape_statutes_api(self, code_name: str, max_statutes: Optional[int]) -> List[NormalizedStatute]:
+    async def _scrape_statutes_api(
+        self, code_name: str, max_statutes: Optional[int]
+    ) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
         statutes: List[NormalizedStatute] = []
         seen = set()
@@ -493,10 +495,14 @@ class _SouthDakotaCheckpoint:
         if not raw_dir:
             self.path: Optional[Path] = None
         else:
-            self.path = Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            self.path = (
+                Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            )
             self.path.parent.mkdir(parents=True, exist_ok=True)
         self.state_code = state_code.upper()
-        self.interval = max(1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500)))
+        self.interval = max(
+            1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500))
+        )
         self.last_count = 0
         self.last_write_ts = 0.0
 

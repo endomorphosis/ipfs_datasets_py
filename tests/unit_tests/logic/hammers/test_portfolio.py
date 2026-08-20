@@ -312,9 +312,7 @@ class TestResolveExecutable:
             policy.resolve_executable("z3")
 
     def test_no_override_and_not_on_path_raises_policy_error(self, monkeypatch):
-        monkeypatch.setattr(
-            "ipfs_datasets_py.logic.hammers.policy.shutil.which", lambda name: None
-        )
+        monkeypatch.setattr("ipfs_datasets_py.logic.hammers.policy.shutil.which", lambda name: None)
         policy = PortfolioPolicy(hammer_policy=_allow_policy("z3"))
         with pytest.raises(PolicyError):
             policy.resolve_executable("z3")
@@ -582,7 +580,9 @@ class TestSolverPortfolioRun:
                 command=command, returncode=0, stdout="sat\n", stderr="", wall_time_seconds=0.01
             )
 
-        portfolio = SolverPortfolio(policy, process_runner=_runner, version_prober=lambda *_: "4.13.0")
+        portfolio = SolverPortfolio(
+            policy, process_runner=_runner, version_prober=lambda *_: "4.13.0"
+        )
         translation = _smt_translation()
         result = portfolio.run(
             "req-1", [PortfolioAttemptSpec(translation=translation, solver_name="z3")]
@@ -612,7 +612,9 @@ class TestSolverPortfolioRun:
 
     def test_denied_attempt_produces_no_solver_attempt_record(self):
         policy = PortfolioPolicy(hammer_policy=_allow_policy("z3"))
-        portfolio = SolverPortfolio(policy, process_runner=lambda *a, **k: SolverProcessOutcome(command=[]))
+        portfolio = SolverPortfolio(
+            policy, process_runner=lambda *a, **k: SolverProcessOutcome(command=[])
+        )
         result = portfolio.run(
             "req-1",
             [PortfolioAttemptSpec(translation=_smt_translation(), solver_name="ghost-solver")],
@@ -723,7 +725,9 @@ class TestSolverPortfolioRun:
 
         portfolio = SolverPortfolio(policy, process_runner=_runner, version_prober=lambda *_: None)
         attempts = [
-            PortfolioAttemptSpec(translation=_smt_translation(translation_id="t-z3"), solver_name="z3"),
+            PortfolioAttemptSpec(
+                translation=_smt_translation(translation_id="t-z3"), solver_name="z3"
+            ),
             PortfolioAttemptSpec(
                 translation=_smt_translation(translation_id="t-cvc5"), solver_name="cvc5"
             ),

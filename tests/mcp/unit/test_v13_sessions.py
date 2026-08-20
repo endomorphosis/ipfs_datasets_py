@@ -9,6 +9,7 @@ Covers sessions from MASTER_IMPROVEMENT_PLAN_2026_v13.md:
   AS103: otel_tracing.py — span attributes + context propagation + errors (10 tests)
   AI93: fastapi_service.py /datasets/* + /ipfs/* + /vectors/* (10 tests)
 """
+
 from __future__ import annotations
 
 import json
@@ -30,6 +31,7 @@ try:
         get_interface_repository,
         toolset_slice,
     )
+
     _IDL_OK = True
 except Exception as _e:
     _IDL_OK = False
@@ -42,6 +44,7 @@ try:
         GRPCToolResponse,
         GRPC_AVAILABLE,
     )
+
     _GRPC_OK = True
 except Exception as _e:
     _GRPC_OK = False
@@ -54,6 +57,7 @@ try:
         _make_gauge,
         _make_histogram,
     )
+
     _PROM_OK = True
 except Exception as _e:
     _PROM_OK = False
@@ -65,6 +69,7 @@ try:
         OTEL_AVAILABLE,
         _NoOpSpan,
     )
+
     _OTEL_OK = True
 except Exception as _e:
     _OTEL_OK = False
@@ -72,8 +77,10 @@ except Exception as _e:
 try:
     from fastapi.testclient import TestClient
     import os
+
     os.environ.setdefault("SECRET_KEY", "test-secret-key-session55")
     from ipfs_datasets_py.mcp_server.fastapi_service import app
+
     _FASTAPI_OK = True
 except Exception as _e:
     _FASTAPI_OK = False
@@ -291,9 +298,7 @@ class TestPrometheusMetricNames:
 
     def test_make_histogram_with_custom_buckets(self):
         custom = [0.001, 0.01, 0.1, 1.0, 10.0]
-        hist = _make_histogram(
-            "mcp_test_custom_hist", "Custom histogram", buckets=custom
-        )
+        hist = _make_histogram("mcp_test_custom_hist", "Custom histogram", buckets=custom)
         assert hist is not None
         hist.observe(0.5)
 

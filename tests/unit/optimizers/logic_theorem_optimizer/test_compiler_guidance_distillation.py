@@ -38,9 +38,7 @@ def test_legacy_distillation_promotion_is_replay_eligibility_not_authority(
     artifact = compiler_guidance_distillation_candidates(
         {
             "compiler_guidance_feature_groups": {"logic_view_contract": 3},
-            "compiler_guidance_todo_routes": {
-                "repair_deontic_bridge_quality_gate": 3
-            },
+            "compiler_guidance_todo_routes": {"repair_deontic_bridge_quality_gate": 3},
         },
         {"applied_count": 3, "quality_gate": "pass"},
     )
@@ -52,12 +50,8 @@ def test_legacy_distillation_promotion_is_replay_eligibility_not_authority(
     assert artifact["promotion_allowed"] is True
     assert report.replay_candidate_count == 1
     assert report.accepted_count == 0
-    assert GuidanceReplayRejection.UNSIGNED.value in (
-        report.outcomes[0].rejection_reasons
-    )
-    assert GuidanceReplayRejection.SCHEMA_MISMATCH.value in (
-        report.outcomes[0].rejection_reasons
-    )
+    assert GuidanceReplayRejection.UNSIGNED.value in (report.outcomes[0].rejection_reasons)
+    assert GuidanceReplayRejection.SCHEMA_MISMATCH.value in (report.outcomes[0].rejection_reasons)
     assert GuidanceReplayRejection.NONRECONSTRUCTIBLE.value in (
         report.outcomes[0].rejection_reasons
     )
@@ -67,9 +61,7 @@ def test_source_bearing_distillation_examples_are_never_replayed(tmp_path) -> No
     raw_text = "The private source paragraph shall not enter replay state."
     artifact = compiler_guidance_distillation_candidates(
         {
-            "compiler_guidance_todo_routes": {
-                "refine_semantic_decompiler_reconstruction": 2
-            },
+            "compiler_guidance_todo_routes": {"refine_semantic_decompiler_reconstruction": 2},
             "compiler_guidance_todo_route_examples": {
                 "refine_semantic_decompiler_reconstruction": [
                     {"sample_id": "private-sample", "text_preview": raw_text}
@@ -84,8 +76,6 @@ def test_source_bearing_distillation_examples_are_never_replayed(tmp_path) -> No
     replay = LegalIRGuidanceReplay(policy=_policy()).run([path])
     serialized = json.dumps(replay.to_dict(), sort_keys=True)
 
-    assert GuidanceReplayRejection.SOURCE_BEARING.value in (
-        replay.outcomes[0].rejection_reasons
-    )
+    assert GuidanceReplayRejection.SOURCE_BEARING.value in (replay.outcomes[0].rejection_reasons)
     assert raw_text not in serialized
     assert "private-sample" not in serialized

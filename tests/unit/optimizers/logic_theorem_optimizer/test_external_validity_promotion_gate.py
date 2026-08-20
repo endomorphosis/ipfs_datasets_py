@@ -10,6 +10,12 @@ from typing import Any
 
 import pytest
 
+_DATASETS_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(_DATASETS_ROOT))
+for _name in list(sys.modules):
+    if _name == "scripts" or _name.startswith("scripts."):
+        sys.modules.pop(_name, None)
+
 from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import (
     EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION,
     MULTI_SEED_PROMOTION_METRICS,
@@ -198,7 +204,9 @@ def test_external_validity_gate_accepts_bound_complete_evidence() -> None:
     assert result.failures == []
     assert result.metrics["evidence_complete"] is True
     assert result.metrics["domain_status"]["external_benchmark_scores"] is True
-    assert result.metrics["bindings"]["promotion_id"]["canonical"] == COMMON_BINDINGS["promotion_id"]
+    assert (
+        result.metrics["bindings"]["promotion_id"]["canonical"] == COMMON_BINDINGS["promotion_id"]
+    )
     assert result.metrics["evidence_domains"]["multi_seed_statistics"]["metrics"]["seed_set"] == [
         "101",
         "103",
@@ -243,8 +251,7 @@ def test_external_validity_gate_recomputes_multi_seed_statistics() -> None:
 
     assert result.accepted is False
     assert (
-        "multi_seed_statistics:multi_seed_metric_seed_count:learned_quality:1<3"
-        in result.failures
+        "multi_seed_statistics:multi_seed_metric_seed_count:learned_quality:1<3" in result.failures
     )
 
 
@@ -272,7 +279,8 @@ def test_external_validity_cli_writes_decision_and_report(tmp_path: Path) -> Non
     completed = subprocess.run(
         [
             sys.executable,
-            str(ROOT / "scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py"),
+            "-m",
+            "scripts.ops.legal_ir.hammer_leanstral_rollout_gate",
             "external-validity-gate",
             "--evidence-path",
             str(evidence_path),

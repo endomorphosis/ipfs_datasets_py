@@ -35,11 +35,13 @@ class TestLLMRelationshipInference:
 
         def llm_backend(prompt: str) -> str:
             # LLM refines co-occurrence to a specific type
-            return json.dumps({
-                "relationship_type": "employs",
-                "confidence": 0.95,
-                "reasoning": "Alice works at Acme Corp"
-            })
+            return json.dumps(
+                {
+                    "relationship_type": "employs",
+                    "confidence": 0.95,
+                    "reasoning": "Alice works at Acme Corp",
+                }
+            )
 
         generator = OntologyGenerator(use_ipfs_accelerate=False, llm_backend=llm_backend)
         context = OntologyGenerationContext(
@@ -89,17 +91,23 @@ class TestLLMRelationshipInference:
         assert len(rels) >= 0
         # Any relationships should be heuristic-based
         for rel in rels:
-            assert rel.properties.get("type_method") in ("verb_frame", "cooccurrence", "context_window")
+            assert rel.properties.get("type_method") in (
+                "verb_frame",
+                "cooccurrence",
+                "context_window",
+            )
 
     def test_llm_inference_fallback_on_low_confidence(self) -> None:
         """Falls back to heuristics when LLM returns low-confidence result."""
 
         def llm_backend(prompt: str) -> str:
-            return json.dumps({
-                "relationship_type": "unknown_type",
-                "confidence": 0.3,  # Too low, below threshold
-                "reasoning": "unsure"
-            })
+            return json.dumps(
+                {
+                    "relationship_type": "unknown_type",
+                    "confidence": 0.3,  # Too low, below threshold
+                    "reasoning": "unsure",
+                }
+            )
 
         generator = OntologyGenerator(use_ipfs_accelerate=False, llm_backend=llm_backend)
         context = OntologyGenerationContext(
@@ -119,7 +127,11 @@ class TestLLMRelationshipInference:
         # Should still have relationships, using heuristics
         for rel in rels:
             # Should not use the low-confidence LLM type
-            assert rel.properties.get("type_method") in ("verb_frame", "cooccurrence", "context_window")
+            assert rel.properties.get("type_method") in (
+                "verb_frame",
+                "cooccurrence",
+                "context_window",
+            )
 
     def test_llm_inference_none_backend_uses_heuristics(self) -> None:
         """When no LLM backend provided, uses pure heuristic inference."""
@@ -179,10 +191,12 @@ class TestLLMRelationshipInference:
         """LLM-refined relationships have confidence values."""
 
         def llm_backend(prompt: str) -> str:
-            return json.dumps({
-                "relationship_type": "manages",
-                "confidence": 0.92,
-            })
+            return json.dumps(
+                {
+                    "relationship_type": "manages",
+                    "confidence": 0.92,
+                }
+            )
 
         generator = OntologyGenerator(use_ipfs_accelerate=False, llm_backend=llm_backend)
         context = OntologyGenerationContext(
@@ -215,11 +229,14 @@ class TestMultilingualOntologySupport:
 
         # This tests the language detection capability
         text_en = "Alice is a patient with a medical condition"
-        result = generator.extract_entities(text_en, OntologyGenerationContext(
-            data_source="test",
-            data_type="text",
-            domain="medical",
-        ))
+        result = generator.extract_entities(
+            text_en,
+            OntologyGenerationContext(
+                data_source="test",
+                data_type="text",
+                domain="medical",
+            ),
+        )
 
         # Should successfully extract entities from English text
         assert result is not None
@@ -229,11 +246,14 @@ class TestMultilingualOntologySupport:
         generator = OntologyGenerator(use_ipfs_accelerate=False)
 
         text_es = "El paciente tiene una obligación de informar al médico"
-        result = generator.extract_entities(text_es, OntologyGenerationContext(
-            data_source="test",
-            data_type="text",
-            domain="medical",
-        ))
+        result = generator.extract_entities(
+            text_es,
+            OntologyGenerationContext(
+                data_source="test",
+                data_type="text",
+                domain="medical",
+            ),
+        )
 
         # Should successfully extract entities from Spanish text
         assert result is not None
@@ -243,11 +263,14 @@ class TestMultilingualOntologySupport:
         generator = OntologyGenerator(use_ipfs_accelerate=False)
 
         text_fr = "Le patient doit informer le médecin de toute obligation"
-        result = generator.extract_entities(text_fr, OntologyGenerationContext(
-            data_source="test",
-            data_type="text",
-            domain="medical",
-        ))
+        result = generator.extract_entities(
+            text_fr,
+            OntologyGenerationContext(
+                data_source="test",
+                data_type="text",
+                domain="medical",
+            ),
+        )
 
         # Should successfully extract entities from French text
         assert result is not None
@@ -257,11 +280,14 @@ class TestMultilingualOntologySupport:
         generator = OntologyGenerator(use_ipfs_accelerate=False)
 
         text_de = "Der Patient muss den Arzt über medizinische Verpflichtungen informieren"
-        result = generator.extract_entities(text_de, OntologyGenerationContext(
-            data_source="test",
-            data_type="text",
-            domain="medical",
-        ))
+        result = generator.extract_entities(
+            text_de,
+            OntologyGenerationContext(
+                data_source="test",
+                data_type="text",
+                domain="medical",
+            ),
+        )
 
         # Should successfully extract entities from German text
         assert result is not None
@@ -295,11 +321,14 @@ class TestMultilingualOntologySupport:
 
         # Text with entity mentioned in multiple languages
         text = "The doctor/médecin treats the Patient/Paciente carefully"
-        result = generator.extract_entities(text, OntologyGenerationContext(
-            data_source="test",
-            data_type="text",
-            domain="medical",
-        ))
+        result = generator.extract_entities(
+            text,
+            OntologyGenerationContext(
+                data_source="test",
+                data_type="text",
+                domain="medical",
+            ),
+        )
 
         assert result is not None
         # Should not duplicate entities across language boundaries
@@ -328,10 +357,12 @@ class TestLLMAndMultilingualIntegration:
         """LLM inference works with Spanish text."""
 
         def llm_backend(prompt: str) -> str:
-            return json.dumps({
-                "relationship_type": "trabaja_para",
-                "confidence": 0.88,
-            })
+            return json.dumps(
+                {
+                    "relationship_type": "trabaja_para",
+                    "confidence": 0.88,
+                }
+            )
 
         generator = OntologyGenerator(use_ipfs_accelerate=False, llm_backend=llm_backend)
         ctx = OntologyGenerationContext(
@@ -355,10 +386,12 @@ class TestLLMAndMultilingualIntegration:
 
         def llm_backend(prompt: str) -> str:
             # Could be called for relationship refinement
-            return json.dumps({
-                "relationship_type": "manages",
-                "confidence": 0.85,
-            })
+            return json.dumps(
+                {
+                    "relationship_type": "manages",
+                    "confidence": 0.85,
+                }
+            )
 
         generator = OntologyGenerator(use_ipfs_accelerate=False, llm_backend=llm_backend)
         ctx = OntologyGenerationContext(
@@ -379,10 +412,12 @@ class TestLLMAndMultilingualIntegration:
 
         def llm_backend(prompt: str) -> str:
             # High-confidence LLM response
-            return json.dumps({
-                "relationship_type": "supervises",
-                "confidence": 0.93,
-            })
+            return json.dumps(
+                {
+                    "relationship_type": "supervises",
+                    "confidence": 0.93,
+                }
+            )
 
         generator = OntologyGenerator(use_ipfs_accelerate=False, llm_backend=llm_backend)
 

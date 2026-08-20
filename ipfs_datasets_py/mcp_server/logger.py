@@ -5,6 +5,7 @@ DQK-079: mutable file sinks (mcp_server.log / FileHandler) are disabled by
 default. Only ephemeral human-readable console logs remain; DuckDB is the
 progress/completion authority after cutover.
 """
+
 import logging
 import re
 import sys
@@ -57,7 +58,9 @@ def _install_optional_warning_filter() -> None:
     """Attach the optional dependency filter to the active root logger and handlers."""
     root_logger = logging.getLogger()
     root_filters = list(getattr(root_logger, "filters", []) or [])
-    if not any(existing is _OPTIONAL_WARNING_FILTER for existing in root_filters) and hasattr(root_logger, "addFilter"):
+    if not any(existing is _OPTIONAL_WARNING_FILTER for existing in root_filters) and hasattr(
+        root_logger, "addFilter"
+    ):
         root_logger.addFilter(_OPTIONAL_WARNING_FILTER)
 
     for handler in list(getattr(root_logger, "handlers", []) or []):

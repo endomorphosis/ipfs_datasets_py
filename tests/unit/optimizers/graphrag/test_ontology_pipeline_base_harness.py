@@ -9,7 +9,11 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_harness import OntologyPipeli
 
 class _StubGenerator:
     def generate_ontology(self, data, context):
-        return {"entities": [{"id": "e1", "name": str(data)}], "relationships": [], "metadata": {"domain": "test"}}
+        return {
+            "entities": [{"id": "e1", "name": str(data)}],
+            "relationships": [],
+            "metadata": {"domain": "test"},
+        }
 
 
 class _StubCritic:

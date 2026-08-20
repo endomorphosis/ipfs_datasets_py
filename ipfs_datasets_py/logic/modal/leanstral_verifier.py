@@ -340,9 +340,7 @@ class LeanstralHammerCandidateResult:
             "accepted": bool(self.accepted),
             "candidate": _json_ready(self.candidate),
             "candidate_index": int(self.candidate_index),
-            "deterministic_checks": [
-                check.to_dict() for check in self.deterministic_checks
-            ],
+            "deterministic_checks": [check.to_dict() for check in self.deterministic_checks],
             "hammer_report": self.hammer_report.to_dict()
             if self.hammer_report is not None
             else None,
@@ -377,9 +375,7 @@ class LeanstralHammerVerificationReport:
         return {
             "accepted": bool(self.accepted),
             "candidate_count": self.candidate_count,
-            "candidate_results": [
-                result.to_dict() for result in self.candidate_results
-            ],
+            "candidate_results": [result.to_dict() for result in self.candidate_results],
             "proposal_task_id": self.proposal_task_id,
             "reasons": list(self.reasons),
             "schema_version": self.schema_version,
@@ -444,12 +440,7 @@ class LeanstralHammerCandidateVerifier:
                 reasons=("missing_drafted_logic_candidates",),
             )
         reasons = tuple(
-            dict.fromkeys(
-                reason
-                for result in results
-                for reason in result.reasons
-                if reason
-            )
+            dict.fromkeys(reason for result in results for reason in result.reasons if reason)
         )
         return LeanstralHammerVerificationReport(
             task_id=task.task_id,
@@ -676,9 +667,7 @@ class LeanstralAuditVerifier:
             if self.config.run_graph_check:
                 local_checks.append(self._check_modal_ir_graph(sample))
             if self.config.run_provenance_check:
-                local_checks.append(
-                    self._check_modal_ir_provenance(sample, span_checks)
-                )
+                local_checks.append(self._check_modal_ir_provenance(sample, span_checks))
 
         cheap_outcome, cheap_reasons = _outcome_from_local_checks(local_checks)
         if cheap_outcome == LeanstralVerificationOutcome.REJECTED:
@@ -730,9 +719,7 @@ class LeanstralAuditVerifier:
             raw_spans = request.evidence.get("source_span_hashes")
             if isinstance(raw_spans, Mapping):
                 expected_spans = {
-                    str(key): str(value)
-                    for key, value in raw_spans.items()
-                    if str(key).strip()
+                    str(key): str(value) for key, value in raw_spans.items() if str(key).strip()
                 }
 
         sample = reference["sample"]
@@ -797,9 +784,7 @@ class LeanstralAuditVerifier:
     def _recompile_sample(self, sample: LegalSample) -> LegalSample:
         backend = str(self.config.canonical_recompile_backend or "codec").strip().lower()
         cache_key = hashlib.sha256(
-            f"{backend}\0{sample.sample_id}\0{sample.citation}\0{sample.text}".encode(
-                "utf-8"
-            )
+            f"{backend}\0{sample.sample_id}\0{sample.citation}\0{sample.text}".encode("utf-8")
         ).hexdigest()
         cached = self._recompiled_sample_cache.get(cache_key)
         if cached is not None:
@@ -948,10 +933,7 @@ class LeanstralAuditVerifier:
     ) -> LeanstralLocalCheck:
         started = time.time()
         reasons: List[str] = []
-        checks_by_formula = {
-            check.formula_id: check
-            for check in span_checks
-        }
+        checks_by_formula = {check.formula_id: check for check in span_checks}
         for formula in sample.modal_ir.formulas:
             provenance = formula.provenance
             if provenance.source_id != sample.sample_id:
@@ -1119,9 +1101,7 @@ class LeanstralAuditVerifier:
             status = LeanstralVerificationOutcome.ACCEPTED
         error_messages = tuple(
             dict.fromkeys(
-                result.error_message
-                for result in ordered_results
-                if result.error_message
+                result.error_message for result in ordered_results if result.error_message
             )
         )
         return LeanstralLocalCheck(
@@ -1148,8 +1128,7 @@ class LeanstralAuditVerifier:
                 "slices": [result.to_dict() for result in ordered_results],
                 "theorem_generator_hash": self._lean_theorem_generator_hash,
                 "theorem_count": sum(
-                    int(result.details.get("theorem_count") or 0)
-                    for result in ordered_results
+                    int(result.details.get("theorem_count") or 0) for result in ordered_results
                 ),
                 "verified_formula_count": sum(
                     int(result.details.get("verified_formula_count") or 0)
@@ -1243,9 +1222,7 @@ class LeanstralAuditVerifier:
                 else 0.0,
                 "proof_cache": execution.provenance.to_dict(),
                 "proof_cache_hit": execution.provenance.hit,
-                "proof_cache_single_flight_shared": (
-                    execution.provenance.single_flight_shared
-                ),
+                "proof_cache_single_flight_shared": (execution.provenance.single_flight_shared),
                 "proof_cache_trust": execution.outcome.trust.value,
             }
         )
@@ -1431,20 +1408,14 @@ def verify_leanstral_audit_hammer_candidates(
             reasons=("missing_drafted_logic_candidates",),
         )
     semantic_context = (
-        request.evidence.get("semantic_context")
-        if isinstance(request.evidence, Mapping)
-        else None
+        request.evidence.get("semantic_context") if isinstance(request.evidence, Mapping) else None
     )
-    semantic_context = (
-        dict(semantic_context) if isinstance(semantic_context, Mapping) else {}
-    )
+    semantic_context = dict(semantic_context) if isinstance(semantic_context, Mapping) else {}
     target_sample_id = str(semantic_context.get("sample_id") or "").strip()
     ordered_examples = sorted(
         examples,
         key=lambda example: (
-            0
-            if _normalized_example_sample_id(example) == target_sample_id
-            else 1,
+            0 if _normalized_example_sample_id(example) == target_sample_id else 1,
             _normalized_example_sample_id(example),
         ),
     )
@@ -1498,9 +1469,12 @@ def verify_leanstral_audit_hammer_candidates(
     candidate_grounding_symbols = _leanstral_candidate_grounding_symbols(
         semantic_context.get("modal_formulas")
     )
-    task_id = "leanstral-audit-hammer-" + hashlib.sha256(
-        f"{request.request_id}\0{sample.modal_ir.canonical_hash()}".encode("utf-8")
-    ).hexdigest()[:16]
+    task_id = (
+        "leanstral-audit-hammer-"
+        + hashlib.sha256(
+            f"{request.request_id}\0{sample.modal_ir.canonical_hash()}".encode("utf-8")
+        ).hexdigest()[:16]
+    )
     task = LegalIRLeanTask(
         task_id=task_id,
         sample_id=sample.sample_id,
@@ -1512,23 +1486,16 @@ def verify_leanstral_audit_hammer_candidates(
         autoencoder_evidence={
             "audit_request_id": request.request_id,
             "candidate_grounding_catalog": {
-                key: list(values)
-                for key, values in candidate_grounding_catalog.items()
+                key: list(values) for key, values in candidate_grounding_catalog.items()
             },
-            "candidate_grounding_symbols": list(
-                candidate_grounding_symbols
-            ),
-            "semantic_context_schema_version": str(
-                semantic_context.get("schema_version") or ""
-            ),
+            "candidate_grounding_symbols": list(candidate_grounding_symbols),
+            "semantic_context_schema_version": str(semantic_context.get("schema_version") or ""),
         },
         theorem_registry={
             "registry_hash": request.theorem_registry_hash,
             "schema_version": "leanstral-bounded-theorem-contract-v1",
         },
-        proof_obligations=tuple(
-            obligation.to_dict() for obligation in obligations
-        ),
+        proof_obligations=tuple(obligation.to_dict() for obligation in obligations),
     )
     proposal = LeanstralProposal.from_mapping(
         {
@@ -1558,10 +1525,7 @@ def _normalized_example_sample_id(
     if isinstance(example, LegalSample):
         return str(example.sample_id or "").strip()
     return str(
-        example.get("sample_id")
-        or example.get("example_id")
-        or example.get("evidence_id")
-        or ""
+        example.get("sample_id") or example.get("example_id") or example.get("evidence_id") or ""
     ).strip()
 
 
@@ -1649,14 +1613,9 @@ def _check_hammer_candidate_contract(
     raw_catalog = evidence.get("candidate_grounding_catalog")
     grounding_catalog = (
         {
-            str(key): tuple(
-                str(value)
-                for value in values
-                if str(value).strip()
-            )
+            str(key): tuple(str(value) for value in values if str(value).strip())
             for key, values in raw_catalog.items()
-            if isinstance(values, Sequence)
-            and not isinstance(values, (str, bytes))
+            if isinstance(values, Sequence) and not isinstance(values, (str, bytes))
         }
         if isinstance(raw_catalog, Mapping)
         else _leanstral_candidate_grounding_catalog(task.modal_formula)
@@ -1673,9 +1632,7 @@ def _check_hammer_candidate_contract(
         expected_ids.discard("")
         if not expected_ids or contract_id not in expected_ids:
             reasons.append("unknown_contract_id")
-        candidate_heads = set(
-            _leanstral_logic_predicate_heads(candidate_text)
-        )
+        candidate_heads = set(_leanstral_logic_predicate_heads(candidate_text))
         grounding_matches = _drafted_logic_candidate_grounding_matches(
             candidate_text,
             grounding_symbols,
@@ -1701,9 +1658,7 @@ def _check_hammer_candidate_contract(
                 statement,
             ):
                 reasons.append("drafted_logic_candidate_copies_obligation")
-            allowed_heads = set(
-                _leanstral_logic_predicate_heads(statement)
-            )
+            allowed_heads = set(_leanstral_logic_predicate_heads(statement))
             allowed_heads.update(
                 _leanstral_candidate_predicate_vocabulary(
                     obligation.get("logic_family"),
@@ -1718,9 +1673,7 @@ def _check_hammer_candidate_contract(
         reasons,
         {
             "contract_id": contract_id,
-            "obligation_ids": [
-                str(item.get("obligation_id") or "") for item in selected
-            ],
+            "obligation_ids": [str(item.get("obligation_id") or "") for item in selected],
             "grounding_match_count": len(grounding_matches),
             "grounding_matches": list(grounding_matches),
             "minimum_grounding_match_count": min(2, len(grounding_symbols)),
@@ -1782,9 +1735,7 @@ def _candidate_obligations(
     candidate: Mapping[str, Any],
 ) -> Sequence[Mapping[str, Any]]:
     obligations = [
-        dict(item)
-        for item in (task.proof_obligations or ())
-        if isinstance(item, Mapping)
+        dict(item) for item in (task.proof_obligations or ()) if isinstance(item, Mapping)
     ]
     wanted = set(
         _string_sequence(
@@ -1861,15 +1812,10 @@ def _normalize_reference_example(
         ).strip(),
         "sample": None,
         "section": str(example.get("section", "")),
-        "source_span_hashes": {
-            str(key): str(value)
-            for key, value in expected_spans.items()
-        }
+        "source_span_hashes": {str(key): str(value) for key, value in expected_spans.items()}
         if isinstance(expected_spans, Mapping)
         else {},
-        "source_span_hash_format": str(
-            example.get("source_span_hash_format", "raw_span_v1")
-        ),
+        "source_span_hash_format": str(example.get("source_span_hash_format", "raw_span_v1")),
         "text": str(
             example.get(
                 "source_text",
@@ -1898,9 +1844,7 @@ def _examples_from_request(
 ) -> Iterable[Mapping[str, Any]]:
     evidence = request.evidence if isinstance(request.evidence, Mapping) else {}
     referenced_examples = [
-        item
-        for item in evidence.get("referenced_examples", []) or []
-        if isinstance(item, Mapping)
+        item for item in evidence.get("referenced_examples", []) or [] if isinstance(item, Mapping)
     ]
     if not referenced_examples:
         referenced_examples = list(_examples_from_evidence_packets(evidence))
@@ -1957,9 +1901,7 @@ def _examples_from_evidence_packets(
         span_hashes = sample_hashes.get("source_span_hashes")
         if isinstance(span_hashes, Mapping):
             example["source_span_hashes"] = {
-                str(key): str(value)
-                for key, value in span_hashes.items()
-                if str(key).strip()
+                str(key): str(value) for key, value in span_hashes.items() if str(key).strip()
             }
             example["source_span_hash_format"] = "introspection_packet_v1"
         for key in ("citation", "section", "title"):
@@ -1967,10 +1909,7 @@ def _examples_from_evidence_packets(
             if value:
                 example[key] = value
         text = str(
-            packet.get("source_text")
-            or packet.get("text")
-            or packet.get("sample_text")
-            or ""
+            packet.get("source_text") or packet.get("text") or packet.get("sample_text") or ""
         ).strip()
         if text:
             example["source_text"] = text
@@ -2088,10 +2027,7 @@ def _source_span_attestation_hash(sample: LegalSample, formula: Any) -> str:
 def _logical_statement_for_formula(formula: Any) -> LogicalStatement:
     operator = formula.operator
     predicate = formula.predicate
-    formula_text = (
-        f"{operator.symbol}[{operator.family}:{operator.system}]"
-        f"({predicate.name})"
-    )
+    formula_text = f"{operator.symbol}[{operator.family}:{operator.system}]({predicate.name})"
     return LogicalStatement(
         formula=formula_text,
         natural_language=predicate.name,
@@ -2187,9 +2123,7 @@ def _cheap_check(
     reasons: Sequence[str],
     details: Optional[Mapping[str, Any]] = None,
 ) -> LeanstralLocalCheck:
-    unique_reasons = tuple(
-        dict.fromkeys(str(reason) for reason in reasons if str(reason).strip())
-    )
+    unique_reasons = tuple(dict.fromkeys(str(reason) for reason in reasons if str(reason).strip()))
     accepted = not unique_reasons
     return LeanstralLocalCheck(
         checker_name=name,
@@ -2263,10 +2197,7 @@ def _outcome_from_local_checks(
         )
     proof_checks = [check for check in checks if not _is_cheap_check(check)]
     acceptance_checks = proof_checks or list(checks)
-    if any(
-        check.status == LeanstralVerificationOutcome.ACCEPTED
-        for check in acceptance_checks
-    ):
+    if any(check.status == LeanstralVerificationOutcome.ACCEPTED for check in acceptance_checks):
         return LeanstralVerificationOutcome.ACCEPTED, ()
     return (
         LeanstralVerificationOutcome.UNSUPPORTED,

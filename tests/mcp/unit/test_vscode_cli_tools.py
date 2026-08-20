@@ -2,6 +2,7 @@
 Session 37 — B2 tests for development_tools/vscode_cli_tools.py
 (all 8 functions mocked via patch on VSCodeCLI).
 """
+
 from __future__ import annotations
 
 import unittest

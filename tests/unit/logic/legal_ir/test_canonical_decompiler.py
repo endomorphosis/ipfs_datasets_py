@@ -40,9 +40,7 @@ from ipfs_datasets_py.utils.cid_utils import cid_for_bytes, cid_for_dag_json
 
 ROOT = Path(__file__).resolve().parents[4]
 PILOT_CASES = json.loads(
-    (
-        ROOT / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
-    ).read_text(encoding="utf-8")
+    (ROOT / "tests/fixtures/semantic_roundtrip/pilot_cases.json").read_text(encoding="utf-8")
 )
 
 
@@ -102,9 +100,7 @@ def test_all_frozen_t1_outputs_match_selected_benchmark_adapter() -> None:
         assert expected.status is ComponentStatus.SUCCESS, case["id"]
         assert result.status is OperationStatus.SUCCESS, case["id"]
         assert result.text == expected.text, case["id"]
-        assert result.text_cid == cid_for_bytes(
-            expected.text.encode("utf-8")
-        ), case["id"]
+        assert result.text_cid == cid_for_bytes(expected.text.encode("utf-8")), case["id"]
 
 
 def test_frozen_grammar_preserves_polarity_roles_and_every_facet() -> None:
@@ -135,15 +131,18 @@ def test_frozen_grammar_preserves_polarity_roles_and_every_facet() -> None:
     )
     assert "Agency must inspect" not in result.text
     assert " shall " not in result.text
-    assert decompile_rule(
-        CanonicalRule(
-            modality="P",
-            actor="court",
-            action="review",
-            object="",
-            temporal=("after_approval",),
+    assert (
+        decompile_rule(
+            CanonicalRule(
+                modality="P",
+                actor="court",
+                action="review",
+                object="",
+                temporal=("after_approval",),
+            )
         )
-    ) == "Court may review after approval."
+        == "Court may review after approval."
+    )
 
 
 def test_success_has_raw_text_cid_and_deterministic_component_trace() -> None:
@@ -172,21 +171,15 @@ def test_success_has_raw_text_cid_and_deterministic_component_trace() -> None:
 
 def test_attribution_receipt_binds_only_public_canonical_inputs_and_t1() -> None:
     request = _request(_rule())
-    result, receipt = (
-        SourceWithheldCanonicalDecompiler().decompile_with_receipt(request)
-    )
+    result, receipt = SourceWithheldCanonicalDecompiler().decompile_with_receipt(request)
 
     assert result.status is OperationStatus.SUCCESS
     assert receipt is not None
     assert receipt["interface"] == CANONICAL_DECOMPILER_ATTRIBUTION_INTERFACE
     assert receipt["schema_version"] == CANONICAL_DECOMPILER_ATTRIBUTION_SCHEMA
     assert receipt["realizer_identity"] == SELECTED_REALIZER_INTERFACE
-    assert receipt["selected_adapter_raw_cid"] == (
-        SELECTED_REALIZER_ADAPTER_RAW_CID
-    )
-    assert receipt["rendering_spec_cid"] == (
-        SOURCE_WITHHELD_RENDERING_SPEC_CID
-    )
+    assert receipt["selected_adapter_raw_cid"] == (SELECTED_REALIZER_ADAPTER_RAW_CID)
+    assert receipt["rendering_spec_cid"] == (SOURCE_WITHHELD_RENDERING_SPEC_CID)
     assert receipt["deterministic"] is True
     assert receipt["source_withheld"] is True
     assert receipt["input_attribution"] == {
@@ -236,9 +229,7 @@ def test_only_exact_frozen_config_and_policy_are_accepted() -> None:
 
     detached = frozen_decompiler_config()
     detached["obligation_surface"] = "shall"
-    assert dict(SOURCE_WITHHELD_DECOMPILER_CONFIG)[
-        "obligation_surface"
-    ] == "must"
+    assert dict(SOURCE_WITHHELD_DECOMPILER_CONFIG)["obligation_surface"] == "must"
 
 
 def test_invalid_requests_and_component_errors_are_typed_failures(

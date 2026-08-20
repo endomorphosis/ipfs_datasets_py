@@ -36,7 +36,10 @@ async def pdf_analyze_relationships(
 
         valid_analysis_types = ["entities", "citations", "themes", "comprehensive"]
         if analysis_type not in valid_analysis_types:
-            return {"status": "error", "message": f"Invalid analysis type. Must be one of: {valid_analysis_types}"}
+            return {
+                "status": "error",
+                "message": f"Invalid analysis type. Must be one of: {valid_analysis_types}",
+            }
 
         if not 0.0 <= min_confidence <= 1.0:
             return {"status": "error", "message": "min_confidence must be between 0.0 and 1.0"}
@@ -121,9 +124,7 @@ async def pdf_analyze_relationships(
                 "relationship_graph": relationship_graph,
                 "analysis_summary": analysis_summary,
                 "processing_time": sum(
-                    r.get("processing_time", 0)
-                    for r in results.values()
-                    if isinstance(r, dict)
+                    r.get("processing_time", 0) for r in results.values() if isinstance(r, dict)
                 ),
                 "message": (
                     f"Successfully analyzed {analysis_type} relationships for document(s). "
@@ -133,7 +134,10 @@ async def pdf_analyze_relationships(
 
     except ImportError as e:
         logger.error("Relationship analysis dependencies not available: %s", e)
-        return {"status": "error", "message": f"Relationship analysis dependencies not available: {str(e)}"}
+        return {
+            "status": "error",
+            "message": f"Relationship analysis dependencies not available: {str(e)}",
+        }
     except Exception as e:
         logger.error("Error analyzing relationships: %s", e)
         return {"status": "error", "message": f"Failed to analyze relationships: {str(e)}"}

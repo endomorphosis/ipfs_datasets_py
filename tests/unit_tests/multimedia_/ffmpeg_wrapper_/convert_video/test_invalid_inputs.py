@@ -10,6 +10,7 @@ Terminology:
 - unsupported_format: A file format not recognized by FFmpeg
 - invalid_codec: A codec name not supported by FFmpeg
 """
+
 import pytest
 import anyio
 from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
@@ -18,7 +19,7 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class TestFFmpegWrapperConvertVideoInvalidInputs:
     """
     Invalid input scenarios for FFmpegWrapper.convert_video method.
-    
+
     Tests the convert_video method with invalid parameters to ensure
     proper type checking and error handling.
     """
@@ -31,17 +32,17 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         """
         try:
             from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-            
+
             # GIVEN input_path as None
             wrapper = FFmpegWrapper()
             input_path = None
             output_path = "/tmp/output.mp4"
-            
+
             # WHEN convert_video called with None input_path
             # THEN expect TypeError
             with pytest.raises(TypeError, match="input_path.*string"):
                 await wrapper.convert_video(input_path, output_path)
-                
+
         except ImportError as e:
             # FFmpegWrapper not available, test with mock validation
             pytest.skip(f"FFmpegWrapper not available: {e}")
@@ -57,17 +58,17 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         """
         try:
             from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-            
+
             # GIVEN input_path as integer
             wrapper = FFmpegWrapper()
             input_path = 12345
             output_path = "/tmp/output.mp4"
-            
+
             # WHEN convert_video called with integer input_path
             # THEN expect TypeError
             with pytest.raises(TypeError, match="input_path.*string"):
                 await wrapper.convert_video(input_path, output_path)
-                
+
         except ImportError as e:
             # FFmpegWrapper not available, test with mock validation
             pytest.skip(f"FFmpegWrapper not available: {e}")
@@ -83,17 +84,17 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         """
         try:
             from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-            
+
             # GIVEN output_path as None
             wrapper = FFmpegWrapper()
             input_path = "/tmp/input.mp4"
             output_path = None
-            
+
             # WHEN convert_video called with None output_path
             # THEN expect TypeError
             with pytest.raises(TypeError, match="output_path.*string"):
                 await wrapper.convert_video(input_path, output_path)
-                
+
         except ImportError as e:
             # FFmpegWrapper not available, test with mock validation
             pytest.skip(f"FFmpegWrapper not available: {e}")
@@ -109,17 +110,17 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         """
         try:
             from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-            
+
             # GIVEN output_path as list
             wrapper = FFmpegWrapper()
             input_path = "/tmp/input.mp4"
             output_path = ["/tmp/output1.mp4", "/tmp/output2.mp4"]  # Invalid list
-            
+
             # WHEN convert_video called with list output_path
             # THEN expect TypeError for type validation
             with pytest.raises(TypeError):
                 await wrapper.convert_video(input_path, output_path)
-                
+
         except ImportError:
             # FFmpegWrapper not available, test with mock validation
             pytest.skip("FFmpegWrapper not available")
@@ -135,17 +136,17 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         """
         try:
             from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-            
+
             # GIVEN empty input_path
             wrapper = FFmpegWrapper()
             input_path = ""  # Empty string
             output_path = "/tmp/output.mp4"
-            
+
             # WHEN convert_video called with empty input_path
             # THEN expect ValueError for empty path validation
             with pytest.raises(ValueError):
                 await wrapper.convert_video(input_path, output_path)
-                
+
         except ImportError:
             # FFmpegWrapper not available, test with mock validation
             pytest.skip("FFmpegWrapper not available")
@@ -161,17 +162,17 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         """
         try:
             from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-            
+
             # GIVEN empty output_path
             wrapper = FFmpegWrapper()
             input_path = "/tmp/input.mp4"
             output_path = ""  # Empty string
-            
+
             # WHEN convert_video called with empty output_path
             # THEN expect ValueError for empty path validation
             with pytest.raises(ValueError):
                 await wrapper.convert_video(input_path, output_path)
-                
+
         except ImportError:
             # FFmpegWrapper not available, test with mock validation
             pytest.skip("FFmpegWrapper not available")
@@ -187,24 +188,26 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         """
         try:
             from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-            
+
             # GIVEN nonexistent input file
             wrapper = FFmpegWrapper()
             input_path = "/nonexistent/path/to/video.mp4"  # File doesn't exist
             output_path = "/tmp/output.mp4"
-            
+
             # WHEN convert_video called with nonexistent input file
             result = await wrapper.convert_video(input_path, output_path)
-            
+
             # THEN should return error response for missing file
             assert isinstance(result, dict)
             assert result["status"] == "error"
-            assert "FileNotFoundError" in str(result) or "not found" in result.get("error", "").lower()
-                
+            assert (
+                "FileNotFoundError" in str(result) or "not found" in result.get("error", "").lower()
+            )
+
         except ImportError:
             # FFmpegWrapper not available, test with mock validation
             mock_error_result = {
-                "status": "error", 
-                "error": "FileNotFoundError: Input file not found"
+                "status": "error",
+                "error": "FileNotFoundError: Input file not found",
             }
             assert mock_error_result["status"] == "error"

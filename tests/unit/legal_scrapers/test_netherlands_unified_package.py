@@ -9,7 +9,10 @@ pytest.importorskip("pyarrow")
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders.common import write_json, write_parquet
+from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders.common import (
+    write_json,
+    write_parquet,
+)
 from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders.unified_package import (
     _reset_output_dir,
     build_unified_wetwijzer_package,
@@ -18,7 +21,9 @@ from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders.unifie
 from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.upload import resolve_targets
 
 
-def test_build_unified_wetwijzer_package_preserves_layers_and_adds_relationships(tmp_path: Path) -> None:
+def test_build_unified_wetwijzer_package_preserves_layers_and_adds_relationships(
+    tmp_path: Path,
+) -> None:
     base_dir, vector_dir, bm25_dir, kg_dir, reports_dir = _write_source_packages(tmp_path)
     out_dir = tmp_path / "unified"
 
@@ -57,11 +62,18 @@ def test_build_unified_wetwijzer_package_preserves_layers_and_adds_relationships
 
 def test_unified_upload_target_is_explicit_not_part_of_legacy_all() -> None:
     assert [target.key for target in resolve_targets(["unified"])] == ["unified"]
-    assert [target.key for target in resolve_targets(["all"])] == ["base", "vector", "bm25", "knowledge-graph"]
+    assert [target.key for target in resolve_targets(["all"])] == [
+        "base",
+        "vector",
+        "bm25",
+        "knowledge-graph",
+    ]
 
 
 def test_reset_output_dir_refuses_unsafe_existing_directory() -> None:
-    with pytest.raises(ValueError, match="Refusing to reset unsafe unified package output directory"):
+    with pytest.raises(
+        ValueError, match="Refusing to reset unsafe unified package output directory"
+    ):
         _reset_output_dir(Path("/"))
 
 
@@ -74,7 +86,10 @@ def test_validate_unified_package_reports_missing_required_files(tmp_path: Path)
 
     assert validation["ok"] is False
     assert "data/articles.parquet" in validation["checks"]["missing_required_files"]
-    assert any("Missing required file: data/articles.parquet" == message for message in validation["messages"])
+    assert any(
+        "Missing required file: data/articles.parquet" == message
+        for message in validation["messages"]
+    )
 
 
 def test_validate_unified_package_reports_empty_articles_parquet(tmp_path: Path) -> None:
@@ -89,7 +104,9 @@ def test_validate_unified_package_reports_empty_articles_parquet(tmp_path: Path)
         out_dir=out_dir,
     )
     pq.write_table(
-        pa.table({"cid": pa.array([], type=pa.string()), "law_cid": pa.array([], type=pa.string())}),
+        pa.table(
+            {"cid": pa.array([], type=pa.string()), "law_cid": pa.array([], type=pa.string())}
+        ),
         out_dir / "data/articles.parquet",
         compression="zstd",
     )
@@ -175,16 +192,31 @@ def _write_source_packages(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path
         {"cid": "bafyarticle2", "record_type": "article", "law_identifier": "BWBRTEST"},
     ]
     vector_rows = [
-        {"cid": row["cid"], "source_cid": row["cid"], "law_cid": row.get("law_cid") or row["cid"], "record_type": row["record_type"]}
+        {
+            "cid": row["cid"],
+            "source_cid": row["cid"],
+            "law_cid": row.get("law_cid") or row["cid"],
+            "record_type": row["record_type"],
+        }
         for row in [laws[0], *articles]
     ]
     bm25_docs = [
-        {"cid": row["cid"], "source_cid": row["cid"], "law_cid": row.get("law_cid") or row["cid"], "record_type": row["record_type"]}
+        {
+            "cid": row["cid"],
+            "source_cid": row["cid"],
+            "law_cid": row.get("law_cid") or row["cid"],
+            "record_type": row["record_type"],
+        }
         for row in [laws[0], *articles]
     ]
     bm25_terms = [{"term": "test", "doc_freq": 1, "idf": 1.0, "postings_count": 1, "postings": []}]
     kg_nodes = [
-        {"cid": row["cid"], "source_cid": row["cid"], "record_type": row["record_type"], "label": row.get("citation") or row.get("title")}
+        {
+            "cid": row["cid"],
+            "source_cid": row["cid"],
+            "record_type": row["record_type"],
+            "label": row.get("citation") or row.get("title"),
+        }
         for row in [laws[0], *articles]
     ]
     kg_edges = [
@@ -201,8 +233,13 @@ def _write_source_packages(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path
     write_parquet(base_dir / "parquet/laws/train-00000-of-00001.parquet", laws)
     write_parquet(base_dir / "parquet/articles/train-00000-of-00001.parquet", articles)
     write_parquet(base_dir / "parquet/cid_index/train-00000-of-00001.parquet", cid_index)
-    write_json(base_dir / "data/metadata/netherlands_laws_run_metadata_latest.json", {"scraped_at": "2026-06-27T00:00:00"})
-    write_json(base_dir / "dataset_manifest.json", {"records": {"laws": 1, "articles": 2, "cid_index": 3}})
+    write_json(
+        base_dir / "data/metadata/netherlands_laws_run_metadata_latest.json",
+        {"scraped_at": "2026-06-27T00:00:00"},
+    )
+    write_json(
+        base_dir / "dataset_manifest.json", {"records": {"laws": 1, "articles": 2, "cid_index": 3}}
+    )
 
     write_parquet(vector_dir / "parquet/mapping/train-00000-of-00001.parquet", vector_rows)
     (vector_dir / "artifacts").mkdir(parents=True)
@@ -222,14 +259,25 @@ def _write_source_packages(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path
     write_json(kg_dir / "artifacts/metadata.json", {"records": {"nodes": 3, "edges": 1}})
     write_json(kg_dir / "dataset_manifest.json", {"records": {"nodes": 3, "edges": 1}})
     (kg_dir / "data/graph").mkdir(parents=True)
-    (kg_dir / "data/graph/ipfs_netherlands_laws_kg.jsonld").write_text('{"@graph":[]}', encoding="utf-8")
+    (kg_dir / "data/graph/ipfs_netherlands_laws_kg.jsonld").write_text(
+        '{"@graph":[]}', encoding="utf-8"
+    )
 
     write_json(
         reports_dir / "coverage_report_quality_audit_after_verify_20260627.json",
-        {"counts": {"complete": 1, "total_discovered_identifiers": 10, "remaining": 9}, "percent_complete": 10.0},
+        {
+            "counts": {"complete": 1, "total_discovered_identifiers": 10, "remaining": 9},
+            "percent_complete": 10.0,
+        },
     )
-    write_json(reports_dir / "integrity_report_quality_audit_final_20260627.json", {"ok": True, "issue_counts": {}})
-    write_json(reports_dir / "quality_audit/quality_report.json", {"quality_gate_recommendation": {"current_gate_pass": True}})
+    write_json(
+        reports_dir / "integrity_report_quality_audit_final_20260627.json",
+        {"ok": True, "issue_counts": {}},
+    )
+    write_json(
+        reports_dir / "quality_audit/quality_report.json",
+        {"quality_gate_recommendation": {"current_gate_pass": True}},
+    )
     write_json(reports_dir / "quality_audit/duplicate_report.json", {})
     write_json(reports_dir / "quality_audit/parser_noise_report.json", {})
     write_json(reports_dir / "quality_audit/hierarchy_report.json", {})

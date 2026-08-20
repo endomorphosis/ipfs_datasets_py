@@ -59,6 +59,7 @@ _SUBMODULE_EXPORTS = {
     "observability",
     "security",
     "security_models",
+    "semantic",
     "submodule_registry",
     "tactician",
     "TDFOL",
@@ -101,11 +102,11 @@ __all__ = sorted(_SUBMODULE_EXPORTS | _REGISTRY_EXPORTS | _PROFILE_D_EXPORTS | _
 def __getattr__(name):
     """
     Provide backward compatibility for tools/ imports with deprecation warnings.
-    
+
     This allows old code like:
         from ipfs_datasets_py.logic import tools
         tools.deontic_logic_core.DeonticOperator
-    
+
     To still work but with a deprecation warning.
     """
     if name == "tools":
@@ -114,7 +115,7 @@ def __getattr__(name):
             "Use logic.integration or module-specific imports (logic.fol, logic.deontic) instead. "
             "See MIGRATION_GUIDE.md for details.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         # Redirect to integration module without recursive package getattr.
         module = importlib.import_module(".integration", __name__)
@@ -143,5 +144,5 @@ def __getattr__(name):
         module = importlib.import_module(f".{name}", __name__)
         globals()[name] = module
         return module
-    
+
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

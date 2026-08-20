@@ -6,7 +6,12 @@ evaluate_batch with lower latency for large batches.
 
 import time
 import pytest
-from ipfs_datasets_py.optimizers.graphrag import OntologyCritic, OntologyGenerationContext, DataType, ExtractionStrategy
+from ipfs_datasets_py.optimizers.graphrag import (
+    OntologyCritic,
+    OntologyGenerationContext,
+    DataType,
+    ExtractionStrategy,
+)
 
 
 @pytest.fixture
@@ -66,9 +71,7 @@ class TestEvaluateBatchParallel:
 
     def test_parallel_vs_sequential_same_results(self, critic, context, sample_ontologies):
         """Parallel evaluation should produce same scores as sequential."""
-        seq_result = critic.evaluate_batch(
-            sample_ontologies, context, source_data="test data"
-        )
+        seq_result = critic.evaluate_batch(sample_ontologies, context, source_data="test data")
         par_result = critic.evaluate_batch_parallel(
             sample_ontologies, context, source_data="test data", max_workers=2
         )
@@ -95,9 +98,7 @@ class TestEvaluateBatchParallel:
     def test_single_item_batch_parallel(self, critic, context, sample_ontologies):
         """Parallel evaluation of single item should work correctly."""
         single_onto = sample_ontologies[:1]
-        result = critic.evaluate_batch_parallel(
-            single_onto, context, max_workers=1
-        )
+        result = critic.evaluate_batch_parallel(single_onto, context, max_workers=1)
 
         assert result["count"] == 1
         assert len(result["scores"]) == 1
@@ -120,12 +121,8 @@ class TestEvaluateBatchParallel:
 
     def test_max_workers_parameter(self, critic, context, sample_ontologies):
         """Test with different max_workers values."""
-        result_1 = critic.evaluate_batch_parallel(
-            sample_ontologies, context, max_workers=1
-        )
-        result_4 = critic.evaluate_batch_parallel(
-            sample_ontologies, context, max_workers=4
-        )
+        result_1 = critic.evaluate_batch_parallel(sample_ontologies, context, max_workers=1)
+        result_4 = critic.evaluate_batch_parallel(sample_ontologies, context, max_workers=4)
 
         # Results should be equivalent regardless of worker count
         assert result_1["count"] == result_4["count"]
@@ -158,9 +155,7 @@ class TestEvaluateBatchParallel:
             large_batch.append(onto)
 
         seq_result = critic.evaluate_batch(large_batch, context)
-        par_result = critic.evaluate_batch_parallel(
-            large_batch, context, max_workers=4
-        )
+        par_result = critic.evaluate_batch_parallel(large_batch, context, max_workers=4)
 
         # Same ontologies, same context → same aggregates
         assert seq_result["count"] == par_result["count"] == 20
@@ -176,15 +171,11 @@ class TestEvaluateBatchParallel:
         ]
 
         # Should not crash; should evaluate valid ones
-        result = critic.evaluate_batch_parallel(
-            bad_ontologies, context, max_workers=2
-        )
+        result = critic.evaluate_batch_parallel(bad_ontologies, context, max_workers=2)
         # At minimum should have tried all
         assert result["count"] <= len(bad_ontologies)
 
-    def test_parallel_respects_source_data_parameter(
-        self, critic, context, sample_ontologies
-    ):
+    def test_parallel_respects_source_data_parameter(self, critic, context, sample_ontologies):
         """Parallel evaluation should pass source_data to each evaluation."""
         source_text = "Important legal document with specific requirements"
 
@@ -202,9 +193,7 @@ class TestEvaluateBatchParallel:
 
     def test_scores_list_order_preserved_parallel(self, critic, context, sample_ontologies):
         """Parallel evaluation should preserve order of input ontologies in output."""
-        result = critic.evaluate_batch_parallel(
-            sample_ontologies, context, max_workers=2
-        )
+        result = critic.evaluate_batch_parallel(sample_ontologies, context, max_workers=2)
 
         # Should have same number of scores as input ontologies
         assert len(result["scores"]) == len(sample_ontologies)
@@ -250,7 +239,7 @@ class TestLatencyComparison:
                 "relationships": [
                     {
                         "source_id": f"e{i}_{j}",
-                        "target_id": f"e{i}_{(j+1) % 5}",
+                        "target_id": f"e{i}_{(j + 1) % 5}",
                         "type": "links_to",
                         "confidence": 0.8,
                     }
@@ -264,9 +253,7 @@ class TestLatencyComparison:
         seq_time = time.time() - start_seq
 
         start_par = time.time()
-        par_result = critic.evaluate_batch_parallel(
-            large_batch, context, max_workers=4
-        )
+        par_result = critic.evaluate_batch_parallel(large_batch, context, max_workers=4)
         par_time = time.time() - start_par
 
         # Results should be equivalent

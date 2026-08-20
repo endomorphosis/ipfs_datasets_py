@@ -112,18 +112,27 @@ def test_packet_002505_pairs_are_registered_across_ambiguity_policies() -> None:
 
 
 def test_packet_002505_refined_buffers_cover_evidence_margins() -> None:
-    assert compiler_weak_typed_self_family_cue_margin_buffer(
-        ModalLogicFamily.DEONTIC.value,
-        ModalLogicFamily.DEONTIC.value,
-    ) >= 0.19
-    assert compiler_refined_modal_family_cue_margin_buffer(
-        ModalLogicFamily.DEONTIC.value,
-        ModalLogicFamily.FRAME.value,
-    ) >= 0.90
-    assert compiler_refined_modal_family_cue_margin_buffer(
-        ModalLogicFamily.FRAME.value,
-        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-    ) >= 1.03
+    assert (
+        compiler_weak_typed_self_family_cue_margin_buffer(
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.DEONTIC.value,
+        )
+        >= 0.19
+    )
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer(
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.FRAME.value,
+        )
+        >= 0.90
+    )
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer(
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        )
+        >= 1.03
+    )
 
 
 def test_compiler_exposes_packet_002505_explicit_adaptive_ambiguities(
@@ -165,9 +174,7 @@ def test_compiler_exposes_packet_002505_explicit_adaptive_ambiguities(
         source="unit_test",
         normalized_text="",
     )
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     for predicted_family, target_family, family_margin, expected_type in evidence_cases:
         ranking = _mock_adaptive_ranking(

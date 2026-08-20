@@ -1,6 +1,7 @@
 """
 Phase B2 unit tests for media_tools/ (ffmpeg_convert, ffmpeg_info, ytdlp_download).
 """
+
 from __future__ import annotations
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -10,6 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 # ffmpeg_convert
 # ---------------------------------------------------------------------------
 
+
 class TestFfmpegConvert:
     """Tests for the ffmpeg_convert async tool."""
 
@@ -17,6 +19,7 @@ class TestFfmpegConvert:
     async def test_missing_input_returns_error(self):
         """Passing an empty input path returns an error dict."""
         from ipfs_datasets_py.mcp_server.tools.media_tools.ffmpeg_convert import ffmpeg_convert
+
         result = await ffmpeg_convert(input_file="", output_file="/tmp/out.mp4")
         assert isinstance(result, dict)
         # either an error key or success=False
@@ -35,6 +38,7 @@ class TestFfmpegConvert:
             return_value=mock_wrapper,
         ):
             from ipfs_datasets_py.mcp_server.tools.media_tools.ffmpeg_convert import ffmpeg_convert
+
             result = await ffmpeg_convert(
                 input_file="/tmp/in.mp4",
                 output_file="/tmp/out.webm",
@@ -54,9 +58,8 @@ class TestFfmpegConvert:
             return_value=mock_wrapper,
         ):
             from ipfs_datasets_py.mcp_server.tools.media_tools.ffmpeg_convert import ffmpeg_convert
-            result = await ffmpeg_convert(
-                input_file="/tmp/in.mp4", output_file="/tmp/out.webm"
-            )
+
+            result = await ffmpeg_convert(input_file="/tmp/in.mp4", output_file="/tmp/out.webm")
 
         assert isinstance(result, dict)
         assert "error" in result or result.get("success") is False
@@ -65,6 +68,7 @@ class TestFfmpegConvert:
 # ---------------------------------------------------------------------------
 # ffmpeg_analyze  (via ffmpeg_info thin wrapper OR ffmpeg_convert module)
 # ---------------------------------------------------------------------------
+
 
 class TestFfmpegAnalyze:
     """Tests for the ffmpeg_analyze tool in ffmpeg_convert.py."""
@@ -82,6 +86,7 @@ class TestFfmpegAnalyze:
             return_value=mock_wrapper,
         ):
             from ipfs_datasets_py.mcp_server.tools.media_tools.ffmpeg_convert import ffmpeg_analyze
+
             result = await ffmpeg_analyze(input_file="/tmp/video.mp4")
 
         assert isinstance(result, dict)
@@ -97,6 +102,7 @@ class TestFfmpegAnalyze:
             return_value=mock_wrapper,
         ):
             from ipfs_datasets_py.mcp_server.tools.media_tools.ffmpeg_convert import ffmpeg_analyze
+
             result = await ffmpeg_analyze(input_file="/missing/file.mp4")
 
         assert isinstance(result, dict)
@@ -105,6 +111,7 @@ class TestFfmpegAnalyze:
 # ---------------------------------------------------------------------------
 # ytdlp_download (thin wrapper)
 # ---------------------------------------------------------------------------
+
 
 class TestYtdlpDownload:
     """Tests for ytdlp_download_video thin wrapper."""
@@ -119,6 +126,7 @@ class TestYtdlpDownload:
             from ipfs_datasets_py.mcp_server.tools.media_tools.ytdlp_download import (
                 ytdlp_download_video,
             )
+
             result = await ytdlp_download_video(url="https://example.com/v")
 
         assert isinstance(result, dict)

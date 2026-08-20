@@ -6,17 +6,20 @@ Methods under test:
   - OntologyPipeline.run_trend(n)
   - OntologyLearningAdapter.feedback_above_median()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
 def _make_result(entities):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities,
         relationships=[],
@@ -28,16 +31,19 @@ def _make_result(entities):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -48,7 +54,10 @@ def _push_run(p, score):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -65,6 +74,7 @@ def _ont(entities, rels):
 # ---------------------------------------------------------------------------
 # OntologyGenerator.entity_confidence_variance
 # ---------------------------------------------------------------------------
+
 
 class TestEntityConfidenceVariance:
     def test_empty_returns_zero(self):
@@ -100,6 +110,7 @@ class TestEntityConfidenceVariance:
 # ---------------------------------------------------------------------------
 # LogicValidator.cycle_count
 # ---------------------------------------------------------------------------
+
 
 class TestCycleCount:
     def test_empty_graph_no_cycles(self):
@@ -141,6 +152,7 @@ class TestCycleCount:
 # OntologyPipeline.run_trend
 # ---------------------------------------------------------------------------
 
+
 class TestRunTrend:
     def test_empty_returns_flat(self):
         p = _make_pipeline()
@@ -173,6 +185,7 @@ class TestRunTrend:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_above_median
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackAboveMedian:
     def test_empty_returns_empty(self):

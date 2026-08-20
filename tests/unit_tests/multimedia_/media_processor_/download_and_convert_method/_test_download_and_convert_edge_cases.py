@@ -1,8 +1,4 @@
-
-
-
 class TestDownloadAndConvertInvalidInputs:
-
     def test_download_and_convert_invalid_url_type(self):
         pass
 
@@ -17,6 +13,5 @@ class TestDownloadAndConvertInvalidInputs:
 
 
 class TestDownloadAndConvertEdgeCases:
-
     def test_download_and_convert_(self):
         pass

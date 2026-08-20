@@ -21,6 +21,7 @@ import types
 
 import pytest
 
+
 # ---------------------------------------------------------------------------
 # Minimal module stubs so heavy optional deps don't block import
 # ---------------------------------------------------------------------------
@@ -56,8 +57,10 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator 
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 class _FakeEntry:
     """Minimal history entry with average_score."""
+
     def __init__(self, s: float) -> None:
         self.average_score = s
 
@@ -112,8 +115,12 @@ def _rel(src, tgt, rtype="related"):
 
 def _make_score(**kwargs):
     dims = {
-        "completeness": 0.5, "consistency": 0.5, "clarity": 0.5,
-        "granularity": 0.5, "relationship_coherence": 0.5, "domain_alignment": 0.5,
+        "completeness": 0.5,
+        "consistency": 0.5,
+        "clarity": 0.5,
+        "granularity": 0.5,
+        "relationship_coherence": 0.5,
+        "domain_alignment": 0.5,
     }
     dims.update(kwargs)
     s = object.__new__(CriticScore)
@@ -127,6 +134,7 @@ _lv = LogicValidator()
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_range_ratio
 # ---------------------------------------------------------------------------
+
 
 class TestScoreRangeRatio:
     """Tests for OntologyOptimizer.score_range_ratio()."""
@@ -181,6 +189,7 @@ class TestScoreRangeRatio:
 # OntologyCritic.score_dimension_skewness
 # ---------------------------------------------------------------------------
 
+
 class TestScoreDimensionSkewness:
     """Tests for OntologyCritic.score_dimension_skewness(score)."""
 
@@ -193,8 +202,12 @@ class TestScoreDimensionSkewness:
         # five zeros and one large value → right-skewed (positive skewness)
         critic = _make_critic()
         s = _make_score(
-            completeness=0.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=1.0,
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=1.0,
         )
         skew = critic.score_dimension_skewness(s)
         assert skew > 0.0
@@ -203,8 +216,12 @@ class TestScoreDimensionSkewness:
         # five ones and one zero → left-skewed (negative skewness)
         critic = _make_critic()
         s = _make_score(
-            completeness=1.0, consistency=1.0, clarity=1.0,
-            granularity=1.0, relationship_coherence=1.0, domain_alignment=0.0,
+            completeness=1.0,
+            consistency=1.0,
+            clarity=1.0,
+            granularity=1.0,
+            relationship_coherence=1.0,
+            domain_alignment=0.0,
         )
         skew = critic.score_dimension_skewness(s)
         assert skew < 0.0
@@ -213,8 +230,12 @@ class TestScoreDimensionSkewness:
         # values 0.0, 0.2, 0.4, 0.6, 0.8, 1.0 → symmetric → skewness ≈ 0
         critic = _make_critic()
         s = _make_score(
-            completeness=0.0, consistency=0.2, clarity=0.4,
-            granularity=0.6, relationship_coherence=0.8, domain_alignment=1.0,
+            completeness=0.0,
+            consistency=0.2,
+            clarity=0.4,
+            granularity=0.6,
+            relationship_coherence=0.8,
+            domain_alignment=1.0,
         )
         skew = critic.score_dimension_skewness(s)
         assert abs(skew) < 1e-9
@@ -227,8 +248,12 @@ class TestScoreDimensionSkewness:
     def test_all_zero_dims_zero_variance(self):
         critic = _make_critic()
         s = _make_score(
-            completeness=0.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         assert critic.score_dimension_skewness(s) == 0.0
 
@@ -236,16 +261,20 @@ class TestScoreDimensionSkewness:
         # Manual: vals=[1,0,0,0,0,0]; mean=1/6; compute expected skew
         critic = _make_critic()
         s = _make_score(
-            completeness=1.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         vals = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         n = 6
         mean = sum(vals) / n
         variance = sum((v - mean) ** 2 for v in vals) / n
-        std = variance ** 0.5
+        std = variance**0.5
         m3 = sum((v - mean) ** 3 for v in vals) / n
-        expected = m3 / (std ** 3)
+        expected = m3 / (std**3)
         result = critic.score_dimension_skewness(s)
         assert abs(result - expected) < 1e-9
 
@@ -261,6 +290,7 @@ class TestScoreDimensionSkewness:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.entity_confidence_below_threshold
 # ---------------------------------------------------------------------------
+
 
 class TestEntityConfidenceBelowThreshold:
     """Tests for OntologyGenerator.entity_confidence_below_threshold()."""
@@ -344,6 +374,7 @@ class TestEntityConfidenceBelowThreshold:
 # OntologyLearningAdapter.feedback_improvement_streaks
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackImprovementStreaks:
     """Tests for OntologyLearningAdapter.feedback_improvement_streaks()."""
 
@@ -399,6 +430,7 @@ class TestFeedbackImprovementStreaks:
 # ---------------------------------------------------------------------------
 # LogicValidator.strongly_connected_component_sizes
 # ---------------------------------------------------------------------------
+
 
 class TestStronglyConnectedComponentSizes:
     """Tests for LogicValidator.strongly_connected_component_sizes(ontology)."""
@@ -485,6 +517,7 @@ class TestStronglyConnectedComponentSizes:
 # ---------------------------------------------------------------------------
 # Stale smoke-tests for OntologyPipeline.run_score_acceleration
 # ---------------------------------------------------------------------------
+
 
 class TestRunScoreAcceleration:
     """Smoke-tests confirming run_score_acceleration already exists."""

@@ -69,6 +69,7 @@ This document outlines the comprehensive plan to create a **true neurosymbolic a
 **Verification:**
 ```python
 from ipfs_datasets_py.logic.TDFOL import parse_tdfol, create_obligation
+
 formula = parse_tdfol("P(x)")
 obligation = create_obligation(formula)
 assert obligation.to_string() == "O(P(x))"
@@ -229,15 +230,13 @@ class FormulaEmbedder:
 ```python
 class NeuralGuidedSearch:
     """Guide proof search using neural networks."""
-    
+
     def select_next_rule(
-        self, 
-        current_state: Formula,
-        available_rules: List[InferenceRule]
+        self, current_state: Formula, available_rules: List[InferenceRule]
     ) -> InferenceRule:
         """
         Select most promising inference rule.
-        
+
         Strategy:
         1. Embed current formula state
         2. Embed each rule's pattern
@@ -245,13 +244,13 @@ class NeuralGuidedSearch:
         4. Return highest-scoring rule
         """
         state_emb = self.embedder.embed(current_state)
-        
+
         scores = []
         for rule in available_rules:
             rule_emb = self.embedder.embed_rule(rule)
             similarity = cosine_similarity(state_emb, rule_emb)
             scores.append(similarity)
-        
+
         best_idx = np.argmax(scores)
         return available_rules[best_idx]
 ```
@@ -260,25 +259,21 @@ class NeuralGuidedSearch:
 ```python
 class HybridConfidence:
     """Combine symbolic and neural confidence."""
-    
-    def score(
-        self, 
-        proof: ProofResult,
-        formula: Formula
-    ) -> float:
+
+    def score(self, proof: ProofResult, formula: Formula) -> float:
         """
         Compute hybrid confidence score.
-        
+
         Combines:
         - Symbolic: proof length, rule quality
         - Neural: embedding similarity, pattern match
         """
         # Symbolic confidence (60% weight)
         symbolic = self._symbolic_confidence(proof)
-        
+
         # Neural confidence (40% weight)
         neural = self._neural_confidence(formula, proof)
-        
+
         # Weighted fusion
         return 0.6 * symbolic + 0.4 * neural
 ```
@@ -349,33 +344,24 @@ tests/unit_tests/graphrag/logic_integration/
 ```python
 class LogicAwareKnowledgeGraph(KnowledgeGraph):
     """Knowledge graph with logical annotations."""
-    
-    def add_entity(
-        self, 
-        entity: str,
-        entity_type: Sort,
-        properties: Dict[str, Formula]
-    ):
+
+    def add_entity(self, entity: str, entity_type: Sort, properties: Dict[str, Formula]):
         """Add entity with logical type and properties."""
         # Type checking using TDFOL Sort system
         self.validate_type(entity, entity_type)
-        
+
         # Attach logical properties
         for prop_name, formula in properties.items():
             self.add_property(entity, prop_name, formula)
-    
+
     def add_relation(
-        self,
-        source: str,
-        relation: str,
-        target: str,
-        theorem: Optional[Formula] = None
+        self, source: str, relation: str, target: str, theorem: Optional[Formula] = None
     ):
         """Add relation with optional theorem justification."""
         # Check consistency with existing theorems
         if not self.is_consistent(source, relation, target):
             raise InconsistencyError(...)
-        
+
         # Attach theorem if provided
         if theorem:
             self.attach_theorem(source, relation, target, theorem)
@@ -385,16 +371,13 @@ class LogicAwareKnowledgeGraph(KnowledgeGraph):
 ```python
 class TheoremAugmentedRAG:
     """RAG system enhanced with theorem proving."""
-    
+
     def retrieve(
-        self,
-        query: str,
-        top_k: int = 5,
-        logical_reasoning: bool = True
+        self, query: str, top_k: int = 5, logical_reasoning: bool = True
     ) -> List[RetrievalResult]:
         """
         Retrieve documents with logical reasoning.
-        
+
         Process:
         1. Parse query to TDFOL formula
         2. Retrieve similar theorems from KB
@@ -404,21 +387,19 @@ class TheoremAugmentedRAG:
         """
         # Parse query
         query_formula = self.parse_query(query)
-        
+
         # Retrieve theorems
         theorems = self.kb.retrieve_similar(query_formula, top_k=20)
-        
+
         # Prove implications
         relevant_theorems = []
         for theorem in theorems:
             if self.prover.prove_implies(query_formula, theorem):
                 relevant_theorems.append(theorem)
-        
+
         # Retrieve documents
-        documents = self.doc_store.retrieve_by_theorems(
-            relevant_theorems, top_k=top_k
-        )
-        
+        documents = self.doc_store.retrieve_by_theorems(relevant_theorems, top_k=top_k)
+
         return documents
 ```
 
@@ -426,16 +407,13 @@ class TheoremAugmentedRAG:
 ```python
 class TemporalGraphReasoner:
     """Reason about temporal properties in knowledge graphs."""
-    
+
     def query_temporal(
-        self,
-        subject: str,
-        relation: str,
-        time_constraint: TemporalFormula
+        self, subject: str, relation: str, time_constraint: TemporalFormula
     ) -> List[Tuple[str, datetime]]:
         """
         Query graph with temporal constraints.
-        
+
         Examples:
         - "Who was employed at time t?"
         - "What obligations were active in 2020?"
@@ -443,16 +421,16 @@ class TemporalGraphReasoner:
         """
         # Convert temporal formula to graph query
         query = self._temporal_to_query(time_constraint)
-        
+
         # Execute on temporal graph
         results = self.graph.query_temporal(subject, relation, query)
-        
+
         # Filter by temporal logic
         filtered = []
         for entity, timestamp in results:
             if self._satisfies_temporal(entity, timestamp, time_constraint):
                 filtered.append((entity, timestamp))
-        
+
         return filtered
 ```
 
@@ -526,27 +504,27 @@ tests/integration/neurosymbolic/
 ```python
 class NeurosymbolicGraphRAG:
     """Complete neurosymbolic reasoning system."""
-    
+
     def __init__(
         self,
         tdfol_prover: TDFOLProver,
         knowledge_graph: LogicAwareKnowledgeGraph,
         embedder: FormulaEmbedder,
-        reasoning_coordinator: ReasoningCoordinator
+        reasoning_coordinator: ReasoningCoordinator,
     ):
         self.prover = tdfol_prover
         self.kg = knowledge_graph
         self.embedder = embedder
         self.coordinator = reasoning_coordinator
-    
+
     def query(
         self,
         question: str,
-        reasoning_depth: str = "moderate"  # shallow, moderate, deep
+        reasoning_depth: str = "moderate",  # shallow, moderate, deep
     ) -> AnswerResult:
         """
         Answer question using neurosymbolic reasoning.
-        
+
         Process:
         1. Parse question → TDFOL
         2. Retrieve similar theorems (neural)
@@ -557,33 +535,29 @@ class NeurosymbolicGraphRAG:
         """
         # Step 1: Parse
         query_formula = self.parse_question(question)
-        
+
         # Step 2: Neural retrieval
         similar_theorems = self.retrieve_similar(query_formula, top_k=20)
-        
+
         # Step 3: Symbolic proving
         proved_theorems = []
         for theorem in similar_theorems:
             proof = self.prover.prove(theorem)
             if proof.is_proved():
                 proved_theorems.append((theorem, proof))
-        
+
         # Step 4: Graph query
-        graph_results = self.kg.query_with_theorems(
-            query_formula, proved_theorems
-        )
-        
+        graph_results = self.kg.query_with_theorems(query_formula, proved_theorems)
+
         # Step 5: Generate answer
-        answer = self.coordinator.generate_answer(
-            question, proved_theorems, graph_results
-        )
-        
+        answer = self.coordinator.generate_answer(question, proved_theorems, graph_results)
+
         return AnswerResult(
             answer=answer.text,
             confidence=answer.confidence,
             proof_trees=[p for _, p in proved_theorems],
             evidence=graph_results,
-            reasoning_trace=answer.trace
+            reasoning_trace=answer.trace,
         )
 ```
 
@@ -591,29 +565,29 @@ class NeurosymbolicGraphRAG:
 ```python
 class InteractiveInterface:
     """Interactive CLI/Web interface."""
-    
+
     def run_cli(self):
         """Run command-line interface."""
         print("Neurosymbolic GraphRAG Query System")
         print("=" * 50)
-        
+
         while True:
             query = input("\nQuery> ")
-            if query.lower() in ['quit', 'exit']:
+            if query.lower() in ["quit", "exit"]:
                 break
-            
+
             # Process query
             result = self.system.query(query)
-            
+
             # Display results
             print(f"\nAnswer: {result.answer}")
             print(f"Confidence: {result.confidence:.2f}")
             print(f"\nProof Steps:")
             for i, step in enumerate(result.proof_trees[0].steps):
-                print(f"  {i+1}. {step.justification}")
-            
+                print(f"  {i + 1}. {step.justification}")
+
             # Option to visualize
-            if input("\nVisualize proof tree? (y/n): ").lower() == 'y':
+            if input("\nVisualize proof tree? (y/n): ").lower() == "y":
                 self.visualizer.show_proof_tree(result.proof_trees[0])
 ```
 
@@ -818,16 +792,14 @@ from ipfs_datasets_py.logic.TDFOL import TDFOLProver
 
 # Create logic-enhanced GraphRAG
 engine = GraphRAGQueryEngine(
-    logic_prover=TDFOLProver(),
-    enable_logical_consistency=True,
-    enable_temporal_reasoning=True
+    logic_prover=TDFOLProver(), enable_logical_consistency=True, enable_temporal_reasoning=True
 )
 
 # Query with logical reasoning
 result = engine.query(
     "What legal obligations apply to data processing?",
     logical_reasoning=True,
-    temporal_scope=(start_date, end_date)
+    temporal_scope=(start_date, end_date),
 )
 ```
 
@@ -1105,9 +1077,7 @@ from ipfs_datasets_py.logic.neurosymbolic import SymaiTDFOLBridge
 bridge = SymaiTDFOLBridge()
 
 # Parse with semantic understanding
-formula = bridge.parse_with_semantics(
-    "It is obligatory that always, agents must report violations"
-)
+formula = bridge.parse_with_semantics("It is obligatory that always, agents must report violations")
 # Returns: DeonticFormula(O, TemporalFormula(□, ...))
 
 # Not just a string!
@@ -1146,9 +1116,7 @@ embedder = SymaiFormulaEmbedder()
 
 # Find similar theorems
 similar = embedder.similar_formulas(
-    query=parse_tdfol("O(P(x))"),
-    formula_bank=knowledge_base.get_all_formulas(),
-    top_k=5
+    query=parse_tdfol("O(P(x))"), formula_bank=knowledge_base.get_all_formulas(), top_k=5
 )
 
 for formula, similarity in similar:
@@ -1225,17 +1193,17 @@ graph = builder.build_theorem_graph(knowledge_base.theorems)
 **Current:**
 ```python
 extras_require = {
-    'symbolic': ['symbolicai>=0.13.1'],
+    "symbolic": ["symbolicai>=0.13.1"],
 }
 ```
 
 **Enhanced (Week 3):**
 ```python
 extras_require = {
-    'neurosymbolic': [
-        'symbolicai>=0.13.1',
-        'sentence-transformers>=2.0.0',
-        'faiss-cpu>=1.7.0',
+    "neurosymbolic": [
+        "symbolicai>=0.13.1",
+        "sentence-transformers>=2.0.0",
+        "faiss-cpu>=1.7.0",
     ],
 }
 ```

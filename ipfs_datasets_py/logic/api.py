@@ -693,6 +693,18 @@ _BW133_CONFLICT_LAZY_NAMES = {
     "detect_i18n_conflicts", "I18NConflictResult",
 }
 
+_UI_UX_IR_EXPORT_NAMES = frozenset(
+    {
+        "decode_ui_ir",
+        "canonicalize_ui_ir",
+        "ui_ir_identity",
+        "evaluate_ui_interaction",
+        "UIUXIR_PUBLIC_API_INTERFACE",
+        "UI_UX_IR_SCHEMA_ID",
+        "public_api_manifest",
+    }
+)
+
 # Additive software-verification facade (LFV-G070 / LogicVerificationAPI@1).
 # Symbols are exposed via __getattr__ only so the frozen exact_exports contract
 # in tests/fixtures/logic/api_v1/manifest.json remains unchanged.
@@ -743,6 +755,14 @@ def _lazy_verification_api():
 
 def __getattr__(name: str) -> Any:
     """Lazily expose optional API classes without import-time side effects."""
+    if name in _UI_UX_IR_EXPORT_NAMES:
+        from ipfs_datasets_py.logic import ui_ux_ir as _ui_ux_ir
+
+        if hasattr(_ui_ux_ir, name):
+            value = getattr(_ui_ux_ir, name)
+            globals()[name] = value
+            return value
+        raise AttributeError(f"{name} is not available from ui_ux_ir public API")
     if name in _BW133_LAZY_NAMES:
         _probe_bw133_delegation()
         val = globals().get(name)

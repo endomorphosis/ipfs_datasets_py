@@ -3,6 +3,7 @@ Kubernetes Log Analysis Engine — canonical package module.
 
 Business logic extracted from mcp_server/tools/software_engineering_tools/kubernetes_log_analyzer.py.
 """
+
 from __future__ import annotations
 
 import logging
@@ -112,28 +113,30 @@ def parse_kubernetes_logs(
             result["statistics"]["by_namespace"][namespace] = (
                 result["statistics"]["by_namespace"].get(namespace, 0) + 1
             )
-            result["statistics"]["by_pod"][pod] = (
-                result["statistics"]["by_pod"].get(pod, 0) + 1
-            )
+            result["statistics"]["by_pod"][pod] = result["statistics"]["by_pod"].get(pod, 0) + 1
             if sev in ("ERROR", "FATAL", "CRITICAL"):
-                result["errors"].append({
-                    "namespace": namespace,
-                    "pod": pod,
-                    "severity": sev,
-                    "message": entry["message"][:200],
-                    "timestamp": entry["timestamp"],
-                })
+                result["errors"].append(
+                    {
+                        "namespace": namespace,
+                        "pod": pod,
+                        "severity": sev,
+                        "message": entry["message"][:200],
+                        "timestamp": entry["timestamp"],
+                    }
+                )
 
         error_count = result["statistics"]["by_severity"].get("ERROR", 0)
         fatal_count = result["statistics"]["by_severity"].get("FATAL", 0)
         if error_count + fatal_count > 50:
-            result["recommendations"].append({
-                "severity": "high",
-                "message": (
-                    f"High number of error/fatal entries ({error_count + fatal_count}) detected"
-                ),
-                "action": "Investigate pod and deployment issues",
-            })
+            result["recommendations"].append(
+                {
+                    "severity": "high",
+                    "message": (
+                        f"High number of error/fatal entries ({error_count + fatal_count}) detected"
+                    ),
+                    "action": "Investigate pod and deployment issues",
+                }
+            )
 
         pod_errors: Counter = Counter()
         for err in result["errors"]:
@@ -141,25 +144,31 @@ def parse_kubernetes_logs(
                 pod_errors[err["pod"]] += 1
         for pod, count in pod_errors.most_common(3):
             if count > 10:
-                result["recommendations"].append({
-                    "severity": "medium",
-                    "message": f"Pod '{pod}' has {count} error entries",
-                    "action": f"Check pod '{pod}' status and describe for details",
-                })
+                result["recommendations"].append(
+                    {
+                        "severity": "medium",
+                        "message": f"Pod '{pod}' has {count} error entries",
+                        "action": f"Check pod '{pod}' status and describe for details",
+                    }
+                )
 
         msgs = [e["message"].lower() for e in result["entries"]]
         if any("oomkilled" in m or "out of memory" in m for m in msgs):
-            result["recommendations"].append({
-                "severity": "high",
-                "message": "OOMKilled detected - pods running out of memory",
-                "action": "Increase memory limits or optimize application memory usage",
-            })
+            result["recommendations"].append(
+                {
+                    "severity": "high",
+                    "message": "OOMKilled detected - pods running out of memory",
+                    "action": "Increase memory limits or optimize application memory usage",
+                }
+            )
         if any("crashloopbackoff" in m for m in msgs):
-            result["recommendations"].append({
-                "severity": "high",
-                "message": "CrashLoopBackOff detected - pods failing to start",
-                "action": "Check pod logs and configuration",
-            })
+            result["recommendations"].append(
+                {
+                    "severity": "high",
+                    "message": "CrashLoopBackOff detected - pods failing to start",
+                    "action": "Check pod logs and configuration",
+                }
+            )
 
         return result
 
@@ -175,14 +184,15 @@ def analyze_pod_health(log_data: Dict[str, Any], pod_name: str) -> Dict[str, Any
             return {"success": False, "error": "Invalid log data provided"}
 
         pod_entries = [
-            e for e in log_data.get("entries", [])
-            if pod_name.lower() in e.get("pod", "").lower()
+            e for e in log_data.get("entries", []) if pod_name.lower() in e.get("pod", "").lower()
         ]
         if not pod_entries:
             return {"success": False, "error": f"No entries found for pod '{pod_name}'"}
 
         total = len(pod_entries)
-        errors = len([e for e in pod_entries if e.get("severity") in ("ERROR", "FATAL", "CRITICAL")])
+        errors = len(
+            [e for e in pod_entries if e.get("severity") in ("ERROR", "FATAL", "CRITICAL")]
+        )
         error_rate = (errors / total * 100) if total else 0
         health_score = 100 - min(error_rate * 2, 100)
 

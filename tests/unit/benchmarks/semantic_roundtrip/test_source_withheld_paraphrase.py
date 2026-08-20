@@ -49,9 +49,7 @@ from benchmarks.semantic_roundtrip.realizers.source_withheld_paraphrase import (
 
 ROOT = Path(__file__).resolve().parents[4]
 PILOT_CASES = json.loads(
-    (
-        ROOT / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
-    ).read_text(encoding="utf-8")
+    (ROOT / "tests/fixtures/semantic_roundtrip/pilot_cases.json").read_text(encoding="utf-8")
 )
 
 
@@ -77,11 +75,7 @@ def _request(
     return RealizerRequest(
         canonical_ir=CanonicalRuleIR(tuple(rules)),
         allowed_atom_vocabulary=_vocabulary(),
-        config=(
-            frozen_replacement_config()
-            if config is None
-            else config
-        ),
+        config=(frozen_replacement_config() if config is None else config),
     )
 
 
@@ -125,15 +119,18 @@ def test_frozen_profile_renders_distinct_polarities_and_every_facet() -> None:
     )
     assert "Agency must inspect" not in result.text
     assert " shall " not in result.text
-    assert paraphrase_rule(
-        CanonicalRule(
-            modality="P",
-            actor="court",
-            action="review",
-            object="",
-            temporal=("after_approval",),
+    assert (
+        paraphrase_rule(
+            CanonicalRule(
+                modality="P",
+                actor="court",
+                action="review",
+                object="",
+                temporal=("after_approval",),
+            )
         )
-    ) == "Court may review after approval."
+        == "Court may review after approval."
+    )
 
 
 def test_exception_with_window_must_regression_reparses_exactly() -> None:
@@ -141,9 +138,7 @@ def test_exception_with_window_must_regression_reparses_exactly() -> None:
     vocabulary = AllowedAtomVocabulary.from_dict(case["allowed_atoms"])
     gold = CanonicalRuleIR.from_dict(case["gold_ir"], vocabulary)
     constructor = TypedDeonticCanonicalConstructor()
-    l1_result = constructor.construct(
-        ConstructorRequest(case["source_text"], vocabulary, {})
-    )
+    l1_result = constructor.construct(ConstructorRequest(case["source_text"], vocabulary, {}))
     assert l1_result.status is ComponentStatus.SUCCESS
     assert l1_result.canonical_ir == gold
     assert l1_result.canonical_ir is not None
@@ -159,28 +154,18 @@ def test_exception_with_window_must_regression_reparses_exactly() -> None:
         )
     )
 
-    assert old.text == (
-        "Company a shall submit backup report within 10 days unless emergency."
-    )
-    assert result.text == (
-        "Company a must submit backup report within 10 days unless emergency."
-    )
-    assert source_copy_diagnostics(
-        case["source_text"], old.text
-    )["shared_8gram_precision"] == 1.0
+    assert old.text == ("Company a shall submit backup report within 10 days unless emergency.")
+    assert result.text == ("Company a must submit backup report within 10 days unless emergency.")
+    assert source_copy_diagnostics(case["source_text"], old.text)["shared_8gram_precision"] == 1.0
     repaired_copy = source_copy_diagnostics(case["source_text"], result.text)
     assert repaired_copy["exact_normalized_copy"] is False
     assert repaired_copy["shared_8gram_precision"] == 0.25
     assert repaired_copy["gate_passed"] is True
 
-    l2_result = constructor.construct(
-        ConstructorRequest(result.text, vocabulary, {})
-    )
+    l2_result = constructor.construct(ConstructorRequest(result.text, vocabulary, {}))
     assert l2_result.status is ComponentStatus.SUCCESS
     assert l2_result.canonical_ir == gold
-    assert polarity_diagnostics(gold, l2_result.canonical_ir)[
-        "gate_passed"
-    ] is True
+    assert polarity_diagnostics(gold, l2_result.canonical_ir)["gate_passed"] is True
 
 
 def test_five_case_typed_constructor_round_trip_matches_frozen_baseline() -> None:
@@ -192,9 +177,7 @@ def test_five_case_typed_constructor_round_trip_matches_frozen_baseline() -> Non
     for case in PILOT_CASES:
         vocabulary = AllowedAtomVocabulary.from_dict(case["allowed_atoms"])
         gold = CanonicalRuleIR.from_dict(case["gold_ir"], vocabulary)
-        l1_result = constructor.construct(
-            ConstructorRequest(case["source_text"], vocabulary, {})
-        )
+        l1_result = constructor.construct(ConstructorRequest(case["source_text"], vocabulary, {}))
         assert l1_result.status is ComponentStatus.SUCCESS, case["id"]
         assert l1_result.canonical_ir is not None, case["id"]
         assert not l1_result.canonical_ir.is_empty, case["id"]
@@ -209,9 +192,7 @@ def test_five_case_typed_constructor_round_trip_matches_frozen_baseline() -> Non
         assert t1_result.status is ComponentStatus.SUCCESS, case["id"]
         assert t1_result.text is not None and t1_result.text.strip(), case["id"]
 
-        l2_result = constructor.construct(
-            ConstructorRequest(t1_result.text, vocabulary, {})
-        )
+        l2_result = constructor.construct(ConstructorRequest(t1_result.text, vocabulary, {}))
         assert l2_result.status is ComponentStatus.SUCCESS, case["id"]
         assert l2_result.canonical_ir is not None, case["id"]
         assert not l2_result.canonical_ir.is_empty, case["id"]
@@ -221,15 +202,9 @@ def test_five_case_typed_constructor_round_trip_matches_frozen_baseline() -> Non
         assert copy["exact_normalized_copy"] is False, case["id"]
         assert copy["gate_passed"] is True, case["id"]
         assert polarity["gate_passed"] is True, case["id"]
-        overlap_precisions.append(
-            round(float(copy["shared_8gram_precision"]), 3)
-        )
+        overlap_precisions.append(round(float(copy["shared_8gram_precision"]), 3))
         primary_losses.append(
-            float(
-                compare_semantic_ir(
-                    gold, l2_result.canonical_ir
-                )["semantic_loss"]
-            )
+            float(compare_semantic_ir(gold, l2_result.canonical_ir)["semantic_loss"])
         )
 
     # PLAT-081/082/083 improved typed_deontic projection; shared-8gram and
@@ -259,10 +234,7 @@ def test_exact_copy_and_eight_token_overlap_negative_controls_pass() -> None:
         result.text,
     )
     overlap_control = source_copy_diagnostics(
-        (
-            "The agency shall publish annual report within 10 days after "
-            "approval."
-        ),
+        ("The agency shall publish annual report within 10 days after approval."),
         result.text,
     )
     assert exact_control["exact_normalized_copy"] is False
@@ -293,9 +265,7 @@ def test_accepts_only_the_exact_frozen_replacement_configuration() -> None:
     with pytest.raises(TypeError):
         FROZEN_REPLACEMENT_CONFIG["profile"] = "mutable"  # type: ignore[index]
     assert frozen_replacement_config() == dict(FROZEN_REPLACEMENT_CONFIG)
-    assert FROZEN_REPLACEMENT_CONFIG_CID == cid_for_dag_json(
-        frozen_replacement_config()
-    )
+    assert FROZEN_REPLACEMENT_CONFIG_CID == cid_for_dag_json(frozen_replacement_config())
 
 
 @pytest.mark.parametrize(
@@ -376,9 +346,7 @@ def test_cid_attribution_binds_only_public_inputs_and_t1() -> None:
             conditions=("public_interest",),
         )
     )
-    result, receipt = (
-        SourceWithheldCanonicalParaphraser().realize_with_receipt(request)
-    )
+    result, receipt = SourceWithheldCanonicalParaphraser().realize_with_receipt(request)
 
     assert result.status is ComponentStatus.SUCCESS
     assert result.text == "Court may review notice if public interest."
@@ -396,18 +364,10 @@ def test_cid_attribution_binds_only_public_inputs_and_t1() -> None:
         "output_attribution",
         "receipt_cid",
     }
-    assert receipt["interface"] == (
-        SOURCE_WITHHELD_PARAPHRASE_ATTRIBUTION_INTERFACE
-    )
-    assert receipt["schema_version"] == (
-        SOURCE_WITHHELD_PARAPHRASE_ATTRIBUTION_SCHEMA
-    )
-    assert receipt["realizer_identity"] == (
-        SOURCE_WITHHELD_CANONICAL_PARAPHRASER_INTERFACE
-    )
-    assert receipt["rendering_spec_cid"] == (
-        SOURCE_WITHHELD_PARAPHRASE_RENDERING_SPEC_CID
-    )
+    assert receipt["interface"] == (SOURCE_WITHHELD_PARAPHRASE_ATTRIBUTION_INTERFACE)
+    assert receipt["schema_version"] == (SOURCE_WITHHELD_PARAPHRASE_ATTRIBUTION_SCHEMA)
+    assert receipt["realizer_identity"] == (SOURCE_WITHHELD_CANONICAL_PARAPHRASER_INTERFACE)
+    assert receipt["rendering_spec_cid"] == (SOURCE_WITHHELD_PARAPHRASE_RENDERING_SPEC_CID)
     assert receipt["source_withheld"] is True
     assert receipt["observed_input_fields"] == [
         "canonical_ir",
@@ -415,12 +375,8 @@ def test_cid_attribution_binds_only_public_inputs_and_t1() -> None:
         "config",
     ]
     assert receipt["input_attribution"] == {
-        "canonical_l1_cid": cid_for_dag_json(
-            request.canonical_ir.to_dict()
-        ),
-        "public_closed_vocabulary_cid": cid_for_dag_json(
-            request.allowed_atom_vocabulary.to_dict()
-        ),
+        "canonical_l1_cid": cid_for_dag_json(request.canonical_ir.to_dict()),
+        "public_closed_vocabulary_cid": cid_for_dag_json(request.allowed_atom_vocabulary.to_dict()),
         "frozen_replacement_config_cid": FROZEN_REPLACEMENT_CONFIG_CID,
         "public_request_cid": cid_for_dag_json(request.to_payload()),
     }
@@ -431,9 +387,7 @@ def test_cid_attribution_binds_only_public_inputs_and_t1() -> None:
     body = dict(receipt)
     receipt_cid = body.pop("receipt_cid")
     assert receipt_cid == cid_for_dag_json(body)
-    assert "a source sentence that must never appear" not in json.dumps(
-        receipt, sort_keys=True
-    )
+    assert "a source sentence that must never appear" not in json.dumps(receipt, sort_keys=True)
 
 
 def test_realizer_is_stateless_and_performs_no_source_or_cache_lookup(
@@ -457,13 +411,9 @@ def test_realizer_is_stateless_and_performs_no_source_or_cache_lookup(
     second = SourceWithheldCanonicalParaphraser().realize(request)
 
     assert first == second
-    assert first.text == (
-        "Agency must not publish records if public interest."
-    )
+    assert first.text == ("Agency must not publish records if public interest.")
     realizer = SourceWithheldCanonicalParaphraser()
-    assert realizer.identity == (
-        SOURCE_WITHHELD_CANONICAL_PARAPHRASER_INTERFACE
-    )
+    assert realizer.identity == (SOURCE_WITHHELD_CANONICAL_PARAPHRASER_INTERFACE)
     assert isinstance(realizer, RoundTripRealizer)
     with pytest.raises(AttributeError):
         realizer.source_text = "unavailable"  # type: ignore[attr-defined]

@@ -167,16 +167,13 @@ This import will be removed in v2.0.0 (August 2026).
 import re
 
 replacements = {
-    'from ipfs_datasets_py.processors.graphrag_processor': 
-        'from ipfs_datasets_py.processors.specialized.graphrag',
-    'from ipfs_datasets_py.processors.pdf_processor': 
-        'from ipfs_datasets_py.processors.specialized.pdf',
-    'from ipfs_datasets_py.processors.batch_processor': 
-        'from ipfs_datasets_py.processors.specialized.batch',
-    'from ipfs_datasets_py.processors.caching': 
-        'from ipfs_datasets_py.processors.infrastructure.caching',
+    "from ipfs_datasets_py.processors.graphrag_processor": "from ipfs_datasets_py.processors.specialized.graphrag",
+    "from ipfs_datasets_py.processors.pdf_processor": "from ipfs_datasets_py.processors.specialized.pdf",
+    "from ipfs_datasets_py.processors.batch_processor": "from ipfs_datasets_py.processors.specialized.batch",
+    "from ipfs_datasets_py.processors.caching": "from ipfs_datasets_py.processors.infrastructure.caching",
     # Add more as needed...
 }
+
 
 def migrate_imports(file_content):
     for old, new in replacements.items():

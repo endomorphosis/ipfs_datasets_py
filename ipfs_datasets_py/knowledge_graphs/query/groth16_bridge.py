@@ -86,13 +86,16 @@ from .zkp import KGZKProver, KGZKVerifier
 # Environment / binary availability helpers
 # ---------------------------------------------------------------------------
 
+
 def groth16_enabled() -> bool:
     """Return *True* if ``IPFS_DATASETS_ENABLE_GROTH16`` opt-in is set.
 
     The accepted values (case-insensitive) are ``1``, ``true``, ``yes``.
     """
     return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "").strip().lower() in {
-        "1", "true", "yes",
+        "1",
+        "true",
+        "yes",
     }
 
 
@@ -119,11 +122,12 @@ def groth16_binary_available(binary_path: Optional[str] = None) -> bool:
     # Fall back to probing the canonical release-build location.
     try:
         from pathlib import Path
+
         # This file lives at: .../knowledge_graphs/query/groth16_bridge.py
         # The Rust crate lives at: .../processors/groth16_backend/
-        kg_query_dir = Path(__file__).resolve().parent          # .../knowledge_graphs/query
-        package_root = kg_query_dir.parents[1]                  # .../ipfs_datasets_py (package)
-        monorepo_root = package_root.parent                     # .../ipfs_datasets_py (repo)
+        kg_query_dir = Path(__file__).resolve().parent  # .../knowledge_graphs/query
+        package_root = kg_query_dir.parents[1]  # .../ipfs_datasets_py (package)
+        monorepo_root = package_root.parent  # .../ipfs_datasets_py (repo)
 
         candidates = [
             package_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
@@ -142,6 +146,7 @@ def groth16_binary_available(binary_path: Optional[str] = None) -> bool:
 # Configuration dataclass
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Groth16KGConfig:
     """Configuration for Groth16-backed Knowledge Graph provers.
@@ -155,6 +160,7 @@ class Groth16KGConfig:
         enable_groth16: When *True*, sets ``IPFS_DATASETS_ENABLE_GROTH16=1``
             in ``os.environ`` before creating the prover (idempotent).
     """
+
     circuit_version: int = 2
     ruleset_id: str = "TDFOL_v1"
     timeout_seconds: int = 30
@@ -165,6 +171,7 @@ class Groth16KGConfig:
 # ---------------------------------------------------------------------------
 # KG → TDFOL_v1 formula mapping
 # ---------------------------------------------------------------------------
+
 
 class KGEntityFormula:
     """Static factory methods that convert KG query concepts to TDFOL_v1
@@ -264,6 +271,7 @@ class KGEntityFormula:
 # Prover / verifier factories
 # ---------------------------------------------------------------------------
 
+
 def create_groth16_kg_prover(
     kg: Any,
     config: Optional[Groth16KGConfig] = None,
@@ -293,6 +301,7 @@ def create_groth16_kg_prover(
 
     try:
         import warnings
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             from ipfs_datasets_py.logic.zkp import ZKPProver as _ZKPProver
@@ -336,6 +345,7 @@ def create_groth16_kg_verifier(
 
     try:
         import warnings
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             from ipfs_datasets_py.logic.zkp.zkp_verifier import ZKPVerifier as _ZKPVerifier
@@ -356,6 +366,7 @@ def create_groth16_kg_verifier(
 # ---------------------------------------------------------------------------
 # Diagnostic helper
 # ---------------------------------------------------------------------------
+
 
 def describe_groth16_status(binary_path: Optional[str] = None) -> Dict[str, Any]:
     """Return a diagnostic dictionary describing the Groth16 backend state.
@@ -394,6 +405,7 @@ def describe_groth16_status(binary_path: Optional[str] = None) -> Dict[str, Any]
                 break
         if resolved_path is None:
             from pathlib import Path
+
             kg_query_dir = Path(__file__).resolve().parent
             package_root = kg_query_dir.parents[1]
             monorepo_root = package_root.parent

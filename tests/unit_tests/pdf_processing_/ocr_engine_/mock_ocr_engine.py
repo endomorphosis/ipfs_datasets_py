@@ -25,7 +25,7 @@ from ipfs_datasets_py.pdf_processing.ocr_engine import (
     SuryaOCR,
     TesseractOCR,
     TrOCREngine,
-    MultiEngineOCR
+    MultiEngineOCR,
 )
 
 from ipfs_datasets_py.pdf_processing.ocr_engine import OCREngine
@@ -34,7 +34,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 from tests.unit_tests.pdf_processing_.ocr_engine_ import REPO_ROOT
@@ -43,8 +43,12 @@ file_path = str(REPO_ROOT / "ipfs_datasets_py" / "pdf_processing" / "ocr_engine.
 md_path = str(REPO_ROOT / "ipfs_datasets_py" / "pdf_processing" / "ocr_engine_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.ocr_engine import (
     EasyOCR,
@@ -52,7 +56,7 @@ from ipfs_datasets_py.pdf_processing.ocr_engine import (
     OCREngine,
     SuryaOCR,
     TesseractOCR,
-    TrOCREngine
+    TrOCREngine,
 )
 
 # Check if each classes methods are accessible:
@@ -88,25 +92,22 @@ except ImportError as e:
 
 class MockOCREngine(OCREngine):
     """Mock OCR engine for testing purposes."""
-    
-    def __init__(self, name: str, available: bool = True, confidence: float = 0.9, text: str = "mock text"):
+
+    def __init__(
+        self, name: str, available: bool = True, confidence: float = 0.9, text: str = "mock text"
+    ):
         self.name = name
         self.available = available
         self.mock_confidence = confidence
         self.mock_text = text
-    
+
     def _initialize(self):
         pass  # Already set in __init__
-    
+
     def extract_text(self, image_data: bytes):
         if not self.available:
             raise RuntimeError(f"{self.name} not available")
-        return {
-            'text': self.mock_text,
-            'confidence': self.mock_confidence,
-            'engine': self.name
-        }
-    
+        return {"text": self.mock_text, "confidence": self.mock_confidence, "engine": self.name}
+
     def is_available(self):
         return self.available
-

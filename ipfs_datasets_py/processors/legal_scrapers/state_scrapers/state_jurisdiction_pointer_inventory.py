@@ -19,12 +19,62 @@ import duckdb
 
 
 STATE_AND_TERRITORY_CODES: Set[str] = {
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
-    "DC", "AS", "GU", "MP", "PR", "VI",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC",
+    "AS",
+    "GU",
+    "MP",
+    "PR",
+    "VI",
 }
 
 
@@ -32,7 +82,9 @@ def _norm(text: str) -> str:
     return (text or "").strip().lower()
 
 
-def _load_jurisdiction_domains(agencies_jsonl: Path) -> Tuple[Dict[str, Set[str]], Dict[str, List[str]]]:
+def _load_jurisdiction_domains(
+    agencies_jsonl: Path,
+) -> Tuple[Dict[str, Set[str]], Dict[str, List[str]]]:
     by_jurisdiction: Dict[str, Set[str]] = {code: set() for code in STATE_AND_TERRITORY_CODES}
     domain_to_codes: Dict[str, Set[str]] = {}
 
@@ -94,7 +146,9 @@ def _write_csv(path: Path, headers: Sequence[str], rows: Iterable[Sequence[objec
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Build per-jurisdiction pointer inventories from pointers.parquet")
+    parser = argparse.ArgumentParser(
+        description="Build per-jurisdiction pointer inventories from pointers.parquet"
+    )
     parser.add_argument(
         "--pointers-parquet",
         type=Path,
@@ -228,13 +282,26 @@ def run(argv: Sequence[str] | None = None) -> Dict[str, object]:
         for row in summary_rows
     }
 
-    domain_count_map = {code: len(domains_by_jurisdiction.get(code, set())) for code in sorted(STATE_AND_TERRITORY_CODES)}
-    missing_jurisdictions = [code for code in sorted(STATE_AND_TERRITORY_CODES) if summary_map.get(code, {}).get("pointer_count", 0) == 0]
+    domain_count_map = {
+        code: len(domains_by_jurisdiction.get(code, set()))
+        for code in sorted(STATE_AND_TERRITORY_CODES)
+    }
+    missing_jurisdictions = [
+        code
+        for code in sorted(STATE_AND_TERRITORY_CODES)
+        if summary_map.get(code, {}).get("pointer_count", 0) == 0
+    ]
 
     summary_csv = out_dir / "jurisdiction_pointer_counts.csv"
     _write_csv(
         summary_csv,
-        headers=["jurisdiction", "agency_domain_count", "matched_domain_count", "pointer_count", "distinct_url_count"],
+        headers=[
+            "jurisdiction",
+            "agency_domain_count",
+            "matched_domain_count",
+            "pointer_count",
+            "distinct_url_count",
+        ],
         rows=[
             (
                 code,
@@ -279,7 +346,9 @@ def run(argv: Sequence[str] | None = None) -> Dict[str, object]:
         "agencies_jsonl": str(agencies_jsonl),
         "out_dir": str(out_dir),
         "write_partitioned_parquet": bool(args.write_partitioned_parquet),
-        "partitioned_parquet_dir": str(parquet_dataset_dir) if args.write_partitioned_parquet else None,
+        "partitioned_parquet_dir": str(parquet_dataset_dir)
+        if args.write_partitioned_parquet
+        else None,
         "write_url_lists": bool(args.write_url_lists),
         "url_lists_dir": str(url_lists_dir) if args.write_url_lists else None,
         "url_list_files": url_list_outputs,
@@ -304,7 +373,9 @@ def run(argv: Sequence[str] | None = None) -> Dict[str, object]:
                 "summary_csv": str(summary_csv),
                 "with_pointers": manifest["coverage"]["with_pointers"],
                 "missing_jurisdictions": missing_jurisdictions,
-                "partitioned_parquet_dir": str(parquet_dataset_dir) if args.write_partitioned_parquet else None,
+                "partitioned_parquet_dir": str(parquet_dataset_dir)
+                if args.write_partitioned_parquet
+                else None,
                 "url_lists_dir": str(url_lists_dir) if args.write_url_lists else None,
             },
             indent=2,

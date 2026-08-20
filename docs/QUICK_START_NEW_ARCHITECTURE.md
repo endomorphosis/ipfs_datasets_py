@@ -42,7 +42,7 @@ from ipfs_datasets_py import UnifiedGraphRAGProcessor, GraphRAGConfiguration
 config = GraphRAGConfiguration(
     processing_mode="balanced",  # fast, balanced, quality, comprehensive
     enable_web_archiving=True,
-    max_depth=2
+    max_depth=2,
 )
 
 # Initialize processor
@@ -52,10 +52,7 @@ processor = UnifiedGraphRAGProcessor(config=config)
 result = await processor.process_website("https://example.com")
 
 # Query the knowledge graph
-query_result = await processor.process_query(
-    "What is this website about?",
-    context=result
-)
+query_result = await processor.process_query("What is this website about?", context=result)
 ```
 
 #### 2. Multimedia Processing
@@ -78,7 +75,7 @@ thumbnail = ffmpeg.extract_frame(video_path, timestamp="00:01:00")
 ```python
 from ipfs_datasets_py.data_transformation.serialization import (
     DataInterchangeUtils,
-    DatasetSerializer
+    DatasetSerializer,
 )
 
 # Convert dataset to CAR format
@@ -137,10 +134,12 @@ from ipfs_datasets_py.data_transformation.serialization.car_conversion import Da
 ```python
 # ⚠️ OLD (deprecated - works but shows warning)
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
+
 processor = GraphRAGProcessor()
 
 # ✅ NEW (unified processor)
 from ipfs_datasets_py import UnifiedGraphRAGProcessor, GraphRAGConfiguration
+
 config = GraphRAGConfiguration(processing_mode="balanced")
 processor = UnifiedGraphRAGProcessor(config=config)
 ```
@@ -198,7 +197,7 @@ config = GraphRAGConfiguration(
     processing_mode="quality",
     enable_web_archiving=True,
     archive_services=["internet_archive", "archive_is"],
-    enable_multi_pass_extraction=True
+    enable_multi_pass_extraction=True,
 )
 
 # Process
@@ -256,23 +255,19 @@ result3 = processor.process("Some text to analyze")  # Auto-routed to text proce
 GraphRAGConfiguration(
     # Processing mode
     processing_mode="balanced",  # fast, balanced, quality, comprehensive
-    
     # Web archiving
     enable_web_archiving=True,
     archive_services=["internet_archive", "archive_is", "common_crawl"],
     max_depth=2,  # Crawl depth
-    
     # Content quality
     content_quality_threshold=0.6,
     enable_multi_pass_extraction=True,
-    
     # Knowledge graph
     enable_comprehensive_search=True,
     enable_entity_linking=True,
-    
     # Performance
     batch_size=10,
-    max_workers=4
+    max_workers=4,
 )
 ```
 

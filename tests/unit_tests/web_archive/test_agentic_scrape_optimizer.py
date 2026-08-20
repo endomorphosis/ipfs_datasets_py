@@ -111,24 +111,38 @@ def test_agentic_optimizer_medical_schema_fields() -> None:
     assert sf["schema"] == "medical_v1"
     assert any("hypertension" in line.lower() for line in sf["diagnoses"])
     assert any("10 mg" in d.lower() for d in sf["dosages"])
-    assert any("procedure" in line.lower() or "therapy" in line.lower() for line in sf["procedures"])
+    assert any(
+        "procedure" in line.lower() or "therapy" in line.lower() for line in sf["procedures"]
+    )
 
 
 def test_structured_field_schema_contract_keys() -> None:
-    legal = AgenticScrapeOptimizer(AgenticExtractionConfig(domain="legal")).transform(
-        url="https://example.com/legal",
-        text="TITLE 12\nSection 12-1\n18 U.S.C. 1001\nEffective date: 01/01/2025",
-    ).structured_fields
+    legal = (
+        AgenticScrapeOptimizer(AgenticExtractionConfig(domain="legal"))
+        .transform(
+            url="https://example.com/legal",
+            text="TITLE 12\nSection 12-1\n18 U.S.C. 1001\nEffective date: 01/01/2025",
+        )
+        .structured_fields
+    )
 
-    finance = AgenticScrapeOptimizer(AgenticExtractionConfig(domain="finance")).transform(
-        url="https://example.com/finance",
-        text="Revenue increased 7.5% and ticker MSFT reported USD 500,000.",
-    ).structured_fields
+    finance = (
+        AgenticScrapeOptimizer(AgenticExtractionConfig(domain="finance"))
+        .transform(
+            url="https://example.com/finance",
+            text="Revenue increased 7.5% and ticker MSFT reported USD 500,000.",
+        )
+        .structured_fields
+    )
 
-    medical = AgenticScrapeOptimizer(AgenticExtractionConfig(domain="medical")).transform(
-        url="https://example.com/medical",
-        text="Diagnosis: diabetes. Medication prescribed: insulin 5 mg. Procedure: therapy.",
-    ).structured_fields
+    medical = (
+        AgenticScrapeOptimizer(AgenticExtractionConfig(domain="medical"))
+        .transform(
+            url="https://example.com/medical",
+            text="Diagnosis: diabetes. Medication prescribed: insulin 5 mg. Procedure: therapy.",
+        )
+        .structured_fields
+    )
 
     legal_keys = {
         "schema",

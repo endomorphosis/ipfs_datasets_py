@@ -19,6 +19,7 @@ Usage::
     bridge.detach()          # remove sink
     connect_audit_to_prometheus(audit, exporter)   # shorthand
 """
+
 from __future__ import annotations
 
 import logging
@@ -127,10 +128,7 @@ class AuditMetricsBridge:
         }
 
     def __repr__(self) -> str:  # pragma: no cover
-        return (
-            f"AuditMetricsBridge(attached={self._attached}, "
-            f"forwarded={self._recorded})"
-        )
+        return f"AuditMetricsBridge(attached={self._attached}, forwarded={self._recorded})"
 
 
 # ---------------------------------------------------------------------------

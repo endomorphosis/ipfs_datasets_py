@@ -60,24 +60,24 @@ Feb 2026            May 2026           Jul 2026           Aug 2026
 **Deprecated Imports:**
 ```python
 from ipfs_datasets_py.data_transformation.multimedia import (
-    FFmpegWrapper,      # ⚠️ Deprecated
-    YtDlpWrapper,       # ⚠️ Deprecated
-    MediaProcessor,     # ⚠️ Deprecated
-    MediaUtils,         # ⚠️ Deprecated
-    EmailProcessor,     # ⚠️ Deprecated
-    DiscordWrapper      # ⚠️ Deprecated
+    FFmpegWrapper,  # ⚠️ Deprecated
+    YtDlpWrapper,  # ⚠️ Deprecated
+    MediaProcessor,  # ⚠️ Deprecated
+    MediaUtils,  # ⚠️ Deprecated
+    EmailProcessor,  # ⚠️ Deprecated
+    DiscordWrapper,  # ⚠️ Deprecated
 )
 ```
 
 **New Location:**
 ```python
 from ipfs_datasets_py.processors.multimedia import (
-    FFmpegWrapper,      # ✅ Use this
-    YtDlpWrapper,       # ✅ Use this
-    MediaProcessor,     # ✅ Use this
-    MediaUtils,         # ✅ Use this
-    EmailProcessor,     # ✅ Use this
-    DiscordWrapper      # ✅ Use this
+    FFmpegWrapper,  # ✅ Use this
+    YtDlpWrapper,  # ✅ Use this
+    MediaProcessor,  # ✅ Use this
+    MediaUtils,  # ✅ Use this
+    EmailProcessor,  # ✅ Use this
+    DiscordWrapper,  # ✅ Use this
 )
 ```
 
@@ -89,10 +89,10 @@ from ipfs_datasets_py.processors.multimedia import (
 **Deprecated Imports:**
 ```python
 from ipfs_datasets_py.data_transformation import (
-    car_conversion,         # ⚠️ Deprecated (use serialization.car_conversion)
-    jsonl_to_parquet,       # ⚠️ Deprecated (use serialization.jsonl_to_parquet)
+    car_conversion,  # ⚠️ Deprecated (use serialization.car_conversion)
+    jsonl_to_parquet,  # ⚠️ Deprecated (use serialization.jsonl_to_parquet)
     dataset_serialization,  # ⚠️ Deprecated (use serialization.dataset_serialization)
-    ipfs_parquet_to_car     # ⚠️ Deprecated (use serialization.ipfs_parquet_to_car)
+    ipfs_parquet_to_car,  # ⚠️ Deprecated (use serialization.ipfs_parquet_to_car)
 )
 
 from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils  # ⚠️ Deprecated
@@ -101,13 +101,15 @@ from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeU
 **New Location:**
 ```python
 from ipfs_datasets_py.data_transformation.serialization import (
-    car_conversion,         # ✅ Use this
-    jsonl_to_parquet,       # ✅ Use this
+    car_conversion,  # ✅ Use this
+    jsonl_to_parquet,  # ✅ Use this
     dataset_serialization,  # ✅ Use this
-    ipfs_parquet_to_car     # ✅ Use this
+    ipfs_parquet_to_car,  # ✅ Use this
 )
 
-from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils  # ✅ Use this
+from ipfs_datasets_py.data_transformation.serialization.car_conversion import (
+    DataInterchangeUtils,
+)  # ✅ Use this
 ```
 
 **Removal Date:** v2.0 (August 2026)  
@@ -118,25 +120,25 @@ from ipfs_datasets_py.data_transformation.serialization.car_conversion import Da
 **Deprecated Classes:**
 ```python
 from ipfs_datasets_py.processors import (
-    GraphRAGProcessor,                    # ⚠️ Deprecated (use UnifiedGraphRAGProcessor)
-    WebsiteGraphRAGProcessor,             # ⚠️ Deprecated (use UnifiedGraphRAGProcessor)
-    AdvancedGraphRAGWebsiteProcessor      # ⚠️ Deprecated (use UnifiedGraphRAGProcessor)
+    GraphRAGProcessor,  # ⚠️ Deprecated (use UnifiedGraphRAGProcessor)
+    WebsiteGraphRAGProcessor,  # ⚠️ Deprecated (use UnifiedGraphRAGProcessor)
+    AdvancedGraphRAGWebsiteProcessor,  # ⚠️ Deprecated (use UnifiedGraphRAGProcessor)
 )
 ```
 
 **New Implementation:**
 ```python
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
-    UnifiedGraphRAGProcessor,    # ✅ Use this
-    GraphRAGConfiguration,       # ✅ Use this
-    GraphRAGResult               # ✅ Use this
+    UnifiedGraphRAGProcessor,  # ✅ Use this
+    GraphRAGConfiguration,  # ✅ Use this
+    GraphRAGResult,  # ✅ Use this
 )
 
 # Or from main package
 from ipfs_datasets_py import (
-    UnifiedGraphRAGProcessor,    # ✅ Use this
-    GraphRAGConfiguration,       # ✅ Use this
-    GraphRAGResult               # ✅ Use this
+    UnifiedGraphRAGProcessor,  # ✅ Use this
+    GraphRAGConfiguration,  # ✅ Use this
+    GraphRAGResult,  # ✅ Use this
 )
 ```
 
@@ -384,7 +386,8 @@ grep -r "from.*processors.website_graphrag_processor import" .
 **A:** Yes, but NOT recommended for production:
 ```python
 import warnings
-warnings.filterwarnings('ignore', category=DeprecationWarning)
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 ```
 
 Better approach: Fix the deprecated imports.

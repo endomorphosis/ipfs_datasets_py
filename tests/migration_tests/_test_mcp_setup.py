@@ -11,6 +11,7 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+
 def test_imports():
     """Test all necessary imports."""
     print("🧪 Testing MCP Server Setup...")
@@ -19,17 +20,21 @@ def test_imports():
         print("  ✓ Testing basic Python imports...")
         import json
         import anyio
+
         print("  ✓ Basic imports successful")
 
         print("  ✓ Testing project imports...")
         from ipfs_datasets_py.mcp_server.configs import Configs, load_config_from_yaml
+
         print("  ✓ MCP configs imported")
 
         from ipfs_datasets_py.mcp_server.simple_server import SimpleIPFSDatasetsMCPServer
+
         print("  ✓ Simple MCP server imported")
 
         print("  ✓ Testing tool imports...")
         from ipfs_datasets_py.mcp_server.tools import dataset_tools
+
         print("  ✓ Dataset tools imported")
 
         return True
@@ -37,8 +42,10 @@ def test_imports():
     except Exception as e:
         print(f"  ✗ Import failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_server_creation():
     """Test server creation and tool registration."""
@@ -64,8 +71,10 @@ def test_server_creation():
     except Exception as e:
         print(f"  ✗ Server creation failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_vs_code_config():
     """Test VS Code configuration files."""
@@ -84,6 +93,7 @@ def test_vs_code_config():
             print("  ✓ settings.json exists")
             with open(settings_file) as f:
                 import json
+
                 settings = json.load(f)
                 if "mcp.servers" in settings:
                     print("  ✓ MCP servers configured")
@@ -105,6 +115,7 @@ def test_vs_code_config():
     except Exception as e:
         print(f"  ✗ VS Code config test failed: {e}")
         return False
+
 
 def main():
     """Run all tests."""
@@ -143,6 +154,7 @@ def main():
     else:
         print(f"❌ {total_tests - success_count} tests failed. Please check the errors above.")
         return False
+
 
 if __name__ == "__main__":
     success = main()

@@ -204,28 +204,42 @@ def parse_legal_document(text: str) -> ParsedLegalDocument:
             continue
 
         if stripped.startswith("# "):
-            sections.append(DocumentSection(kind="markdown_h1", heading=stripped[2:].strip(), line_number=index))
+            sections.append(
+                DocumentSection(kind="markdown_h1", heading=stripped[2:].strip(), line_number=index)
+            )
             continue
         if stripped.startswith("## "):
-            sections.append(DocumentSection(kind="markdown_h2", heading=stripped[3:].strip(), line_number=index))
+            sections.append(
+                DocumentSection(kind="markdown_h2", heading=stripped[3:].strip(), line_number=index)
+            )
             continue
         if stripped.startswith("### "):
-            sections.append(DocumentSection(kind="markdown_h3", heading=stripped[4:].strip(), line_number=index))
+            sections.append(
+                DocumentSection(kind="markdown_h3", heading=stripped[4:].strip(), line_number=index)
+            )
             continue
         if stripped.startswith("#### "):
-            sections.append(DocumentSection(kind="markdown_h4", heading=stripped[5:].strip(), line_number=index))
+            sections.append(
+                DocumentSection(kind="markdown_h4", heading=stripped[5:].strip(), line_number=index)
+            )
             continue
         if _ROMAN_HEADING_PATTERN.match(stripped):
-            sections.append(DocumentSection(kind="roman_heading", heading=stripped, line_number=index))
+            sections.append(
+                DocumentSection(kind="roman_heading", heading=stripped, line_number=index)
+            )
             continue
         if _LETTER_HEADING_PATTERN.match(stripped):
-            sections.append(DocumentSection(kind="letter_heading", heading=stripped, line_number=index))
+            sections.append(
+                DocumentSection(kind="letter_heading", heading=stripped, line_number=index)
+            )
             continue
         if _SUBHEADING_PATTERN.match(stripped):
             sections.append(DocumentSection(kind="subheading", heading=stripped, line_number=index))
             continue
         if _ALL_CAPS_HEADING_PATTERN.fullmatch(stripped):
-            sections.append(DocumentSection(kind="all_caps_heading", heading=stripped, line_number=index))
+            sections.append(
+                DocumentSection(kind="all_caps_heading", heading=stripped, line_number=index)
+            )
             all_caps_heading_count += 1
             continue
         if _NUMBERED_PARAGRAPH_PATTERN.match(stripped):
@@ -402,7 +416,9 @@ def build_document_knowledge_graph(
                     "properties": {},
                 }
             )
-            edges.append({"source": document_node_id, "target": case_node_id, "type": "identified_by"})
+            edges.append(
+                {"source": document_node_id, "target": case_node_id, "type": "identified_by"}
+            )
 
         for index, line in enumerate(parsed.header.party_lines, start=1):
             node_id = f"{graph_id}:party:{index}"

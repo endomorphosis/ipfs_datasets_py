@@ -187,9 +187,7 @@ def readdress_receipt(value: dict[str, object]) -> dict[str, object]:
 
 
 def test_interfaces_bind_the_exact_model_envelope_and_route_identity() -> None:
-    direct = BoundedModelOutputRecovery(
-        RecordingClient([IR.to_dict()]), route=RecoveryRoute.DIRECT
-    )
+    direct = BoundedModelOutputRecovery(RecordingClient([IR.to_dict()]), route=RecoveryRoute.DIRECT)
     symai = BoundedModelOutputRecovery(
         RecordingClient([IR.to_dict()], symai=True),
         route=RecoveryRoute.SYMAI,
@@ -255,9 +253,7 @@ def test_role_specific_bounded_schemas_and_explicit_polarity_instructions() -> N
 
     l1 = recovery.recover_l1(constructor_request())
     t1 = recovery.recover_t1(realizer_request())
-    l2 = recovery.recover_l2(
-        constructor_request(t1.text or ""), expected_ir=IR
-    )
+    l2 = recovery.recover_l2(constructor_request(t1.text or ""), expected_ir=IR)
 
     assert l1.status is ComponentStatus.SUCCESS
     assert t1.status is ComponentStatus.SUCCESS
@@ -430,9 +426,9 @@ def test_malformed_provider_output_is_recorded_and_can_use_only_one_retry() -> N
 
 def test_symai_route_receipts_are_retained_and_route_drift_never_falls_back() -> None:
     accepted_client = RecordingClient([realization()], symai=True)
-    accepted = BoundedModelOutputRecovery(
-        accepted_client, route="symai"
-    ).recover_t1(realizer_request())
+    accepted = BoundedModelOutputRecovery(accepted_client, route="symai").recover_t1(
+        realizer_request()
+    )
 
     assert accepted.status is ComponentStatus.SUCCESS
     call = accepted.receipt.to_dict()["calls"][0]
@@ -448,9 +444,9 @@ def test_symai_route_receipts_are_retained_and_route_drift_never_falls_back() ->
         symai=True,
         metadata={**ROUTE_METADATA, "resolved_model_name": "other-model"},
     )
-    failed = BoundedModelOutputRecovery(
-        drift_client, route="symai"
-    ).recover_l1(constructor_request())
+    failed = BoundedModelOutputRecovery(drift_client, route="symai").recover_l1(
+        constructor_request()
+    )
 
     assert failed.failure_reason is FailureReason.CAPABILITY_UNAVAILABLE
     assert len(drift_client.calls) == 1
@@ -472,10 +468,7 @@ def test_l2_polarity_mismatch_is_rejected_instead_of_silently_accepted() -> None
 
     assert result.failure_reason is FailureReason.RETRY_EXHAUSTED
     assert result.receipt.terminal_rejection == "polarity_ambiguous"
-    assert all(
-        call.rejection == "polarity_ambiguous"
-        for call in result.receipt.calls
-    )
+    assert all(call.rejection == "polarity_ambiguous" for call in result.receipt.calls)
 
 
 def test_policy_is_bounded_and_cannot_add_an_unregistered_retry_class() -> None:
@@ -525,9 +518,7 @@ def test_all_wrappers_share_one_serialized_physical_slot() -> None:
 
     threads = [
         threading.Thread(
-            target=lambda wrapper=wrapper: results.append(
-                wrapper.recover_l1(constructor_request())
-            )
+            target=lambda wrapper=wrapper: results.append(wrapper.recover_l1(constructor_request()))
         )
         for wrapper in (first, second)
     ]
@@ -571,9 +562,7 @@ def test_frozen_srt021_evidence_binds_exact_report_gate_and_coordinates() -> Non
     )
     coordinates = evidence.to_dict()["coordinates"]
     model = [
-        coordinate
-        for coordinate in coordinates
-        if str(coordinate["arm_id"]).startswith("model__")
+        coordinate for coordinate in coordinates if str(coordinate["arm_id"]).startswith("model__")
     ]
     modal_spacy = [
         coordinate
@@ -588,22 +577,15 @@ def test_frozen_srt021_evidence_binds_exact_report_gate_and_coordinates() -> Non
             coordinate["gate_id"],
         )
         for coordinate in model
-    } == {
-        ("legal_doc_1", repeat, "polarity_preservation")
-        for repeat in range(5)
-    }
+    } == {("legal_doc_1", repeat, "polarity_preservation") for repeat in range(5)}
     assert len(modal_spacy) == 4
-    assert {
-        coordinate["case_id"] for coordinate in modal_spacy
-    } == {
+    assert {coordinate["case_id"] for coordinate in modal_spacy} == {
         "construction_contract",
         "corp_policy_1",
         "exec_order_1",
         "legal_doc_1",
     }
-    assert {
-        coordinate["repeat_index"] for coordinate in modal_spacy
-    } == {0}
+    assert {coordinate["repeat_index"] for coordinate in modal_spacy} == {0}
 
     policy = PREREGISTERED_SRT023_POLICY.to_dict()
     policy_cid = policy.pop("policy_cid")
@@ -638,31 +620,22 @@ def test_request_prompt_call_and_recovery_cids_are_content_sensitive() -> None:
     )
     first_call = first_receipt["calls"][0]
     second_call = second_receipt["calls"][0]
-    assert first_call["prompt_cid"] == cid_for_bytes(
-        str(client.calls[0]["prompt"]).encode("utf-8")
-    )
+    assert first_call["prompt_cid"] == cid_for_bytes(str(client.calls[0]["prompt"]).encode("utf-8"))
     assert second_call["prompt_cid"] == cid_for_bytes(
         str(client.calls[1]["prompt"]).encode("utf-8")
     )
-    assert validate_cid(
-        first_receipt["request_cid"], codecs=("dag-json",)
-    )
+    assert validate_cid(first_receipt["request_cid"], codecs=("dag-json",))
     assert validate_cid(first_call["prompt_cid"], codecs=("raw",))
 
     for serialized in (first_receipt, second_receipt):
         call = dict(serialized["calls"][0])
         call_cid = call.pop("receipt_cid")
         assert call_cid == cid_for_dag_json(call)
-        assert ModelCallReceipt.from_dict(
-            serialized["calls"][0]
-        ).receipt_cid == call_cid
+        assert ModelCallReceipt.from_dict(serialized["calls"][0]).receipt_cid == call_cid
         receipt = dict(serialized)
         receipt_cid = receipt.pop("receipt_cid")
         assert receipt_cid == cid_for_dag_json(receipt)
-        assert (
-            ModelOutputRecoveryReceipt.validate_dict(serialized)
-            == receipt_cid
-        )
+        assert ModelOutputRecoveryReceipt.validate_dict(serialized) == receipt_cid
 
     assert first_receipt["request_cid"] != second_receipt["request_cid"]
     assert first_call["prompt_cid"] != second_call["prompt_cid"]
@@ -674,16 +647,11 @@ def test_frozen_manifest_and_receipts_reject_readdressed_tampering() -> None:
     manifest_path = REPO_ROOT / SRT021_MANIFEST_RELATIVE_PATH
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     tampered_manifest = json.loads(json.dumps(manifest))
-    model_arm = (
-        "model__not_applicable__always_on__symai__leanstral_symai"
-    )
-    samples = tampered_manifest["remediation"]["arms"][model_arm][
-        "sample_coordinate_keys_by_gate"
-    ]["polarity_preservation"]
-    samples[0] = (
-        "legal_doc_1|9|"
-        "model__not_applicable__always_on__symai__leanstral_symai"
-    )
+    model_arm = "model__not_applicable__always_on__symai__leanstral_symai"
+    samples = tampered_manifest["remediation"]["arms"][model_arm]["sample_coordinate_keys_by_gate"][
+        "polarity_preservation"
+    ]
+    samples[0] = "legal_doc_1|9|model__not_applicable__always_on__symai__leanstral_symai"
     manifest_body = dict(tampered_manifest)
     del manifest_body["manifest_cid"]
     tampered_manifest["manifest_cid"] = cid_for_dag_json(manifest_body)
@@ -696,9 +664,9 @@ def test_frozen_manifest_and_receipts_reject_readdressed_tampering() -> None:
             manifest_gate_cid=cid_for_dag_json({"forged": "gate"}),
         )
 
-    result = BoundedModelOutputRecovery(
-        RecordingClient([IR.to_dict()]), route="direct"
-    ).recover_l1(constructor_request())
+    result = BoundedModelOutputRecovery(RecordingClient([IR.to_dict()]), route="direct").recover_l1(
+        constructor_request()
+    )
     tampered_receipt = json.loads(json.dumps(result.receipt.to_dict()))
     tampered_receipt["boundary"]["fallback_allowed"] = True
     receipt_body = dict(tampered_receipt)
@@ -708,14 +676,10 @@ def test_frozen_manifest_and_receipts_reject_readdressed_tampering() -> None:
         ModelOutputRecoveryReceipt.validate_dict(tampered_receipt)
 
     tampered_evidence = json.loads(json.dumps(result.receipt.to_dict()))
-    tampered_evidence["remediation_evidence"]["coordinates"][0][
-        "case_id"
-    ] = "forged_case"
+    tampered_evidence["remediation_evidence"]["coordinates"][0]["case_id"] = "forged_case"
     evidence_body = dict(tampered_evidence["remediation_evidence"])
     del evidence_body["evidence_cid"]
-    tampered_evidence["remediation_evidence"][
-        "evidence_cid"
-    ] = cid_for_dag_json(evidence_body)
+    tampered_evidence["remediation_evidence"]["evidence_cid"] = cid_for_dag_json(evidence_body)
     receipt_body = dict(tampered_evidence)
     del receipt_body["receipt_cid"]
     tampered_evidence["receipt_cid"] = cid_for_dag_json(receipt_body)
@@ -724,13 +688,12 @@ def test_frozen_manifest_and_receipts_reject_readdressed_tampering() -> None:
 
 
 def test_model_output_recovery_has_no_legacy_sha_fields() -> None:
-    source = (
-        REPO_ROOT
-        / "benchmarks/semantic_roundtrip/model_output_recovery.py"
-    ).read_text(encoding="utf-8")
-    result = BoundedModelOutputRecovery(
-        RecordingClient([IR.to_dict()]), route="direct"
-    ).recover_l1(constructor_request())
+    source = (REPO_ROOT / "benchmarks/semantic_roundtrip/model_output_recovery.py").read_text(
+        encoding="utf-8"
+    )
+    result = BoundedModelOutputRecovery(RecordingClient([IR.to_dict()]), route="direct").recover_l1(
+        constructor_request()
+    )
     serialized = json.dumps(result.receipt.to_dict(), sort_keys=True)
 
     assert "sha256" not in source.lower()
@@ -834,17 +797,15 @@ def test_readdressed_two_call_terminal_failure_must_be_retry_exhausted() -> None
 
 
 def test_readdressed_direct_call_cannot_claim_a_symai_receipt() -> None:
-    direct = BoundedModelOutputRecovery(
-        RecordingClient([IR.to_dict()]), route="direct"
-    ).recover_l1(constructor_request())
+    direct = BoundedModelOutputRecovery(RecordingClient([IR.to_dict()]), route="direct").recover_l1(
+        constructor_request()
+    )
     symai = BoundedModelOutputRecovery(
         RecordingClient([IR.to_dict()], symai=True), route="symai"
     ).recover_l1(constructor_request())
     direct_receipt = json.loads(json.dumps(direct.receipt.to_dict()))
     direct_call = direct_receipt["calls"][0]
-    direct_call["symai_route_receipt"] = symai.receipt.to_dict()["calls"][0][
-        "symai_route_receipt"
-    ]
+    direct_call["symai_route_receipt"] = symai.receipt.to_dict()["calls"][0]["symai_route_receipt"]
     direct_call = readdress_receipt(direct_call)
 
     with pytest.raises(ContractError, match="direct model call"):
@@ -921,27 +882,25 @@ def test_symai_call_failure_allows_only_an_absent_route_receipt() -> None:
         symai=True,
         metadata={**ROUTE_METADATA, "resolved_model_name": "other-model"},
     )
-    failed = BoundedModelOutputRecovery(
-        drift_client, route="symai"
-    ).recover_l1(constructor_request())
+    failed = BoundedModelOutputRecovery(drift_client, route="symai").recover_l1(
+        constructor_request()
+    )
     failed_receipt = json.loads(json.dumps(failed.receipt.to_dict()))
     failed_call = failed_receipt["calls"][0]
     assert failed_call["outcome"] == "call_failed"
     assert failed_call["symai_route_receipt"] is None
-    assert ModelCallReceipt.from_dict(failed_call).receipt_cid == (
-        failed_call["receipt_cid"]
-    )
-    assert ModelOutputRecoveryReceipt.validate_dict(failed_receipt) == (
-        failed_receipt["receipt_cid"]
+    assert ModelCallReceipt.from_dict(failed_call).receipt_cid == (failed_call["receipt_cid"])
+    assert (
+        ModelOutputRecoveryReceipt.validate_dict(failed_receipt) == (failed_receipt["receipt_cid"])
     )
 
     valid_symai = BoundedModelOutputRecovery(
         RecordingClient([IR.to_dict()], symai=True), route="symai"
     ).recover_l1(constructor_request())
     forged_call = json.loads(json.dumps(failed_call))
-    forged_call["symai_route_receipt"] = valid_symai.receipt.to_dict()[
-        "calls"
-    ][0]["symai_route_receipt"]
+    forged_call["symai_route_receipt"] = valid_symai.receipt.to_dict()["calls"][0][
+        "symai_route_receipt"
+    ]
     forged_call = readdress_receipt(forged_call)
     with pytest.raises(ContractError, match="failed SyMAI call"):
         ModelCallReceipt.from_dict(forged_call)
@@ -1110,10 +1069,7 @@ def test_research_policy_allows_preregistered_budget_greater_than_one() -> None:
     assert len(client.calls) == 4  # initial + 3 research retries
     assert result.receipt.retries == 3
     assert result.receipt.policy.kind is RecoveryPolicyKind.RESEARCH
-    assert all(
-        call.rejection_reason == "empty_rules"
-        for call in result.receipt.calls[:-1]
-    )
+    assert all(call.rejection_reason == "empty_rules" for call in result.receipt.calls[:-1])
 
 
 def test_accept_rate_and_retry_exhausted_rate_are_separate_from_e2e_loss() -> None:
@@ -1162,14 +1118,10 @@ def test_single_rule_research_schema_path_is_usable_for_hybrid_repair() -> None:
             ),
         )
     )
-    schema = SyMAIPolarityContract.single_rule_research_canonical_schema(
-        VOCABULARY
-    )
+    schema = SyMAIPolarityContract.single_rule_research_canonical_schema(VOCABULARY)
     assert schema["properties"]["rules"]["minItems"] == 1
     assert schema["properties"]["rules"]["maxItems"] == 1
-    t1_schema = SyMAIPolarityContract.single_rule_research_realization_schema(
-        single
-    )
+    t1_schema = SyMAIPolarityContract.single_rule_research_realization_schema(single)
     assert t1_schema["properties"]["rules"]["minItems"] == 1
     assert t1_schema["properties"]["rules"]["maxItems"] == 1
     with pytest.raises(ContractError, match="exactly one rule"):
@@ -1184,9 +1136,7 @@ def test_single_rule_research_schema_path_is_usable_for_hybrid_repair() -> None:
     result = recovery.recover_l1(constructor_request())
     assert result.status is ComponentStatus.SUCCESS
     assert result.canonical_ir == single
-    assert client.calls[0]["schema_name"] == (
-        "research_single_rule_l1_canonical_ir_v1"
-    )
+    assert client.calls[0]["schema_name"] == ("research_single_rule_l1_canonical_ir_v1")
     assert client.calls[0]["schema"]["properties"]["rules"]["maxItems"] == 1
     assert recovery.schema_path is RecoverySchemaPath.SINGLE_RULE_RESEARCH
 

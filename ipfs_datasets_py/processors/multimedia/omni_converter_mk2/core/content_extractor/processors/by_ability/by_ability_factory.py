@@ -1,5 +1,3 @@
-
-
 from ._audio_processor import AudioProcessor
 from ._image_processor import ImageProcessor
 from ._document_processor import DocumentProcessor
@@ -20,8 +18,9 @@ _processors = [
     VideoProcessor,
     EbookProcessor,
     OCRProcessor,
-    LLMProcessor
+    LLMProcessor,
 ]
+
 
 def _get_available_processors() -> list:
     """
@@ -42,25 +41,26 @@ def _get_available_processors() -> list:
             available_processors.append(processor)
         except Exception as e:
             print(f"Failed to instantiate processor {processor.__name__}: {e}")
-            continue 
+            continue
         finally:
             # Free resources if processor was instantiated
             if processor is not None:
-                del processor 
+                del processor
+
 
 def make_processors():
-    """
-    """
+    """ """
     available_processor = _get_available_processors()
+
 
 def create_llm_processor() -> LLMProcessor:
     """
     Factory function to create an LLMProcessor instance.
-    
+
     Args:
         resources: Dictionary of resources for dependency injection
         configs: Configuration parameters
-        
+
     Returns:
         Configured LLMProcessor instance
     """

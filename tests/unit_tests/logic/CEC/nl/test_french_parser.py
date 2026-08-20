@@ -25,7 +25,7 @@ from ipfs_datasets_py.logic.CEC.nl.french_parser import (
     get_french_verb_conjugations,
     get_french_articles,
     get_french_negation_patterns,
-    get_french_deontic_keywords
+    get_french_deontic_keywords,
 )
 from ipfs_datasets_py.logic.CEC.native.dcec_core import (
     DeonticFormula,
@@ -35,14 +35,14 @@ from ipfs_datasets_py.logic.CEC.native.dcec_core import (
     DeonticOperator,
     CognitiveOperator,
     TemporalOperator,
-    LogicalConnective
+    LogicalConnective,
 )
 from ipfs_datasets_py.logic.CEC.native.dcec_namespace import DCECNamespace
 
 
 class TestParserInitialization:
     """Test French parser initialization."""
-    
+
     def test_parser_creation(self):
         """
         GIVEN FrenchParser class
@@ -54,7 +54,7 @@ class TestParserInitialization:
         assert parser.confidence_threshold == 0.5
         assert parser.namespace is not None
         assert parser.matcher is not None
-    
+
     def test_parser_custom_threshold(self):
         """
         GIVEN custom confidence threshold
@@ -63,7 +63,7 @@ class TestParserInitialization:
         """
         parser = FrenchParser(confidence_threshold=0.7)
         assert parser.confidence_threshold == 0.7
-    
+
     def test_parser_supported_operators(self):
         """
         GIVEN FrenchParser
@@ -72,15 +72,15 @@ class TestParserInitialization:
         """
         parser = FrenchParser()
         operators = parser.get_supported_operators()
-        assert 'doit' in operators
-        assert 'peut' in operators
-        assert 'sait' in operators
-        assert 'toujours' in operators
+        assert "doit" in operators
+        assert "peut" in operators
+        assert "sait" in operators
+        assert "toujours" in operators
 
 
 class TestDeonticObligationFrench:
     """Test French deontic obligation parsing."""
-    
+
     def test_parse_doit_simple(self):
         """
         GIVEN French obligation with 'doit'
@@ -92,7 +92,7 @@ class TestDeonticObligationFrench:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.OBLIGATION
-    
+
     def test_parse_il_faut(self):
         """
         GIVEN French obligation with 'il faut'
@@ -104,7 +104,7 @@ class TestDeonticObligationFrench:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.OBLIGATION
-    
+
     def test_parse_est_oblige(self):
         """
         GIVEN French obligation with 'est obligé'
@@ -116,7 +116,7 @@ class TestDeonticObligationFrench:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.OBLIGATION
-    
+
     def test_parse_est_necessaire(self):
         """
         GIVEN French obligation with 'il est nécessaire'
@@ -127,7 +127,7 @@ class TestDeonticObligationFrench:
         result = parser.parse("Il est nécessaire de vérifier")
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
-    
+
     def test_parse_est_requis(self):
         """
         GIVEN French obligation with 'il est requis'
@@ -138,7 +138,7 @@ class TestDeonticObligationFrench:
         result = parser.parse("Il est requis d'approuver")
         # Should parse even if 'd' is separate
         assert result.formula is not None
-    
+
     def test_parse_obligation_plural(self):
         """
         GIVEN French obligation with plural 'doivent'
@@ -150,7 +150,7 @@ class TestDeonticObligationFrench:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.OBLIGATION
-    
+
     def test_parse_ont_obligation(self):
         """
         GIVEN French obligation with 'ont l'obligation'
@@ -161,7 +161,7 @@ class TestDeonticObligationFrench:
         result = parser.parse("Les agents ont l'obligation de participer")
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
-    
+
     def test_parse_est_tenu(self):
         """
         GIVEN French obligation with 'est tenu'
@@ -172,7 +172,7 @@ class TestDeonticObligationFrench:
         result = parser.parse("L'utilisateur est tenu de respecter")
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
-    
+
     def test_parse_obligation_compound(self):
         """
         GIVEN French obligation with compound action
@@ -183,7 +183,7 @@ class TestDeonticObligationFrench:
         result = parser.parse("L'agent doit respecter les règles")
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
-    
+
     def test_parse_obligation_confidence(self):
         """
         GIVEN clear French obligation
@@ -198,7 +198,7 @@ class TestDeonticObligationFrench:
 
 class TestDeonticPermissionFrench:
     """Test French deontic permission parsing."""
-    
+
     def test_parse_peut_simple(self):
         """
         GIVEN French permission with 'peut'
@@ -210,7 +210,7 @@ class TestDeonticPermissionFrench:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PERMISSION
-    
+
     def test_parse_est_permis(self):
         """
         GIVEN French permission with 'est permis'
@@ -221,7 +221,7 @@ class TestDeonticPermissionFrench:
         result = parser.parse("Il est permis d'accéder")
         # Should parse even with 'd' contraction
         assert result.formula is not None
-    
+
     def test_parse_a_le_droit(self):
         """
         GIVEN French permission with 'a le droit'
@@ -233,7 +233,7 @@ class TestDeonticPermissionFrench:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PERMISSION
-    
+
     def test_parse_pourra_future(self):
         """
         GIVEN French permission with future tense 'pourra'
@@ -244,7 +244,7 @@ class TestDeonticPermissionFrench:
         result = parser.parse("L'agent pourra commencer")
         # May not match exact pattern but should produce formula
         assert result.formula is not None
-    
+
     def test_parse_on_peut(self):
         """
         GIVEN French permission with 'on peut'
@@ -255,7 +255,7 @@ class TestDeonticPermissionFrench:
         result = parser.parse("On peut modifier")
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
-    
+
     def test_parse_permission_plural(self):
         """
         GIVEN French permission with plural 'peuvent'
@@ -267,7 +267,7 @@ class TestDeonticPermissionFrench:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PERMISSION
-    
+
     def test_parse_sont_autorises(self):
         """
         GIVEN French permission with 'sont autorisés'
@@ -278,7 +278,7 @@ class TestDeonticPermissionFrench:
         result = parser.parse("Les agents sont autorisés à procéder")
         # Should parse 'à' as part of expression
         assert result.formula is not None
-    
+
     def test_parse_ont_le_droit(self):
         """
         GIVEN French permission with 'ont le droit'
@@ -289,7 +289,7 @@ class TestDeonticPermissionFrench:
         result = parser.parse("Les agents ont le droit de continuer")
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
-    
+
     def test_parse_permission_conditional(self):
         """
         GIVEN French permission with conditional
@@ -301,7 +301,7 @@ class TestDeonticPermissionFrench:
         assert result.success
         # Should at least extract permission part
         assert result.formula is not None
-    
+
     def test_parse_permission_confidence(self):
         """
         GIVEN clear French permission
@@ -316,7 +316,7 @@ class TestDeonticPermissionFrench:
 
 class TestDeonticProhibitionFrench:
     """Test French deontic prohibition parsing."""
-    
+
     def test_parse_ne_doit_pas(self):
         """
         GIVEN French prohibition with 'ne doit pas'
@@ -328,7 +328,7 @@ class TestDeonticProhibitionFrench:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PROHIBITION
-    
+
     def test_parse_ne_peut_pas(self):
         """
         GIVEN French prohibition with 'ne peut pas'
@@ -340,7 +340,7 @@ class TestDeonticProhibitionFrench:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PROHIBITION
-    
+
     def test_parse_interdit(self):
         """
         GIVEN French prohibition with 'interdit'
@@ -351,7 +351,7 @@ class TestDeonticProhibitionFrench:
         result = parser.parse("Interdit d'accéder")
         # Should parse prohibition
         assert result.formula is not None
-    
+
     def test_parse_est_interdit(self):
         """
         GIVEN French prohibition with 'est interdit'
@@ -362,7 +362,7 @@ class TestDeonticProhibitionFrench:
         result = parser.parse("Il est interdit de modifier")
         # Should parse prohibition
         assert result.formula is not None
-    
+
     def test_parse_nest_pas_permis(self):
         """
         GIVEN French prohibition with 'n'est pas permis'
@@ -373,7 +373,7 @@ class TestDeonticProhibitionFrench:
         result = parser.parse("N'est pas permis de fumer")
         # Should parse prohibition
         assert result.formula is not None
-    
+
     def test_parse_ne_se_permet_pas(self):
         """
         GIVEN French prohibition with 'ne se permet pas'
@@ -384,7 +384,7 @@ class TestDeonticProhibitionFrench:
         result = parser.parse("Ne se permet pas d'éliminer")
         # Should parse prohibition
         assert result.formula is not None
-    
+
     def test_parse_prohibition_formal(self):
         """
         GIVEN formal French prohibition
@@ -395,7 +395,7 @@ class TestDeonticProhibitionFrench:
         result = parser.parse("Il est défendu d'accéder")
         # Should at least create formula
         assert result.formula is not None
-    
+
     def test_parse_ne_doit_jamais(self):
         """
         GIVEN French prohibition with 'ne doit jamais'
@@ -407,7 +407,7 @@ class TestDeonticProhibitionFrench:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PROHIBITION
-    
+
     def test_parse_prohibition_compound(self):
         """
         GIVEN French prohibition with compound expression
@@ -418,7 +418,7 @@ class TestDeonticProhibitionFrench:
         result = parser.parse("L'agent ne doit pas divulguer d'informations confidentielles")
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
-    
+
     def test_parse_prohibition_confidence(self):
         """
         GIVEN clear French prohibition
@@ -433,7 +433,7 @@ class TestDeonticProhibitionFrench:
 
 class TestCognitiveOperatorsFrench:
     """Test French cognitive operator parsing."""
-    
+
     def test_parse_sait_que(self):
         """
         GIVEN French knowledge statement with 'sait que'
@@ -445,7 +445,7 @@ class TestCognitiveOperatorsFrench:
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
         assert result.formula.operator == CognitiveOperator.KNOWLEDGE
-    
+
     def test_parse_croit_que(self):
         """
         GIVEN French belief statement with 'croit que'
@@ -457,7 +457,7 @@ class TestCognitiveOperatorsFrench:
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
         assert result.formula.operator == CognitiveOperator.BELIEF
-    
+
     def test_parse_pense_que(self):
         """
         GIVEN French belief statement with 'pense que'
@@ -468,7 +468,7 @@ class TestCognitiveOperatorsFrench:
         result = parser.parse("L'agent pense que ça fonctionne")
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
-    
+
     def test_parse_veut(self):
         """
         GIVEN French desire statement with 'veut'
@@ -480,7 +480,7 @@ class TestCognitiveOperatorsFrench:
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
         assert result.formula.operator == CognitiveOperator.DESIRE
-    
+
     def test_parse_desire(self):
         """
         GIVEN French desire statement with 'désire'
@@ -491,7 +491,7 @@ class TestCognitiveOperatorsFrench:
         result = parser.parse("L'agent désire continuer")
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
-    
+
     def test_parse_envisage(self):
         """
         GIVEN French intention statement with 'envisage'
@@ -502,7 +502,7 @@ class TestCognitiveOperatorsFrench:
         result = parser.parse("L'agent envisage de résoudre")
         # Should parse intention
         assert result.formula is not None
-    
+
     def test_parse_a_lintention(self):
         """
         GIVEN French intention statement with 'a l'intention de'
@@ -514,7 +514,7 @@ class TestCognitiveOperatorsFrench:
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
         assert result.formula.operator == CognitiveOperator.INTENTION
-    
+
     def test_parse_a_pour_objectif(self):
         """
         GIVEN French goal statement with 'a pour objectif'
@@ -526,7 +526,7 @@ class TestCognitiveOperatorsFrench:
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
         assert result.formula.operator == CognitiveOperator.GOAL
-    
+
     def test_parse_cognitive_nested(self):
         """
         GIVEN nested French cognitive statement
@@ -538,7 +538,7 @@ class TestCognitiveOperatorsFrench:
         assert result.success
         # Should parse outer cognitive operator
         assert result.formula is not None
-    
+
     def test_parse_cognitive_confidence(self):
         """
         GIVEN French cognitive statement
@@ -553,7 +553,7 @@ class TestCognitiveOperatorsFrench:
 
 class TestTemporalOperatorsFrench:
     """Test French temporal operator parsing."""
-    
+
     def test_parse_toujours(self):
         """
         GIVEN French always statement with 'toujours'
@@ -565,7 +565,7 @@ class TestTemporalOperatorsFrench:
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
         assert result.formula.operator == TemporalOperator.ALWAYS
-    
+
     def test_parse_eventuellement(self):
         """
         GIVEN French eventually statement with 'éventuellement'
@@ -577,7 +577,7 @@ class TestTemporalOperatorsFrench:
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
         assert result.formula.operator == TemporalOperator.EVENTUALLY
-    
+
     def test_parse_finalement(self):
         """
         GIVEN French eventually statement with 'finalement'
@@ -588,7 +588,7 @@ class TestTemporalOperatorsFrench:
         result = parser.parse("Finalement le processus se termine")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_ensuite(self):
         """
         GIVEN French next statement with 'ensuite'
@@ -600,7 +600,7 @@ class TestTemporalOperatorsFrench:
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
         assert result.formula.operator == TemporalOperator.NEXT
-    
+
     def test_parse_apres(self):
         """
         GIVEN French next statement with 'après'
@@ -611,7 +611,7 @@ class TestTemporalOperatorsFrench:
         result = parser.parse("Après l'agent continue")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_en_tout_temps(self):
         """
         GIVEN French always with idiomatic expression
@@ -622,7 +622,7 @@ class TestTemporalOperatorsFrench:
         result = parser.parse("En tout temps le système surveille")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_un_jour(self):
         """
         GIVEN French eventually with idiomatic expression
@@ -633,7 +633,7 @@ class TestTemporalOperatorsFrench:
         result = parser.parse("Un jour l'agent atteindra l'objectif")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_jusqua_ce_que(self):
         """
         GIVEN French until statement with 'jusqu'à ce que'
@@ -644,7 +644,7 @@ class TestTemporalOperatorsFrench:
         result = parser.parse("L'agent attend jusqu'à ce que termine")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_depuis_que(self):
         """
         GIVEN French since statement with 'depuis que'
@@ -655,7 +655,7 @@ class TestTemporalOperatorsFrench:
         result = parser.parse("L'agent agit depuis que a commencé")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_temporal_confidence(self):
         """
         GIVEN French temporal statement
@@ -670,7 +670,7 @@ class TestTemporalOperatorsFrench:
 
 class TestLogicalConnectivesFrench:
     """Test French logical connective parsing."""
-    
+
     def test_parse_et_conjunction(self):
         """
         GIVEN French conjunction with 'et'
@@ -682,7 +682,7 @@ class TestLogicalConnectivesFrench:
         assert result.success
         assert isinstance(result.formula, ConnectiveFormula)
         assert result.formula.connective == LogicalConnective.AND
-    
+
     def test_parse_ou_disjunction(self):
         """
         GIVEN French disjunction with 'ou'
@@ -694,7 +694,7 @@ class TestLogicalConnectivesFrench:
         assert result.success
         assert isinstance(result.formula, ConnectiveFormula)
         assert result.formula.connective == LogicalConnective.OR
-    
+
     def test_parse_si_alors(self):
         """
         GIVEN French implication with 'si...alors'
@@ -706,7 +706,7 @@ class TestLogicalConnectivesFrench:
         assert result.success
         assert isinstance(result.formula, ConnectiveFormula)
         assert result.formula.connective == LogicalConnective.IMPLIES
-    
+
     def test_parse_si_comma_alors(self):
         """
         GIVEN French implication with comma
@@ -718,7 +718,7 @@ class TestLogicalConnectivesFrench:
         assert result.success
         # Should extract implication
         assert result.formula is not None
-    
+
     def test_parse_complex_connectives(self):
         """
         GIVEN French text with multiple connectives
@@ -729,7 +729,7 @@ class TestLogicalConnectivesFrench:
         result = parser.parse("L'agent doit respecter et l'agent peut vérifier")
         assert result.success
         assert result.formula is not None
-    
+
     def test_parse_nested_connectives(self):
         """
         GIVEN French text with nested connectives
@@ -740,7 +740,7 @@ class TestLogicalConnectivesFrench:
         result = parser.parse("Si l'agent doit respecter et l'agent peut agir alors procède")
         # Complex parsing - should at least produce formula
         assert result.formula is not None
-    
+
     def test_parse_et_multiple(self):
         """
         GIVEN French text with multiple 'et'
@@ -750,7 +750,7 @@ class TestLogicalConnectivesFrench:
         parser = FrenchParser()
         result = parser.parse("L'agent doit A et doit B et doit C")
         assert result.formula is not None
-    
+
     def test_parse_ou_multiple(self):
         """
         GIVEN French text with multiple 'ou'
@@ -760,7 +760,7 @@ class TestLogicalConnectivesFrench:
         parser = FrenchParser()
         result = parser.parse("L'agent peut A ou peut B ou peut C")
         assert result.formula is not None
-    
+
     def test_parse_mixed_connectives(self):
         """
         GIVEN French text with mixed connectives
@@ -770,7 +770,7 @@ class TestLogicalConnectivesFrench:
         parser = FrenchParser()
         result = parser.parse("Si l'agent doit A ou doit B alors peut C")
         assert result.formula is not None
-    
+
     def test_parse_connectives_confidence(self):
         """
         GIVEN French text with connectives
@@ -785,7 +785,7 @@ class TestLogicalConnectivesFrench:
 
 class TestVerbConjugations:
     """Test French verb conjugation handling."""
-    
+
     def test_get_verb_conjugations(self):
         """
         GIVEN French verb conjugation function
@@ -793,12 +793,12 @@ class TestVerbConjugations:
         THEN should return conjugation tables
         """
         conjugations = get_french_verb_conjugations()
-        assert 'devoir' in conjugations
-        assert 'pouvoir' in conjugations
-        assert 'savoir' in conjugations
-        assert conjugations['devoir']['present']['il/elle'] == 'doit'
-        assert conjugations['pouvoir']['present']['il/elle'] == 'peut'
-    
+        assert "devoir" in conjugations
+        assert "pouvoir" in conjugations
+        assert "savoir" in conjugations
+        assert conjugations["devoir"]["present"]["il/elle"] == "doit"
+        assert conjugations["pouvoir"]["present"]["il/elle"] == "peut"
+
     def test_parse_different_conjugations(self):
         """
         GIVEN French text with various conjugations
@@ -806,15 +806,15 @@ class TestVerbConjugations:
         THEN should handle different forms
         """
         parser = FrenchParser()
-        
+
         # doit (3rd person singular)
         result1 = parser.parse("L'agent doit agir")
         assert result1.success
-        
+
         # doivent (3rd person plural)
         result2 = parser.parse("Les agents doivent respecter")
         assert result2.success
-    
+
     def test_parse_future_tense(self):
         """
         GIVEN French text with future tense
@@ -825,7 +825,7 @@ class TestVerbConjugations:
         result = parser.parse("L'agent devra commencer demain")
         # May not match exact pattern but should create formula
         assert result.formula is not None
-    
+
     def test_articles_function(self):
         """
         GIVEN get_french_articles function
@@ -833,17 +833,17 @@ class TestVerbConjugations:
         THEN should return articles and contractions
         """
         articles = get_french_articles()
-        assert 'definite' in articles
-        assert 'indefinite' in articles
-        assert 'contractions' in articles
-        assert 'le' in articles['definite']
-        assert 'un' in articles['indefinite']
-        assert 'du' in articles['contractions']
+        assert "definite" in articles
+        assert "indefinite" in articles
+        assert "contractions" in articles
+        assert "le" in articles["definite"]
+        assert "un" in articles["indefinite"]
+        assert "du" in articles["contractions"]
 
 
 class TestNegationPatterns:
     """Test French negation pattern handling."""
-    
+
     def test_negation_patterns_function(self):
         """
         GIVEN get_french_negation_patterns function
@@ -851,11 +851,11 @@ class TestNegationPatterns:
         THEN should return French negation patterns
         """
         patterns = get_french_negation_patterns()
-        assert 'ne...pas' in patterns
-        assert 'ne...jamais' in patterns
-        assert 'ne...plus' in patterns
-        assert 'ne...rien' in patterns
-    
+        assert "ne...pas" in patterns
+        assert "ne...jamais" in patterns
+        assert "ne...plus" in patterns
+        assert "ne...rien" in patterns
+
     def test_deontic_keywords_function(self):
         """
         GIVEN get_french_deontic_keywords function
@@ -863,13 +863,13 @@ class TestNegationPatterns:
         THEN should return categorized keywords
         """
         keywords = get_french_deontic_keywords()
-        assert 'obligation' in keywords
-        assert 'permission' in keywords
-        assert 'prohibition' in keywords
-        assert 'doit' in keywords['obligation']
-        assert 'peut' in keywords['permission']
-        assert 'interdit' in keywords['prohibition']
-    
+        assert "obligation" in keywords
+        assert "permission" in keywords
+        assert "prohibition" in keywords
+        assert "doit" in keywords["obligation"]
+        assert "peut" in keywords["permission"]
+        assert "interdit" in keywords["prohibition"]
+
     def test_parse_complex_negation(self):
         """
         GIVEN French text with complex negation

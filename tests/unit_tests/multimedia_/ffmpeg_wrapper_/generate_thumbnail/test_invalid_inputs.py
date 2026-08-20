@@ -10,6 +10,7 @@ Terminology:
 - invalid_timestamp_format: A timestamp specification in incorrect format
 - unsupported_image_format: An image format extension not supported by FFmpeg
 """
+
 import pytest
 import anyio
 from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
@@ -18,7 +19,7 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
     """
     Invalid input scenarios for FFmpegWrapper.generate_thumbnail method.
-    
+
     Tests the generate_thumbnail method with invalid parameters to ensure
     proper type checking and error handling.
     """
@@ -30,14 +31,11 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         THEN returns error response with appropriate message
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
-            result = await wrapper.generate_thumbnail(
-                input_path=None,
-                output_path="thumbnail.jpg"
-            )
+            result = await wrapper.generate_thumbnail(input_path=None, output_path="thumbnail.jpg")
             # generate_thumbnail should handle None input gracefully and return error response
             assert result["status"] == "error"
             assert "error" in result
@@ -52,14 +50,11 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         THEN returns error response with appropriate message
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
-            result = await wrapper.generate_thumbnail(
-                input_path=12345,
-                output_path="thumbnail.jpg"
-            )
+            result = await wrapper.generate_thumbnail(input_path=12345, output_path="thumbnail.jpg")
             # generate_thumbnail should handle invalid input types gracefully
             assert result["status"] == "error"
             assert "error" in result
@@ -74,14 +69,11 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         THEN returns error response with appropriate message
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
-            result = await wrapper.generate_thumbnail(
-                input_path="video.mp4",
-                output_path=None
-            )
+            result = await wrapper.generate_thumbnail(input_path="video.mp4", output_path=None)
             # generate_thumbnail should handle None output_path gracefully
             assert result["status"] == "error"
             assert "error" in result
@@ -96,13 +88,12 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         THEN returns error response with appropriate message
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.generate_thumbnail(
-                input_path="video.mp4",
-                output_path=["thumbnail.jpg", "thumbnail2.jpg"]
+                input_path="video.mp4", output_path=["thumbnail.jpg", "thumbnail2.jpg"]
             )
             # generate_thumbnail should handle invalid output_path types gracefully
             assert result["status"] == "error"
@@ -118,13 +109,10 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         THEN returns error response indicating input_path cannot be empty
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
-        result = await wrapper.generate_thumbnail(
-            input_path="",
-            output_path="thumbnail.jpg"
-        )
+
+        result = await wrapper.generate_thumbnail(input_path="", output_path="thumbnail.jpg")
         # generate_thumbnail should handle empty string input gracefully
         assert result["status"] == "error"
         assert "error" in result
@@ -136,13 +124,10 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         THEN returns error response indicating output_path cannot be empty
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
-        result = await wrapper.generate_thumbnail(
-            input_path="video.mp4",
-            output_path=""
-        )
+
+        result = await wrapper.generate_thumbnail(input_path="video.mp4", output_path="")
         # generate_thumbnail should handle empty string output_path gracefully
         assert result["status"] == "error"
         assert "error" in result
@@ -154,13 +139,15 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         THEN returns dict with status 'error' and FileNotFoundError message
         """
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         result = await wrapper.generate_thumbnail(
-            input_path="nonexistent_video.mp4",
-            output_path="thumbnail.jpg"
+            input_path="nonexistent_video.mp4", output_path="thumbnail.jpg"
         )
         # generate_thumbnail is now implemented and should handle nonexistent files
         assert result["status"] == "error"
-        assert "not found" in result.get("error", "").lower() or "exist" in result.get("error", "").lower()
+        assert (
+            "not found" in result.get("error", "").lower()
+            or "exist" in result.get("error", "").lower()
+        )

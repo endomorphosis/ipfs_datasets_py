@@ -136,8 +136,7 @@ class VirginiaScraper(BaseStateScraper):
         if not path.lower().startswith("/vacode/"):
             return False
         return bool(
-            self._VA_SECTION_URL_RE.match(path)
-            or self._VA_DIRECT_SECTION_URL_RE.match(path)
+            self._VA_SECTION_URL_RE.match(path) or self._VA_DIRECT_SECTION_URL_RE.match(path)
         )
 
     def _derive_va_section_number(self, source_url: str) -> str:
@@ -149,23 +148,21 @@ class VirginiaScraper(BaseStateScraper):
         )
         if section_match:
             return str(section_match.group(1) or "").strip()
-        direct_match = re.search(r"/vacode/([0-9A-Za-z.]+-[0-9A-Za-z.\-]+)/?$", path, flags=re.IGNORECASE)
+        direct_match = re.search(
+            r"/vacode/([0-9A-Za-z.]+-[0-9A-Za-z.\-]+)/?$", path, flags=re.IGNORECASE
+        )
         if direct_match:
             return str(direct_match.group(1) or "").strip()
         return ""
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Virginia's legislative website."""
         return "https://law.lis.virginia.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Virginia."""
-        return [{
-            "name": "Code of Virginia",
-            "url": f"{self.get_base_url()}/",
-            "type": "Code"
-        }]
-    
+        return [{"name": "Code of Virginia", "url": f"{self.get_base_url()}/", "type": "Code"}]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -173,11 +170,11 @@ class VirginiaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Virginia's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -253,7 +250,9 @@ class VirginiaScraper(BaseStateScraper):
             "https://law.lis.virginia.gov/vacode/title1/chapter1/section1-1/",
             "https://law.lis.virginia.gov/vacode/title18.2/chapter7/section18.2-247/",
         ]
-        return await self._scrape_section_urls(code_name, [(url, "") for url in section_urls], max_statutes=max_statutes)
+        return await self._scrape_section_urls(
+            code_name, [(url, "") for url in section_urls], max_statutes=max_statutes
+        )
 
     async def _scrape_official_index(
         self,
@@ -262,7 +261,9 @@ class VirginiaScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         title_links = await self._discover_title_links()
         self.logger.info("Virginia official index: discovered %s title links", len(title_links))
-        resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
+        resumed = self._load_partial_checkpoint_statutes(
+            code_name=code_name, max_statutes=max_statutes
+        )
         checkpoint_progress = self._load_partial_checkpoint_progress()
         statutes: List[NormalizedStatute] = []
         seen_keys: set[str] = set()
@@ -291,7 +292,9 @@ class VirginiaScraper(BaseStateScraper):
         resume_titles_scanned = max(0, int(checkpoint_progress.get("titles_scanned") or 0))
         resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
         resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
-        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        resume_discovered_sections = max(
+            0, int(checkpoint_progress.get("discovered_sections") or 0)
+        )
         title_rewind = max(0, int(self._env_int("STATE_SCRAPER_VA_RESUME_TITLE_REWIND", default=1)))
         resume_title_floor = max(0, resume_titles_scanned - title_rewind)
         chapters_scanned_total = int(resume_chapters_scanned)
@@ -353,7 +356,11 @@ class VirginiaScraper(BaseStateScraper):
                         if str(url or "").strip().lower() not in seen_urls
                     ]
                 sections_discovered_total += len(section_links)
-                if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_links):
+                if (
+                    chapter_index == 1
+                    or chapter_index % 10 == 0
+                    or chapter_index == len(chapter_links)
+                ):
                     self.logger.info(
                         "Virginia official index: title=%s chapter=%s/%s sections=%s statutes_so_far=%s",
                         title_label or title_url,
@@ -377,6 +384,7 @@ class VirginiaScraper(BaseStateScraper):
                             "codes_total": 1,
                         },
                     )
+
                 def _progress_hook(
                     scanned_sections: int,
                     total_sections: int,
@@ -402,6 +410,7 @@ class VirginiaScraper(BaseStateScraper):
                                 "codes_total": 1,
                             },
                         )
+
                 parsed = await self._scrape_section_urls(
                     code_name,
                     section_links,
@@ -434,7 +443,9 @@ class VirginiaScraper(BaseStateScraper):
             return []
 
         index_url = f"{self.get_base_url()}/vacode/"
-        payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=20)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            index_url, timeout_seconds=20
+        )
         if not payload:
             return []
         soup = BeautifulSoup(payload, "html.parser")
@@ -457,7 +468,9 @@ class VirginiaScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=20)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            title_url, timeout_seconds=20
+        )
         if not payload:
             return []
         soup = BeautifulSoup(payload, "html.parser")
@@ -465,7 +478,9 @@ class VirginiaScraper(BaseStateScraper):
         seen: set[str] = set()
         for anchor in soup.find_all("a", href=True):
             href = urljoin(title_url, str(anchor.get("href") or "").strip())
-            if not re.search(r"/vacode/title[0-9A-Za-z.]+/chapter[0-9A-Za-z.]+/?$", href, re.IGNORECASE):
+            if not re.search(
+                r"/vacode/title[0-9A-Za-z.]+/chapter[0-9A-Za-z.]+/?$", href, re.IGNORECASE
+            ):
                 continue
             normalized = href.rstrip("/") + "/"
             if normalized in seen:
@@ -480,7 +495,9 @@ class VirginiaScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            chapter_url, timeout_seconds=20
+        )
         if not payload:
             return []
         soup = BeautifulSoup(payload, "html.parser")
@@ -516,9 +533,13 @@ class VirginiaScraper(BaseStateScraper):
         total_sections = len(section_urls)
         seen_keys: set[str] = set()
 
-        async def _parse_section(source_url: str, section_label: str) -> Optional[NormalizedStatute]:
+        async def _parse_section(
+            source_url: str, section_label: str
+        ) -> Optional[NormalizedStatute]:
             async with sem:
-                payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=15)
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    source_url, timeout_seconds=15
+                )
                 if not payload:
                     return None
                 soup = BeautifulSoup(payload, "html.parser")
@@ -533,13 +554,17 @@ class VirginiaScraper(BaseStateScraper):
                 text = self._normalize_legal_text(node.get_text(" ", strip=True))
                 heading = node.find("h2") or soup.find("title")
                 heading_text = heading.get_text(" ", strip=True) if heading else ""
-                match = re.search(r"(?:§|section)\s*([0-9A-Za-z.-]+)", heading_text or text, flags=re.IGNORECASE)
+                match = re.search(
+                    r"(?:§|section)\s*([0-9A-Za-z.-]+)", heading_text or text, flags=re.IGNORECASE
+                )
                 section_number = (
                     self._derive_va_section_number(source_url)
                     or (match.group(1) if match else "")
                     or str(self._derive_section_number_from_url(source_url) or "").strip()
                 )
-                section_name = re.sub(r"^§\s*[0-9A-Za-z.-]+\s*\.?\s*", "", heading_text or section_label).strip(". ")
+                section_name = re.sub(
+                    r"^§\s*[0-9A-Za-z.-]+\s*\.?\s*", "", heading_text or section_label
+                ).strip(". ")
                 # Some valid Virginia sections are short; avoid treating those
                 # as missing rows during full-corpus sweeps.
                 if len(text) < 120 or not section_number:
@@ -556,7 +581,10 @@ class VirginiaScraper(BaseStateScraper):
                     source_url=source_url,
                     official_cite=f"Va. Code Ann. § {section_number}",
                     metadata=StatuteMetadata(),
-                    structured_data={"source_kind": "official_virginia_code_html", "skip_hydrate": True},
+                    structured_data={
+                        "source_kind": "official_virginia_code_html",
+                        "skip_hydrate": True,
+                    },
                 )
 
         tasks = [

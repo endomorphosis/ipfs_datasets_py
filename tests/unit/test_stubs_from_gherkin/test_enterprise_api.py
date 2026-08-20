@@ -4,11 +4,13 @@ Test stubs for enterprise_api module.
 Feature: Enterprise API
   Enterprise-grade API for system integration
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def api_calls_by_a_client():
@@ -83,6 +85,7 @@ def the_enterprise_api():
 
 
 # Test scenarios
+
 
 def test_authenticate_enterprise_client():
     """
@@ -173,6 +176,7 @@ def test_provide_api_documentation():
 
 
 # Step definitions
+
 
 # Given steps
 @given("API calls by a client")
@@ -343,4 +347,3 @@ def usage_statistics_are_recorded():
     """Step: Then usage statistics are recorded"""
     # TODO: Implement step
     pass
-

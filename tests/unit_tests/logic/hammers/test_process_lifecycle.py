@@ -138,10 +138,7 @@ def test_failed_descendant_cleanup_is_an_orphan_and_preserves_manifest(
     assert result.termination_reason == "orphaned_process_group"
     assert result.process_group_reaped is False
     assert result.error is not None
-    manifest = (
-        supervisor.manifest_directory
-        / f"{result.managed_process_id}.json"
-    )
+    manifest = supervisor.manifest_directory / f"{result.managed_process_id}.json"
     assert manifest.exists()
     retained = json.loads(manifest.read_text(encoding="utf-8"))
     assert retained["cleanup_failed"] is True
@@ -287,7 +284,9 @@ def test_elan_recovery_removes_stale_unlocked_but_preserves_active_lock(tmp_path
 
 
 def test_recovery_does_not_kill_unrelated_process_from_forged_manifest(tmp_path: Path) -> None:
-    process = subprocess.Popen([PYTHON, "-c", "import time; time.sleep(60)"], start_new_session=True)
+    process = subprocess.Popen(
+        [PYTHON, "-c", "import time; time.sleep(60)"], start_new_session=True
+    )
     try:
         processes = tmp_path / "processes"
         processes.mkdir(parents=True)
@@ -382,10 +381,7 @@ def test_recovery_reaps_owned_descendants_after_group_leader_exits(
         start_new_session=True,
     )
     birth = (
-        Path(f"/proc/{leader.pid}/stat")
-        .read_text(encoding="utf-8")
-        .rsplit(")", 1)[1]
-        .split()[19]
+        Path(f"/proc/{leader.pid}/stat").read_text(encoding="utf-8").rsplit(")", 1)[1].split()[19]
     )
     process_group_id = os.getpgid(leader.pid)
     assert leader.stdout is not None
@@ -432,6 +428,7 @@ def test_lean_runtime_uses_supervisor_owned_kind(monkeypatch: pytest.MonkeyPatch
         def run(self, command, **kwargs):
             calls.append((command, kwargs))
             from ipfs_datasets_py.logic.hammers.process_lifecycle import ProcessExecutionResult
+
             return ProcessExecutionResult(
                 command=list(command),
                 kind=kwargs["kind"].value,
@@ -439,7 +436,9 @@ def test_lean_runtime_uses_supervisor_owned_kind(monkeypatch: pytest.MonkeyPatch
                 process_group_reaped=True,
             )
 
-    monkeypatch.setattr("ipfs_datasets_py.logic.modal.lean_runtime.get_process_supervisor", lambda: FakeSupervisor())
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.lean_runtime.get_process_supervisor", lambda: FakeSupervisor()
+    )
     result = run_lean_process(["/tools/lake", "env", "lean", "Task.lean"], timeout=3)
     assert result.returncode == 0
     assert calls[0][1]["kind"] is ProcessKind.LAKE

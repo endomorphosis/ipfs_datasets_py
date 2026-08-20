@@ -171,7 +171,7 @@ def prove(formula, prefer_zkp=False):
 ```python
 class OptimizedProver:
     """Optimized TDFOL prover with O(n² log n) performance.
-    
+
     Features:
     1. Indexed KB for O(log n) lookups
     2. Proof caching for O(1) hits
@@ -179,24 +179,24 @@ class OptimizedProver:
     4. Strategy selection
     5. Statistics tracking
     """
-    
+
     def __init__(
         self,
         kb: TDFOLKnowledgeBase,
         enable_cache: bool = True,
         enable_zkp: bool = True,
         workers: int = 1,
-        strategy: ProvingStrategy = ProvingStrategy.AUTO
+        strategy: ProvingStrategy = ProvingStrategy.AUTO,
     ):
         # Build indexed KB
         self.indexed_kb = self._build_indexed_kb()
-        
+
         # Initialize cache
         self.cache = get_global_cache() if enable_cache else None
-        
+
         # Initialize ZKP prover
         self.zkp_prover = ZKPTDFOLProver(kb) if enable_zkp else None
-        
+
         # Statistics
         self.stats = OptimizationStats()
 ```
@@ -238,11 +238,11 @@ Output: Proof result
 
 ```python
 class ProvingStrategy(Enum):
-    FORWARD = "forward"          # Apply rules until goal
-    BACKWARD = "backward"        # Goal-directed search
+    FORWARD = "forward"  # Apply rules until goal
+    BACKWARD = "backward"  # Goal-directed search
     BIDIRECTIONAL = "bidirectional"  # Search from both ends
     MODAL_TABLEAUX = "modal_tableaux"  # Systematic worlds
-    AUTO = "auto"                # Automatic selection
+    AUTO = "auto"  # Automatic selection
 ```
 
 ### Auto-Selection Heuristics
@@ -286,13 +286,14 @@ def _select_strategy(formula):
 @dataclass
 class OptimizationStats:
     """Track optimization performance."""
+
     cache_hits: int = 0
     cache_misses: int = 0
     zkp_verifications: int = 0
     indexed_lookups: int = 0
     total_proofs: int = 0
     avg_proof_time_ms: float = 0.0
-    
+
     def cache_hit_rate(self) -> float:
         total = self.cache_hits + self.cache_misses
         return self.cache_hits / total if total > 0 else 0.0
@@ -357,11 +358,7 @@ kb.add_axiom(parse_tdfol("P"))
 kb.add_axiom(parse_tdfol("P → Q"))
 
 # Create optimized prover
-prover = OptimizedProver(
-    kb,
-    enable_cache=True,
-    enable_zkp=True
-)
+prover = OptimizedProver(kb, enable_cache=True, enable_zkp=True)
 
 # Prove formula
 result = prover.prove(parse_tdfol("Q"))
@@ -397,7 +394,7 @@ prover = OptimizedProver(kb, enable_zkp=True)
 # Prefer ZKP verification
 result = prover.prove(
     parse_tdfol("Q"),
-    prefer_zkp=True  # Try ZKP first
+    prefer_zkp=True,  # Try ZKP first
 )
 
 # Check if ZKP was used

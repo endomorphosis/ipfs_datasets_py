@@ -21,15 +21,12 @@ from ipfs_datasets_py.mcp_server.tools.ipfs_tools import pin_to_ipfs
 # Pin a file
 result = await pin_to_ipfs(
     content="/path/to/file.parquet",
-    pin_name="my-dataset-v1"   # Optional label
+    pin_name="my-dataset-v1",  # Optional label
 )
 # Returns: {"status": "success", "cid": "QmXxx...", "size_bytes": 12345}
 
 # Pin raw bytes / string
-result = await pin_to_ipfs(
-    content='{"key": "value"}',
-    content_type="json"
-)
+result = await pin_to_ipfs(content='{"key": "value"}', content_type="json")
 ```
 
 ### Get content from IPFS
@@ -39,7 +36,7 @@ from ipfs_datasets_py.mcp_server.tools.ipfs_tools import get_from_ipfs
 
 result = await get_from_ipfs(
     cid="QmXxx...",
-    output_path="/tmp/retrieved_file"  # Optional: save to disk
+    output_path="/tmp/retrieved_file",  # Optional: save to disk
 )
 # Returns: {"status": "success", "content": "...", "cid": "QmXxx..."}
 ```

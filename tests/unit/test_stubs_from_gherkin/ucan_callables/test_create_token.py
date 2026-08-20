@@ -5,10 +5,12 @@ Feature: UCANManager.create_token()
   Tests the create_token() method of UCANManager.
   This callable creates a new UCAN authorization token.
 """
+
 import pytest
 
 
 # Fixtures for Background
+
 
 @pytest.fixture
 def a_ucanmanager_instance_is_initialized():
@@ -48,10 +50,16 @@ def a_ucancapability_with_resourcefiledatatxt_and_actionread():
 
 # Test scenarios
 
-def test_create_token_with_single_capability_returns_instance(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+
+def test_create_token_with_single_capability_returns_instance(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token with single capability returns instance
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -63,10 +71,15 @@ def test_create_token_with_single_capability_returns_instance(a_ucanmanager_inst
     pass
 
 
-def test_created_token_has_token_id_as_uuid_string(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_created_token_has_token_id_as_uuid_string(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Created token has token_id as UUID string
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -78,10 +91,15 @@ def test_created_token_has_token_id_as_uuid_string(a_ucanmanager_instance_is_ini
     pass
 
 
-def test_created_token_has_correct_issuer(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_created_token_has_correct_issuer(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Created token has correct issuer
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -93,10 +111,15 @@ def test_created_token_has_correct_issuer(a_ucanmanager_instance_is_initialized,
     pass
 
 
-def test_created_token_has_correct_audience(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_created_token_has_correct_audience(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Created token has correct audience
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -108,10 +131,15 @@ def test_created_token_has_correct_audience(a_ucanmanager_instance_is_initialize
     pass
 
 
-def test_created_token_capabilities_contains_1_entry(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_created_token_capabilities_contains_1_entry(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Created token capabilities contains 1 entry
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -123,10 +151,15 @@ def test_created_token_capabilities_contains_1_entry(a_ucanmanager_instance_is_i
     pass
 
 
-def test_created_token_expires_at_is_ttl_seconds_from_now(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_created_token_expires_at_is_ttl_seconds_from_now(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Created token expires_at is ttl seconds from now
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -138,10 +171,15 @@ def test_created_token_expires_at_is_ttl_seconds_from_now(a_ucanmanager_instance
     pass
 
 
-def test_created_token_has_signature_attribute(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_created_token_has_signature_attribute(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Created token has signature attribute
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -153,10 +191,15 @@ def test_created_token_has_signature_attribute(a_ucanmanager_instance_is_initial
     pass
 
 
-def test_create_token_with_multiple_capabilities_contains_3_entries(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_with_multiple_capabilities_contains_3_entries(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token with multiple capabilities contains 3 entries
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -169,10 +212,15 @@ def test_create_token_with_multiple_capabilities_contains_3_entries(a_ucanmanage
     pass
 
 
-def test_multiple_capabilities_each_have_resource_attribute(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_multiple_capabilities_each_have_resource_attribute(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Multiple capabilities each have resource attribute
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -185,10 +233,15 @@ def test_multiple_capabilities_each_have_resource_attribute(a_ucanmanager_instan
     pass
 
 
-def test_multiple_capabilities_each_have_action_attribute(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_multiple_capabilities_each_have_action_attribute(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Multiple capabilities each have action attribute
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -201,10 +254,15 @@ def test_multiple_capabilities_each_have_action_attribute(a_ucanmanager_instance
     pass
 
 
-def test_create_token_with_custom_ttl(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_with_custom_ttl(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token with custom TTL
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -216,10 +274,15 @@ def test_create_token_with_custom_ttl(a_ucanmanager_instance_is_initialized, iss
     pass
 
 
-def test_create_token_with_not_before_timestamp(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_with_not_before_timestamp(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token with not_before timestamp
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -231,10 +294,15 @@ def test_create_token_with_not_before_timestamp(a_ucanmanager_instance_is_initia
     pass
 
 
-def test_create_token_with_proof_token_id(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_with_proof_token_id(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token with proof token ID
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -247,10 +315,15 @@ def test_create_token_with_proof_token_id(a_ucanmanager_instance_is_initialized,
     pass
 
 
-def test_create_token_stores_token_in_manager(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_stores_token_in_manager(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token stores token in manager
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -262,10 +335,15 @@ def test_create_token_stores_token_in_manager(a_ucanmanager_instance_is_initiali
     pass
 
 
-def test_created_token_is_indexed_by_token_id(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_created_token_is_indexed_by_token_id(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Created token is indexed by token_id
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -277,10 +355,15 @@ def test_created_token_is_indexed_by_token_id(a_ucanmanager_instance_is_initiali
     pass
 
 
-def test_create_token_updates_tokensjson_file(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_updates_tokensjson_file(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token updates tokens.json file
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -292,10 +375,15 @@ def test_create_token_updates_tokensjson_file(a_ucanmanager_instance_is_initiali
     pass
 
 
-def test_create_token_generates_jwt_signature(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_generates_jwt_signature(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token generates JWT signature
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -307,10 +395,15 @@ def test_create_token_generates_jwt_signature(a_ucanmanager_instance_is_initiali
     pass
 
 
-def test_token_signature_contains_token_id_as_jti_claim(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_token_signature_contains_token_id_as_jti_claim(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Token signature contains token_id as jti claim
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -322,10 +415,15 @@ def test_token_signature_contains_token_id_as_jti_claim(a_ucanmanager_instance_i
     pass
 
 
-def test_token_signature_contains_issuer_did_as_iss_claim(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_token_signature_contains_issuer_did_as_iss_claim(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Token signature contains issuer_did as iss claim
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -337,10 +435,15 @@ def test_token_signature_contains_issuer_did_as_iss_claim(a_ucanmanager_instance
     pass
 
 
-def test_token_signature_contains_audience_did_as_aud_claim(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_token_signature_contains_audience_did_as_aud_claim(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Token signature contains audience_did as aud claim
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -352,10 +455,15 @@ def test_token_signature_contains_audience_did_as_aud_claim(a_ucanmanager_instan
     pass
 
 
-def test_create_token_fails_when_manager_not_initialized(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_fails_when_manager_not_initialized(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token fails when manager not initialized
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -368,10 +476,15 @@ def test_create_token_fails_when_manager_not_initialized(a_ucanmanager_instance_
     pass
 
 
-def test_create_token_fails_when_issuer_not_found(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_fails_when_issuer_not_found(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token fails when issuer not found
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -383,10 +496,15 @@ def test_create_token_fails_when_issuer_not_found(a_ucanmanager_instance_is_init
     pass
 
 
-def test_create_token_fails_when_issuer_lacks_private_key(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_fails_when_issuer_lacks_private_key(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token fails when issuer lacks private key
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -399,10 +517,15 @@ def test_create_token_fails_when_issuer_lacks_private_key(a_ucanmanager_instance
     pass
 
 
-def test_create_token_fails_when_audience_not_found(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_fails_when_audience_not_found(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token fails when audience not found
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -414,10 +537,15 @@ def test_create_token_fails_when_audience_not_found(a_ucanmanager_instance_is_in
     pass
 
 
-def test_create_token_fails_with_unsupported_capability_action(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice_and_private_key, audience_keypair_exists_with_diddidkeybob, a_ucancapability_with_resourcefiledatatxt_and_actionread):
+def test_create_token_fails_with_unsupported_capability_action(
+    a_ucanmanager_instance_is_initialized,
+    issuer_keypair_exists_with_diddidkeyalice_and_private_key,
+    audience_keypair_exists_with_diddidkeybob,
+    a_ucancapability_with_resourcefiledatatxt_and_actionread,
+):
     """
     Scenario: Create token fails with unsupported capability action
-    
+
     Given a UCANManager instance is initialized
     Given issuer keypair exists with did="did:key:alice" and private key
     Given audience keypair exists with did="did:key:bob"
@@ -428,4 +556,3 @@ def test_create_token_fails_with_unsupported_capability_action(a_ucanmanager_ins
     """
     # TODO: Implement test
     pass
-

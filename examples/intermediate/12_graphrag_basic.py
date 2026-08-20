@@ -20,16 +20,16 @@ import tempfile
 
 async def demo_basic_graphrag():
     """Demonstrate basic GraphRAG workflow."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 1: Basic GraphRAG Workflow")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📊 GraphRAG combines:")
     print("   1. Knowledge Graph: Structured relationships")
     print("   2. Vector Search: Semantic similarity")
     print("   3. RAG: Retrieval-Augmented Generation")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import HybridVectorGraphSearch
 from ipfs_datasets_py.ml.embeddings import IPFSEmbeddings
 from ipfs_datasets_py.knowledge_graphs import KnowledgeGraphBuilder
@@ -72,20 +72,20 @@ for result in results:
     print(f"Text: {result['text']}")
     print(f"Entities: {result['entities']}")
     print(f"Relationships: {result['relationships']}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_entity_centric_retrieval():
     """Retrieve information about specific entities."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 2: Entity-Centric Retrieval")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🎯 Entity-Centric Retrieval")
     print("   Focus on specific entities and their context")
-    
+
     example_code = '''
 from ipfs_datasets_py.search import LogicAwareEntityExtractor
 
@@ -119,20 +119,20 @@ for result in results:
     print(f"Target: {result['target_entity']}")
     print(f"Confidence: {result['confidence']:.2f}")
     '''
-    
+
     print(example_code)
 
 
 async def demo_multi_hop_reasoning():
     """Perform multi-hop reasoning over knowledge graphs."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 3: Multi-Hop Reasoning")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🔗 Multi-Hop Reasoning")
     print("   Answer questions requiring multiple inference steps")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import CrossDocumentReasoner
 
 reasoner = CrossDocumentReasoner(
@@ -165,20 +165,20 @@ for i, step in enumerate(reasoning_result['reasoning_path'], 1):
 print("\\nSupporting evidence:")
 for evidence in reasoning_result['evidence']:
     print(f"- {evidence}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_graphrag_with_documents():
     """Build GraphRAG from actual documents."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 4: GraphRAG from Documents")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📄 Building GraphRAG from Documents")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.file_converter import FileConverter
 from ipfs_datasets_py.search import HybridVectorGraphSearch
 
@@ -222,21 +222,21 @@ results = await graphrag.search(
 for i, result in enumerate(results, 1):
     print(f"{i}. Score: {result['score']:.3f}")
     print(f"   {result['text'][:100]}...")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_logic_enhanced_rag():
     """Combine logic reasoning with RAG."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 5: Logic-Enhanced RAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🧠 Logic-Enhanced RAG")
     print("   Add logical constraints to retrieval")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import LogicEnhancedRAG
 
 # Create RAG with logic constraints
@@ -267,20 +267,20 @@ for result in results:
     print(f"Company: {result['company']}")
     print(f"Founder: {result['founder']}")
     print(f"Satisfies: {result['constraints_satisfied']}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_graphrag_evaluation():
     """Evaluate GraphRAG performance."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 6: GraphRAG Evaluation")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📊 Evaluating GraphRAG Performance")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import GraphRAGEvaluator
 
 evaluator = GraphRAGEvaluator()
@@ -313,21 +313,21 @@ for test_case, result in zip(test_cases, results['details']):
     print(f"Q: {test_case['question']}")
     print(f"  Correct: {result['correct']}")
     print(f"  Confidence: {result['confidence']:.2f}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_graphrag_update():
     """Update GraphRAG with new information."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 7: Updating GraphRAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🔄 Incremental Updates")
     print("   Add new information without rebuilding")
-    
-    example_code = '''
+
+    example_code = """
 # Add new documents
 new_documents = [
     "Apple acquired Beats Electronics in 2014.",
@@ -355,59 +355,59 @@ results = await graphrag.search(
 )
 
 # Will now include information about Beats acquisition
-    '''
-    
+    """
+
     print(example_code)
 
 
 def show_tips():
     """Show tips for GraphRAG."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TIPS FOR GRAPHRAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n1. When to Use GraphRAG:")
     print("   - Complex queries requiring reasoning")
     print("   - Entity-centric information needs")
     print("   - Multi-document analysis")
     print("   - Structured knowledge domains")
-    
+
     print("\n2. Graph Construction:")
     print("   - Use domain-specific entity extractors")
     print("   - Validate relationships before adding")
     print("   - Include entity types for better retrieval")
     print("   - Consider entity linking to external KBs")
-    
+
     print("\n3. Hybrid Search:")
     print("   - Vector search: Good for semantic similarity")
     print("   - Graph search: Good for structured relationships")
     print("   - Combine both for best results")
     print("   - Weight by query type")
-    
+
     print("\n4. Performance:")
     print("   - Index graph for fast traversal")
     print("   - Cache frequent queries")
     print("   - Limit graph depth for large graphs")
     print("   - Use approximate NN for vector search")
-    
+
     print("\n5. Quality:")
     print("   - Evaluate with test questions")
     print("   - Monitor entity extraction accuracy")
     print("   - Validate relationship correctness")
     print("   - Use human feedback for improvement")
-    
+
     print("\n6. Scaling:")
     print("   - Partition large graphs by domain")
     print("   - Use graph databases (Neo4j, etc.)")
     print("   - Distribute across multiple nodes")
     print("   - Incremental updates for efficiency")
-    
+
     print("\n7. Applications:")
     print("   - Question answering systems")
     print("   - Research and analysis")
     print("   - Customer support")
     print("   - Knowledge management")
-    
+
     print("\n8. Next Steps:")
     print("   - See 14_cross_document_reasoning.py for advanced multi-doc")
     print("   - See 15_graphrag_optimization.py for production systems")
@@ -415,10 +415,10 @@ def show_tips():
 
 async def main():
     """Run all GraphRAG demonstrations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("IPFS DATASETS PYTHON - GRAPHRAG BASICS")
-    print("="*70)
-    
+    print("=" * 70)
+
     await demo_basic_graphrag()
     await demo_entity_centric_retrieval()
     await demo_multi_hop_reasoning()
@@ -426,12 +426,12 @@ async def main():
     await demo_logic_enhanced_rag()
     await demo_graphrag_evaluation()
     await demo_graphrag_update()
-    
+
     show_tips()
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("✅ GRAPHRAG EXAMPLES COMPLETE")
-    print("="*70)
+    print("=" * 70)
 
 
 if __name__ == "__main__":

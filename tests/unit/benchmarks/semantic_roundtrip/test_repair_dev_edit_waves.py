@@ -77,9 +77,7 @@ INTERVENTION_REGISTRY_PATH = (
     / "semantic-roundtrip-compositions"
     / "repair_dev_intervention_registry.json"
 )
-REPAIR_DEV_CASES_PATH = (
-    ROOT / "tests" / "fixtures" / "semantic_roundtrip" / "repair_dev_cases.json"
-)
+REPAIR_DEV_CASES_PATH = ROOT / "tests" / "fixtures" / "semantic_roundtrip" / "repair_dev_cases.json"
 BASELINE_REPORT_PATH = (
     ROOT
     / "workspace"
@@ -226,9 +224,7 @@ def test_mean_pilot_forward_and_e2e_remain_zero() -> None:
     losses: list[float] = []
     for case in load_pilot_matrix_cases():
         l1 = construct_baseline_l1(case)
-        losses.append(
-            float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"])
-        )
+        losses.append(float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"]))
     mean_forward = sum(losses) / len(losses)
     assert mean_forward <= BASELINE_E2E_MEAN + 1e-9
     assert mean_forward == pytest.approx(0.0, abs=1e-9)
@@ -262,18 +258,11 @@ def test_pilot_coverage_polarity_source_copy_gates_still_pass() -> None:
 
 
 def test_purpose_for_and_before_gerund_classification_unit() -> None:
-    assert (
-        _classify_qualifier_facet("for_marketing_purposes") == "conditions"
-    )
-    assert (
-        _classify_qualifier_facet("for_members_in_good_standing") == "conditions"
-    )
+    assert _classify_qualifier_facet("for_marketing_purposes") == "conditions"
+    assert _classify_qualifier_facet("for_members_in_good_standing") == "conditions"
     assert _classify_qualifier_facet("for_classified_projects") == "conditions"
     assert _classify_qualifier_facet("for_five_years") == "temporal"
-    assert (
-        _classify_qualifier_facet("before_making_robocalls_to_wireless_numbers")
-        == "conditions"
-    )
+    assert _classify_qualifier_facet("before_making_robocalls_to_wireless_numbers") == "conditions"
     assert _classify_qualifier_facet("before_arbitration") == "temporal"
 
 
@@ -323,8 +312,7 @@ def test_conjoined_action_split_unit() -> None:
         "actor": "Staff members",
         "action_verb": "accept",
         "action_object": (
-            "promotional items and gifts up to in value from "
-            "approved business partners"
+            "promotional items and gifts up to in value from approved business partners"
         ),
         "source_text": "Staff members may accept promotional items and gifts",
     }
@@ -390,9 +378,7 @@ def test_expand_norms_integrates_split_and_recovery() -> None:
                 "modality": "F",
                 "actor": "All workers",
                 "action_verb": "engage",
-                "action_object": (
-                    "in insider trading or share material non-public information"
-                ),
+                "action_object": ("in insider trading or share material non-public information"),
                 "source_text": (
                     "All workers must not engage in insider trading or "
                     "share material non-public information"
@@ -405,9 +391,7 @@ def test_expand_norms_integrates_split_and_recovery() -> None:
         "industry colleagues. All workers must not engage in insider trading "
         "or share material non-public information."
     )
-    expanded = _expand_norms_for_projection(
-        norms, vocab, source_text=source
-    )
+    expanded = _expand_norms_for_projection(norms, vocab, source_text=source)
     dicts = [norm.to_dict() for norm in expanded]  # type: ignore[union-attr]
     verbs = {item.get("action_verb") for item in dicts}
     assert "engage" in verbs
@@ -437,10 +421,7 @@ def test_edit_wave_receipt_cites_cids_hypothesis_and_metrics(
     # Packet / intervention / baseline / tree CIDs.
     packet_cids = receipt["packet_cids"]
     assert isinstance(packet_cids, list) and packet_cids
-    assert all(
-        isinstance(item, str) and item.startswith("baguqeera")
-        for item in packet_cids
-    )
+    assert all(isinstance(item, str) and item.startswith("baguqeera") for item in packet_cids)
     assert receipt["residual_catalog_cid"] == catalog["catalog_cid"]
     assert receipt["tree_cid"] == catalog["tree_cid"]
     assert receipt["baseline_report_cid"] == catalog["baseline"]["report_cid"]
@@ -449,19 +430,18 @@ def test_edit_wave_receipt_cites_cids_hypothesis_and_metrics(
     assert receipt["intervention_ids"]
 
     # Residual cluster + deterministic hypothesis.
-    assert isinstance(receipt["residual_cluster"], str) and receipt[
-        "residual_cluster"
-    ]
-    assert isinstance(receipt["deterministic_hypothesis"], str) and receipt[
-        "deterministic_hypothesis"
-    ]
+    assert isinstance(receipt["residual_cluster"], str) and receipt["residual_cluster"]
+    assert (
+        isinstance(receipt["deterministic_hypothesis"], str) and receipt["deterministic_hypothesis"]
+    )
 
     # Changed symbols / files, assumptions, tests, structural receipts.
-    assert isinstance(receipt["changed_symbols"], list) and receipt[
-        "changed_symbols"
-    ]
-    assert "benchmarks/semantic_roundtrip/constructors/typed_deontic.py" in (
-        receipt["changed_files"]  # type: ignore[operator]
+    assert isinstance(receipt["changed_symbols"], list) and receipt["changed_symbols"]
+    assert (
+        "benchmarks/semantic_roundtrip/constructors/typed_deontic.py"
+        in (
+            receipt["changed_files"]  # type: ignore[operator]
+        )
     )
     assert isinstance(receipt["assumptions"], list) and receipt["assumptions"]
     assert isinstance(receipt["tests"], list) and receipt["tests"]
@@ -489,9 +469,12 @@ def test_edit_wave_receipt_cites_cids_hypothesis_and_metrics(
     assert float(prior[f"{case_id}_forward_loss"]) == pytest.approx(  # type: ignore[index]
         prior_meta["forward"], abs=1e-8
     )
-    assert float(prior[f"{case_id}_residual_count"]) == prior_meta[  # type: ignore[index]
-        "residual_count"
-    ]
+    assert (
+        float(prior[f"{case_id}_residual_count"])
+        == prior_meta[  # type: ignore[index]
+            "residual_count"
+        ]
+    )
     assert isinstance(prior.get("per_facet_prior"), list)
 
     post = receipt["post_scores"]
@@ -535,9 +518,9 @@ def test_structural_constraint_names_still_declared() -> None:
 def test_constructor_identity_unchanged_and_no_llm_dependency() -> None:
     constructor = TypedDeonticCanonicalConstructor()
     assert constructor.identity == TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE
-    source = (
-        ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py"
-    ).read_text(encoding="utf-8")
+    source = (ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py").read_text(
+        encoding="utf-8"
+    )
     lowered = source.lower()
     for banned in (
         "openai",
@@ -576,6 +559,4 @@ def test_manifest_lists_all_nonzero_receipts() -> None:
     assert set(manifest["case_ids"]) == set(NONZERO_REPAIR_DEV_CASES)
     assert manifest["blind_data_accessed"] is False
     assert manifest["optional_runtimes_promoted"] == []
-    assert float(manifest["mean_pilot_forward_loss"]) == pytest.approx(
-        0.0, abs=1e-9
-    )
+    assert float(manifest["mean_pilot_forward_loss"]) == pytest.approx(0.0, abs=1e-9)

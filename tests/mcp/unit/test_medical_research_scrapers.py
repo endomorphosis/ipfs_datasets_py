@@ -5,6 +5,7 @@ All functions are sync (not async).  They delegate immediately to
 MedicalResearchCore / BiomoleculeDiscoveryCore / AIDatasetBuilderCore,
 so we mock those classes at the module level to avoid hitting real APIs.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -22,6 +23,7 @@ _MOD = "ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.medical_rese
 # scrape_pubmed_medical_research
 # ---------------------------------------------------------------------------
 
+
 class TestScrapePubmedMedicalResearch:
     """Tests for scrape_pubmed_medical_research()."""
 
@@ -29,12 +31,14 @@ class TestScrapePubmedMedicalResearch:
         from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
             scrape_pubmed_medical_research,
         )
+
         self.fn = scrape_pubmed_medical_research
 
     def test_returns_dict_with_mock(self) -> None:
         with patch(f"{_MOD}.MedicalResearchCore") as mock_cls:
             mock_cls.return_value.scrape_pubmed_research.return_value = {
-                "articles": [], "total_count": 0
+                "articles": [],
+                "total_count": 0,
             }
             result = self.fn("diabetes")
         assert isinstance(result, dict)
@@ -49,7 +53,8 @@ class TestScrapePubmedMedicalResearch:
     def test_empty_query(self) -> None:
         with patch(f"{_MOD}.MedicalResearchCore") as mock_cls:
             mock_cls.return_value.scrape_pubmed_research.return_value = {
-                "articles": [], "total_count": 0
+                "articles": [],
+                "total_count": 0,
             }
             result = self.fn("")
         assert isinstance(result, dict)
@@ -59,6 +64,7 @@ class TestScrapePubmedMedicalResearch:
 # scrape_clinical_trials
 # ---------------------------------------------------------------------------
 
+
 class TestScrapeClinicalTrials:
     """Tests for scrape_clinical_trials()."""
 
@@ -66,12 +72,14 @@ class TestScrapeClinicalTrials:
         from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
             scrape_clinical_trials,
         )
+
         self.fn = scrape_clinical_trials
 
     def test_returns_dict_with_mock(self) -> None:
         with patch(f"{_MOD}.MedicalResearchCore") as mock_cls:
             mock_cls.return_value.scrape_clinical_trials.return_value = {
-                "trials": [], "total_count": 0
+                "trials": [],
+                "total_count": 0,
             }
             result = self.fn("cancer")
         assert isinstance(result, dict)
@@ -87,6 +95,7 @@ class TestScrapeClinicalTrials:
 # scrape_biochemical_research
 # ---------------------------------------------------------------------------
 
+
 class TestScrapeBiochemicalResearch:
     """Tests for scrape_biochemical_research()."""
 
@@ -94,12 +103,14 @@ class TestScrapeBiochemicalResearch:
         from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
             scrape_biochemical_research,
         )
+
         self.fn = scrape_biochemical_research
 
     def test_returns_dict_with_mock(self) -> None:
         with patch(f"{_MOD}.MedicalResearchCore") as mock_cls:
             mock_cls.return_value.scrape_biochemical_research.return_value = {
-                "papers": [], "total_count": 0
+                "papers": [],
+                "total_count": 0,
             }
             result = self.fn("CRISPR")
         assert isinstance(result, dict)
@@ -109,6 +120,7 @@ class TestScrapeBiochemicalResearch:
 # discover_protein_binders
 # ---------------------------------------------------------------------------
 
+
 class TestDiscoverProteinBinders:
     """Tests for discover_protein_binders()."""
 
@@ -116,12 +128,14 @@ class TestDiscoverProteinBinders:
         from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
             discover_protein_binders,
         )
+
         self.fn = discover_protein_binders
 
     def test_returns_dict_with_mock(self) -> None:
         with patch(f"{_MOD}.BiomoleculeDiscoveryCore") as mock_cls:
             mock_cls.return_value.discover_protein_binders.return_value = {
-                "binders": [], "target_protein": "ACE2"
+                "binders": [],
+                "target_protein": "ACE2",
             }
             result = self.fn("ACE2")
         assert isinstance(result, dict)
@@ -137,6 +151,7 @@ class TestDiscoverProteinBinders:
 # build_dataset_from_scraped_data
 # ---------------------------------------------------------------------------
 
+
 class TestBuildDatasetFromScrapedData:
     """Tests for build_dataset_from_scraped_data()."""
 
@@ -144,13 +159,12 @@ class TestBuildDatasetFromScrapedData:
         from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
             build_dataset_from_scraped_data,
         )
+
         self.fn = build_dataset_from_scraped_data
 
     def test_returns_dict_with_mock(self) -> None:
         with patch(f"{_MOD}.AIDatasetBuilderCore") as mock_cls:
-            mock_cls.return_value.build_dataset.return_value = {
-                "dataset": [], "record_count": 0
-            }
+            mock_cls.return_value.build_dataset.return_value = {"dataset": [], "record_count": 0}
             result = self.fn([{"title": "paper1"}])
         assert isinstance(result, dict)
 
@@ -165,6 +179,7 @@ class TestBuildDatasetFromScrapedData:
 # generate_synthetic_dataset
 # ---------------------------------------------------------------------------
 
+
 class TestGenerateSyntheticDataset:
     """Tests for generate_synthetic_dataset()."""
 
@@ -172,12 +187,14 @@ class TestGenerateSyntheticDataset:
         from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
             generate_synthetic_dataset,
         )
+
         self.fn = generate_synthetic_dataset
 
     def test_returns_dict_with_mock(self) -> None:
         with patch(f"{_MOD}.AIDatasetBuilderCore") as mock_cls:
             mock_cls.return_value.generate_synthetic_data.return_value = {
-                "samples": [], "num_samples": 3
+                "samples": [],
+                "num_samples": 3,
             }
             result = self.fn([{"title": "template"}], num_samples=3)
         assert isinstance(result, dict)

@@ -22,12 +22,16 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_native
 )
 
 
-DEFAULT_OUT = Path('security_ir_artifacts/corpora/xaman-app/runtime/native-vault-android-host-preflight.json')
+DEFAULT_OUT = Path(
+    "security_ir_artifacts/corpora/xaman-app/runtime/native-vault-android-host-preflight.json"
+)
 
 
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n', encoding='utf-8')
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
 
 
 def _resolve(root: Path, value: str) -> Path:
@@ -37,15 +41,25 @@ def _resolve(root: Path, value: str) -> Path:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root.')
-    parser.add_argument('--android-sdk', default=os.environ.get('ANDROID_SDK_ROOT', ''), help='Explicit Android SDK root.')
-    parser.add_argument('--java-home', default=os.environ.get('JAVA_HOME', ''), help='Optional locked JDK root for sdkmanager.')
-    parser.add_argument('--avd-home', default=str(Path.home() / '.android/avd'), help='AVD home directory.')
-    parser.add_argument('--avd-name', default=AVD_NAME, help='Expected API-34 verifier AVD name.')
-    parser.add_argument('--out', default=str(DEFAULT_OUT), help='Redacted preflight artifact path.')
+    parser.add_argument("--repo-root", default=str(ROOT_DIR), help="Repository root.")
+    parser.add_argument(
+        "--android-sdk",
+        default=os.environ.get("ANDROID_SDK_ROOT", ""),
+        help="Explicit Android SDK root.",
+    )
+    parser.add_argument(
+        "--java-home",
+        default=os.environ.get("JAVA_HOME", ""),
+        help="Optional locked JDK root for sdkmanager.",
+    )
+    parser.add_argument(
+        "--avd-home", default=str(Path.home() / ".android/avd"), help="AVD home directory."
+    )
+    parser.add_argument("--avd-name", default=AVD_NAME, help="Expected API-34 verifier AVD name.")
+    parser.add_argument("--out", default=str(DEFAULT_OUT), help="Redacted preflight artifact path.")
     args = parser.parse_args(argv)
     if not args.android_sdk:
-        parser.error('--android-sdk or ANDROID_SDK_ROOT is required')
+        parser.error("--android-sdk or ANDROID_SDK_ROOT is required")
     root = Path(args.repo_root).resolve()
     try:
         report = probe_android_host(
@@ -58,13 +72,18 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(str(exc))
     out = _resolve(root, args.out)
     _write_json(out, report)
-    print(json.dumps({
-        'artifact_cid': report['artifact_cid'],
-        'out': str(out.relative_to(root)) if out.is_relative_to(root) else str(out),
-        'security_decision': report['security_decision'],
-    }, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                "artifact_cid": report["artifact_cid"],
+                "out": str(out.relative_to(root)) if out.is_relative_to(root) else str(out),
+                "security_decision": report["security_decision"],
+            },
+            sort_keys=True,
+        )
+    )
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

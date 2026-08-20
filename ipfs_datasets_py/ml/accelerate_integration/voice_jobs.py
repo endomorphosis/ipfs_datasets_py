@@ -279,19 +279,21 @@ def jobs_from_voice_workset(
                 ) from exc
             source_audio = _artifact_from_work_item(item)
             source_task_id = ""
-            if item.operation in {
-                AudioWorkOperation.ASR,
-                AudioWorkOperation.VALIDATE,
-            } and source_audio is None:
+            if (
+                item.operation
+                in {
+                    AudioWorkOperation.ASR,
+                    AudioWorkOperation.VALIDATE,
+                }
+                and source_audio is None
+            ):
                 source_key = (item.subject_id, item.locale)
                 source_task_id = audio_task_id_by_subject.get(source_key, "")
                 if not source_task_id:
                     raise VoiceJobBridgeError(
                         f"work item {item.work_id!r} has no immutable or generated audio source"
                     )
-                dependency_task_ids = tuple(
-                    sorted({*dependency_task_ids, source_task_id})
-                )
+                dependency_task_ids = tuple(sorted({*dependency_task_ids, source_task_id}))
 
             lineage = _lineage(
                 workset=workset,
@@ -509,8 +511,7 @@ class VoiceJobBridge:
             )
         if submitted_id != job.task_id:
             raise VoiceJobBridgeError(
-                f"canonical queue changed deterministic task ID {job.task_id!r} "
-                f"to {submitted_id!r}"
+                f"canonical queue changed deterministic task ID {job.task_id!r} to {submitted_id!r}"
             )
         if replayed:
             existing = self._queue.get(job.task_id)
@@ -808,9 +809,7 @@ def _parse_and_verify_receipt(
         or result.status != status
         or result_lineage != request_lineage
     ):
-        raise VoiceJobReceiptError(
-            f"task {task_id!r} receipt does not match its request lineage"
-        )
+        raise VoiceJobReceiptError(f"task {task_id!r} receipt does not match its request lineage")
     return result
 
 

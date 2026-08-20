@@ -13,6 +13,7 @@ from typing import Dict, Any
 # Mock heavy dependencies before importing enterprise_api
 # ---------------------------------------------------------------------------
 
+
 def _setup_mocks():
     """Set up mock modules for enterprise_api imports."""
     mock_graphrag = MagicMock()
@@ -44,6 +45,7 @@ from ipfs_datasets_py.mcp_server.enterprise_api import (
 # ---------------------------------------------------------------------------
 # AuthenticationManager
 # ---------------------------------------------------------------------------
+
 
 class TestAuthenticationManager:
     """Tests for JWT authentication manager."""
@@ -100,8 +102,10 @@ class TestAuthenticationManager:
         THEN: Returns None (does not raise)
         """
         with patch("ipfs_datasets_py.mcp_server.enterprise_api.jwt") as mock_jwt:
+
             class FakePyJWTError(Exception):
                 pass
+
             mock_jwt.PyJWTError = FakePyJWTError
             mock_jwt.decode.side_effect = FakePyJWTError("invalid token")
             result = self.auth.verify_token("bad.token.value")
@@ -122,6 +126,7 @@ class TestAuthenticationManager:
 # ---------------------------------------------------------------------------
 # RateLimiter
 # ---------------------------------------------------------------------------
+
 
 class TestRateLimiter:
     """Tests for API rate limiting."""
@@ -153,6 +158,7 @@ class TestRateLimiter:
         THEN: HTTPException is raised on the 6th request
         """
         from fastapi import HTTPException
+
         # Flood the limiter with exactly the max allowed (5)
         for i in range(5):
             asyncio.run(self.limiter.check_limits("user1", "website_processing"))
@@ -168,6 +174,7 @@ class TestRateLimiter:
         THEN: The other user is not affected
         """
         from fastapi import HTTPException
+
         # Flood user1's limit
         for _ in range(5):
             asyncio.run(self.limiter.check_limits("user1", "website_processing"))
@@ -182,12 +189,16 @@ class TestRateLimiter:
         WHEN: Checking configured limits
         THEN: 'search' allows 100 requests, 'website_processing' allows only 5
         """
-        assert self.limiter.limits["search"]["requests"] > self.limiter.limits["website_processing"]["requests"]
+        assert (
+            self.limiter.limits["search"]["requests"]
+            > self.limiter.limits["website_processing"]["requests"]
+        )
 
 
 # ---------------------------------------------------------------------------
 # ProcessingJobManager
 # ---------------------------------------------------------------------------
+
 
 class TestProcessingJobManager:
     """Tests for job submission and status tracking."""
@@ -259,6 +270,7 @@ class TestProcessingJobManager:
 # ---------------------------------------------------------------------------
 # AdvancedAnalyticsDashboard
 # ---------------------------------------------------------------------------
+
 
 class TestAdvancedAnalyticsDashboard:
     """Tests for analytics dashboard."""
@@ -362,6 +374,7 @@ class TestAdvancedAnalyticsDashboard:
 # WebsiteProcessingRequest (Pydantic model)
 # ---------------------------------------------------------------------------
 
+
 class TestWebsiteProcessingRequest:
     """Tests for request validation model."""
 
@@ -372,6 +385,7 @@ class TestWebsiteProcessingRequest:
         THEN: ValidationError is raised
         """
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             WebsiteProcessingRequest()  # missing url
 
@@ -391,6 +405,7 @@ class TestWebsiteProcessingRequest:
         THEN: ValidationError is raised
         """
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             WebsiteProcessingRequest(url="https://example.com", crawl_depth=0)
 
@@ -401,6 +416,7 @@ class TestWebsiteProcessingRequest:
         THEN: ValidationError is raised
         """
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             WebsiteProcessingRequest(url="https://example.com", crawl_depth=6)
 
@@ -408,6 +424,7 @@ class TestWebsiteProcessingRequest:
 # ---------------------------------------------------------------------------
 # AuthenticationManager.authenticate — async path (lines 143-166)
 # ---------------------------------------------------------------------------
+
 
 class TestAuthenticationManagerAuthenticate:
     """Tests for the async authenticate() method (lines 143-166)."""
@@ -431,6 +448,7 @@ class TestAuthenticationManagerAuthenticate:
         THEN: HTTPException is raised with 401
         """
         from fastapi import HTTPException
+
         auth = AuthenticationManager()
         # Force demo user to be inactive
         auth.users_db["demo"].is_active = False
@@ -448,6 +466,7 @@ class TestAuthenticationManagerAuthenticate:
         THEN: HTTPException is raised with 401
         """
         from fastapi import HTTPException
+
         auth = AuthenticationManager()
         with pytest.raises(HTTPException) as exc_info:
             asyncio.run(auth.authenticate("this.is.not.valid"))
@@ -461,6 +480,7 @@ class TestAuthenticationManagerAuthenticate:
         """
         import jwt as _jwt
         from fastapi import HTTPException
+
         auth = AuthenticationManager()
         # Create a token without a 'sub' claim
         token = _jwt.encode({"role": "user"}, auth.secret_key, algorithm=auth.algorithm)
@@ -473,6 +493,7 @@ class TestAuthenticationManagerAuthenticate:
 # ProcessingJobManager.process_job — background task (lines 275-354)
 # ---------------------------------------------------------------------------
 
+
 class TestProcessingJobManagerProcessJob:
     """Tests for the async process_job() background task."""
 
@@ -483,6 +504,7 @@ class TestProcessingJobManagerProcessJob:
         THEN: Job status is set to 'failed' and no exception propagates
         """
         from ipfs_datasets_py.mcp_server.exceptions import ToolExecutionError as MCPToolExecError
+
         jm = ProcessingJobManager()
         req = WebsiteProcessingRequest(url="https://example.com")
         job_id = asyncio.run(jm.submit_job("user1", req))
@@ -538,6 +560,7 @@ class TestProcessingJobManagerProcessJob:
 # RateLimiter — sliding window eviction (line 228)
 # ---------------------------------------------------------------------------
 
+
 class TestRateLimiterSlidingWindow:
     """Covers the queue-eviction branch (line 228) in RateLimiter.check_limits()."""
 
@@ -559,6 +582,7 @@ class TestRateLimiterSlidingWindow:
 # ProcessingJobManager._send_webhook_notification (lines 355-370)
 # ---------------------------------------------------------------------------
 
+
 class TestSendWebhookNotification:
     """Tests for _send_webhook_notification — covers lines 355-370."""
 
@@ -571,7 +595,9 @@ class TestSendWebhookNotification:
         jm = ProcessingJobManager()
         with patch.dict("sys.modules", {"aiohttp": None}):
             # Should not raise even when aiohttp is unavailable
-            asyncio.run(jm._send_webhook_notification("https://hook.example.com", "job1", "completed"))
+            asyncio.run(
+                jm._send_webhook_notification("https://hook.example.com", "job1", "completed")
+            )
 
     def test_webhook_exception_does_not_propagate(self):
         """

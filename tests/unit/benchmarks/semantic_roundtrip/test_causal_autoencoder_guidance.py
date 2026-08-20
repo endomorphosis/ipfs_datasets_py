@@ -79,9 +79,7 @@ BASELINE_IR = CanonicalRuleIR(
         ),
     )
 )
-GUIDED_IR = CanonicalRuleIR(
-    (replace(BASELINE_IR.rules[0], object="report"),)
-)
+GUIDED_IR = CanonicalRuleIR((replace(BASELINE_IR.rules[0], object="report"),))
 FEATURE_ID = "lir-feature-source-grounded-object"
 FEATURE_NAME = "semantic-slot:object:report"
 
@@ -94,9 +92,7 @@ class FixedConstructor:
 
     def construct(self, request: ConstructorRequest) -> ConstructorResult:
         self.requests.append(request)
-        return ConstructorResult(
-            ComponentStatus.SUCCESS, canonical_ir=BASELINE_IR
-        )
+        return ConstructorResult(ComponentStatus.SUCCESS, canonical_ir=BASELINE_IR)
 
 
 def request(config: dict[str, object] | None = None) -> ConstructorRequest:
@@ -117,12 +113,8 @@ def frozen_guidance(
         state_cid=PINNED_AUTOENCODER_STATE_CID,
         state_sha256=PINNED_AUTOENCODER_STATE_SHA256,
         state_schema=PINNED_AUTOENCODER_STATE_SCHEMA,
-        declared_architecture=(
-            PINNED_AUTOENCODER_DECLARED_ARCHITECTURE
-        ),
-        effective_architecture=(
-            PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE
-        ),
+        declared_architecture=(PINNED_AUTOENCODER_DECLARED_ARCHITECTURE),
+        effective_architecture=(PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE),
         stable_export={
             "excluded_categories": [
                 "decoded_embeddings",
@@ -136,9 +128,7 @@ def frozen_guidance(
             "feature_count": 1,
             "sample_count": sample_count,
             "sample_memory_included": sample_memory_included,
-            "schema_version": (
-                "legal-ir-stable-autoencoder-feature-export-v1"
-            ),
+            "schema_version": ("legal-ir-stable-autoencoder-feature-export-v1"),
             "stable_features": [
                 {
                     "feature": FEATURE_NAME,
@@ -200,12 +190,8 @@ def test_frozen_state_is_loaded_by_cid_as_global_sample_free_export() -> None:
         "access": "read_only",
         "cid": PINNED_AUTOENCODER_STATE_CID,
         "cid_verified": True,
-        "declared_architecture": (
-            PINNED_AUTOENCODER_DECLARED_ARCHITECTURE
-        ),
-        "effective_architecture": (
-            PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE
-        ),
+        "declared_architecture": (PINNED_AUTOENCODER_DECLARED_ARCHITECTURE),
+        "effective_architecture": (PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE),
         "schema": PINNED_AUTOENCODER_STATE_SCHEMA,
         "sha256": PINNED_AUTOENCODER_STATE_SHA256,
     }
@@ -225,15 +211,11 @@ def test_no_reviewed_adapter_is_explicit_terminal_unsupported() -> None:
         loader_calls.append(path)
         return frozen_guidance()
 
-    constructor = CausalAutoencoderGuidance(
-        base, guidance_loader=loader
-    )
+    constructor = CausalAutoencoderGuidance(base, guidance_loader=loader)
     paired = constructor.construct_pair(request())
 
     assert isinstance(constructor, RoundTripConstructor)
-    assert constructor.identity.startswith(
-        CAUSAL_AUTOENCODER_GUIDANCE_INTERFACE
-    )
+    assert constructor.identity.startswith(CAUSAL_AUTOENCODER_GUIDANCE_INTERFACE)
     assert len(loader_calls) == 1
     assert len(base.requests) == 1
     assert paired.status is CausalQualificationStatus.UNAVAILABLE
@@ -241,13 +223,8 @@ def test_no_reviewed_adapter_is_explicit_terminal_unsupported() -> None:
     assert paired.no_guidance.canonical_ir is BASELINE_IR
     assert paired.guided.status is ComponentStatus.FAILED
     assert paired.guided.failure_reason is FailureReason.CAPABILITY_UNAVAILABLE
-    assert UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER in (
-        paired.guided.failure_detail or ""
-    )
-    assert (
-        paired.missing_causal_contract
-        == MISSING_CAUSAL_CONTRACT_FIELDS
-    )
+    assert UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER in (paired.guided.failure_detail or "")
+    assert paired.missing_causal_contract == MISSING_CAUSAL_CONTRACT_FIELDS
     assert paired.guided_disposition == "terminal_unsupported"
     assert paired.change_receipt is None
 
@@ -299,9 +276,7 @@ def test_reviewed_contract_produces_paired_feature_attributed_change() -> None:
     assert paired.negative_control.canonical_l1_changed is False
     assert paired.change_receipt is not None
     assert paired.change_receipt.changed_fields == ("object",)
-    assert paired.change_receipt.changed_field_paths == (
-        "rules[0->0].object",
-    )
+    assert paired.change_receipt.changed_field_paths == ("rules[0->0].object",)
     assert paired.change_receipt.causal_feature_ids == (FEATURE_ID,)
     assert seen == {
         "baseline_ir": BASELINE_IR,
@@ -353,9 +328,7 @@ def test_fabricated_or_incomplete_causal_mutations_are_rejected(
 
 
 def test_reviewed_feature_cannot_mutate_an_undeclared_field() -> None:
-    modality_change = CanonicalRuleIR(
-        (replace(BASELINE_IR.rules[0], modality="F"),)
-    )
+    modality_change = CanonicalRuleIR((replace(BASELINE_IR.rules[0], modality="F"),))
     constructor = CausalAutoencoderGuidance(
         FixedConstructor(),
         reviewed_contract=reviewed_contract(),
@@ -416,9 +389,7 @@ def test_contract_and_applicator_must_be_preregistered_together() -> None:
     with pytest.raises(ContractError, match="supplied together"):
         CausalAutoencoderGuidance(
             FixedConstructor(),
-            applicator=lambda baseline, vocabulary, guidance: (
-                attributed_output()
-            ),
+            applicator=lambda baseline, vocabulary, guidance: attributed_output(),
             guidance_loader=lambda path: frozen_guidance(),
         )
 
@@ -427,40 +398,26 @@ def test_checked_in_qualification_is_exact_cid_bound_evidence() -> None:
     qualification = load_causal_guidance_qualification()
 
     assert qualification == build_causal_guidance_qualification()
-    assert qualification["interface"] == (
-        CAUSAL_GUIDANCE_QUALIFICATION_INTERFACE
-    )
-    assert qualification["status"] == (
-        UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER
-    )
-    assert qualification["evaluation_status"] == (
-        EVALUATION_STATUS_NOT_MEASURED
-    )
+    assert qualification["interface"] == (CAUSAL_GUIDANCE_QUALIFICATION_INTERFACE)
+    assert qualification["status"] == (UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER)
+    assert qualification["evaluation_status"] == (EVALUATION_STATUS_NOT_MEASURED)
     assert qualification["evaluation_status_reason"] == TERMINAL_UNSUPPORTED
     assert qualification["task_id"] == PLATEAU_BREAK_TASK_ID
     assert qualification["board_namespace"] == PLATEAU_BREAK_BOARD_NAMESPACE
     causal_contract = qualification["causal_contract"]
     assert causal_contract["preregistered"] is False
-    assert causal_contract["missing"] == list(
-        MISSING_CAUSAL_CONTRACT_FIELDS
-    )
-    assert (
-        causal_contract["advisory_diagnostics_are_causal_guidance"]
-        is False
-    )
+    assert causal_contract["missing"] == list(MISSING_CAUSAL_CONTRACT_FIELDS)
+    assert causal_contract["advisory_diagnostics_are_causal_guidance"] is False
     coordinates = qualification["guided_coordinates"]
     assert coordinates["count"] == 12
     assert coordinates["disposition"] == TERMINAL_UNSUPPORTED
-    assert coordinates["evaluation_status"] == (
-        EVALUATION_STATUS_NOT_MEASURED
-    )
+    assert coordinates["evaluation_status"] == (EVALUATION_STATUS_NOT_MEASURED)
     assert coordinates["schedule_for_semantic_scoring"] is False
     assert all(
         item["status"] == TERMINAL_UNSUPPORTED
         and item["evaluation_status"] == EVALUATION_STATUS_NOT_MEASURED
         and item["schedule_for_semantic_scoring"] is False
-        and item["reason"]
-        == UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER
+        and item["reason"] == UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER
         for item in coordinates["coordinates"]
     )
     planner = qualification["matrix_planner"]
@@ -473,9 +430,7 @@ def test_checked_in_qualification_is_exact_cid_bound_evidence() -> None:
         item["arm_id"] for item in coordinates["coordinates"]
     }
     teacher = qualification["teacher_residual"]
-    assert teacher == teacher_residual_disposition_from_qualification(
-        qualification
-    )
+    assert teacher == teacher_residual_disposition_from_qualification(qualification)
     assert teacher["interface"] == TEACHER_RESIDUAL_INTERFACE
     assert teacher["role"] == TEACHER_RESIDUAL_ROLE
     assert teacher["production_default"] is False
@@ -505,19 +460,11 @@ def test_missing_contract_fail_closed_excludes_guided_from_semantic_schedule() -
     assert paired.guided_disposition == TERMINAL_UNSUPPORTED
     assert paired.change_receipt is None
     assert paired.missing_causal_contract == MISSING_CAUSAL_CONTRACT_FIELDS
-    assert guided_scored_support_from_qualification(qualification) == (
-        TERMINAL_UNSUPPORTED
-    )
-    assert guided_scored_support_from_qualification(None) == (
-        TERMINAL_UNSUPPORTED
-    )
+    assert guided_scored_support_from_qualification(qualification) == (TERMINAL_UNSUPPORTED)
+    assert guided_scored_support_from_qualification(None) == (TERMINAL_UNSUPPORTED)
 
-    baseline = (
-        "typed_deontic__no_guidance__no_repair__not_applicable__deterministic"
-    )
-    guided = (
-        "typed_deontic__guided__no_repair__not_applicable__deterministic"
-    )
+    baseline = "typed_deontic__no_guidance__no_repair__not_applicable__deterministic"
+    guided = "typed_deontic__guided__no_repair__not_applicable__deterministic"
     candidates = [
         {"cell_id": baseline, "composition": {"guidance": "no_guidance"}},
         {"cell_id": guided, "composition": {"guidance": "guided"}},
@@ -535,21 +482,13 @@ def test_missing_contract_fail_closed_excludes_guided_from_semantic_schedule() -
         and item["status"] == TERMINAL_UNSUPPORTED
         for item in plan["not_measured"]
     )
-    admitted = filter_semantic_schedule_candidates(
-        candidates, qualification
-    )
+    admitted = filter_semantic_schedule_candidates(candidates, qualification)
     assert admitted == [candidates[0]]
     # Qualification matrix planner freezes the same exclusion set.
     assert set(qualification["matrix_planner"]["excluded_guided_arm_ids"]) == {
-        item["arm_id"]
-        for item in qualification["guided_coordinates"]["coordinates"]
+        item["arm_id"] for item in qualification["guided_coordinates"]["coordinates"]
     }
-    assert (
-        qualification["matrix_planner"][
-            "scheduled_for_semantic_scoring_arm_ids"
-        ]
-        == []
-    )
+    assert qualification["matrix_planner"]["scheduled_for_semantic_scoring_arm_ids"] == []
 
 
 def test_scored_supported_qualification_admits_guided_to_semantic_schedule() -> None:
@@ -564,9 +503,7 @@ def test_scored_supported_qualification_admits_guided_to_semantic_schedule() -> 
             "include_guided_in_semantic_schedule": True,
         },
     }
-    assert guided_scored_support_from_qualification(qualification) == (
-        SCORED_SUPPORTED
-    )
+    assert guided_scored_support_from_qualification(qualification) == (SCORED_SUPPORTED)
     teacher = teacher_residual_disposition_from_qualification(qualification)
     assert teacher["scored_support"] == SCORED_SUPPORTED
     assert teacher["evaluation_status"] == SCORED_SUPPORTED
@@ -581,9 +518,7 @@ def test_scored_supported_qualification_admits_guided_to_semantic_schedule() -> 
     assert plan["guided_disposition"] == SCORED_SUPPORTED
     assert plan["scheduled_arm_ids"] == [guided["cell_id"]]
     assert plan["not_measured_arm_ids"] == []
-    assert filter_semantic_schedule_candidates([guided], qualification) == [
-        guided
-    ]
+    assert filter_semantic_schedule_candidates([guided], qualification) == [guided]
 
 
 def test_teacher_residual_fail_closed_without_reviewed_contract() -> None:
@@ -616,9 +551,7 @@ def test_qualification_rejects_self_consistent_fabricated_relabeling() -> None:
     fabricated["evaluation_status"] = "semantic_scored"
     fabricated["guided_coordinates"]["disposition"] = SCORED_SUPPORTED
     fabricated["matrix_planner"]["include_guided_in_semantic_schedule"] = True
-    fabricated["causal_contract"][
-        "advisory_diagnostics_are_causal_guidance"
-    ] = True
+    fabricated["causal_contract"]["advisory_diagnostics_are_causal_guidance"] = True
     del fabricated["qualification_cid"]
     fabricated["qualification_cid"] = cid_for_dag_json(fabricated)
 

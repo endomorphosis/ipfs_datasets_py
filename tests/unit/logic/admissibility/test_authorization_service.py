@@ -104,12 +104,8 @@ def _envelope(**overrides: Any) -> InvocationIntentEnvelope:
         "tenant_id": "tenant:acme",
         "actor": ActorBinding(actor_id="actor:alice"),
         "audience": AudienceBinding(audience_id="audience:dispatcher-1"),
-        "tool": ToolBinding(
-            tool_id="tool:ledger.transfer", tool_version="1.2.3"
-        ),
-        "arguments": ArgumentCommitment.from_redacted(
-            {"amount": 10, "currency": "USD"}
-        ),
+        "tool": ToolBinding(tool_id="tool:ledger.transfer", tool_version="1.2.3"),
+        "arguments": ArgumentCommitment.from_redacted({"amount": 10, "currency": "USD"}),
         "nonce": "nonce-svc-001",
         "created_at": "2026-07-28T12:00:00Z",
         "deadline": "2026-07-28T12:05:00Z",
@@ -250,9 +246,7 @@ def _attempt(
     )
 
 
-def _proved_attempts_solver(
-    job: ProofJob, backend_id: str, probe: Any
-) -> PortfolioAttemptRecord:
+def _proved_attempts_solver(job: ProofJob, backend_id: str, probe: Any) -> PortfolioAttemptRecord:
     return _attempt(job, backend_id, JobVerdict.PROVED)
 
 
@@ -351,11 +345,8 @@ class TestBudgetAndRoots:
         assert result.status is not InternalDecisionStatus.ALLOW
         assert result.wire_status is not AdmissibilityStatus.ALLOW
         assert result.capability is None
-        assert any(
-            "policy_root" in r or "policy" in r.lower() for r in result.reasons
-        ) or any(
-            "Root" in result.trace.exception_type
-            or "root" in result.trace.exception_message
+        assert any("policy_root" in r or "policy" in r.lower() for r in result.reasons) or any(
+            "Root" in result.trace.exception_type or "root" in result.trace.exception_message
             for _ in [0]
         )
 
@@ -564,9 +555,7 @@ class TestCapabilityDerivation:
         result.capability.verify_integrity()
 
     def test_no_capability_on_non_allow(self) -> None:
-        result = _run(
-            deps=_offline_deps(allow=False), derive_capability_on_allow=True
-        )
+        result = _run(deps=_offline_deps(allow=False), derive_capability_on_allow=True)
         assert not result.is_allow
         assert result.capability is None
         # Manual derivation from non-allow receipt must also fail.
@@ -731,9 +720,7 @@ class TestTraceAndDiagnostics:
     def test_trace_records_diagnostics(self) -> None:
         result = _run()
         assert result.trace.diagnostics
-        assert any(
-            d.startswith("auth.service.") for d in result.trace.diagnostics
-        )
+        assert any(d.startswith("auth.service.") for d in result.trace.diagnostics)
         assert result.trace.elapsed_ms >= 0
         assert result.trace.schema_version
 

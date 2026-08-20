@@ -132,8 +132,15 @@ class TestBaseSessionToDict:
     def test_to_dict_keys_present(self):
         s = _make_session([0.5, 0.7])
         d = s.to_dict()
-        for key in ("session_id", "domain", "best_score", "current_round",
-                    "score_delta", "avg_score", "regression_count"):
+        for key in (
+            "session_id",
+            "domain",
+            "best_score",
+            "current_round",
+            "score_delta",
+            "avg_score",
+            "regression_count",
+        ):
             assert key in d, f"Missing key: {key}"
 
     def test_to_dict_values_consistent(self):
@@ -176,6 +183,7 @@ class TestBaseSessionAddRound:
 
 # ── JSON serialization round-trips ─────────────────────────────────────────
 
+
 class TestBaseSessionJSONRoundTrip:
     def _session_with_rounds(self):
         s = BaseSession(session_id="rt-1", domain="legal", max_rounds=5)
@@ -192,6 +200,7 @@ class TestBaseSessionJSONRoundTrip:
 
     def test_to_json_indent_is_valid_json(self):
         import json
+
         s = self._session_with_rounds()
         j = s.to_json(indent=2)
         data = json.loads(j)

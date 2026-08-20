@@ -19,11 +19,7 @@ This guide covers best practices and solutions to common problems.
 **DO:** Use configuration objects
 ```python
 # ✅ Good
-config = LogicConfig(
-    use_nlp=True,
-    cache_size=1000,
-    batch_concurrency=10
-)
+config = LogicConfig(use_nlp=True, cache_size=1000, batch_concurrency=10)
 service = LogicService(config)
 ```
 
@@ -75,18 +71,14 @@ for text in texts:
 **DO:** Enable caching for repeated operations
 ```python
 # ✅ Good
-engine = ProofExecutionEngine(
-    enable_caching=True,
-    cache_size=1000,
-    cache_ttl=3600
-)
+engine = ProofExecutionEngine(enable_caching=True, cache_size=1000, cache_ttl=3600)
 ```
 
 **DO:** Monitor cache statistics
 ```python
 # ✅ Good
 stats = cache.get_statistics()
-if stats['hit_rate'] < 0.5:
+if stats["hit_rate"] < 0.5:
     logger.warning("Low cache hit rate - consider increasing cache size")
 ```
 
@@ -115,10 +107,10 @@ result = service.convert_to_fol(text)
 # ✅ Good
 test_cases = [
     "All humans are mortal",  # Simple
-    "If P then Q",            # Conditional
-    "Some birds can't fly",   # Negation
-    "",                       # Edge case
-    "Complex nested quantification..."  # Complex
+    "If P then Q",  # Conditional
+    "Some birds can't fly",  # Negation
+    "",  # Edge case
+    "Complex nested quantification...",  # Complex
 ]
 ```
 
@@ -127,8 +119,8 @@ test_cases = [
 # ✅ Good
 def test_handles_empty_input():
     result = await convert_text_to_fol("")
-    assert result['status'] == 'success'
-    assert len(result['fol_formulas']) == 0
+    assert result["status"] == "success"
+    assert len(result["fol_formulas"]) == 0
 ```
 
 ### 7. Logging
@@ -139,10 +131,10 @@ def test_handles_empty_input():
 logger.info(
     "Conversion complete",
     extra={
-        'text_length': len(text),
-        'confidence': result['summary']['average_confidence'],
-        'time_ms': elapsed * 1000
-    }
+        "text_length": len(text),
+        "confidence": result["summary"]["average_confidence"],
+        "time_ms": elapsed * 1000,
+    },
 )
 ```
 
@@ -159,11 +151,7 @@ print(f"Result: {result}")  # No log levels, no structured data
 # ✅ Good - In CI pipeline
 def test_performance_regression():
     benchmark = PerformanceBenchmark()
-    result = benchmark.benchmark(
-        "FOL Conversion",
-        convert_text_to_fol,
-        iterations=100
-    )
+    result = benchmark.benchmark("FOL Conversion", convert_text_to_fol, iterations=100)
     assert result.mean_time < 0.05  # <50ms threshold
 ```
 
@@ -180,16 +168,13 @@ unique_formulas_per_day = 10000
 cache_size = int(unique_formulas_per_day * 0.8)  # 80% coverage
 cache_ttl = 3600  # 1 hour
 
-engine = ProofExecutionEngine(
-    cache_size=cache_size,
-    cache_ttl=cache_ttl
-)
+engine = ProofExecutionEngine(cache_size=cache_size, cache_ttl=cache_ttl)
 ```
 
 **Monitor and adjust:**
 ```python
 stats = cache.get_statistics()
-if stats['evictions'] > stats['hits']:
+if stats["evictions"] > stats["hits"]:
     # Cache too small
     cache.resize(cache_size * 2)
 ```
@@ -201,19 +186,16 @@ if stats['evictions'] > stats['hits']:
 async def find_optimal_batch_size():
     test_data = generate_test_data(1000)
     results = {}
-    
+
     for batch_size in [10, 50, 100, 200]:
         processor = ChunkedBatchProcessor(chunk_size=batch_size)
-        
+
         start = time.time()
-        result = await processor.process_large_batch(
-            test_data,
-            convert_text_to_fol
-        )
+        result = await processor.process_large_batch(test_data, convert_text_to_fol)
         elapsed = time.time() - start
-        
+
         results[batch_size] = result.items_per_second
-    
+
     optimal = max(results, key=results.get)
     print(f"Optimal batch size: {optimal}")
     return optimal
@@ -224,10 +206,7 @@ async def find_optimal_batch_size():
 **CPU-bound tasks:**
 ```python
 # Use process pool for CPU-bound work
-processor = BatchProcessor(
-    max_concurrency=os.cpu_count(),
-    use_process_pool=True
-)
+processor = BatchProcessor(max_concurrency=os.cpu_count(), use_process_pool=True)
 ```
 
 **I/O-bound tasks:**
@@ -235,7 +214,7 @@ processor = BatchProcessor(
 # Use higher concurrency for I/O-bound work
 processor = BatchProcessor(
     max_concurrency=50,  # Higher for I/O
-    use_process_pool=False
+    use_process_pool=False,
 )
 ```
 
@@ -245,28 +224,20 @@ processor = BatchProcessor(
 ```python
 async def compare_extraction_methods():
     benchmark = PerformanceBenchmark()
-    
+
     # Regex (faster)
     regex_result = await benchmark.benchmark_async(
-        "Regex",
-        convert_text_to_fol,
-        text_input=text,
-        use_nlp=False,
-        iterations=100
+        "Regex", convert_text_to_fol, text_input=text, use_nlp=False, iterations=100
     )
-    
+
     # NLP (better quality)
     nlp_result = await benchmark.benchmark_async(
-        "NLP",
-        convert_text_to_fol,
-        text_input=text,
-        use_nlp=True,
-        iterations=100
+        "NLP", convert_text_to_fol, text_input=text, use_nlp=True, iterations=100
     )
-    
-    print(f"Regex: {regex_result.mean_time*1000:.1f}ms")
-    print(f"NLP: {nlp_result.mean_time*1000:.1f}ms")
-    print(f"Speedup: {nlp_result.mean_time/regex_result.mean_time:.1f}x")
+
+    print(f"Regex: {regex_result.mean_time * 1000:.1f}ms")
+    print(f"NLP: {nlp_result.mean_time * 1000:.1f}ms")
+    print(f"Speedup: {nlp_result.mean_time / regex_result.mean_time:.1f}x")
 ```
 
 **Choose based on needs:**
@@ -280,12 +251,9 @@ async def compare_extraction_methods():
 # ✅ Good - Stream processing
 async def process_large_file(file_path):
     processor = ChunkedBatchProcessor(chunk_size=100)
-    
+
     for chunk in read_file_in_chunks(file_path):
-        result = await processor.process_large_batch(
-            chunk,
-            convert_text_to_fol
-        )
+        result = await processor.process_large_batch(chunk, convert_text_to_fol)
         yield result  # Process incrementally
 ```
 
@@ -319,10 +287,12 @@ cache.resize(2000)  # Double the size
 # 2. Increase TTL
 cache = ProofCache(max_size=1000, default_ttl=7200)  # 2 hours
 
+
 # 3. Normalize formulas before caching
 def normalize_formula(formula):
     # Remove whitespace variations
-    return ' '.join(formula.split())
+    return " ".join(formula.split())
+
 
 # Use normalized key
 cache_key = normalize_formula(formula)
@@ -349,7 +319,7 @@ pip install https://github.com/explosion/spacy-models/releases/download/en_core_
 from ipfs_datasets_py.logic.fol.utils.nlp_predicate_extractor import get_extraction_stats
 
 stats = get_extraction_stats()
-if not stats['spacy_available']:
+if not stats["spacy_available"]:
     logger.warning("spaCy not available, using regex fallback")
     use_nlp = False
 ```
@@ -371,14 +341,12 @@ if not stats['spacy_available']:
 processor = FOLBatchProcessor(max_concurrency=20)  # Increase from 10
 
 # 2. Use process pool for CPU-bound
-processor = BatchProcessor(
-    max_concurrency=os.cpu_count(),
-    use_process_pool=True
-)
+processor = BatchProcessor(max_concurrency=os.cpu_count(), use_process_pool=True)
 
 # 3. Profile to find bottlenecks
 import cProfile
-cProfile.run('asyncio.run(processor.convert_batch(texts))')
+
+cProfile.run("asyncio.run(processor.convert_batch(texts))")
 ```
 
 ### Issue 4: Out of Memory
@@ -393,7 +361,7 @@ cProfile.run('asyncio.run(processor.convert_batch(texts))')
 # 1. Use chunked processing
 processor = ChunkedBatchProcessor(
     chunk_size=50,  # Reduce from 100
-    max_concurrency=5   # Reduce concurrency
+    max_concurrency=5,  # Reduce concurrency
 )
 
 # 2. Process in streaming fashion
@@ -402,6 +370,7 @@ async for chunk_result in process_stream(large_dataset):
 
 # 3. Monitor memory usage
 import psutil
+
 process = psutil.Process()
 memory_mb = process.memory_info().rss / 1024 / 1024
 if memory_mb > 1000:  # >1GB
@@ -442,12 +411,11 @@ import logging
 
 # Set log level
 logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 # Enable module logging
-logger = logging.getLogger('ipfs_datasets_py.logic')
+logger = logging.getLogger("ipfs_datasets_py.logic")
 logger.setLevel(logging.DEBUG)
 ```
 
@@ -478,12 +446,14 @@ stats.print_stats(10)  # Top 10 functions
 ```python
 from memory_profiler import profile
 
+
 @profile
 async def memory_test():
-    texts = ['test'] * 10000
+    texts = ["test"] * 10000
     processor = FOLBatchProcessor()
     result = await processor.convert_batch(texts)
     return result
+
 
 # Run with: python -m memory_profiler script.py
 ```
@@ -510,25 +480,20 @@ except Exception as e:
 def check_performance_regression():
     """Check for performance regressions."""
     benchmark = PerformanceBenchmark()
-    
+
     # Current performance
     current = benchmark.benchmark(
-        "Current",
-        convert_text_to_fol,
-        text_input="All humans are mortal",
-        iterations=100
+        "Current", convert_text_to_fol, text_input="All humans are mortal", iterations=100
     )
-    
+
     # Load baseline (from previous run)
     baseline = load_baseline_benchmark()
-    
+
     # Compare
     regression = (current.mean_time - baseline.mean_time) / baseline.mean_time
-    
+
     if regression > 0.1:  # >10% slower
-        raise AssertionError(
-            f"Performance regression detected: {regression*100:.1f}% slower"
-        )
+        raise AssertionError(f"Performance regression detected: {regression * 100:.1f}% slower")
 ```
 
 ---
@@ -595,15 +560,13 @@ def my_custom_extractor(text):
     predicates = {
         "nouns": extract_domain_nouns(text),
         "verbs": extract_domain_verbs(text),
-        "custom": my_custom_logic(text)
+        "custom": my_custom_logic(text),
     }
     return predicates
 
+
 # Use in conversion
-result = await convert_text_to_fol(
-    text,
-    domain_predicates=my_custom_extractor(text)
-)
+result = await convert_text_to_fol(text, domain_predicates=my_custom_extractor(text))
 ```
 
 ### Q: How do I deploy in production?

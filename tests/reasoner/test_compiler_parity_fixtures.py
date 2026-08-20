@@ -29,7 +29,13 @@ def test_compiler_parity_fixtures_match_expected_outputs() -> None:
 
 def test_compiler_parity_fixtures_are_replay_stable() -> None:
     for case in _load_cases():
-        ir_a = parse_cnl_sentence(case["sentence"], jurisdiction=case.get("jurisdiction", "us/federal"))
-        ir_b = parse_cnl_sentence(case["sentence"], jurisdiction=case.get("jurisdiction", "us/federal"))
+        ir_a = parse_cnl_sentence(
+            case["sentence"], jurisdiction=case.get("jurisdiction", "us/federal")
+        )
+        ir_b = parse_cnl_sentence(
+            case["sentence"], jurisdiction=case.get("jurisdiction", "us/federal")
+        )
         assert compile_to_dcec(ir_a) == compile_to_dcec(ir_b), case["id"]
-        assert compile_to_temporal_deontic_fol(ir_a) == compile_to_temporal_deontic_fol(ir_b), case["id"]
+        assert compile_to_temporal_deontic_fol(ir_a) == compile_to_temporal_deontic_fol(ir_b), case[
+            "id"
+        ]

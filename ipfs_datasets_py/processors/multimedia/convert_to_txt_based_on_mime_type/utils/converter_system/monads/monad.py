@@ -1,10 +1,8 @@
-
-
 from typing import Any, Callable, Type, TypeVar, Generic
 
 
-T = TypeVar('T')
-U = TypeVar('U')
+T = TypeVar("T")
+U = TypeVar("U")
 
 
 class Monad(Generic[T]):
@@ -15,14 +13,14 @@ class Monad(Generic[T]):
         - Constructing and editing long, complex data processing pipelines.
         - Handling side effects predictably across every function in them.
         - Running these pipelines in parallel, asynchronously, or both.
-        - Producing side effects (logging, error handling, file saving, etc) without modifying the function itself. 
+        - Producing side effects (logging, error handling, file saving, etc) without modifying the function itself.
         \nThis makes it great for adapting legacy code or third party libraries.
         - Highly Robust: ANY error in the pipeline can be caught, handled, and reported.
         - Highly Extensible, as you can add new operations to the pipeline easily.
         - Highly Testable, as you can test each operation in isolation.
 
     Attributes:
-        _value: The value contained in the monad. Value can be anything, 
+        _value: The value contained in the monad. Value can be anything,
             but it's usually an input/output of a function, a function, or another Monad.
 
     Methods:
@@ -34,13 +32,13 @@ class Monad(Generic[T]):
     - NOTE: That function can be coroutines as well
 
     Properties:
-        - value: Read-only access to the value contained in the monad. 
-        This is to prevent accidental modification during the pipeline process. 
+        - value: Read-only access to the value contained in the monad.
+        This is to prevent accidental modification during the pipeline process.
 
     Example usage:
         >>> def add_one(x):
             return x + 1
-        
+
         >>> def multiply_by_two(x):
             return x * 2
 
@@ -50,7 +48,7 @@ class Monad(Generic[T]):
     """
 
     def __init__(self, value: T):
-        if isinstance(value, Monad): # NOTE Remember to always unwrap the Monad!
+        if isinstance(value, Monad):  # NOTE Remember to always unwrap the Monad!
             self._value = value._value
         else:
             self._value = value
@@ -60,7 +58,7 @@ class Monad(Generic[T]):
         return self._value
 
     @staticmethod
-    def make_a_monad_with_this(value: T) -> 'Monad[T]':
+    def make_a_monad_with_this(value: T) -> "Monad[T]":
         """
         Wrap the input value in a monad.
         """
@@ -68,16 +66,16 @@ class Monad(Generic[T]):
         return Monad(value)
 
     @staticmethod
-    def unit(value: T) -> 'Monad[T]':
+    def unit(value: T) -> "Monad[T]":
         """
         Wrap the input value in a monad.
         """
         return Monad(value)
 
-    def lift(self, func: Callable[[T], U], monad_type: Type['Monad[U]'] = None) -> 'Monad[U]':
+    def lift(self, func: Callable[[T], U], monad_type: Type["Monad[U]"] = None) -> "Monad[U]":
         pass
 
-    def bind(self, func: Callable[[T], 'Monad[U]']) -> 'Monad[U]':
+    def bind(self, func: Callable[[T], "Monad[U]"]) -> "Monad[U]":
         """
         Wrap a function that takes a value of type T and returns a monad of type U.
         This allows for function chaining in a controlled fashion.
@@ -91,35 +89,37 @@ class Monad(Generic[T]):
         """
         return self.make_a_monad_with_this(func(self.value))
 
-    def flat_map(self, func: Callable[[T], 'Monad[U]']) -> 'Monad[U]':
+    def flat_map(self, func: Callable[[T], "Monad[U]"]) -> "Monad[U]":
         """
         Alias for bind.
         """
         return self.bind(func)
 
-    def and_then(self, func: Callable[[T], 'Monad[U]']) -> 'Monad[U]':
+    def and_then(self, func: Callable[[T], "Monad[U]"]) -> "Monad[U]":
         """
         Alias for bind.
         """
         return self.bind(func)
 
-    def __rshift__(self, func: Callable[[T], 'Monad[U]']) -> 'Monad[U]':
+    def __rshift__(self, func: Callable[[T], "Monad[U]"]) -> "Monad[U]":
         """
         Alias for bind. The symbol for it is the '>>' operator.
 
 
-        Example: 
+        Example:
         >>> result = Monad(5) >> add_one >> multiply_by_two
         """
         return self.bind(func)
 
-    def __call__(self, *args, **kwargs) -> 'Monad[T]':
+    def __call__(self, *args, **kwargs) -> "Monad[T]":
         """
         Used when a Monad is called as a decorator or function.
         """
         return self.bind(lambda func: self.make_a_monad_with_this(func(*args, **kwargs)))
 
+
 from functools import wraps, partial
+
 
 def enter(x: Any) -> Monad[T]:
     """
@@ -127,29 +127,30 @@ def enter(x: Any) -> Monad[T]:
     """
     return Monad(x)
 
+
 def multiply_by_two(x):
     return x * 2
 
 
 import inspect
 
+
 class Async(Monad[T]):
-    
     def __init__(self, value: T):
         super().__init__(value)
-        self._future = None 
+        self._future = None
 
     @staticmethod
     def unit(value: T):
         return Async(value)
 
-    def bind(self, func: Callable[[T], 'Async[U]']) -> 'Async[U]':
+    def bind(self, func: Callable[[T], "Async[U]"]) -> "Async[U]":
         if callable(func):
             return Async(func(self.value))
-        if inspect.iscoroutinefunction(func): # TODO
+        if inspect.iscoroutinefunction(func):  # TODO
             return Async(func(self.value))
 
-    def __rshift__(self, func: Callable[[T], 'Monad[U]']) -> 'Async[U]':
+    def __rshift__(self, func: Callable[[T], "Monad[U]"]) -> "Async[U]":
         self.bind(func)
 
     @property
@@ -160,10 +161,11 @@ class Async(Monad[T]):
 def async_(func=None):
     return lambda x: Async(func(x))
 
+
 from pydantic import BaseModel
 
+
 class Resource(BaseModel):
-    
     def save(self):
         pass
 
@@ -173,27 +175,24 @@ class Resource(BaseModel):
     def load(self):
         pass
 
+
 resource = Resource()
 
 save = partial(Resource.save)
 load = partial(Resource.load)
 convert = partial(Resource.convert)
 
+
 def emit(x, resource):
     pass
 
 
-pipeline = Monad(
-            enter(resource)
-        ).and_then(
-            async_(load)
-        ).and_then(
-            async_(convert)
-        ).and_then(
-            async_(save)
-        )
+pipeline = (
+    Monad(enter(resource)).and_then(async_(load)).and_then(async_(convert)).and_then(async_(save))
+)
 data = None
 pipeline = Monad(data) >> async_(load) >> async_(convert)
+
 
 def test_monad_as_decorator():
     # Test case 1: Using Monad as a decorator
@@ -204,6 +203,7 @@ def test_monad_as_decorator():
     result = add_one(5)
     assert isinstance(result, Monad)
     assert result.value == 6
+
 
 def test_monad_as_function():
     # Test case 2: Using Monad as a function
@@ -242,10 +242,11 @@ def test_monad_as_function():
     def divide(x, y):
         return x / y
 
+
 def log(x):
     print(f"Logging: {x}")
     return x
 
+
 def add_one(x):
     return x + 1
-

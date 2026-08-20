@@ -3,6 +3,7 @@
 Covers empty list, single ontology, multiple ontologies,
 aggregated statistics, and public import.
 """
+
 from __future__ import annotations
 
 import pytest

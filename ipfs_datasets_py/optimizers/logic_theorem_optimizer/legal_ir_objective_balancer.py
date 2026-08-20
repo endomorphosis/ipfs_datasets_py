@@ -28,9 +28,7 @@ from .legal_ir_semantic_metrics import (
 )
 
 
-LEGAL_IR_OBJECTIVE_BALANCER_SCHEMA_VERSION: Final = (
-    "legal-ir-per-family-constrained-objective-v1"
-)
+LEGAL_IR_OBJECTIVE_BALANCER_SCHEMA_VERSION: Final = "legal-ir-per-family-constrained-objective-v1"
 
 LEARNED_CE: Final = "learned_cross_entropy_loss"
 LEARNED_COSINE: Final = "learned_cosine_similarity"
@@ -50,9 +48,7 @@ SOFT_OBJECTIVE_METRICS: Final[tuple[str, ...]] = (
     ANTI_COPY,
 )
 
-LOWER_IS_BETTER_SOFT_METRICS: Final = frozenset(
-    {LEARNED_CE, COMPILER_CE, ANTI_COPY}
-)
+LOWER_IS_BETTER_SOFT_METRICS: Final = frozenset({LEARNED_CE, COMPILER_CE, ANTI_COPY})
 HIGHER_IS_BETTER_SOFT_METRICS: Final = frozenset(
     {LEARNED_COSINE, COMPILER_COSINE, PROOF_VALIDITY, RECONSTRUCTION}
 )
@@ -199,9 +195,7 @@ class LegalIRObjectiveBalancerConfig:
     require_semantic_equivalence_evidence: bool = True
 
     def __post_init__(self) -> None:
-        families = tuple(
-            canonical_legal_ir_evaluation_family(family) for family in self.families
-        )
+        families = tuple(canonical_legal_ir_evaluation_family(family) for family in self.families)
         if not families:
             raise ValueError("at least one LegalIR family is required")
         if len(set(families)) != len(families):
@@ -247,15 +241,11 @@ class FamilyObjectiveResult:
     soft_weights_before: Mapping[str, float]
     soft_weights_after: Mapping[str, float]
     missing_soft_metrics: tuple[str, ...] = ()
-    hard_guardrail_regressions: Mapping[str, Mapping[str, Any]] = field(
-        default_factory=dict
-    )
+    hard_guardrail_regressions: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
     missing_hard_guardrails: tuple[str, ...] = ()
     semantic_equivalence: Mapping[str, Any] = field(default_factory=dict)
     missing_semantic_equivalence_metrics: tuple[str, ...] = ()
-    semantic_equivalence_regressions: Mapping[str, Mapping[str, Any]] = field(
-        default_factory=dict
-    )
+    semantic_equivalence_regressions: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
     semantic_equivalence_threshold_failures: Mapping[str, Mapping[str, Any]] = field(
         default_factory=dict
     )
@@ -293,17 +283,13 @@ class FamilyObjectiveResult:
             "hard_guardrail_regressions": _json_ready(self.hard_guardrail_regressions),
             "metric_deltas": _round_mapping(self.metric_deltas),
             "missing_hard_guardrails": list(self.missing_hard_guardrails),
-            "missing_semantic_equivalence_metrics": list(
-                self.missing_semantic_equivalence_metrics
-            ),
+            "missing_semantic_equivalence_metrics": list(self.missing_semantic_equivalence_metrics),
             "missing_soft_metrics": list(self.missing_soft_metrics),
             "objective_improvement": round(self.objective_improvement, 12),
             "passed": self.passed,
             "semantic_ce_cosine_disagreement": self.semantic_ce_cosine_disagreement,
             "semantic_equivalence": _json_ready(self.semantic_equivalence),
-            "semantic_equivalence_regressions": _json_ready(
-                self.semantic_equivalence_regressions
-            ),
+            "semantic_equivalence_regressions": _json_ready(self.semantic_equivalence_regressions),
             "semantic_equivalence_threshold_failures": _json_ready(
                 self.semantic_equivalence_threshold_failures
             ),
@@ -328,11 +314,7 @@ class LegalIRObjectiveBalanceReport:
 
     @property
     def failed_families(self) -> tuple[str, ...]:
-        return tuple(
-            family
-            for family, result in self.family_results.items()
-            if not result.passed
-        )
+        return tuple(family for family, result in self.family_results.items() if not result.passed)
 
     @property
     def accepted(self) -> bool:
@@ -353,16 +335,14 @@ class LegalIRObjectiveBalanceReport:
         return {
             "accepted": self.accepted,
             "adapted_soft_weights": {
-                family: _round_mapping(weights)
-                for family, weights in self.adapted_weights.items()
+                family: _round_mapping(weights) for family, weights in self.adapted_weights.items()
             },
             "block_reasons": list(self.block_reasons),
             "failed_families": list(self.failed_families),
             "families": list(self.family_results),
             "family_count": len(self.family_results),
             "family_results": {
-                family: result.to_dict()
-                for family, result in self.family_results.items()
+                family: result.to_dict() for family, result in self.family_results.items()
             },
             "guardrail_policy": {
                 "hard_guardrails": sorted(_HARD_GUARDRAIL_ALIASES),
@@ -406,9 +386,7 @@ class LegalIRObjectiveBalancer:
             config=SemanticEquivalenceConfig(
                 families=self.config.families,
                 regression_tolerance=self.config.metric_tolerance,
-                require_complete_metrics=(
-                    self.config.require_semantic_equivalence_evidence
-                ),
+                require_complete_metrics=(self.config.require_semantic_equivalence_evidence),
             ),
         )
         hard_baseline = _extract_global_guardrails(baseline_metrics)
@@ -482,31 +460,20 @@ class LegalIRObjectiveBalancer:
                 if self.config.require_semantic_equivalence_evidence
                 else (),
                 semantic_equivalence_regressions=semantic_family.regressions,
-                semantic_equivalence_threshold_failures=(
-                    semantic_family.threshold_failures
-                ),
+                semantic_equivalence_threshold_failures=(semantic_family.threshold_failures),
                 semantic_ce_cosine_disagreement=semantic_family.disagreement,
             )
 
-        improvements = [
-            result.objective_improvement for result in family_results.values()
-        ]
+        improvements = [result.objective_improvement for result in family_results.values()]
         macro = sum(improvements) / len(improvements) if improvements else 0.0
         worst = min(improvements) if improvements else 0.0
         block_reasons = _block_reasons(family_results, self.config)
         descriptor = {
-            "after": {
-                family: result.after_metrics
-                for family, result in family_results.items()
-            },
-            "before": {
-                family: result.before_metrics
-                for family, result in family_results.items()
-            },
+            "after": {family: result.after_metrics for family, result in family_results.items()},
+            "before": {family: result.before_metrics for family, result in family_results.items()},
             "families": self.config.families,
             "weights": {
-                family: result.soft_weights_before
-                for family, result in family_results.items()
+                family: result.soft_weights_before for family, result in family_results.items()
             },
         }
         return LegalIRObjectiveBalanceReport(
@@ -698,9 +665,7 @@ def _normalize_current_weights(
 ) -> tuple[dict[str, dict[str, float]], tuple[str, ...]]:
     source = dict(current_weights or {})
     ignored: set[str] = set()
-    per_family_mode = any(
-        _canonical_family_or_empty(str(key)) in config.families for key in source
-    )
+    per_family_mode = any(_canonical_family_or_empty(str(key)) in config.families for key in source)
     weights: dict[str, dict[str, float]] = {}
     for family in config.families:
         if per_family_mode:
@@ -738,11 +703,7 @@ def _adapt_family_weights(
         for metric, value in after_metrics.items()
         if metric in SOFT_OBJECTIVE_METRICS
     }
-    mean_loss = (
-        sum(component_losses.values()) / len(component_losses)
-        if component_losses
-        else 0.0
-    )
+    mean_loss = sum(component_losses.values()) / len(component_losses) if component_losses else 0.0
     adapted: dict[str, float] = {}
     for metric in SOFT_OBJECTIVE_METRICS:
         current = float(weights[metric])

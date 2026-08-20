@@ -28,9 +28,7 @@ def _identity() -> LeanstralServiceIdentity:
     )
 
 
-def _healthy(
-    service: dict[str, Any], identity: LeanstralServiceIdentity
-) -> LeanstralServiceHealth:
+def _healthy(service: dict[str, Any], identity: LeanstralServiceIdentity) -> LeanstralServiceHealth:
     return LeanstralServiceHealth(
         status="healthy",
         cuda_backed=True,
@@ -259,9 +257,7 @@ def test_health_failures_are_consecutive_bounded_and_restart_one_generation() ->
         active_services.add(service_id)
         return {"service_id": service_id}
 
-    def restarter(
-        previous: dict[str, Any], requested: LeanstralServiceIdentity
-    ) -> dict[str, Any]:
+    def restarter(previous: dict[str, Any], requested: LeanstralServiceIdentity) -> dict[str, Any]:
         old_id = str(previous["service_id"])
         restarted.append((old_id, requested))
         active_services.remove(old_id)
@@ -357,9 +353,7 @@ def test_request_and_restart_timing_are_reported_as_separate_dimensions() -> Non
         del requested
         return {"service_id": "generation-1"}
 
-    def restarter(
-        previous: dict[str, Any], requested: LeanstralServiceIdentity
-    ) -> dict[str, Any]:
+    def restarter(previous: dict[str, Any], requested: LeanstralServiceIdentity) -> dict[str, Any]:
         nonlocal now
         del previous, requested
         now += 0.75

@@ -1,13 +1,16 @@
 """
 Test suite for core/file_validator/_validation_result.py converted from unittest to pytest.
 """
+
 import pytest
 from pydantic import ValidationError
 
 try:
     from core.file_validator._validation_result import ValidationResult
 except ImportError:
-    pytest.skip("core.file_validator._validation_result module not available", allow_module_level=True)
+    pytest.skip(
+        "core.file_validator._validation_result module not available", allow_module_level=True
+    )
 
 
 class TestValidationResultInitialization:
@@ -26,18 +29,18 @@ class TestValidationResultInitialization:
         """
         # GIVEN
         is_valid = True
-        errors = ['error1', 'error2']
-        warnings = ['warning1']
-        validation_context = {'key': 'value'}
-        
+        errors = ["error1", "error2"]
+        warnings = ["warning1"]
+        validation_context = {"key": "value"}
+
         # WHEN
         result = ValidationResult(
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
-            validation_context=validation_context
+            validation_context=validation_context,
         )
-        
+
         # THEN
         assert isinstance(result, ValidationResult)
 
@@ -50,18 +53,18 @@ class TestValidationResultInitialization:
         """
         # GIVEN
         is_valid = True
-        errors = ['error1', 'error2']
-        warnings = ['warning1']
-        validation_context = {'key': 'value'}
-        
+        errors = ["error1", "error2"]
+        warnings = ["warning1"]
+        validation_context = {"key": "value"}
+
         # WHEN
         result = ValidationResult(
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
-            validation_context=validation_context
+            validation_context=validation_context,
         )
-        
+
         # THEN
         assert result.is_valid is True
 
@@ -74,20 +77,20 @@ class TestValidationResultInitialization:
         """
         # GIVEN
         is_valid = True
-        errors = ['error1', 'error2']
-        warnings = ['warning1']
-        validation_context = {'key': 'value'}
-        
+        errors = ["error1", "error2"]
+        warnings = ["warning1"]
+        validation_context = {"key": "value"}
+
         # WHEN
         result = ValidationResult(
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
-            validation_context=validation_context
+            validation_context=validation_context,
         )
-        
+
         # THEN
-        assert result.errors == ['error1', 'error2']
+        assert result.errors == ["error1", "error2"]
 
     def test_init_with_all_valid_parameters_sets_warnings(self):
         """
@@ -98,20 +101,20 @@ class TestValidationResultInitialization:
         """
         # GIVEN
         is_valid = True
-        errors = ['error1', 'error2']
-        warnings = ['warning1']
-        validation_context = {'key': 'value'}
-        
+        errors = ["error1", "error2"]
+        warnings = ["warning1"]
+        validation_context = {"key": "value"}
+
         # WHEN
         result = ValidationResult(
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
-            validation_context=validation_context
+            validation_context=validation_context,
         )
-        
+
         # THEN
-        assert result.warnings == ['warning1']
+        assert result.warnings == ["warning1"]
 
     def test_init_with_all_valid_parameters_sets_validation_context(self):
         """
@@ -122,20 +125,20 @@ class TestValidationResultInitialization:
         """
         # GIVEN
         is_valid = True
-        errors = ['error1', 'error2']
-        warnings = ['warning1']
-        validation_context = {'key': 'value'}
-        
+        errors = ["error1", "error2"]
+        warnings = ["warning1"]
+        validation_context = {"key": "value"}
+
         # WHEN
         result = ValidationResult(
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
-            validation_context=validation_context
+            validation_context=validation_context,
         )
-        
+
         # THEN
-        assert result.validation_context == {'key': 'value'}
+        assert result.validation_context == {"key": "value"}
 
     def test_init_with_minimal_parameters_creates_instance(self):
         """
@@ -146,7 +149,7 @@ class TestValidationResultInitialization:
         """
         # WHEN
         result = ValidationResult()
-        
+
         # THEN
         assert isinstance(result, ValidationResult)
 
@@ -159,7 +162,7 @@ class TestValidationResultInitialization:
         """
         # WHEN
         result = ValidationResult()
-        
+
         # THEN
         assert result.is_valid is True
 
@@ -172,7 +175,7 @@ class TestValidationResultInitialization:
         """
         # WHEN
         result = ValidationResult()
-        
+
         # THEN
         assert result.errors == []
 
@@ -185,7 +188,7 @@ class TestValidationResultInitialization:
         """
         # WHEN
         result = ValidationResult()
-        
+
         # THEN
         assert result.warnings == []
 
@@ -198,7 +201,7 @@ class TestValidationResultInitialization:
         """
         # WHEN
         result = ValidationResult()
-        
+
         # THEN
         assert result.validation_context == {}
 
@@ -223,10 +226,10 @@ class TestValidationResultInitialization:
         # WHEN & THEN
         with pytest.raises(ValidationError) as exc_info:
             ValidationResult(is_valid="not a boolean")
-        
+
         # Verify the error is related to is_valid field
         error_details = str(exc_info.value)
-        assert 'is_valid' in error_details.lower()
+        assert "is_valid" in error_details.lower()
 
     def test_init_with_invalid_errors_type_raises_validation_error(self):
         """
@@ -249,10 +252,10 @@ class TestValidationResultInitialization:
         # WHEN & THEN
         with pytest.raises(ValidationError) as exc_info:
             ValidationResult(errors="not a list")
-        
+
         # Verify the error is related to errors field
         error_details = str(exc_info.value)
-        assert 'errors' in error_details.lower()
+        assert "errors" in error_details.lower()
 
     def test_init_with_invalid_warnings_type_raises_validation_error(self):
         """
@@ -275,10 +278,10 @@ class TestValidationResultInitialization:
         # WHEN & THEN
         with pytest.raises(ValidationError) as exc_info:
             ValidationResult(warnings="not a list")
-        
+
         # Verify the error is related to warnings field
         error_details = str(exc_info.value)
-        assert 'warnings' in error_details.lower()
+        assert "warnings" in error_details.lower()
 
     def test_init_with_invalid_validation_context_type_raises_validation_error(self):
         """
@@ -301,17 +304,20 @@ class TestValidationResultInitialization:
         # WHEN & THEN
         with pytest.raises(ValidationError) as exc_info:
             ValidationResult(validation_context=["not", "a", "dict"])
-        
+
         # Verify the error is related to validation_context field
         error_details = str(exc_info.value)
-        assert 'validation_context' in error_details.lower()
+        assert "validation_context" in error_details.lower()
 
-    @pytest.mark.parametrize("is_valid,errors,warnings,context", [
-        (True, ['error1'], ['warning1'], {'key': 'value'}),
-        (False, [], [], {}),
-        (True, ['e1', 'e2', 'e3'], ['w1', 'w2'], {'a': 1, 'b': 2}),
-        (False, ['critical_error'], [], {'source': 'validation'}),
-    ])
+    @pytest.mark.parametrize(
+        "is_valid,errors,warnings,context",
+        [
+            (True, ["error1"], ["warning1"], {"key": "value"}),
+            (False, [], [], {}),
+            (True, ["e1", "e2", "e3"], ["w1", "w2"], {"a": 1, "b": 2}),
+            (False, ["critical_error"], [], {"source": "validation"}),
+        ],
+    )
     def test_init_with_various_valid_combinations(self, is_valid, errors, warnings, context):
         """
         GIVEN various valid parameter combinations
@@ -322,12 +328,9 @@ class TestValidationResultInitialization:
         """
         # WHEN
         result = ValidationResult(
-            is_valid=is_valid,
-            errors=errors,
-            warnings=warnings,
-            validation_context=context
+            is_valid=is_valid, errors=errors, warnings=warnings, validation_context=context
         )
-        
+
         # THEN
         assert isinstance(result, ValidationResult)
         assert result.is_valid == is_valid
@@ -344,21 +347,18 @@ class TestValidationResultInitialization:
             - Original lists not affected by modifications
         """
         # GIVEN
-        original_errors = ['error1']
-        original_warnings = ['warning1']
-        
+        original_errors = ["error1"]
+        original_warnings = ["warning1"]
+
         # WHEN
-        result = ValidationResult(
-            errors=original_errors.copy(),
-            warnings=original_warnings.copy()
-        )
-        
+        result = ValidationResult(errors=original_errors.copy(), warnings=original_warnings.copy())
+
         # Modify the result's lists
-        result.errors.append('error2')
-        result.warnings.append('warning2')
-        
+        result.errors.append("error2")
+        result.warnings.append("warning2")
+
         # THEN
-        assert original_errors == ['error1']  # Original unchanged
-        assert original_warnings == ['warning1']  # Original unchanged
-        assert result.errors == ['error1', 'error2']
-        assert result.warnings == ['warning1', 'warning2']
+        assert original_errors == ["error1"]  # Original unchanged
+        assert original_warnings == ["warning1"]  # Original unchanged
+        assert result.errors == ["error1", "error2"]
+        assert result.warnings == ["warning1", "warning2"]

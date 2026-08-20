@@ -128,7 +128,7 @@ from ipfs_datasets_py.search.graph_query.budgets import budgets_from_preset
 engine = UnifiedQueryEngine(backend=backend, vector_store=vector_store)
 
 # Execute different query types
-budgets = budgets_from_preset('safe')
+budgets = budgets_from_preset("safe")
 
 # Cypher query
 result = engine.execute_cypher("MATCH (n) RETURN n LIMIT 10", budgets=budgets)
@@ -138,9 +138,7 @@ result = engine.execute_hybrid("What is IPFS?", k=10, budgets=budgets)
 
 # Full GraphRAG with LLM reasoning
 result = engine.execute_graphrag(
-    question="Explain content addressing",
-    context={'embeddings': embeddings},
-    budgets=budgets
+    question="Explain content addressing", context={"embeddings": embeddings}, budgets=budgets
 )
 ```
 
@@ -150,13 +148,13 @@ Consistent budget enforcement across all query types:
 
 ```python
 manager = BudgetManager()
-budgets = budgets_from_preset('strict')
+budgets = budgets_from_preset("strict")
 
 with manager.track(budgets) as tracker:
     # Execute query
     tracker.increment_nodes(10)
     tracker.increment_edges(50)
-    
+
     # Check if exceeded
     if tracker.exceeded:
         print(f"Budget exceeded: {tracker.exceeded_reason}")
@@ -176,8 +174,8 @@ results = hybrid.search(
     query="document about AI",
     k=10,
     vector_weight=0.6,  # 60% vector score
-    graph_weight=0.4,   # 40% graph score
-    max_hops=2
+    graph_weight=0.4,  # 40% graph score
+    max_hops=2,
 )
 
 for result in results:

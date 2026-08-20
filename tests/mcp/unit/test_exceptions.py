@@ -61,7 +61,7 @@ def test_tool_execution_error():
     """Test ToolExecutionError with chained exception."""
     original = ValueError("Invalid parameter")
     error = ToolExecutionError("my_tool", original)
-    
+
     assert "my_tool" in str(error)
     assert error.tool_name == "my_tool"
     assert error.original_error is original
@@ -102,13 +102,13 @@ def test_exception_hierarchy():
     assert issubclass(RuntimeRoutingError, MCPServerError)
     assert issubclass(P2PServiceError, MCPServerError)
     assert issubclass(ConfigurationError, MCPServerError)
-    
+
     # Can catch specific exceptions
     try:
         raise ToolNotFoundError("test_tool")
     except ToolError:
         pass  # Should catch
-    
+
     # Can catch all MCP exceptions
     try:
         raise MetricsCollectionError("Test")
@@ -120,7 +120,7 @@ def test_exception_can_be_raised_and_caught():
     """Test that exceptions can be raised and caught properly."""
     with pytest.raises(ToolNotFoundError) as exc_info:
         raise ToolNotFoundError("missing_tool", "tools")
-    
+
     assert exc_info.value.tool_name == "missing_tool"
     assert exc_info.value.category == "tools"
 
@@ -129,7 +129,7 @@ def test_all_exceptions_importable():
     """Test that all exceptions can be imported."""
     # This test verifies __all__ exports
     from ipfs_datasets_py.mcp_server import exceptions
-    
+
     for exc_name in exceptions.__all__:
         assert hasattr(exceptions, exc_name)
         exc_class = getattr(exceptions, exc_name)

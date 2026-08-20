@@ -42,9 +42,9 @@ class TestUniqueRelationshipTypes:
             relationships=[],
             confidence=1.0,
         )
-        
+
         types = generator.unique_relationship_types(result)
-        
+
         assert types == set()
         assert isinstance(types, set)
 
@@ -64,9 +64,9 @@ class TestUniqueRelationshipTypes:
             ],
             confidence=0.8,
         )
-        
+
         types = generator.unique_relationship_types(result)
-        
+
         assert types == {"knows"}
 
     def test_multiple_distinct_types(self, generator, sample_entities):
@@ -80,9 +80,9 @@ class TestUniqueRelationshipTypes:
             ],
             confidence=0.75,
         )
-        
+
         types = generator.unique_relationship_types(result)
-        
+
         assert set(types) == {"knows", "works_for", "employed_by"}
         assert len(types) == 3
 
@@ -98,9 +98,9 @@ class TestUniqueRelationshipTypes:
             ],
             confidence=0.75,
         )
-        
+
         types = generator.unique_relationship_types(result)
-        
+
         assert set(types) == {"knows", "works_for"}
         assert len(types) == 2
 
@@ -115,9 +115,9 @@ class TestUniqueRelationshipTypes:
             ],
             confidence=0.75,
         )
-        
+
         types = generator.unique_relationship_types(result)
-        
+
         assert types == {"alpha_relation", "beta_relation", "zebra_relation"}
 
     def test_type_with_special_characters(self, generator, sample_entities):
@@ -131,9 +131,9 @@ class TestUniqueRelationshipTypes:
             ],
             confidence=0.75,
         )
-        
+
         types = generator.unique_relationship_types(result)
-        
+
         assert set(types) == {"type_with_underscore", "type-with-dash", "TYPE123"}
         assert len(types) == 3
 
@@ -148,9 +148,9 @@ class TestUniqueRelationshipTypes:
             relationships=relationships,
             confidence=0.7,
         )
-        
+
         types = generator.unique_relationship_types(result)
-        
+
         assert types == {"common_type"}
         assert len(types) == 1
 
@@ -166,9 +166,9 @@ class TestUniqueRelationshipTypes:
             metadata={"source": "test", "version": "1.0"},
             errors=["warning: low confidence"],
         )
-        
+
         types = generator.unique_relationship_types(result)
-        
+
         assert set(types) == {"rel_type_a", "rel_type_b"}
         # Metadata and errors should not affect the result
         assert result.metadata["source"] == "test"
@@ -183,9 +183,9 @@ class TestUniqueRelationshipTypes:
             ],
             confidence=0.75,
         )
-        
+
         types = generator.unique_relationship_types(result)
-        
+
         assert isinstance(types, set)
         assert not isinstance(types, list)
         assert not isinstance(types, tuple)
@@ -201,9 +201,9 @@ class TestUniqueRelationshipTypes:
             ],
             confidence=0.75,
         )
-        
+
         types = generator.unique_relationship_types(result)
-        
+
         assert set(types) == {"TypeA", "typea", "TYPEA"}
         assert len(types) == 3
 
@@ -219,9 +219,9 @@ class TestUniqueRelationshipTypes:
         )
         original_rel_count = len(result.relationships)
         original_types = {r.type for r in result.relationships}
-        
+
         types = generator.unique_relationship_types(result)
-        
+
         # Original result should be unchanged
         assert len(result.relationships) == original_rel_count
         assert {r.type for r in result.relationships} == original_types

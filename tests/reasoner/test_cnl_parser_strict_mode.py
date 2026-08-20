@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_legal_ir import DeonticOp, parse_cnl_sentence
+from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_legal_ir import (
+    DeonticOp,
+    parse_cnl_sentence,
+)
 
 
 def test_parse_cnl_sentence_includes_ranked_alternatives_and_confidence() -> None:
@@ -57,7 +60,11 @@ def test_parse_cnl_sentence_template_means_emits_definition_rule() -> None:
 
 
 def test_parse_cnl_sentence_template_includes_emits_member_rules() -> None:
-    ir = parse_cnl_sentence("Sensitive data includes health records, financial records, and biometrics.")
+    ir = parse_cnl_sentence(
+        "Sensitive data includes health records, financial records, and biometrics."
+    )
 
-    members = sorted(r.consequent.args[1] for r in ir.rules.values() if r.consequent.pred == "includes_member")
+    members = sorted(
+        r.consequent.args[1] for r in ir.rules.values() if r.consequent.pred == "includes_member"
+    )
     assert members == ["biometrics", "financial records", "health records"]

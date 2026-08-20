@@ -36,7 +36,7 @@ class EmbeddingManager:
             "status": "success",
             "embeddings": embeddings,
             "model_name": self.model_name,
-            "dimension": 4
+            "dimension": 4,
         }
 
     def get_available_models(self) -> List[str]:
@@ -45,9 +45,7 @@ class EmbeddingManager:
 
 
 async def generate_embeddings(
-    texts: List[str],
-    model_name: str = DEFAULT_MODEL,
-    **kwargs: Any
+    texts: List[str], model_name: str = DEFAULT_MODEL, **kwargs: Any
 ) -> Dict[str, Any]:
     """Generate embeddings for multiple texts."""
     _ = kwargs
@@ -59,10 +57,7 @@ async def generate_embeddings(
 
 
 async def shard_embeddings(
-    embeddings: List[Any],
-    shard_count: int = 4,
-    strategy: str = "balanced",
-    **kwargs: Any
+    embeddings: List[Any], shard_count: int = 4, strategy: str = "balanced", **kwargs: Any
 ) -> Dict[str, Any]:
     """Shard embeddings into a fixed number of shards."""
     _ = kwargs
@@ -82,5 +77,5 @@ async def shard_embeddings(
         "status": "success",
         "shard_count": shard_count,
         "total_embeddings": len(embeddings),
-        "shards": shards
+        "shards": shards,
     }

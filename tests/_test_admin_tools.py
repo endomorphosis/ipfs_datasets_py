@@ -19,7 +19,7 @@ from ipfs_datasets_py.mcp_server.tools.admin_tools.admin_tools import (
     system_maintenance,
     configure_system,
     system_health,
-    system_status
+    system_status,
 )
 
 
@@ -52,7 +52,7 @@ class TestAdminTools:
             model="test-model",
             endpoint="http://localhost:8000",
             endpoint_type="local",
-            ctx_length=512
+            ctx_length=512,
         )
         assert result is not None
         assert "status" in result
@@ -77,10 +77,7 @@ class TestAdminTools:
         THEN expect result to not be None
         AND result should contain 'status' field
         """
-        result = await configure_system(
-            action="get",
-            config_key="embedding_settings"
-        )
+        result = await configure_system(action="get", config_key="embedding_settings")
         assert result is not None
         assert "status" in result
 
@@ -93,10 +90,7 @@ class TestAdminTools:
         AND result should contain 'status' field
         AND result should contain 'health' field or 'components' field
         """
-        result = await system_health(
-            component="all",
-            detailed=True
-        )
+        result = await system_health(component="all", detailed=True)
         assert result is not None
         assert "status" in result
 
@@ -126,10 +120,10 @@ class TestAdminToolsIntegration:
         """
         try:
             from ipfs_datasets_py.mcp_server.tools.tool_registration import get_registered_tools
-            
+
             # Test MCP tool registration retrieval
             registered_tools = get_registered_tools()
-            
+
             assert registered_tools is not None
             if isinstance(registered_tools, list):
                 # Look for admin tools in the list
@@ -137,9 +131,9 @@ class TestAdminToolsIntegration:
                 assert len(admin_tools) >= 0  # Could be empty, that's okay
             elif isinstance(registered_tools, dict):
                 assert "status" in registered_tools or "tools" in registered_tools
-                
+
         except ImportError:
-            # Graceful fallback for compatibility testing  
+            # Graceful fallback for compatibility testing
             mock_tools = {
                 "status": "retrieved",
                 "tools": [
@@ -147,12 +141,12 @@ class TestAdminToolsIntegration:
                     "system_health",
                     "system_maintenance",
                     "configure_system",
-                    "system_status"
+                    "system_status",
                 ],
                 "category": "admin_tools",
-                "count": 5
+                "count": 5,
             }
-            
+
             assert mock_tools is not None
             assert len(mock_tools["tools"]) > 0
 

@@ -12,8 +12,11 @@ import tempfile
 import logging
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def main():
     """Run the main test function."""
@@ -30,11 +33,13 @@ def main():
         # Import query metrics components
         from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
         from ipfs_datasets_py.rag.rag_query_visualization import EnhancedQueryVisualizer
+
         logger.info("Successfully imported RAG query components")
 
         # Import audit components
         from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator
         from ipfs_datasets_py.audit.audit_logger import AuditEvent, AuditLevel, AuditCategory
+
         logger.info("Successfully imported audit components")
 
         # Create query metrics collector
@@ -58,16 +63,10 @@ def main():
                 "phases": {
                     "vector_search": {"duration": 0.2 + (i * 0.02)},
                     "graph_traversal": {"duration": 0.2 + (i * 0.02)},
-                    "ranking": {"duration": 0.1 + (i * 0.01)}
+                    "ranking": {"duration": 0.1 + (i * 0.01)},
                 },
-                "results": {
-                    "count": 5 + i,
-                    "quality_score": 0.7 + (i * 0.02)
-                },
-                "params": {
-                    "max_depth": 2,
-                    "max_results": 10
-                }
+                "results": {"count": 5 + i, "quality_score": 0.7 + (i * 0.02)},
+                "params": {"max_depth": 2, "max_results": 10},
             }
 
             # Add to query_metrics manually (this works around the deque access restriction)
@@ -110,7 +109,7 @@ def main():
                 status="success" if i % 5 != 0 else "failure",
                 user=f"user-{i % 3}",
                 resource_id=f"resource-{i % 4}",
-                resource_type=f"type-{i % 2}"
+                resource_type=f"type-{i % 2}",
             )
 
             # Add event to metrics
@@ -121,16 +120,15 @@ def main():
         # Create a visualizer
         logger.info("Creating the visualizer...")
         visualizer = EnhancedQueryVisualizer(
-            metrics_collector=query_metrics,
-            dashboard_dir=temp_dir
+            metrics_collector=query_metrics, dashboard_dir=temp_dir
         )
 
         # Print the visualizer's methods
-        methods = [method for method in dir(visualizer) if not method.startswith('_')]
+        methods = [method for method in dir(visualizer) if not method.startswith("_")]
         logger.info(f"Available visualizer methods: {methods}")
 
         # Check if our visualization method exists
-        if hasattr(visualizer, 'visualize_query_audit_metrics'):
+        if hasattr(visualizer, "visualize_query_audit_metrics"):
             logger.info("Found visualize_query_audit_metrics method!")
 
             # Use the method to create a visualization
@@ -141,7 +139,7 @@ def main():
                 audit_metrics_aggregator=audit_metrics,
                 output_file=output_file,
                 time_window=24 * 3600,  # 24 hours
-                show_plot=False
+                show_plot=False,
             )
 
             if result is not None:
@@ -176,6 +174,7 @@ def visualize_query_audit_metrics(
     finally:
         logger.info(f"Test script completed. Output directory: {temp_dir}")
         logger.info(f"To view the results, check the files in: {temp_dir}")
+
 
 if __name__ == "__main__":
     main()

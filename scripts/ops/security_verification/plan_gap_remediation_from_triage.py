@@ -18,27 +18,29 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_counte
 )
 
 
-TRIAGE_PATH = Path('security_ir_artifacts/corpora/xaman-app/counterexample-triage.json')
-OUTPUT_PATH = Path('security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json')
+TRIAGE_PATH = Path("security_ir_artifacts/corpora/xaman-app/counterexample-triage.json")
+OUTPUT_PATH = Path("security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json")
 
 
 def _load(path: Path) -> dict[str, object]:
-    payload = json.loads(path.read_text(encoding='utf-8'))
+    payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f'expected JSON object: {path}')
+        raise ValueError(f"expected JSON object: {path}")
     return payload
 
 
 def _write(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n', encoding='utf-8')
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root.')
-    parser.add_argument('--triage', default=str(TRIAGE_PATH), help='Input triage report path.')
-    parser.add_argument('--out', default=str(OUTPUT_PATH), help='Output remediation matrix path.')
+    parser.add_argument("--repo-root", default=str(ROOT_DIR), help="Repository root.")
+    parser.add_argument("--triage", default=str(TRIAGE_PATH), help="Input triage report path.")
+    parser.add_argument("--out", default=str(OUTPUT_PATH), help="Output remediation matrix path.")
     args = parser.parse_args(argv)
 
     root = Path(args.repo_root).resolve()
@@ -55,10 +57,12 @@ def main(argv: list[str] | None = None) -> int:
     print(
         json.dumps(
             {
-                'artifact_path': str(out_path.relative_to(root)) if out_path.is_relative_to(root) else str(out_path),
-                'overall_status': report['overall_status'],
-                'matrix_entry_count': report['summary']['entry_count'],
-                'required_task_count': report['summary']['required_task_count'],
+                "artifact_path": str(out_path.relative_to(root))
+                if out_path.is_relative_to(root)
+                else str(out_path),
+                "overall_status": report["overall_status"],
+                "matrix_entry_count": report["summary"]["entry_count"],
+                "required_task_count": report["summary"]["required_task_count"],
             },
             sort_keys=True,
         )
@@ -66,5 +70,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

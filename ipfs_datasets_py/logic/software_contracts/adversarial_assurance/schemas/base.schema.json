@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/adversarial-assurance.base.schema.json",
+  "title": "Adversarial-assurance artifact base models v1",
+  "description": "Closed, fail-closed JSON Schema for datasets-owned adversarial-assurance common header, provenance, generator identity, and version binding (AAE-007/AAE-012). Unknown fields, unsupported schemas, floats, private data, and model-written authority are rejected. Canonical CIDs are recomputed via software_contracts.content.",
+  "oneOf": [
+    { "$ref": "#/$defs/assuranceArtifactHeader" },
+    { "$ref": "#/$defs/artifactProvenance" },
+    { "$ref": "#/$defs/generatorIdentity" },
+    { "$ref": "#/$defs/versionBinding" }
+  ],
+  "$defs": {
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "cidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cid" }]
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nfcStringOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nfcString" }]
+    },
+    "token": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:/+-]{0,127}$"
+    },
+    "versionToken": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$"
+    },
+    "artifactKind": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    },
+    "repositoryId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/+-]{0,255}$"
+    },
+    "symbolId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/+@#$-]{0,511}$"
+    },
+    "assuranceTerminalStatus": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "rejected",
+        "invalid",
+        "stale",
+        "inconclusive",
+        "evaluation_failed",
+        "human_review_required",
+        "unavailable",
+        "cancelled",
+        "simulated"
+      ]
+    },
+    "executionMode": {
+      "type": "string",
+      "enum": ["live", "simulated", "replay"]
+    },
+    "authoritySource": {
+      "type": "string",
+      "enum": [
+        "deterministic",
+        "observed",
+        "human",
+        "policy",
+        "receipt",
+        "schema"
+      ]
+    },
+    "strictObject": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "null" },
+          { "type": "boolean" },
+          { "type": "integer" },
+          { "type": "string" },
+          { "type": "array" },
+          { "type": "object" }
+        ]
+      }
+    },
+    "cidList": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/cid" },
+      "uniqueItems": true,
+      "maxItems": 4096
+    },
+    "tokenList": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/token" },
+      "uniqueItems": true,
+      "maxItems": 256
+    },
+    "symbolIdList": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/symbolId" },
+      "uniqueItems": true,
+      "maxItems": 4096
+    },
+    "generatorIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "generator_id",
+        "generator_version",
+        "interface_id",
+        "generator_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.adversarial-assurance-generator@1"
+        },
+        "generator_id": { "$ref": "#/$defs/token" },
+        "generator_version": { "$ref": "#/$defs/versionToken" },
+        "interface_id": { "$ref": "#/$defs/nfcString" },
+        "generator_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "versionBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "operator_id",
+        "operator_version",
+        "campaign_policy_id",
+        "campaign_policy_version",
+        "generator",
+        "version_binding_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.adversarial-assurance-version-binding@1"
+        },
+        "operator_id": { "$ref": "#/$defs/token" },
+        "operator_version": { "$ref": "#/$defs/versionToken" },
+        "campaign_policy_id": { "$ref": "#/$defs/token" },
+        "campaign_policy_version": { "$ref": "#/$defs/versionToken" },
+        "generator": { "$ref": "#/$defs/generatorIdentity" },
+        "version_binding_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "artifactProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "producer_id",
+        "producer_version",
+        "execution_mode",
+        "authority_source",
+        "input_cids",
+        "tool_ids",
+        "policy_cid",
+        "notes",
+        "provenance_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.adversarial-assurance-provenance@1"
+        },
+        "producer_id": { "$ref": "#/$defs/token" },
+        "producer_version": { "$ref": "#/$defs/versionToken" },
+        "execution_mode": { "$ref": "#/$defs/executionMode" },
+        "authority_source": { "$ref": "#/$defs/authoritySource" },
+        "input_cids": { "$ref": "#/$defs/cidList" },
+        "tool_ids": { "$ref": "#/$defs/tokenList" },
+        "policy_cid": { "$ref": "#/$defs/cidOrNull" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "provenance_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "assuranceArtifactHeader": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "artifact_kind",
+        "repository_id",
+        "repository_state_cid",
+        "target_symbol_ids",
+        "target_artifact_cids",
+        "capsule_cids",
+        "proof_unit_cids",
+        "environment_cid",
+        "dependency_lock_cid",
+        "versions",
+        "provenance",
+        "terminal_status",
+        "receipt_cids",
+        "proof_cids",
+        "metadata",
+        "header_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.adversarial-assurance-artifact-header@1"
+        },
+        "interface_id": { "const": "AssuranceArtifactHeader@1" },
+        "artifact_kind": { "$ref": "#/$defs/artifactKind" },
+        "repository_id": { "$ref": "#/$defs/repositoryId" },
+        "repository_state_cid": { "$ref": "#/$defs/cid" },
+        "target_symbol_ids": { "$ref": "#/$defs/symbolIdList" },
+        "target_artifact_cids": { "$ref": "#/$defs/cidList" },
+        "capsule_cids": { "$ref": "#/$defs/cidList" },
+        "proof_unit_cids": { "$ref": "#/$defs/cidList" },
+        "environment_cid": { "$ref": "#/$defs/cid" },
+        "dependency_lock_cid": { "$ref": "#/$defs/cid" },
+        "versions": { "$ref": "#/$defs/versionBinding" },
+        "provenance": { "$ref": "#/$defs/artifactProvenance" },
+        "terminal_status": { "$ref": "#/$defs/assuranceTerminalStatus" },
+        "receipt_cids": { "$ref": "#/$defs/cidList" },
+        "proof_cids": { "$ref": "#/$defs/cidList" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "header_cid": { "$ref": "#/$defs/cid" }
+      }
+    }
+  }
+}

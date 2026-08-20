@@ -58,7 +58,9 @@ def _source_map() -> LegalIRSourceMap:
     return builder.to_source_map()
 
 
-def test_resolves_defined_terms_actors_authorities_exceptions_and_conditions_with_provenance() -> None:
+def test_resolves_defined_terms_actors_authorities_exceptions_and_conditions_with_provenance() -> (
+    None
+):
     source_map = _source_map()
     builder = LegalIRSymbolTableBuilder(
         symbol_table_id="symbols-core",
@@ -179,13 +181,12 @@ def test_scoped_references_shadow_parent_definitions_without_ambiguity() -> None
 
     table = builder.to_symbol_table()
 
-    assert table.resolution_by_reference_id["ref:local-record"].status is LegalIRResolutionStatus.RESOLVED
-    assert table.resolution_by_reference_id["ref:local-record"].symbol_ids == (
-        "term:record:local",
+    assert (
+        table.resolution_by_reference_id["ref:local-record"].status
+        is LegalIRResolutionStatus.RESOLVED
     )
-    assert table.resolution_by_reference_id["ref:doc-record"].symbol_ids == (
-        "term:record:general",
-    )
+    assert table.resolution_by_reference_id["ref:local-record"].symbol_ids == ("term:record:local",)
+    assert table.resolution_by_reference_id["ref:doc-record"].symbol_ids == ("term:record:general",)
     assert not table.ambiguous_references
 
 
@@ -390,12 +391,8 @@ def test_build_symbol_table_extracts_common_legal_ir_shapes() -> None:
     table = build_legal_ir_symbol_table(sample)
 
     assert normalize_legal_symbol_name(" Public-Body ") == "public body"
-    assert table.resolution_by_reference_id["ref:public-body"].symbol_ids == (
-        "term:public-body",
-    )
-    assert {
-        definition.symbol_kind for definition in table.definitions
-    } >= {
+    assert table.resolution_by_reference_id["ref:public-body"].symbol_ids == ("term:public-body",)
+    assert {definition.symbol_kind for definition in table.definitions} >= {
         LegalIRSymbolKind.DEFINED_TERM,
         LegalIRSymbolKind.ACTOR,
         LegalIRSymbolKind.CONDITION,

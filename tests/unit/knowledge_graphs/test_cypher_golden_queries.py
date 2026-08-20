@@ -19,6 +19,7 @@ from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler, Cy
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _parse_and_compile(query: str):
     """Parse then compile *query* and return the IR list."""
     parser = CypherParser()
@@ -40,6 +41,7 @@ def _ops_of_type(ir, op_type: str):
 # ---------------------------------------------------------------------------
 # Simple MATCH patterns
 # ---------------------------------------------------------------------------
+
 
 class TestSimpleMatchPatterns:
     """Golden fixtures for simple MATCH … RETURN queries."""
@@ -102,9 +104,7 @@ class TestSimpleMatchPatterns:
         THEN: IR contains ScanLabel, Expand and Project
         """
         # GIVEN / WHEN
-        ir = _parse_and_compile(
-            "MATCH (a:Person)-[r:KNOWS]->(b:Person) RETURN a, b"
-        )
+        ir = _parse_and_compile("MATCH (a:Person)-[r:KNOWS]->(b:Person) RETURN a, b")
 
         # THEN
         ops = _op_types(ir)
@@ -118,6 +118,7 @@ class TestSimpleMatchPatterns:
 # ---------------------------------------------------------------------------
 # WHERE clause patterns
 # ---------------------------------------------------------------------------
+
 
 class TestWhereClause:
     """Golden fixtures for WHERE clause compilation."""
@@ -171,9 +172,7 @@ class TestWhereClause:
         THEN: IR contains two Filter operations (one per predicate)
         """
         # GIVEN / WHEN
-        ir = _parse_and_compile(
-            "MATCH (p:Person) WHERE p.age > 20 AND p.age < 40 RETURN p"
-        )
+        ir = _parse_and_compile("MATCH (p:Person) WHERE p.age > 20 AND p.age < 40 RETURN p")
 
         # THEN
         filters = _ops_of_type(ir, "Filter")
@@ -183,6 +182,7 @@ class TestWhereClause:
 # ---------------------------------------------------------------------------
 # RETURN clause patterns
 # ---------------------------------------------------------------------------
+
 
 class TestReturnClause:
     """Golden fixtures for RETURN clause compilation."""
@@ -265,6 +265,7 @@ class TestReturnClause:
 # CREATE patterns
 # ---------------------------------------------------------------------------
 
+
 class TestCreatePatterns:
     """Golden fixtures for CREATE clause compilation."""
 
@@ -307,6 +308,7 @@ class TestCreatePatterns:
 # ---------------------------------------------------------------------------
 # Error / invalid-input paths
 # ---------------------------------------------------------------------------
+
 
 class TestParserErrors:
     """Golden fixtures that verify invalid queries raise the right exceptions."""

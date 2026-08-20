@@ -10,12 +10,14 @@ Methods under test:
   - OntologyLearningAdapter.feedback_std_last_n(n)
   - OntologyMediator.action_entropy_normalized()
 """
+
 import math
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -28,11 +30,13 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_entity(eid, etype="T"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=etype, text=eid)
 
 
@@ -46,6 +50,7 @@ def _make_rel_mock(rel_type="is_a"):
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -55,16 +60,19 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -75,21 +83,27 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 # ── OntologyOptimizer.score_rebound_count ────────────────────────────────────
+
 
 class TestScoreReboundCount:
     def test_empty_returns_zero(self):
@@ -118,6 +132,7 @@ class TestScoreReboundCount:
 
 # ── OntologyOptimizer.history_zscore_last ────────────────────────────────────
 
+
 class TestHistoryZscoreLast:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -144,6 +159,7 @@ class TestHistoryZscoreLast:
 
 # ── OntologyGenerator.entity_diversity_score ─────────────────────────────────
 
+
 class TestEntityDiversityScore:
     def test_empty_returns_zero(self):
         g = _make_generator()
@@ -157,15 +173,18 @@ class TestEntityDiversityScore:
 
     def test_all_unique_types_returns_one(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("a", "Person"),
-            _make_entity("b", "Org"),
-            _make_entity("c", "Place"),
-        ])
+        r = _make_result(
+            [
+                _make_entity("a", "Person"),
+                _make_entity("b", "Org"),
+                _make_entity("c", "Place"),
+            ]
+        )
         assert g.entity_diversity_score(r) == pytest.approx(1.0)
 
 
 # ── OntologyGenerator.relationship_density_by_type ───────────────────────────
+
 
 class TestRelationshipDensityByType:
     def test_empty_returns_empty_dict(self):
@@ -191,6 +210,7 @@ class TestRelationshipDensityByType:
 
 # ── LogicValidator.cycle_count_estimate ──────────────────────────────────────
 
+
 class TestCycleCountEstimate:
     def test_empty_returns_zero(self):
         v = _make_validator()
@@ -210,6 +230,7 @@ class TestCycleCountEstimate:
 
 
 # ── OntologyPipeline.run_score_above_mean_count ──────────────────────────────
+
 
 class TestRunScoreAboveMeanCount:
     def test_empty_returns_zero(self):
@@ -231,6 +252,7 @@ class TestRunScoreAboveMeanCount:
 
 
 # ── OntologyLearningAdapter.feedback_std_last_n ──────────────────────────────
+
 
 class TestFeedbackStdLastN:
     def test_empty_returns_zero(self):
@@ -257,6 +279,7 @@ class TestFeedbackStdLastN:
 
 
 # ── OntologyMediator.action_entropy_normalized ───────────────────────────────
+
 
 class TestActionEntropyNormalized:
     def test_empty_returns_zero(self):

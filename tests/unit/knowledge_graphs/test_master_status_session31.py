@@ -12,6 +12,7 @@ Targets (all previously-uncovered paths reachable without optional deps):
   query/distributed.py              96% → ~99%  (+3pp)  — error/dedup/streaming/filter paths
   query/knowledge_graph.py          88% → ~92%  (+4pp)  — graphrag fallback, IR/gremlin/semantic
 """
+
 from __future__ import annotations
 
 import json
@@ -28,25 +29,29 @@ import pytest
 # Helpers / shared fixtures
 # ─────────────────────────────────────────────────────────────────
 
+
 def _make_kg_extractor(**kwargs):
     """Return a KnowledgeGraphExtractor with no optional deps."""
     from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
         KnowledgeGraphExtractor,
     )
+
     return KnowledgeGraphExtractor(**kwargs)
 
 
 def _make_entity(name: str, entity_type: str = "entity"):
     from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
     return Entity(entity_type=entity_type, name=name, confidence=0.9)
 
 
 def _make_kg(entities=None, relationships=None):
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
     kg = KnowledgeGraph()
-    for e in (entities or []):
+    for e in entities or []:
         kg.add_entity(e)
-    for r in (relationships or []):
+    for r in relationships or []:
         kg.add_relationship(r)
     return kg
 
@@ -54,6 +59,7 @@ def _make_kg(entities=None, relationships=None):
 # ─────────────────────────────────────────────────────────────────
 # extraction/_wikipedia_helpers.py
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestWikipediaHelpersUncoveredPaths:
     """GIVEN WikipediaExtractionMixin WHEN hitting previously-uncovered paths."""
@@ -71,9 +77,13 @@ class TestWikipediaHelpersUncoveredPaths:
         extractor.tracer = mock_tracer
         mock_tracer.trace_extraction.return_value = "trace-42"
         import requests
-        with patch("ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
-                   side_effect=requests.RequestException("timeout")):
+
+        with patch(
+            "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
+            side_effect=requests.RequestException("timeout"),
+        ):
             from ipfs_datasets_py.knowledge_graphs.exceptions import EntityExtractionError
+
             with pytest.raises(EntityExtractionError, match="Network error"):
                 extractor.extract_from_wikipedia("SomePage")
         mock_tracer.update_extraction_trace.assert_called_once()
@@ -92,9 +102,12 @@ class TestWikipediaHelpersUncoveredPaths:
         api_response = {"query": {"pages": {"-1": {"ns": 0}}}}
         mock_resp = MagicMock()
         mock_resp.json.return_value = api_response
-        with patch("ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
-                   return_value=mock_resp):
+        with patch(
+            "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
+            return_value=mock_resp,
+        ):
             from ipfs_datasets_py.knowledge_graphs.exceptions import EntityExtractionError
+
             with pytest.raises(EntityExtractionError):
                 extractor.extract_from_wikipedia("NonExistentPage")
         mock_tracer.update_extraction_trace.assert_called()
@@ -111,15 +124,19 @@ class TestWikipediaHelpersUncoveredPaths:
         api_response = {"query": {"pages": {"123": {"extract": "Some content."}}}}
         mock_resp = MagicMock()
         mock_resp.json.return_value = api_response
-        with patch(
-            "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
-            return_value=mock_resp,
-        ), patch.object(
-            extractor,
-            "extract_enhanced_knowledge_graph",
-            side_effect=ValueError("bad value"),
+        with (
+            patch(
+                "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
+                return_value=mock_resp,
+            ),
+            patch.object(
+                extractor,
+                "extract_enhanced_knowledge_graph",
+                side_effect=ValueError("bad value"),
+            ),
         ):
             from ipfs_datasets_py.knowledge_graphs.exceptions import EntityExtractionError
+
             with pytest.raises(EntityExtractionError, match="Unexpected error"):
                 extractor.extract_from_wikipedia("SomePage")
         call_kwargs = mock_tracer.update_extraction_trace.call_args[1]
@@ -173,8 +190,10 @@ class TestWikipediaHelpersUncoveredPaths:
         mock_tracer.trace_validation.return_value = "trace-notinkg"
         kg = _make_kg()  # empty KG
         stmts = [{"property": "p", "value": "v"}]
-        with patch.object(extractor, "_get_wikidata_id", return_value="Q42"), \
-             patch.object(extractor, "_get_wikidata_statements", return_value=stmts):
+        with (
+            patch.object(extractor, "_get_wikidata_id", return_value="Q42"),
+            patch.object(extractor, "_get_wikidata_statements", return_value=stmts),
+        ):
             result = extractor.validate_against_wikidata(kg, "QuantumComputer")
         assert result["coverage"] == 0.0
         assert result["missing_relationships"] == stmts
@@ -190,9 +209,15 @@ class TestWikipediaHelpersUncoveredPaths:
         mock_tracer.trace_validation.return_value = "trace-neterr"
         kg = _make_kg(entities=[_make_entity("SomeEntity")])
         import requests
-        with patch.object(extractor, "_get_wikidata_id", return_value="Q42"), \
-             patch.object(extractor, "_get_wikidata_statements",
-                          side_effect=requests.RequestException("net error")):
+
+        with (
+            patch.object(extractor, "_get_wikidata_id", return_value="Q42"),
+            patch.object(
+                extractor,
+                "_get_wikidata_statements",
+                side_effect=requests.RequestException("net error"),
+            ),
+        ):
             result = extractor.validate_against_wikidata(kg, "SomeEntity")
         assert result["coverage"] == 0.0
 
@@ -208,8 +233,10 @@ class TestWikipediaHelpersUncoveredPaths:
         entity = _make_entity("SomeEntity")
         kg = _make_kg(entities=[entity])
         stmts = [{"property": "name", "value": "SomeEntity"}]
-        with patch.object(extractor, "_get_wikidata_id", return_value="Q42"), \
-             patch.object(extractor, "_get_wikidata_statements", return_value=stmts):
+        with (
+            patch.object(extractor, "_get_wikidata_id", return_value="Q42"),
+            patch.object(extractor, "_get_wikidata_statements", return_value=stmts),
+        ):
             result = extractor.validate_against_wikidata(kg, "SomeEntity")
         assert "coverage" in result
         call_kwargs = mock_tracer.update_validation_trace.call_args[1]
@@ -225,10 +252,17 @@ class TestWikipediaHelpersUncoveredPaths:
         extractor.tracer = mock_tracer
         mock_tracer.trace_extraction_and_validation.return_value = "trace-ev"
         fake_kg = _make_kg(entities=[_make_entity("Alice")])
-        fake_val = {"coverage": 0.75, "covered_relationships": [], "missing_relationships": [],
-                    "additional_relationships": [], "entity_mapping": {}}
-        with patch.object(extractor, "extract_from_wikipedia", return_value=fake_kg), \
-             patch.object(extractor, "validate_against_wikidata", return_value=fake_val):
+        fake_val = {
+            "coverage": 0.75,
+            "covered_relationships": [],
+            "missing_relationships": [],
+            "additional_relationships": [],
+            "entity_mapping": {},
+        }
+        with (
+            patch.object(extractor, "extract_from_wikipedia", return_value=fake_kg),
+            patch.object(extractor, "validate_against_wikidata", return_value=fake_val),
+        ):
             result = extractor.extract_and_validate_wikipedia_graph("SomePage")
         assert result["trace_id"] == "trace-ev"
         assert result["coverage"] == 0.75
@@ -245,8 +279,10 @@ class TestWikipediaHelpersUncoveredPaths:
         extractor.tracer = mock_tracer
         mock_tracer.trace_extraction_and_validation.return_value = "trace-err"
         from ipfs_datasets_py.knowledge_graphs.exceptions import EntityExtractionError
-        with patch.object(extractor, "extract_from_wikipedia",
-                          side_effect=EntityExtractionError("fail")):
+
+        with patch.object(
+            extractor, "extract_from_wikipedia", side_effect=EntityExtractionError("fail")
+        ):
             with pytest.raises(EntityExtractionError):
                 extractor.extract_and_validate_wikipedia_graph("SomePage")
 
@@ -260,10 +296,14 @@ class TestWikipediaHelpersUncoveredPaths:
         extractor.tracer = mock_tracer
         mock_tracer.trace_extraction_and_validation.return_value = "trace-ve"
         fake_kg = _make_kg(entities=[_make_entity("Alice")])
-        with patch.object(extractor, "extract_from_wikipedia", return_value=fake_kg), \
-             patch.object(extractor, "validate_against_wikidata",
-                          side_effect=ValueError("unexpected val err")):
+        with (
+            patch.object(extractor, "extract_from_wikipedia", return_value=fake_kg),
+            patch.object(
+                extractor, "validate_against_wikidata", side_effect=ValueError("unexpected val err")
+            ),
+        ):
             from ipfs_datasets_py.knowledge_graphs.exceptions import EntityExtractionError
+
             with pytest.raises(EntityExtractionError, match="Failed to extract and validate"):
                 extractor.extract_and_validate_wikipedia_graph("SomePage")
         call_kwargs = mock_tracer.update_extraction_and_validation_trace.call_args[1]
@@ -276,8 +316,10 @@ class TestWikipediaHelpersUncoveredPaths:
         extractor = self._mixin(use_tracer=False)
         mock_resp = MagicMock()
         mock_resp.json.return_value = {}  # no 'search' key
-        with patch("ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
-                   return_value=mock_resp):
+        with patch(
+            "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
+            return_value=mock_resp,
+        ):
             result = extractor._get_wikidata_id("some entity")
         assert result is None
 
@@ -288,17 +330,24 @@ class TestWikipediaHelpersUncoveredPaths:
         extractor = self._mixin(use_tracer=False)
         mock_resp = MagicMock()
         # valueLabel is None → .get('value', ...) raises AttributeError → generic except
-        bad_data = {"results": {"bindings": [
-            {
-                "property": {"value": "http://www.wikidata.org/entity/P569"},
-                "propertyLabel": {"value": "date of birth"},
-                "valueLabel": None,  # None → AttributeError on .get()
+        bad_data = {
+            "results": {
+                "bindings": [
+                    {
+                        "property": {"value": "http://www.wikidata.org/entity/P569"},
+                        "propertyLabel": {"value": "date of birth"},
+                        "valueLabel": None,  # None → AttributeError on .get()
+                    }
+                ]
             }
-        ]}}
+        }
         mock_resp.json.return_value = bad_data
-        with patch("ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
-                   return_value=mock_resp):
+        with patch(
+            "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
+            return_value=mock_resp,
+        ):
             from ipfs_datasets_py.knowledge_graphs.exceptions import ValidationError
+
             with pytest.raises(ValidationError, match="Failed to query Wikidata"):
                 extractor._get_wikidata_statements("Q42")
 
@@ -325,8 +374,10 @@ class TestWikipediaHelpersUncoveredPaths:
         ]
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"results": {"bindings": bindings}}
-        with patch("ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
-                   return_value=mock_resp):
+        with patch(
+            "ipfs_datasets_py.knowledge_graphs.extraction._wikipedia_helpers.requests.get",
+            return_value=mock_resp,
+        ):
             stmts = extractor._get_wikidata_statements("Q42")
         assert len(stmts) == 1
         assert stmts[0]["property"] == "date of birth"
@@ -336,6 +387,7 @@ class TestWikipediaHelpersUncoveredPaths:
 # ─────────────────────────────────────────────────────────────────
 # extraction/srl.py
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestSRLUncoveredPaths:
     """GIVEN SRL extractor WHEN hitting previously-uncovered paths.
@@ -350,6 +402,7 @@ class TestSRLUncoveredPaths:
     # THEN no agent_text and no patient_text → `continue` at line 294 is executed
     def test_extract_heuristic_frames_no_agent_or_patient_continue(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import _extract_heuristic_frames
+
         # "walked" ends in "ed" → detected as verb; no pre/post words → line 294 continue
         frames = _extract_heuristic_frames("walked")
         assert frames == []  # no frame produced because agent/patient both None
@@ -359,8 +412,10 @@ class TestSRLUncoveredPaths:
     # THEN ROLE_INSTRUMENT role is present in extracted frame
     def test_extract_heuristic_frames_instrument_modifier(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_INSTRUMENT,
+            _extract_heuristic_frames,
+            ROLE_INSTRUMENT,
         )
+
         frames = _extract_heuristic_frames("Alice built the house using hammers")
         assert frames, "Expected at least one frame"
         all_roles = {arg.role for f in frames for arg in f.arguments}
@@ -371,8 +426,10 @@ class TestSRLUncoveredPaths:
     # THEN ROLE_LOCATION role is present
     def test_extract_heuristic_frames_location_modifier(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_LOCATION,
+            _extract_heuristic_frames,
+            ROLE_LOCATION,
         )
+
         frames = _extract_heuristic_frames("Alice worked at the office")
         assert frames, "Expected at least one frame"
         all_roles = {arg.role for f in frames for arg in f.arguments}
@@ -383,8 +440,10 @@ class TestSRLUncoveredPaths:
     # THEN ROLE_TIME role is present
     def test_extract_heuristic_frames_time_modifier(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_TIME,
+            _extract_heuristic_frames,
+            ROLE_TIME,
         )
+
         frames = _extract_heuristic_frames("Alice joined in 2024")
         assert frames, "Expected at least one frame"
         all_roles = {arg.role for f in frames for arg in f.arguments}
@@ -395,8 +454,10 @@ class TestSRLUncoveredPaths:
     # THEN ROLE_CAUSE role is present
     def test_extract_heuristic_frames_cause_modifier(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_CAUSE,
+            _extract_heuristic_frames,
+            ROLE_CAUSE,
         )
+
         frames = _extract_heuristic_frames("Alice stayed home because of rain")
         assert frames, "Expected at least one frame"
         all_roles = {arg.role for f in frames for arg in f.arguments}
@@ -407,8 +468,10 @@ class TestSRLUncoveredPaths:
     # THEN ROLE_RESULT role is present
     def test_extract_heuristic_frames_result_modifier(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_RESULT,
+            _extract_heuristic_frames,
+            ROLE_RESULT,
         )
+
         frames = _extract_heuristic_frames("Alice coded resulting in a program")
         assert frames, "Expected at least one frame"
         all_roles = {arg.role for f in frames for arg in f.arguments}
@@ -419,6 +482,7 @@ class TestSRLUncoveredPaths:
     # THEN entire text is treated as one unit (branch at line 717-718 exercised)
     def test_extract_heuristic_sentence_split_false(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         extractor = SRLExtractor(sentence_split=False)
         frames = extractor._extract_heuristic("Alice built it. Bob tested it.")
         assert isinstance(frames, list)
@@ -428,6 +492,7 @@ class TestSRLUncoveredPaths:
     # THEN `continue` at line 724 is hit (empty sent after strip) → returns []
     def test_extract_heuristic_whitespace_only_sentence_skipped(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         extractor = SRLExtractor(sentence_split=False)
         frames = extractor._extract_heuristic("   ")
         assert frames == []
@@ -438,10 +503,9 @@ class TestSRLUncoveredPaths:
     def test_build_temporal_graph_overlaps_keyword(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         extractor = SRLExtractor()
-        kg = extractor.build_temporal_graph(
-            "Alice built the house. Meanwhile, Bob painted it."
-        )
+        kg = extractor.build_temporal_graph("Alice built the house. Meanwhile, Bob painted it.")
         assert isinstance(kg, KnowledgeGraph)
 
     # GIVEN two consecutive sentences with PRECEDES keyword "then"
@@ -450,6 +514,7 @@ class TestSRLUncoveredPaths:
     def test_build_temporal_graph_precedes_keyword(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         extractor = SRLExtractor()
         kg = extractor.build_temporal_graph(
             "Alice built the foundation. Then, Bob added the walls."
@@ -461,6 +526,7 @@ class TestSRLUncoveredPaths:
 # migration/formats.py
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestFormatsUncoveredPaths:
     """GIVEN migration formats WHEN hitting previously-uncovered paths."""
 
@@ -469,14 +535,20 @@ class TestFormatsUncoveredPaths:
     # THEN empty line is skipped (line 877 `continue`) and schema is loaded
     def test_load_json_lines_empty_line_and_schema(self):
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            _builtin_load_json_lines, NodeData,
+            _builtin_load_json_lines,
+            NodeData,
         )
+
         node = NodeData(id="n1", labels=["Person"], properties={"name": "Alice"})
-        schema_dict = {"constraints": [], "indexes": [], "node_labels": ["Person"],
-                       "relationship_types": []}
+        schema_dict = {
+            "constraints": [],
+            "indexes": [],
+            "node_labels": ["Person"],
+            "relationship_types": [],
+        }
         lines = [
             json.dumps({"type": "node", "data": node.to_dict()}),
-            "",   # empty line → triggers `continue` at line 877
+            "",  # empty line → triggers `continue` at line 877
             json.dumps({"type": "schema", "data": schema_dict}),
         ]
         with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
@@ -494,16 +566,21 @@ class TestFormatsUncoveredPaths:
     # THEN ImportError raised with 'ipld-car' message (lines 914-919 exercised)
     def test_save_car_ipld_car_import_error(self):
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            _builtin_save_car, GraphData,
+            _builtin_save_car,
+            GraphData,
         )
+
         gd = GraphData(nodes=[], relationships=[])
         mock_libipld = MagicMock()
         mock_libipld.encode_dag_cbor.return_value = b"\x00"
-        with patch.dict(sys.modules, {
-            "libipld": mock_libipld,
-            "ipld_car": None,
-            "multiformats": None,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "libipld": mock_libipld,
+                "ipld_car": None,
+                "multiformats": None,
+            },
+        ):
             with pytest.raises(ImportError, match="ipld-car"):
                 _builtin_save_car(gd, "/tmp/test_session31_save.car")
 
@@ -512,6 +589,7 @@ class TestFormatsUncoveredPaths:
     # THEN falls through to ipld_car path; if ipld_car absent → ImportError
     def test_load_car_libipld_empty_blocks_falls_through(self):
         from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_load_car
+
         with tempfile.NamedTemporaryFile(suffix=".car", delete=False) as f:
             f.write(b"\x00" * 4)
             fname = f.name
@@ -519,11 +597,14 @@ class TestFormatsUncoveredPaths:
             mock_libipld = MagicMock()
             # empty blocks dict → `if blocks:` is False → falls through (lines 949-953)
             mock_libipld.decode_car.return_value = ({}, {})
-            with patch.dict(sys.modules, {
-                "libipld": mock_libipld,
-                "ipld_car": None,
-                "dag_cbor": None,
-            }):
+            with patch.dict(
+                sys.modules,
+                {
+                    "libipld": mock_libipld,
+                    "ipld_car": None,
+                    "dag_cbor": None,
+                },
+            ):
                 with pytest.raises((ImportError, Exception)):
                     _builtin_load_car(fname)
         finally:
@@ -534,17 +615,21 @@ class TestFormatsUncoveredPaths:
     # THEN falls through to ipld_car path (lines 954-955 `except Exception: pass`)
     def test_load_car_libipld_exception_falls_through(self):
         from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_load_car
+
         with tempfile.NamedTemporaryFile(suffix=".car", delete=False) as f:
             f.write(b"\x00" * 4)
             fname = f.name
         try:
             mock_libipld = MagicMock()
             mock_libipld.decode_car.side_effect = RuntimeError("bad codec")
-            with patch.dict(sys.modules, {
-                "libipld": mock_libipld,
-                "ipld_car": None,
-                "dag_cbor": None,
-            }):
+            with patch.dict(
+                sys.modules,
+                {
+                    "libipld": mock_libipld,
+                    "ipld_car": None,
+                    "dag_cbor": None,
+                },
+            ):
                 with pytest.raises((ImportError, Exception)):
                     _builtin_load_car(fname)
         finally:
@@ -555,6 +640,7 @@ class TestFormatsUncoveredPaths:
     # THEN dag_cbor.decode is called and GraphData returned (lines 967-973)
     def test_load_car_ipld_car_bytes_data_path(self):
         from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_load_car, GraphData
+
         with tempfile.NamedTemporaryFile(suffix=".car", delete=False) as f:
             f.write(b"\x00" * 4)
             fname = f.name
@@ -567,11 +653,14 @@ class TestFormatsUncoveredPaths:
             mock_ipld_car.decode.return_value = (["fake_root"], iter([("cid1", b"\x42")]))
             mock_dag_cbor = MagicMock()
             mock_dag_cbor.decode.return_value = gd.to_dict()
-            with patch.dict(sys.modules, {
-                "libipld": mock_libipld,
-                "ipld_car": mock_ipld_car,
-                "dag_cbor": mock_dag_cbor,
-            }):
+            with patch.dict(
+                sys.modules,
+                {
+                    "libipld": mock_libipld,
+                    "ipld_car": mock_ipld_car,
+                    "dag_cbor": mock_dag_cbor,
+                },
+            ):
                 result = _builtin_load_car(fname)
             assert isinstance(result, GraphData)
         finally:
@@ -582,6 +671,7 @@ class TestFormatsUncoveredPaths:
     # THEN data used directly (`graph_dict = data` at line 972)
     def test_load_car_ipld_car_dict_data_path(self):
         from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_load_car, GraphData
+
         with tempfile.NamedTemporaryFile(suffix=".car", delete=False) as f:
             f.write(b"\x00" * 4)
             fname = f.name
@@ -592,11 +682,14 @@ class TestFormatsUncoveredPaths:
             mock_ipld_car = MagicMock()
             # Return a dict (not bytes) directly for the block data
             mock_ipld_car.decode.return_value = (["fake_root"], iter([("cid1", gd.to_dict())]))
-            with patch.dict(sys.modules, {
-                "libipld": mock_libipld,
-                "ipld_car": mock_ipld_car,
-                "dag_cbor": MagicMock(),
-            }):
+            with patch.dict(
+                sys.modules,
+                {
+                    "libipld": mock_libipld,
+                    "ipld_car": mock_ipld_car,
+                    "dag_cbor": MagicMock(),
+                },
+            ):
                 result = _builtin_load_car(fname)
             assert isinstance(result, GraphData)
         finally:
@@ -607,6 +700,7 @@ class TestFormatsUncoveredPaths:
     # THEN ValueError("CAR file contains no blocks") raised (line 975)
     def test_load_car_no_blocks_raises_value_error(self):
         from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_load_car
+
         with tempfile.NamedTemporaryFile(suffix=".car", delete=False) as f:
             f.write(b"\x00" * 4)
             fname = f.name
@@ -615,11 +709,14 @@ class TestFormatsUncoveredPaths:
             mock_libipld.decode_car.side_effect = ImportError("no libipld")
             mock_ipld_car = MagicMock()
             mock_ipld_car.decode.return_value = ([], iter([]))  # empty iterator
-            with patch.dict(sys.modules, {
-                "libipld": mock_libipld,
-                "ipld_car": mock_ipld_car,
-                "dag_cbor": MagicMock(),
-            }):
+            with patch.dict(
+                sys.modules,
+                {
+                    "libipld": mock_libipld,
+                    "ipld_car": mock_ipld_car,
+                    "dag_cbor": MagicMock(),
+                },
+            ):
                 with pytest.raises(ValueError, match="no blocks"):
                     _builtin_load_car(fname)
         finally:
@@ -630,8 +727,12 @@ class TestFormatsUncoveredPaths:
     # THEN returns JSON string containing id and type fields
     def test_relationship_data_to_json(self):
         from ipfs_datasets_py.knowledge_graphs.migration.formats import RelationshipData
+
         rd = RelationshipData(
-            id="r1", type="KNOWS", start_node="n1", end_node="n2",
+            id="r1",
+            type="KNOWS",
+            start_node="n1",
+            end_node="n2",
             properties={"since": 2020},
         )
         j = rd.to_json()
@@ -644,11 +745,13 @@ class TestFormatsUncoveredPaths:
 # core/expression_evaluator.py
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestExpressionEvaluatorUncoveredPaths:
     """GIVEN call_function (expression_evaluator) WHEN hitting uncovered branches."""
 
     def _call(self, func_name: str, *args):
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import call_function
+
         return call_function(func_name, list(args))
 
     # GIVEN substring called with exactly 2 args (no length arg)
@@ -698,8 +801,10 @@ class TestExpressionEvaluatorUncoveredPaths:
     # THEN comma at paren_depth==0 splits args correctly; result verifies correct splitting
     def test_evaluate_expression_three_arg_function(self):
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import (
-            evaluate_expression, call_function,
+            evaluate_expression,
+            call_function,
         )
+
         # substring("hello", 1, 3) → "ell"
         # The three comma-separated args are split at paren_depth==0 (lines 201-203)
         result = evaluate_expression('substring("hello", 1, 3)', {})
@@ -716,6 +821,7 @@ class TestExpressionEvaluatorUncoveredPaths:
         from ipfs_datasets_py.knowledge_graphs.core.expression_evaluator import (
             evaluate_expression,
         )
+
         # reverse(toLower("hello")) — args_str = 'toLower("hello")' which contains '(' ')'
         # These cause paren_depth += 1 (line 206) and -= 1 (line 208)
         result = evaluate_expression('reverse(toLower("hello"))', {})
@@ -727,6 +833,7 @@ class TestExpressionEvaluatorUncoveredPaths:
 # jsonld/validation.py
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestJSONLDValidationUncoveredPaths:
     """GIVEN SchemaValidator and SHACLValidator WHEN hitting uncovered paths."""
 
@@ -735,6 +842,7 @@ class TestJSONLDValidationUncoveredPaths:
     # THEN result has a warning about unavailable library (lines 60-62 branch)
     def test_schema_validator_no_jsonschema(self):
         import ipfs_datasets_py.knowledge_graphs.jsonld.validation as val_mod
+
         original = val_mod.HAVE_JSONSCHEMA
         try:
             val_mod.HAVE_JSONSCHEMA = False
@@ -751,12 +859,14 @@ class TestJSONLDValidationUncoveredPaths:
     def test_schema_validator_knowledge_graph_error_propagates(self):
         import ipfs_datasets_py.knowledge_graphs.jsonld.validation as val_mod
         from ipfs_datasets_py.knowledge_graphs.exceptions import KnowledgeGraphError
+
         validator = val_mod.SchemaValidator()
         original = val_mod.Draft7Validator
 
         class KgRaisingValidator:
             def __init__(self, schema):
                 pass
+
             def iter_errors(self, data):
                 raise KnowledgeGraphError("kg err")
 
@@ -772,12 +882,14 @@ class TestJSONLDValidationUncoveredPaths:
     # THEN error is added to result (lines 90-91)
     def test_schema_validator_type_error_added_to_result(self):
         import ipfs_datasets_py.knowledge_graphs.jsonld.validation as val_mod
+
         validator = val_mod.SchemaValidator()
         original = val_mod.Draft7Validator
 
         class TypeErrorValidator:
             def __init__(self, schema):
                 pass
+
             def iter_errors(self, data):
                 raise TypeError("type error")
 
@@ -793,12 +905,14 @@ class TestJSONLDValidationUncoveredPaths:
     # THEN error added via defensive fallback (lines 92-94)
     def test_schema_validator_generic_exception_added_to_result(self):
         import ipfs_datasets_py.knowledge_graphs.jsonld.validation as val_mod
+
         validator = val_mod.SchemaValidator()
         original = val_mod.Draft7Validator
 
         class RuntimeErrorValidator:
             def __init__(self, schema):
                 pass
+
             def iter_errors(self, data):
                 raise RuntimeError("unexpected")
 
@@ -814,6 +928,7 @@ class TestJSONLDValidationUncoveredPaths:
     # THEN scalar dict is wrapped in list (line 166 `and_shapes = [and_shapes]`)
     def test_shacl_validator_and_scalar_dict_wrapped_in_list(self):
         from ipfs_datasets_py.knowledge_graphs.jsonld.validation import SHACLValidator
+
         validator = SHACLValidator()
         shape = {
             "and": {"minCount": 1, "path": "name"},  # scalar dict → wrapped in list
@@ -826,6 +941,7 @@ class TestJSONLDValidationUncoveredPaths:
     # THEN scalar dict is wrapped in list (line 179 `or_shapes = [or_shapes]`)
     def test_shacl_validator_or_scalar_dict_wrapped_in_list(self):
         from ipfs_datasets_py.knowledge_graphs.jsonld.validation import SHACLValidator
+
         validator = SHACLValidator()
         shape = {
             "or": {"minCount": 1, "path": "name"},  # scalar dict → wrapped in list
@@ -838,15 +954,19 @@ class TestJSONLDValidationUncoveredPaths:
 # query/distributed.py
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestDistributedQueryUncoveredPaths:
     """GIVEN FederatedQueryExecutor / _KGBackend WHEN hitting previously-uncovered paths."""
 
     def _make_dist_kg(self, **kwargs):
         """Build a FederatedQueryExecutor with one real KnowledgeGraph partition."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            FederatedQueryExecutor, DistributedGraph, PartitionStrategy,
+            FederatedQueryExecutor,
+            DistributedGraph,
+            PartitionStrategy,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = KnowledgeGraph()
         dg = DistributedGraph(
             partitions=[kg],
@@ -860,9 +980,12 @@ class TestDistributedQueryUncoveredPaths:
     # THEN error is recorded in result.errors (lines 503-508)
     def test_execute_cypher_partition_exception_recorded(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            FederatedQueryExecutor, DistributedGraph, PartitionStrategy,
+            FederatedQueryExecutor,
+            DistributedGraph,
+            PartitionStrategy,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg_bad = KnowledgeGraph()
         kg_bad.entities = None  # will cause AttributeError in _execute_on_partition
         dg = DistributedGraph(
@@ -879,9 +1002,12 @@ class TestDistributedQueryUncoveredPaths:
     # THEN error recorded in result.errors (parallel path, lines 555-560)
     def test_execute_cypher_parallel_partition_exception_recorded(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            FederatedQueryExecutor, DistributedGraph, PartitionStrategy,
+            FederatedQueryExecutor,
+            DistributedGraph,
+            PartitionStrategy,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg_bad = KnowledgeGraph()
         kg_bad.entities = None
         dg = DistributedGraph(
@@ -898,10 +1024,13 @@ class TestDistributedQueryUncoveredPaths:
     # THEN duplicate records are filtered out (line 766-768)
     def test_execute_cypher_streaming_dedup(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            FederatedQueryExecutor, DistributedGraph, PartitionStrategy,
+            FederatedQueryExecutor,
+            DistributedGraph,
+            PartitionStrategy,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         # Two partitions with the same entity — should produce same record → deduped
         e = Entity(entity_type="person", name="Alice", confidence=0.9)
         kg1 = KnowledgeGraph()
@@ -924,10 +1053,13 @@ class TestDistributedQueryUncoveredPaths:
     # THEN duplicate records are NOT filtered (both returned)
     def test_execute_cypher_streaming_no_dedup_returns_both(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            FederatedQueryExecutor, DistributedGraph, PartitionStrategy,
+            FederatedQueryExecutor,
+            DistributedGraph,
+            PartitionStrategy,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         e = Entity(entity_type="person", name="Bob", confidence=0.9)
         kg1 = KnowledgeGraph()
         kg1.entities[e.entity_id] = e
@@ -948,10 +1080,13 @@ class TestDistributedQueryUncoveredPaths:
     # THEN bad partition is skipped (lines 696-700 `except Exception: continue`)
     def test_execute_cypher_streaming_bad_partition_skipped(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            FederatedQueryExecutor, DistributedGraph, PartitionStrategy,
+            FederatedQueryExecutor,
+            DistributedGraph,
+            PartitionStrategy,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         e = Entity(entity_type="person", name="Carol", confidence=0.9)
         kg_bad = KnowledgeGraph()
         kg_bad.entities = None  # will raise
@@ -975,6 +1110,7 @@ class TestDistributedQueryUncoveredPaths:
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
         from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
         kg = KnowledgeGraph()
         e1 = Entity(entity_type="person", name="Alice", confidence=0.9)
         e2 = Entity(entity_type="person", name="Bob", confidence=0.9)
@@ -1028,6 +1164,7 @@ class TestDistributedQueryUncoveredPaths:
     # THEN returns 40-char hex SHA1 string (stable across orderings)
     def test_record_fingerprint_stable(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _record_fingerprint
+
         fp1 = _record_fingerprint({"a": 1, "b": "hello"})
         fp2 = _record_fingerprint({"b": "hello", "a": 1})
         assert len(fp1) == 40
@@ -1037,6 +1174,7 @@ class TestDistributedQueryUncoveredPaths:
 # ─────────────────────────────────────────────────────────────────
 # query/knowledge_graph.py
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestQueryKnowledgeGraphUncoveredPaths:
     """GIVEN query_knowledge_graph module WHEN hitting uncovered paths."""
@@ -1068,10 +1206,13 @@ class TestQueryKnowledgeGraphUncoveredPaths:
             )
         except ImportError:
             pytest.skip("query_knowledge_graph not importable")
-        with patch.dict(sys.modules, {
-            "gremlin_python": None,
-            "gremlin_python.driver": None,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "gremlin_python": None,
+                "gremlin_python.driver": None,
+            },
+        ):
             with pytest.raises((ImportError, ModuleNotFoundError, AttributeError, Exception)):
                 query_knowledge_graph(
                     query="g.V().limit(1)",
@@ -1090,9 +1231,12 @@ class TestQueryKnowledgeGraphUncoveredPaths:
             )
         except ImportError:
             pytest.skip("query_knowledge_graph not importable")
-        with patch.dict(sys.modules, {
-            "sentence_transformers": None,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "sentence_transformers": None,
+            },
+        ):
             with pytest.raises((ImportError, ModuleNotFoundError, AttributeError, Exception)):
                 query_knowledge_graph(
                     query="find similar nodes",
@@ -1106,12 +1250,16 @@ class TestQueryKnowledgeGraphUncoveredPaths:
     def test_graphrag_fallback_import_path(self):
         # Verify the module itself handles the fallback gracefully
         # by importing it with unified_graphrag absent
-        with patch.dict(sys.modules, {
-            "ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag": None,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag": None,
+            },
+        ):
             try:
                 import importlib
                 import ipfs_datasets_py.knowledge_graphs.query.knowledge_graph as kgq
+
                 importlib.reload(kgq)
                 assert kgq is not None
             except Exception:

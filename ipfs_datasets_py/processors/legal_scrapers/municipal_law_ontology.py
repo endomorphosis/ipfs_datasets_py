@@ -54,7 +54,11 @@ BASE_CLASSES: List[Dict[str, Any]] = [
     {"id": "RegulatedSubject", "label": "Regulated subject", "parent": "Thing"},
     {"id": "RegulatedActivity", "label": "Regulated activity", "parent": "RegulatedSubject"},
     {"id": "RegulatedProperty", "label": "Regulated property", "parent": "RegulatedSubject"},
-    {"id": "AuthorizationInstrument", "label": "Authorization instrument", "parent": "RegulatedSubject"},
+    {
+        "id": "AuthorizationInstrument",
+        "label": "Authorization instrument",
+        "parent": "RegulatedSubject",
+    },
     {"id": "Permit", "label": "Permit", "parent": "AuthorizationInstrument"},
     {"id": "License", "label": "License", "parent": "AuthorizationInstrument"},
     {"id": "FinancialObligation", "label": "Financial obligation", "parent": "RegulatedSubject"},
@@ -68,26 +72,126 @@ BASE_CLASSES: List[Dict[str, Any]] = [
 
 
 BASE_PREDICATES: List[Dict[str, Any]] = [
-    {"id": "PART_OF_TITLE", "domain": "MunicipalCodeChapter|MunicipalCodeSection", "range": "MunicipalCodeTitle", "flogic": "partOfTitle"},
-    {"id": "PART_OF_CHAPTER", "domain": "MunicipalCodeSection", "range": "MunicipalCodeChapter", "flogic": "partOfChapter"},
-    {"id": "REFERENCES_LEGAL_AUTHORITY", "domain": "MunicipalCodeSection", "range": "LegalAuthority", "flogic": "referencesAuthority"},
-    {"id": "REFERENCES_CODE_SECTION", "domain": "MunicipalCodeSection", "range": "LegalAuthority", "flogic": "referencesCodeSection"},
-    {"id": "REFERENCES_SECTION_CID", "domain": "MunicipalCodeSection", "range": "MunicipalCodeSection", "flogic": "referencesSection"},
-    {"id": "AMENDED_BY", "domain": "MunicipalCodeSection", "range": "Ordinance", "flogic": "amendedBy"},
-    {"id": "DEFINES_TERM", "domain": "MunicipalCodeSection", "range": "DefinedTerm", "flogic": "definesTerm"},
-    {"id": "MENTIONS_ACTOR", "domain": "MunicipalCodeSection", "range": "LegalActor", "flogic": "mentionsActor"},
-    {"id": "REGULATES_SUBJECT", "domain": "MunicipalCodeSection", "range": "RegulatedSubject", "flogic": "regulatesSubject"},
-    {"id": "GOVERNS_AUTHORIZATION", "domain": "MunicipalCodeSection", "range": "AuthorizationInstrument", "flogic": "governsAuthorization"},
-    {"id": "IMPOSES_DUTY", "domain": "MunicipalCodeSection", "range": "Obligation", "deontic": "O(action)"},
-    {"id": "IMPOSES_DUTY_ON", "domain": "MunicipalCodeSection", "range": "LegalActor", "deontic": "O(actor, action)"},
-    {"id": "PROHIBITS", "domain": "MunicipalCodeSection", "range": "Prohibition", "deontic": "F(action)"},
-    {"id": "GRANTS_AUTHORITY", "domain": "MunicipalCodeSection", "range": "AuthorityGrant", "deontic": "P(actor, action)"},
-    {"id": "GRANTS_AUTHORITY_TO", "domain": "MunicipalCodeSection", "range": "GovernmentActor|LegalActor", "deontic": "P(actor, action)"},
-    {"id": "CREATES_PROCESS", "domain": "MunicipalCodeSection", "range": "AdministrativeProcess", "flogic": "createsProcess"},
-    {"id": "HAS_TRIGGER", "domain": "LegalNorm", "range": "Process|RegulatedSubject", "tdfol": "trigger(norm, condition)"},
-    {"id": "HAS_EXCEPTION", "domain": "LegalNorm", "range": "LegalNorm|RegulatedSubject", "tdfol": "unless(norm, exception)"},
-    {"id": "HAS_CONDITION", "domain": "LegalNorm", "range": "RegulatedSubject|Process", "tdfol": "condition(norm, condition)"},
-    {"id": "HAS_DEADLINE", "domain": "LegalNorm|AdministrativeProcess", "range": "TemporalConstraint", "tdfol": "deadline(norm, time)"},
+    {
+        "id": "PART_OF_TITLE",
+        "domain": "MunicipalCodeChapter|MunicipalCodeSection",
+        "range": "MunicipalCodeTitle",
+        "flogic": "partOfTitle",
+    },
+    {
+        "id": "PART_OF_CHAPTER",
+        "domain": "MunicipalCodeSection",
+        "range": "MunicipalCodeChapter",
+        "flogic": "partOfChapter",
+    },
+    {
+        "id": "REFERENCES_LEGAL_AUTHORITY",
+        "domain": "MunicipalCodeSection",
+        "range": "LegalAuthority",
+        "flogic": "referencesAuthority",
+    },
+    {
+        "id": "REFERENCES_CODE_SECTION",
+        "domain": "MunicipalCodeSection",
+        "range": "LegalAuthority",
+        "flogic": "referencesCodeSection",
+    },
+    {
+        "id": "REFERENCES_SECTION_CID",
+        "domain": "MunicipalCodeSection",
+        "range": "MunicipalCodeSection",
+        "flogic": "referencesSection",
+    },
+    {
+        "id": "AMENDED_BY",
+        "domain": "MunicipalCodeSection",
+        "range": "Ordinance",
+        "flogic": "amendedBy",
+    },
+    {
+        "id": "DEFINES_TERM",
+        "domain": "MunicipalCodeSection",
+        "range": "DefinedTerm",
+        "flogic": "definesTerm",
+    },
+    {
+        "id": "MENTIONS_ACTOR",
+        "domain": "MunicipalCodeSection",
+        "range": "LegalActor",
+        "flogic": "mentionsActor",
+    },
+    {
+        "id": "REGULATES_SUBJECT",
+        "domain": "MunicipalCodeSection",
+        "range": "RegulatedSubject",
+        "flogic": "regulatesSubject",
+    },
+    {
+        "id": "GOVERNS_AUTHORIZATION",
+        "domain": "MunicipalCodeSection",
+        "range": "AuthorizationInstrument",
+        "flogic": "governsAuthorization",
+    },
+    {
+        "id": "IMPOSES_DUTY",
+        "domain": "MunicipalCodeSection",
+        "range": "Obligation",
+        "deontic": "O(action)",
+    },
+    {
+        "id": "IMPOSES_DUTY_ON",
+        "domain": "MunicipalCodeSection",
+        "range": "LegalActor",
+        "deontic": "O(actor, action)",
+    },
+    {
+        "id": "PROHIBITS",
+        "domain": "MunicipalCodeSection",
+        "range": "Prohibition",
+        "deontic": "F(action)",
+    },
+    {
+        "id": "GRANTS_AUTHORITY",
+        "domain": "MunicipalCodeSection",
+        "range": "AuthorityGrant",
+        "deontic": "P(actor, action)",
+    },
+    {
+        "id": "GRANTS_AUTHORITY_TO",
+        "domain": "MunicipalCodeSection",
+        "range": "GovernmentActor|LegalActor",
+        "deontic": "P(actor, action)",
+    },
+    {
+        "id": "CREATES_PROCESS",
+        "domain": "MunicipalCodeSection",
+        "range": "AdministrativeProcess",
+        "flogic": "createsProcess",
+    },
+    {
+        "id": "HAS_TRIGGER",
+        "domain": "LegalNorm",
+        "range": "Process|RegulatedSubject",
+        "tdfol": "trigger(norm, condition)",
+    },
+    {
+        "id": "HAS_EXCEPTION",
+        "domain": "LegalNorm",
+        "range": "LegalNorm|RegulatedSubject",
+        "tdfol": "unless(norm, exception)",
+    },
+    {
+        "id": "HAS_CONDITION",
+        "domain": "LegalNorm",
+        "range": "RegulatedSubject|Process",
+        "tdfol": "condition(norm, condition)",
+    },
+    {
+        "id": "HAS_DEADLINE",
+        "domain": "LegalNorm|AdministrativeProcess",
+        "range": "TemporalConstraint",
+        "tdfol": "deadline(norm, time)",
+    },
 ]
 
 
@@ -148,10 +252,30 @@ BASE_SUBJECT_LEXICON: Dict[str, str] = {
 
 
 NORM_PATTERNS: List[Dict[str, str]] = [
-    {"id": "prohibition", "regex": r"\bshall\s+not\b|\bmust\s+not\b|\bmay\s+not\b|\bis\s+prohibited\b|\bare\s+prohibited\b", "class": "Prohibition", "predicate": "PROHIBITS"},
-    {"id": "obligation", "regex": r"\bshall\b|\bmust\b|\bis\s+required\b|\bare\s+required\b", "class": "Obligation", "predicate": "IMPOSES_DUTY"},
-    {"id": "authority_grant", "regex": r"\bmay\b|\bis\s+authorized\b|\bare\s+authorized\b|\bhas\s+authority\b", "class": "AuthorityGrant", "predicate": "GRANTS_AUTHORITY"},
-    {"id": "definition", "regex": r"\bmeans\b|\bis defined as\b", "class": "DefinitionNorm", "predicate": "DEFINES"},
+    {
+        "id": "prohibition",
+        "regex": r"\bshall\s+not\b|\bmust\s+not\b|\bmay\s+not\b|\bis\s+prohibited\b|\bare\s+prohibited\b",
+        "class": "Prohibition",
+        "predicate": "PROHIBITS",
+    },
+    {
+        "id": "obligation",
+        "regex": r"\bshall\b|\bmust\b|\bis\s+required\b|\bare\s+required\b",
+        "class": "Obligation",
+        "predicate": "IMPOSES_DUTY",
+    },
+    {
+        "id": "authority_grant",
+        "regex": r"\bmay\b|\bis\s+authorized\b|\bare\s+authorized\b|\bhas\s+authority\b",
+        "class": "AuthorityGrant",
+        "predicate": "GRANTS_AUTHORITY",
+    },
+    {
+        "id": "definition",
+        "regex": r"\bmeans\b|\bis defined as\b",
+        "class": "DefinitionNorm",
+        "predicate": "DEFINES",
+    },
 ]
 
 
@@ -195,7 +319,9 @@ def _normalize_term(value: object) -> str:
     return re.sub(r"\s+", " ", str(value or "").strip().lower())
 
 
-def merge_llm_ontology_extensions(base: Mapping[str, Any], extension: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
+def merge_llm_ontology_extensions(
+    base: Mapping[str, Any], extension: Optional[Mapping[str, Any]]
+) -> Dict[str, Any]:
     """Merge validated LLM-router ontology suggestions into *base*.
 
     Accepted extension keys:
@@ -210,15 +336,26 @@ def merge_llm_ontology_extensions(base: Mapping[str, Any], extension: Optional[M
         merged["llm_extension"] = {"accepted": False, "reason": "no_extension"}
         return merged
 
-    class_ids = {str(item.get("id") or "") for item in list(merged.get("classes") or []) if isinstance(item, Mapping)}
-    pending_classes = [dict(item) for item in list(extension.get("classes") or []) if isinstance(item, Mapping)]
+    class_ids = {
+        str(item.get("id") or "")
+        for item in list(merged.get("classes") or [])
+        if isinstance(item, Mapping)
+    }
+    pending_classes = [
+        dict(item) for item in list(extension.get("classes") or []) if isinstance(item, Mapping)
+    ]
     accepted_classes: List[Dict[str, Any]] = []
     for item in pending_classes:
         class_id = re.sub(r"[^A-Za-z0-9_]", "", str(item.get("id") or ""))
         parent = re.sub(r"[^A-Za-z0-9_]", "", str(item.get("parent") or "Thing"))
         if not class_id or class_id in class_ids or parent not in class_ids:
             continue
-        accepted = {"id": class_id, "label": str(item.get("label") or class_id), "parent": parent, "source": "llm_router"}
+        accepted = {
+            "id": class_id,
+            "label": str(item.get("label") or class_id),
+            "parent": parent,
+            "source": "llm_router",
+        }
         merged.setdefault("classes", []).append(accepted)
         class_ids.add(class_id)
         accepted_classes.append(accepted)
@@ -239,7 +376,11 @@ def merge_llm_ontology_extensions(base: Mapping[str, Any], extension: Optional[M
             merged.setdefault("subject_lexicon", {})[normalized] = class_id
             accepted_subject_terms[normalized] = class_id
 
-    predicate_ids = {str(item.get("id") or "") for item in list(merged.get("predicates") or []) if isinstance(item, Mapping)}
+    predicate_ids = {
+        str(item.get("id") or "")
+        for item in list(merged.get("predicates") or [])
+        if isinstance(item, Mapping)
+    }
     accepted_predicates: List[Dict[str, Any]] = []
     for item in list(extension.get("predicates") or []):
         if not isinstance(item, Mapping):

@@ -243,8 +243,8 @@ ipfs_datasets_py/file_converter/  (v0.4.0)
 ```python
 from ipfs_datasets_py.processors.file_converter import FileConverter
 
-converter = FileConverter(backend='native')
-result = await converter.convert('document.pdf')
+converter = FileConverter(backend="native")
+result = await converter.convert("document.pdf")
 print(result.text)
 ```
 
@@ -253,7 +253,7 @@ print(result.text)
 from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 
 converter = IPFSAcceleratedConverter(enable_ipfs=True)
-result = await converter.convert('doc.pdf', store_on_ipfs=True, pin=True)
+result = await converter.convert("doc.pdf", store_on_ipfs=True, pin=True)
 print(f"CID: {result.ipfs_cid}")
 print(f"Gateway: {result.ipfs_gateway_url}")
 ```
@@ -263,9 +263,7 @@ print(f"Gateway: {result.ipfs_gateway_url}")
 from ipfs_datasets_py.processors.file_converter import create_batch_processor
 
 processor = create_batch_processor(
-    converter,
-    max_concurrent=5,
-    progress_callback=lambda p: print(f"{p.completed}/{p.total}")
+    converter, max_concurrent=5, progress_callback=lambda p: print(f"{p.completed}/{p.total}")
 )
 results = await processor.process_batch(files)
 ```
@@ -274,7 +272,7 @@ results = await processor.process_batch(files)
 ```python
 from ipfs_datasets_py.processors.file_converter import extract_metadata
 
-metadata = extract_metadata('document.pdf')
+metadata = extract_metadata("document.pdf")
 print(f"Size: {metadata['file']['size_human']}")
 print(f"SHA256: {metadata['hashes']['sha256']}")
 print(f"MIME: {metadata['format']['mime_type']}")
@@ -283,8 +281,11 @@ print(f"MIME: {metadata['format']['mime_type']}")
 ### Custom Pipeline
 ```python
 from ipfs_datasets_py.processors.file_converter import (
-    Pipeline, FileUnit,
-    validate_file_exists, detect_format, extract_text
+    Pipeline,
+    FileUnit,
+    validate_file_exists,
+    detect_format,
+    extract_text,
 )
 
 pipeline = Pipeline()
@@ -304,13 +305,13 @@ result = await pipeline.process(file_unit)
 
 **Before:**
 ```python
-converter = FileConverter(backend='markitdown')  # Deprecated
-converter = FileConverter(backend='omni')         # Deprecated
+converter = FileConverter(backend="markitdown")  # Deprecated
+converter = FileConverter(backend="omni")  # Deprecated
 ```
 
 **After:**
 ```python
-converter = FileConverter(backend='native')       # Recommended
+converter = FileConverter(backend="native")  # Recommended
 ```
 
 ### From Submodules
@@ -318,15 +319,17 @@ converter = FileConverter(backend='native')       # Recommended
 **Before:**
 ```python
 import sys
-sys.path.insert(0, 'ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2')
+
+sys.path.insert(0, "ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2")
 from omni_converter import convert_file
 ```
 
 **After:**
 ```python
 from ipfs_datasets_py.processors.file_converter import FileConverter
-converter = FileConverter(backend='native')
-result = await converter.convert('document.pdf')
+
+converter = FileConverter(backend="native")
+result = await converter.convert("document.pdf")
 ```
 
 ### From asyncio
@@ -334,6 +337,7 @@ result = await converter.convert('document.pdf')
 **Before:**
 ```python
 import asyncio
+
 semaphore = asyncio.Semaphore(5)
 await asyncio.sleep(1)
 ```
@@ -341,6 +345,7 @@ await asyncio.sleep(1)
 **After:**
 ```python
 import anyio
+
 limiter = anyio.CapacityLimiter(5)
 await anyio.sleep(1)
 ```
@@ -370,6 +375,7 @@ pip install ipfs-datasets-py[all]
 ### Check Version
 ```python
 from ipfs_datasets_py import file_converter
+
 print(file_converter.__version__)  # Should be 0.4.0+
 ```
 
@@ -382,18 +388,21 @@ grep -r "import asyncio" ipfs_datasets_py/file_converter/
 ### Test Deprecation
 ```python
 import warnings
+
 warnings.simplefilter("always", DeprecationWarning)
 
 from ipfs_datasets_py.file_converter import FileConverter
-converter = FileConverter(backend='markitdown')
+
+converter = FileConverter(backend="markitdown")
 # Should show DeprecationWarning
 ```
 
 ### Test Native Backend
 ```python
 from ipfs_datasets_py.processors.file_converter import FileConverter
-converter = FileConverter(backend='native')
-result = converter.convert_sync('test.txt')
+
+converter = FileConverter(backend="native")
+result = converter.convert_sync("test.txt")
 print(f"Success: {result.success}")
 # Should print: Success: True
 ```

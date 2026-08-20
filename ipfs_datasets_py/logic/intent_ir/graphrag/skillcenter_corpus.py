@@ -35,9 +35,7 @@ from ..source_adapters.skillcenter import (
 
 SKILLCENTER_CORPUS_SCHEMA_VERSION: Final = "skillcenter-corpus/v1"
 SKILLCENTER_CORPUS_ROW_SCHEMA_VERSION: Final = "skillcenter-corpus-row/v1"
-SKILLCENTER_CORPUS_CID_INDEX_SCHEMA_VERSION: Final = (
-    "skillcenter-corpus-cid-index/v1"
-)
+SKILLCENTER_CORPUS_CID_INDEX_SCHEMA_VERSION: Final = "skillcenter-corpus-cid-index/v1"
 SKILLCENTER_CORPUS_PRIMARY_KEY: Final = "entry_cid"
 DEFAULT_CORPUS_BATCH_SIZE: Final = 512
 
@@ -88,12 +86,9 @@ class SkillCenterCorpusIndex:
         self.root = root
         self.manifest = dict(manifest)
         self.cid_rows = tuple(dict(row) for row in cid_rows)
-        self._corpus_path = root / str(
-            manifest["files"]["corpus"]["relative_path"]
-        )
+        self._corpus_path = root / str(manifest["files"]["corpus"]["relative_path"])
         self._corpus_index_by_cid = {
-            str(row["entry_cid"]): int(row["corpus_index"])
-            for row in self.cid_rows
+            str(row["entry_cid"]): int(row["corpus_index"]) for row in self.cid_rows
         }
 
     @classmethod
@@ -114,9 +109,7 @@ class SkillCenterCorpusIndex:
             or not manifest_path.is_file()
             or manifest_path.stat().st_size > _MAX_MANIFEST_BYTES
         ):
-            raise SkillCenterCorpusError(
-                "corpus must contain a bounded regular manifest.json"
-            )
+            raise SkillCenterCorpusError("corpus must contain a bounded regular manifest.json")
         manifest_bytes = manifest_path.read_bytes()
         try:
             manifest = json.loads(manifest_bytes)
@@ -124,16 +117,13 @@ class SkillCenterCorpusIndex:
             raise SkillCenterCorpusError("corpus manifest is malformed") from exc
         if (
             not isinstance(manifest, Mapping)
-            or manifest.get("schema_version")
-            != SKILLCENTER_CORPUS_SCHEMA_VERSION
+            or manifest.get("schema_version") != SKILLCENTER_CORPUS_SCHEMA_VERSION
             or manifest.get("primary_key") != SKILLCENTER_CORPUS_PRIMARY_KEY
         ):
             raise SkillCenterCorpusError("unsupported corpus manifest")
         files = manifest.get("files")
         if not isinstance(files, Mapping) or set(files) != _REQUIRED_FILES:
-            raise SkillCenterCorpusError(
-                "corpus manifest has an unexpected file set"
-            )
+            raise SkillCenterCorpusError("corpus manifest has an unexpected file set")
         paths = {
             name: _verify_file_descriptor(index_root, files[name])
             for name in sorted(_REQUIRED_FILES)
@@ -154,14 +144,10 @@ class SkillCenterCorpusIndex:
         expected_rows = int(manifest.get("source_records", -1))
         corpus_metadata = pq.read_metadata(paths["corpus"])
         if corpus_metadata.num_rows != expected_rows:
-            raise SkillCenterCorpusError(
-                "corpus row count does not match its manifest"
-            )
+            raise SkillCenterCorpusError("corpus row count does not match its manifest")
         cid_rows = pq.read_table(paths["cid_index"]).to_pylist()
         if len(cid_rows) != expected_rows:
-            raise SkillCenterCorpusError(
-                "CID index row count does not match the corpus"
-            )
+            raise SkillCenterCorpusError("CID index row count does not match the corpus")
         entry_cids = [str(row.get("entry_cid", "")) for row in cid_rows]
         if (
             entry_cids != sorted(entry_cids)
@@ -173,9 +159,7 @@ class SkillCenterCorpusIndex:
             )
         corpus_indexes = sorted(int(row["corpus_index"]) for row in cid_rows)
         if corpus_indexes != list(range(expected_rows)):
-            raise SkillCenterCorpusError(
-                "CID index must cover every corpus row exactly once"
-            )
+            raise SkillCenterCorpusError("CID index must cover every corpus row exactly once")
         for row in cid_rows:
             _validate_cid_profile(str(row["entry_cid"]), label="entry_cid")
         loaded = cls(root=index_root, manifest=manifest, cid_rows=cid_rows)
@@ -186,9 +170,7 @@ class SkillCenterCorpusIndex:
     @property
     def summary(self) -> SkillCenterCorpusBuildSummary:
         corpus_file = self.manifest["files"]["corpus"]
-        manifest_sha = hashlib.sha256(
-            (self.root / "manifest.json").read_bytes()
-        ).hexdigest()
+        manifest_sha = hashlib.sha256((self.root / "manifest.json").read_bytes()).hexdigest()
         return SkillCenterCorpusBuildSummary(
             output_dir=str(self.root),
             dataset_revision=str(self.manifest["dataset_revision"]),
@@ -258,41 +240,28 @@ class SkillCenterCorpusIndex:
         expected_count = int(self.manifest["source_records"])
         for expected_index, row in enumerate(self.iter_rows()):
             if int(row.get("corpus_index", -1)) != expected_index:
-                raise SkillCenterCorpusError(
-                    "corpus_index must be dense and ordered"
-                )
+                raise SkillCenterCorpusError("corpus_index must be dense and ordered")
             record = _record_from_row(row)
             identity = record.entry_identity
             entry_cid = str(row.get("entry_cid", ""))
             if (
                 entry_cid != identity.cid
-                or bytes(row.get("entry_cid_bytes") or b"")
-                != identity.cid_bytes
-                or bytes(row.get("entry_multihash") or b"")
-                != identity.multihash_bytes
+                or bytes(row.get("entry_cid_bytes") or b"") != identity.cid_bytes
+                or bytes(row.get("entry_multihash") or b"") != identity.multihash_bytes
                 or str(row.get("entry_sha256", "")) != identity.sha256
                 or str(row.get("content_cid", "")) != record.content_cid
-                or str(row.get("content_sha256", ""))
-                != record.content_sha256
+                or str(row.get("content_sha256", "")) != record.content_sha256
                 or str(row.get("bundle_cid", ""))
                 != cid_v1_from_digest(bytes.fromhex(record.bundle_sha256))
             ):
-                raise SkillCenterCorpusError(
-                    f"corpus row {expected_index} has stale CID identity"
-                )
-            if (
-                entry_cid in seen
-                or self._corpus_index_by_cid.get(entry_cid)
-                != expected_index
-            ):
+                raise SkillCenterCorpusError(f"corpus row {expected_index} has stale CID identity")
+            if entry_cid in seen or self._corpus_index_by_cid.get(entry_cid) != expected_index:
                 raise SkillCenterCorpusError(
                     "entry_cid primary-key or CID-index coverage is invalid"
                 )
             seen.add(entry_cid)
         if len(seen) != expected_count:
-            raise SkillCenterCorpusError(
-                "verified corpus row count does not match manifest"
-            )
+            raise SkillCenterCorpusError("verified corpus row count does not match manifest")
 
 
 def build_skillcenter_corpus(
@@ -308,9 +277,7 @@ def build_skillcenter_corpus(
         or not isinstance(batch_size, int)
         or not 1 <= batch_size <= 10_000
     ):
-        raise SkillCenterCorpusError(
-            "batch_size must be between 1 and 10000"
-        )
+        raise SkillCenterCorpusError("batch_size must be between 1 and 10000")
     prepared = sorted(
         tuple(readers),
         key=lambda reader: reader.repository_file,
@@ -334,9 +301,7 @@ def build_skillcenter_corpus(
         inputs.append(
             {
                 **manifest.to_dict(),
-                "bundle_cid": cid_v1_from_digest(
-                    bytes.fromhex(manifest.local_sha256)
-                ),
+                "bundle_cid": cid_v1_from_digest(bytes.fromhex(manifest.local_sha256)),
                 "declared_total_skills": (
                     reader.declared_total_skills
                     if reader.declared_total_skills is not None
@@ -345,16 +310,12 @@ def build_skillcenter_corpus(
             }
         )
     build_identity_payload = {
-        "entry_identity_schema_version": (
-            SKILLCENTER_ENTRY_IDENTITY_SCHEMA_VERSION
-        ),
+        "entry_identity_schema_version": (SKILLCENTER_ENTRY_IDENTITY_SCHEMA_VERSION),
         "inputs": inputs,
         "primary_key": SKILLCENTER_CORPUS_PRIMARY_KEY,
         "schema_version": SKILLCENTER_CORPUS_SCHEMA_VERSION,
     }
-    build_identity_sha256 = hashlib.sha256(
-        canonical_json_bytes(build_identity_payload)
-    ).hexdigest()
+    build_identity_sha256 = hashlib.sha256(canonical_json_bytes(build_identity_payload)).hexdigest()
     output = Path(output_dir).expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     if output.is_symlink():
@@ -362,13 +323,8 @@ def build_skillcenter_corpus(
     with _build_lock(output):
         if output.exists():
             existing = SkillCenterCorpusIndex.load(output)
-            if (
-                existing.manifest.get("build_identity_sha256")
-                != build_identity_sha256
-            ):
-                raise SkillCenterCorpusError(
-                    "existing corpus was built from different inputs"
-                )
+            if existing.manifest.get("build_identity_sha256") != build_identity_sha256:
+                raise SkillCenterCorpusError("existing corpus was built from different inputs")
             return existing.summary
         staging = Path(
             tempfile.mkdtemp(
@@ -435,9 +391,7 @@ def _build_into_directory(
                 seen_skill_ids.add(record.skill_id)
                 source_ref = record.to_source_ref()
                 row = {
-                    "bundle_cid": cid_v1_from_digest(
-                        bytes.fromhex(record.bundle_sha256)
-                    ),
+                    "bundle_cid": cid_v1_from_digest(bytes.fromhex(record.bundle_sha256)),
                     "bundle_sha256": record.bundle_sha256,
                     "content_cid": record.content_cid,
                     "content_sha256": record.content_sha256,
@@ -447,9 +401,7 @@ def _build_into_directory(
                     "domain": record.domain,
                     "entry_cid": identity.cid,
                     "entry_cid_bytes": identity.cid_bytes,
-                    "entry_identity_schema_version": (
-                        identity.identity_schema_version
-                    ),
+                    "entry_identity_schema_version": (identity.identity_schema_version),
                     "entry_multihash": identity.multihash_bytes,
                     "entry_sha256": identity.sha256,
                     "language": record.language,
@@ -478,9 +430,7 @@ def _build_into_directory(
                         "corpus_index": corpus_index,
                         "entry_cid": identity.cid,
                         "repository_file": record.repository_file,
-                        "schema_version": (
-                            SKILLCENTER_CORPUS_CID_INDEX_SCHEMA_VERSION
-                        ),
+                        "schema_version": (SKILLCENTER_CORPUS_CID_INDEX_SCHEMA_VERSION),
                         "skill_id": record.skill_id,
                     }
                 )
@@ -499,9 +449,7 @@ def _build_into_directory(
     finally:
         writer.close()
     if corpus_index != sum(item.total_skills for item in manifests):
-        raise SkillCenterCorpusError(
-            "written corpus coverage differs from physical bundle counts"
-        )
+        raise SkillCenterCorpusError("written corpus coverage differs from physical bundle counts")
     cid_rows.sort(key=lambda row: str(row["entry_cid"]))
     cid_schema = _cid_index_schema(pa)
     pq.write_table(
@@ -522,9 +470,7 @@ def _build_into_directory(
         "bundle_count": len(manifests),
         "dataset_id": manifests[0].dataset_id,
         "dataset_revision": manifests[0].dataset_revision,
-        "entry_identity_schema_version": (
-            SKILLCENTER_ENTRY_IDENTITY_SCHEMA_VERSION
-        ),
+        "entry_identity_schema_version": (SKILLCENTER_ENTRY_IDENTITY_SCHEMA_VERSION),
         "files": files,
         "inputs": list(inputs),
         "primary_key": SKILLCENTER_CORPUS_PRIMARY_KEY,
@@ -586,9 +532,7 @@ def _cid_index_schema(pa: Any) -> Any:
     metadata = {
         b"foreign_key": b"corpus_index->corpus.parquet.corpus_index",
         b"primary_key": SKILLCENTER_CORPUS_PRIMARY_KEY.encode(),
-        b"schema_version": (
-            SKILLCENTER_CORPUS_CID_INDEX_SCHEMA_VERSION.encode()
-        ),
+        b"schema_version": (SKILLCENTER_CORPUS_CID_INDEX_SCHEMA_VERSION.encode()),
     }
     return pa.schema(
         [
@@ -612,11 +556,7 @@ def _record_from_row(row: Mapping[str, Any]) -> SkillCenterSkillRecord:
         language=str(row["language"]),
         library_md=str(row["library_md"]),
         metadata_yaml=str(row["metadata_yaml"]),
-        overall_score=(
-            None
-            if row.get("overall_score") is None
-            else float(row["overall_score"])
-        ),
+        overall_score=(None if row.get("overall_score") is None else float(row["overall_score"])),
         primary_source_id=str(row["primary_source_id"]),
         profile=str(row["profile"]),
         repository_file=str(row["repository_file"]),
@@ -653,9 +593,7 @@ def _validate_cid_profile(value: str, *, label: str) -> None:
     except Exception as exc:
         raise SkillCenterCorpusError(f"{label} is not a valid CID") from exc
     if decoded.codec.name != "raw" or decoded.hashfun.name != "sha2-256":
-        raise SkillCenterCorpusError(
-            f"{label} must use CIDv1/raw/sha2-256"
-        )
+        raise SkillCenterCorpusError(f"{label} must use CIDv1/raw/sha2-256")
 
 
 def _file_descriptor(path: Path, *, root: Path) -> dict[str, Any]:
@@ -691,9 +629,7 @@ def _verify_file_descriptor(root: Path, value: Any) -> Path:
         or digest.hex() != value.get("sha256")
         or cid_v1_from_digest(digest) != value.get("cid")
     ):
-        raise SkillCenterCorpusError(
-            f"corpus artifact identity mismatch: {relative}"
-        )
+        raise SkillCenterCorpusError(f"corpus artifact identity mismatch: {relative}")
     return path
 
 

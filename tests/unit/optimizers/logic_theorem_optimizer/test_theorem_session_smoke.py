@@ -44,7 +44,7 @@ def test_logic_theorem_optimizer_run_session_smoke(monkeypatch):
         data="All employees must complete training.",
         data_type=DataType.TEXT,
         domain="general",
-        config=LogicExtractionConfig(extraction_mode=ExtractionMode.FOL)
+        config=LogicExtractionConfig(extraction_mode=ExtractionMode.FOL),
     )
     extraction_result = ExtractionResult(
         statements=[

@@ -7,14 +7,16 @@ Generates comprehensive documentation from Python source code.
 from typing import Dict, Any, Optional, List
 
 
-def documentation_generator(input_path: str,
-                          output_path: str = "docs",
-                          docstring_style: str = "google",
-                          ignore_patterns: Optional[List[str]] = None,
-                          include_inheritance: bool = True,
-                          include_examples: bool = True,
-                          include_source_links: bool = True,
-                          format_type: str = "markdown") -> Dict[str, Any]:
+def documentation_generator(
+    input_path: str,
+    output_path: str = "docs",
+    docstring_style: str = "google",
+    ignore_patterns: Optional[List[str]] = None,
+    include_inheritance: bool = True,
+    include_examples: bool = True,
+    include_source_links: bool = True,
+    format_type: str = "markdown",
+) -> Dict[str, Any]:
     """
     Generate comprehensive documentation from Python source code.
 
@@ -41,28 +43,25 @@ def documentation_generator(input_path: str,
                 "input_path": input_path,
                 "output_path": output_path,
                 "format_type": format_type,
-                "files_generated": [f"{output_path}/documentation.{format_type}"]
+                "files_generated": [f"{output_path}/documentation.{format_type}"],
             },
             "metadata": {
                 "tool": "documentation_generator",
                 "input_path": input_path,
                 "output_path": output_path,
-                "format_type": format_type
-            }
+                "format_type": format_type,
+            },
         }
     except Exception as e:
         return {
             "success": False,
             "error": "generation_error",
             "message": str(e),
-            "metadata": {
-                "tool": "documentation_generator",
-                "input_path": input_path
-            }
+            "metadata": {"tool": "documentation_generator", "input_path": input_path},
         }
 
 
-# Main MCP function  
+# Main MCP function
 async def documentation_generator_simple(
     input_path: str = ".",
     output_path: str = "docs",
@@ -71,7 +70,7 @@ async def documentation_generator_simple(
     include_inheritance: bool = True,
     include_examples: bool = True,
     include_source_links: bool = True,
-    format_type: str = "markdown"
+    format_type: str = "markdown",
 ):
     """
     Generate comprehensive documentation from Python source code.
@@ -86,18 +85,20 @@ async def documentation_generator_simple(
             include_inheritance=include_inheritance,
             include_examples=include_examples,
             include_source_links=include_source_links,
-            format_type=format_type
+            format_type=format_type,
         )
-        
+
         return {
             "status": "success" if result.get("success") else "error",
-            "message": result.get("result", {}).get("message", "Documentation generation completed"),
+            "message": result.get("result", {}).get(
+                "message", "Documentation generation completed"
+            ),
             "result": result.get("result", {}),
-            "tool_type": "documentation_generator"
+            "tool_type": "documentation_generator",
         }
     except Exception as e:
         return {
             "status": "error",
             "message": f"Documentation generation failed: {str(e)}",
-            "tool_type": "documentation_generator"
+            "tool_type": "documentation_generator",
         }

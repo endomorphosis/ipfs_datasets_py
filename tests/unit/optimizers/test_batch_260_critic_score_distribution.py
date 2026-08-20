@@ -68,7 +68,7 @@ def create_sample_ontology(
             "confidence": max(0.0, min(1.0, base + (i % 3) * 0.05)),
         }
         entities.append(entity)
-    
+
     relationships: List[Relationship] = []
     for i in range(relationship_count):
         rel: Relationship = {
@@ -79,7 +79,7 @@ def create_sample_ontology(
             "confidence": max(0.0, min(1.0, base - 0.05 + (i % 2) * 0.1)),
         }
         relationships.append(rel)
-    
+
     ontology: Ontology = {
         "entities": entities,
         "relationships": relationships,
@@ -97,7 +97,7 @@ def create_sample_ontology(
             },
         },
     }
-    
+
     return ontology
 
 
@@ -108,7 +108,7 @@ def create_sample_ontology(
 
 class TestCriticScoreDistributionStatistics:
     """Test statistical properties of critic scores."""
-    
+
     def test_generate_1000_scores(self, critic, context):
         """Generate 1000 critic scores for distribution analysis."""
         scores = []
@@ -120,10 +120,10 @@ class TestCriticScoreDistributionStatistics:
             )
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         assert len(scores) == 1000
         assert all(0.0 <= s <= 1.0 for s in scores)
-    
+
     def test_score_mean_calculation(self, critic, context):
         """Test mean score across sample population."""
         scores = []
@@ -131,11 +131,11 @@ class TestCriticScoreDistributionStatistics:
             ontology = create_sample_ontology(entity_count=5 + (i % 15))
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         mean = statistics.mean(scores)
         assert 0.0 < mean < 1.0
         assert 0.4 < mean < 0.9  # Reasonable range for test data
-    
+
     def test_score_median_calculation(self, critic, context):
         """Test median score across sample population."""
         scores = []
@@ -143,10 +143,10 @@ class TestCriticScoreDistributionStatistics:
             ontology = create_sample_ontology(entity_count=5 + (i % 20))
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         median = statistics.median(scores)
         assert 0.0 < median < 1.0
-    
+
     def test_score_std_dev_calculation(self, critic, context):
         """Test standard deviation of scores."""
         scores = []
@@ -154,11 +154,11 @@ class TestCriticScoreDistributionStatistics:
             ontology = create_sample_ontology(entity_count=5 + (i % 20))
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         if len(scores) > 1:
             stdev = statistics.stdev(scores)
             assert 0.0 <= stdev <= 1.0  # Std dev bounded
-    
+
     def test_score_quartiles(self, critic, context):
         """Test quartile distribution of scores."""
         scores = []
@@ -166,19 +166,19 @@ class TestCriticScoreDistributionStatistics:
             ontology = create_sample_ontology(entity_count=5 + (i % 30))
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         sorted_scores = sorted(scores)
         q1_idx = len(sorted_scores) // 4
         q2_idx = len(sorted_scores) // 2
         q3_idx = (3 * len(sorted_scores)) // 4
-        
+
         q1 = sorted_scores[q1_idx]
         q2 = sorted_scores[q2_idx]  # median
         q3 = sorted_scores[q3_idx]
-        
+
         assert q1 <= q2 <= q3
         assert 0.0 <= q1 < q2 < q3 <= 1.0
-    
+
     def test_score_percentiles(self, critic, context):
         """Test percentile calculation."""
         scores = []
@@ -186,20 +186,20 @@ class TestCriticScoreDistributionStatistics:
             ontology = create_sample_ontology(entity_count=5 + (i % 25))
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         sorted_scores = sorted(scores)
-        
+
         # 10th, 50th (median), 90th percentiles
         idx_10 = max(0, int(0.10 * len(sorted_scores)))
         idx_50 = max(0, int(0.50 * len(sorted_scores)))
         idx_90 = max(0, int(0.90 * len(sorted_scores)))
-        
+
         p10 = sorted_scores[idx_10]
         p50 = sorted_scores[idx_50]
         p90 = sorted_scores[idx_90]
-        
+
         assert p10 <= p50 <= p90
-    
+
     def test_score_range_analysis(self, critic, context):
         """Test min/max range of scores."""
         scores = []
@@ -207,11 +207,11 @@ class TestCriticScoreDistributionStatistics:
             ontology = create_sample_ontology(entity_count=5 + (i % 20))
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         min_score = min(scores)
         max_score = max(scores)
         score_range = max_score - min_score
-        
+
         assert 0.0 <= min_score <= max_score <= 1.0
         assert score_range >= 0.0
 
@@ -257,11 +257,11 @@ class TestDomainSpecificScoreDistribution:
         assert len(scores) == 50
         assert all(0.0 <= s <= 1.0 for s in scores)
         assert 0.0 < statistics.mean(scores) < 1.0
-    
+
     def test_cross_domain_score_comparison(self, critic, context):
         """Compare score distributions across domains."""
         domain_scores = {}
-        
+
         for domain in ["legal", "medical", "technical"]:
             scores = []
             for i in range(30):
@@ -273,13 +273,13 @@ class TestDomainSpecificScoreDistribution:
                     ontology["metadata"]["domain"] = domain
                 score = critic.evaluate_ontology(ontology, context)
                 scores.append(score.overall)
-            
+
             domain_scores[domain] = {
                 "mean": statistics.mean(scores),
                 "median": statistics.median(scores),
                 "count": len(scores),
             }
-        
+
         # All domains should have valid distributions
         assert len(domain_scores) == 3
         for domain, stats in domain_scores.items():
@@ -294,11 +294,11 @@ class TestDomainSpecificScoreDistribution:
 
 class TestScoreConvergence:
     """Test score convergence across refinement cycles."""
-    
+
     def test_score_improvement_trend(self, critic, context):
         """Test that scores generally improve with refinement."""
         refinement_scores = []
-        
+
         for refinement_cycle in range(5):
             # Simulate refinement improving ontology
             ontology = create_sample_ontology(
@@ -308,29 +308,31 @@ class TestScoreConvergence:
             )
             score = critic.evaluate_ontology(ontology, context)
             refinement_scores.append(score.overall)
-        
+
         assert len(refinement_scores) == 5
         # Generally trending upward
-        assert refinement_scores[-1] >= refinement_scores[0] - 0.01  # Allow 1% tolerance for rule-based variance
-    
+        assert (
+            refinement_scores[-1] >= refinement_scores[0] - 0.01
+        )  # Allow 1% tolerance for rule-based variance
+
     def test_score_stability_across_runs(self, critic, context):
         """Test score stability for same ontology across runs."""
         ontology = create_sample_ontology(entity_count=15, relationship_count=8)
-        
+
         scores = []
         for _ in range(10):
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         # Scores should be consistent
         mean_score = statistics.mean(scores)
         for score in scores:
             assert abs(score - mean_score) < 0.1  # Small variance
-    
+
     def test_score_distribution_across_refinement(self, critic, context):
         """Track score distribution changes during refinement."""
         cycle_distributions = {}
-        
+
         for cycle in range(3):
             scores = []
             for i in range(50):
@@ -340,12 +342,12 @@ class TestScoreConvergence:
                 )
                 score = critic.evaluate_ontology(ontology, context)
                 scores.append(score.overall)
-            
+
             cycle_distributions[cycle] = {
                 "mean": statistics.mean(scores),
                 "count": len(scores),
             }
-        
+
         assert len(cycle_distributions) == 3
         for cycle, stats in cycle_distributions.items():
             assert 0.0 < stats["mean"] < 1.0
@@ -358,7 +360,7 @@ class TestScoreConvergence:
 
 class TestOutlierDetection:
     """Test outlier detection in score distributions."""
-    
+
     def test_score_outlier_identification(self, critic, context):
         """Identify and validate outlier scores."""
         scores = []
@@ -366,16 +368,16 @@ class TestOutlierDetection:
             ontology = create_sample_ontology(entity_count=5 + (i % 20))
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         mean = statistics.mean(scores)
         stdev = statistics.stdev(scores) if len(scores) > 1 else 0.1
-        
+
         # Identify outliers (> 2 std deviations)
         outliers = [s for s in scores if abs(s - mean) > 2 * stdev]
-        
+
         # Should have some outliers in large sample
         assert isinstance(outliers, list)
-    
+
     def test_extreme_score_values(self, critic, context):
         """Test handling of extreme score values."""
         scores = []
@@ -391,10 +393,10 @@ class TestOutlierDetection:
                     entity_count=10 + (i % 30),
                     relationship_count=5 + (i % 20),
                 )
-            
+
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         assert all(0.0 <= s <= 1.0 for s in scores)
         assert min(scores) >= 0.0
         assert max(scores) <= 1.0
@@ -426,11 +428,11 @@ class TestDimensionScoreDistribution:
 
         assert all(0.0 <= s <= 1.0 for s in dimension_scores)
         assert 0.0 < statistics.mean(dimension_scores) <= 1.0
-    
+
     def test_dimension_correlation(self, critic, context):
         """Test correlation between different dimensions."""
         dimension_data = {"completeness": [], "consistency": [], "clarity": []}
-        
+
         for i in range(50):
             ontology = create_sample_ontology(
                 entity_count=10 + (i % 20),
@@ -440,13 +442,10 @@ class TestDimensionScoreDistribution:
             dimension_data["completeness"].append(score.completeness)
             dimension_data["consistency"].append(score.consistency)
             dimension_data["clarity"].append(score.clarity)
-        
+
         # All dimensions should have valid ranges and counts
         assert all(len(scores) == 50 for scores in dimension_data.values())
-        assert all(
-            all(0.0 <= s <= 1.0 for s in scores)
-            for scores in dimension_data.values()
-        )
+        assert all(all(0.0 <= s <= 1.0 for s in scores) for scores in dimension_data.values())
 
 
 # ============================================================================
@@ -505,12 +504,15 @@ class TestCriticScoreDistributionInvariants:
             "consistency": statistics.mean(score.consistency for score in scores),
             "clarity": statistics.mean(score.clarity for score in scores),
             "granularity": statistics.mean(score.granularity for score in scores),
-            "relationship_coherence": statistics.mean(score.relationship_coherence for score in scores),
+            "relationship_coherence": statistics.mean(
+                score.relationship_coherence for score in scores
+            ),
             "domain_alignment": statistics.mean(score.domain_alignment for score in scores),
         }
         weighted_mean = sum(DIMENSION_WEIGHTS[key] * mean_dims[key] for key in mean_dims)
 
         assert overall_mean == pytest.approx(weighted_mean, rel=1e-12, abs=1e-12)
+
 
 # ============================================================================
 # Integration and Real-World Pattern Tests
@@ -519,12 +521,12 @@ class TestCriticScoreDistributionInvariants:
 
 class TestRealWorldScoringPatterns:
     """Test realistic scoring patterns and edge cases."""
-    
+
     def test_small_vs_large_ontology_scores(self, critic, context):
         """Compare scores for small vs. large ontologies."""
         small_scores = []
         large_scores = []
-        
+
         for i in range(50):
             small_ontology = create_sample_ontology(
                 entity_count=2,
@@ -532,26 +534,26 @@ class TestRealWorldScoringPatterns:
             )
             small_score = critic.evaluate_ontology(small_ontology, context)
             small_scores.append(small_score.overall)
-            
+
             large_ontology = create_sample_ontology(
                 entity_count=50,
                 relationship_count=30,
             )
             large_score = critic.evaluate_ontology(large_ontology, context)
             large_scores.append(large_score.overall)
-        
+
         small_mean = statistics.mean(small_scores)
         large_mean = statistics.mean(large_scores)
-        
+
         # Both should produce valid scores
         assert 0.0 < small_mean < 1.0
         assert 0.0 < large_mean < 1.0
-    
+
     def test_dense_vs_sparse_relationship_graphs(self, critic, context):
         """Compare scores for dense vs. sparse relationship graphs."""
         sparse_scores = []
         dense_scores = []
-        
+
         for i in range(30):
             # Sparse: many entities, few relationships
             sparse_ontology = create_sample_ontology(
@@ -560,7 +562,7 @@ class TestRealWorldScoringPatterns:
             )
             sparse_score = critic.evaluate_ontology(sparse_ontology, context)
             sparse_scores.append(sparse_score.overall)
-            
+
             # Dense: fewer entities, many relationships
             dense_ontology = create_sample_ontology(
                 entity_count=10,
@@ -568,15 +570,15 @@ class TestRealWorldScoringPatterns:
             )
             dense_score = critic.evaluate_ontology(dense_ontology, context)
             dense_scores.append(dense_score.overall)
-        
+
         assert len(sparse_scores) == 30
         assert len(dense_scores) == 30
-    
+
     def test_bimodal_score_distribution(self, critic, context):
         """Test detection of bimodal distributions."""
         # Create mixture of poor and good ontologies
         scores = []
-        
+
         for i in range(100):
             if i % 2 == 0:
                 # Poor ontology (sparse)
@@ -592,14 +594,14 @@ class TestRealWorldScoringPatterns:
                     relationship_count=20,
                     base_score=0.8,
                 )
-            
+
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         # Should see separation in distribution
         assert len(scores) == 100
         sorted_scores = sorted(scores)
         median = statistics.median(scores)
-        
+
         # Bimodal: clear separation around median
         assert min(sorted_scores) < median < max(sorted_scores)

@@ -311,9 +311,7 @@ def _extract_lean_universe_context(
     binder_match = _UNIVERSE_BINDER_RE.search(source)
     parameters: List[str] = []
     if binder_match:
-        parameters = [
-            p.strip() for p in re.split(r"[,\s]+", binder_match.group(1)) if p.strip()
-        ]
+        parameters = [p.strip() for p in re.split(r"[,\s]+", binder_match.group(1)) if p.strip()]
 
     type_bindings: Dict[str, str] = {}
     for hyp in hypotheses:

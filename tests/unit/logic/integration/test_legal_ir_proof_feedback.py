@@ -353,9 +353,12 @@ def test_partitioning_is_deterministic_grouped_and_policy_versioned() -> None:
     holdout_policy = ProofFeedbackPartitionPolicy(holdout_fraction=1.0, salt="frozen-corpus-a")
     assert train_policy.assign("sample-a") == ProofFeedbackPartition.TRAIN
     assert holdout_policy.assign("sample-a") == ProofFeedbackPartition.HOLDOUT
-    assert deterministic_proof_feedback_partition(
-        "sample-a", holdout_fraction=1.0, salt="frozen-corpus-a"
-    ) == ProofFeedbackPartition.HOLDOUT
+    assert (
+        deterministic_proof_feedback_partition(
+            "sample-a", holdout_fraction=1.0, salt="frozen-corpus-a"
+        )
+        == ProofFeedbackPartition.HOLDOUT
+    )
 
     first = _trusted_record(partition_key="same-private-sample")
     second = _trusted_record(
@@ -379,7 +382,9 @@ def test_store_persists_idempotently_and_replays_in_content_order(tmp_path) -> N
     assert store.get(first.record_id) == first
 
     replay = store.replay(versions=_versions(), trusted_only=True)
-    assert [item.record_id for item in replay.records] == sorted([first.record_id, second.record_id])
+    assert [item.record_id for item in replay.records] == sorted(
+        [first.record_id, second.record_id]
+    )
     assert stale.record_id not in replay.to_dict()["record_ids"]
     assert replay.replay_id == store.replay(versions=_versions(), trusted_only=True).replay_id
 

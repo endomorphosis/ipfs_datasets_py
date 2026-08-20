@@ -18,6 +18,11 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Final
 
+from .legal_ir_canonical_adapter import (
+    compile_legal_ir_canonical,
+    compile_through_canonical_authority,
+    compiler_request_from_legal_ir_source,
+)
 from .legal_ir_diagnostics import (
     LegalIRDiagnostic,
     LegalIRDiagnosticCode,
@@ -105,7 +110,9 @@ class LegalIRCompilerOptions:
             "max_workers": int(self.max_workers or 1),
             "metadata": _json_ready(self.metadata),
             "proof_aware": bool(self.proof_aware),
-            "resource_limits": {str(key): int(value) for key, value in sorted(self.resource_limits.items())},
+            "resource_limits": {
+                str(key): int(value) for key, value in sorted(self.resource_limits.items())
+            },
         }
 
 
@@ -136,18 +143,24 @@ class LegalIRCompilerResult:
         source_map = self.source_map
         if source_map is not None and not isinstance(source_map, LegalIRSourceMap):
             source_map = LegalIRSourceMap.from_dict(_mapping(source_map))
-        result_id = self.result_id or "lir-compiler-result-" + _stable_hash(
-            {
-                "diagnostics": diagnostics.to_dict(),
-                "operation": self.operation,
-                "payload": self.payload,
-                "schema_version": self.schema_version,
-                "status": self.status,
-            }
-        )[:24]
+        result_id = (
+            self.result_id
+            or "lir-compiler-result-"
+            + _stable_hash(
+                {
+                    "diagnostics": diagnostics.to_dict(),
+                    "operation": self.operation,
+                    "payload": self.payload,
+                    "schema_version": self.schema_version,
+                    "status": self.status,
+                }
+            )[:24]
+        )
         object.__setattr__(self, "diagnostics", diagnostics)
         object.__setattr__(self, "source_map", source_map)
-        object.__setattr__(self, "lsp_diagnostics", tuple(dict(item) for item in self.lsp_diagnostics))
+        object.__setattr__(
+            self, "lsp_diagnostics", tuple(dict(item) for item in self.lsp_diagnostics)
+        )
         object.__setattr__(self, "metadata", _mapping(self.metadata))
         object.__setattr__(self, "result_id", result_id)
 
@@ -166,7 +179,9 @@ class LegalIRCompilerResult:
             "payload": _json_ready(self.payload),
             "result_id": self.result_id,
             "schema_version": self.schema_version,
-            "source_map": self.source_map.to_dict() if isinstance(self.source_map, LegalIRSourceMap) else None,
+            "source_map": self.source_map.to_dict()
+            if isinstance(self.source_map, LegalIRSourceMap)
+            else None,
             "status": self.status,
             "successful": self.successful,
         }
@@ -191,6 +206,27 @@ class LegalIRCompilerAPI:
         temporal: Mapping[str, Any] | Sequence[Any] | None = None,
     ) -> LegalIRCompilerResult:
         initial = _initial_state(source)
+        canonical_result, authority = compile_through_canonical_authority(source)
+        initial["canonical_authority"] = authority
+        if canonical_result is not None:
+            initial["canonical_compile"] = {
+                "canonical_ir": (
+                    None
+                    if canonical_result.canonical_ir is None
+                    else canonical_result.canonical_ir.to_dict()
+                ),
+                "canonical_ir_cid": (
+                    None
+                    if canonical_result.canonical_ir is None
+                    else canonical_result.canonical_ir.ir_cid
+                ),
+                "pipeline_trace_cid": canonical_result.provenance.get("pipeline_trace_cid"),
+                "result_cid": canonical_result.result_cid,
+                "status": canonical_result.status.value,
+                "unsupported_semantics": [
+                    item.to_dict() for item in canonical_result.unsupported_semantics
+                ],
+            }
         resolved_passes = tuple(passes or default_legal_ir_api_passes())
         resolved_functions = {**_default_pass_functions(), **dict(pass_functions or {})}
         if passes is not None and pass_functions is None:
@@ -232,6 +268,7 @@ class LegalIRCompilerAPI:
             )
 
         payload = {
+            "canonical_authority": authority,
             "compile": compile_result.to_dict(),
             "compiled": _json_ready(compile_result.output_state),
             "deterministic_output_order": list(compile_result.deterministic_output_order),
@@ -240,6 +277,8 @@ class LegalIRCompilerAPI:
             "proof_aware": bool(self.options.proof_aware),
             "schema_version": LEGAL_IR_COMPILER_ARTIFACT_SCHEMA_VERSION,
         }
+        if canonical_result is not None:
+            payload["canonical_compile"] = initial["canonical_compile"]
         source_map = _source_map_from_payload(compile_result.output_state)
         diagnostics = _compile_diagnostic_report(compile_result, source_map=source_map)
         return _result(
@@ -258,7 +297,9 @@ class LegalIRCompilerAPI:
         statements = _decompiled_statements(compiled)
         text = "\n".join(statements)
         losses: list[dict[str, Any]] = []
-        for index, obligation in enumerate(_sequence(compiled.get("obligations") or compiled.get("proof_obligations"))):
+        for index, obligation in enumerate(
+            _sequence(compiled.get("obligations") or compiled.get("proof_obligations"))
+        ):
             row = _mapping(obligation)
             if not str(row.get("statement") or "").strip():
                 losses.append(
@@ -654,7 +695,9 @@ def _pass_ingest(state: Mapping[str, Any]) -> Mapping[str, Any]:
     source_map = _source_map_from_payload(payload) or _build_source_map(
         normalized,
         citation=str(payload.get("citation") or ""),
-        source_document_id=str(payload.get("source_document_id") or payload.get("document_id") or "legal-ir-api-source"),
+        source_document_id=str(
+            payload.get("source_document_id") or payload.get("document_id") or "legal-ir-api-source"
+        ),
     )
     return {
         **payload,
@@ -662,7 +705,11 @@ def _pass_ingest(state: Mapping[str, Any]) -> Mapping[str, Any]:
             "citation": str(payload.get("citation") or ""),
             "normalized_text": normalized,
             "normalized_text_sha256": _content_hash(normalized),
-            "source_document_id": str(payload.get("source_document_id") or payload.get("document_id") or "legal-ir-api-source"),
+            "source_document_id": str(
+                payload.get("source_document_id")
+                or payload.get("document_id")
+                or "legal-ir-api-source"
+            ),
         },
         "source_map": source_map.to_dict(),
     }
@@ -680,19 +727,25 @@ def _pass_lower(state: Mapping[str, Any]) -> Mapping[str, Any]:
     proof_obligations = []
     for index, item in enumerate(obligations):
         row = _mapping(item)
-        obligation_id = str(row.get("obligation_id") or row.get("id") or f"api-obligation-{index + 1:04d}")
+        obligation_id = str(
+            row.get("obligation_id") or row.get("id") or f"api-obligation-{index + 1:04d}"
+        )
         statement = str(row.get("statement") or row.get("text") or text)
         formula_id = str(row.get("formula_id") or f"formula-{obligation_id}")
         lowered_row = {
             "action": row.get("action", []),
-            "citations": _sequence(row.get("citations") or ([normalized.get("citation")] if normalized.get("citation") else [])),
+            "citations": _sequence(
+                row.get("citations")
+                or ([normalized.get("citation")] if normalized.get("citation") else [])
+            ),
             "conditions": _sequence(row.get("conditions")),
             "exceptions": _sequence(row.get("exceptions")),
             "formula_id": formula_id,
             "object": row.get("object", []),
             "obligation_id": obligation_id,
             "operator": str(row.get("operator") or _operator_from_text(statement)),
-            "proof_status": _mapping(row.get("proof_status")) or {"status": "unproved", "trust_status": "untrusted"},
+            "proof_status": _mapping(row.get("proof_status"))
+            or {"status": "unproved", "trust_status": "untrusted"},
             "source_node_ids": _sequence(row.get("source_node_ids")) or [formula_id],
             "statement": statement,
             "subject": row.get("subject", []),
@@ -706,7 +759,9 @@ def _pass_lower(state: Mapping[str, Any]) -> Mapping[str, Any]:
                 "logic_family": str(row.get("logic_family") or "deontic"),
                 "metadata": {"source": "legal_ir_compiler_api"},
                 "obligation_id": obligation_id,
-                "sample_id": str(row.get("sample_id") or normalized.get("source_document_id") or ""),
+                "sample_id": str(
+                    row.get("sample_id") or normalized.get("source_document_id") or ""
+                ),
                 "statement": statement,
             }
         )
@@ -741,9 +796,12 @@ def _build_source_map(
     source_document_id: str = "legal-ir-api-source",
 ) -> LegalIRSourceMap:
     citation = citation or f"uncited:{source_document_id}"
-    source_map_id = "lir-source-map-" + _stable_hash(
-        {"citation": citation, "source_document_id": source_document_id, "text": text}
-    )[:24]
+    source_map_id = (
+        "lir-source-map-"
+        + _stable_hash(
+            {"citation": citation, "source_document_id": source_document_id, "text": text}
+        )[:24]
+    )
     builder = LegalIRSourceMapBuilder(source_map_id=source_map_id)
     builder.add_source_document(source_document_id, text, citation=citation)
     span = builder.add_span(
@@ -764,7 +822,9 @@ def _build_source_map(
 
 
 def _obligation_from_text(text: str, *, source_map: LegalIRSourceMap) -> dict[str, Any]:
-    formula_node = next((node for node in source_map.nodes if node.node_kind == "compiler_formula"), None)
+    formula_node = next(
+        (node for node in source_map.nodes if node.node_kind == "compiler_formula"), None
+    )
     formula_id = formula_node.node_id if formula_node else "formula-" + _stable_hash(text)[:16]
     obligation_id = "api-obligation-" + _stable_hash({"formula_id": formula_id, "text": text})[:16]
     return {
@@ -811,7 +871,9 @@ def _result(
     metadata: Mapping[str, Any] | None = None,
 ) -> LegalIRCompilerResult:
     exit_code = _exit_code(diagnostics, options=options)
-    resolved_status = status or ("ok" if exit_code == LegalIRCompilerExitCode.OK.value else "diagnostic_error")
+    resolved_status = status or (
+        "ok" if exit_code == LegalIRCompilerExitCode.OK.value else "diagnostic_error"
+    )
     lsp = tuple(legal_ir_lsp_diagnostics(diagnostics)) if options.include_lsp_diagnostics else ()
     return LegalIRCompilerResult(
         operation=operation.value,
@@ -850,10 +912,16 @@ def _exception_report(
     return builder.build()
 
 
-def _proof_validation_diagnostics(validation: Any, *, source_map: LegalIRSourceMap | None) -> LegalIRDiagnosticReport:
+def _proof_validation_diagnostics(
+    validation: Any, *, source_map: LegalIRSourceMap | None
+) -> LegalIRDiagnosticReport:
     builder = LegalIRDiagnosticsBuilder(source_map=source_map)
     for diagnostic in validation.diagnostics:
-        severity = LegalIRDiagnosticSeverity.ERROR if diagnostic.error else LegalIRDiagnosticSeverity.WARNING
+        severity = (
+            LegalIRDiagnosticSeverity.ERROR
+            if diagnostic.error
+            else LegalIRDiagnosticSeverity.WARNING
+        )
         builder.add(
             LegalIRDiagnosticCode.PROOF_FAILURE,
             diagnostic.message,
@@ -868,7 +936,9 @@ def _proof_validation_diagnostics(validation: Any, *, source_map: LegalIRSourceM
     return builder.build()
 
 
-def _source_map_validation_diagnostics(validation: Any, *, source_map: LegalIRSourceMap | None) -> LegalIRDiagnosticReport:
+def _source_map_validation_diagnostics(
+    validation: Any, *, source_map: LegalIRSourceMap | None
+) -> LegalIRDiagnosticReport:
     builder = LegalIRDiagnosticsBuilder(source_map=source_map)
     for issue in getattr(validation, "issues", ()):
         severity = (
@@ -887,7 +957,9 @@ def _source_map_validation_diagnostics(validation: Any, *, source_map: LegalIRSo
     return builder.build()
 
 
-def _proof_readiness_report(payload: Mapping[str, Any], *, source_map: LegalIRSourceMap | None) -> LegalIRDiagnosticReport:
+def _proof_readiness_report(
+    payload: Mapping[str, Any], *, source_map: LegalIRSourceMap | None
+) -> LegalIRDiagnosticReport:
     builder = LegalIRDiagnosticsBuilder(source_map=source_map)
     missing = []
     for field_name in (
@@ -907,7 +979,9 @@ def _proof_readiness_report(payload: Mapping[str, Any], *, source_map: LegalIRSo
     return builder.build()
 
 
-def _merge_reports(left: LegalIRDiagnosticReport, right: LegalIRDiagnosticReport) -> LegalIRDiagnosticReport:
+def _merge_reports(
+    left: LegalIRDiagnosticReport, right: LegalIRDiagnosticReport
+) -> LegalIRDiagnosticReport:
     return LegalIRDiagnosticReport(
         report_id="",
         diagnostics=(*left.diagnostics, *right.diagnostics),
@@ -962,12 +1036,20 @@ def _options(value: LegalIRCompilerOptions | Mapping[str, Any] | None) -> LegalI
         include_lsp_diagnostics=bool(data.get("include_lsp_diagnostics") or data.get("lsp")),
         fail_on_warnings=bool(data.get("fail_on_warnings", False)),
         max_workers=max(1, int(data.get("max_workers") or 1)),
-        resource_limits=_mapping(data.get("resource_limits")) or {"cpu": max(1, int(data.get("max_workers") or 1))},
+        resource_limits=_mapping(data.get("resource_limits"))
+        or {"cpu": max(1, int(data.get("max_workers") or 1))},
         metadata=_mapping(data.get("metadata")),
     )
 
 
 def _initial_state(source: str | Mapping[str, Any]) -> dict[str, Any]:
+    if hasattr(source, "source_text") and hasattr(source, "atom_vocabulary"):
+        return {
+            "allow_explicit_partial": bool(getattr(source, "allow_explicit_partial", False)),
+            "atom_vocabulary": _mapping(getattr(source, "atom_vocabulary")),
+            "raw_document": str(getattr(source, "source_text")),
+            "request_id": str(getattr(source, "request_id", "") or "legal-ir-api"),
+        }
     if isinstance(source, str):
         stripped = source.strip()
         if stripped.startswith("{") or stripped.startswith("["):
@@ -1005,7 +1087,9 @@ def _compiled_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _is_proof_carrying_artifact(payload: Mapping[str, Any]) -> bool:
-    return str(payload.get("schema_version") or "") == LEGAL_IR_PROOF_CARRYING_ARTIFACT_SCHEMA_VERSION
+    return (
+        str(payload.get("schema_version") or "") == LEGAL_IR_PROOF_CARRYING_ARTIFACT_SCHEMA_VERSION
+    )
 
 
 def _can_build_proof_artifact(payload: Mapping[str, Any]) -> bool:
@@ -1057,7 +1141,9 @@ def _decompiled_statements(payload: Mapping[str, Any]) -> list[str]:
     return statements
 
 
-def _learned_guidance_state(*, active: bool, artifact: Mapping[str, Any] | None = None) -> dict[str, Any]:
+def _learned_guidance_state(
+    *, active: bool, artifact: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
     payload = _mapping(artifact)
     return {
         "active": bool(active),
@@ -1124,7 +1210,10 @@ def _json_ready(value: Any) -> Any:
     if hasattr(value, "to_dict"):
         return _json_ready(value.to_dict())
     if isinstance(value, Mapping):
-        return {str(key): _json_ready(item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))}
+        return {
+            str(key): _json_ready(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_json_ready(item) for item in value]
     return str(value)
@@ -1156,6 +1245,8 @@ __all__ = [
     "LegalIRCompilerResult",
     "benchmark_legal_ir",
     "compile_legal_ir",
+    "compile_legal_ir_canonical",
+    "compiler_request_from_legal_ir_source",
     "decompile_legal_ir",
     "default_legal_ir_api_passes",
     "diff_legal_ir",

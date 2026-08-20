@@ -42,16 +42,10 @@ from .content_addressing import cid_for_dag_json
 CAPABILITY_INVENTORY_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.capability-inventory.v1"
 )
-WORKTREE_SAFETY_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.worktree-safety.v1"
-)
+WORKTREE_SAFETY_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.worktree-safety.v1"
 WORKTREE_SAFETY_RECEIPT_NAME: Final = "worktree-safety.json"
-RESOURCE_LEASE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.resource-lease.v1"
-)
-RESOURCE_POLICY_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.resource-policy.v1"
-)
+RESOURCE_LEASE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.resource-lease.v1"
+RESOURCE_POLICY_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.resource-policy.v1"
 
 _SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 _HEX_COMMIT = re.compile(r"[0-9a-f]{40,64}\Z")
@@ -174,9 +168,7 @@ class ResourcePolicy:
                 or not math.isfinite(float(value))
                 or not 0 < float(value) <= 86_400
             ):
-                raise CapabilityContractError(
-                    f"{name} must be finite and from 0 to 86400"
-                )
+                raise CapabilityContractError(f"{name} must be finite and from 0 to 86400")
 
     @classmethod
     def from_resource_limits(cls, limits: object) -> "ResourcePolicy":
@@ -193,24 +185,18 @@ class ResourcePolicy:
             "case_timeout_seconds",
         )
         if any(not hasattr(limits, name) for name in required):
-            raise CapabilityContractError(
-                "limits do not provide the required resource ceilings"
-            )
+            raise CapabilityContractError("limits do not provide the required resource ceilings")
         workers = getattr(limits, "max_workers")
         return cls(
             max_workers=workers,
             max_memory_bytes=getattr(limits, "max_memory_bytes"),
             max_model_instances=1,
             max_model_workers=workers,
-            max_solver_processes=getattr(
-                limits, "max_solver_processes_per_case"
-            ),
+            max_solver_processes=getattr(limits, "max_solver_processes_per_case"),
             max_kernel_workers=workers,
             max_validation_workers=workers,
             queue_timeout_seconds=getattr(limits, "case_timeout_seconds"),
-            cancellation_grace_seconds=min(
-                2.0, float(getattr(limits, "case_timeout_seconds"))
-            ),
+            cancellation_grace_seconds=min(2.0, float(getattr(limits, "case_timeout_seconds"))),
         )
 
     def to_dict(self) -> dict[str, object]:
@@ -230,9 +216,7 @@ class ResourcePolicy:
         try:
             return cls(**data)  # type: ignore[arg-type]
         except TypeError as exc:
-            raise CapabilityContractError(
-                "invalid resource-policy fields"
-            ) from exc
+            raise CapabilityContractError("invalid resource-policy fields") from exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -249,9 +233,7 @@ class ResourceLeaseRequest:
     def __post_init__(self) -> None:
         _safe_id(self.owner_id, "owner_id")
         if not isinstance(self.resource_class, ResourceClass):
-            raise CapabilityContractError(
-                "resource_class must be a ResourceClass"
-            )
+            raise CapabilityContractError("resource_class must be a ResourceClass")
         if (
             isinstance(self.units, bool)
             or not isinstance(self.units, int)
@@ -263,9 +245,7 @@ class ResourceLeaseRequest:
             or not isinstance(self.memory_bytes, int)
             or not 0 <= self.memory_bytes <= 1 << 40
         ):
-            raise CapabilityContractError(
-                "memory_bytes must be an integer from 0 to 2^40"
-            )
+            raise CapabilityContractError("memory_bytes must be an integer from 0 to 2^40")
         if self.resource_class is ResourceClass.MODEL:
             _safe_id(self.model_identity, "model_identity")
         elif self.model_identity is not None:
@@ -278,9 +258,7 @@ class ResourceLeaseRequest:
             or not math.isfinite(float(self.timeout_seconds))
             or not 0 < float(self.timeout_seconds) <= 86_400
         ):
-            raise CapabilityContractError(
-                "timeout_seconds must be finite and from 0 to 86400"
-            )
+            raise CapabilityContractError("timeout_seconds must be finite and from 0 to 86400")
 
 
 @dataclass(frozen=True, slots=True)
@@ -308,9 +286,7 @@ class ResourceLeaseReceipt:
             or not isinstance(self.sequence, int)
             or self.sequence < 0
         ):
-            raise CapabilityContractError(
-                "resource lease sequence must be nonnegative"
-            )
+            raise CapabilityContractError("resource lease sequence must be nonnegative")
         # Reuse the request validator for identities, counts, and lane rules.
         ResourceLeaseRequest(
             self.owner_id,
@@ -327,25 +303,15 @@ class ResourceLeaseReceipt:
                 or not math.isfinite(float(value))
                 or not 0 <= float(value) <= 86_400_000
             ):
-                raise CapabilityContractError(
-                    f"{name} must be finite and from 0 to 86400000"
-                )
+                raise CapabilityContractError(f"{name} must be finite and from 0 to 86400000")
         if type(self.shared_model_instance) is not bool:
-            raise CapabilityContractError(
-                "shared_model_instance must be a boolean"
-            )
+            raise CapabilityContractError("shared_model_instance must be a boolean")
         if self.outcome not in {"released", "cancelled"}:
-            raise CapabilityContractError(
-                "resource lease outcome must be released or cancelled"
-            )
+            raise CapabilityContractError("resource lease outcome must be released or cancelled")
         if self.detail is not None and (
-            not isinstance(self.detail, str)
-            or not self.detail.strip()
-            or len(self.detail) > 512
+            not isinstance(self.detail, str) or not self.detail.strip() or len(self.detail) > 512
         ):
-            raise CapabilityContractError(
-                "resource lease detail must be 1-512 characters"
-            )
+            raise CapabilityContractError("resource lease detail must be 1-512 characters")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -364,9 +330,7 @@ class ResourceLeaseReceipt:
         try:
             resource_class = ResourceClass(data["resource_class"])
         except (TypeError, ValueError) as exc:
-            raise CapabilityContractError(
-                "resource_lease.resource_class is invalid"
-            ) from exc
+            raise CapabilityContractError("resource_lease.resource_class is invalid") from exc
         try:
             return cls(
                 schema=data["schema"],  # type: ignore[arg-type]
@@ -383,9 +347,7 @@ class ResourceLeaseReceipt:
                 detail=data["detail"],  # type: ignore[arg-type]
             )
         except TypeError as exc:
-            raise CapabilityContractError(
-                "invalid resource-lease fields"
-            ) from exc
+            raise CapabilityContractError("invalid resource-lease fields") from exc
 
 
 class ResourceLease:
@@ -426,9 +388,7 @@ class ResourceLease:
         if self._released:
             raise ResourceLeaseError("resource lease is already released")
         if self.cancelled:
-            raise ResourceLeaseCancelled(
-                f"resource lease cancelled for {self.request.owner_id}"
-            )
+            raise ResourceLeaseCancelled(f"resource lease cancelled for {self.request.owner_id}")
 
     def release(self, *, detail: str | None = None) -> ResourceLeaseReceipt:
         if self._released:
@@ -512,14 +472,10 @@ class ResourceScheduler:
     def _can_acquire(self, request: ResourceLeaseRequest) -> bool:
         if self._active_workers + request.units > self.policy.max_workers:
             return False
-        if (
-            self._active_memory + request.memory_bytes
-            > self.policy.max_memory_bytes
-        ):
+        if self._active_memory + request.memory_bytes > self.policy.max_memory_bytes:
             return False
-        if (
-            self._active_by_class[request.resource_class] + request.units
-            > self._class_limit(request.resource_class)
+        if self._active_by_class[request.resource_class] + request.units > self._class_limit(
+            request.resource_class
         ):
             return False
         if request.resource_class is ResourceClass.MODEL:
@@ -532,9 +488,7 @@ class ResourceScheduler:
 
     def acquire(self, request: ResourceLeaseRequest) -> ResourceLease:
         if not isinstance(request, ResourceLeaseRequest):
-            raise CapabilityContractError(
-                "request must be a ResourceLeaseRequest"
-            )
+            raise CapabilityContractError("request must be a ResourceLeaseRequest")
         if (
             request.units > self.policy.max_workers
             or request.units > self._class_limit(request.resource_class)
@@ -558,14 +512,10 @@ class ResourceScheduler:
                     )
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    raise ResourceLeaseTimeout(
-                        f"resource queue timeout for {request.owner_id}"
-                    )
+                    raise ResourceLeaseTimeout(f"resource queue timeout for {request.owner_id}")
                 self._condition.wait(remaining)
             if request.owner_id in self._cancelled_owners:
-                raise ResourceLeaseCancelled(
-                    f"resource request cancelled for {request.owner_id}"
-                )
+                raise ResourceLeaseCancelled(f"resource request cancelled for {request.owner_id}")
             acquired_at = time.monotonic()
             shared = bool(
                 request.resource_class is ResourceClass.MODEL
@@ -591,9 +541,7 @@ class ResourceScheduler:
                 acquired_at,
             )
 
-    def _release(
-        self, lease: ResourceLease, *, detail: str | None
-    ) -> ResourceLeaseReceipt:
+    def _release(self, lease: ResourceLease, *, detail: str | None) -> ResourceLeaseReceipt:
         if lease._scheduler is not self:
             raise ResourceLeaseError("resource lease belongs to another scheduler")
         request = lease.request
@@ -805,13 +753,8 @@ def run_bounded_process_group(
     """Run without a shell and reap the entire child process group on timeout."""
 
     command = tuple(arguments)
-    if (
-        not command
-        or any(not isinstance(item, str) or not item for item in command)
-    ):
-        raise CapabilityContractError(
-            "arguments must be a nonempty sequence of strings"
-        )
+    if not command or any(not isinstance(item, str) or not item for item in command):
+        raise CapabilityContractError("arguments must be a nonempty sequence of strings")
     for name, value in {
         "timeout_seconds": timeout_seconds,
         "cancellation_grace_seconds": cancellation_grace_seconds,
@@ -822,45 +765,30 @@ def run_bounded_process_group(
             or not math.isfinite(float(value))
             or not 0 < float(value) <= 86_400
         ):
-            raise CapabilityContractError(
-                f"{name} must be finite and from 0 to 86400"
-            )
+            raise CapabilityContractError(f"{name} must be finite and from 0 to 86400")
     if (
         isinstance(max_output_bytes, bool)
         or not isinstance(max_output_bytes, int)
         or not 1 <= max_output_bytes <= 16 * 1024 * 1024
     ):
-        raise CapabilityContractError(
-            "max_output_bytes must be from 1 to 16777216"
-        )
+        raise CapabilityContractError("max_output_bytes must be from 1 to 16777216")
     if input_bytes is not None and not isinstance(input_bytes, bytes):
         raise CapabilityContractError("input_bytes must be bytes or None")
     if input_bytes is not None and len(input_bytes) > 16 * 1024 * 1024:
-        raise CapabilityContractError(
-            "input_bytes must not exceed 16777216 bytes"
-        )
+        raise CapabilityContractError("input_bytes must not exceed 16777216 bytes")
     inherited_descriptors = tuple(pass_fds)
     if (
-        any(
-            type(descriptor) is not int or descriptor <= 2
-            for descriptor in inherited_descriptors
-        )
+        any(type(descriptor) is not int or descriptor <= 2 for descriptor in inherited_descriptors)
         or len(inherited_descriptors) != len(set(inherited_descriptors))
         or (inherited_descriptors and os.name != "posix")
     ):
-        raise CapabilityContractError(
-            "pass_fds must contain unique POSIX descriptors above stderr"
-        )
+        raise CapabilityContractError("pass_fds must contain unique POSIX descriptors above stderr")
     try:
         process = subprocess.Popen(
             command,
             cwd=cwd,
             env=None if env is None else dict(env),
-            stdin=(
-                subprocess.DEVNULL
-                if input_bytes is None
-                else subprocess.PIPE
-            ),
+            stdin=(subprocess.DEVNULL if input_bytes is None else subprocess.PIPE),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=False,
@@ -870,9 +798,7 @@ def run_bounded_process_group(
             pass_fds=inherited_descriptors,
         )
     except OSError as exc:
-        raise ResourceLeaseError(
-            f"cannot start bounded process: {type(exc).__name__}"
-        ) from exc
+        raise ResourceLeaseError(f"cannot start bounded process: {type(exc).__name__}") from exc
     timed_out = False
     try:
         try:
@@ -889,9 +815,7 @@ def run_bounded_process_group(
             except (AttributeError, ProcessLookupError, PermissionError):
                 process.terminate()
             try:
-                stdout, stderr = process.communicate(
-                    timeout=float(cancellation_grace_seconds)
-                )
+                stdout, stderr = process.communicate(timeout=float(cancellation_grace_seconds))
             except subprocess.TimeoutExpired:
                 try:
                     if os.name != "posix":
@@ -909,18 +833,14 @@ def run_bounded_process_group(
             try:
                 _cleanup_failed_process_communication(
                     process,
-                    cancellation_grace_seconds=float(
-                        cancellation_grace_seconds
-                    ),
+                    cancellation_grace_seconds=float(cancellation_grace_seconds),
                 )
             finally:
                 _close_process_standard_streams(process)
         except BaseException:
             pass
         raise
-    surviving_descendants = bool(
-        _active_process_group_members(process.pid)
-    )
+    surviving_descendants = bool(_active_process_group_members(process.pid))
     process_group_reaped = (
         _reap_bounded_process_group(
             process.pid,
@@ -967,14 +887,8 @@ def HSSLEV0125F83() -> str:
 
 
 def _safe_id(value: object, field_name: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not _SAFE_ID.fullmatch(value)
-        or value in {".", ".."}
-    ):
-        raise CapabilityContractError(
-            f"{field_name} must be a safe 1-128 character identifier"
-        )
+    if not isinstance(value, str) or not _SAFE_ID.fullmatch(value) or value in {".", ".."}:
+        raise CapabilityContractError(f"{field_name} must be a safe 1-128 character identifier")
     return value
 
 
@@ -1056,9 +970,7 @@ def _sanitize_url(value: str) -> str:
         (key, _REDACTED if _SECRET_KEY.search(key) else item)
         for key, item in parse_qsl(parsed.query, keep_blank_values=True)
     ]
-    return urlunsplit(
-        (parsed.scheme, hostname, parsed.path, urlencode(query), "")
-    )
+    return urlunsplit((parsed.scheme, hostname, parsed.path, urlencode(query), ""))
 
 
 def redact_secrets(value: object, *, _key: str | None = None) -> object:
@@ -1073,16 +985,11 @@ def redact_secrets(value: object, *, _key: str | None = None) -> object:
     if _key is not None and _SECRET_KEY.search(_key):
         return _REDACTED if value not in (None, "", False) else value
     if isinstance(value, Mapping):
-        return {
-            str(key): redact_secrets(item, _key=str(key))
-            for key, item in value.items()
-        }
+        return {str(key): redact_secrets(item, _key=str(key)) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
         return [redact_secrets(item) for item in value]
     if isinstance(value, str):
-        if _key is not None and (
-            "endpoint" in _key.lower() or _key.lower().endswith("url")
-        ):
+        if _key is not None and ("endpoint" in _key.lower() or _key.lower().endswith("url")):
             return _sanitize_url(value)
         return _SECRET_TEXT.sub(r"\1=<redacted>", value)
     return value
@@ -1095,28 +1002,17 @@ def _freeze_json(value: object, field_name: str) -> object:
         return value
     if isinstance(value, float):
         if not math.isfinite(value):
-            raise CapabilityContractError(
-                f"{field_name} must contain finite canonical JSON values"
-            )
+            raise CapabilityContractError(f"{field_name} must contain finite canonical JSON values")
         return value
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
-            raise CapabilityContractError(
-                f"{field_name} must contain only string object keys"
-            )
+            raise CapabilityContractError(f"{field_name} must contain only string object keys")
         return MappingProxyType(
-            {
-                key: _freeze_json(value[key], f"{field_name}.{key}")
-                for key in sorted(value)
-            }
+            {key: _freeze_json(value[key], f"{field_name}.{key}") for key in sorted(value)}
         )
     if isinstance(value, (list, tuple)):
-        return tuple(
-            _freeze_json(item, f"{field_name}[]") for item in value
-        )
-    raise CapabilityContractError(
-        f"{field_name} must contain only canonical JSON values"
-    )
+        return tuple(_freeze_json(item, f"{field_name}[]") for item in value)
+    raise CapabilityContractError(f"{field_name} must contain only canonical JSON values")
 
 
 def _thaw_json(value: object) -> object:
@@ -1149,15 +1045,9 @@ class CapabilityRecord:
 
     def __post_init__(self) -> None:
         try:
-            kind = (
-                self.kind
-                if isinstance(self.kind, CapabilityKind)
-                else CapabilityKind(self.kind)
-            )
+            kind = self.kind if isinstance(self.kind, CapabilityKind) else CapabilityKind(self.kind)
         except (TypeError, ValueError) as exc:
-            raise CapabilityContractError(
-                f"unsupported capability kind: {self.kind!r}"
-            ) from exc
+            raise CapabilityContractError(f"unsupported capability kind: {self.kind!r}") from exc
         try:
             status = (
                 self.status
@@ -1174,26 +1064,19 @@ class CapabilityRecord:
         frozen_identity = _freeze_json(sanitized, "identity")
         provenance = tuple(self.provenance)
         if not provenance or any(
-            not isinstance(item, str) or not item.strip()
-            for item in provenance
+            not isinstance(item, str) or not item.strip() for item in provenance
         ):
-            raise CapabilityContractError(
-                "provenance must contain at least one nonempty source"
-            )
+            raise CapabilityContractError("provenance must contain at least one nonempty source")
         if len(provenance) != len(set(provenance)):
             raise CapabilityContractError("provenance must not contain duplicates")
 
         reason = self.reason
         if status is CapabilityStatus.AVAILABLE and not identity:
-            raise CapabilityContractError(
-                "an available capability requires a nonempty identity"
-            )
+            raise CapabilityContractError("an available capability requires a nonempty identity")
         if status is not CapabilityStatus.AVAILABLE and (
             not isinstance(reason, str) or not reason.strip()
         ):
-            raise CapabilityContractError(
-                "a degraded or unavailable capability requires a reason"
-            )
+            raise CapabilityContractError("a degraded or unavailable capability requires a reason")
         if reason is not None:
             reason = str(redact_secrets(reason)).strip()
 
@@ -1264,26 +1147,17 @@ class CapabilityInventory:
             "environment",
         )
         if self.source_commit is not None and (
-            not isinstance(self.source_commit, str)
-            or not _HEX_COMMIT.fullmatch(self.source_commit)
+            not isinstance(self.source_commit, str) or not _HEX_COMMIT.fullmatch(self.source_commit)
         ):
-            raise CapabilityContractError(
-                "source_commit must be a full lowercase Git commit id"
-            )
+            raise CapabilityContractError("source_commit must be a full lowercase Git commit id")
 
         records = tuple(self.capabilities)
         if not all(isinstance(record, CapabilityRecord) for record in records):
-            raise CapabilityContractError(
-                "capabilities must contain CapabilityRecord values"
-            )
+            raise CapabilityContractError("capabilities must contain CapabilityRecord values")
         actual = [record.kind for record in records]
-        duplicates = sorted(
-            kind.value for kind in set(actual) if actual.count(kind) > 1
-        )
+        duplicates = sorted(kind.value for kind in set(actual) if actual.count(kind) > 1)
         if duplicates:
-            raise CapabilityContractError(
-                f"capabilities contain duplicate kinds: {duplicates}"
-            )
+            raise CapabilityContractError(f"capabilities contain duplicate kinds: {duplicates}")
         missing = set(REQUIRED_CAPABILITY_KINDS) - set(actual)
         unknown = set(actual) - set(REQUIRED_CAPABILITY_KINDS)
         if missing or unknown or len(records) != len(REQUIRED_CAPABILITY_KINDS):
@@ -1316,9 +1190,7 @@ class CapabilityInventory:
 
     @property
     def by_kind(self) -> Mapping[CapabilityKind, CapabilityRecord]:
-        return MappingProxyType(
-            {record.kind: record for record in self.capabilities}
-        )
+        return MappingProxyType({record.kind: record for record in self.capabilities})
 
     @property
     def sha256(self) -> str:
@@ -1338,9 +1210,7 @@ class CapabilityInventory:
             "run_id": self.run_id,
             "environment": _thaw_json(self.environment),
             "source_commit": self.source_commit,
-            "capabilities": [
-                record.to_dict() for record in self.capabilities
-            ],
+            "capabilities": [record.to_dict() for record in self.capabilities],
         }
 
     @classmethod
@@ -1359,9 +1229,7 @@ class CapabilityInventory:
         )
         raw_records = payload["capabilities"]
         if not isinstance(raw_records, (list, tuple)):
-            raise CapabilityContractError(
-                "capability inventory.capabilities must be an array"
-            )
+            raise CapabilityContractError("capability inventory.capabilities must be an array")
         return cls(
             schema=payload["schema"],  # type: ignore[arg-type]
             run_id=payload["run_id"],  # type: ignore[arg-type]
@@ -1370,9 +1238,7 @@ class CapabilityInventory:
                 "capability inventory.environment",
             ),
             source_commit=payload["source_commit"],  # type: ignore[arg-type]
-            capabilities=tuple(
-                CapabilityRecord.from_dict(record) for record in raw_records
-            ),
+            capabilities=tuple(CapabilityRecord.from_dict(record) for record in raw_records),
         )
 
 
@@ -1451,9 +1317,7 @@ def _run_version_command(arguments: Sequence[str]) -> str:
     )
     output = (completed.stdout or completed.stderr).strip().splitlines()
     if completed.returncode != 0:
-        raise RuntimeError(
-            f"version command exited with status {completed.returncode}"
-        )
+        raise RuntimeError(f"version command exited with status {completed.returncode}")
     return output[0][:512] if output else "version not reported"
 
 
@@ -1462,9 +1326,7 @@ class ProbeContext:
     """Injected read-only inputs available to capability probes."""
 
     run_paths: RunPaths
-    environ: Mapping[str, str] = field(
-        default_factory=lambda: MappingProxyType(dict(os.environ))
-    )
+    environ: Mapping[str, str] = field(default_factory=lambda: MappingProxyType(dict(os.environ)))
     find_spec: FindSpec = _find_spec_without_import
     distribution_version: DistributionVersion = metadata.version
     which: ExecutableFinder = shutil.which
@@ -1474,15 +1336,10 @@ class ProbeContext:
         if not _is_run_paths(self.run_paths):
             raise CapabilityContractError("run_paths must be a RunPaths value")
         if not isinstance(self.environ, Mapping) or not all(
-            isinstance(key, str) and isinstance(value, str)
-            for key, value in self.environ.items()
+            isinstance(key, str) and isinstance(value, str) for key, value in self.environ.items()
         ):
-            raise CapabilityContractError(
-                "probe environment must map strings to strings"
-            )
-        object.__setattr__(
-            self, "environ", MappingProxyType(dict(self.environ))
-        )
+            raise CapabilityContractError("probe environment must map strings to strings")
+        object.__setattr__(self, "environ", MappingProxyType(dict(self.environ)))
 
 
 def _version(context: ProbeContext, *distributions: str) -> str | None:
@@ -1646,9 +1503,7 @@ def _llm_router_probe(context: ProbeContext) -> CapabilityRecord:
     configured_providers = sorted(
         {
             item.strip()
-            for item in context.environ.get(
-                "HSSL_LLM_ROUTER_PROVIDERS", ""
-            ).split(",")
+            for item in context.environ.get("HSSL_LLM_ROUTER_PROVIDERS", "").split(",")
             if item.strip()
         }
         | ({provider} if provider else set())
@@ -1730,9 +1585,11 @@ def _hammer_probe(context: ProbeContext) -> CapabilityRecord:
 def _leanstral_probe(context: ProbeContext) -> CapabilityRecord:
     endpoint = context.environ.get("HSSL_LEANSTRAL_ENDPOINT")
     model = context.environ.get("HSSL_LEANSTRAL_MODEL")
-    health_verified = context.environ.get(
-        "HSSL_LEANSTRAL_HEALTH_VERIFIED", ""
-    ).lower() in {"1", "true", "yes"}
+    health_verified = context.environ.get("HSSL_LEANSTRAL_HEALTH_VERIFIED", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     identity = {
         "endpoint": endpoint,
         "requested_model": model,
@@ -1812,18 +1669,16 @@ def _cache_probe(context: ProbeContext) -> CapabilityRecord:
 
 
 def _scheduler_probe(context: ProbeContext) -> CapabilityRecord:
-    configured = context.environ.get(
-        "HSSL_RESOURCE_SCHEDULER", "run-scoped-file-lock"
-    )
-    verified = context.environ.get(
-        "HSSL_RESOURCE_SCHEDULER_VERIFIED", ""
-    ).lower() in {"1", "true", "yes"}
+    configured = context.environ.get("HSSL_RESOURCE_SCHEDULER", "run-scoped-file-lock")
+    verified = context.environ.get("HSSL_RESOURCE_SCHEDULER_VERIFIED", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     identity = {
         "implementation": configured,
         "schema": "logic-pipeline-resource-scheduler.v1",
-        "state_path": (
-            context.run_paths.state / "resource-scheduler.json"
-        ).as_posix(),
+        "state_path": (context.run_paths.state / "resource-scheduler.json").as_posix(),
         "policy_schema": RESOURCE_POLICY_SCHEMA,
         "lease_schema": RESOURCE_LEASE_SCHEMA,
         "resource_classes": [item.value for item in ResourceClass],
@@ -1853,29 +1708,24 @@ def _scheduler_probe(context: ProbeContext) -> CapabilityRecord:
     )
 
 
-DEFAULT_CAPABILITY_PROBES: Final[Mapping[CapabilityKind, CapabilityProbe]] = (
-    MappingProxyType(
-        {
-            CapabilityKind.SPACY_PIPELINE: _spacy_probe,
-            CapabilityKind.SYMAI: _symai_probe,
-            CapabilityKind.LLM_ROUTER: _llm_router_probe,
-            CapabilityKind.HAMMER: _hammer_probe,
-            CapabilityKind.LEANSTRAL_SERVICE: _leanstral_probe,
-            CapabilityKind.LEAN_TOOLCHAIN: _lean_toolchain_probe,
-            CapabilityKind.CACHE_BACKEND: _cache_probe,
-            CapabilityKind.RESOURCE_SCHEDULER: _scheduler_probe,
-        }
-    )
+DEFAULT_CAPABILITY_PROBES: Final[Mapping[CapabilityKind, CapabilityProbe]] = MappingProxyType(
+    {
+        CapabilityKind.SPACY_PIPELINE: _spacy_probe,
+        CapabilityKind.SYMAI: _symai_probe,
+        CapabilityKind.LLM_ROUTER: _llm_router_probe,
+        CapabilityKind.HAMMER: _hammer_probe,
+        CapabilityKind.LEANSTRAL_SERVICE: _leanstral_probe,
+        CapabilityKind.LEAN_TOOLCHAIN: _lean_toolchain_probe,
+        CapabilityKind.CACHE_BACKEND: _cache_probe,
+        CapabilityKind.RESOURCE_SCHEDULER: _scheduler_probe,
+    }
 )
 
 
 def _resolved_within(path: Path, root: Path) -> bool:
     resolved_path = path.resolve(strict=False)
     resolved_root = root.resolve(strict=False)
-    return (
-        resolved_path == resolved_root
-        or resolved_path.is_relative_to(resolved_root)
-    )
+    return resolved_path == resolved_root or resolved_path.is_relative_to(resolved_root)
 
 
 def _validate_scoped_capability(
@@ -1884,12 +1734,8 @@ def _validate_scoped_capability(
 ) -> None:
     if record.kind is CapabilityKind.CACHE_BACKEND:
         root = record.identity.get("root")
-        if not isinstance(root, str) or not _resolved_within(
-            Path(root), run_paths.cache
-        ):
-            raise CapabilityContractError(
-                "cache backend root must be scoped below this run cache"
-            )
+        if not isinstance(root, str) or not _resolved_within(Path(root), run_paths.cache):
+            raise CapabilityContractError("cache backend root must be scoped below this run cache")
     if record.kind is CapabilityKind.RESOURCE_SCHEDULER:
         state_path = record.identity.get("state_path")
         if not isinstance(state_path, str) or not _resolved_within(
@@ -1916,13 +1762,8 @@ def _bind_scoped_capability(
     if record.kind is CapabilityKind.CACHE_BACKEND and "root" not in identity:
         identity["root"] = (run_paths.cache / "capabilities").as_posix()
         provenance = (*provenance, "RunPaths.cache")
-    if (
-        record.kind is CapabilityKind.RESOURCE_SCHEDULER
-        and "state_path" not in identity
-    ):
-        identity["state_path"] = (
-            run_paths.state / "resource-scheduler.json"
-        ).as_posix()
+    if record.kind is CapabilityKind.RESOURCE_SCHEDULER and "state_path" not in identity:
+        identity["state_path"] = (run_paths.state / "resource-scheduler.json").as_posix()
         provenance = (*provenance, "RunPaths.state")
     if identity == _thaw_json(record.identity):
         return record
@@ -1959,15 +1800,11 @@ def probe_runtime_capabilities(
 
     _safe_id(run_id, "run_id")
     if not _is_run_paths(run_paths) or run_paths.run_id != run_id:
-        raise CapabilityContractError(
-            "run_paths must belong to the inventory run_id"
-        )
+        raise CapabilityContractError("run_paths must belong to the inventory run_id")
     selected = DEFAULT_CAPABILITY_PROBES if probes is None else probes
     context = ProbeContext(
         run_paths=run_paths,
-        environ=MappingProxyType(
-            dict(os.environ if environ is None else environ)
-        ),
+        environ=MappingProxyType(dict(os.environ if environ is None else environ)),
         find_spec=find_spec,
         distribution_version=distribution_version,
         which=which,
@@ -1990,9 +1827,7 @@ def probe_runtime_capabilities(
         try:
             record = probe(context)
             if not isinstance(record, CapabilityRecord):
-                raise CapabilityContractError(
-                    "probe did not return a CapabilityRecord"
-                )
+                raise CapabilityContractError("probe did not return a CapabilityRecord")
             if record.kind is not kind:
                 raise CapabilityContractError(
                     f"probe for {kind.value} returned {record.kind.value}"
@@ -2033,19 +1868,13 @@ def require_capabilities(
     seen: set[CapabilityKind] = set()
     for raw_kind in required:
         try:
-            kind = (
-                raw_kind
-                if isinstance(raw_kind, CapabilityKind)
-                else CapabilityKind(raw_kind)
-            )
+            kind = raw_kind if isinstance(raw_kind, CapabilityKind) else CapabilityKind(raw_kind)
         except (TypeError, ValueError) as exc:
             raise CapabilityUnavailableError(
                 f"unsupported required capability: {raw_kind!r}"
             ) from exc
         if kind in seen:
-            raise CapabilityUnavailableError(
-                f"duplicate required capability: {kind.value}"
-            )
+            raise CapabilityUnavailableError(f"duplicate required capability: {kind.value}")
         seen.add(kind)
         record = inventory.by_kind[kind]
         if record.status is not CapabilityStatus.AVAILABLE:
@@ -2145,25 +1974,19 @@ def _hardened_git_executable() -> Path:
 
     candidate = shutil.which("git", path=os.defpath)
     if candidate is None:
-        raise CapabilityContractError(
-            "cannot resolve the hardened Git executable"
-        )
+        raise CapabilityContractError("cannot resolve the hardened Git executable")
     try:
         executable = Path(candidate).resolve(strict=True)
         metadata = executable.lstat()
     except OSError as exc:
-        raise CapabilityContractError(
-            "cannot authenticate the hardened Git executable"
-        ) from exc
+        raise CapabilityContractError("cannot authenticate the hardened Git executable") from exc
     if (
         stat.S_ISLNK(metadata.st_mode)
         or not stat.S_ISREG(metadata.st_mode)
         or stat.S_IMODE(metadata.st_mode) & 0o022
         or not metadata.st_mode & 0o111
     ):
-        raise CapabilityContractError(
-            "hardened Git must be a non-writable regular executable"
-        )
+        raise CapabilityContractError("hardened Git must be a non-writable regular executable")
     try:
         version_result = subprocess.run(
             [executable.as_posix(), "version"],
@@ -2177,21 +2000,13 @@ def _hardened_git_executable() -> Path:
             env=_hardened_git_environment(),
         )
     except (OSError, subprocess.SubprocessError) as exc:
-        raise CapabilityContractError(
-            "cannot probe the hardened Git version"
-        ) from exc
+        raise CapabilityContractError("cannot probe the hardened Git version") from exc
     version_match = re.fullmatch(
         r"git version ([0-9]+)\.([0-9]+)\.([0-9]+)(?:\S*)?\n?",
         version_result.stdout,
     )
-    if (
-        version_match is None
-        or tuple(int(value) for value in version_match.groups())
-        < (2, 40, 0)
-    ):
-        raise CapabilityContractError(
-            "hardened Git 2.40.0 or newer is required"
-        )
+    if version_match is None or tuple(int(value) for value in version_match.groups()) < (2, 40, 0):
+        raise CapabilityContractError("hardened Git 2.40.0 or newer is required")
     return executable
 
 
@@ -2213,8 +2028,7 @@ def _git(
         if secure_materialization:
             if template_directory is None:
                 raise CapabilityContractError(
-                    "secure Git materialization requires an empty template "
-                    "directory"
+                    "secure Git materialization requires an empty template directory"
                 )
             template = Path(template_directory)
             try:
@@ -2233,8 +2047,7 @@ def _git(
                 or populated
             ):
                 raise CapabilityContractError(
-                    "secure Git template directory must be canonical, "
-                    "private, and empty"
+                    "secure Git template directory must be canonical, private, and empty"
                 )
             template_arguments = (
                 "-c",
@@ -2249,9 +2062,7 @@ def _git(
             *arguments,
         ]
         environment = _hardened_git_environment()
-        effective_umask = (
-            0o022 if secure_materialization else child_umask
-        )
+        effective_umask = 0o022 if secure_materialization else child_umask
     else:
         command = ["git", "-C", str(repository), *arguments]
         environment = {
@@ -2270,28 +2081,16 @@ def _git(
             shell=False,
             close_fds=True,
             input=input_text,
-            stdin=(
-                subprocess.DEVNULL
-                if hardened and input_text is None
-                else None
-            ),
-            **(
-                {}
-                if effective_umask is None
-                else {"umask": effective_umask}
-            ),
+            stdin=(subprocess.DEVNULL if hardened and input_text is None else None),
+            **({} if effective_umask is None else {"umask": effective_umask}),
             env=environment,
         )
     except (OSError, subprocess.SubprocessError) as exc:
-        raise CapabilityContractError(
-            f"Git command failed: {type(exc).__name__}"
-        ) from exc
+        raise CapabilityContractError(f"Git command failed: {type(exc).__name__}") from exc
     if check and completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip().splitlines()
         summary = detail[0][:512] if detail else "no diagnostic"
-        raise CapabilityContractError(
-            f"Git command {arguments[0]!r} failed: {summary}"
-        )
+        raise CapabilityContractError(f"Git command {arguments[0]!r} failed: {summary}")
     return completed
 
 
@@ -2314,9 +2113,7 @@ def _reject_effective_checkout_filters(
     """Fail before checkout when pinned or info attributes select a filter."""
 
     if commit is not None and not _HEX_COMMIT.fullmatch(commit):
-        raise CapabilityContractError(
-            "checkout-filter preflight requires a full Git commit"
-        )
+        raise CapabilityContractError("checkout-filter preflight requires a full Git commit")
     paths_result = (
         _git(
             repository,
@@ -2339,9 +2136,7 @@ def _reject_effective_checkout_filters(
     raw_paths = paths_result.stdout
     paths = raw_paths.split("\0")
     if paths[-1] != "" or any(not path for path in paths[:-1]):
-        raise CapabilityContractError(
-            "Git returned malformed paths for checkout-filter preflight"
-        )
+        raise CapabilityContractError("Git returned malformed paths for checkout-filter preflight")
     expected_paths = paths[:-1]
     attribute_arguments = (
         ("check-attr", "-z", "--stdin", "filter")
@@ -2361,34 +2156,20 @@ def _reject_effective_checkout_filters(
         sanitized_environment=True,
     ).stdout.split("\0")
     if attributes[-1:] != [""]:
-        raise CapabilityContractError(
-            "Git returned malformed checkout-filter evidence"
-        )
+        raise CapabilityContractError("Git returned malformed checkout-filter evidence")
     attributes = attributes[:-1]
     if len(attributes) != len(expected_paths) * 3:
-        raise CapabilityContractError(
-            "Git returned incomplete checkout-filter evidence"
-        )
+        raise CapabilityContractError("Git returned incomplete checkout-filter evidence")
     for index, expected_path in enumerate(expected_paths):
         path, attribute, value = attributes[index * 3 : index * 3 + 3]
-        if (
-            path != expected_path
-            or attribute != "filter"
-            or value not in {"unspecified", "unset"}
-        ):
-            raise CapabilityContractError(
-                "effective Git checkout filters are forbidden"
-            )
+        if path != expected_path or attribute != "filter" or value not in {"unspecified", "unset"}:
+            raise CapabilityContractError("effective Git checkout filters are forbidden")
 
 
 def _paths_overlap(left: Path, right: Path) -> bool:
     left = left.resolve(strict=False)
     right = right.resolve(strict=False)
-    return (
-        left == right
-        or left.is_relative_to(right)
-        or right.is_relative_to(left)
-    )
+    return left == right or left.is_relative_to(right) or right.is_relative_to(left)
 
 
 def _logical_absolute_path(path: Path, field: str) -> Path:
@@ -2418,13 +2199,9 @@ def _reject_symlink_components(path: Path, field: str) -> Path:
                 f"cannot inspect {field} path component: {current}"
             ) from exc
         if stat.S_ISLNK(metadata.st_mode):
-            raise CapabilityContractError(
-                f"{field} may not traverse a symlink: {current}"
-            )
+            raise CapabilityContractError(f"{field} may not traverse a symlink: {current}")
         if index < len(parts) - 1 and not stat.S_ISDIR(metadata.st_mode):
-            raise CapabilityContractError(
-                f"{field} ancestor is not a directory: {current}"
-            )
+            raise CapabilityContractError(f"{field} ancestor is not a directory: {current}")
     return logical
 
 
@@ -2435,12 +2212,7 @@ def _mkdir_without_following_symlinks(path: Path, *, mode: int = 0o700) -> Path:
     directory_flag = getattr(os, "O_DIRECTORY", 0)
     nofollow_flag = getattr(os, "O_NOFOLLOW", 0)
     cloexec_flag = getattr(os, "O_CLOEXEC", 0)
-    if (
-        os.name != "posix"
-        or not directory_flag
-        or not nofollow_flag
-        or not os.supports_dir_fd
-    ):
+    if os.name != "posix" or not directory_flag or not nofollow_flag or not os.supports_dir_fd:
         logical.mkdir(mode=mode, parents=True, exist_ok=True)
         _reject_symlink_components(logical, "benchmark directory")
         return logical
@@ -2509,9 +2281,7 @@ def _submodule_gitlinks(
                 or ".." in logical.parts
                 or logical.as_posix() != path
             ):
-                raise CapabilityContractError(
-                    "Git returned a malformed submodule gitlink"
-                )
+                raise CapabilityContractError("Git returned a malformed submodule gitlink")
             commits[path] = object_id
     return MappingProxyType(dict(sorted(commits.items())))
 
@@ -2550,9 +2320,7 @@ def _reject_initialized_submodule_filters(
             or stat.S_ISLNK(metadata.st_mode)
             or not stat.S_ISDIR(metadata.st_mode)
         ):
-            raise CapabilityContractError(
-                "initialized submodule path is not a canonical directory"
-            )
+            raise CapabilityContractError("initialized submodule path is not a canonical directory")
         probe = _git(
             child,
             "rev-parse",
@@ -2619,9 +2387,7 @@ def _hardened_worktree_status(
             or stat.S_ISLNK(metadata.st_mode)
             or not stat.S_ISDIR(metadata.st_mode)
         ):
-            raise CapabilityContractError(
-                "initialized submodule path is not a canonical directory"
-            )
+            raise CapabilityContractError("initialized submodule path is not a canonical directory")
         probe = _git(
             child,
             "rev-parse",
@@ -2639,18 +2405,14 @@ def _hardened_worktree_status(
             sanitized_environment=True,
         )
         if child_head != expected_commit:
-            observations.append(
-                f"{relative}\0HEAD\0{child_head}\0{expected_commit}"
-            )
+            observations.append(f"{relative}\0HEAD\0{child_head}\0{expected_commit}")
         child_status = _hardened_worktree_status(
             child,
             ignore_submodules=False,
             seen=descendants,
         )
         if child_status:
-            observations.append(
-                f"{relative}\0STATUS\0{child_status}"
-            )
+            observations.append(f"{relative}\0STATUS\0{child_status}")
     return "\0".join(observations)
 
 
@@ -2674,11 +2436,7 @@ def _source_snapshot(
         check=False,
         sanitized_environment=sanitized_environment,
     )
-    branch = (
-        branch_result.stdout.strip()
-        if branch_result.returncode == 0
-        else None
-    )
+    branch = branch_result.stdout.strip() if branch_result.returncode == 0 else None
     status = _hardened_worktree_status(
         repository,
         ignore_submodules=False,
@@ -2711,9 +2469,7 @@ class WorktreeSafetyReceipt:
 
     def __post_init__(self) -> None:
         if self.schema != WORKTREE_SAFETY_SCHEMA:
-            raise CapabilityContractError(
-                f"unsupported worktree safety schema: {self.schema!r}"
-            )
+            raise CapabilityContractError(f"unsupported worktree safety schema: {self.schema!r}")
         _safe_id(self.run_id, "run_id")
         if self.evidence != HSSLEV0118D14():
             raise CapabilityContractError("worktree evidence marker is invalid")
@@ -2723,19 +2479,14 @@ class WorktreeSafetyReceipt:
                 raise CapabilityContractError(
                     f"{field_name} must be a full lowercase Git commit id"
                 )
-        if (
-            not isinstance(self.source_status_sha256, str)
-            or not re.fullmatch(r"[0-9a-f]{64}", self.source_status_sha256)
+        if not isinstance(self.source_status_sha256, str) or not re.fullmatch(
+            r"[0-9a-f]{64}", self.source_status_sha256
         ):
-            raise CapabilityContractError(
-                "source_status_sha256 must be a lowercase SHA-256 digest"
-            )
+            raise CapabilityContractError("source_status_sha256 must be a lowercase SHA-256 digest")
         if not isinstance(self.base_revision, str) or not self.base_revision:
             raise CapabilityContractError("base_revision must be nonempty")
         if self.base_commit != self.worktree_commit:
-            raise CapabilityContractError(
-                "worktree commit must equal the pinned base commit"
-            )
+            raise CapabilityContractError("worktree commit must equal the pinned base commit")
         if self.detached is not True:
             raise CapabilityContractError("benchmark worktree must be detached")
         if self.auto_merge is not False:
@@ -2748,9 +2499,7 @@ class WorktreeSafetyReceipt:
         worktree = Path(self.worktree_root).resolve()
         state = Path(self.state_root).resolve()
         if not worktree.is_relative_to(state):
-            raise CapabilityContractError(
-                "worktree root must be below the run state root"
-            )
+            raise CapabilityContractError("worktree root must be below the run state root")
         if _paths_overlap(source, state) or _paths_overlap(common, state):
             raise CapabilityContractError(
                 "run state root overlaps the active checkout or Git state"
@@ -2858,9 +2607,7 @@ def canonical_worktree_safety_json(receipt: WorktreeSafetyReceipt) -> str:
 
 
 def worktree_safety_sha256(receipt: WorktreeSafetyReceipt) -> str:
-    return hashlib.sha256(
-        canonical_worktree_safety_json(receipt).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(canonical_worktree_safety_json(receipt).encode("utf-8")).hexdigest()
 
 
 def _validate_isolation_paths(
@@ -2883,28 +2630,18 @@ def _validate_isolation_paths(
     if _paths_overlap(source_checkout, state_root) or _paths_overlap(
         source_git_common_dir, state_root
     ):
-        raise ValueError(
-            "benchmark state root must not overlap the active checkout or Git state"
-        )
+        raise ValueError("benchmark state root must not overlap the active checkout or Git state")
     if _paths_overlap(source_checkout, worktree_root) or _paths_overlap(
         source_git_common_dir, worktree_root
     ):
-        raise ValueError(
-            "benchmark worktree must not overlap the active checkout or Git state"
-        )
+        raise ValueError("benchmark worktree must not overlap the active checkout or Git state")
     for directory in run_paths.directories():
         if not _resolved_within(directory, state_root):
-            raise ValueError(
-                "every mutable benchmark path must be scoped below the state root"
-            )
+            raise ValueError("every mutable benchmark path must be scoped below the state root")
     if not _resolved_within(worktree_root, run_paths.worktrees):
-        raise ValueError(
-            "worktree target escapes the run-scoped worktree directory"
-        )
+        raise ValueError("worktree target escapes the run-scoped worktree directory")
     if worktree_root.exists() or worktree_root.is_symlink():
-        raise FileExistsError(
-            f"isolated worktree target already exists: {worktree_root}"
-        )
+        raise FileExistsError(f"isolated worktree target already exists: {worktree_root}")
     return state_root, worktree_root
 
 
@@ -2929,9 +2666,7 @@ def prepare_isolated_worktree(
         raise CapabilityContractError("base_revision must be nonempty")
     requested_source = Path(source_checkout).resolve()
     if not requested_source.is_dir():
-        raise CapabilityContractError(
-            "source checkout must be an existing Git working tree"
-        )
+        raise CapabilityContractError("source checkout must be an existing Git working tree")
     source = Path(
         _git_value(
             requested_source,
@@ -2941,9 +2676,7 @@ def prepare_isolated_worktree(
         )
     ).resolve()
     if source != requested_source:
-        raise CapabilityContractError(
-            "source checkout must name the active working-tree root"
-        )
+        raise CapabilityContractError("source checkout must name the active working-tree root")
     common_raw = _git_value(
         source,
         "rev-parse",
@@ -2961,9 +2694,7 @@ def prepare_isolated_worktree(
         sanitized_environment=True,
     )
     if not _HEX_COMMIT.fullmatch(base_commit):
-        raise CapabilityContractError(
-            "base_revision did not resolve to a full Git commit"
-        )
+        raise CapabilityContractError("base_revision did not resolve to a full Git commit")
     _reject_effective_checkout_filters(source, base_commit)
     source_before = _source_snapshot(
         source,
@@ -3020,9 +2751,7 @@ def prepare_isolated_worktree(
     )
     source_unchanged = source_after == source_before
     if not source_unchanged:
-        raise CapabilityContractError(
-            "active source checkout changed during worktree preparation"
-        )
+        raise CapabilityContractError("active source checkout changed during worktree preparation")
 
     receipt = WorktreeSafetyReceipt(
         schema=WORKTREE_SAFETY_SCHEMA,

@@ -19,16 +19,14 @@ biomolecule discovery, and AI-powered dataset construction.
 ### PubMed search and scrape
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers import (
-    search_pubmed, scrape_pubmed
-)
+from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers import search_pubmed, scrape_pubmed
 
 # Search
 results = await search_pubmed(
     query="CRISPR cancer therapy",
     max_results=100,
     date_from="2023-01-01",
-    fields=["title", "abstract", "authors", "doi"]
+    fields=["title", "abstract", "authors", "doi"],
 )
 
 # Scrape full articles
@@ -36,7 +34,7 @@ articles = await scrape_pubmed(
     pmids=results["pmids"],
     include_full_text=False,
     output_format="jsonl",
-    output_path="/data/pubmed_cancer.jsonl"
+    output_path="/data/pubmed_cancer.jsonl",
 )
 ```
 
@@ -49,7 +47,7 @@ trials = await scrape_clinical_trials(
     condition="Alzheimer's Disease",
     phase=["PHASE3", "PHASE4"],
     status="RECRUITING",
-    max_results=200
+    max_results=200,
 )
 ```
 
@@ -63,7 +61,7 @@ dataset = await build_medical_dataset(
     topic="diabetes treatment",
     max_records=5000,
     filter_by_impact=True,  # Filter by journal impact factor
-    output_path="/data/diabetes_dataset.parquet"
+    output_path="/data/diabetes_dataset.parquet",
 )
 ```
 

@@ -9,7 +9,7 @@ improvement project. They provide mock implementations with comprehensive functi
 for areas where tests expected individual tool files.
 
 Tool Categories:
-- Admin Tools: system_health.py, system_status.py  
+- Admin Tools: system_health.py, system_status.py
 - Cache Tools: cache_stats.py
 - Workflow Tools: execute_workflow.py
 - Vector Store Tools: list_indices.py, delete_index.py, create_vector_store.py
@@ -35,11 +35,11 @@ from .delete_index import delete_index
 from .create_vector_store import create_vector_store
 
 __all__ = [
-    'system_health',
-    'system_status', 
-    'cache_stats',
-    'execute_workflow',
-    'list_indices',
-    'delete_index',
-    'create_vector_store'
+    "system_health",
+    "system_status",
+    "cache_stats",
+    "execute_workflow",
+    "list_indices",
+    "delete_index",
+    "create_vector_store",
 ]

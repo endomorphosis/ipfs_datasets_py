@@ -31,7 +31,7 @@ from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
 # Create driver (Neo4j-compatible API)
 driver = GraphDatabase.driver(
     "ipfs://localhost:5001",
-    auth=None  # Auth not required for IPFS
+    auth=None,  # Auth not required for IPFS
 )
 
 # Use with context manager
@@ -58,10 +58,7 @@ Session management with transaction support:
 session = driver.session(database="default")
 
 # Run query
-result = session.run(
-    "MATCH (n:Person {name: $name}) RETURN n",
-    name="Alice"
-)
+result = session.run("MATCH (n:Person {name: $name}) RETURN n", name="Alice")
 
 # Iterate results
 for record in result:
@@ -89,11 +86,7 @@ Connection pooling for performance:
 from ipfs_datasets_py.knowledge_graphs.neo4j_compat import ConnectionPool
 
 # Create pool
-pool = ConnectionPool(
-    uri="ipfs://localhost:5001",
-    max_connections=10,
-    connection_timeout=30
-)
+pool = ConnectionPool(uri="ipfs://localhost:5001", max_connections=10, connection_timeout=30)
 
 # Get connection
 with pool.acquire() as connection:
@@ -166,31 +159,18 @@ result2 = session2.run("MATCH (n:Person {name: 'Alice'}) RETURN n")
 Neo4j type mappings:
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.neo4j_compat import (
-    Node, Relationship, Path
-)
+from ipfs_datasets_py.knowledge_graphs.neo4j_compat import Node, Relationship, Path
 
 # Node representation
-node = Node(
-    id=123,
-    labels=["Person", "Employee"],
-    properties={"name": "Alice", "age": 30}
-)
+node = Node(id=123, labels=["Person", "Employee"], properties={"name": "Alice", "age": 30})
 
 # Relationship representation
 rel = Relationship(
-    id=456,
-    type="WORKS_AT",
-    start_node=123,
-    end_node=789,
-    properties={"since": "2020"}
+    id=456, type="WORKS_AT", start_node=123, end_node=789, properties={"since": "2020"}
 )
 
 # Path representation
-path = Path(
-    nodes=[node1, node2, node3],
-    relationships=[rel1, rel2]
-)
+path = Path(nodes=[node1, node2, node3], relationships=[rel1, rel2])
 ```
 
 ---
@@ -203,10 +183,7 @@ path = Path(
 ```python
 from neo4j import GraphDatabase
 
-driver = GraphDatabase.driver(
-    "bolt://localhost:7687",
-    auth=("neo4j", "password")
-)
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
 
 with driver.session() as session:
     result = session.run("MATCH (n:Person) RETURN n")
@@ -222,7 +199,7 @@ from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
 
 driver = GraphDatabase.driver(
     "ipfs://localhost:5001",
-    auth=None  # No auth needed
+    auth=None,  # No auth needed
 )
 
 with driver.session() as session:
@@ -249,9 +226,11 @@ with driver.session() as session:
         tx.run("CREATE (n:Person {name: 'Bob'})")
         tx.commit()  # Or tx.rollback()
 
+
 # Transaction function (auto-retry)
 def create_person(tx, name):
     return tx.run("CREATE (n:Person {name: $name}) RETURN n", name=name)
+
 
 with driver.session() as session:
     result = session.write_transaction(create_person, "Charlie")
@@ -261,11 +240,15 @@ with driver.session() as session:
 
 ```python
 # Prevent injection, improve performance
-result = session.run("""
+result = session.run(
+    """
     MATCH (p:Person {name: $name})
     WHERE p.age > $min_age
     RETURN p
-""", name="Alice", min_age=25)
+""",
+    name="Alice",
+    min_age=25,
+)
 
 for record in result:
     print(f"Found: {record['p']['name']}")
@@ -291,6 +274,7 @@ node = record["n"]
 
 # Method 4: To DataFrame
 import pandas as pd
+
 result = session.run("MATCH (n:Person) RETURN n.name, n.age")
 df = pd.DataFrame([dict(record) for record in result])
 ```
@@ -305,7 +289,7 @@ driver = GraphDatabase.driver(
     "ipfs://localhost:5001",
     max_connection_pool_size=50,
     max_connection_lifetime=3600,  # 1 hour
-    connection_acquisition_timeout=60  # 1 minute
+    connection_acquisition_timeout=60,  # 1 minute
 )
 
 # Pool automatically manages connections
@@ -364,9 +348,7 @@ pip install ipfs-datasets-py
 from neo4j import GraphDatabase, Session, Transaction
 
 # After
-from ipfs_datasets_py.knowledge_graphs.neo4j_compat import (
-    GraphDatabase, Session, Transaction
-)
+from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase, Session, Transaction
 ```
 
 ### Step 3: Update Connection URI
@@ -429,12 +411,15 @@ def query_data():
         return session.run("MATCH (n) RETURN n").data()
     driver.close()
 
+
 # Efficient: Reuse driver
 driver = GraphDatabase.driver("ipfs://localhost:5001")
+
 
 def query_data():
     with driver.session() as session:
         return session.run("MATCH (n) RETURN n").data()
+
 
 # Close when done
 driver.close()
@@ -460,7 +445,7 @@ with driver.session() as session:
 from ipfs_datasets_py.knowledge_graphs.neo4j_compat import (
     ServiceUnavailable,
     TransientError,
-    DatabaseError
+    DatabaseError,
 )
 
 try:

@@ -181,12 +181,8 @@ def _corpus_record() -> SkillCenterSkillRecord:
 
 def test_versioned_ontology_separates_similarity_from_semantic_edges() -> None:
     assert SEMANTIC_ONTOLOGY.version == SEMANTIC_ONTOLOGY_VERSION
-    assert set(SEMANTIC_ONTOLOGY.node_types) == {
-        item.value for item in SemanticNodeType
-    }
-    assert set(SEMANTIC_ONTOLOGY.edge_types) == {
-        item.value for item in SemanticEdgeType
-    }
+    assert set(SEMANTIC_ONTOLOGY.node_types) == {item.value for item in SemanticNodeType}
+    assert set(SEMANTIC_ONTOLOGY.edge_types) == {item.value for item in SemanticEdgeType}
     SEMANTIC_ONTOLOGY.validate_edge(
         SemanticEdgeType.USES,
         SemanticNodeType.ACTION,
@@ -211,10 +207,7 @@ def test_projector_preserves_semantics_modalities_and_grounding() -> None:
     assert graph.graph_cid == cid_v1(graph.canonical_bytes())
     assert graph.graph_cid in store.blocks
     assert graph.similarity_edges == ()
-    assert all(
-        edge.edge_class is not SemanticEdgeClass.SIMILARITY
-        for edge in graph.semantic_edges
-    )
+    assert all(edge.edge_class is not SemanticEdgeClass.SIMILARITY for edge in graph.semantic_edges)
     assert {
         SemanticNodeType.INTENT_DOCUMENT,
         SemanticNodeType.SOURCE_REFERENCE,
@@ -251,18 +244,10 @@ def test_projector_preserves_semantics_modalities_and_grounding() -> None:
         if "statement_id" in node.properties
     }
     assert statement_nodes["statement:goal"].properties["modality"] == "intended"
-    assert (
-        statement_nodes["statement:failure"].properties["modality"]
-        == "prohibited"
-    )
-    assert (
-        statement_nodes["statement:verify"].properties["modality"]
-        == "recommended"
-    )
+    assert statement_nodes["statement:failure"].properties["modality"] == "prohibited"
+    assert statement_nodes["statement:verify"].properties["modality"] == "recommended"
     control = next(
-        edge
-        for edge in graph.semantic_edges
-        if edge.edge_class is SemanticEdgeClass.CONTROL
+        edge for edge in graph.semantic_edges if edge.edge_class is SemanticEdgeClass.CONTROL
     )
     assert control.edge_type is SemanticEdgeType.CONDITIONAL
     assert control.properties["control_edge_kind"] == "conditional"
@@ -297,19 +282,13 @@ def test_every_control_edge_kind_is_preserved(
         document.control_edges[0],
         kind=control_kind,
         guard_statement_id=(
-            "statement:guard"
-            if control_kind is ControlEdgeKind.CONDITIONAL
-            else ""
+            "statement:guard" if control_kind is ControlEdgeKind.CONDITIONAL else ""
         ),
     )
-    graph = SemanticIntentGraphProjector().project(
-        replace(document, control_edges=(control,))
-    )
+    graph = SemanticIntentGraphProjector().project(replace(document, control_edges=(control,)))
 
     projected = next(
-        edge
-        for edge in graph.semantic_edges
-        if edge.edge_class is SemanticEdgeClass.CONTROL
+        edge for edge in graph.semantic_edges if edge.edge_class is SemanticEdgeClass.CONTROL
     )
     assert projected.edge_type is projected_kind
     assert projected.properties["control_edge_kind"] == control_kind.value
@@ -341,9 +320,7 @@ def test_optional_corpus_binding_requires_and_records_exact_evidence() -> None:
     with pytest.raises(SemanticProjectionError, match="absent"):
         SemanticIntentGraphProjector().project(document, corpus)
 
-    source = replace(
-        document.sources[0], content_sha256=record.content_sha256
-    )
+    source = replace(document.sources[0], content_sha256=record.content_sha256)
     with pytest.raises(SemanticProjectionError, match="exact grounding"):
         SemanticIntentGraphProjector().project(
             replace(
@@ -359,25 +336,19 @@ def test_optional_corpus_binding_requires_and_records_exact_evidence() -> None:
             corpus,
         )
 
-    graph = SemanticIntentGraphProjector().project(
-        replace(document, sources=(source,)), corpus
-    )
+    graph = SemanticIntentGraphProjector().project(replace(document, sources=(source,)), corpus)
 
     assert graph.corpus_graph_digest == corpus.graph_digest
     assert graph.corpus_graph_cid == corpus.graph_cid
     source_node = next(
-        node
-        for node in graph.nodes
-        if node.node_type is SemanticNodeType.SOURCE_REFERENCE
+        node for node in graph.nodes if node.node_type is SemanticNodeType.SOURCE_REFERENCE
     )
     assert source_node.properties["corpus_node_id"]
 
 
 def test_projector_rejects_inferred_or_dangling_projections() -> None:
     document = _document()
-    inferred = replace(
-        document.statements[0], grounding=NodeGrounding.INFERRED
-    )
+    inferred = replace(document.statements[0], grounding=NodeGrounding.INFERRED)
     with pytest.raises(SemanticProjectionError, match="ungrounded"):
         SemanticIntentGraphProjector().project(
             replace(
@@ -386,13 +357,9 @@ def test_projector_rejects_inferred_or_dangling_projections() -> None:
             )
         )
 
-    dangling = replace(
-        document.control_edges[0], target_action_id="action:missing"
-    )
+    dangling = replace(document.control_edges[0], target_action_id="action:missing")
     with pytest.raises(SemanticProjectionError, match="unknown ids"):
-        SemanticIntentGraphProjector().project(
-            replace(document, control_edges=(dangling,))
-        )
+        SemanticIntentGraphProjector().project(replace(document, control_edges=(dangling,)))
 
 
 def test_artifact_rejects_dangling_edges_and_tampered_identity() -> None:

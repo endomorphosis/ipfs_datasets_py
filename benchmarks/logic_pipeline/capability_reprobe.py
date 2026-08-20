@@ -56,24 +56,20 @@ from .source_bound_import import import_source_bound_ipfs_accelerate
 
 
 REASSESSMENT_RUN_ID: Final = PUBLISHED_REASSESSMENT_RUN_ID
-LIVE_RECEIPT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.live-capability-smoke.v1"
-)
-CAPABILITY_FREEZE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.capability-freeze.v1"
-)
+LIVE_RECEIPT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.live-capability-smoke.v1"
+CAPABILITY_FREEZE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.capability-freeze.v1"
 SNAPSHOT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.capability-reassessment-snapshot.v1"
 )
-DEFAULT_BASELINE_MANIFEST: Final = (
-    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).baseline_manifest
-)
-DEFAULT_RECEIPT_DIRECTORY: Final = (
-    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).receipt_directory
-)
-DEFAULT_SNAPSHOT_PATH: Final = (
-    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).capability_snapshot
-)
+DEFAULT_BASELINE_MANIFEST: Final = ReassessmentRunLayout.for_run(
+    REASSESSMENT_RUN_ID
+).baseline_manifest
+DEFAULT_RECEIPT_DIRECTORY: Final = ReassessmentRunLayout.for_run(
+    REASSESSMENT_RUN_ID
+).receipt_directory
+DEFAULT_SNAPSHOT_PATH: Final = ReassessmentRunLayout.for_run(
+    REASSESSMENT_RUN_ID
+).capability_snapshot
 REQUIRED_MATRIX_CAPABILITIES: Final = tuple(CapabilityKind)
 NATIVE_KERNEL_COMPONENT: Final = "native_kernel"
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
@@ -82,9 +78,9 @@ _SECRET_KEY_RE = re.compile(
     r"(?:^|[_-])token(?:$|[_-](?:value|digest|sha256)))",
     re.IGNORECASE,
 )
-_SYMAI_SMOKE_TEXT = (
-    'Return only this JSON object: {"runtime_identity":"exact","fallback":false}'
-)
+_SYMAI_SMOKE_TEXT = 'Return only this JSON object: {"runtime_identity":"exact","fallback":false}'
+
+
 class CapabilityFreezeError(RuntimeError):
     """Raised when live evidence cannot authorize or freeze the matrix."""
 
@@ -121,9 +117,7 @@ def _strict_json(raw: bytes, *, source: str) -> object:
         result: dict[str, object] = {}
         for key, value in items:
             if key in result:
-                raise CapabilityFreezeError(
-                    f"{source} contains duplicate JSON key {key!r}"
-                )
+                raise CapabilityFreezeError(f"{source} contains duplicate JSON key {key!r}")
             result[key] = value
         return result
 
@@ -132,9 +126,7 @@ def _strict_json(raw: bytes, *, source: str) -> object:
             raw.decode("utf-8"),
             object_pairs_hook=pairs,
             parse_constant=lambda value: (_ for _ in ()).throw(
-                CapabilityFreezeError(
-                    f"{source} contains non-finite JSON value {value}"
-                )
+                CapabilityFreezeError(f"{source} contains non-finite JSON value {value}")
             ),
         )
     except (UnicodeError, json.JSONDecodeError) as exc:
@@ -142,33 +134,24 @@ def _strict_json(raw: bytes, *, source: str) -> object:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise CapabilityFreezeError(f"{field} must be an object")
     return value
 
 
-def _exact_keys(
-    value: Mapping[str, object], expected: set[str], field: str
-) -> None:
+def _exact_keys(value: Mapping[str, object], expected: set[str], field: str) -> None:
     if set(value) != expected:
         raise CapabilityFreezeError(
-            f"{field} fields changed; expected={sorted(expected)}, "
-            f"actual={sorted(value)}"
+            f"{field} fields changed; expected={sorted(expected)}, actual={sorted(value)}"
         )
 
 
 def _reject_secret_bearing(value: object, field: str = "receipt") -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
-            allowed_negative_attestation = (
-                key == "secrets_serialized" and item is False
-            )
+            allowed_negative_attestation = key == "secrets_serialized" and item is False
             if _SECRET_KEY_RE.search(str(key)) and not allowed_negative_attestation:
-                raise CapabilityFreezeError(
-                    f"{field} contains secret-bearing field {key!r}"
-                )
+                raise CapabilityFreezeError(f"{field} contains secret-bearing field {key!r}")
             _reject_secret_bearing(item, f"{field}.{key}")
     elif isinstance(value, (list, tuple)):
         for index, item in enumerate(value):
@@ -178,9 +161,7 @@ def _reject_secret_bearing(value: object, field: str = "receipt") -> None:
         if "<redacted>" in lowered or re.search(
             r"(?i)\b(?:bearer|basic)\s+[a-z0-9._~+/-]{8,}", value
         ):
-            raise CapabilityFreezeError(
-                f"{field} contains redacted or credential-like text"
-            )
+            raise CapabilityFreezeError(f"{field} contains redacted or credential-like text")
 
 
 def _seal_receipt(payload: Mapping[str, object]) -> dict[str, object]:
@@ -222,29 +203,19 @@ def _validate_live_receipt(
         or receipt["status"] != "pass"
     ):
         raise CapabilityFreezeError(f"{component} receipt header is ineligible")
-    requested = _mapping(
-        receipt["requested_identity"], f"{component}.requested_identity"
-    )
-    effective = _mapping(
-        receipt["effective_identity"], f"{component}.effective_identity"
-    )
+    requested = _mapping(receipt["requested_identity"], f"{component}.requested_identity")
+    effective = _mapping(receipt["effective_identity"], f"{component}.effective_identity")
     if requested != effective:
-        raise CapabilityFreezeError(
-            f"{component} requested/effective identity mismatch"
-        )
+        raise CapabilityFreezeError(f"{component} requested/effective identity mismatch")
     bounded = _mapping(receipt["bounded"], f"{component}.bounded")
     safety = _mapping(receipt["safety"], f"{component}.safety")
-    if (
-        bounded.get("bounded") is not True
-        or safety
-        != {
-            "corpus_accessed": False,
-            "fallback_used": False,
-            "holdout_accessed": False,
-            "production_routing_changed": False,
-            "secrets_serialized": False,
-        }
-    ):
+    if bounded.get("bounded") is not True or safety != {
+        "corpus_accessed": False,
+        "fallback_used": False,
+        "holdout_accessed": False,
+        "production_routing_changed": False,
+        "secrets_serialized": False,
+    }:
         raise CapabilityFreezeError(
             f"{component} receipt does not prove the bounded safety contract"
         )
@@ -333,10 +304,7 @@ def _valid_capture_date(
         captured = date.fromisoformat(value)
     except ValueError:
         return False
-    return (
-        value == captured.isoformat()
-        and captured <= datetime.now(timezone.utc).date()
-    )
+    return value == captured.isoformat() and captured <= datetime.now(timezone.utc).date()
 
 
 def _reference_root(
@@ -356,9 +324,7 @@ def _reference_root(
 
 def _relative_reference(value: object, field: str) -> PurePosixPath:
     if not isinstance(value, str) or not value or "\\" in value:
-        raise CapabilityFreezeError(
-            f"{field} must be a canonical relative POSIX path"
-        )
+        raise CapabilityFreezeError(f"{field} must be a canonical relative POSIX path")
     path = PurePosixPath(value)
     if (
         path.is_absolute()
@@ -366,9 +332,7 @@ def _relative_reference(value: object, field: str) -> PurePosixPath:
         or any(part in {"", ".", ".."} for part in path.parts)
         or path.as_posix() != value
     ):
-        raise CapabilityFreezeError(
-            f"{field} must be a canonical relative POSIX path"
-        )
+        raise CapabilityFreezeError(f"{field} must be a canonical relative POSIX path")
     return path
 
 
@@ -379,15 +343,11 @@ def _assert_no_symlink_chain(root: Path, target: Path, field: str) -> None:
     logical_target = target.absolute()
     for ancestor in reversed((logical_root, *logical_root.parents)):
         if ancestor.is_symlink():
-            raise CapabilityFreezeError(
-                f"{field} reference root must not use a symlink"
-            )
+            raise CapabilityFreezeError(f"{field} reference root must not use a symlink")
     try:
         relative = logical_target.relative_to(logical_root)
     except ValueError as exc:
-        raise CapabilityFreezeError(
-            f"{field} escaped its reference root"
-        ) from exc
+        raise CapabilityFreezeError(f"{field} escaped its reference root") from exc
     current = logical_root
     for part in relative.parts:
         current = current / part
@@ -411,9 +371,7 @@ def _canonical_artifact_reference(
     logical_path = path if path.is_absolute() else repository / path
     _assert_no_symlink_chain(root, logical_path, field)
     try:
-        relative = logical_path.resolve(strict=False).relative_to(
-            root.resolve(strict=False)
-        )
+        relative = logical_path.resolve(strict=False).relative_to(root.resolve(strict=False))
     except ValueError as exc:
         raise CapabilityFreezeError(
             f"{field} must remain inside its canonical reference root"
@@ -443,13 +401,9 @@ def _resolve_artifact_reference(
         resolved_root = root.resolve(strict=True)
         target = candidate.resolve(strict=True)
     except OSError as exc:
-        raise CapabilityFreezeError(
-            f"{field} artifact is unavailable"
-        ) from exc
+        raise CapabilityFreezeError(f"{field} artifact is unavailable") from exc
     if not target.is_file() or not target.is_relative_to(resolved_root):
-        raise CapabilityFreezeError(
-            f"{field} escaped its canonical reference root"
-        )
+        raise CapabilityFreezeError(f"{field} escaped its canonical reference root")
     return target
 
 
@@ -485,8 +439,7 @@ def _spacy_smoke(repository: Path, *, run_id: str) -> dict[str, object]:
         or list(nlp.pipe_names) != expected_pipes
         or not annotations
         or not all(annotations.values())
-        or _sha_bytes(smoke_text.encode("utf-8"))
-        != smoke.get("text_sha256")
+        or _sha_bytes(smoke_text.encode("utf-8")) != smoke.get("text_sha256")
     ):
         raise CapabilityFreezeError("spaCy lock, identity, or annotation smoke drifted")
     identity = {
@@ -504,10 +457,7 @@ def _spacy_smoke(repository: Path, *, run_id: str) -> dict[str, object]:
             "annotations": annotations,
             "input_sha256": _sha_bytes(smoke_text.encode("utf-8")),
             "output_sha256": _sha_json(
-                [
-                    [token.text, token.lemma_, token.pos_, token.dep_]
-                    for token in document
-                ]
+                [[token.text, token.lemma_, token.pos_, token.dep_] for token in document]
             ),
             "token_count": len(document),
         },
@@ -548,11 +498,7 @@ def _served_models(value: Mapping[str, object]) -> list[Mapping[str, object]]:
     raw = value.get("data", value.get("models"))
     if not isinstance(raw, list):
         raise CapabilityFreezeError("model service response has no model array")
-    return [
-        _mapping(item, "served model")
-        for item in raw
-        if isinstance(item, Mapping)
-    ]
+    return [_mapping(item, "served model") for item in raw if isinstance(item, Mapping)]
 
 
 def _model_id(value: Mapping[str, object]) -> str:
@@ -597,19 +543,15 @@ def _leanstral_adapter_smoke(
         )
     except Exception as exc:
         raise CapabilityFreezeError(
-            "Leanstral adapter/provider readiness smoke failed: "
-            f"{type(exc).__name__}"
+            f"Leanstral adapter/provider readiness smoke failed: {type(exc).__name__}"
         ) from exc
     if record.status.value != "success" or not isinstance(record.data, Mapping):
         detail = str(record.failure_detail or record.failure_code.value)
         raise CapabilityFreezeError(
-            "Leanstral adapter/provider readiness smoke did not produce a draft: "
-            f"{detail[:256]}"
+            f"Leanstral adapter/provider readiness smoke did not produce a draft: {detail[:256]}"
         )
     draft = _mapping(record.data.get("draft"), "Leanstral readiness draft")
-    metadata = _mapping(
-        draft.get("metadata"), "Leanstral readiness draft metadata"
-    )
+    metadata = _mapping(draft.get("metadata"), "Leanstral readiness draft metadata")
     generation = _mapping(
         metadata.get("benchmark_generation_boundary"),
         "Leanstral generation-boundary receipt",
@@ -621,23 +563,16 @@ def _leanstral_adapter_smoke(
         or draft.get("verified") is not False
         or draft.get("authoritative") is not False
         or draft.get("kernel_checked") is not False
-        or not str(draft.get("context_capsule_id") or "").startswith(
-            "proof-context:sha256:"
-        )
+        or not str(draft.get("context_capsule_id") or "").startswith("proof-context:sha256:")
         or generation.get("schema") != LEANSTRAL_GENERATION_BOUNDARY_SCHEMA
         or generation.get("endpoint") != identity["endpoint"]
         or generation.get("provider") != identity["provider"]
         or generation.get("requested_model") != identity["model"]
         or generation.get("response_model") != identity["model"]
-        or not _SHA256_RE.fullmatch(
-            str(generation.get("raw_model_content_sha256") or "")
-        )
-        or generation.get("normalization")
-        not in {"none", "strip_single_leading_by"}
+        or not _SHA256_RE.fullmatch(str(generation.get("raw_model_content_sha256") or ""))
+        or generation.get("normalization") not in {"none", "strip_single_leading_by"}
     ):
-        raise CapabilityFreezeError(
-            "Leanstral readiness draft violated the frozen strict contract"
-        )
+        raise CapabilityFreezeError("Leanstral readiness draft violated the frozen strict contract")
     return {
         "adapter_provider_boundary": True,
         "compiler_context_bound": True,
@@ -645,9 +580,7 @@ def _leanstral_adapter_smoke(
         "context_capsule_id": str(draft["context_capsule_id"]),
         "prompt_sha256": str(draft.get("prompt_sha256") or ""),
         "draft_output_sha256": str(draft.get("output_sha256") or ""),
-        "raw_model_content_sha256": str(
-            generation["raw_model_content_sha256"]
-        ),
+        "raw_model_content_sha256": str(generation["raw_model_content_sha256"]),
         "proposal_normalization": str(generation["normalization"]),
         "model_calls": record.telemetry.model_calls,
         "draft_authoritative": False,
@@ -660,12 +593,8 @@ def _leanstral_smokes(
     *,
     run_id: str,
 ) -> tuple[dict[str, object], dict[str, object]]:
-    symai_lock = _load_json(
-        repository / "benchmarks/logic_pipeline/runtime_env/symai-router.lock"
-    )
-    lean_lock = _load_json(
-        repository / "benchmarks/logic_pipeline/runtime_env/leanstral.lock"
-    )
+    symai_lock = _load_json(repository / "benchmarks/logic_pipeline/runtime_env/symai-router.lock")
+    lean_lock = _load_json(repository / "benchmarks/logic_pipeline/runtime_env/leanstral.lock")
     symai_identity = _mapping(symai_lock.get("identity"), "SyMAI lock identity")
     symai_package = _mapping(symai_lock.get("package"), "SyMAI lock package")
     symai_router = _mapping(symai_lock.get("router"), "SyMAI lock router")
@@ -696,9 +625,7 @@ def _leanstral_smokes(
             sys.prefix = str(config_root)
             symai_module = importlib.import_module(str(symai_package["import"]))
             router_module = importlib.import_module(str(symai_router["module"]))
-            engine_module_name, _, engine_name = str(symai_router["engine"]).rpartition(
-                "."
-            )
+            engine_module_name, _, engine_name = str(symai_router["engine"]).rpartition(".")
             engine_module = importlib.import_module(engine_module_name)
             engine = getattr(engine_module, engine_name)
         except Exception as exc:
@@ -725,8 +652,7 @@ def _leanstral_smokes(
         max_bytes=max_response,
     )
     matching = [
-        model for model in _served_models(models)
-        if _model_id(model) == lean_identity["model"]
+        model for model in _served_models(models) if _model_id(model) == lean_identity["model"]
     ]
     if str(health.get("status", "")).lower() not in {"ok", "healthy"}:
         raise CapabilityFreezeError("Leanstral health check is not terminal healthy")
@@ -768,48 +694,32 @@ def _leanstral_smokes(
                 "model": str(symai_identity["model"]),
                 "routing_stack": ["capability_reprobe", "llm_router"],
             },
-            environment_sha256=_sha_json(
-                {"symai": symai_identity, "leanstral": lean_identity}
-            ),
+            environment_sha256=_sha_json({"symai": symai_identity, "leanstral": lean_identity}),
         )
     )
     provenance = symai_record.data.get("backend_provenance")
-    router_metadata = (
-        provenance.get("router_metadata")
-        if isinstance(provenance, Mapping)
-        else None
-    )
+    router_metadata = provenance.get("router_metadata") if isinstance(provenance, Mapping) else None
     if (
         symai_record.status is not StageStatus.SUCCESS
         or not isinstance(router_metadata, Mapping)
-        or router_metadata.get("resolved_provider_name")
-        != lean_identity["provider"]
+        or router_metadata.get("resolved_provider_name") != lean_identity["provider"]
         or router_metadata.get("resolved_model_name") != lean_identity["model"]
         or router_metadata.get("service_endpoint") != endpoint
-        or router_metadata.get("routing_backend")
-        != "existing_leanstral_service"
+        or router_metadata.get("routing_backend") != "existing_leanstral_service"
     ):
-        raise CapabilityFreezeError(
-            "SyMAI actual engine/adapter route failed or drifted"
-        )
+        raise CapabilityFreezeError("SyMAI actual engine/adapter route failed or drifted")
     raw_symai_output = symai_record.data.get("raw_output")
     if not isinstance(raw_symai_output, str):
         raise CapabilityFreezeError("SyMAI actual route omitted structured output")
     effective_service_model = str(router_metadata["resolved_model_name"])
     completion = {
         "model": effective_service_model,
-        "structured_output_sha256": _sha_bytes(
-            raw_symai_output.encode("utf-8")
-        ),
+        "structured_output_sha256": _sha_bytes(raw_symai_output.encode("utf-8")),
     }
     boundary_checks = _leanstral_adapter_smoke(
         lean_identity,
         timeout_seconds=float(symai_smoke["timeout_seconds"]),
-        max_tokens=int(
-            _mapping(lean_lock.get("smoke"), "Leanstral lock smoke")[
-                "max_tokens"
-            ]
-        ),
+        max_tokens=int(_mapping(lean_lock.get("smoke"), "Leanstral lock smoke")["max_tokens"]),
     )
     symai_effective = {
         "provider": str(symai_identity["provider"]),
@@ -899,9 +809,7 @@ def _hammer_smoke(
     try:
         hammer_module = importlib.import_module("ipfs_datasets_py.logic.hammers")
     except Exception as exc:
-        raise CapabilityFreezeError(
-            f"Hammer live import failed: {type(exc).__name__}"
-        ) from exc
+        raise CapabilityFreezeError(f"Hammer live import failed: {type(exc).__name__}") from exc
     identity = {
         "implementation": "ipfs_datasets_py.logic.hammers",
         "package_version": str(record.identity["hammer_package_version"]),
@@ -937,10 +845,7 @@ def _lean_smokes(
         raise CapabilityFreezeError("Lean toolchain metadata probe is unavailable")
     lean = _mapping(record.identity.get("lean"), "Lean identity")
     lake = _mapping(record.identity.get("lake"), "Lake identity")
-    source = (
-        "theorem hssl_capability_identity (x : Nat) : x = x := by\n"
-        "  exact rfl\n"
-    )
+    source = "theorem hssl_capability_identity (x : Nat) : x = x := by\n  exact rfl\n"
     with tempfile.TemporaryDirectory(prefix="hssl-native-kernel-") as raw_root:
         source_path = Path(raw_root) / "HSSLCapabilitySmoke.lean"
         source_path.write_text(source, encoding="utf-8")
@@ -950,11 +855,7 @@ def _lean_smokes(
             cwd=raw_root,
             max_output_bytes=4096,
         )
-    if (
-        kernel.returncode != 0
-        or kernel.timed_out
-        or not kernel.process_group_reaped
-    ):
+    if kernel.returncode != 0 or kernel.timed_out or not kernel.process_group_reaped:
         raise CapabilityFreezeError("independent native Lean kernel rejected smoke")
     toolchain_identity = {
         "lean_path": str(lean["path"]),
@@ -1164,9 +1065,7 @@ def _source_binding(
         )
         manifest_bytes = baseline_path.read_bytes()
     except (OSError, SourceReconciliationError) as exc:
-        raise CapabilityFreezeError(
-            f"source baseline revalidation failed: {exc}"
-        ) from exc
+        raise CapabilityFreezeError(f"source baseline revalidation failed: {exc}") from exc
     payload = baseline.to_dict()
     source = _mapping(payload["source"], "baseline source")
     if (
@@ -1217,9 +1116,7 @@ def run_live_capability_reprobe(
     except ReassessmentNamespaceError as exc:
         raise CapabilityFreezeError(str(exc)) from exc
     baseline_path = (
-        layout.baseline_manifest
-        if baseline_manifest is None
-        else Path(baseline_manifest)
+        layout.baseline_manifest if baseline_manifest is None else Path(baseline_manifest)
     )
     if not baseline_path.is_absolute():
         baseline_path = repository / baseline_path
@@ -1266,9 +1163,7 @@ def run_live_capability_reprobe(
 
     def record(kind: CapabilityKind, component: str) -> CapabilityRecord:
         receipt = receipts[component]
-        identity = dict(
-            _mapping(receipt["effective_identity"], f"{component} identity")
-        )
+        identity = dict(_mapping(receipt["effective_identity"], f"{component} identity"))
         identity.update(
             {
                 "live_receipt_component": component,
@@ -1340,9 +1235,7 @@ def _exclusive_write(path: Path, raw: bytes) -> None:
             handle.flush()
             os.fsync(handle.fileno())
     except FileExistsError as exc:
-        raise CapabilityFreezeError(
-            f"refusing to overwrite frozen evidence: {path}"
-        ) from exc
+        raise CapabilityFreezeError(f"refusing to overwrite frozen evidence: {path}") from exc
 
 
 def freeze_live_capability_reprobe(
@@ -1366,9 +1259,7 @@ def freeze_live_capability_reprobe(
     except ReassessmentNamespaceError as exc:
         raise CapabilityFreezeError(str(exc)) from exc
     baseline_path = Path(
-        layout.baseline_manifest
-        if baseline_manifest is None
-        else baseline_manifest
+        layout.baseline_manifest if baseline_manifest is None else baseline_manifest
     )
     if not baseline_path.is_absolute():
         baseline_path = repository / baseline_path
@@ -1379,18 +1270,12 @@ def freeze_live_capability_reprobe(
         benchmark_root=benchmark_root,
     )
     if dict(reprobe.source_binding) != expected_source_binding:
-        raise CapabilityFreezeError(
-            "live reprobe source binding changed before freeze"
-        )
+        raise CapabilityFreezeError("live reprobe source binding changed before freeze")
     receipt_root = Path(
-        layout.receipt_directory
-        if receipt_directory is None
-        else receipt_directory
+        layout.receipt_directory if receipt_directory is None else receipt_directory
     )
     receipt_root = _rooted(repository, receipt_root)
-    snapshot = Path(
-        layout.capability_snapshot if snapshot_path is None else snapshot_path
-    )
+    snapshot = Path(layout.capability_snapshot if snapshot_path is None else snapshot_path)
     snapshot = _rooted(repository, snapshot)
     inventory_path = receipt_root / "capability-inventory.json"
     freeze_path = receipt_root / "capability-freeze.json"
@@ -1426,10 +1311,7 @@ def freeze_live_capability_reprobe(
         raise CapabilityFreezeError(str(exc)) from exc
     receipt_root.mkdir(mode=0o700, parents=True, exist_ok=True)
     targets = [inventory_path, freeze_path, snapshot]
-    targets.extend(
-        receipt_root / _receipt_filename(component)
-        for component in reprobe.receipts
-    )
+    targets.extend(receipt_root / _receipt_filename(component) for component in reprobe.receipts)
     existing = [path for path in targets if path.exists()]
     if existing:
         raise CapabilityFreezeError(
@@ -1448,9 +1330,7 @@ def freeze_live_capability_reprobe(
             "bytes_sha256": _sha_bytes(raw),
             "receipt_sha256": receipt_payload["receipt_sha256"],
         }
-    inventory_raw = (
-        canonical_capability_inventory_json(reprobe.inventory) + "\n"
-    ).encode("utf-8")
+    inventory_raw = (canonical_capability_inventory_json(reprobe.inventory) + "\n").encode("utf-8")
     _exclusive_write(inventory_path, inventory_raw)
     freeze: dict[str, object] = {
         "schema": CAPABILITY_FREEZE_SCHEMA,
@@ -1510,21 +1390,16 @@ def freeze_live_capability_reprobe(
             },
             "source_binding": dict(reprobe.source_binding),
             "capability_statuses": {
-                record.kind.value: record.status.value
-                for record in reprobe.inventory.capabilities
+                record.kind.value: record.status.value for record in reprobe.inventory.capabilities
             },
             "native_kernel": {
                 "status": "pass",
-                "receipt_sha256": reprobe.receipts[NATIVE_KERNEL_COMPONENT][
-                    "receipt_sha256"
-                ],
+                "receipt_sha256": reprobe.receipts[NATIVE_KERNEL_COMPONENT]["receipt_sha256"],
             },
             "safety": freeze["safety"],
         },
     }
-    snapshot_raw = (
-        json.dumps(snapshot_payload, indent=2, sort_keys=True) + "\n"
-    ).encode("utf-8")
+    snapshot_raw = (json.dumps(snapshot_payload, indent=2, sort_keys=True) + "\n").encode("utf-8")
     _exclusive_write(snapshot, snapshot_raw)
     return MappingProxyType(freeze)
 
@@ -1547,11 +1422,7 @@ def validate_frozen_capability_reprobe(
         )
     except ValueError as exc:
         raise CapabilityFreezeError("expected run_id is invalid") from exc
-    root = Path(
-        layout.receipt_directory
-        if receipt_directory is None
-        else receipt_directory
-    )
+    root = Path(layout.receipt_directory if receipt_directory is None else receipt_directory)
     root = _rooted(repository, root)
     freeze_path = root / "capability-freeze.json"
     if _uses_legacy_repository_references(expected_run_id, benchmark_root):
@@ -1565,9 +1436,7 @@ def validate_frozen_capability_reprobe(
             field="capability freeze",
         )
     freeze_raw = freeze_path.read_bytes()
-    freeze = dict(
-        _mapping(_strict_json(freeze_raw, source=freeze_path.as_posix()), "freeze")
-    )
+    freeze = dict(_mapping(_strict_json(freeze_raw, source=freeze_path.as_posix()), "freeze"))
     if freeze_raw != (_canonical_json(freeze) + "\n").encode("utf-8"):
         raise CapabilityFreezeError("capability freeze is not canonical JSON")
     _exact_keys(
@@ -1596,8 +1465,7 @@ def validate_frozen_capability_reprobe(
         or freeze["status"] != "eligible"
         or freeze["frozen"] is not True
         or freeze["native_kernel_required"] is not True
-        or freeze["required_capabilities"]
-        != [kind.value for kind in CapabilityKind]
+        or freeze["required_capabilities"] != [kind.value for kind in CapabilityKind]
         or _sha_json(freeze) != supplied_freeze_sha
     ):
         raise CapabilityFreezeError("capability freeze header/digest is invalid")
@@ -1623,17 +1491,13 @@ def validate_frozen_capability_reprobe(
     inventory_raw = inventory_path.read_bytes()
     if _sha_bytes(inventory_raw) != inventory_ref.get("bytes_sha256"):
         raise CapabilityFreezeError("inventory byte digest mismatch")
-    inventory_value = _strict_json(
-        inventory_raw, source=inventory_path.as_posix()
-    )
+    inventory_value = _strict_json(inventory_raw, source=inventory_path.as_posix())
     inventory = CapabilityInventory.from_dict(inventory_value)
     if (
         inventory.schema != CAPABILITY_INVENTORY_SCHEMA
         or inventory.run_id != expected_run_id
-        or capability_inventory_sha256(inventory)
-        != inventory_ref.get("semantic_sha256")
-        or inventory_raw
-        != (canonical_capability_inventory_json(inventory) + "\n").encode("utf-8")
+        or capability_inventory_sha256(inventory) != inventory_ref.get("semantic_sha256")
+        or inventory_raw != (canonical_capability_inventory_json(inventory) + "\n").encode("utf-8")
     ):
         raise CapabilityFreezeError("inventory identity or canonical bytes drifted")
 
@@ -1671,9 +1535,7 @@ def validate_frozen_capability_reprobe(
 
     source_binding = dict(_mapping(freeze["source_binding"], "source binding"))
     baseline_path = Path(
-        layout.baseline_manifest
-        if baseline_manifest is None
-        else baseline_manifest
+        layout.baseline_manifest if baseline_manifest is None else baseline_manifest
     )
     if not baseline_path.is_absolute():
         baseline_path = repository / baseline_path
@@ -1694,8 +1556,7 @@ def validate_frozen_capability_reprobe(
         receipt = receipts.get(component)
         if (
             receipt is None
-            or record.identity.get("live_receipt_sha256")
-            != receipt["receipt_sha256"]
+            or record.identity.get("live_receipt_sha256") != receipt["receipt_sha256"]
             or record.identity.get("bounded_smoke") is not True
         ):
             raise CapabilityFreezeError(
@@ -1722,9 +1583,7 @@ def validate_capability_snapshot(
         )
     except ValueError as exc:
         raise CapabilityFreezeError("expected run_id is invalid") from exc
-    path = Path(
-        layout.capability_snapshot if snapshot_path is None else snapshot_path
-    )
+    path = Path(layout.capability_snapshot if snapshot_path is None else snapshot_path)
     path = _rooted(repository, path)
     if _uses_legacy_repository_references(expected_run_id, benchmark_root):
         _assert_no_symlink_chain(repository, path, "capability snapshot")
@@ -1736,9 +1595,7 @@ def validate_capability_snapshot(
             benchmark_root=benchmark_root,
             field="capability snapshot",
         )
-    value = dict(
-        _mapping(_strict_json(path.read_bytes(), source=path.as_posix()), "snapshot")
-    )
+    value = dict(_mapping(_strict_json(path.read_bytes(), source=path.as_posix()), "snapshot"))
     _exact_keys(
         value,
         {"benchmark_script", "captured_on", "notes", "results"},
@@ -1781,9 +1638,7 @@ def validate_capability_snapshot(
     freeze_ref = _mapping(results["freeze"], "snapshot freeze")
     receipt_root = _rooted(
         repository,
-        layout.receipt_directory
-        if receipt_directory is None
-        else receipt_directory,
+        layout.receipt_directory if receipt_directory is None else receipt_directory,
     )
     targets: dict[str, Path] = {}
     for field, reference, filename in (
@@ -1803,9 +1658,7 @@ def validate_capability_snapshot(
             field=f"snapshot {field}",
         )
         if reference["path"] != expected_reference:
-            raise CapabilityFreezeError(
-                f"snapshot {field} path binding drifted"
-            )
+            raise CapabilityFreezeError(f"snapshot {field} path binding drifted")
         target = _resolve_artifact_reference(
             reference["path"],
             repository=repository,
@@ -1828,24 +1681,19 @@ def validate_capability_snapshot(
     if (
         inventory.run_id != expected_run_id
         or freeze.get("run_id") != expected_run_id
-        or capability_inventory_sha256(inventory)
-        != inventory_ref["semantic_sha256"]
+        or capability_inventory_sha256(inventory) != inventory_ref["semantic_sha256"]
         or freeze.get("freeze_sha256") != freeze_ref["semantic_sha256"]
         or results["source_binding"] != freeze.get("source_binding")
         or results["safety"] != freeze.get("safety")
         or results["capability_statuses"]
-        != {
-            record.kind.value: record.status.value
-            for record in inventory.capabilities
-        }
+        != {record.kind.value: record.status.value for record in inventory.capabilities}
     ):
         raise CapabilityFreezeError("public capability snapshot cross-binding drifted")
     native = _mapping(results["native_kernel"], "snapshot native kernel")
     receipts = _mapping(freeze.get("receipts"), "snapshot freeze receipts")
     native_ref = _mapping(receipts.get(NATIVE_KERNEL_COMPONENT), "native receipt")
-    if (
-        native.get("status") != "pass"
-        or native.get("receipt_sha256") != native_ref.get("receipt_sha256")
+    if native.get("status") != "pass" or native.get("receipt_sha256") != native_ref.get(
+        "receipt_sha256"
     ):
         raise CapabilityFreezeError("public snapshot native-kernel binding drifted")
     _reject_secret_bearing(value, "snapshot")

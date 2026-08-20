@@ -377,6 +377,7 @@ async def cache_get(key: str):
 # Tool becomes:
 from ipfs_datasets_py.logic.deontic import DeonticParser, ConflictDetector
 
+
 @wrap_function_as_tool(...)
 async def detect_conflicts(statements: List[str]):
     parser = DeonticParser()
@@ -399,6 +400,7 @@ async def detect_conflicts(statements: List[str]):
 # Tool becomes:
 from ipfs_datasets_py.processors.nlp import EntityExtractor, RelationshipAnalyzer
 
+
 @wrap_function_as_tool(...)
 async def analyze_relationships(text: str):
     extractor = EntityExtractor()
@@ -419,36 +421,38 @@ async def analyze_relationships(text: str):
 import os
 from pathlib import Path
 
+
 def count_lines(file_path):
     """Count non-comment, non-blank lines."""
     with open(file_path) as f:
         lines = f.readlines()
-    
+
     code_lines = 0
     for line in lines:
         stripped = line.strip()
-        if stripped and not stripped.startswith('#'):
+        if stripped and not stripped.startswith("#"):
             code_lines += 1
     return code_lines
+
 
 def test_tool_files_are_thin():
     """Verify tool files are <100 lines (excluding schemas)."""
     tools_dir = Path("ipfs_datasets_py/mcp_server/tools")
-    
+
     thick_tools = []
     for tool_file in tools_dir.rglob("*.py"):
         if tool_file.name.startswith("_") or tool_file.name.startswith("test_"):
             continue
-        
+
         lines = count_lines(tool_file)
-        
+
         # Allow larger files if they have multiple tools
         # or are legacy/complex state tools
         allowed_thick = ["cache_tools.py", "analysis_tools.py", "legacy"]
-        
+
         if lines > 150 and not any(a in str(tool_file) for a in allowed_thick):
             thick_tools.append((tool_file, lines))
-    
+
     assert len(thick_tools) == 0, f"Thick tools found: {thick_tools}"
 ```
 
@@ -460,25 +464,24 @@ def test_tool_files_are_thin():
 def test_tools_import_from_core():
     """Verify tools import from core modules, not embed logic."""
     tools_dir = Path("ipfs_datasets_py/mcp_server/tools")
-    
+
     missing_imports = []
     for tool_file in tools_dir.rglob("*.py"):
         if tool_file.name.startswith("_"):
             continue
-        
+
         with open(tool_file) as f:
             content = f.read()
-        
+
         # Check for core module imports
-        has_core_import = any([
-            "from ipfs_datasets_py." in content,
-            "import ipfs_datasets_py." in content
-        ])
-        
+        has_core_import = any(
+            ["from ipfs_datasets_py." in content, "import ipfs_datasets_py." in content]
+        )
+
         # Exclude certain files (like __init__.py)
         if not has_core_import and tool_file.name != "__init__.py":
             missing_imports.append(tool_file)
-    
+
     # Report but don't fail (some tools may be self-contained)
     if missing_imports:
         print(f"Tools without core imports: {missing_imports}")

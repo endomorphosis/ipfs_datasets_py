@@ -69,9 +69,7 @@ def test_parser_ir_readiness_resolves_numbered_reference_only_with_same_document
     cited_element["canonical_citation"] = ""
     cited_element["section_context"] = {"section": "552"}
 
-    projected = parser_elements_with_deterministic_ir_readiness(
-        [reference_element, cited_element]
-    )
+    projected = parser_elements_with_deterministic_ir_readiness([reference_element, cited_element])
 
     assert projected[0]["promotable_to_theorem"] is False
     assert projected[0]["llm_repair"]["required"] is False
@@ -99,7 +97,9 @@ def test_parser_ir_readiness_returns_copies_and_preserves_legacy_validation_list
     assert raw_element["export_readiness"]["requires_validation"] == raw_requires_validation
     assert raw_element["llm_repair"]["required"] is False
     assert raw_element["llm_repair"]["deterministically_resolved"] is True
-    assert raw_element["llm_repair"]["deterministic_resolution"]["type"] == "local_scope_applicability"
+    assert (
+        raw_element["llm_repair"]["deterministic_resolution"]["type"] == "local_scope_applicability"
+    )
     assert isinstance(projected["export_readiness"]["requires_validation"], list)
     assert projected["export_readiness"]["requires_validation"] == raw_requires_validation
     assert projected["llm_repair"]["required"] is False
@@ -117,9 +117,19 @@ def test_raw_parser_llm_repair_clears_only_formula_resolved_probe_samples():
         "The Secretary shall publish the notice except as provided in section 552."
     )[0]
 
-    assert [element["promotable_to_theorem"] for element in resolved_elements] == [False, False, False]
-    assert [element["llm_repair"]["required"] for element in resolved_elements] == [False, False, False]
-    assert [element["llm_repair"]["deterministic_resolution"]["type"] for element in resolved_elements] == [
+    assert [element["promotable_to_theorem"] for element in resolved_elements] == [
+        False,
+        False,
+        False,
+    ]
+    assert [element["llm_repair"]["required"] for element in resolved_elements] == [
+        False,
+        False,
+        False,
+    ]
+    assert [
+        element["llm_repair"]["deterministic_resolution"]["type"] for element in resolved_elements
+    ] == [
         "local_scope_applicability",
         "standard_substantive_exception",
         "pure_precedence_override",

@@ -130,15 +130,15 @@ When `llm_router` needs Copilot to work outside the current working tree, use th
 from ipfs_datasets_py import llm_router
 
 llm_router.generate_text(
-   "Summarize the files in the implementation worktree and propose the next fix.",
-   provider="copilot_cli",
-   copilot_add_dirs=["/tmp/211-ai-implementation-worktrees"],
+    "Summarize the files in the implementation worktree and propose the next fix.",
+    provider="copilot_cli",
+    copilot_add_dirs=["/tmp/211-ai-implementation-worktrees"],
 )
 
 llm_router.generate_text(
-   "Review the files under this alternate checkout.",
-   provider="copilot_cli",
-   copilot_allow_all_paths=True,
+    "Review the files under this alternate checkout.",
+    provider="copilot_cli",
+    copilot_allow_all_paths=True,
 )
 ```
 

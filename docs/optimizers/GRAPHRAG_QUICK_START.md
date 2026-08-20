@@ -34,12 +34,7 @@ from ipfs_datasets_py.optimizers.graphrag import (
 from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator, OntologyGenerationContext
 
 # Create generator with AI model backend
-generator = OntologyGenerator(
-    ipfs_accelerate_config={
-        'model': 'bert-base-uncased',
-        'task': 'ner'
-    }
-)
+generator = OntologyGenerator(ipfs_accelerate_config={"model": "bert-base-uncased", "task": "ner"})
 
 # Define input data
 text_data = """
@@ -50,8 +45,8 @@ Python emphasizes code readability and uses significant whitespace.
 # Create context
 context = OntologyGenerationContext(
     data=text_data,
-    domain='software_engineering',
-    extraction_strategy='ai',
+    domain="software_engineering",
+    extraction_strategy="ai",
 )
 
 # Generate ontology
@@ -88,14 +83,14 @@ from ipfs_datasets_py.optimizers.graphrag import OntologyHarness
 
 # Create harness (integrates generator + critic + optimizer)
 harness = OntologyHarness(
-    generator_config={'model': 'bert-base-uncased'},
+    generator_config={"model": "bert-base-uncased"},
     critic_backend=your_llm_backend,
 )
 
 # Run optimization loop
 final_ontology = harness.optimize(
     data=text_data,
-    domain='software_engineering',
+    domain="software_engineering",
     iterations=5,
     score_threshold=0.85,
 )
@@ -111,11 +106,11 @@ print(f"Final ontology score: {final_ontology['score']}")
 from ipfs_datasets_py.optimizers.graphrag import ExtractionConfig
 
 config = ExtractionConfig(
-    extraction_strategy='hybrid',  # 'rule_based', 'ai', or 'hybrid'
+    extraction_strategy="hybrid",  # 'rule_based', 'ai', or 'hybrid'
     min_confidence=0.7,
     max_entities=100,
-    entity_types=['person', 'organization', 'technology'],
-    relationship_types=['created_by', 'uses', 'related_to'],
+    entity_types=["person", "organization", "technology"],
+    relationship_types=["created_by", "uses", "related_to"],
 )
 
 ontology = generator.generate(context, config=config)
@@ -136,10 +131,7 @@ agent = OntologyRefinementAgent(
 feedback = agent.propose_feedback(ontology, score, context)
 
 # Apply feedback to refine ontology
-refined_ontology = generator.generate_with_feedback(
-    context,
-    feedback=feedback
-)
+refined_ontology = generator.generate_with_feedback(context, feedback=feedback)
 ```
 
 ### Stream Large Documents
@@ -172,8 +164,8 @@ docs = ["doc one", "doc two", "doc three"]
 results = pipeline.run_batch(
     docs,
     refine=False,
-    parallel=True,   # enable parallel execution
-    max_workers=4,   # optional; defaults based on batch size
+    parallel=True,  # enable parallel execution
+    max_workers=4,  # optional; defaults based on batch size
 )
 
 # result order matches input order
@@ -239,7 +231,7 @@ python -m ipfs_datasets_py.optimizers.graphrag.cli \
 ```python
 context = OntologyGenerationContext(
     data="Your text here...",
-    domain='general',
+    domain="general",
 )
 ```
 
@@ -247,10 +239,10 @@ context = OntologyGenerationContext(
 ```python
 from ipfs_datasets_py.processors import pdf
 
-pdf_text = pdf.extract_text('document.pdf')
+pdf_text = pdf.extract_text("document.pdf")
 context = OntologyGenerationContext(
     data=pdf_text,
-    domain='legal',
+    domain="legal",
 )
 ```
 
@@ -258,11 +250,11 @@ context = OntologyGenerationContext(
 ```python
 import json
 
-data = json.load(open('data.json'))
+data = json.load(open("data.json"))
 context = OntologyGenerationContext(
     data=json.dumps(data),
-    domain='database',
-    extraction_strategy='rule_based',  # Works well with structured data
+    domain="database",
+    extraction_strategy="rule_based",  # Works well with structured data
 )
 ```
 

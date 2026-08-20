@@ -47,16 +47,13 @@ def _canonical_bytes(value: Any) -> bytes:
 
 def _pretty_bytes(value: Any) -> bytes:
     return (
-        json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False)
-        + "\n"
+        json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n"
     ).encode("utf-8")
 
 
 def _atomic_write(path: Path, content: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        prefix=f".{path.name}.", dir=path.parent
-    )
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     temporary = Path(temporary_name)
     try:
         with os.fdopen(descriptor, "wb") as handle:
@@ -202,9 +199,7 @@ class AbbyVoiceMaterializationResult:
             "artifact_payloads",
             MappingProxyType(dict(sorted(self.artifact_payloads.items()))),
         )
-        object.__setattr__(
-            self, "release_manifest", MappingProxyType(dict(self.release_manifest))
-        )
+        object.__setattr__(self, "release_manifest", MappingProxyType(dict(self.release_manifest)))
         object.__setattr__(
             self,
             "materialization_manifest",
@@ -379,9 +374,7 @@ def execute_tts_asr_from_jobs(
 
     audio_bytes = (wav_factory or _default_wav)()
     synthesize = text_to_speech_fn or (lambda _text, **_kwargs: audio_bytes)
-    transcribe = speech_to_text_fn or (
-        lambda _data, **_kwargs: "offline fixture transcript"
-    )
+    transcribe = speech_to_text_fn or (lambda _data, **_kwargs: "offline fixture transcript")
 
     resolver = ArtifactResolver(
         ArtifactPolicy(
@@ -411,7 +404,11 @@ def execute_tts_asr_from_jobs(
     ordered = sorted(
         jobs,
         key=lambda job: (
-            0 if str(job.task_type) == "voice.tts" else 1 if str(job.task_type) == "voice.asr" else 2,
+            0
+            if str(job.task_type) == "voice.tts"
+            else 1
+            if str(job.task_type) == "voice.asr"
+            else 2,
             job.task_id,
         ),
     )
@@ -558,12 +555,8 @@ class AbbyVoiceMaterializer:
             "quality-report.json": _pretty_bytes(quality),
             "quarantine.jsonl": quarantine_bytes,
             "audio-workset.jsonl": workset_bytes,
-            "tts-work-manifest.json": payloads.get(
-                "normalized/tts-work-manifest.json", b"{}"
-            ),
-            "asr-work-manifest.json": payloads.get(
-                "normalized/asr-work-manifest.json", b"{}"
-            ),
+            "tts-work-manifest.json": payloads.get("normalized/tts-work-manifest.json", b"{}"),
+            "asr-work-manifest.json": payloads.get("normalized/asr-work-manifest.json", b"{}"),
             "audio-validation-work-manifest.json": payloads.get(
                 "normalized/audio-validation-work-manifest.json", b"{}"
             ),
@@ -578,9 +571,7 @@ class AbbyVoiceMaterializer:
                 manager_result.artifact_manifest.to_dict()
                 if hasattr(manager_result.artifact_manifest, "to_dict")
                 else {
-                    "manifest_id": getattr(
-                        manager_result.artifact_manifest, "manifest_id", ""
-                    ),
+                    "manifest_id": getattr(manager_result.artifact_manifest, "manifest_id", ""),
                     "repository_commit": self.repository_commit,
                 }
             ),
@@ -614,9 +605,7 @@ class AbbyVoiceMaterializer:
         }
         flat["manifest.json"] = _pretty_bytes(materialization_manifest)
 
-        release_builder = AbbyVoiceHFReleaseBuilder(
-            repository_commit=self.repository_commit
-        )
+        release_builder = AbbyVoiceHFReleaseBuilder(repository_commit=self.repository_commit)
         release_manifest = release_builder.build(
             artifacts=flat,
             workset_id=manager_result.workset.workset_id,

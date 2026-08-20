@@ -238,7 +238,7 @@ result = processor.process(
     input_data,
     max_retries=5,
     use_multiple=True,  # Aggregate multiple processors
-    timeout=30
+    timeout=30,
 )
 ```
 

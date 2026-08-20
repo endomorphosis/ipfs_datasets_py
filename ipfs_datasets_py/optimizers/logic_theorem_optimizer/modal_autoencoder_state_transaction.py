@@ -15,9 +15,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Iterable, Mapping, Optional
 
 
-MODAL_AUTOENCODER_STATE_TRANSACTION_SCHEMA_VERSION = (
-    "modal-autoencoder-touched-row-transaction-v1"
-)
+MODAL_AUTOENCODER_STATE_TRANSACTION_SCHEMA_VERSION = "modal-autoencoder-touched-row-transaction-v1"
 
 
 class StateTransactionError(RuntimeError):
@@ -165,12 +163,7 @@ class ModalAutoencoderStateTransaction:
 
     @property
     def touched_components(self) -> tuple[str, ...]:
-        return tuple(
-            sorted(
-                {component for component, _key in self._rows}
-                | set(self._components)
-            )
-        )
+        return tuple(sorted({component for component, _key in self._rows} | set(self._components)))
 
     @property
     def patch(self) -> Optional[ModalAutoencoderStatePatch]:
@@ -200,9 +193,7 @@ class ModalAutoencoderStateTransaction:
         self.state._begin_state_transaction(self)
         try:
             self.base_revision = int(self.state.state_revision)
-            self._tracker_checkpoint = (
-                self.state._state_identity_tracker.transaction_checkpoint()
-            )
+            self._tracker_checkpoint = self.state._state_identity_tracker.transaction_checkpoint()
             self._active = True
         except BaseException:
             self.state._end_state_transaction(self)
@@ -217,9 +208,7 @@ class ModalAutoencoderStateTransaction:
                 "state transaction writer thread does not own the transaction"
             )
         if getattr(self.state, "_active_state_transaction", None) is not self:
-            raise StateTransactionConflictError(
-                "state transaction lost exclusive writer ownership"
-            )
+            raise StateTransactionConflictError("state transaction lost exclusive writer ownership")
 
     def before_mutation(
         self,
@@ -282,9 +271,7 @@ class ModalAutoencoderStateTransaction:
                     before_exists=before_exists,
                     before_value=copy.deepcopy(before_value),
                     after_exists=after_exists,
-                    after_value=(
-                        copy.deepcopy(mapping[key]) if after_exists else None
-                    ),
+                    after_value=(copy.deepcopy(mapping[key]) if after_exists else None),
                     prior_revision=self.base_revision,
                 )
             )
@@ -335,9 +322,7 @@ class ModalAutoencoderStateTransaction:
         # A candidate can perform several nested scalar writes within one row.
         # Row replay deliberately collapses those writes, so restore the exact
         # candidate revision after its values have been applied.
-        self.state._state_identity_tracker.restore_revision(
-            patch.result_revision
-        )
+        self.state._state_identity_tracker.restore_revision(patch.result_revision)
 
     def commit(self) -> ModalAutoencoderStatePatch:
         """Keep current values and release the exclusive writer."""
@@ -373,9 +358,7 @@ class ModalAutoencoderStateTransaction:
                     mapping[key] = copy.deepcopy(before_value)
                 else:
                     mapping.pop(key, None)
-            self.state._state_identity_tracker.restore_transaction_checkpoint(
-                checkpoint
-            )
+            self.state._state_identity_tracker.restore_transaction_checkpoint(checkpoint)
         finally:
             self._restoring = False
             self._patch = patch

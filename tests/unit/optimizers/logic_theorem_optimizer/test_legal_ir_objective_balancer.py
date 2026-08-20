@@ -91,9 +91,7 @@ def _packet(
         "view_family_metrics": {
             family: _family_metrics(
                 ce=ce + index * 0.01,
-                compiler_ce=(compiler_ce + index * 0.01)
-                if compiler_ce is not None
-                else None,
+                compiler_ce=(compiler_ce + index * 0.01) if compiler_ce is not None else None,
                 cosine=cosine,
                 compiler_cosine=compiler_cosine
                 if compiler_cosine is not None
@@ -187,21 +185,11 @@ def test_hard_guardrails_block_even_when_soft_objective_improves() -> None:
     assert report.accepted is False
     assert report.macro_soft_improvement > 0.0
     assert "deontic:hard_guardrail_regressed" in report.block_reasons
-    assert any(
-        key.startswith("source_copy:") for key in deontic.hard_guardrail_regressions
-    )
-    assert any(
-        key.startswith("hammer_trust:") for key in deontic.hard_guardrail_regressions
-    )
-    assert any(
-        key.startswith("provenance:") for key in deontic.hard_guardrail_regressions
-    )
-    assert any(
-        key.startswith("structural:") for key in deontic.hard_guardrail_regressions
-    )
-    assert any(
-        key.startswith("frozen_canary:") for key in deontic.hard_guardrail_regressions
-    )
+    assert any(key.startswith("source_copy:") for key in deontic.hard_guardrail_regressions)
+    assert any(key.startswith("hammer_trust:") for key in deontic.hard_guardrail_regressions)
+    assert any(key.startswith("provenance:") for key in deontic.hard_guardrail_regressions)
+    assert any(key.startswith("structural:") for key in deontic.hard_guardrail_regressions)
+    assert any(key.startswith("frozen_canary:") for key in deontic.hard_guardrail_regressions)
     assert "source_copy_penalty" in report.ignored_weight_keys
     assert "hammer_trusted_success_rate" in report.ignored_weight_keys
     assert "source_copy_penalty" not in report.adapted_weights["deontic"]
@@ -250,12 +238,8 @@ def test_adapts_soft_weights_inside_configured_bounds_only() -> None:
 def test_aliases_and_missing_required_families_fail_closed() -> None:
     before = _packet(ce=0.80, compiler_ce=0.84, cosine=0.76, compiler_cosine=0.74)
     after = _packet(ce=0.60, compiler_ce=0.62, cosine=0.84, compiler_cosine=0.82)
-    before["view_family_metrics"]["kg"] = before["view_family_metrics"].pop(
-        "knowledge_graphs"
-    )
-    after["view_family_metrics"]["kg"] = after["view_family_metrics"].pop(
-        "knowledge_graphs"
-    )
+    before["view_family_metrics"]["kg"] = before["view_family_metrics"].pop("knowledge_graphs")
+    after["view_family_metrics"]["kg"] = after["view_family_metrics"].pop("knowledge_graphs")
     after["view_family_metrics"].pop("temporal")
 
     report = evaluate_constrained_legal_ir_objective(before, after)
@@ -293,6 +277,4 @@ def test_semantic_equivalence_is_hard_gate_when_ce_and_cosine_improve() -> None:
     assert "deontic:semantic_equivalence_threshold_failed" in report.block_reasons
     assert "deontic:ce_cosine_semantic_disagreement" in report.block_reasons
     assert payload["semantic_equivalence_gate"]["hard_promotion_gate"] is True
-    assert payload["semantic_equivalence_gate"]["family_results"]["deontic"][
-        "disagreement"
-    ] is True
+    assert payload["semantic_equivalence_gate"]["family_results"]["deontic"]["disagreement"] is True

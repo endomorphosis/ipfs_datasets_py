@@ -12,6 +12,7 @@ from collections import defaultdict
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def load_module_directly(file_path, module_name):
     """Load a module directly from file path, bypassing the regular import system."""
     spec = importlib.util.spec_from_file_location(module_name, file_path)
@@ -19,11 +20,12 @@ def load_module_directly(file_path, module_name):
     spec.loader.exec_module(module)
     return module
 
+
 # Load the rag_query_optimizer module directly
 rag_query_optimizer = load_module_directly(
-    "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/rag_query_optimizer.py",
-    "rag_query_optimizer"
+    "/home/barberb/ipfs_datasets_py/ipfs_datasets_py/rag_query_optimizer.py", "rag_query_optimizer"
 )
+
 
 # Create a simple test function
 def test_integration():
@@ -43,7 +45,7 @@ def test_integration():
             "path_scores": {},
             "entity_frequency": defaultdict(int),
             "entity_connectivity": {},
-            "relation_usefulness": defaultdict(float)
+            "relation_usefulness": defaultdict(float),
         }
 
         # Create a rewriter with traversal stats
@@ -55,7 +57,9 @@ def test_integration():
 
         # Modify stats and check reference sharing
         traversal_stats["relation_usefulness"]["test_relation"] = 0.75
-        rewriter_sees_changes = rewriter.traversal_stats["relation_usefulness"]["test_relation"] == 0.75
+        rewriter_sees_changes = (
+            rewriter.traversal_stats["relation_usefulness"]["test_relation"] == 0.75
+        )
         logger.info(f"Rewriter sees changes to traversal stats: {rewriter_sees_changes}")
 
         return initialization_correct and rewriter_sees_changes
@@ -63,6 +67,7 @@ def test_integration():
     except Exception as e:
         logger.error(f"Test failed with error: {str(e)}")
         return False
+
 
 if __name__ == "__main__":
     success = test_integration()

@@ -1,5 +1,3 @@
-
-
 from pathlib import Path
 from functools import partial
 import logging
@@ -16,21 +14,26 @@ from utils.common.logger import get_logger
 
 logger = get_logger(__name__)
 
-def _json(file_path: str | Path, content: Any, encoding: str = 'utf-8'):
-    with open(file_path, 'w',encoding=encoding) as file:
+
+def _json(file_path: str | Path, content: Any, encoding: str = "utf-8"):
+    with open(file_path, "w", encoding=encoding) as file:
         json.dump(content, file)
 
-def _txt(file_path: str | Path, content: str, encoding: str = 'utf-8'):
-    with open(file_path, 'w', encoding=encoding) as file:
+
+def _txt(file_path: str | Path, content: str, encoding: str = "utf-8"):
+    with open(file_path, "w", encoding=encoding) as file:
         file.write(content)
 
-def _yaml(file_path: str | Path, content: Any, encoding: str = 'utf-8'):
-    with open(file_path, 'w', encoding=encoding) as file:
+
+def _yaml(file_path: str | Path, content: Any, encoding: str = "utf-8"):
+    with open(file_path, "w", encoding=encoding) as file:
         yaml.dump(content, file)
+
 
 def _print(msg):
     print(msg)
     return lambda x: x
+
 
 def _txt_to_sql_db():
     """
@@ -44,7 +47,6 @@ from .file_unit import FileUnit
 from define_function import define_function
 
 
-
 def check_if_errored(x, success_msg=None, failure_msg=None):
     if not x.errored:
         _log_success(success_msg)
@@ -52,8 +54,10 @@ def check_if_errored(x, success_msg=None, failure_msg=None):
         _log_error(failure_msg)
     return x
 
+
 def _log_error(msg):
     logger.error(msg)
+
 
 def _log_success(msg):
     logger.info(msg)
@@ -77,13 +81,16 @@ def file_writer(file_unit: FileUnit):
     success_msg = f"{file_name} saved successfully."
 
     # Get the partial function for the given file type
-    _save = define_function(file_unit, 'save')
+    _save = define_function(file_unit, "save")
 
     # Use the monadic pipeline to save the content.
-    saving = start(file_unit, ErrorMonad
-        ) >> _print(f"Saving {file_name}..."
-        ) >> _save >> check_if_errored(success_msg, error_msg
-        ) >> stop
+    saving = (
+        start(file_unit, ErrorMonad)
+        >> _print(f"Saving {file_name}...")
+        >> _save
+        >> check_if_errored(success_msg, error_msg)
+        >> stop
+    )
 
     if saving.errored:
         pass
@@ -91,5 +98,3 @@ def file_writer(file_unit: FileUnit):
         print("Save successful.")
     file_unit.data = saving.value
     return file_unit
-
-

@@ -4,11 +4,13 @@ Test stubs for streaming_data_loader module.
 Feature: Streaming Data Loader
   Efficient loading and streaming of large datasets
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_compressed_data_source():
@@ -110,6 +112,7 @@ def progress_monitoring_is_enabled():
 
 
 # Test scenarios
+
 
 def test_initialize_streaming_loader():
     """
@@ -233,6 +236,7 @@ def test_handle_stream_errors():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a compressed data source")
@@ -438,4 +442,3 @@ def transformation_is_applied_to_each_item():
     """Step: Then transformation is applied to each item"""
     # TODO: Implement step
     pass
-

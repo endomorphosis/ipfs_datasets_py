@@ -46,9 +46,7 @@ _EXPORTS: Final[dict[str, tuple[str, ...]]] = {
 }
 
 _EXPORT_MODULE: Final[dict[str, str]] = {
-    name: module_name
-    for module_name, names in _EXPORTS.items()
-    for name in names
+    name: module_name for module_name, names in _EXPORTS.items() for name in names
 }
 
 __all__ = sorted(_EXPORT_MODULE)

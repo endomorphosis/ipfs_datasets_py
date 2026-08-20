@@ -27,6 +27,7 @@ See [Thin Tool Architecture](../../THIN_TOOL_ARCHITECTURE.md) for comprehensive 
 
 ```python
 """Tool: [name] — [one line description]."""
+
 from typing import Any
 from ..exceptions import MCPServerError
 
@@ -127,6 +128,7 @@ This is normal when `ipfs_accelerate_py` is not installed. The server gracefully
 
 ```python
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 
 # MCP server logger

@@ -250,15 +250,10 @@ def augment_legal_ir_projection_triples(
     """
 
     normalized = _normalize_triples(triples)
-    seen = {
-        (triple["subject"], triple["predicate"], triple["object"])
-        for triple in normalized
-    }
+    seen = {(triple["subject"], triple["predicate"], triple["object"]) for triple in normalized}
     predicates_by_subject: Dict[str, set[str]] = {}
     for triple in normalized:
-        predicates_by_subject.setdefault(triple["subject"], set()).add(
-            triple["predicate"]
-        )
+        predicates_by_subject.setdefault(triple["subject"], set()).add(triple["predicate"])
 
     augmented = list(normalized)
     augment_triggers_by_subject: Dict[str, int] = {}
@@ -277,9 +272,8 @@ def augment_legal_ir_projection_triples(
             if trigger_count >= _MAX_AUGMENT_TRIGGER_TRIPLES_PER_SUBJECT:
                 continue
             augment_triggers_by_subject[subject] = trigger_count + 1
-        if (
-            predicate in {"source_id", *_SOURCE_ID_ALIAS_PREDICATES}
-            and not _has_family(existing_predicates, "source_id_")
+        if predicate in {"source_id", *_SOURCE_ID_ALIAS_PREDICATES} and not _has_family(
+            existing_predicates, "source_id_"
         ):
             components = _source_id_components(obj)
         elif predicate == "citation" and not _has_family(
@@ -453,8 +447,7 @@ def _citation_from_text_components(text: str) -> List[Tuple[str, str]]:
     if not title_match or not section_match:
         return []
     citation = (
-        f"{title_match.group('title')} U.S.C. "
-        f"{_normalize_section(section_match.group('section'))}"
+        f"{title_match.group('title')} U.S.C. {_normalize_section(section_match.group('section'))}"
     )
     return _citation_components(citation)
 
@@ -468,9 +461,7 @@ def _section_text_components(text: str) -> List[Tuple[str, str]]:
     if not section_match and not citation_match:
         return []
     raw_section = (
-        section_match.group("section")
-        if section_match
-        else citation_match.group("section")
+        section_match.group("section") if section_match else citation_match.group("section")
     )
     section = _normalize_section(raw_section)
     components: List[Tuple[str, str]] = [
@@ -683,16 +674,10 @@ def _primary_editorial_status_keywords(text: str) -> List[str]:
     else:
         marker_match = _SECTION_MARKER_RE.search(text)
         if marker_match:
-            heading = _clean_heading_text(
-                text[marker_match.end() : marker_match.end() + 160]
-            )
+            heading = _clean_heading_text(text[marker_match.end() : marker_match.end() + 160])
     if not heading:
         return []
-    return [
-        keyword
-        for keyword, pattern in _EDITORIAL_STATUS_KEYWORDS
-        if pattern.search(heading)
-    ]
+    return [keyword for keyword, pattern in _EDITORIAL_STATUS_KEYWORDS if pattern.search(heading)]
 
 
 def _editorial_reference_status_keywords(
@@ -721,11 +706,7 @@ def _clean_heading_text(text: str) -> str:
 
 
 def _section_heading_parts(heading: str) -> List[str]:
-    return [
-        part.strip(" -.;")
-        for part in heading.split(";")
-        if part.strip(" -.;")
-    ]
+    return [part.strip(" -.;") for part in heading.split(";") if part.strip(" -.;")]
 
 
 def _section_body_structure_components(text: str) -> List[Tuple[str, str]]:
@@ -914,8 +895,7 @@ def _section_list_components(prefix: str, section: str) -> List[Tuple[str, str]]
         (f"{prefix}_list_last", items[-1]),
     ]
     components.extend(
-        (f"{prefix}_list_item_{index}", item)
-        for index, item in enumerate(items, start=1)
+        (f"{prefix}_list_item_{index}", item) for index, item in enumerate(items, start=1)
     )
     return components
 
@@ -953,9 +933,7 @@ def _append_source_citation_alignment_triples(
 ) -> None:
     component_maps: Dict[str, Dict[str, str]] = {}
     for triple in triples:
-        component_maps.setdefault(triple["subject"], {})[
-            triple["predicate"]
-        ] = triple["object"]
+        component_maps.setdefault(triple["subject"], {})[triple["predicate"]] = triple["object"]
 
     for subject, components in sorted(component_maps.items()):
         alignment_components = _source_citation_alignment_components(components)
@@ -997,9 +975,7 @@ def _source_citation_alignment_components(
         return []
 
     title_match = bool(source_title and citation_title and source_title == citation_title)
-    section_match = bool(
-        source_section and citation_section and source_section == citation_section
-    )
+    section_match = bool(source_section and citation_section and source_section == citation_section)
     canonical_match = bool(
         source_canonical and citation_canonical and source_canonical == citation_canonical
     )
@@ -1086,13 +1062,9 @@ def _append_legal_ir_guidance_alignment_triples(
         target_views = set(guidance["target"])
         predicted_views = set(guidance["predicted"])
         feature_text = "\n".join(sorted(guidance["features"] | guidance["actions"]))
-        has_graph_route = any(
-            action in feature_text for action in _LEGAL_IR_GRAPH_REPAIR_ACTIONS
-        )
+        has_graph_route = any(action in feature_text for action in _LEGAL_IR_GRAPH_REPAIR_ACTIONS)
         has_neo4j_target = _NEO4J_COMPAT_TARGET_COMPONENT in feature_text
-        has_graph_failure_metric = (
-            "legal_ir_multiview_graph_failure_penalty" in feature_text
-        )
+        has_graph_failure_metric = "legal_ir_multiview_graph_failure_penalty" in feature_text
         has_knowledge_graph_scope = "knowledge_graphs" in feature_text
         graph_repair_guidance = (
             bool(guidance["actions"] & _LEGAL_IR_GRAPH_REPAIR_ACTIONS)
@@ -1129,9 +1101,7 @@ def _append_legal_ir_guidance_alignment_triples(
         for rank, view in enumerate(ranked_views, start=1):
             if view in predicted_views:
                 facts.append(("learned_legal_ir_predicted_view", view))
-                facts.append(
-                    ("learned_legal_ir_predicted_view_weight", f"{view}:1.000000")
-                )
+                facts.append(("learned_legal_ir_predicted_view_weight", f"{view}:1.000000"))
             if view in target_views:
                 facts.append(("learned_legal_ir_target_view", view))
                 facts.append(("learned_legal_ir_target_view_weight", f"{view}:1.000000"))
@@ -1273,9 +1243,7 @@ def _collect_legal_ir_component_gap_features(
         guidance["features"].add(view)
         if isinstance(gap_bucket, dict):
             existing = _safe_float(gap_bucket.get(view), 0.0)
-            gap_bucket[view] = (
-                number if existing == 1.0 and number else existing + number
-            )
+            gap_bucket[view] = number if existing == 1.0 and number else existing + number
         if view == _NEO4J_COMPAT_TARGET_COMPONENT and number > 0.0:
             guidance["target"].add(_NEO4J_COMPAT_TARGET_COMPONENT)
 
@@ -1364,9 +1332,7 @@ def _append_structural_graph_view_alignment_triples(
 ) -> None:
     component_maps: Dict[str, Dict[str, str]] = {}
     for triple in triples:
-        component_maps.setdefault(triple["subject"], {})[
-            triple["predicate"]
-        ] = triple["object"]
+        component_maps.setdefault(triple["subject"], {})[triple["predicate"]] = triple["object"]
 
     for subject, components in sorted(component_maps.items()):
         if not _components_imply_neo4j_projection_view(components):
@@ -1411,8 +1377,7 @@ def _components_imply_neo4j_projection_view(components: Mapping[str, str]) -> bo
     ):
         return False
     has_canonical_citation = bool(
-        components.get("citation_canonical")
-        or components.get("source_id_citation_canonical")
+        components.get("citation_canonical") or components.get("source_id_citation_canonical")
     )
     has_section_structure = bool(
         components.get("section_marker_normalized")
@@ -1420,8 +1385,7 @@ def _components_imply_neo4j_projection_view(components: Mapping[str, str]) -> bo
         or components.get("citation_section_normalized")
     )
     has_graph_structure = bool(
-        components.get("usc_hierarchy_projection") == "true"
-        or components.get("status_keyword")
+        components.get("usc_hierarchy_projection") == "true" or components.get("status_keyword")
     )
     return has_canonical_citation and has_section_structure and has_graph_structure
 
@@ -1436,10 +1400,7 @@ def _append_component_triples(
 ) -> None:
     existing_predicates = predicates_by_subject.setdefault(subject, set())
     for predicate, value in _clean_components(components):
-        if (
-            predicate in existing_predicates
-            and predicate not in _MULTI_VALUE_COMPONENT_PREDICATES
-        ):
+        if predicate in existing_predicates and predicate not in _MULTI_VALUE_COMPONENT_PREDICATES:
             continue
         key = (subject, predicate, value)
         if key in seen:

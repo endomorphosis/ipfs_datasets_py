@@ -187,6 +187,7 @@ class TestEnhancedMonitoringTools:
                 clear_cache,
                 monitor_cache,
             )
+
             assert callable(get_cache_stats)
             assert callable(clear_cache)
             assert callable(monitor_cache)
@@ -203,6 +204,7 @@ class TestEnhancedMonitoringTools:
             from ipfs_datasets_py.mcp_server.tools.monitoring_tools.enhanced_monitoring_tools import (
                 get_cache_stats,
             )
+
             result = await get_cache_stats()
             assert result is not None
         except ImportError:

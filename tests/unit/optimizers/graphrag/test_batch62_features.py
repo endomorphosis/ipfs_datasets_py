@@ -2,6 +2,7 @@
 OntologyOptimizer.export_score_chart, OntologyGenerator.extract_with_coref,
 OntologyHarness integration test.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -24,14 +25,20 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _ctx():
     return OntologyGenerationContext(data_source="test", data_type="text", domain="test")
 
 
 def _score(**kwargs):
     defaults = dict(
-        completeness=0.7, consistency=0.7, clarity=0.6, granularity=0.5,
-        relationship_coherence=0.4, domain_alignment=0.4, recommendations=["Add more entity properties"],
+        completeness=0.7,
+        consistency=0.7,
+        clarity=0.6,
+        granularity=0.5,
+        relationship_coherence=0.4,
+        domain_alignment=0.4,
+        recommendations=["Add more entity properties"],
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -45,14 +52,19 @@ def _make_mediator():
 
 def _make_report(score, ontology=None):
     return OptimizationReport(
-        average_score=score, trend="stable", improvement_rate=0.0,
-        recommendations=[], best_ontology=ontology, worst_ontology=None,
+        average_score=score,
+        trend="stable",
+        improvement_rate=0.0,
+        recommendations=[],
+        best_ontology=ontology,
+        worst_ontology=None,
     )
 
 
 # ---------------------------------------------------------------------------
 # OntologyPipeline.run_async
 # ---------------------------------------------------------------------------
+
 
 class TestRunAsync:
     def test_returns_coroutine(self):
@@ -96,6 +108,7 @@ class TestRunAsync:
 # OntologyMediator.get_recommendation_stats
 # ---------------------------------------------------------------------------
 
+
 class TestGetRecommendationStats:
     def test_returns_empty_before_refine(self):
         mediator = _make_mediator()
@@ -104,7 +117,9 @@ class TestGetRecommendationStats:
     def test_single_recommendation_tracked(self, ontology_dict_factory):
         mediator = _make_mediator()
         score = _score(recommendations=["Add entity properties"])
-        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         mediator.refine_ontology(ontology, score, _ctx())
         stats = mediator.get_recommendation_stats()
         assert "Add entity properties" in stats
@@ -113,7 +128,9 @@ class TestGetRecommendationStats:
     def test_repeated_recommendation_counted(self, ontology_dict_factory):
         mediator = _make_mediator()
         score = _score(recommendations=["Fix naming conventions"])
-        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         mediator.refine_ontology(ontology, score, _ctx())
         mediator.refine_ontology(ontology, score, _ctx())
         stats = mediator.get_recommendation_stats()
@@ -122,7 +139,9 @@ class TestGetRecommendationStats:
     def test_multiple_unique_recommendations(self, ontology_dict_factory):
         mediator = _make_mediator()
         score = _score(recommendations=["Add properties", "Fix naming"])
-        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         mediator.refine_ontology(ontology, score, _ctx())
         stats = mediator.get_recommendation_stats()
         assert "Add properties" in stats
@@ -131,7 +150,9 @@ class TestGetRecommendationStats:
     def test_returns_copy(self, ontology_dict_factory):
         mediator = _make_mediator()
         score = _score(recommendations=["R1"])
-        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         mediator.refine_ontology(ontology, score, _ctx())
         stats = mediator.get_recommendation_stats()
         stats["R1"] = 999
@@ -141,7 +162,9 @@ class TestGetRecommendationStats:
     def test_empty_recommendations_no_change(self, ontology_dict_factory):
         mediator = _make_mediator()
         score = _score(recommendations=[])
-        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        ontology = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         mediator.refine_ontology(ontology, score, _ctx())
         assert mediator.get_recommendation_stats() == {}
 
@@ -149,6 +172,7 @@ class TestGetRecommendationStats:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.export_score_chart
 # ---------------------------------------------------------------------------
+
 
 class TestExportScoreChart:
     def test_raises_on_empty_history(self):
@@ -179,21 +203,24 @@ class TestExportScoreChart:
         result = opt.export_score_chart(filepath=path)
         assert result is None
         import os
+
         assert os.path.exists(path)
 
     def test_output_is_valid_base64(self):
         import base64
+
         opt = OntologyOptimizer()
         opt._history.append(_make_report(0.5))
         raw = opt.export_score_chart()
         # Should not raise
         decoded = base64.b64decode(raw)
-        assert decoded[:4] == b'\x89PNG'
+        assert decoded[:4] == b"\x89PNG"
 
 
 # ---------------------------------------------------------------------------
 # OntologyGenerator.extract_with_coref
 # ---------------------------------------------------------------------------
+
 
 class TestExtractWithCoref:
     @pytest.fixture
@@ -203,6 +230,7 @@ class TestExtractWithCoref:
     def test_returns_extraction_result(self, gen):
         result = gen.extract_with_coref("Alice works here. She is a lawyer.", _ctx())
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
         assert isinstance(result, EntityExtractionResult)
 
     def test_coref_resolved_metadata(self, gen):
@@ -226,6 +254,7 @@ class TestExtractWithCoref:
 # ---------------------------------------------------------------------------
 # OntologyHarness integration test (no mocks)
 # ---------------------------------------------------------------------------
+
 
 class TestOntologyHarnessIntegration:
     def test_pipeline_full_run_no_mocks(self):

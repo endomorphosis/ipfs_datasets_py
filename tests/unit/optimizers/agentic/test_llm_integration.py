@@ -16,7 +16,7 @@ from ipfs_datasets_py.optimizers.agentic.base import OptimizationMethod
 
 class TestLLMProvider:
     """Test LLMProvider enum."""
-    
+
     def test_provider_values(self):
         """Test that all providers have correct values."""
         assert LLMProvider.GPT4.value == "gpt4"
@@ -41,7 +41,7 @@ class TestOptimizerLLMRouter:
         """Legacy retry wrapper should be disabled to avoid stacked retries."""
         router = OptimizerLLMRouter(enable_caching=False)
         assert router._retry_handler.max_retries == 0
-    
+
     def test_init_default(self):
         """Test default initialization."""
         router = OptimizerLLMRouter()
@@ -49,7 +49,7 @@ class TestOptimizerLLMRouter:
         assert router.model_name == "gpt-5.5"
         assert router.fallback_providers == []
         assert router.enable_tracking is True
-    
+
     def test_init_with_provider(self):
         """Test initialization with specific provider."""
         router = OptimizerLLMRouter(
@@ -174,12 +174,17 @@ class TestOptimizerLLMRouter:
         router = OptimizerLLMRouter(enable_caching=False)
         router._retry_handler.retry = lambda func, max_retries=2: func()
 
-        with patch(
-            "ipfs_datasets_py.optimizers.agentic.llm_integration.execute_with_resilience",
-            side_effect=lambda operation, policy, circuit_breaker=None, sleep_fn=None: operation(),
-        ) as mocked_resilience, patch(
-            "ipfs_datasets_py.optimizers.agentic.llm_integration.router_generate",
-            return_value="ok",
+        with (
+            patch(
+                "ipfs_datasets_py.optimizers.agentic.llm_integration.execute_with_resilience",
+                side_effect=lambda operation, policy, circuit_breaker=None, sleep_fn=None: (
+                    operation()
+                ),
+            ) as mocked_resilience,
+            patch(
+                "ipfs_datasets_py.optimizers.agentic.llm_integration.router_generate",
+                return_value="ok",
+            ),
         ):
             response = router.generate(
                 prompt="test prompt",

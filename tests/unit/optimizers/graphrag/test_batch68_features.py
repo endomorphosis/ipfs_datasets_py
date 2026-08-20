@@ -11,7 +11,10 @@ Covers:
 import pytest
 
 from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic, CriticScore
-from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer, OptimizationReport
+from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
+    OntologyOptimizer,
+    OptimizationReport,
+)
 from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
 from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 
@@ -20,11 +23,16 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _score(overall_value: float) -> CriticScore:
     v = overall_value
     return CriticScore(
-        completeness=v, consistency=v, clarity=v, granularity=v,
-        relationship_coherence=v, domain_alignment=v,
+        completeness=v,
+        consistency=v,
+        clarity=v,
+        granularity=v,
+        relationship_coherence=v,
+        domain_alignment=v,
         recommendations=["Add entities", "Improve clarity"] if v < 0.8 else [],
     )
 
@@ -40,18 +48,21 @@ def _validator() -> LogicValidator:
 def _optimizer_with_scores(scores):
     opt = OntologyOptimizer()
     for i, s in enumerate(scores):
-        opt._history.append(OptimizationReport(
-            average_score=s,
-            trend="stable",
-            improvement_rate=0.5,
-            metadata={"num_sessions": 1},
-        ))
+        opt._history.append(
+            OptimizationReport(
+                average_score=s,
+                trend="stable",
+                improvement_rate=0.5,
+                metadata={"num_sessions": 1},
+            )
+        )
     return opt
 
 
 # ---------------------------------------------------------------------------
 # CriticScore.to_html_report
 # ---------------------------------------------------------------------------
+
 
 class TestCriticScoreToHtmlReport:
     def test_returns_string(self):
@@ -75,12 +86,26 @@ class TestCriticScoreToHtmlReport:
         assert "Add entities" in html
 
     def test_no_recs_message(self):
-        score = CriticScore(completeness=0.9, consistency=0.9, clarity=0.9, granularity=0.9, relationship_coherence=0.9, domain_alignment=0.9)
+        score = CriticScore(
+            completeness=0.9,
+            consistency=0.9,
+            clarity=0.9,
+            granularity=0.9,
+            relationship_coherence=0.9,
+            domain_alignment=0.9,
+        )
         html = score.to_html_report()
         assert "No recommendations" in html
 
     def test_scores_in_output(self):
-        score = CriticScore(completeness=0.75, consistency=0.75, clarity=0.75, granularity=0.75, relationship_coherence=0.75, domain_alignment=0.75)
+        score = CriticScore(
+            completeness=0.75,
+            consistency=0.75,
+            clarity=0.75,
+            granularity=0.75,
+            relationship_coherence=0.75,
+            domain_alignment=0.75,
+        )
         html = score.to_html_report()
         assert "0.7500" in html
 
@@ -88,6 +113,7 @@ class TestCriticScoreToHtmlReport:
 # ---------------------------------------------------------------------------
 # OntologyCritic.score_trend
 # ---------------------------------------------------------------------------
+
 
 class TestScoreTrend:
     def test_returns_string(self):
@@ -124,6 +150,7 @@ class TestScoreTrend:
 # OntologyOptimizer.emit_summary_log
 # ---------------------------------------------------------------------------
 
+
 class TestEmitSummaryLog:
     def test_returns_string(self):
         opt = _optimizer_with_scores([0.5, 0.7])
@@ -159,6 +186,7 @@ class TestEmitSummaryLog:
 # OntologyPipeline.run_with_metrics
 # ---------------------------------------------------------------------------
 
+
 class TestRunWithMetrics:
     def test_returns_dict(self):
         p = OntologyPipeline(domain="test")
@@ -193,6 +221,7 @@ class TestRunWithMetrics:
 # ---------------------------------------------------------------------------
 # LogicValidator.explain_entity
 # ---------------------------------------------------------------------------
+
 
 class TestExplainEntity:
     def test_returns_dict(self):

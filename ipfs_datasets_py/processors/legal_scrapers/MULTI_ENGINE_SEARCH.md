@@ -61,7 +61,7 @@ config = SearchEngineConfig(
     api_key="your_brave_api_key",
     rate_limit_per_minute=60,
     cache_enabled=True,
-    cache_ttl_seconds=3600
+    cache_ttl_seconds=3600,
 )
 engine = BraveSearchEngine(config)
 ```
@@ -86,7 +86,7 @@ pip install ddgs>=9.11.2
 config = SearchEngineConfig(
     engine_type="duckduckgo",
     rate_limit_per_minute=30,  # Conservative
-    cache_enabled=True
+    cache_enabled=True,
 )
 engine = DuckDuckGoSearchEngine(config)
 ```
@@ -117,7 +117,7 @@ config = SearchEngineConfig(
     engine_type="google_cse",
     api_key="your_google_api_key",
     rate_limit_per_minute=60,
-    extra_params={"cse_id": "your_cse_id"}
+    extra_params={"cse_id": "your_cse_id"},
 )
 engine = GoogleCSESearchEngine(config)
 ```
@@ -138,7 +138,7 @@ Coordinates searches across multiple engines with parallel execution and fallbac
 from ipfs_datasets_py.processors.web_archiving.search_engines import (
     MultiEngineOrchestrator,
     OrchestratorConfig,
-    SearchEngineConfig
+    SearchEngineConfig,
 )
 
 config = OrchestratorConfig(
@@ -147,7 +147,7 @@ config = OrchestratorConfig(
     fallback_enabled=True,
     result_aggregation="merge",
     deduplication_enabled=True,
-    max_workers=3
+    max_workers=3,
 )
 
 orchestrator = MultiEngineOrchestrator(config)
@@ -176,7 +176,7 @@ searcher = MultiEngineLegalSearch(
     engines=["brave", "duckduckgo"],
     brave_api_key="your_brave_key",
     parallel_enabled=True,
-    fallback_enabled=True
+    fallback_enabled=True,
 )
 
 # Search (same API as BraveLegalSearch)
@@ -202,14 +202,14 @@ All search engines return results in a standardized format:
 ```python
 @dataclass
 class SearchEngineResult:
-    title: str                           # Result title
-    url: str                             # Result URL
-    snippet: str                         # Description/snippet
-    engine: str                          # Source engine
-    score: float = 1.0                   # Ranking score
-    published_date: Optional[str] = None # Publication date
-    domain: Optional[str] = None         # Domain name
-    metadata: Dict[str, Any]             # Engine-specific metadata
+    title: str  # Result title
+    url: str  # Result URL
+    snippet: str  # Description/snippet
+    engine: str  # Source engine
+    score: float = 1.0  # Ranking score
+    published_date: Optional[str] = None  # Publication date
+    domain: Optional[str] = None  # Domain name
+    metadata: Dict[str, Any]  # Engine-specific metadata
 ```
 
 ## Performance Features
@@ -246,14 +246,13 @@ Each engine enforces rate limits to avoid API throttling:
 ```python
 # Before
 from ipfs_datasets_py.processors.legal_scrapers import BraveLegalSearch
+
 searcher = BraveLegalSearch(api_key="...")
 
 # After (adds DuckDuckGo as free fallback)
 from ipfs_datasets_py.processors.legal_scrapers import MultiEngineLegalSearch
-searcher = MultiEngineLegalSearch(
-    engines=["brave", "duckduckgo"],
-    brave_api_key="..."
-)
+
+searcher = MultiEngineLegalSearch(engines=["brave", "duckduckgo"], brave_api_key="...")
 ```
 
 The `search()` method API is identical, so no other changes needed!
@@ -270,7 +269,7 @@ searcher = MultiEngineLegalSearch(
     parallel_enabled=True,
     fallback_enabled=True,
     result_aggregation="merge",
-    deduplication_enabled=True
+    deduplication_enabled=True,
 )
 
 results = searcher.search("Your legal query here")
@@ -297,7 +296,7 @@ export GOOGLE_CSE_ID="your_cse_id"
 from ipfs_datasets_py.processors.web_archiving.search_engines import (
     BraveSearchEngine,
     DuckDuckGoSearchEngine,
-    SearchEngineConfig
+    SearchEngineConfig,
 )
 
 # Test Brave
@@ -316,7 +315,7 @@ assert ddg.test_connection()
 ```python
 from ipfs_datasets_py.processors.web_archiving.search_engines import (
     MultiEngineOrchestrator,
-    OrchestratorConfig
+    OrchestratorConfig,
 )
 
 config = OrchestratorConfig(engines=["brave", "duckduckgo"])
@@ -340,21 +339,11 @@ stats = orchestrator.get_stats()
 # Example output:
 {
     "engines": {
-        "brave": {
-            "requests": 10,
-            "cache_entries": 5,
-            "cache_enabled": True,
-            "rate_limit": 60
-        },
-        "duckduckgo": {
-            "requests": 8,
-            "cache_entries": 4,
-            "cache_enabled": True,
-            "rate_limit": 30
-        }
+        "brave": {"requests": 10, "cache_entries": 5, "cache_enabled": True, "rate_limit": 60},
+        "duckduckgo": {"requests": 8, "cache_entries": 4, "cache_enabled": True, "rate_limit": 30},
     },
     "total_requests": 18,
-    "total_cache_entries": 9
+    "total_cache_entries": 9,
 }
 ```
 

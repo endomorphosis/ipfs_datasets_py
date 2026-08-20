@@ -24,9 +24,9 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _VALID_ENTITY_TYPES = ["case", "statute", "regulation", "party", "concept", "jurisdiction", "date"]
-_VALID_REL_TYPES    = ["cites", "references", "overrules", "extends", "modifies", "relates_to"]
-_VALID_LAYOUTS      = ["force", "hierarchical", "circular", "community"]
-_VALID_FORMATS      = ["html", "png", "svg", "json", "mermaid", "dot"]
+_VALID_REL_TYPES = ["cites", "references", "overrules", "extends", "modifies", "relates_to"]
+_VALID_LAYOUTS = ["force", "hierarchical", "circular", "community"]
+_VALID_FORMATS = ["html", "png", "svg", "json", "mermaid", "dot"]
 _VALID_SEARCH_TYPES = ["semantic", "keyword", "structural", "hybrid"]
 
 
@@ -90,7 +90,9 @@ async def create_legal_knowledge_graph(
     if relationship_types:
         for rtype in relationship_types:
             if rtype not in _VALID_REL_TYPES:
-                return _err(f"Invalid relationship type '{rtype}'. Must be one of: {_VALID_REL_TYPES}")
+                return _err(
+                    f"Invalid relationship type '{rtype}'. Must be one of: {_VALID_REL_TYPES}"
+                )
 
     try:
         from ipfs_datasets_py.processors.legal_scrapers import LegalGraphRAG
@@ -101,10 +103,10 @@ async def create_legal_knowledge_graph(
         # (which accepts "search results" with title/snippet/url).
         results = [
             {
-                "title":   doc.get("title", ""),
+                "title": doc.get("title", ""),
                 "snippet": doc.get("content", "")[:500],  # use first 500 chars as snippet
-                "url":     doc.get("url", ""),
-                "domain":  doc.get("domain", ""),
+                "url": doc.get("url", ""),
+                "domain": doc.get("domain", ""),
             }
             for doc in documents
         ]
@@ -120,40 +122,38 @@ async def create_legal_knowledge_graph(
             if hasattr(obj, "_asdict"):
                 return obj._asdict()
             if hasattr(obj, "__dict__"):
-                return {k: _serialise(v) for k, v in obj.__dict__.items()
-                        if not k.startswith("_")}
+                return {k: _serialise(v) for k, v in obj.__dict__.items() if not k.startswith("_")}
             return obj
 
-        entities      = [_serialise(e) for e in kg.entities]
+        entities = [_serialise(e) for e in kg.entities]
         relationships = [_serialise(r) for r in kg.relationships]
 
         graph_stats = {
-            "total_entities":      len(entities),
+            "total_entities": len(entities),
             "total_relationships": len(relationships),
             "documents_processed": len(documents),
         }
 
         return {
-            "status":          "success",
-            "graph_state":     graphrag,   # opaque — pass to search / visualise
-            "entities":        entities,
-            "relationships":   relationships,
+            "status": "success",
+            "graph_state": graphrag,  # opaque — pass to search / visualise
+            "entities": entities,
+            "relationships": relationships,
             "graph_statistics": graph_stats,
             "total_documents": len(documents),
-            "total_entities":  len(entities),
+            "total_entities": len(entities),
             "total_relationships": len(relationships),
             "extraction_metadata": {
-                "extract_entities":      extract_entities,
+                "extract_entities": extract_entities,
                 "extract_relationships": extract_relationships,
-                "min_confidence":        min_confidence,
+                "min_confidence": min_confidence,
             },
         }
 
     except ImportError as exc:
         logger.error("Import error in create_legal_knowledge_graph: %s", exc)
         return _err(
-            f"Required module not found: {exc}. "
-            "Install with: pip install ipfs-datasets-py[legal]",
+            f"Required module not found: {exc}. Install with: pip install ipfs-datasets-py[legal]",
             total_documents=len(documents),
         )
     except Exception as exc:
@@ -208,8 +208,7 @@ async def search_legal_graph(
             if hasattr(obj, "_asdict"):
                 return obj._asdict()
             if hasattr(obj, "__dict__"):
-                return {k: _serialise(v) for k, v in obj.__dict__.items()
-                        if not k.startswith("_")}
+                return {k: _serialise(v) for k, v in obj.__dict__.items() if not k.startswith("_")}
             return obj
 
         results = [_serialise(r) for r in raw_results]
@@ -219,20 +218,20 @@ async def search_legal_graph(
             raw_subgraph = graphrag.extract_subgraph(query=query, max_depth=hops)
             if raw_subgraph:
                 subgraph = {
-                    "entities":      [_serialise(e) for e in raw_subgraph.entities],
+                    "entities": [_serialise(e) for e in raw_subgraph.entities],
                     "relationships": [_serialise(r) for r in raw_subgraph.relationships],
                 }
 
         return {
-            "status":        "success",
-            "results":       results,
-            "subgraph":      subgraph,
+            "status": "success",
+            "results": results,
+            "subgraph": subgraph,
             "total_results": len(results),
             "search_metadata": {
-                "query":            query,
-                "search_type":      search_type,
+                "query": query,
+                "search_type": search_type,
                 "include_subgraph": include_subgraph,
-                "hops":             hops,
+                "hops": hops,
             },
         }
 
@@ -274,28 +273,29 @@ async def visualize_legal_graph(
         if graph_state is None:
             return _err("graph_state is required; call create_legal_knowledge_graph first")
 
-        graphrag  = graph_state
+        graphrag = graph_state
         # The canonical visualize_graph() supports "mermaid" and "dot"
         viz_format = "mermaid" if format in ("html", "json", "png", "svg") else format
-        viz_data   = graphrag.visualize_graph(format=viz_format)
+        viz_data = graphrag.visualize_graph(format=viz_format)
 
         if output_path:
             from pathlib import Path as _Path
+
             _Path(output_path).write_text(viz_data, encoding="utf-8")
             return {
-                "status":      "success",
-                "format":      format,
-                "layout":      layout,
+                "status": "success",
+                "format": format,
+                "layout": layout,
                 "output_path": output_path,
-                "message":     f"Graph visualization saved to {output_path}",
+                "message": f"Graph visualization saved to {output_path}",
             }
 
         return {
-            "status":             "success",
-            "format":             format,
-            "layout":             layout,
+            "status": "success",
+            "format": format,
+            "layout": layout,
             "visualization_data": viz_data,
-            "message":            "Graph visualization created successfully",
+            "message": "Graph visualization created successfully",
         }
 
     except Exception as exc:

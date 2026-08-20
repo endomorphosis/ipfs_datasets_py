@@ -28,7 +28,7 @@ class TestP2PMetricsCollectorInit:
         """
         base_collector = EnhancedMetricsCollector(enabled=True)
         p2p_collector = P2PMetricsCollector(base_collector=base_collector)
-        
+
         assert p2p_collector.base_collector is base_collector
 
     def test_init_without_base_collector(self):
@@ -38,7 +38,7 @@ class TestP2PMetricsCollectorInit:
         THEN: Default collector is created
         """
         p2p_collector = P2PMetricsCollector()
-        
+
         assert p2p_collector.base_collector is not None
 
     def test_init_metrics_structure(self):
@@ -48,7 +48,7 @@ class TestP2PMetricsCollectorInit:
         THEN: All metric dictionaries are initialized
         """
         p2p_collector = P2PMetricsCollector()
-        
+
         assert "total_discoveries" in p2p_collector.peer_discovery_metrics
         assert "total_workflows" in p2p_collector.workflow_metrics
         assert "total_bootstrap_attempts" in p2p_collector.bootstrap_metrics
@@ -60,7 +60,7 @@ class TestP2PMetricsCollectorInit:
         THEN: Dashboard cache is None
         """
         p2p_collector = P2PMetricsCollector()
-        
+
         assert p2p_collector._dashboard_cache is None
         assert p2p_collector._dashboard_cache_time is None
 
@@ -75,14 +75,11 @@ class TestPeerDiscoveryMetrics:
         THEN: Metrics are updated correctly
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_peer_discovery(
-            source="github",
-            peers_found=5,
-            success=True,
-            duration_ms=100.0
+            source="github", peers_found=5, success=True, duration_ms=100.0
         )
-        
+
         assert collector.peer_discovery_metrics["total_discoveries"] == 1
         assert collector.peer_discovery_metrics["successful_discoveries"] == 1
         assert collector.peer_discovery_metrics["failed_discoveries"] == 0
@@ -95,13 +92,9 @@ class TestPeerDiscoveryMetrics:
         THEN: Failure is recorded
         """
         collector = P2PMetricsCollector()
-        
-        collector.track_peer_discovery(
-            source="dht",
-            peers_found=0,
-            success=False
-        )
-        
+
+        collector.track_peer_discovery(source="dht", peers_found=0, success=False)
+
         assert collector.peer_discovery_metrics["total_discoveries"] == 1
         assert collector.peer_discovery_metrics["successful_discoveries"] == 0
         assert collector.peer_discovery_metrics["failed_discoveries"] == 1
@@ -113,11 +106,11 @@ class TestPeerDiscoveryMetrics:
         THEN: Sources are tracked separately
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_peer_discovery("github", 3, True)
         collector.track_peer_discovery("dht", 2, True)
         collector.track_peer_discovery("mdns", 1, True)
-        
+
         assert collector.peer_discovery_metrics["peers_by_source"]["github"] == 3
         assert collector.peer_discovery_metrics["peers_by_source"]["dht"] == 2
         assert collector.peer_discovery_metrics["peers_by_source"]["mdns"] == 1
@@ -129,9 +122,9 @@ class TestPeerDiscoveryMetrics:
         THEN: Duration is recorded
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_peer_discovery("github", 5, True, duration_ms=123.45)
-        
+
         assert len(collector.peer_discovery_metrics["discovery_times"]) == 1
         assert collector.peer_discovery_metrics["discovery_times"][0] == 123.45
 
@@ -143,12 +136,12 @@ class TestPeerDiscoveryMetrics:
         """
         collector = P2PMetricsCollector()
         before = datetime.utcnow()
-        
+
         collector.track_peer_discovery("github", 5, True)
-        
+
         after = datetime.utcnow()
         last_discovery = collector.peer_discovery_metrics["last_discovery"]
-        
+
         assert before <= last_discovery <= after
 
     def test_track_peer_discovery_updates_base_collector(self):
@@ -159,9 +152,9 @@ class TestPeerDiscoveryMetrics:
         """
         base_collector = Mock()
         collector = P2PMetricsCollector(base_collector=base_collector)
-        
+
         collector.track_peer_discovery("github", 5, True)
-        
+
         base_collector.increment_counter.assert_called()
 
 
@@ -175,17 +168,16 @@ class TestWorkflowMetrics:
         THEN: Active workflow count increases
         """
         collector = P2PMetricsCollector()
-        
-        collector.track_workflow_execution(
-            workflow_id="wf-001",
-            status="running"
-        )
-        
+
+        collector.track_workflow_execution(workflow_id="wf-001", status="running")
+
         assert collector.workflow_metrics["total_workflows"] == 1
         assert collector.workflow_metrics["active_workflows"] == 1
         assert collector.workflow_metrics["workflows_by_status"]["running"] == 1
 
-    @pytest.mark.skip(reason="Implementation bug: base_collector uses record_histogram instead of observe_histogram")
+    @pytest.mark.skip(
+        reason="Implementation bug: base_collector uses record_histogram instead of observe_histogram"
+    )
     def test_track_workflow_completed(self):
         """
         GIVEN: P2PMetricsCollector with running workflow
@@ -193,10 +185,10 @@ class TestWorkflowMetrics:
         THEN: Completed count increases, active decreases
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_workflow_execution("wf-001", "running")
         collector.track_workflow_execution("wf-001", "completed", execution_time_ms=500.0)
-        
+
         assert collector.workflow_metrics["completed_workflows"] == 1
         assert collector.workflow_metrics["active_workflows"] == 0
         assert len(collector.workflow_metrics["workflow_durations"]) == 1
@@ -208,10 +200,10 @@ class TestWorkflowMetrics:
         THEN: Failed count increases, active decreases
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_workflow_execution("wf-001", "running")
         collector.track_workflow_execution("wf-001", "failed")
-        
+
         assert collector.workflow_metrics["failed_workflows"] == 1
         assert collector.workflow_metrics["active_workflows"] == 0
 
@@ -222,14 +214,16 @@ class TestWorkflowMetrics:
         THEN: Active count reflects concurrent workflows
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_workflow_execution("wf-001", "running")
         collector.track_workflow_execution("wf-002", "running")
         collector.track_workflow_execution("wf-003", "running")
-        
+
         assert collector.workflow_metrics["active_workflows"] == 3
 
-    @pytest.mark.skip(reason="Implementation bug: base_collector uses record_histogram instead of observe_histogram")
+    @pytest.mark.skip(
+        reason="Implementation bug: base_collector uses record_histogram instead of observe_histogram"
+    )
     def test_track_workflow_execution_time(self):
         """
         GIVEN: P2PMetricsCollector
@@ -237,9 +231,9 @@ class TestWorkflowMetrics:
         THEN: Duration is recorded
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_workflow_execution("wf-001", "completed", execution_time_ms=1234.56)
-        
+
         assert 1234.56 in collector.workflow_metrics["workflow_durations"]
 
     def test_track_workflow_timestamp(self):
@@ -250,12 +244,12 @@ class TestWorkflowMetrics:
         """
         collector = P2PMetricsCollector()
         before = datetime.utcnow()
-        
+
         collector.track_workflow_execution("wf-001", "running")
-        
+
         after = datetime.utcnow()
         last_workflow = collector.workflow_metrics["last_workflow"]
-        
+
         assert before <= last_workflow <= after
 
     def test_track_workflow_updates_base_collector(self):
@@ -267,10 +261,10 @@ class TestWorkflowMetrics:
         base_collector = Mock()
         base_collector.observe_histogram = Mock()
         collector = P2PMetricsCollector(base_collector=base_collector)
-        
+
         # Track without execution_time_ms to avoid record_histogram call
         collector.track_workflow_execution("wf-001", "running")
-        
+
         base_collector.increment_counter.assert_called()
 
 
@@ -284,13 +278,9 @@ class TestBootstrapMetrics:
         THEN: Success is recorded
         """
         collector = P2PMetricsCollector()
-        
-        collector.track_bootstrap_operation(
-            method="github",
-            success=True,
-            duration_ms=200.0
-        )
-        
+
+        collector.track_bootstrap_operation(method="github", success=True, duration_ms=200.0)
+
         assert collector.bootstrap_metrics["total_bootstrap_attempts"] == 1
         assert collector.bootstrap_metrics["successful_bootstraps"] == 1
         assert collector.bootstrap_metrics["failed_bootstraps"] == 0
@@ -302,12 +292,9 @@ class TestBootstrapMetrics:
         THEN: Failure is recorded
         """
         collector = P2PMetricsCollector()
-        
-        collector.track_bootstrap_operation(
-            method="dht",
-            success=False
-        )
-        
+
+        collector.track_bootstrap_operation(method="dht", success=False)
+
         assert collector.bootstrap_metrics["total_bootstrap_attempts"] == 1
         assert collector.bootstrap_metrics["successful_bootstraps"] == 0
         assert collector.bootstrap_metrics["failed_bootstraps"] == 1
@@ -319,11 +306,11 @@ class TestBootstrapMetrics:
         THEN: Methods are tracked separately
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_bootstrap_operation("github", True)
         collector.track_bootstrap_operation("local_file", True)
         collector.track_bootstrap_operation("dht", False)
-        
+
         assert collector.bootstrap_metrics["bootstrap_methods_used"]["github"] == 1
         assert collector.bootstrap_metrics["bootstrap_methods_used"]["local_file"] == 1
         assert collector.bootstrap_metrics["bootstrap_methods_used"]["dht"] == 1
@@ -335,9 +322,9 @@ class TestBootstrapMetrics:
         THEN: Duration is recorded
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_bootstrap_operation("github", True, duration_ms=345.67)
-        
+
         assert 345.67 in collector.bootstrap_metrics["bootstrap_times"]
 
     def test_track_bootstrap_timestamp(self):
@@ -348,12 +335,12 @@ class TestBootstrapMetrics:
         """
         collector = P2PMetricsCollector()
         before = datetime.utcnow()
-        
+
         collector.track_bootstrap_operation("github", True)
-        
+
         after = datetime.utcnow()
         last_bootstrap = collector.bootstrap_metrics["last_bootstrap"]
-        
+
         assert before <= last_bootstrap <= after
 
     def test_track_bootstrap_updates_base_collector(self):
@@ -364,9 +351,9 @@ class TestBootstrapMetrics:
         """
         base_collector = Mock()
         collector = P2PMetricsCollector(base_collector=base_collector)
-        
+
         collector.track_bootstrap_operation("github", True)
-        
+
         base_collector.increment_counter.assert_called()
 
 
@@ -380,14 +367,16 @@ class TestDashboardData:
         THEN: Empty/zero metrics returned
         """
         collector = P2PMetricsCollector()
-        
+
         data = collector.get_dashboard_data()
-        
+
         assert "peer_discovery" in data
         assert "workflows" in data
         assert "bootstrap" in data
 
-    @pytest.mark.skip(reason="Implementation bug: base_collector uses record_histogram instead of observe_histogram")
+    @pytest.mark.skip(
+        reason="Implementation bug: base_collector uses record_histogram instead of observe_histogram"
+    )
     def test_get_dashboard_data_with_metrics(self):
         """
         GIVEN: P2PMetricsCollector with tracked metrics
@@ -395,13 +384,13 @@ class TestDashboardData:
         THEN: Aggregated data returned
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_peer_discovery("github", 5, True, duration_ms=100.0)
         collector.track_workflow_execution("wf-001", "completed", execution_time_ms=500.0)
         collector.track_bootstrap_operation("github", True, duration_ms=200.0)
-        
+
         data = collector.get_dashboard_data()
-        
+
         assert data["peer_discovery"]["total"] == 1
         assert data["workflows"]["total"] == 1
         assert data["bootstrap"]["total_attempts"] == 1
@@ -413,18 +402,18 @@ class TestDashboardData:
         THEN: Cached data is returned
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_peer_discovery("github", 5, True)
-        
+
         # First call populates cache
         data1 = collector.get_dashboard_data()
-        
+
         # Track more data
         collector.track_peer_discovery("github", 3, True)
-        
+
         # Second call should return cached data
         data2 = collector.get_dashboard_data()
-        
+
         # Data should be same (cached)
         assert data1 == data2
 
@@ -435,13 +424,13 @@ class TestDashboardData:
         THEN: Fresh data is returned
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_peer_discovery("github", 5, True)
         data1 = collector.get_dashboard_data()
-        
+
         collector.track_peer_discovery("github", 3, True)
         data2 = collector.get_dashboard_data(force_refresh=True)
-        
+
         # Data should be different (refreshed)
         assert data1["peer_discovery"]["total"] == 1
         assert data2["peer_discovery"]["total"] == 2
@@ -453,12 +442,12 @@ class TestDashboardData:
         THEN: Averages are calculated correctly
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_peer_discovery("github", 5, True, duration_ms=100.0)
         collector.track_peer_discovery("github", 5, True, duration_ms=200.0)
-        
+
         data = collector.get_dashboard_data()
-        
+
         avg_discovery_time = data["peer_discovery"]["avg_duration_ms"]
         assert avg_discovery_time == 150.0
 
@@ -469,13 +458,13 @@ class TestDashboardData:
         THEN: Success rates are calculated
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_peer_discovery("github", 5, True)
         collector.track_peer_discovery("github", 5, True)
         collector.track_peer_discovery("github", 0, False)
-        
+
         data = collector.get_dashboard_data()
-        
+
         success_rate = data["peer_discovery"]["success_rate"]
         assert 66.0 <= success_rate <= 67.0
 
@@ -490,9 +479,9 @@ class TestMetricsBoundaries:
         THEN: Metrics updated correctly
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_peer_discovery("github", 0, True)
-        
+
         assert collector.peer_discovery_metrics["peers_by_source"]["github"] == 0
 
     def test_track_large_peer_count(self):
@@ -502,9 +491,9 @@ class TestMetricsBoundaries:
         THEN: Count is recorded correctly
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_peer_discovery("github", 10000, True)
-        
+
         assert collector.peer_discovery_metrics["peers_by_source"]["github"] == 10000
 
     def test_track_many_discoveries_deque_bounded(self):
@@ -514,13 +503,15 @@ class TestMetricsBoundaries:
         THEN: Only last 100 durations kept
         """
         collector = P2PMetricsCollector()
-        
+
         for i in range(150):
             collector.track_peer_discovery("github", 1, True, duration_ms=float(i))
-        
+
         assert len(collector.peer_discovery_metrics["discovery_times"]) == 100
 
-    @pytest.mark.skip(reason="Implementation bug: base_collector uses record_histogram instead of observe_histogram")
+    @pytest.mark.skip(
+        reason="Implementation bug: base_collector uses record_histogram instead of observe_histogram"
+    )
     def test_track_many_workflows_deque_bounded(self):
         """
         GIVEN: P2PMetricsCollector
@@ -528,10 +519,10 @@ class TestMetricsBoundaries:
         THEN: Only last 100 durations kept
         """
         collector = P2PMetricsCollector()
-        
+
         for i in range(150):
             collector.track_workflow_execution(f"wf-{i}", "completed", execution_time_ms=float(i))
-        
+
         assert len(collector.workflow_metrics["workflow_durations"]) == 100
 
     def test_active_workflows_never_negative(self):
@@ -541,8 +532,8 @@ class TestMetricsBoundaries:
         THEN: Active count doesn't go negative
         """
         collector = P2PMetricsCollector()
-        
+
         collector.track_workflow_execution("wf-001", "completed")
         collector.track_workflow_execution("wf-002", "completed")
-        
+
         assert collector.workflow_metrics["active_workflows"] == 0

@@ -107,16 +107,20 @@ class TestClearHistory:
 
     def test_returns_count_cleared(self):
         opt = OntologyOptimizer()
+
         # Manually inject history items
         class _FakeEntry:
             average_score = 0.5
+
         opt._history.extend([_FakeEntry(), _FakeEntry(), _FakeEntry()])
         assert opt.clear_history() == 3
 
     def test_history_empty_after(self):
         opt = OntologyOptimizer()
+
         class _FakeEntry:
             average_score = 0.5
+
         opt._history.append(_FakeEntry())
         opt.clear_history()
         assert opt.score_history() == []
@@ -137,8 +141,10 @@ class TestPercentileScore:
 
     def test_single_entry_any_percentile(self):
         opt = OntologyOptimizer()
+
         class _FakeEntry:
             average_score = 0.7
+
         opt._history.append(_FakeEntry())
         assert opt.percentile_score(0) == pytest.approx(0.7)
         assert opt.percentile_score(100) == pytest.approx(0.7)
@@ -146,8 +152,10 @@ class TestPercentileScore:
     def test_median_of_three(self):
         opt = OntologyOptimizer()
         for s in [0.2, 0.5, 0.8]:
+
             class _FE:
                 average_score = s
+
             opt._history.append(_FE())
         assert opt.percentile_score(50) == pytest.approx(0.5)
 
@@ -167,8 +175,10 @@ class TestTopNScores:
     def test_returns_descending(self):
         opt = OntologyOptimizer()
         for s in [0.3, 0.9, 0.6]:
+
             class _FE:
                 average_score = s
+
             opt._history.append(_FE())
         scores = opt.top_n_scores(3)
         assert scores == sorted(scores, reverse=True)
@@ -176,8 +186,10 @@ class TestTopNScores:
     def test_respects_n(self):
         opt = OntologyOptimizer()
         for s in [0.1, 0.5, 0.9, 0.7]:
+
             class _FE:
                 average_score = s
+
             opt._history.append(_FE())
         assert len(opt.top_n_scores(2)) == 2
 

@@ -63,7 +63,11 @@ def test_workspace_dataset_search_and_summary_helpers_return_ranked_results():
         "workspace_name": "Inbox",
         "source_type": "email",
         "documents": [
-            {"id": "email_1", "subject": "Contract dispute", "body": "Breach of contract allegations and damages."},
+            {
+                "id": "email_1",
+                "subject": "Contract dispute",
+                "body": "Breach of contract allegations and damages.",
+            },
             {"id": "email_2", "subject": "Travel", "body": "Logistics for next week's trip."},
         ],
     }
@@ -129,7 +133,9 @@ def test_workspace_summary_and_package_manifest_include_logic_artifact_counts(tm
     }
 
     summary = summarize_workspace_dataset(dataset)
-    package = package_workspace_dataset(dataset, tmp_path / "bundle", package_name="logic_bundle", include_car=False)
+    package = package_workspace_dataset(
+        dataset, tmp_path / "bundle", package_name="logic_bundle", include_car=False
+    )
     packaged_summary = load_packaged_workspace_summary_view(package["manifest_json_path"])
     packaged = load_packaged_workspace_dataset(package["manifest_json_path"])
 
@@ -241,7 +247,10 @@ def test_formal_enrichment_emits_first_order_logic_and_zkp_counts(monkeypatch):
     )
 
     assert payload["first_order_logic"]["backend"] == "fol_converter"
-    assert payload["first_order_logic"]["formulas"][0]["formula"] == "Obligation(hacc, review_reasonable_accommodation_requests)"
+    assert (
+        payload["first_order_logic"]["formulas"][0]["formula"]
+        == "Obligation(hacc, review_reasonable_accommodation_requests)"
+    )
     assert payload["summary"]["first_order_formula_count"] == 1
     assert payload["summary"]["zkp_certificate_count"] >= 1
     assert payload["summary"]["zkp_proof_certificate_ids"]
@@ -257,7 +266,9 @@ def test_workspace_dataset_search_groups_google_voice_bundle_results(tmp_path):
     event_json_path = bundle_dir / "event.json"
     notes_path = bundle_dir / "inspection_notes.txt"
 
-    transcript_path.write_text("Tenant asked for the inspection notice during the call.", encoding="utf-8")
+    transcript_path.write_text(
+        "Tenant asked for the inspection notice during the call.", encoding="utf-8"
+    )
     notes_path.write_text("Inspection notes from the attached text file.", encoding="utf-8")
     event_json_path.write_text(
         json.dumps(
@@ -303,9 +314,14 @@ def test_workspace_dataset_search_groups_google_voice_bundle_results(tmp_path):
     assert bm25_results["group_count"] == 1
     assert bm25_results["grouped_results"][0]["group_id"] == "google_voice_bundle_voice_search_1"
     assert bm25_results["grouped_results"][0]["source_type"] == "google_voice_bundle"
-    assert bm25_results["grouped_results"][0]["document_ids"] == ["voice_search_1", "voice_search_1_attachment_1"]
+    assert bm25_results["grouped_results"][0]["document_ids"] == [
+        "voice_search_1",
+        "voice_search_1_attachment_1",
+    ]
     assert bm25_results["grouped_results"][0]["match_count"] == 2
-    assert [item["document_id"] for item in bm25_results["grouped_results"][0]["matched_results"]] == [
+    assert [
+        item["document_id"] for item in bm25_results["grouped_results"][0]["matched_results"]
+    ] == [
         "voice_search_1",
         "voice_search_1_attachment_1",
     ]
@@ -313,20 +329,29 @@ def test_workspace_dataset_search_groups_google_voice_bundle_results(tmp_path):
     assert vector_results["result_count"] == 2
     assert vector_results["group_count"] == 1
     assert vector_results["grouped_results"][0]["group_id"] == "google_voice_bundle_voice_search_1"
-    assert vector_results["grouped_results"][0]["document_ids"] == ["voice_search_1", "voice_search_1_attachment_1"]
+    assert vector_results["grouped_results"][0]["document_ids"] == [
+        "voice_search_1",
+        "voice_search_1_attachment_1",
+    ]
 
 
 def test_workspace_dataset_preview_and_directory_ingestion_select_textual_documents(tmp_path):
     evidence_dir = tmp_path / "evidence"
     evidence_dir.mkdir()
-    (evidence_dir / "chat.txt").write_text("Discord messages about the billing dispute.", encoding="utf-8")
+    (evidence_dir / "chat.txt").write_text(
+        "Discord messages about the billing dispute.", encoding="utf-8"
+    )
     (evidence_dir / "metadata.json").write_text(
-        json.dumps({"id": "email_1", "subject": "Invoice", "body": "Invoice thread and payment dispute."}),
+        json.dumps(
+            {"id": "email_1", "subject": "Invoice", "body": "Invoice thread and payment dispute."}
+        ),
         encoding="utf-8",
     )
 
     builder = WorkspaceDatasetBuilder()
-    dataset = builder.build_from_directory(evidence_dir, workspace_id="dir-1", workspace_name="Directory Workspace")
+    dataset = builder.build_from_directory(
+        evidence_dir, workspace_id="dir-1", workspace_name="Directory Workspace"
+    )
     preview = builder.preview_retrieval_index(
         {
             "workspace_id": "dir-1",
@@ -399,7 +424,13 @@ def test_workspace_dataset_builder_uses_google_voice_materialized_bundle_files(t
                 "timestamp": "2026-03-24T04:56:14Z",
                 "phone_numbers": ["(503) 555-0100"],
                 "attachments": [{"path": str(bundle_dir / "audio.mp3"), "kind": "audio"}],
-                "enrichments": [{"path": str(enrichment_path), "kind": "transcription", "source_attachment": str(bundle_dir / "audio.mp3")}],
+                "enrichments": [
+                    {
+                        "path": str(enrichment_path),
+                        "kind": "transcription",
+                        "source_attachment": str(bundle_dir / "audio.mp3"),
+                    }
+                ],
                 "deduped_gmail_message_ids": ["gmail_1"],
                 "source_kind": "takeout",
                 "source_html_path": str(source_html_path),
@@ -430,7 +461,9 @@ def test_workspace_dataset_builder_uses_google_voice_materialized_bundle_files(t
     assert payload["collections"][1]["document_ids"] == ["voice_1", "voice_1_enrichment_1"]
     assert payload["documents"][0]["title"] == "Voicemail from advocate"
     assert "inspection notice" in payload["documents"][0]["text"]
-    assert payload["documents"][0]["metadata"]["enrichment_document_ids"] == ["voice_1_enrichment_1"]
+    assert payload["documents"][0]["metadata"]["enrichment_document_ids"] == [
+        "voice_1_enrichment_1"
+    ]
     assert payload["documents"][0]["metadata"]["parsed"]["event_type"] == "voicemail"
     assert payload["documents"][0]["metadata"]["attachments"][0]["kind"] == "audio"
     assert payload["documents"][0]["metadata"]["deduped_gmail_message_ids"] == ["gmail_1"]
@@ -492,7 +525,9 @@ def test_workspace_dataset_builder_promotes_text_google_voice_attachments(tmp_pa
     assert len(payload["documents"]) == 2
     assert len(payload["collections"]) == 2
     assert payload["collections"][1]["document_ids"] == ["voice_2", "voice_2_attachment_1"]
-    assert payload["documents"][0]["metadata"]["attachment_document_ids"] == ["voice_2_attachment_1"]
+    assert payload["documents"][0]["metadata"]["attachment_document_ids"] == [
+        "voice_2_attachment_1"
+    ]
     assert payload["documents"][1]["metadata"]["parent_document_id"] == "voice_2"
     assert payload["documents"][1]["metadata"]["collection_id"] == "google_voice_bundle_voice_2"
     assert payload["documents"][1]["metadata"]["attachment_kind"] == "document"
@@ -644,7 +679,9 @@ def test_workspace_dataset_single_parquet_export_contains_index_sections(tmp_pat
         ]
     }
 
-    export_result = export_workspace_dataset_single_parquet(dataset, tmp_path / "workspace_bundle.parquet")
+    export_result = export_workspace_dataset_single_parquet(
+        dataset, tmp_path / "workspace_bundle.parquet"
+    )
     rows = pq.read_table(tmp_path / "workspace_bundle.parquet").to_pylist()
     loaded = load_workspace_dataset_single_parquet(tmp_path / "workspace_bundle.parquet")
 

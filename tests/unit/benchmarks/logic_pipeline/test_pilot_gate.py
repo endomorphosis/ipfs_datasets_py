@@ -46,11 +46,7 @@ def _sha256_json(value: object) -> str:
 
 def _redigest(value: dict[str, object]) -> dict[str, object]:
     value["artifact_sha256"] = _sha256_json(
-        {
-            key: item
-            for key, item in value.items()
-            if key != "artifact_sha256"
-        }
+        {key: item for key, item in value.items() if key != "artifact_sha256"}
     )
     return value
 
@@ -76,10 +72,7 @@ def test_marker_proxy_and_canonical_artifact_identity(
     assert canonical_report["schema"] == pilot_gate.PILOT_GATE_SCHEMA
     assert canonical_report["run_id"] == pilot_gate.PILOT_GATE_RUN_ID
     assert pilot_gate.PILOT_SHORTLIST_SCHEMA == pilot_gate.PILOT_GATE_SCHEMA
-    assert (
-        pilot_gate.DEFAULT_PILOT_SHORTLIST_PATH
-        == pilot_gate.DEFAULT_PILOT_GATE_PATH
-    )
+    assert pilot_gate.DEFAULT_PILOT_SHORTLIST_PATH == pilot_gate.DEFAULT_PILOT_GATE_PATH
 
 
 def test_ledger_has_exact_coordinates_order_and_observation_kinds(
@@ -96,18 +89,13 @@ def test_ledger_has_exact_coordinates_order_and_observation_kinds(
         for cache_mode in pilot_gate.CACHE_MODES
         for case_id in pilot_gate.PILOT_CASE_IDS
     ]
-    actual_coordinates = [
-        (row["variant_id"], row["cache_mode"], row["case_id"])
-        for row in ledger
-    ]
+    actual_coordinates = [(row["variant_id"], row["cache_mode"], row["case_id"]) for row in ledger]
     assert len(ledger) == 280
     assert actual_coordinates == expected_coordinates
     assert len(set(actual_coordinates)) == 280
     assert normalization == {
         "variant_ids": list(ALL_VARIANT_IDS),
-        "candidate_variant_ids": list(
-            pilot_gate.NONBASELINE_CANDIDATE_IDS
-        ),
+        "candidate_variant_ids": list(pilot_gate.NONBASELINE_CANDIDATE_IDS),
         "cache_modes": ["cold", "warm"],
         "pilot_case_ids": list(pilot_gate.PILOT_CASE_IDS),
         "proof_eligible_case_ids": [
@@ -146,9 +134,7 @@ def test_ledger_has_exact_coordinates_order_and_observation_kinds(
         )
     }
     assert actual_kind_counts == normalization["observation_kind_counts"]
-    assert {row["schema"] for row in ledger} == {
-        pilot_gate.PILOT_OUTCOME_CELL_SCHEMA
-    }
+    assert {row["schema"] for row in ledger} == {pilot_gate.PILOT_OUTCOME_CELL_SCHEMA}
 
 
 def test_proof_exclusions_are_explicit_for_p05_p06_and_p10(
@@ -175,16 +161,12 @@ def test_proof_exclusions_are_explicit_for_p05_p06_and_p10(
     excluded_rows = [
         row
         for row in ledger
-        if row["variant_id"] in proof_variants
-        and row["case_id"] in excluded_cases
+        if row["variant_id"] in proof_variants and row["case_id"] in excluded_cases
     ]
     assert len(excluded_rows) == 66
     for row in excluded_rows:
         assert row["proof_scope"] == "excluded_nonproof"
-        assert not any(
-            source["source"] == "proof"
-            for source in row["source_observations"]
-        )
+        assert not any(source["source"] == "proof" for source in row["source_observations"])
         assert row["kernel_verified"] is None
         if row["variant_id"] in overlap_variants:
             assert row["observation_kind"] == "frontend_only"
@@ -208,10 +190,7 @@ def test_invalid_control_has_zero_false_positives_and_null_efficacy(
 
     assert len(invalid_rows) == 28
     assert {row["case_id"] for row in invalid_rows} == {"pilot-p10"}
-    assert all(
-        row["invalid_control_kernel_false_positive"] is None
-        for row in invalid_rows
-    )
+    assert all(row["invalid_control_kernel_false_positive"] is None for row in invalid_rows)
     assert all(row["efficacy_observed"] is False for row in invalid_rows)
     assert safety == {
         "invalid_control_case_ids": ["pilot-p10"],
@@ -242,9 +221,7 @@ def test_source_bindings_and_deep_freeze_are_content_addressed(
     ]
     for binding in bindings:
         source_path = ROOT / str(binding["path"])
-        assert binding["content_sha256"] == hashlib.sha256(
-            source_path.read_bytes()
-        ).hexdigest()
+        assert binding["content_sha256"] == hashlib.sha256(source_path.read_bytes()).hexdigest()
         source = json.loads(source_path.read_text(encoding="utf-8"))
         semantic_sha256 = source.get("artifact_sha256") or _sha256_json(source)
         assert binding["semantic_sha256"] == semantic_sha256
@@ -259,9 +236,9 @@ def test_source_bindings_and_deep_freeze_are_content_addressed(
     }
     registry = deep_freeze["registry"]
     assert registry["sha256"] == VARIANT_REGISTRY_SHA256
-    assert [
-        item["variant_id"] for item in registry["variant_configurations"]
-    ] == list(ALL_VARIANT_IDS)
+    assert [item["variant_id"] for item in registry["variant_configurations"]] == list(
+        ALL_VARIANT_IDS
+    )
     for item in registry["variant_configurations"]:
         variant = VARIANT_REGISTRY[item["variant_id"]]
         assert item["configuration_sha256"] == variant.digest
@@ -319,16 +296,11 @@ def test_source_bindings_and_deep_freeze_are_content_addressed(
     ]
     assert len(expected_reserved_namespaces) == 56
     assert (
-        deep_freeze["cache_policy"]["reserved_unopened_namespaces"]
-        == expected_reserved_namespaces
+        deep_freeze["cache_policy"]["reserved_unopened_namespaces"] == expected_reserved_namespaces
     )
     assert len(set(expected_reserved_namespaces)) == 56
-    assert deep_freeze["cache_policy"][
-        "execution_claimed_for_reserved_namespaces"
-    ] is False
-    assert deep_freeze["resource_policy"][
-        "model_and_kernel_lanes_distinct"
-    ] is True
+    assert deep_freeze["cache_policy"]["execution_claimed_for_reserved_namespaces"] is False
+    assert deep_freeze["resource_policy"]["model_and_kernel_lanes_distinct"] is True
     assert deep_freeze["resource_policy"]["execution_claimed"] is False
     assert deep_freeze["resource_policy"]["resource_lanes"] == [
         "cpu",
@@ -337,31 +309,24 @@ def test_source_bindings_and_deep_freeze_are_content_addressed(
         "kernel",
         "validation",
     ]
-    assert deep_freeze["thresholds"]["values"] == (
-        DEFAULT_PROTOCOL.thresholds.to_dict()
-    )
+    assert deep_freeze["thresholds"]["values"] == (DEFAULT_PROTOCOL.thresholds.to_dict())
     for key in ("prompts", "cache_policy", "resource_policy"):
         body = dict(deep_freeze[key])
         body.pop("frozen")
         digest = body.pop("sha256")
         assert digest == _sha256_json(body)
-    assert deep_freeze["policies"]["sha256"] == _sha256_json(
-        deep_freeze["policies"]["values"]
-    )
+    assert deep_freeze["policies"]["sha256"] == _sha256_json(deep_freeze["policies"]["values"])
     model_identity_body = dict(deep_freeze["model_identities"])
     model_identity_body.pop("frozen")
     model_identity_digest = model_identity_body.pop("sha256")
     assert model_identity_digest == _sha256_json(model_identity_body)
-    assert deep_freeze["thresholds"]["sha256"] == _sha256_json(
-        deep_freeze["thresholds"]["values"]
-    )
+    assert deep_freeze["thresholds"]["sha256"] == _sha256_json(deep_freeze["thresholds"]["values"])
 
     freeze_body = {
         "protocol_sha256": deep_freeze["protocol"]["sha256"],
         "registry_sha256": deep_freeze["registry"]["sha256"],
         "variant_configuration_sha256s": [
-            item["configuration_sha256"]
-            for item in registry["variant_configurations"]
+            item["configuration_sha256"] for item in registry["variant_configurations"]
         ],
         "prompt_sha256": deep_freeze["prompts"]["sha256"],
         "cache_policy_sha256": deep_freeze["cache_policy"]["sha256"],
@@ -448,9 +413,7 @@ def test_dispositions_empty_shortlist_incomplete_decision_and_closed_holdout(
     }
 
 
-def _mutate_redigested_report(
-    value: dict[str, object], case: str
-) -> dict[str, object]:
+def _mutate_redigested_report(value: dict[str, object], case: str) -> dict[str, object]:
     ledger = value["outcome_ledger"]
     shortlist = value["shortlist"]
     assert isinstance(ledger, list)
@@ -475,9 +438,7 @@ def _mutate_redigested_report(
     elif case == "holdout edit":
         value["holdout"]["authorized"] = True
     elif case == "safety edit":
-        value["safety"][
-            "kernel_verified_invalid_control_false_positive_count"
-        ] = 1
+        value["safety"]["kernel_verified_invalid_control_false_positive_count"] = 1
     else:  # pragma: no cover - parametrization is intentionally exhaustive.
         raise AssertionError(f"unknown tamper case: {case}")
     return _redigest(value)
@@ -539,24 +500,16 @@ def test_loader_accepts_canonical_and_rejects_duplicate_or_noncanonical_json(
     tmp_path: Path,
 ) -> None:
     canonical = tmp_path / "canonical.json"
-    canonical.write_text(
-        canonical_json(canonical_report) + "\n", encoding="utf-8"
-    )
-    assert pilot_gate.load_pilot_gate_report(
-        canonical, repository_root=ROOT
-    ) == canonical_report
+    canonical.write_text(canonical_json(canonical_report) + "\n", encoding="utf-8")
+    assert pilot_gate.load_pilot_gate_report(canonical, repository_root=ROOT) == canonical_report
 
     duplicate = tmp_path / "duplicate.json"
-    duplicate.write_text(
-        '{"schema":"first","schema":"second"}\n', encoding="utf-8"
-    )
+    duplicate.write_text('{"schema":"first","schema":"second"}\n', encoding="utf-8")
     with pytest.raises(pilot_gate.PilotGateError, match="strict JSON"):
         pilot_gate.load_pilot_gate_report(duplicate, repository_root=ROOT)
 
     noncanonical = tmp_path / "noncanonical.json"
-    noncanonical.write_text(
-        json.dumps(canonical_report, indent=2) + "\n", encoding="utf-8"
-    )
+    noncanonical.write_text(json.dumps(canonical_report, indent=2) + "\n", encoding="utf-8")
     with pytest.raises(pilot_gate.PilotGateError, match="canonical JSON"):
         pilot_gate.load_pilot_gate_report(noncanonical, repository_root=ROOT)
 
@@ -566,14 +519,15 @@ def test_writer_is_canonical_atomic_and_refuses_overwrite(
     tmp_path: Path,
 ) -> None:
     destination = tmp_path / "nested" / "pilot.json"
-    assert pilot_gate.write_pilot_gate_report(
-        canonical_report,
-        destination,
-        repository_root=ROOT,
-    ) == destination
-    assert destination.read_text(encoding="utf-8") == (
-        canonical_json(canonical_report) + "\n"
+    assert (
+        pilot_gate.write_pilot_gate_report(
+            canonical_report,
+            destination,
+            repository_root=ROOT,
+        )
+        == destination
     )
+    assert destination.read_text(encoding="utf-8") == (canonical_json(canonical_report) + "\n")
 
     with pytest.raises(pilot_gate.PilotGateError, match="refusing to overwrite"):
         pilot_gate.write_pilot_gate_report(
@@ -582,12 +536,15 @@ def test_writer_is_canonical_atomic_and_refuses_overwrite(
             repository_root=ROOT,
         )
 
-    assert pilot_gate.write_pilot_shortlist_report(
-        canonical_report,
-        destination,
-        repository_root=ROOT,
-        overwrite=True,
-    ) == destination
+    assert (
+        pilot_gate.write_pilot_shortlist_report(
+            canonical_report,
+            destination,
+            repository_root=ROOT,
+            overwrite=True,
+        )
+        == destination
+    )
 
 
 def test_source_path_resolution_is_strictly_allowlisted() -> None:
@@ -609,9 +566,7 @@ def test_source_path_resolution_is_strictly_allowlisted() -> None:
         pilot_gate.FRONTEND_SOURCE_PATH.as_posix() + ".bak",
         ".",
     ):
-        with pytest.raises(
-            pilot_gate.PilotGateError, match="not allowlisted"
-        ):
+        with pytest.raises(pilot_gate.PilotGateError, match="not allowlisted"):
             pilot_gate._resolve_allowlisted_source(ROOT, forbidden)
 
 
@@ -619,10 +574,9 @@ def test_performance_snapshot_matches_the_canonical_gate(
     canonical_report: dict[str, object],
 ) -> None:
     snapshot = json.loads(
-        (
-            ROOT
-            / "docs/performance_snapshots/2026-07-24_pilot_shortlist.json"
-        ).read_text(encoding="utf-8")
+        (ROOT / "docs/performance_snapshots/2026-07-24_pilot_shortlist.json").read_text(
+            encoding="utf-8"
+        )
     )["results"]
     normalization = canonical_report["normalization"]
     safety = canonical_report["safety"]
@@ -643,13 +597,9 @@ def test_performance_snapshot_matches_the_canonical_gate(
         "expected_outcome_cells": normalization["expected_cell_count"],
         "retained_outcome_cells": normalization["observed_cell_count"],
         "observation_kind_counts": normalization["observation_kind_counts"],
-        "proof_excluded_case_ids": normalization[
-            "proof_excluded_case_ids"
-        ],
+        "proof_excluded_case_ids": normalization["proof_excluded_case_ids"],
         "selection_splits": shortlist["selection_splits"],
-        "holdout_outcomes_used": canonical_report["holdout"][
-            "selection_used_holdout"
-        ],
+        "holdout_outcomes_used": canonical_report["holdout"]["selection_used_holdout"],
     }
     safety_fields = (
         "invalid_control_case_ids",
@@ -661,9 +611,7 @@ def test_performance_snapshot_matches_the_canonical_gate(
         "infrastructure_failure_count",
         "efficacy_observation_count",
     )
-    assert snapshot["safety"] == {
-        field: safety[field] for field in safety_fields
-    }
+    assert snapshot["safety"] == {field: safety[field] for field in safety_fields}
     assert snapshot["freeze"] == {
         "sha256": deep_freeze["freeze_sha256"],
         "protocol_sha256": deep_freeze["protocol"]["sha256"],
@@ -745,15 +693,9 @@ def _canonical_invalid_control_result(
     masked_by_blocking_failure: bool,
 ) -> CaseResultRecord:
     case_id = "measured-invalid-control"
-    case_manifest_sha256 = hashlib.sha256(
-        b"measured invalid-control manifest"
-    ).hexdigest()
-    input_sha256 = hashlib.sha256(
-        b"measured invalid-control input"
-    ).hexdigest()
-    environment_sha256 = hashlib.sha256(
-        b"measured invalid-control environment"
-    ).hexdigest()
+    case_manifest_sha256 = hashlib.sha256(b"measured invalid-control manifest").hexdigest()
+    input_sha256 = hashlib.sha256(b"measured invalid-control input").hexdigest()
+    environment_sha256 = hashlib.sha256(b"measured invalid-control environment").hexdigest()
     common = {
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
         "run_id": run_id,
@@ -781,18 +723,14 @@ def _canonical_invalid_control_result(
                     input_sha256=input_sha256,
                     environment_sha256=environment_sha256,
                 ),
-                telemetry=TelemetryRecord(
-                    resource_lane=ResourceLane.CPU
-                ),
+                telemetry=TelemetryRecord(resource_lane=ResourceLane.CPU),
                 failure_code=FailureCode.CANONICAL_IR_REJECTION,
                 failure_detail="blocking compiler failure",
             )
         )
 
     upstream_stage_digests = tuple(stage.digest for stage in stages)
-    candidate_artifact_sha256 = hashlib.sha256(
-        b"measured-pilot-safety-candidate"
-    ).hexdigest()
+    candidate_artifact_sha256 = hashlib.sha256(b"measured-pilot-safety-candidate").hexdigest()
     receipt_body = {
         "schema": NATIVE_KERNEL_RECEIPT_SCHEMA,
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
@@ -833,21 +771,13 @@ def _canonical_invalid_control_result(
         }
         receipt_body.update(
             {
-                "compiled_obligation_sha256": hashlib.sha256(
-                    b"compiled"
-                ).hexdigest(),
-                "obligation_sha256": hashlib.sha256(
-                    b"obligation"
-                ).hexdigest(),
+                "compiled_obligation_sha256": hashlib.sha256(b"compiled").hexdigest(),
+                "obligation_sha256": hashlib.sha256(b"obligation").hexdigest(),
                 "candidate_source": attempt["candidate_source"],
                 "candidate_artifact_sha256": candidate_artifact_sha256,
                 "source_sha256": attempt["source_sha256"],
-                "semantic_context_sha256": hashlib.sha256(
-                    b"semantic-context"
-                ).hexdigest(),
-                "semantic_artifact_sha256s": [
-                    candidate_artifact_sha256
-                ],
+                "semantic_context_sha256": hashlib.sha256(b"semantic-context").hexdigest(),
+                "semantic_artifact_sha256s": [candidate_artifact_sha256],
                 "command_sha256": attempt["command_sha256"],
                 "stdout_sha256": attempt["stdout_sha256"],
                 "stderr_sha256": attempt["stderr_sha256"],
@@ -856,9 +786,7 @@ def _canonical_invalid_control_result(
                 "cancelled": attempt["cancelled"],
                 "resource_exhausted": attempt["resource_exhausted"],
                 "termination_reason": attempt["termination_reason"],
-                "process_group_reaped": attempt[
-                    "process_group_reaped"
-                ],
+                "process_group_reaped": attempt["process_group_reaped"],
                 "candidate_attempts": [attempt],
                 "candidate_attempts_sha256": _sha256_json([attempt]),
                 "selected_attempt": {
@@ -889,31 +817,23 @@ def _canonical_invalid_control_result(
                 requested_identity={"component": "kernel"},
                 effective_identity={
                     "graph_invoked": True,
-                    "consumed_artifact_sha256": [
-                        candidate_artifact_sha256
-                    ],
+                    "consumed_artifact_sha256": [candidate_artifact_sha256],
                 },
                 input_sha256=input_sha256,
                 environment_sha256=environment_sha256,
                 upstream_stage_digests=upstream_stage_digests,
             ),
-            telemetry=TelemetryRecord(
-                resource_lane=ResourceLane.KERNEL
-            ),
+            telemetry=TelemetryRecord(resource_lane=ResourceLane.KERNEL),
             data={
                 **receipt_body,
                 "receipt_sha256": receipt_sha256,
             },
             kernel_accepted=accepted,
-            kernel_receipt_sha256=(
-                receipt_sha256 if accepted else None
-            ),
+            kernel_receipt_sha256=(receipt_sha256 if accepted else None),
         )
     )
     result = CaseResultRecord.from_stages(stages)
-    result.validate_provenance(
-        expected_environment_sha256=environment_sha256
-    )
+    result.validate_provenance(expected_environment_sha256=environment_sha256)
     return CaseResultRecord.from_dict(result.to_dict())
 
 
@@ -930,19 +850,12 @@ def _measured_gate_sources(
     selected = frontier if frontier is not None else ["A1"]
     invalid_result = _canonical_invalid_control_result(
         run_id=run_id,
-        accepted=(
-            invalid_control_verified
-            or invalid_control_masked_kernel_acceptance
-        ),
-        masked_by_blocking_failure=(
-            invalid_control_masked_kernel_acceptance
-        ),
+        accepted=(invalid_control_verified or invalid_control_masked_kernel_acceptance),
+        masked_by_blocking_failure=(invalid_control_masked_kernel_acceptance),
     )
     baseline_receipt = invalid_result.digest
     candidate_receipts = {
-        candidate_id: hashlib.sha256(
-            f"case-{candidate_id}".encode()
-        ).hexdigest()
+        candidate_id: hashlib.sha256(f"case-{candidate_id}".encode()).hexdigest()
         for candidate_id in candidates
     }
 
@@ -1069,9 +982,7 @@ def _measured_gate_sources(
                     {
                         "run_id": run_id,
                         "baseline_result_sha256": baseline_receipt,
-                        "candidate_result_sha256": candidate_receipts[
-                            candidate_id
-                        ],
+                        "candidate_result_sha256": candidate_receipts[candidate_id],
                     }
                 ]
             }
@@ -1084,9 +995,7 @@ def _measured_gate_sources(
                     "candidate_id": candidate_id,
                     "eligible": True,
                     "on_frontier": candidate_id in selected,
-                    "dominated_by": (
-                        [] if candidate_id in selected else [selected[0]]
-                    ),
+                    "dominated_by": ([] if candidate_id in selected else [selected[0]]),
                     "metrics": {
                         "quality": 0.8,
                         "latency": 12.0,
@@ -1095,9 +1004,7 @@ def _measured_gate_sources(
                         "complexity": 2.0,
                     },
                     "analysis_sha256s": [
-                        hashlib.sha256(
-                            f"analysis-{candidate_id}".encode()
-                        ).hexdigest()
+                        hashlib.sha256(f"analysis-{candidate_id}".encode()).hexdigest()
                     ],
                     "case_result_sha256s": [
                         baseline_receipt,
@@ -1121,9 +1028,7 @@ def _measured_gate_sources(
 def _measured_gate_inputs(
     sources: dict[str, dict[str, object]],
 ) -> tuple[dict[str, object], dict[str, object]]:
-    bindings = {
-        kind: source["artifact_sha256"] for kind, source in sources.items()
-    }
+    bindings = {kind: source["artifact_sha256"] for kind, source in sources.items()}
     freeze_inputs = {
         "prompts": {"prompt_sha256s": ["1" * 64]},
         "policies": {"policy": "frozen"},
@@ -1160,9 +1065,7 @@ def test_measured_gate_authorizes_exact_nondominated_frontier(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     sources = _measured_gate_sources(frontier=["A1"])
-    value, bindings, freeze_inputs = _build_synthetic_measured_gate(
-        monkeypatch, sources
-    )
+    value, bindings, freeze_inputs = _build_synthetic_measured_gate(monkeypatch, sources)
 
     assert pilot_gate.HSSLEV1159F06() == report.HSSLEV1159F06()
     assert value["evidence"] == pilot_gate.HSSLEV1159F06()
@@ -1177,20 +1080,20 @@ def test_measured_gate_authorizes_exact_nondominated_frontier(
     assert value["decision"]["status"] == "complete"
     assert value["decision"]["production_promotion_authorized"] is False
     assert [
-        row["variant_id"]
-        for row in value["deep_freeze"]["registry"][
-            "selected_configurations"
-        ]
+        row["variant_id"] for row in value["deep_freeze"]["registry"]["selected_configurations"]
     ] == ["A1"]
-    assert pilot_gate.validate_measured_pilot_gate_report(
-        value,
-        sources["frontend"],
-        sources["proof"],
-        sources["efficiency"],
-        sources["statistics"],
-        source_bindings=bindings,
-        freeze_inputs=freeze_inputs,
-    ) == value
+    assert (
+        pilot_gate.validate_measured_pilot_gate_report(
+            value,
+            sources["frontend"],
+            sources["proof"],
+            sources["efficiency"],
+            sources["statistics"],
+            source_bindings=bindings,
+            freeze_inputs=freeze_inputs,
+        )
+        == value
+    )
 
 
 def test_measured_gate_retains_null_cost_as_incomplete(
@@ -1207,9 +1110,7 @@ def test_measured_gate_retains_null_cost_as_incomplete(
         reason.startswith("efficiency_metric_missing:A1:")
         for reason in value["shortlist"]["reasons"]
     )
-    assert value["candidate_evidence"][0]["efficiency"]["costs"][
-        "solver_processes"
-    ] is None
+    assert value["candidate_evidence"][0]["efficiency"]["costs"]["solver_processes"] is None
 
 
 def test_measured_gate_invalid_control_forces_rejection(
@@ -1220,9 +1121,7 @@ def test_measured_gate_invalid_control_forces_rejection(
         _measured_gate_sources(invalid_control_verified=True),
     )
 
-    assert value["safety"][
-        "kernel_verified_invalid_control_false_positive_count"
-    ] == 1
+    assert value["safety"]["kernel_verified_invalid_control_false_positive_count"] == 1
     assert value["safety"]["fatal_safety_incident"] is True
     assert value["decision"]["status"] == "rejected"
     assert value["shortlist"]["selected_variant_ids"] == []
@@ -1232,13 +1131,9 @@ def test_measured_gate_invalid_control_forces_rejection(
 def test_measured_gate_rejects_masked_raw_kernel_acceptance(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    sources = _measured_gate_sources(
-        invalid_control_masked_kernel_acceptance=True
-    )
+    sources = _measured_gate_sources(invalid_control_masked_kernel_acceptance=True)
     invalid_observation = sources["efficiency"]["observations"][0]
-    result = CaseResultRecord.from_dict(
-        invalid_observation["case_result"]
-    )
+    result = CaseResultRecord.from_dict(invalid_observation["case_result"])
     kernel = result.stages[-1]
 
     assert result.status.value == "rejected"
@@ -1253,12 +1148,8 @@ def test_measured_gate_rejects_masked_raw_kernel_acceptance(
         sources,
     )
 
-    assert value["safety"][
-        "kernel_verified_invalid_control_false_positive_count"
-    ] == 1
-    assert value["safety"]["kernel_receipt_sha256s"] == [
-        kernel.kernel_receipt_sha256
-    ]
+    assert value["safety"]["kernel_verified_invalid_control_false_positive_count"] == 1
+    assert value["safety"]["kernel_receipt_sha256s"] == [kernel.kernel_receipt_sha256]
     assert value["safety"]["fatal_safety_incident"] is True
     assert value["decision"]["status"] == "rejected"
     assert value["shortlist"]["selected_variant_ids"] == []
@@ -1270,20 +1161,14 @@ def test_measured_gate_cannot_treat_absent_invalid_controls_as_safe(
 ) -> None:
     sources = _measured_gate_sources()
     sources["efficiency"]["observations"] = [
-        row
-        for row in sources["efficiency"]["observations"]
-        if row["invalid_control"] is not True
+        row for row in sources["efficiency"]["observations"] if row["invalid_control"] is not True
     ]
     value, _, _ = _build_synthetic_measured_gate(monkeypatch, sources)
 
     assert value["safety"]["observed_invalid_control_count"] == 0
-    assert value["safety"][
-        "kernel_verified_invalid_control_false_positive_rate"
-    ] is None
+    assert value["safety"]["kernel_verified_invalid_control_false_positive_rate"] is None
     assert value["completeness"]["complete"] is False
-    assert "invalid_control_safety_evidence_missing" in value["shortlist"][
-        "reasons"
-    ]
+    assert "invalid_control_safety_evidence_missing" in value["shortlist"]["reasons"]
     assert value["decision"]["status"] == "incomplete"
     assert value["holdout"]["authorized"] is False
 
@@ -1303,9 +1188,7 @@ def test_measured_gate_never_truncates_an_oversized_frontier(
     assert value["shortlist"]["frontier_variant_ids"] == frontier
     assert value["shortlist"]["selected_variant_ids"] == []
     assert value["shortlist"]["truncation_applied"] is False
-    assert "nondominated_frontier_exceeds_shortlist_max" in value[
-        "shortlist"
-    ]["reasons"]
+    assert "nondominated_frontier_exceeds_shortlist_max" in value["shortlist"]["reasons"]
     assert value["holdout"]["authorized"] is False
 
 
@@ -1347,9 +1230,7 @@ def test_measured_gate_rejects_cross_run_statistics(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     sources = _measured_gate_sources()
-    sources["statistics"]["requests"][0]["observations"][0][
-        "run_id"
-    ] = "different-run"
+    sources["statistics"]["requests"][0]["observations"][0]["run_id"] = "different-run"
     monkeypatch.setattr(
         pilot_gate,
         "_measured_source_reports",

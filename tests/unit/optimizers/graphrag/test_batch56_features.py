@@ -6,6 +6,7 @@ Covers:
 - OntologyHarness.run_concurrent()
 - batch_extract() merge_provenance source tagging
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -17,28 +18,38 @@ import pytest
 # typing.py type aliases
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestTypingAliases:
     """Type aliases in typing.py should be importable and behave as expected."""
 
     def test_import_all_aliases(self):
         from ipfs_datasets_py.optimizers.graphrag.typing import (
-            OntologyDict, EntityDict, RelationshipDict, MetadataDict,
-            EntityList, RelationshipList, FixSuggestion, ActionName,
+            OntologyDict,
+            EntityDict,
+            RelationshipDict,
+            MetadataDict,
+            EntityList,
+            RelationshipList,
+            FixSuggestion,
+            ActionName,
         )
 
     def test_ontology_dict_is_dict_type(self):
         from ipfs_datasets_py.optimizers.graphrag.typing import OntologyDict
+
         # Type alias — at runtime it's just dict; the alias exists for annotations
         sample: OntologyDict = {"entities": [], "relationships": []}
         assert isinstance(sample, dict)
 
     def test_entity_dict_is_dict_type(self):
         from ipfs_datasets_py.optimizers.graphrag.typing import EntityDict
+
         sample: EntityDict = {"id": "e1", "text": "Alice", "type": "Person"}
         assert isinstance(sample, dict)
 
     def test_all_exported(self):
         import ipfs_datasets_py.optimizers.graphrag.typing as t
+
         for name in t.__all__:
             assert hasattr(t, name)
 
@@ -47,21 +58,25 @@ class TestTypingAliases:
 # OntologyPipeline facade
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestOntologyPipeline:
     """OntologyPipeline should run the full workflow in one call."""
 
     @pytest.fixture
     def pipeline(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
         return OntologyPipeline(domain="general")
 
     def test_run_returns_pipeline_result(self, pipeline):
         from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import PipelineResult
+
         result = pipeline.run("Alice met Bob in London.")
         assert isinstance(result, PipelineResult)
 
     def test_run_result_has_score(self, pipeline):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
         result = pipeline.run("Alice works at Acme Corp.")
         assert isinstance(result.score, CriticScore)
 
@@ -90,6 +105,7 @@ class TestOntologyPipeline:
 
     def test_run_batch_each_has_score(self, pipeline):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
         results = pipeline.run_batch(["Alice.", "Bob."])
         for r in results:
             assert isinstance(r.score, CriticScore)
@@ -103,6 +119,7 @@ class TestOntologyPipeline:
 # OntologyHarness.run_concurrent()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestHarnessRunConcurrent:
     """run_concurrent() should return results for each doc in order."""
 
@@ -110,14 +127,14 @@ class TestHarnessRunConcurrent:
     def harness_ctx(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_harness import OntologyPipelineHarness
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext,
+            OntologyGenerator,
+            OntologyGenerationContext,
         )
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
         gen = OntologyGenerator()
-        ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="general"
-        )
+        ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="general")
         critic = OntologyCritic(use_llm=False)
         mediator = OntologyMediator(generator=gen, critic=critic)
         harness = OntologyPipelineHarness(generator=gen, critic=critic, mediator=mediator)
@@ -153,7 +170,9 @@ class TestHarnessRunConcurrent:
 
         monkeypatch.setattr(harness, "run_and_report", _boom)
 
-        with pytest.raises(RuntimeError, match="OntologyHarness.run_single\\(\\) failed: run failed"):
+        with pytest.raises(
+            RuntimeError, match="OntologyHarness.run_single\\(\\) failed: run failed"
+        ):
             harness.run_single("Alice", ctx)
 
     def test_run_concurrent_returns_error_dict_for_failed_doc(self, harness_ctx, monkeypatch):
@@ -162,7 +181,13 @@ class TestHarnessRunConcurrent:
         def _maybe_fail(data, _context):
             if data == "bad":
                 raise RuntimeError("doc failure")
-            return {"best_score": 0.5, "rounds": 1, "converged": True, "best_ontology": {}, "session": object()}
+            return {
+                "best_score": 0.5,
+                "rounds": 1,
+                "converged": True,
+                "best_ontology": {},
+                "session": object(),
+            }
 
         monkeypatch.setattr(harness, "run_and_report", _maybe_fail)
 
@@ -177,18 +202,19 @@ class TestHarnessRunConcurrent:
 # batch_extract() merge_provenance source tagging
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestBatchExtractProvenance:
     """batch_extract should tag entities with source_doc_index."""
 
     @pytest.fixture
     def gen_ctx(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext,
+            OntologyGenerator,
+            OntologyGenerationContext,
         )
+
         gen = OntologyGenerator()
-        ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="general"
-        )
+        ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="general")
         return gen, ctx
 
     def test_entities_have_source_doc_index(self, gen_ctx):
@@ -197,8 +223,8 @@ class TestBatchExtractProvenance:
         results = gen.batch_extract(docs, ctx)
         for idx, r in enumerate(results):
             for ent in r.entities:
-                if hasattr(ent, '__dict__'):
-                    assert ent.__dict__.get('source_doc_index') == idx
+                if hasattr(ent, "__dict__"):
+                    assert ent.__dict__.get("source_doc_index") == idx
 
     def test_correct_index_per_doc(self, gen_ctx):
         gen, ctx = gen_ctx
@@ -206,5 +232,5 @@ class TestBatchExtractProvenance:
         results = gen.batch_extract(docs, ctx, max_workers=1)
         for idx, r in enumerate(results):
             for ent in r.entities:
-                if hasattr(ent, '__dict__'):
-                    assert ent.__dict__['source_doc_index'] == idx
+                if hasattr(ent, "__dict__"):
+                    assert ent.__dict__["source_doc_index"] == idx

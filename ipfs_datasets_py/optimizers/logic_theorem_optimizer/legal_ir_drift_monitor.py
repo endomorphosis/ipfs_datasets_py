@@ -19,15 +19,9 @@ from typing import Any, Final
 
 
 LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION: Final = "legal-ir-drift-monitor-v1"
-LEGAL_IR_DRIFT_ROLLBACK_TODO_SCHEMA_VERSION: Final = (
-    "legal-ir-drift-rollback-todo-v1"
-)
-LEGAL_IR_DRIFT_ROLLBACK_DECISION_SCHEMA_VERSION: Final = (
-    "legal-ir-drift-rollback-decision-v1"
-)
-PRODUCTION_DRIFT_AND_ROLLBACK_HARD_GUARDRAIL: Final = (
-    "learned_guidance_is_reversible"
-)
+LEGAL_IR_DRIFT_ROLLBACK_TODO_SCHEMA_VERSION: Final = "legal-ir-drift-rollback-todo-v1"
+LEGAL_IR_DRIFT_ROLLBACK_DECISION_SCHEMA_VERSION: Final = "legal-ir-drift-rollback-decision-v1"
+PRODUCTION_DRIFT_AND_ROLLBACK_HARD_GUARDRAIL: Final = "learned_guidance_is_reversible"
 
 DEFAULT_FAMILY_METRICS_HIGHER_IS_BETTER: Final = frozenset(
     {
@@ -321,7 +315,9 @@ def _jensen_shannon_divergence(left: Mapping[str, float], right: Mapping[str, fl
                 total += p * math.log2(p / q)
         return total
 
-    return max(0.0, min(1.0, 0.5 * kl_divergence(left, midpoint) + 0.5 * kl_divergence(right, midpoint)))
+    return max(
+        0.0, min(1.0, 0.5 * kl_divergence(left, midpoint) + 0.5 * kl_divergence(right, midpoint))
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -375,7 +371,9 @@ class LegalIRDriftMonitorConfig:
             or not isinstance(self.max_resource_saturation_event_increase, int)
             or self.max_resource_saturation_event_increase < 0
         ):
-            raise ValueError("max_resource_saturation_event_increase must be a non-negative integer")
+            raise ValueError(
+                "max_resource_saturation_event_increase must be a non-negative integer"
+            )
         object.__setattr__(
             self,
             "higher_is_better_metrics",
@@ -430,18 +428,21 @@ class LegalIRDriftEvent:
 
     @property
     def event_id(self) -> str:
-        return "lir-drift-" + _stable_digest(
-            {
-                "baseline": self.baseline,
-                "category": self.category,
-                "current": self.current,
-                "family": self.family,
-                "metric": self.metric,
-                "observed": self.observed,
-                "signal": self.signal,
-                "threshold": self.threshold,
-            }
-        )[:20]
+        return (
+            "lir-drift-"
+            + _stable_digest(
+                {
+                    "baseline": self.baseline,
+                    "category": self.category,
+                    "current": self.current,
+                    "family": self.family,
+                    "metric": self.metric,
+                    "observed": self.observed,
+                    "signal": self.signal,
+                    "threshold": self.threshold,
+                }
+            )[:20]
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -580,15 +581,11 @@ class LegalIRDriftMonitor:
         events.extend(distribution_events)
         metrics["production_distribution"] = distribution_metrics
 
-        family_events, family_metrics = self._family_metric_drift(
-            baseline_payload, current_payload
-        )
+        family_events, family_metrics = self._family_metric_drift(baseline_payload, current_payload)
         events.extend(family_events)
         metrics["family_metric_drift"] = family_metrics
 
-        proof_events, proof_metrics = self._proof_failure_drift(
-            baseline_payload, current_payload
-        )
+        proof_events, proof_metrics = self._proof_failure_drift(baseline_payload, current_payload)
         events.extend(proof_events)
         metrics["proof_failure_drift"] = proof_metrics
 
@@ -598,9 +595,7 @@ class LegalIRDriftMonitor:
         events.extend(rejection_events)
         metrics["rejection_spikes"] = rejection_metrics
 
-        schema_events, schema_metrics = self._schema_drift(
-            baseline_payload, current_payload
-        )
+        schema_events, schema_metrics = self._schema_drift(baseline_payload, current_payload)
         events.extend(schema_events)
         metrics["schema_drift"] = schema_metrics
 
@@ -628,15 +623,18 @@ class LegalIRDriftMonitor:
 
         deduped_events = tuple(_dedupe_events(events))
         rollback_decision = _build_rollback_decision(deduped_events, promotions)
-        report_id = "lir-drift-report-" + _stable_digest(
-            {
-                "baseline": _baseline_identity(baseline_payload),
-                "config": self.config.to_dict(),
-                "current": _baseline_identity(current_payload),
-                "events": [event.to_dict() for event in deduped_events],
-                "rollback": rollback_decision.to_dict(),
-            }
-        )[:24]
+        report_id = (
+            "lir-drift-report-"
+            + _stable_digest(
+                {
+                    "baseline": _baseline_identity(baseline_payload),
+                    "config": self.config.to_dict(),
+                    "current": _baseline_identity(current_payload),
+                    "events": [event.to_dict() for event in deduped_events],
+                    "rollback": rollback_decision.to_dict(),
+                }
+            )[:24]
+        )
         return LegalIRDriftReport(
             report_id=report_id,
             drift_detected=bool(deduped_events),
@@ -696,7 +694,10 @@ class LegalIRDriftMonitor:
         for family in sorted(set(before).intersection(after)):
             deltas[family] = {}
             for metric in sorted(set(before[family]).intersection(after[family])):
-                if metric not in self.config.higher_is_better_metrics and metric not in self.config.lower_is_better_metrics:
+                if (
+                    metric not in self.config.higher_is_better_metrics
+                    and metric not in self.config.lower_is_better_metrics
+                ):
                     continue
                 baseline_value = before[family][metric]
                 current_value = after[family][metric]
@@ -834,8 +835,12 @@ class LegalIRDriftMonitor:
                     baseline=str(before["schema_signature"]),
                     current=str(after["schema_signature"]),
                     evidence={
-                        "added_keys": sorted(set(after["schema_keys"]) - set(before["schema_keys"])),
-                        "removed_keys": sorted(set(before["schema_keys"]) - set(after["schema_keys"])),
+                        "added_keys": sorted(
+                            set(after["schema_keys"]) - set(before["schema_keys"])
+                        ),
+                        "removed_keys": sorted(
+                            set(before["schema_keys"]) - set(after["schema_keys"])
+                        ),
                     },
                 )
             )
@@ -861,7 +866,9 @@ class LegalIRDriftMonitor:
             if increase > threshold:
                 events.append(
                     LegalIRDriftEvent(
-                        category="gpu_resource_degradation" if signal.startswith("gpu") else "resource_degradation",
+                        category="gpu_resource_degradation"
+                        if signal.startswith("gpu")
+                        else "resource_degradation",
                         signal=f"{signal}_increase",
                         observed=round(increase, 12),
                         threshold=threshold,
@@ -986,7 +993,10 @@ def _proof_failure_rate(payload: Mapping[str, Any]) -> float | None:
     )
     if direct is not None:
         return _safe_rate(direct)
-    hammer = _mapping(payload.get("hammer_metrics") or _mapping(payload.get("latest_daemon_hammer_guidance")).get("hammer_metrics"))
+    hammer = _mapping(
+        payload.get("hammer_metrics")
+        or _mapping(payload.get("latest_daemon_hammer_guidance")).get("hammer_metrics")
+    )
     success = _first_number(
         hammer or payload,
         (
@@ -999,7 +1009,9 @@ def _proof_failure_rate(payload: Mapping[str, Any]) -> float | None:
         rate = _safe_rate(success)
         return 1.0 - rate if rate is not None else None
     failed = _first_number(payload, ("proof_failed_count", "failed_count", "hammer_failed_count"))
-    attempted = _first_number(payload, ("proof_attempted_count", "attempted_count", "hammer_attempted_count"))
+    attempted = _first_number(
+        payload, ("proof_attempted_count", "attempted_count", "hammer_attempted_count")
+    )
     if failed is not None and attempted is not None and attempted > 0:
         return max(0.0, min(1.0, failed / attempted))
     family_metrics = _normalise_family_metrics(payload)
@@ -1055,8 +1067,7 @@ def _schema_identity(payload: Mapping[str, Any]) -> dict[str, Any]:
         signature_source: Any = schema
     else:
         version = _string(
-            payload.get("schema_version")
-            or _mapping(payload.get("versions")).get("schema_version")
+            payload.get("schema_version") or _mapping(payload.get("versions")).get("schema_version")
         )
         keys = tuple(sorted(str(key) for key in payload.keys()))
         signature_source = {"schema_version": version, "keys": keys}
@@ -1080,12 +1091,27 @@ def _resource_metrics(payload: Mapping[str, Any]) -> dict[str, Any]:
         raw = _mapping(payload["evaluator_health"])
     queue_lag = _queue_lag(payload)
     result: dict[str, Any] = {
-        "cpu_utilization": _safe_rate(_first_number(raw or payload, ("cpu_utilization", "cpu_percent"))),
-        "gpu_memory_pressure": _safe_rate(_first_number(raw or payload, ("gpu_memory_pressure", "gpu_memory_percent"))),
-        "gpu_utilization": _safe_rate(_first_number(raw or payload, ("gpu_utilization", "gpu_utilization_percent"))),
-        "memory_pressure": _safe_rate(_first_number(raw or payload, ("memory_pressure", "memory_percent"))),
+        "cpu_utilization": _safe_rate(
+            _first_number(raw or payload, ("cpu_utilization", "cpu_percent"))
+        ),
+        "gpu_memory_pressure": _safe_rate(
+            _first_number(raw or payload, ("gpu_memory_pressure", "gpu_memory_percent"))
+        ),
+        "gpu_utilization": _safe_rate(
+            _first_number(raw or payload, ("gpu_utilization", "gpu_utilization_percent"))
+        ),
+        "memory_pressure": _safe_rate(
+            _first_number(raw or payload, ("memory_pressure", "memory_percent"))
+        ),
         "queue_lag_p95_seconds": queue_lag,
-        "saturation_events_total": _first_number(raw or payload, ("saturation_events_total", "resource_saturation_events_total", "resource_saturation_events")),
+        "saturation_events_total": _first_number(
+            raw or payload,
+            (
+                "saturation_events_total",
+                "resource_saturation_events_total",
+                "resource_saturation_events",
+            ),
+        ),
     }
     telemetry_known = (raw or payload).get("gpu_telemetry_known")
     if telemetry_known is None:
@@ -1208,9 +1234,8 @@ def _build_rollback_decision(
                 "activation_key": promotion_id,
                 "disable_action": "remove_promoted_guidance_records",
                 "restore_mode": "canary_only",
-                "rollback_id": "lir-guidance-rollback-" + _stable_digest(
-                    {"promotion_id": promotion_id}
-                )[:24],
+                "rollback_id": "lir-guidance-rollback-"
+                + _stable_digest({"promotion_id": promotion_id})[:24],
             }
         rollback_id = _string(rollback.get("rollback_id")) or (
             "lir-guidance-rollback-" + _stable_digest({"promotion_id": promotion_id})[:24]
@@ -1230,7 +1255,8 @@ def _build_rollback_decision(
             {
                 "activation_state": disabled_state,
                 "affected_guidance_ids": list(guidance_ids),
-                "disable_action": _string(rollback.get("disable_action")) or "remove_promoted_guidance_records",
+                "disable_action": _string(rollback.get("disable_action"))
+                or "remove_promoted_guidance_records",
                 "disabled": True,
                 "promotion_id": promotion_id,
                 "rollback_metadata": {
@@ -1239,17 +1265,22 @@ def _build_rollback_decision(
                     "rollback_trigger": "production_drift_monitor",
                     "rollback_trigger_event_ids": list(event_ids),
                 },
-                "source_export_id": _string(promotion.get("source_export_id") or promotion.get("learned_export_id")),
+                "source_export_id": _string(
+                    promotion.get("source_export_id") or promotion.get("learned_export_id")
+                ),
             }
         )
-        todo_id = "PORTAL-LIR-HAMMER-083-ROLLBACK-" + _stable_digest(
-            {
-                "events": event_ids,
-                "guidance_ids": guidance_ids,
-                "promotion_id": promotion_id,
-                "rollback_id": rollback_id,
-            }
-        )[:12].upper()
+        todo_id = (
+            "PORTAL-LIR-HAMMER-083-ROLLBACK-"
+            + _stable_digest(
+                {
+                    "events": event_ids,
+                    "guidance_ids": guidance_ids,
+                    "promotion_id": promotion_id,
+                    "rollback_id": rollback_id,
+                }
+            )[:12].upper()
+        )
         todos.append(
             LegalIRRollbackTodo(
                 todo_id=todo_id,
@@ -1258,13 +1289,17 @@ def _build_rollback_decision(
                 rollback_id=rollback_id,
                 drift_event_ids=event_ids,
                 guidance_ids=guidance_ids,
-                action=_string(rollback.get("disable_action")) or "remove_promoted_guidance_records",
+                action=_string(rollback.get("disable_action"))
+                or "remove_promoted_guidance_records",
             )
         )
     if not promotions:
-        todo_id = "PORTAL-LIR-HAMMER-083-ROLLBACK-" + _stable_digest(
-            {"events": event_ids, "promotion_id": "missing_active_promotion"}
-        )[:12].upper()
+        todo_id = (
+            "PORTAL-LIR-HAMMER-083-ROLLBACK-"
+            + _stable_digest({"events": event_ids, "promotion_id": "missing_active_promotion"})[
+                :12
+            ].upper()
+        )
         todos.append(
             LegalIRRollbackTodo(
                 todo_id=todo_id,

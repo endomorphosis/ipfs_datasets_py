@@ -4,11 +4,13 @@ Test stubs for ucan module.
 Feature: UCAN Authorization
   User Controlled Authorization Network tokens and capabilities
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_ucan_token_structure():
@@ -101,6 +103,7 @@ def an_unsigned_ucan_token_and_a_private_key():
 
 
 # Test scenarios
+
 
 def test_create_ucan_token():
     """
@@ -213,6 +216,7 @@ def test_verify_ucan_audience():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a UCAN token structure")
@@ -425,4 +429,3 @@ def the_token_structure_is_extracted():
     """Step: Then the token structure is extracted"""
     # TODO: Implement step
     pass
-

@@ -167,10 +167,15 @@ def test_hammer_premise_sanitizer_rejects_poisoned_sources_before_selection() ->
     assert [premise.name for premise in batch.accepted] == ["clean"]
     assert {premise.name for premise in batch.rejected} == {"poisoned", "model-leak", "hint"}
     assert [premise.name for premise in selected.selected] == ["clean"]
-    assert LegalIRPoisonReason.POISONED_PREMISE.value in scan_hammer_premise(poisoned).rejection_reasons
+    assert (
+        LegalIRPoisonReason.POISONED_PREMISE.value
+        in scan_hammer_premise(poisoned).rejection_reasons
+    )
 
 
-def test_legal_ir_hammer_report_records_security_rejections_and_blocks_poisoned_proof_inputs() -> None:
+def test_legal_ir_hammer_report_records_security_rejections_and_blocks_poisoned_proof_inputs() -> (
+    None
+):
     report = run_legal_ir_hammer(
         {"formulas": []},
         obligations=[
@@ -204,7 +209,10 @@ def test_legal_ir_hammer_report_records_security_rejections_and_blocks_poisoned_
     assert report.proved_count == 1
     assert report.premise_count == 1
     assert payload["metadata"]["premise_security"]["rejected_count"] == 1
-    assert payload["metadata"]["premise_security_schema_version"] == LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION
+    assert (
+        payload["metadata"]["premise_security_schema_version"]
+        == LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION
+    )
     assert "malicious_citation" in payload["metadata"]["premise_security"]["rejection_reasons"]
     assert report.artifacts[0].trusted is False
     assert "premise_security_rejected" in report.artifacts[0].rejection_reasons

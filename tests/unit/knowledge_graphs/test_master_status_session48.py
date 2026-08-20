@@ -14,6 +14,7 @@ code from a legacy implementation.
 
 All tests follow GIVEN-WHEN-THEN.
 """
+
 from __future__ import annotations
 
 import sys
@@ -28,6 +29,7 @@ import pytest
 #    node.variable and default_var are None/falsy
 # ===========================================================================
 
+
 class TestCompilerAnonymousVariable:
     """GIVEN a NodePattern with no variable and _compile_node_pattern called
     with default_var=None, WHEN compiled, THEN an _anon... variable is
@@ -35,10 +37,12 @@ class TestCompilerAnonymousVariable:
 
     def _compiler(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
+
         return CypherCompiler()
 
     def _node_pattern(self, variable=None, labels=None, properties=None):
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import NodePattern
+
         return NodePattern(
             variable=variable,
             labels=labels or [],
@@ -104,6 +108,7 @@ class TestCompilerAnonymousVariable:
 #    `reverse` and `size` fallback handlers in call_function()
 #    These are reached when the names are temporarily absent from FUNCTION_REGISTRY
 # ===========================================================================
+
 
 class TestCallFunctionReverseAndSizeFallback:
     """GIVEN `reverse` and `size` are absent from FUNCTION_REGISTRY WHEN
@@ -230,12 +235,17 @@ class TestCallFunctionReverseAndSizeFallback:
 #    (e.g. A→B, B→C, C→B), causing B to appear in the BFS queue a second time
 # ===========================================================================
 
+
 class TestOntologyReasonerTransitiveCycleGuard:
     """GIVEN a cyclic transitive property graph WHEN materialize() is called
     THEN line 828 fires and the BFS terminates without infinite loop."""
 
     def _make_reasoner(self, prop_name):
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
+
         s = OntologySchema()
         s.add_transitive(prop_name)
         return OntologyReasoner(s)
@@ -252,9 +262,14 @@ class TestOntologyReasonerTransitiveCycleGuard:
     def test_bfs_cycle_guard_fires_for_a_b_c_b(self):
         """GIVEN A→B→C→B (cycle) WHEN _apply_transitive BFS for start=A
         THEN B is popped twice; second time `mid in visited` is True → line 828."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
-            KnowledgeGraph, Entity, Relationship,
+            KnowledgeGraph,
+            Entity,
+            Relationship,
         )
 
         prop = "connects"
@@ -266,7 +281,9 @@ class TestOntologyReasonerTransitiveCycleGuard:
         ea = Entity(entity_id="A", name="A", entity_type="Node")
         eb = Entity(entity_id="B", name="B", entity_type="Node")
         ec = Entity(entity_id="C", name="C", entity_type="Node")
-        kg.add_entity(ea); kg.add_entity(eb); kg.add_entity(ec)
+        kg.add_entity(ea)
+        kg.add_entity(eb)
+        kg.add_entity(ec)
 
         # A→B, B→C, C→B (cycle back to B)
         self._add_rel(kg, Relationship, ea, eb, prop)
@@ -280,9 +297,14 @@ class TestOntologyReasonerTransitiveCycleGuard:
 
     def test_bfs_terminates_with_long_cycle(self):
         """GIVEN A→B→C→D→B (longer cycle) WHEN materialize THEN terminates cleanly."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
-            KnowledgeGraph, Entity, Relationship,
+            KnowledgeGraph,
+            Entity,
+            Relationship,
         )
 
         prop = "relates"
@@ -306,9 +328,14 @@ class TestOntologyReasonerTransitiveCycleGuard:
 
     def test_bfs_cycle_does_not_duplicate_inferred_rels(self):
         """GIVEN cycle A→B→C→B WHEN materialize THEN inferred A→C added only once."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
-            KnowledgeGraph, Entity, Relationship,
+            KnowledgeGraph,
+            Entity,
+            Relationship,
         )
 
         prop = "likes"
@@ -320,7 +347,9 @@ class TestOntologyReasonerTransitiveCycleGuard:
         ea = Entity(entity_id="A", name="A", entity_type="X")
         eb = Entity(entity_id="B", name="B", entity_type="X")
         ec = Entity(entity_id="C", name="C", entity_type="X")
-        kg.add_entity(ea); kg.add_entity(eb); kg.add_entity(ec)
+        kg.add_entity(ea)
+        kg.add_entity(eb)
+        kg.add_entity(ec)
 
         self._add_rel(kg, Relationship, ea, eb, prop)
         self._add_rel(kg, Relationship, eb, ec, prop)
@@ -328,9 +357,9 @@ class TestOntologyReasonerTransitiveCycleGuard:
 
         result = r.materialize(kg)
         inferred = [
-            rel for rel in result.relationships.values()
-            if rel.relationship_type == prop
-            and getattr(rel, "properties", {}).get("inferred")
+            rel
+            for rel in result.relationships.values()
+            if rel.relationship_type == prop and getattr(rel, "properties", {}).get("inferred")
         ]
         # A→C should be inferred (not duplicated)
         assert len(inferred) >= 1

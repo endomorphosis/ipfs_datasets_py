@@ -16,6 +16,12 @@ from typing import Any
 
 import pytest
 
+_DATASETS_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(_DATASETS_ROOT))
+for _name in list(sys.modules):
+    if _name == "scripts" or _name.startswith("scripts."):
+        sys.modules.pop(_name, None)
+
 from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import (
     LEGAL_IR_VIEW_FAMILIES,
     THROUGHPUT_REMEDIATION_SCHEMA_VERSION,
@@ -199,9 +205,7 @@ def _complete_evidence() -> dict[str, Any]:
             "checkpoint_sha256": "sha256:" + "c" * 64,
             "summary_sha256": "sha256:" + "d" * 64,
         },
-        "quality_families": {
-            family: _quality_pair() for family in LEGAL_IR_VIEW_FAMILIES
-        },
+        "quality_families": {family: _quality_pair() for family in LEGAL_IR_VIEW_FAMILIES},
         "ablations": {
             "persistent_leanstral_reuse": {
                 "attributed": True,
@@ -363,9 +367,7 @@ def test_every_per_family_quality_metric_is_a_no_regression_guardrail(metric: st
     evidence = _complete_evidence()
     pair = evidence["quality_families"]["deontic"]
     baseline = pair["baseline"][metric]
-    pair["candidate"][metric] = (
-        baseline + 0.001 if metric in LOWER_IS_BETTER else baseline - 0.001
-    )
+    pair["candidate"][metric] = baseline + 0.001 if metric in LOWER_IS_BETTER else baseline - 0.001
 
     result = throughput_remediation_rollout_gate(evidence)
 

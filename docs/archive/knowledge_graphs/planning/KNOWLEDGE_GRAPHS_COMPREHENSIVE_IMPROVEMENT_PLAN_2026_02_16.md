@@ -713,22 +713,20 @@ jobs:
 
 from ipfs_datasets_py.embeddings import EmbeddingManager
 
+
 class KGEmbeddingManager:
     """Manages embeddings for knowledge graph entities."""
-    
+
     def embed_entity(self, entity_id: str, entity_data: Dict) -> np.ndarray:
         """Generate embedding for entity."""
         pass
-    
+
     def embed_relationship(self, rel_id: str, rel_data: Dict) -> np.ndarray:
         """Generate embedding for relationship."""
         pass
-    
+
     def similarity_search(
-        self, 
-        query: str, 
-        k: int = 10,
-        entity_types: Optional[List[str]] = None
+        self, query: str, k: int = 10, entity_types: Optional[List[str]] = None
     ) -> List[Entity]:
         """Search entities by semantic similarity."""
         pass
@@ -738,12 +736,8 @@ class KGEmbeddingManager:
 ```python
 class EntityLinker:
     """Links text mentions to KG entities."""
-    
-    def link_entities(
-        self, 
-        text: str, 
-        kg: KnowledgeGraph
-    ) -> List[EntityMention]:
+
+    def link_entities(self, text: str, kg: KnowledgeGraph) -> List[EntityMention]:
         """Identify and link entities in text."""
         pass
 ```
@@ -768,18 +762,14 @@ class EntityLinker:
 ```python
 # rag/kg_retriever.py
 
+
 class KnowledgeGraphRetriever:
     """RAG retriever backed by knowledge graph."""
-    
-    def retrieve(
-        self,
-        query: str,
-        k: int = 5,
-        expand_hops: int = 2
-    ) -> List[Document]:
+
+    def retrieve(self, query: str, k: int = 5, expand_hops: int = 2) -> List[Document]:
         """
         Retrieve documents using KG.
-        
+
         1. Embed query
         2. Find similar entities in KG
         3. Expand to connected entities
@@ -793,12 +783,8 @@ class KnowledgeGraphRetriever:
 ```python
 class KGContextEnhancer:
     """Enriches RAG context with KG information."""
-    
-    def enhance_context(
-        self,
-        documents: List[Document],
-        kg: KnowledgeGraph
-    ) -> EnhancedContext:
+
+    def enhance_context(self, documents: List[Document], kg: KnowledgeGraph) -> EnhancedContext:
         """Add KG context to retrieved documents."""
         pass
 ```
@@ -823,16 +809,14 @@ class KGContextEnhancer:
 ```python
 # pdf_processing/kg_extractor.py
 
+
 class PDFKnowledgeExtractor:
     """Extract knowledge graph from PDFs."""
-    
-    def extract_from_pdf(
-        self,
-        pdf_path: str
-    ) -> KnowledgeGraph:
+
+    def extract_from_pdf(self, pdf_path: str) -> KnowledgeGraph:
         """
         Extract KG from PDF.
-        
+
         1. Extract text
         2. Identify entities
         3. Extract relationships
@@ -845,11 +829,8 @@ class PDFKnowledgeExtractor:
 ```python
 class CitationGraphBuilder:
     """Build citation graph from academic PDFs."""
-    
-    def build_citation_graph(
-        self,
-        pdfs: List[str]
-    ) -> KnowledgeGraph:
+
+    def build_citation_graph(self, pdfs: List[str]) -> KnowledgeGraph:
         """Build graph of citations between papers."""
         pass
 ```
@@ -874,14 +855,11 @@ class CitationGraphBuilder:
 ```python
 # knowledge_graphs/llm/extractor.py
 
+
 class LLMKnowledgeExtractor:
     """Use LLM to extract knowledge."""
-    
-    def extract_with_llm(
-        self,
-        text: str,
-        schema: Optional[Schema] = None
-    ) -> List[Triple]:
+
+    def extract_with_llm(self, text: str, schema: Optional[Schema] = None) -> List[Triple]:
         """Use LLM to extract structured knowledge."""
         pass
 ```
@@ -890,19 +868,12 @@ class LLMKnowledgeExtractor:
 ```python
 class KGTextGenerator:
     """Generate natural language from KG."""
-    
-    def generate_description(
-        self,
-        entity: Entity,
-        context_hops: int = 2
-    ) -> str:
+
+    def generate_description(self, entity: Entity, context_hops: int = 2) -> str:
         """Generate text description of entity using KG context."""
         pass
-    
-    def generate_explanation(
-        self,
-        path: Path
-    ) -> str:
+
+    def generate_explanation(self, path: Path) -> str:
         """Explain a path through the KG."""
         pass
 ```
@@ -927,18 +898,14 @@ class KGTextGenerator:
 ```python
 # search/kg_search.py
 
+
 class KGSearchEngine:
     """Search engine with KG augmentation."""
-    
-    def search(
-        self,
-        query: str,
-        k: int = 10,
-        use_kg: bool = True
-    ) -> SearchResults:
+
+    def search(self, query: str, k: int = 10, use_kg: bool = True) -> SearchResults:
         """
         Search with KG augmentation.
-        
+
         1. Standard search
         2. Entity linking in results
         3. KG expansion
@@ -951,20 +918,12 @@ class KGSearchEngine:
 ```python
 class EntitySearch:
     """Search focused on entities."""
-    
-    def find_entities(
-        self,
-        query: str,
-        entity_types: Optional[List[str]] = None
-    ) -> List[Entity]:
+
+    def find_entities(self, query: str, entity_types: Optional[List[str]] = None) -> List[Entity]:
         """Find entities matching query."""
         pass
-    
-    def find_relationships(
-        self,
-        entity1: str,
-        entity2: str
-    ) -> List[Path]:
+
+    def find_relationships(self, entity1: str, entity2: str) -> List[Path]:
         """Find relationship paths between entities."""
         pass
 ```
@@ -1060,24 +1019,25 @@ Create `jsonld/vocabularies/` subdirectory:
 ```python
 # tests/performance/knowledge_graphs/benchmark_queries.py
 
+
 class QueryBenchmarks:
     """Performance benchmarks for query operations."""
-    
+
     def test_simple_match_performance(self):
         """Benchmark: MATCH (n) RETURN n LIMIT 100"""
         # Target: < 10ms
         pass
-    
+
     def test_complex_match_performance(self):
         """Benchmark: Multi-hop pattern matching"""
         # Target: < 100ms
         pass
-    
+
     def test_hybrid_search_performance(self):
         """Benchmark: Hybrid vector+graph search"""
         # Target: < 200ms
         pass
-    
+
     def test_large_graph_traversal(self):
         """Benchmark: BFS on 10K+ node graph"""
         # Target: < 500ms
@@ -1127,13 +1087,14 @@ class QueryBenchmarks:
 ```python
 # core/optimizer.py (enhanced)
 
+
 class QueryOptimizer:
     """Optimizes query execution plans."""
-    
+
     def optimize(self, query_plan: QueryPlan) -> OptimizedPlan:
         """
         Optimize query plan.
-        
+
         - Reorder operations for efficiency
         - Select best indexes
         - Apply caching strategies

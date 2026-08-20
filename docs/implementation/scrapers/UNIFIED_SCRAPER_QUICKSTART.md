@@ -50,8 +50,9 @@ python -m ipfs_datasets_py.scraper_cli scrape https://example.com \
 try:
     import requests
     from bs4 import BeautifulSoup
+
     response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
+    soup = BeautifulSoup(response.content, "html.parser")
     text = soup.get_text()
 except Exception as e:
     # Try playwright?
@@ -104,11 +105,7 @@ from ipfs_datasets_py.unified_web_scraper import scrape_url, scrape_urls
 result = scrape_url("https://example.com")
 
 # Multiple URLs
-results = scrape_urls([
-    "https://example.com",
-    "https://example.org",
-    "https://example.net"
-])
+results = scrape_urls(["https://example.com", "https://example.org", "https://example.net"])
 
 for result in results:
     if result.success:
@@ -137,10 +134,7 @@ python -m ipfs_datasets_py.scraper_cli scrape-file urls.txt
 from ipfs_datasets_py.mcp_server.tools.web_scraping_tools import scrape_url_tool
 
 # AI assistants can use this
-result = await scrape_url_tool(
-    url="https://example.com",
-    fallback_enabled=True
-)
+result = await scrape_url_tool(url="https://example.com", fallback_enabled=True)
 ```
 
 ## Common Use Cases
@@ -229,9 +223,9 @@ if result.success:
 from ipfs_datasets_py.unified_web_scraper import scrape_url, ScraperConfig
 
 config = ScraperConfig(
-    timeout=60,              # Wait up to 60 seconds
-    extract_links=True,      # Extract all links
-    fallback_enabled=True,   # Try multiple methods
+    timeout=60,  # Wait up to 60 seconds
+    extract_links=True,  # Extract all links
+    fallback_enabled=True,  # Try multiple methods
 )
 
 scraper = UnifiedWebScraper(config)
@@ -247,21 +241,17 @@ config = ScraperConfig(
     follow_redirects=True,
     verify_ssl=True,
     rate_limit_delay=2.0,  # 2 seconds between requests
-    
     # Extraction settings
     extract_links=True,
     extract_text=True,
-    
     # Retry settings
     max_retries=5,
     retry_delay=2.0,
-    
     # Browser settings (for Playwright)
     playwright_headless=True,
     playwright_wait_for="networkidle",
-    
     # Custom user agent
-    user_agent="MyBot/1.0"
+    user_agent="MyBot/1.0",
 )
 ```
 
@@ -360,11 +350,7 @@ import json
 from datetime import datetime
 
 # Configuration
-config = ScraperConfig(
-    timeout=60,
-    rate_limit_delay=2.0,
-    extract_links=True
-)
+config = ScraperConfig(timeout=60, rate_limit_delay=2.0, extract_links=True)
 
 # URLs to scrape
 urls = [
@@ -383,31 +369,30 @@ failed = []
 
 for result in results:
     if result.success:
-        successful.append({
-            'url': result.url,
-            'title': result.title,
-            'content': result.content,
-            'method': result.method_used.value,
-            'links_count': len(result.links),
-            'timestamp': result.timestamp
-        })
+        successful.append(
+            {
+                "url": result.url,
+                "title": result.title,
+                "content": result.content,
+                "method": result.method_used.value,
+                "links_count": len(result.links),
+                "timestamp": result.timestamp,
+            }
+        )
     else:
-        failed.append({
-            'url': result.url,
-            'errors': result.errors
-        })
+        failed.append({"url": result.url, "errors": result.errors})
 
 # Save results
 output = {
-    'scraped_at': datetime.now().isoformat(),
-    'total_urls': len(urls),
-    'successful': len(successful),
-    'failed': len(failed),
-    'results': successful,
-    'errors': failed
+    "scraped_at": datetime.now().isoformat(),
+    "total_urls": len(urls),
+    "successful": len(successful),
+    "failed": len(failed),
+    "results": successful,
+    "errors": failed,
 }
 
-with open('scraping_results.json', 'w') as f:
+with open("scraping_results.json", "w") as f:
     json.dump(output, f, indent=2)
 
 print(f"\n✓ Scraped {len(successful)}/{len(urls)} URLs successfully")

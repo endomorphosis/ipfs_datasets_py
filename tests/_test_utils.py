@@ -13,6 +13,7 @@ These functions check for:
     - No mocked objects or placeholders that are not explicitly marked as such.
     - Unnecessary fallbacks that clutters the codebase and make it harder to test and debug.
 """
+
 import ast
 import inspect
 import textwrap
@@ -34,44 +35,52 @@ except ImportError:
         return [s for s in re.split(r"(?<=[.!?])\s+", text.strip()) if s]
 
 
-
-
-
-
 class FalsifiedCodeError(NotImplementedError):
     """Custom exception for falsified code."""
+
     pass
+
 
 class UnlabeledMockError(NotImplementedError):
     """Custom exception for unlabeled mocks."""
+
     pass
+
 
 class UnlabeledPlaceholderError(NotImplementedError):
     """Custom exception for unlabeled placeholders."""
+
     pass
+
 
 class SilentlyIgnoredErrorsError(NotImplementedError):
     """Custom exception for code that silently ignores errors."""
-    pass
 
+    pass
 
 
 class UnnecessaryFallbackError(Exception):
     """Custom exception for unnecessary fallback code."""
+
     pass
+
 
 class BadDocumentationError(Exception):
     """Custom exception for bad documentation."""
+
     pass
+
 
 class BadSignatureError(Exception):
     """Custom exception for bad function signatures."""
+
     pass
+
 
 class CheatingTestError(Exception):
     """Custom exception for test cheating patterns."""
-    pass
 
+    pass
 
 
 def get_ast_tree(input_path: Path) -> ast.Module:
@@ -107,13 +116,13 @@ def get_ast_tree(input_path: Path) -> ast.Module:
     """
     input_path = Path(input_path)
     try:
-        with open(input_path.resolve(), 'r') as file:
+        with open(input_path.resolve(), "r") as file:
             content = file.read()
     except FileNotFoundError:
         raise FileNotFoundError(f"File '{input_path}' does not exist.")
     except Exception as e:
         raise IOError(f"Failed to read file '{input_path}': {e}") from e
-    
+
     tree = ast.parse(content)
     return tree
 
@@ -121,43 +130,43 @@ def get_ast_tree(input_path: Path) -> ast.Module:
 def has_good_callable_metadata(tree: ast.Module | object) -> Literal[True]:
     """
     Validate callable objects' metadata to ensure comprehensive documentation and proper signatures.
-    
-    This function performs comprehensive validation of all callable objects (functions, methods, 
+
+    This function performs comprehensive validation of all callable objects (functions, methods,
     and classes) within a Python AST module to ensure they meet high-quality metadata standards.
     It systematically checks each callable for proper documentation and signature quality.
-    
+
     The validation process includes:
     - Function and method signature validation (type hints, return annotations)
     - Comprehensive docstring validation (Google-style format, required sections)
     - Class documentation requirements
     - Module-level documentation standards
-    
+
     Args:
         tree: The parsed AST module containing callable objects to validate.
-        
+
     Returns:
         Literal[True]: Indicates that the validation was successful.
-        
+
     Raises:
         BadSignatureError: When function signatures lack proper type annotations,
             return type annotations, or have other signature-related issues.
         BadDocumentationError: When docstrings are missing, too short, lack
             required sections (Args, Returns, Raises, Examples), or don't meet
             Google-style documentation standards.
-            
+
     Examples:
         >>> import ast
         >>> code = '''
         ... def well_documented_func(param: str) -> str:
         ...     \'\'\'
         ...     A properly documented function with comprehensive metadata.
-        ...     
+        ...
         ...     Args:
         ...         param: A string parameter for demonstration.
-        ...         
+        ...
         ...     Returns:
         ...         str: The processed parameter value.
-        ...         
+        ...
         ...     Examples:
         ...         >>> well_documented_func("test")
         ...         'test'
@@ -214,7 +223,9 @@ def has_good_callable_metadata(tree: ast.Module | object) -> Literal[True]:
     return True
 
 
-def raise_on_test_cheating(tree: ast.FunctionDef | ast.AsyncFunctionDef, reset: bool = False) -> None:
+def raise_on_test_cheating(
+    tree: ast.FunctionDef | ast.AsyncFunctionDef, reset: bool = False
+) -> None:
     """
     Validate that the module does not contain any test cheating patterns.
 
@@ -231,8 +242,6 @@ def raise_on_test_cheating(tree: ast.FunctionDef | ast.AsyncFunctionDef, reset: 
         BadDocumentationError: If any test cheating patterns are detected.
     """
     pass
-
-
 
 
 def raise_on_bad_module_docstring(node: ast.AST, min_docstring_word_count: int = 50) -> None:
@@ -267,7 +276,7 @@ def raise_on_bad_module_docstring(node: ast.AST, min_docstring_word_count: int =
         >>> code = '''
         ... \"\"\"Module documentation example.
         ... This module provides utility functions for data processing.
-        ... 
+        ...
         ... The main function process_data handles input validation and transformation.
         ...\"\"\"
         ...
@@ -276,7 +285,7 @@ def raise_on_bad_module_docstring(node: ast.AST, min_docstring_word_count: int =
         ... '''
         >>> tree = ast.parse(code)
         >>> raise_on_bad_module_docstring(tree)  # No exception raised
-        
+
         >>> bad_code = 'def func(): pass'  # No docstring
         >>> bad_tree = ast.parse(bad_code)
         >>> raise_on_bad_module_docstring(bad_tree)  # Raises BadDocumentationError
@@ -287,9 +296,7 @@ def raise_on_bad_module_docstring(node: ast.AST, min_docstring_word_count: int =
     docstring = ast.get_docstring(node)
     # Check if the module has a docstring
     if docstring is None:
-        raise BadDocumentationError(
-            f"Module '{node.name}' is missing a docstring."
-        )
+        raise BadDocumentationError(f"Module '{node.name}' is missing a docstring.")
 
     # Check if the docstring is too short
     if len(docstring.split()) < min_docstring_word_count:
@@ -299,7 +306,7 @@ def raise_on_bad_module_docstring(node: ast.AST, min_docstring_word_count: int =
         )
 
     # Check if the docstring references the module's public API
-    public_api = [name for name in dir(node) if not name.startswith('_')]
+    public_api = [name for name in dir(node) if not name.startswith("_")]
     for api in public_api:
         if api in docstring:
             continue
@@ -313,18 +320,17 @@ def raise_on_bad_module_docstring(node: ast.AST, min_docstring_word_count: int =
         )
 
 
-
 def raise_on_bad_signature(node: ast.AST) -> None:
     """
     Validate the signature of a callable object and raise errors for bad patterns.
-    
+
     This function checks a callable's signature for common issues including:
     - Parameters with default values but no type annotations
     - Parameters without type annotations (excluding 'self' and 'cls')
     - Missing return type annotation
     - Missing type annotations for keyword-only arguments
     - Missing type annotations for *args and **kwargs
-    
+
     Args:
         node: An AST node representing a callable object (function or method)
               that contains signature information including arguments and return type.
@@ -340,18 +346,18 @@ def raise_on_bad_signature(node: ast.AST) -> None:
             - A keyword-only argument lacks a type annotation
             - *args or **kwargs lack type annotations
     """
-    node_name = node.name if hasattr(node, 'name') else 'module'
+    node_name = node.name if hasattr(node, "name") else "module"
 
     # Check for default values in parameters
     # defaults list corresponds to the last len(defaults) parameters
     defaults = node.args.defaults
     args = node.args.args
-    
+
     if defaults:
         # Map defaults to their corresponding arguments
         num_defaults = len(defaults)
         args_with_defaults = args[-num_defaults:]
-        
+
         for arg in args_with_defaults:
             if arg.annotation is None:
                 raise BadSignatureError(
@@ -361,7 +367,7 @@ def raise_on_bad_signature(node: ast.AST) -> None:
     # Check for default values in keyword-only parameters
     kw_defaults = node.args.kw_defaults
     kwonly_args = node.args.kwonlyargs
-    
+
     if kw_defaults and kwonly_args:
         for i, (arg, default) in enumerate(zip(kwonly_args, kw_defaults)):
             if default is not None and arg.annotation is None:
@@ -371,7 +377,7 @@ def raise_on_bad_signature(node: ast.AST) -> None:
 
     # Check for type annotations in regular parameters
     for arg in args:
-        if arg.annotation is None and arg.arg not in ['self', 'cls']:
+        if arg.annotation is None and arg.arg not in ["self", "cls"]:
             raise BadSignatureError(
                 f"Callable '{node_name}' has a parameter '{arg.arg}' without a type annotation."
             )
@@ -397,9 +403,7 @@ def raise_on_bad_signature(node: ast.AST) -> None:
 
     # Check for return annotation
     if node.returns is None:
-        raise BadSignatureError(
-            f"Callable '{node_name}' does not have a return type annotation."
-        )
+        raise BadSignatureError(f"Callable '{node_name}' does not have a return type annotation.")
 
     return
 
@@ -407,12 +411,12 @@ def raise_on_bad_signature(node: ast.AST) -> None:
 def raise_on_bad_docstring(node: ast.AST, tree: ast.AST) -> None:
     """
     Validate that a callable object has a comprehensive, well-structured docstring.
-    
+
     This function enforces Google-style docstring standards for functions and classes,
     ensuring they contain appropriate sections based on the callable's characteristics.
     It validates docstring length, required sections (Args, Returns, Raises, Examples),
     and ensures documentation aligns with the actual function signature and implementation.
-    
+
     The validation includes:
     - Minimum word count requirements (50+ words)
     - Required 'Args:' section for functions with parameters
@@ -420,25 +424,25 @@ def raise_on_bad_docstring(node: ast.AST, tree: ast.AST) -> None:
     - Required 'Raises:' section for functions that raise exceptions
     - Required 'Examples:' section for all callables
     - Special handling for initialization methods (__init__, __new__, __post_init__)
-    
+
     Args:
         node: An AST node representing a function, async function, or class definition
               that should be validated for proper docstring documentation.
         tree: The complete AST tree of the module, used for additional context
               when analyzing the callable's implementation and usage patterns.
-        
+
     Raises:
         BadDocumentationError: If the docstring is missing, too short (< 50 words),
             lacks required sections based on the callable's signature or implementation,
             or fails to meet Google-style documentation standards.
-    
+
     Examples:
         >>> # Validate a function node's docstring
         >>> tree = ast.parse(source_code)
         >>> func_node = tree.body[0]  # First function in module
         >>> raise_on_bad_docstring(func_node, tree)
-        
-        >>> # Validate a class node's docstring  
+
+        >>> # Validate a class node's docstring
         >>> class_node = tree.body[1]  # First class in module
         >>> raise_on_bad_docstring(class_node, tree)
     """
@@ -469,7 +473,7 @@ def raise_on_bad_docstring(node: ast.AST, tree: ast.AST) -> None:
                 break
 
     # Docstring contains "Raises:" if exceptions exist in the function body
-    if raise_exists and not any(keyword in docstring for keyword in ['Raises:', 'Raise:']):
+    if raise_exists and not any(keyword in docstring for keyword in ["Raises:", "Raise:"]):
         raise BadDocumentationError(
             f"Docstring for '{node_name}' is missing 'Raises:' section "
             "but exceptions are raised in the callable body."
@@ -478,16 +482,16 @@ def raise_on_bad_docstring(node: ast.AST, tree: ast.AST) -> None:
     # Docstring contains "Args:" if there are arguments (only check for functions)
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
         # Create a copy of args list and remove "self" and "cls" from consideration
-        filtered_args = [arg for arg in node.args.args if arg.arg not in ['self', 'cls']]
+        filtered_args = [arg for arg in node.args.args if arg.arg not in ["self", "cls"]]
         kwonly_args = node.args.kwonlyargs
         has_vararg = node.args.vararg is not None
         has_kwarg = node.args.kwarg is not None
-        
+
         # Check if function has any arguments that should be documented
         has_documentable_args = bool(filtered_args or kwonly_args or has_vararg or has_kwarg)
 
         if has_documentable_args:
-            if 'Args:' not in docstring:
+            if "Args:" not in docstring:
                 raise BadDocumentationError(
                     f"Docstring for '{node_name}' does not contain 'Args:' "
                     "but the callable has arguments."
@@ -495,19 +499,19 @@ def raise_on_bad_docstring(node: ast.AST, tree: ast.AST) -> None:
 
     # Docstring contains 'Returns:', or 'Examples:'
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-        if node.name in ['__init__', '__new__', '__post_init__']:
+        if node.name in ["__init__", "__new__", "__post_init__"]:
             # Initialization methods like __init__, __new__, and __post_init__ do not require 'Returns:'
             pass
         else:
             # NOTE: Due to the raise_on_bad_signature function, we already know that
             # if it's a function, the return type is annotated, so we can safely check for 'Returns:'
-            if ast.unparse(node.returns) != 'None' and 'Returns:' not in docstring:
+            if ast.unparse(node.returns) != "None" and "Returns:" not in docstring:
                 raise BadDocumentationError(
                     f"Docstring for '{node_name}' in does not contain 'Returns:' section "
                     "despite having a return type annotation other than None."
                 )
     # NOTE This affects classes as well, but we don't check for return types in classes.
-    if 'Examples:' in docstring or 'Example:' in docstring:
+    if "Examples:" in docstring or "Example:" in docstring:
         return
     else:
         raise BadDocumentationError(
@@ -515,33 +519,45 @@ def raise_on_bad_docstring(node: ast.AST, tree: ast.AST) -> None:
         )
 
 
-
-
-
-
-
-
-
 _FAKE_CODE_INDICATORS = [
-    "In a real implementation", "In a real scenario", "For testing purposes",
-    "In production", "For now", "For demonstration", "In case",
-    "In a full implementation", "simplified", "This would be",
-    "depends on", "simple approximation", "can be enhanced",
-    "placeholder"
+    "In a real implementation",
+    "In a real scenario",
+    "For testing purposes",
+    "In production",
+    "For now",
+    "For demonstration",
+    "In case",
+    "In a full implementation",
+    "simplified",
+    "This would be",
+    "depends on",
+    "simple approximation",
+    "can be enhanced",
+    "placeholder",
 ]
 
 _MOCKED_CODE_INDICATORS = [
-    "mock", "mocked", "mocking", "Mock", "Mocked",
-    "Mocking", "Mocked code", "Mocking behavior",
-    "Mocked function", "Mocked class", "Mocked method",
+    "mock",
+    "mocked",
+    "mocking",
+    "Mock",
+    "Mocked",
+    "Mocking",
+    "Mocked code",
+    "Mocking behavior",
+    "Mocked function",
+    "Mocked class",
+    "Mocked method",
 ]
 
 _FALLBACK_INDICATORS = [
-    "fallback", "fallbacks", "Fallback", "Fallbacks",
-    #"backup", "backups", "backup code", "backup implementation",
-    #"Backup code", "Backup implementation",
+    "fallback",
+    "fallbacks",
+    "Fallback",
+    "Fallbacks",
+    # "backup", "backups", "backup code", "backup implementation",
+    # "Backup code", "Backup implementation",
 ]
-
 
 
 def raise_on_bad_callable_code_quality(path: Path) -> None:
@@ -559,14 +575,14 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
     - Finds unnecessary fallback implementations
     - Catches silently suppressed errors
 
-    Files containing mock indicators in their path (e.g. "mock", "placeholder", "stub", 
+    Files containing mock indicators in their path (e.g. "mock", "placeholder", "stub",
     "example") are exempt from certain checks, as they are expected to contain
     placeholder code. The same is true for paths indicating the presence of
     fallback code (e.g. "fallback", "fallbacks", "Fallback", "Fallbacks")
 
     Args:
         path: Path to the Python file to analyze for code quality issues.
-        
+
     Raises:
         FileNotFoundError: If the specified file does not exist.
         IOError: If the file cannot be read or parsed.
@@ -582,21 +598,19 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
     Examples:
         >>> # Check a production file for code quality issues
         >>> raise_on_bad_callable_code_quality(Path("src/module.py"))
-        
+
         >>> # Mock files are exempt from certain checks
         >>> raise_on_bad_callable_code_quality(Path("tests/mock_data.py"))
     """
     path = Path(path)
 
-    # NOTE We purposefully don't include "tests" here, 
+    # NOTE We purposefully don't include "tests" here,
     # as test implementations can be faked as well.
-    mock_file_indicators = [ 
-        "mock", "placeholder", "stub", "example"
-    ]
+    mock_file_indicators = ["mock", "placeholder", "stub", "example"]
     full_path = str(path.resolve())
 
     try:
-        with open(path.resolve(), 'r') as f:
+        with open(path.resolve(), "r") as f:
             code = f.read()
     except FileNotFoundError:
         raise FileNotFoundError(f"File '{path}' does not exist.")
@@ -625,10 +639,8 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
                     " Replace this code with actual implementations "
                     'or move it to a file with "mock", "placeholder", "stub", "example" in the file path.'
                 )
-        
-    fallback_file_indicators = [
-        "mock", "placeholder", "stub", "example", "backup", "fallback"
-    ]
+
+    fallback_file_indicators = ["mock", "placeholder", "stub", "example", "backup", "fallback"]
 
     for fallback in _FALLBACK_INDICATORS:
         if fallback in code.lower():
@@ -642,8 +654,13 @@ def raise_on_bad_callable_code_quality(path: Path) -> None:
             )
 
     for suppressed_error in [
-        "silently", "silently", "ignore errors", "ignore exceptions",
-        "ignore error", "ignore exception", "suppress errors",
+        "silently",
+        "silently",
+        "ignore errors",
+        "ignore exceptions",
+        "ignore error",
+        "ignore exception",
+        "suppress errors",
     ]:
         if suppressed_error in code.lower():
             for indicator in fallback_file_indicators:

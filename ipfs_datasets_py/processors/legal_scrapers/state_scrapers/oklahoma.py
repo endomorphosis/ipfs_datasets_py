@@ -137,21 +137,17 @@ class OklahomaScraper(BaseStateScraper):
     def _normalize_wayback_url(url: str) -> str:
         value = str(url or "").strip()
         if value.startswith("http://web.archive.org/"):
-            return "https://" + value[len("http://"):]
+            return "https://" + value[len("http://") :]
         return value
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Oklahoma's legislative website."""
         return "http://www.oklegislature.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Oklahoma."""
-        return [{
-            "name": "Oklahoma Statutes",
-            "url": f"{self.get_base_url()}/",
-            "type": "Code"
-        }]
-    
+        return [{"name": "Oklahoma Statutes", "url": f"{self.get_base_url()}/", "type": "Code"}]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -159,11 +155,11 @@ class OklahomaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Oklahoma's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -182,7 +178,9 @@ class OklahomaScraper(BaseStateScraper):
 
         # Seed recovery is for bounded probes only — never sole full-corpus path.
         if not self._full_corpus_enabled() and max_statutes is None:
-            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            direct = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=return_threshold
+            )
             if direct:
                 return direct[:return_threshold]
 
@@ -194,9 +192,13 @@ class OklahomaScraper(BaseStateScraper):
         )
         # Bootstrap with a tiny direct OSCN sample even in full-corpus mode so
         # long candidate-discovery phases still show early real progress.
-        bootstrap_seed_target_raw = str(os.getenv("STATE_SCRAPER_OK_BOOTSTRAP_SEED_COUNT", "") or "").strip()
+        bootstrap_seed_target_raw = str(
+            os.getenv("STATE_SCRAPER_OK_BOOTSTRAP_SEED_COUNT", "") or ""
+        ).strip()
         try:
-            bootstrap_seed_target = int(bootstrap_seed_target_raw) if bootstrap_seed_target_raw else 2
+            bootstrap_seed_target = (
+                int(bootstrap_seed_target_raw) if bootstrap_seed_target_raw else 2
+            )
         except Exception:
             bootstrap_seed_target = 2
         bootstrap_seed_target = max(1, min(8, bootstrap_seed_target))
@@ -330,8 +332,12 @@ class OklahomaScraper(BaseStateScraper):
         if not markdown:
             return None
 
-        section_match = re.search(r"Section\s+([0-9A-Za-z.\-]+)\s+-\s*([^\n*]+)", markdown, flags=re.IGNORECASE)
-        cite_match = re.search(r"Cite as:\s*([0-9]+\s+O\.S\.\s*§\s*[0-9A-Za-z.\-]+)", markdown, flags=re.IGNORECASE)
+        section_match = re.search(
+            r"Section\s+([0-9A-Za-z.\-]+)\s+-\s*([^\n*]+)", markdown, flags=re.IGNORECASE
+        )
+        cite_match = re.search(
+            r"Cite as:\s*([0-9]+\s+O\.S\.\s*§\s*[0-9A-Za-z.\-]+)", markdown, flags=re.IGNORECASE
+        )
         body_start = cite_match.end() if cite_match else -1
         if body_start < 0 and section_match:
             body_start = section_match.end()
@@ -340,7 +346,12 @@ class OklahomaScraper(BaseStateScraper):
 
         tail = markdown[body_start:]
         end = len(tail)
-        for marker in ("Historical Data", "Citationizer", "Oklahoma Attorney General", "Court of Criminal Appeals"):
+        for marker in (
+            "Historical Data",
+            "Citationizer",
+            "Oklahoma Attorney General",
+            "Court of Criminal Appeals",
+        ):
             idx = tail.find(marker)
             if idx >= 0:
                 end = min(end, idx)
@@ -350,9 +361,15 @@ class OklahomaScraper(BaseStateScraper):
         if len(body) < 120:
             return None
 
-        section_number = section_match.group(1).strip() if section_match else self._extract_cite_id(document_url)
-        section_name = section_match.group(2).strip()[:180] if section_match else f"Section {section_number}"
-        official_cite = cite_match.group(1).strip() if cite_match else f"Okla. Stat. § {section_number}"
+        section_number = (
+            section_match.group(1).strip() if section_match else self._extract_cite_id(document_url)
+        )
+        section_name = (
+            section_match.group(2).strip()[:180] if section_match else f"Section {section_number}"
+        )
+        official_cite = (
+            cite_match.group(1).strip() if cite_match else f"Okla. Stat. § {section_number}"
+        )
 
         return NormalizedStatute(
             state_code=self.state_code,
@@ -398,7 +415,9 @@ class OklahomaScraper(BaseStateScraper):
                 seen_candidate_urls.add(source_url)
 
         candidate_urls = await self._collect_candidate_document_urls(headers=headers)
-        candidate_timeout_raw = str(os.getenv("STATE_SCRAPER_OK_CANDIDATE_TIMEOUT_SECONDS", "") or "").strip()
+        candidate_timeout_raw = str(
+            os.getenv("STATE_SCRAPER_OK_CANDIDATE_TIMEOUT_SECONDS", "") or ""
+        ).strip()
         try:
             candidate_timeout_seconds = int(candidate_timeout_raw) if candidate_timeout_raw else 75
         except Exception:
@@ -410,7 +429,9 @@ class OklahomaScraper(BaseStateScraper):
         except Exception:
             scan_heartbeat_seconds = 30
         scan_heartbeat_seconds = max(10, min(180, scan_heartbeat_seconds))
-        heartbeat_every_raw = str(os.getenv("STATE_SCRAPER_OK_SCAN_HEARTBEAT_EVERY", "") or "").strip()
+        heartbeat_every_raw = str(
+            os.getenv("STATE_SCRAPER_OK_SCAN_HEARTBEAT_EVERY", "") or ""
+        ).strip()
         try:
             scan_heartbeat_every = int(heartbeat_every_raw) if heartbeat_every_raw else 200
         except Exception:
@@ -567,7 +588,9 @@ class OklahomaScraper(BaseStateScraper):
             candidates.append(normalized)
 
         bounded_limit = self._bounded_return_threshold(0)
-        bounded_direct_only = str(os.getenv("STATE_SCRAPER_BOUNDED_DIRECT_ONLY", "")).strip().lower() in {
+        bounded_direct_only = str(
+            os.getenv("STATE_SCRAPER_BOUNDED_DIRECT_ONLY", "")
+        ).strip().lower() in {
             "1",
             "true",
             "yes",
@@ -588,9 +611,13 @@ class OklahomaScraper(BaseStateScraper):
             )
             return candidates
 
-        seed_fetch_timeout_raw = str(os.getenv("STATE_SCRAPER_OK_SEED_FETCH_TIMEOUT_SECONDS", "") or "").strip()
+        seed_fetch_timeout_raw = str(
+            os.getenv("STATE_SCRAPER_OK_SEED_FETCH_TIMEOUT_SECONDS", "") or ""
+        ).strip()
         try:
-            seed_fetch_timeout_seconds = int(seed_fetch_timeout_raw) if seed_fetch_timeout_raw else 90
+            seed_fetch_timeout_seconds = (
+                int(seed_fetch_timeout_raw) if seed_fetch_timeout_raw else 90
+            )
         except Exception:
             seed_fetch_timeout_seconds = 90
         seed_fetch_timeout_seconds = max(30, min(300, seed_fetch_timeout_seconds))
@@ -599,12 +626,16 @@ class OklahomaScraper(BaseStateScraper):
             os.getenv("STATE_SCRAPER_OK_SEED_ARCHIVE_DISCOVERY_TIMEOUT_SECONDS", "") or ""
         ).strip()
         try:
-            seed_archive_timeout_seconds = int(seed_archive_timeout_raw) if seed_archive_timeout_raw else 60
+            seed_archive_timeout_seconds = (
+                int(seed_archive_timeout_raw) if seed_archive_timeout_raw else 60
+            )
         except Exception:
             seed_archive_timeout_seconds = 60
         seed_archive_timeout_seconds = max(20, min(240, seed_archive_timeout_seconds))
 
-        cdx_timeout_raw = str(os.getenv("STATE_SCRAPER_OK_CDX_DISCOVERY_TIMEOUT_SECONDS", "") or "").strip()
+        cdx_timeout_raw = str(
+            os.getenv("STATE_SCRAPER_OK_CDX_DISCOVERY_TIMEOUT_SECONDS", "") or ""
+        ).strip()
         try:
             cdx_timeout_seconds = int(cdx_timeout_raw) if cdx_timeout_raw else 120
         except Exception:
@@ -730,7 +761,9 @@ class OklahomaScraper(BaseStateScraper):
             links.append(full_url)
         return links
 
-    async def _discover_links_from_archived_seed(self, *, seed_url: str, headers: Dict[str, str]) -> List[str]:
+    async def _discover_links_from_archived_seed(
+        self, *, seed_url: str, headers: Dict[str, str]
+    ) -> List[str]:
         seed_citeid = self._extract_cite_id(seed_url)
         if not seed_citeid:
             return []
@@ -765,7 +798,9 @@ class OklahomaScraper(BaseStateScraper):
             original = str(row[1] or "").strip()
             if not ts or not original:
                 continue
-            replay_url = self._normalize_wayback_url(f"https://web.archive.org/web/{ts}id_/{original}")
+            replay_url = self._normalize_wayback_url(
+                f"https://web.archive.org/web/{ts}id_/{original}"
+            )
             html = await self._request_text(replay_url, headers=headers, timeout=35)
             if not html:
                 continue
@@ -814,7 +849,9 @@ class OklahomaScraper(BaseStateScraper):
             if "deliverdocument.asp?citeid=" not in original.lower():
                 continue
             if timestamp:
-                replay = self._normalize_wayback_url(f"https://web.archive.org/web/{timestamp}id_/{original}")
+                replay = self._normalize_wayback_url(
+                    f"https://web.archive.org/web/{timestamp}id_/{original}"
+                )
                 urls.append(replay)
             urls.append(original)
         return urls
@@ -853,7 +890,11 @@ class OklahomaScraper(BaseStateScraper):
         text = max(candidates, key=len)
         # Drop OSCN global navigation noise that often prefixes archived pages.
         text = re.sub(r"^\s*OSCN\s+navigation\s+.*?\bHelp\b\s*", "", text, flags=re.IGNORECASE)
-        text = re.split(r"\bCitationizer\s+©\s+Summary\s+of\s+Documents\s+Citing\s+This\s+Document\b", text, maxsplit=1)[0]
+        text = re.split(
+            r"\bCitationizer\s+©\s+Summary\s+of\s+Documents\s+Citing\s+This\s+Document\b",
+            text,
+            maxsplit=1,
+        )[0]
         return self._normalize_legal_text(text)
 
     async def _build_statute_from_document_url(
@@ -895,16 +936,27 @@ class OklahomaScraper(BaseStateScraper):
         if not section_number:
             section_number = "unknown"
 
-        section_name_match = re.search(r"Section\s+[0-9A-Za-z.\-]+\s*-\s*([^\n\r]+)", text, flags=re.IGNORECASE)
-        section_name = section_name_match.group(1).strip()[:180] if section_name_match else f"Section {section_number}"
-
-        official_cite_match = (
-            re.search(r"\bCite\s+as:\s*(\d+\s+O\.S\.\s*§?\s*[0-9A-Za-z.\-]+)", text, flags=re.IGNORECASE)
-            or re.search(r"\b\d+\s+O\.S\.\s*§?\s*[0-9A-Za-z.\-]+\b", text)
+        section_name_match = re.search(
+            r"Section\s+[0-9A-Za-z.\-]+\s*-\s*([^\n\r]+)", text, flags=re.IGNORECASE
         )
+        section_name = (
+            section_name_match.group(1).strip()[:180]
+            if section_name_match
+            else f"Section {section_number}"
+        )
+
+        official_cite_match = re.search(
+            r"\bCite\s+as:\s*(\d+\s+O\.S\.\s*§?\s*[0-9A-Za-z.\-]+)", text, flags=re.IGNORECASE
+        ) or re.search(r"\b\d+\s+O\.S\.\s*§?\s*[0-9A-Za-z.\-]+\b", text)
         official_cite = (
-            official_cite_match.group(1) if official_cite_match and official_cite_match.lastindex else official_cite_match.group(0)
-        ) if official_cite_match else f"Okla. Stat. {section_number}"
+            (
+                official_cite_match.group(1)
+                if official_cite_match and official_cite_match.lastindex
+                else official_cite_match.group(0)
+            )
+            if official_cite_match
+            else f"Okla. Stat. {section_number}"
+        )
 
         return NormalizedStatute(
             state_code=self.state_code,
@@ -928,12 +980,16 @@ class OklahomaScraper(BaseStateScraper):
         direct_oscn_text = await self._request_live_oscn_text(url, headers=headers, timeout=timeout)
         if direct_oscn_text:
             return direct_oscn_text
-        direct_wayback_text = await self._request_wayback_text(url, headers=headers, timeout=timeout)
+        direct_wayback_text = await self._request_wayback_text(
+            url, headers=headers, timeout=timeout
+        )
         if direct_wayback_text:
             return direct_wayback_text
-        heavy_fallback_for_deliver_raw = str(
-            os.getenv("STATE_SCRAPER_OK_HEAVY_FALLBACK_FOR_DELIVERDOCUMENT", "") or ""
-        ).strip().lower()
+        heavy_fallback_for_deliver_raw = (
+            str(os.getenv("STATE_SCRAPER_OK_HEAVY_FALLBACK_FOR_DELIVERDOCUMENT", "") or "")
+            .strip()
+            .lower()
+        )
         heavy_fallback_for_deliver = heavy_fallback_for_deliver_raw in {"1", "true", "yes", "on"}
         if (
             "oscn.net/applications/oscn/deliverdocument.asp" in normalized_url.lower()
@@ -980,7 +1036,9 @@ class OklahomaScraper(BaseStateScraper):
                 import urllib.request
 
                 request = urllib.request.Request(candidate_url, headers=request_headers)
-                with urllib.request.urlopen(request, timeout=max(5, min(int(timeout or 25), 25))) as response:
+                with urllib.request.urlopen(
+                    request, timeout=max(5, min(int(timeout or 25), 25))
+                ) as response:
                     return response.read().decode("utf-8", errors="replace")
             except Exception:
                 return ""
@@ -1016,7 +1074,9 @@ class OklahomaScraper(BaseStateScraper):
         normalized_url = str(url or "").strip()
         if "oscn.net/applications/oscn/deliverdocument.asp" not in normalized_url.lower():
             return ""
-        if normalized_url.lower().startswith(("https://web.archive.org/", "http://web.archive.org/")):
+        if normalized_url.lower().startswith(
+            ("https://web.archive.org/", "http://web.archive.org/")
+        ):
             return ""
 
         def _fetch() -> str:
@@ -1264,8 +1324,12 @@ def _statute_from_checkpoint_row(
         kwargs["metadata"] = None
 
     kwargs["state_code"] = str(kwargs.get("state_code") or default_state_code).upper()
-    kwargs["state_name"] = str(kwargs.get("state_name") or default_state_name).strip() or default_state_name
-    kwargs["code_name"] = str(kwargs.get("code_name") or default_code_name).strip() or default_code_name
+    kwargs["state_name"] = (
+        str(kwargs.get("state_name") or default_state_name).strip() or default_state_name
+    )
+    kwargs["code_name"] = (
+        str(kwargs.get("code_name") or default_code_name).strip() or default_code_name
+    )
     kwargs["statute_id"] = str(kwargs.get("statute_id") or "").strip()
     if not kwargs["statute_id"]:
         return None
@@ -1284,10 +1348,14 @@ class _OklahomaCheckpoint:
         if not raw_dir:
             self.path: Optional[Path] = None
         else:
-            self.path = Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            self.path = (
+                Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            )
             self.path.parent.mkdir(parents=True, exist_ok=True)
         self.state_code = state_code.upper()
-        self.interval = max(1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500)))
+        self.interval = max(
+            1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500))
+        )
         self.last_count = 0
         self.last_write_ts = 0.0
 

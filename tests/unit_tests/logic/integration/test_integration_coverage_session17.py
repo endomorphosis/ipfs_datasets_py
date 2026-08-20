@@ -15,6 +15,7 @@ Targets:
 - domain/__init__.py lines 17-18/22-23/27-28 (optional-import guards)
 - converters/__init__.py lines 14-15 (optional-import guard)
 """
+
 import pytest
 import anyio
 from unittest.mock import patch, MagicMock, PropertyMock
@@ -29,11 +30,13 @@ class TestCECBridgeStrategyPaths:
     @pytest.fixture
     def bridge(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         return CECBridge(enable_prover_router=True, enable_z3=False)
 
     def test_prove_router_strategy_hits_prove_with_router(self, bridge):
         """GIVEN strategy='router' WHEN prove called THEN _prove_with_router is called (line 148)."""
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         mock_result = UnifiedProofResult(
             is_proved=True, is_valid=True, prover_used="router", proof_time=0.1, status="valid"
         )
@@ -45,6 +48,7 @@ class TestCECBridgeStrategyPaths:
     def test_prove_cec_strategy_hits_prove_with_cec_manager(self, bridge):
         """GIVEN strategy='cec' WHEN prove called THEN _prove_with_cec_manager called (line 150-152)."""
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         mock_result = UnifiedProofResult(
             is_proved=True, is_valid=True, prover_used="cec_native", proof_time=0.05, status="valid"
         )
@@ -56,8 +60,13 @@ class TestCECBridgeStrategyPaths:
     def test_prove_unknown_strategy_falls_back_to_cec_manager(self, bridge):
         """GIVEN unknown strategy WHEN prove called THEN fallback _prove_with_cec_manager (line 153-155)."""
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         fallback = UnifiedProofResult(
-            is_proved=False, is_valid=False, prover_used="cec_fallback", proof_time=0.0, status="invalid"
+            is_proved=False,
+            is_valid=False,
+            prover_used="cec_fallback",
+            proof_time=0.0,
+            status="invalid",
         )
         with patch.object(bridge, "_prove_with_cec_manager", return_value=fallback) as m:
             result = bridge.prove("h(z)", strategy="unknown_xyz", use_cache=False)
@@ -67,6 +76,7 @@ class TestCECBridgeStrategyPaths:
     def test_prove_with_router_delegates_to_cec_manager(self, bridge):
         """GIVEN _prove_with_router called WHEN invoked THEN calls _prove_with_cec_manager (line 210)."""
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         cec_result = UnifiedProofResult(
             is_proved=True, is_valid=True, prover_used="cec", proof_time=0.03, status="valid"
         )
@@ -76,7 +86,9 @@ class TestCECBridgeStrategyPaths:
 
     def test_prove_with_router_exception_returns_error_result(self, bridge):
         """GIVEN _prove_with_cec_manager raises WHEN _prove_with_router called THEN error result (lines 213-215)."""
-        with patch.object(bridge, "_prove_with_cec_manager", side_effect=RuntimeError("prover crash")):
+        with patch.object(
+            bridge, "_prove_with_cec_manager", side_effect=RuntimeError("prover crash")
+        ):
             result = bridge._prove_with_router("q(x)", timeout=5.0)
         assert not result.is_proved
         assert result.prover_used == "router"
@@ -95,6 +107,7 @@ class TestCECBridgeStrategyPaths:
     def test_cache_proof_with_ipfs_cache_exception(self, bridge):
         """GIVEN ipfs_cache.put raises WHEN _cache_proof called THEN logs warning but doesn't raise (lines 293-294)."""
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         mock_ipfs = MagicMock()
         mock_ipfs.put.side_effect = RuntimeError("ipfs down")
         bridge.ipfs_cache = mock_ipfs
@@ -108,6 +121,7 @@ class TestCECBridgeStrategyPaths:
     def test_cache_proof_with_cec_cache_exception(self, bridge):
         """GIVEN CEC cache raises WHEN _cache_proof called THEN logs warning but doesn't raise (lines 322-323)."""
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         bridge.ipfs_cache = None
         mock_cc = MagicMock()
         mock_cc.proof_cache.cache_proof.side_effect = RuntimeError("cec cache fail")
@@ -121,6 +135,7 @@ class TestCECBridgeStrategyPaths:
     def test_prove_caches_proved_result(self, bridge):
         """GIVEN prove succeeds with is_proved=True WHEN use_cache=True THEN _cache_proof called (line 157-159)."""
         from ipfs_datasets_py.logic.integration.cec_bridge import UnifiedProofResult
+
         proved = UnifiedProofResult(
             is_proved=True, is_valid=True, prover_used="cec", proof_time=0.1, status="valid"
         )
@@ -139,13 +154,20 @@ class TestFOLConstructorIOExceptionPaths:
 
     @pytest.fixture
     def constructor(self):
-        from ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor import InteractiveFOLConstructor
+        from ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor import (
+            InteractiveFOLConstructor,
+        )
+
         return InteractiveFOLConstructor(domain="legal")
 
     def test_export_session_analyze_exception_logged(self, constructor):
         """GIVEN analyze_logical_structure raises WHEN export_session THEN error logged in result (lines 57-59)."""
-        with patch.object(constructor, "analyze_logical_structure", side_effect=RuntimeError("analysis fail")):
-            with patch.object(constructor, "validate_consistency", return_value={"consistency_report": {}}):
+        with patch.object(
+            constructor, "analyze_logical_structure", side_effect=RuntimeError("analysis fail")
+        ):
+            with patch.object(
+                constructor, "validate_consistency", return_value={"consistency_report": {}}
+            ):
                 result = constructor.export_session()
         errors = result.get("errors", [])
         assert any("logical_analysis" in e for e in errors)
@@ -153,7 +175,9 @@ class TestFOLConstructorIOExceptionPaths:
     def test_export_session_consistency_exception_logged(self, constructor):
         """GIVEN validate_consistency raises WHEN export_session THEN error logged (lines 63-65)."""
         with patch.object(constructor, "analyze_logical_structure", return_value={"analysis": {}}):
-            with patch.object(constructor, "validate_consistency", side_effect=RuntimeError("consistency fail")):
+            with patch.object(
+                constructor, "validate_consistency", side_effect=RuntimeError("consistency fail")
+            ):
                 result = constructor.export_session()
         errors = result.get("errors", [])
         assert any("consistency_report" in e for e in errors)
@@ -229,8 +253,11 @@ class TestFOLConstructorIOExceptionPaths:
     def test_generate_consistency_recommendations_many_conflicts(self, constructor):
         """GIVEN >2 conflicts WHEN _generate_consistency_recommendations THEN domain review recommendation (lines 207-208)."""
         conflicts = [
-            {"conflict_type": "universal_contradiction",
-             "statement1": {"text": f"A{i}"}, "statement2": {"text": f"B{i}"}}
+            {
+                "conflict_type": "universal_contradiction",
+                "statement1": {"text": f"A{i}"},
+                "statement2": {"text": f"B{i}"},
+            }
             for i in range(3)
         ]
         recs = constructor._generate_consistency_recommendations(conflicts)
@@ -248,7 +275,9 @@ class TestTemporalDeonticAPIExceptionPaths:
         from ipfs_datasets_py.logic.integration.domain import temporal_deontic_api as _api
 
         async def run():
-            with patch.object(_api.anyio.to_thread, "run_sync", side_effect=RuntimeError("thread fail")):
+            with patch.object(
+                _api.anyio.to_thread, "run_sync", side_effect=RuntimeError("thread fail")
+            ):
                 result = await _api.query_theorems_from_parameters(
                     {"store_path": "/tmp/no_store", "query_text": "test"}
                 )
@@ -262,7 +291,9 @@ class TestTemporalDeonticAPIExceptionPaths:
         from ipfs_datasets_py.logic.integration.domain import temporal_deontic_api as _api
 
         async def run():
-            with patch.object(_api.anyio.to_thread, "run_sync", side_effect=RuntimeError("thread fail")):
+            with patch.object(
+                _api.anyio.to_thread, "run_sync", side_effect=RuntimeError("thread fail")
+            ):
                 result = await _api.check_document_consistency_from_parameters(
                     {"document_text": "test doc text here"}
                 )
@@ -275,7 +306,9 @@ class TestTemporalDeonticAPIExceptionPaths:
         from ipfs_datasets_py.logic.integration.domain import temporal_deontic_api as _api
 
         async def run():
-            with patch.object(_api.anyio.to_thread, "run_sync", side_effect=RuntimeError("add fail")):
+            with patch.object(
+                _api.anyio.to_thread, "run_sync", side_effect=RuntimeError("add fail")
+            ):
                 result = await _api.add_theorem_from_parameters(
                     {
                         "store_path": "/tmp/no_store",
@@ -293,7 +326,9 @@ class TestTemporalDeonticAPIExceptionPaths:
         from ipfs_datasets_py.logic.integration.domain import temporal_deontic_api as _api
 
         async def run():
-            with patch.object(_api.anyio.to_thread, "run_sync", side_effect=RuntimeError("bulk fail")):
+            with patch.object(
+                _api.anyio.to_thread, "run_sync", side_effect=RuntimeError("bulk fail")
+            ):
                 result = await _api.bulk_process_caselaw_from_parameters(
                     {"caselaw_directories": ["/tmp/fakelaw"]}
                 )
@@ -311,11 +346,16 @@ class TestIPLDLogicStorageCollectionPaths:
     @pytest.fixture
     def storage(self, tmp_path):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDStorage
+
         return LogicIPLDStorage(storage_path=str(tmp_path))
 
     def _make_node(self):
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDNode
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         formula = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="pay_tax")
         return LogicIPLDNode(formula_id="node_test_001", deontic_formula=formula)
 
@@ -354,13 +394,16 @@ class TestIPLDLogicStorageCollectionPaths:
         # Inject mock data into the storage's tracking dict
         storage.document_to_formulas["doc_abc"] = ["f1", "f2", "formula_to_exclude"]
         # Access internal data directly (provenance tracker uses logic_storage.document_to_formulas)
-        related = [c for c in storage.document_to_formulas.get("doc_abc", []) if c != "formula_to_exclude"]
+        related = [
+            c for c in storage.document_to_formulas.get("doc_abc", []) if c != "formula_to_exclude"
+        ]
         assert "f1" in related
         assert "f2" in related
 
     def test_ipld_node_filesystem_file_has_correct_content(self, storage, tmp_path):
         """GIVEN LogicIPLDNode WHEN _store_in_filesystem THEN JSON file with formula data (lines 285-295)."""
         import json
+
         node = self._make_node()
         cid = storage._store_in_filesystem(node)
         json_files = list(tmp_path.glob(f"formula_{cid}*.json"))
@@ -370,7 +413,11 @@ class TestIPLDLogicStorageCollectionPaths:
 
     def test_store_logic_formula_returns_string_cid(self, storage):
         """GIVEN DeonticFormula WHEN store_logic_formula THEN returns string CID."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         formula = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="file_report")
         cid = storage.store_logic_formula(formula, source_doc_cid=None)
         assert isinstance(cid, str)
@@ -378,7 +425,11 @@ class TestIPLDLogicStorageCollectionPaths:
 
     def test_store_logic_formula_with_source_doc_cid_tracks_mapping(self, storage):
         """GIVEN DeonticFormula with source_doc_cid WHEN store_logic_formula THEN stored in document_to_formulas."""
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         formula = DeonticFormula(operator=DeonticOperator.PERMISSION, proposition="park_here")
         cid = storage.store_logic_formula(formula, source_doc_cid="doc_source_001")
         assert cid in storage.document_to_formulas.get("doc_source_001", [])
@@ -386,15 +437,19 @@ class TestIPLDLogicStorageCollectionPaths:
     def test_provenance_tracker_find_related_formulas(self, storage):
         """GIVEN LogicProvenanceTracker WHEN find_related_formulas THEN uses document_to_formulas (lines 458-461)."""
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
-            LogicProvenanceTracker, LogicIPLDNode, LogicProvenanceChain
+            LogicProvenanceTracker,
+            LogicIPLDNode,
+            LogicProvenanceChain,
         )
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticFormula, DeonticOperator
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+        )
+
         tracker = LogicProvenanceTracker(storage)
         # Build provenance chain
         chain = LogicProvenanceChain(
-            source_document_path="/doc/xyz.txt",
-            source_document_cid="doc_xyz",
-            formula_cid="fc"
+            source_document_path="/doc/xyz.txt", source_document_cid="doc_xyz", formula_cid="fc"
         )
         formula = DeonticFormula(operator=DeonticOperator.PROHIBITION, proposition="block")
         node = LogicIPLDNode(formula_id="fc", deontic_formula=formula, provenance_chain=chain)
@@ -418,10 +473,11 @@ class TestProverInstallerSudoPaths:
         """GIVEN no root, no passwordless sudo WHEN ensure_coq THEN manual instructions printed (lines 146-151)."""
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq
 
-        with patch("shutil.which") as mock_which, \
-             patch("subprocess.run") as mock_run, \
-             patch("os.getuid", return_value=1000):
-
+        with (
+            patch("shutil.which") as mock_which,
+            patch("subprocess.run") as mock_run,
+            patch("os.getuid", return_value=1000),
+        ):
             # coqc not found; apt-get present
             mock_which.side_effect = lambda cmd: "/usr/bin/apt-get" if cmd == "apt-get" else None
 
@@ -457,7 +513,10 @@ class TestNaturalLanguageTDFOLInterface:
 
     @pytest.fixture
     def interface(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import NaturalLanguageTDFOLInterface
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            NaturalLanguageTDFOLInterface,
+        )
+
         return NaturalLanguageTDFOLInterface()
 
     def test_understand_returns_formula_or_none(self, interface):
@@ -468,6 +527,7 @@ class TestNaturalLanguageTDFOLInterface:
     def test_explain_returns_string(self, interface):
         """GIVEN parsed formula WHEN explain called THEN string explanation (line 598)."""
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate
+
         formula = Predicate("Obligation", ())
         result = interface.explain(formula)
         assert isinstance(result, str)
@@ -476,28 +536,21 @@ class TestNaturalLanguageTDFOLInterface:
     def test_reason_with_parseable_conclusion(self, interface):
         """GIVEN parseable premise + conclusion WHEN reason THEN result dict (line 570-613)."""
         result = interface.reason(
-            premises=["all rules must be followed"],
-            conclusion="rules are followed"
+            premises=["all rules must be followed"], conclusion="rules are followed"
         )
         assert isinstance(result, dict)
         assert "valid" in result or "error" in result
 
     def test_reason_with_unparseable_premise_returns_error(self, interface):
         """GIVEN premise that fails to parse WHEN reason THEN error result (lines 601-606)."""
-        result = interface.reason(
-            premises=["@#$invalid%%%"],
-            conclusion="conclusion"
-        )
+        result = interface.reason(premises=["@#$invalid%%%"], conclusion="conclusion")
         assert isinstance(result, dict)
         if not result.get("valid", False):
             assert "error" in result or "premises" in result
 
     def test_reason_with_uppercase_atom_premise(self, interface):
         """GIVEN uppercase bare atom premise WHEN reason THEN fallback attempted (lines 594-599)."""
-        result = interface.reason(
-            premises=["Obligation"],
-            conclusion="Valid"
-        )
+        result = interface.reason(premises=["Obligation"], conclusion="Valid")
         assert isinstance(result, dict)
 
     def test_understand_returns_none_for_empty_string(self, interface):
@@ -510,10 +563,7 @@ class TestNaturalLanguageTDFOLInterface:
 
     def test_reason_with_uppercase_conclusion_fallback(self, interface):
         """GIVEN unparseable conclusion with uppercase atom WHEN reason THEN fallback attempted (lines 612-615)."""
-        result = interface.reason(
-            premises=["all agents must comply"],
-            conclusion="InvalidAtom@@@"
-        )
+        result = interface.reason(premises=["all agents must comply"], conclusion="InvalidAtom@@@")
         assert isinstance(result, dict)
 
 
@@ -525,11 +575,15 @@ class TestEmbeddingProverSimilarityPaths:
 
     @pytest.fixture
     def prover(self):
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover import EmbeddingEnhancedProver
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover import (
+            EmbeddingEnhancedProver,
+        )
+
         return EmbeddingEnhancedProver(cache_enabled=True)
 
     def _pred(self, name):
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate
+
         return Predicate(name, ())
 
     def test_compute_similarity_with_matching_axiom(self, prover):
@@ -591,20 +645,29 @@ class TestReasoningCoordinatorNeuralPaths:
 
     @pytest.fixture
     def coordinator(self):
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import NeuralSymbolicCoordinator
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
+            NeuralSymbolicCoordinator,
+        )
+
         return NeuralSymbolicCoordinator(use_embeddings=True)
 
     def _pred(self, name):
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate
+
         return Predicate(name, ())
 
     def test_prove_neural_only_uses_embedding_prover(self, coordinator):
         """GIVEN NEURAL_ONLY strategy WHEN prove THEN embedding_prover.compute_similarity called (lines 269-285)."""
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import ReasoningStrategy
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
+            ReasoningStrategy,
+        )
+
         goal = self._pred("Pay")
         axioms = [self._pred("Pay")]
 
-        with patch.object(coordinator.embedding_prover, "compute_similarity", return_value=0.95) as m:
+        with patch.object(
+            coordinator.embedding_prover, "compute_similarity", return_value=0.95
+        ) as m:
             result = coordinator.prove(goal, axioms, strategy=ReasoningStrategy.NEURAL_ONLY)
 
         m.assert_called_once()
@@ -612,7 +675,10 @@ class TestReasoningCoordinatorNeuralPaths:
 
     def test_prove_neural_only_high_confidence_is_proved(self, coordinator):
         """GIVEN high embedding similarity WHEN NEURAL_ONLY THEN is_proved=True (lines 275-285)."""
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import ReasoningStrategy
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
+            ReasoningStrategy,
+        )
+
         goal = self._pred("Obligation")
 
         with patch.object(coordinator.embedding_prover, "compute_similarity", return_value=0.99):
@@ -622,7 +688,10 @@ class TestReasoningCoordinatorNeuralPaths:
 
     def test_prove_neural_only_low_confidence_not_proved(self, coordinator):
         """GIVEN low embedding similarity WHEN NEURAL_ONLY THEN is_proved=False."""
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import ReasoningStrategy
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
+            ReasoningStrategy,
+        )
+
         goal = self._pred("Unknown")
 
         with patch.object(coordinator.embedding_prover, "compute_similarity", return_value=0.01):
@@ -633,16 +702,21 @@ class TestReasoningCoordinatorNeuralPaths:
     def test_prove_hybrid_symbolic_fails_neural_fills_gap(self, coordinator):
         """GIVEN symbolic fails + good neural WHEN HYBRID THEN combined confidence used (lines 308-322)."""
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
-            ReasoningStrategy, CoordinatedResult
+            ReasoningStrategy,
+            CoordinatedResult,
         )
+
         goal = self._pred("PayTax")
 
         sym_fail = CoordinatedResult(
-            is_proved=False, confidence=0.1,
-            symbolic_result=None, neural_confidence=0.0,
+            is_proved=False,
+            confidence=0.1,
+            symbolic_result=None,
+            neural_confidence=0.0,
             strategy_used=ReasoningStrategy.SYMBOLIC_ONLY,
             reasoning_path="symbolic fail",
-            proof_steps=[], metadata={}
+            proof_steps=[],
+            metadata={},
         )
         with patch.object(coordinator, "_prove_symbolic", return_value=sym_fail):
             with patch.object(coordinator.embedding_prover, "compute_similarity", return_value=0.9):
@@ -653,15 +727,21 @@ class TestReasoningCoordinatorNeuralPaths:
     def test_prove_hybrid_symbolic_succeeds_skips_neural(self, coordinator):
         """GIVEN symbolic succeeds WHEN HYBRID THEN neural embedding NOT called (line 300-305)."""
         from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
-            ReasoningStrategy, CoordinatedResult
+            ReasoningStrategy,
+            CoordinatedResult,
         )
+
         goal = self._pred("P")
 
         sym_ok = CoordinatedResult(
-            is_proved=True, confidence=0.95,
-            symbolic_result=None, neural_confidence=0.0,
+            is_proved=True,
+            confidence=0.95,
+            symbolic_result=None,
+            neural_confidence=0.0,
             strategy_used=ReasoningStrategy.SYMBOLIC_ONLY,
-            reasoning_path="symbolic success", proof_steps=[], metadata={}
+            reasoning_path="symbolic success",
+            proof_steps=[],
+            metadata={},
         )
         with patch.object(coordinator, "_prove_symbolic", return_value=sym_ok):
             with patch.object(coordinator.embedding_prover, "compute_similarity") as m_neural:
@@ -672,7 +752,10 @@ class TestReasoningCoordinatorNeuralPaths:
 
     def test_prove_neural_only_no_embedding_prover_falls_back(self, coordinator):
         """GIVEN embedding_prover=None WHEN NEURAL_ONLY THEN falls back to symbolic (lines 265-267)."""
-        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import ReasoningStrategy
+        from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator import (
+            ReasoningStrategy,
+        )
+
         coordinator.embedding_prover = None
         goal = self._pred("Q")
 
@@ -689,26 +772,31 @@ class TestInitModuleGuards:
     def test_symbolic_init_logic_primitives_importable(self):
         """GIVEN symbolic/__init__.py WHEN imported THEN LogicPrimitives attribute exists."""
         from ipfs_datasets_py.logic.integration import symbolic as sym_pkg
+
         assert hasattr(sym_pkg, "LogicPrimitives")
 
     def test_domain_init_legal_domain_knowledge_importable(self):
         """GIVEN domain/__init__.py WHEN imported THEN LegalDomainKnowledge attribute exists."""
         from ipfs_datasets_py.logic.integration import domain as dom_pkg
+
         assert hasattr(dom_pkg, "LegalDomainKnowledge")
 
     def test_converters_init_deontic_logic_converter_importable(self):
         """GIVEN converters/__init__.py WHEN imported THEN DeonticLogicConverter attribute exists."""
         from ipfs_datasets_py.logic.integration import converters as conv_pkg
+
         assert hasattr(conv_pkg, "DeonticLogicConverter")
 
     def test_integration_init_getattr_unknown_returns_none(self):
         """GIVEN integration/__init__.py WHEN accessing unknown availability attr THEN bool returned."""
         import ipfs_datasets_py.logic.integration as integ
+
         val = getattr(integ, "SYMBOLIC_AI_AVAILABLE", None)
         assert val is False or val is True or val is None
 
     def test_integration_init_availability_attribute_check(self):
         """GIVEN integration package WHEN checking _AVAILABILITY_EXPORTS THEN it is a dict."""
         import ipfs_datasets_py.logic.integration as integ
+
         if hasattr(integ, "_AVAILABILITY_EXPORTS"):
             assert isinstance(integ._AVAILABILITY_EXPORTS, dict)

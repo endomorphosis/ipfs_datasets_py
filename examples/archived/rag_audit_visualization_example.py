@@ -22,13 +22,14 @@ import tempfile
 from typing import Dict, List, Any, Optional
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Import RAG query components
 try:
     from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
     from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryDashboard
+
     RAG_COMPONENTS_AVAILABLE = True
 except ImportError:
     logger.warning("RAG query components not available. Some features will be disabled.")
@@ -37,13 +38,18 @@ except ImportError:
 # Import audit components
 try:
     from ipfs_datasets_py.audit.audit_logger import (
-        AuditLogger, AuditEvent, AuditLevel, AuditCategory
+        AuditLogger,
+        AuditEvent,
+        AuditLevel,
+        AuditCategory,
     )
     from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator
+
     AUDIT_COMPONENTS_AVAILABLE = True
 except ImportError:
     logger.warning("Audit components not available. Some features will be disabled.")
     AUDIT_COMPONENTS_AVAILABLE = False
+
 
 def setup_monitoring_system():
     """Initialize the monitoring and visualization system."""
@@ -67,9 +73,7 @@ def setup_monitoring_system():
     # Create visualization dashboard
     dashboard_dir = tempfile.mkdtemp(prefix="rag_audit_visualization_")
     dashboard = RAGQueryDashboard(
-        metrics_collector=query_metrics,
-        dashboard_dir=dashboard_dir,
-        theme="light"
+        metrics_collector=query_metrics, dashboard_dir=dashboard_dir, theme="light"
     )
 
     logger.info(f"Monitoring system set up with dashboard directory: {dashboard_dir}")
@@ -79,8 +83,9 @@ def setup_monitoring_system():
         "audit_logger": audit_logger,
         "audit_metrics": audit_metrics,
         "dashboard": dashboard,
-        "dashboard_dir": dashboard_dir
+        "dashboard_dir": dashboard_dir,
     }
+
 
 def simulate_rag_queries(components, count=10, performance_degradation=None):
     """
@@ -115,7 +120,7 @@ def simulate_rag_queries(components, count=10, performance_degradation=None):
             "max_depth": 2,
             "traversal": {"max_depth": 2, "relationship_types": ["related_to", "contains"]},
             "max_vector_results": 5 + (i % 5),  # Varies from 5 to 9
-            "min_similarity": 0.6 + (i % 5) * 0.05  # Varies from 0.6 to 0.8
+            "min_similarity": 0.6 + (i % 5) * 0.05,  # Varies from 0.6 to 0.8
         }
 
         # Start tracking query
@@ -145,14 +150,15 @@ def simulate_rag_queries(components, count=10, performance_degradation=None):
             results={
                 "count": results_count,
                 "quality_score": quality_score,
-                "sources": [f"doc_{j}" for j in range(results_count)]
-            }
+                "sources": [f"doc_{j}" for j in range(results_count)],
+            },
         )
 
         # Add a small delay between queries
         time.sleep(0.1)
 
     logger.info("Completed simulating RAG queries")
+
 
 def simulate_audit_events(components, count=20, error_burst=None):
     """
@@ -173,16 +179,12 @@ def simulate_audit_events(components, count=20, error_burst=None):
     audit_logger = components["audit_logger"]
 
     # Define event categories and actions
-    categories = [
-        AuditCategory.DATA_ACCESS,
-        AuditCategory.SECURITY,
-        AuditCategory.SYSTEM
-    ]
+    categories = [AuditCategory.DATA_ACCESS, AuditCategory.SECURITY, AuditCategory.SYSTEM]
 
     actions = {
         AuditCategory.DATA_ACCESS: ["read", "write", "modify", "delete"],
         AuditCategory.SECURITY: ["login", "logout", "permission_change", "credential_refresh"],
-        AuditCategory.SYSTEM: ["startup", "shutdown", "config_change", "health_check"]
+        AuditCategory.SYSTEM: ["startup", "shutdown", "config_change", "health_check"],
     }
 
     resources = ["dataset_1", "dataset_2", "user_db", "system_config", "auth_service"]
@@ -225,8 +227,8 @@ def simulate_audit_events(components, count=20, error_burst=None):
             details={
                 "simulation_id": i,
                 "is_error_burst": is_error,
-                "timestamp_seconds": time.time()
-            }
+                "timestamp_seconds": time.time(),
+            },
         )
 
         audit_logger.log_event_obj(event)
@@ -235,6 +237,7 @@ def simulate_audit_events(components, count=20, error_burst=None):
         time.sleep(0.05)
 
     logger.info("Completed simulating audit events")
+
 
 def create_visualizations(components):
     """
@@ -272,7 +275,7 @@ def create_visualizations(components):
         audit_metrics_aggregator=audit_metrics,
         output_file=timeline_path,
         title="Query Performance & Audit Events Timeline",
-        show_plot=False
+        show_plot=False,
     )
     output_files["timeline"] = timeline_path
 
@@ -284,7 +287,7 @@ def create_visualizations(components):
             output_file=interactive_timeline_path,
             interactive=True,
             title="Interactive Query & Audit Timeline",
-            show_plot=False
+            show_plot=False,
         )
         output_files["interactive_timeline"] = interactive_timeline_path
     except Exception as e:
@@ -300,12 +303,13 @@ def create_visualizations(components):
         title="Integrated Query Performance & Security Dashboard",
         include_performance=True,
         include_security=True,
-        include_query_audit_timeline=True
+        include_query_audit_timeline=True,
     )
     output_files["dashboard"] = dashboard_path
 
     logger.info(f"Visualizations created in: {vis_dir}")
     return output_files
+
 
 def run_example():
     """
@@ -346,6 +350,7 @@ def run_example():
     logger.info("Example completed successfully")
     return output_files
 
+
 if __name__ == "__main__":
     try:
         # Run the example
@@ -358,7 +363,9 @@ if __name__ == "__main__":
             for name, path in output_files.items():
                 print(f"- {name}: {path}")
 
-            print("\nTip: Open the dashboard HTML file in a web browser to explore the visualization")
+            print(
+                "\nTip: Open the dashboard HTML file in a web browser to explore the visualization"
+            )
         else:
             print("\nExample failed. Please check the logs for more information.")
     except Exception as e:

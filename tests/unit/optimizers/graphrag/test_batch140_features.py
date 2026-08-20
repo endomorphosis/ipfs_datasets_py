@@ -6,6 +6,7 @@ Methods under test:
   - OntologyGenerator.confidence_std(result)
   - OntologyGenerator.entity_type_distribution(result)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -14,8 +15,12 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -36,22 +41,30 @@ def _push_adapter(a, score, domain=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_result(*entries):
     """entries = (entity_type, confidence) tuples"""
-    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity, EntityExtractionResult
+    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+        Entity,
+        EntityExtractionResult,
+    )
+
     entities = [
         Entity(id=f"e{i}", type=t, text=f"e{i}", properties={}, confidence=c)
         for i, (t, c) in enumerate(entries)
     ]
-    return EntityExtractionResult(entities=entities, relationships=[], confidence=0.5, metadata={}, errors=[])
+    return EntityExtractionResult(
+        entities=entities, relationships=[], confidence=0.5, metadata={}, errors=[]
+    )
 
 
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.domain_coverage
 # ---------------------------------------------------------------------------
+
 
 class TestDomainCoverage:
     @pytest.mark.parametrize(
@@ -80,6 +93,7 @@ class TestDomainCoverage:
 # OntologyLearningAdapter.volatility
 # ---------------------------------------------------------------------------
 
+
 class TestVolatility:
     @pytest.mark.parametrize(
         "scores,expected",
@@ -107,6 +121,7 @@ class TestVolatility:
 # OntologyGenerator.confidence_std
 # ---------------------------------------------------------------------------
 
+
 class TestConfidenceStd:
     @pytest.mark.parametrize(
         "entries,expected",
@@ -132,6 +147,7 @@ class TestConfidenceStd:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.entity_type_distribution
 # ---------------------------------------------------------------------------
+
 
 class TestEntityTypeDistribution:
     @pytest.mark.parametrize(

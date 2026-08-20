@@ -25,11 +25,13 @@ def test_print_stats_outputs_cache_size_line(mock_cache_with_stats, captured_out
         output contains "cache_size: 100"
     """
     expected_substring = "100"
-    
+
     print_stats(mock_cache_with_stats)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_print_stats_outputs_max_size_line(mock_cache_with_stats, captured_output):
@@ -46,11 +48,13 @@ def test_print_stats_outputs_max_size_line(mock_cache_with_stats, captured_outpu
         output contains "max_size: 1000"
     """
     expected_substring = "1,000"
-    
+
     print_stats(mock_cache_with_stats)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_print_stats_outputs_fill_rate_as_percentage(mock_cache_with_stats, captured_output):
@@ -67,11 +71,13 @@ def test_print_stats_outputs_fill_rate_as_percentage(mock_cache_with_stats, capt
         output contains "fill_rate: 10.0%"
     """
     expected_substring = "10.0%"
-    
+
     print_stats(mock_cache_with_stats)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_print_stats_outputs_total_requests_count(mock_cache_with_stats, captured_output):
@@ -88,11 +94,13 @@ def test_print_stats_outputs_total_requests_count(mock_cache_with_stats, capture
         output contains "total_requests: 500"
     """
     expected_substring = "500"
-    
+
     print_stats(mock_cache_with_stats)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_print_stats_outputs_hit_rate_as_percentage(mock_cache_with_stats, captured_output):
@@ -109,11 +117,13 @@ def test_print_stats_outputs_hit_rate_as_percentage(mock_cache_with_stats, captu
         output contains "hit_rate: 80.0%"
     """
     expected_substring = "80.0%"
-    
+
     print_stats(mock_cache_with_stats)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_print_stats_outputs_p2p_status_enabled(mock_cache_with_p2p, captured_output):
@@ -130,11 +140,13 @@ def test_print_stats_outputs_p2p_status_enabled(mock_cache_with_p2p, captured_ou
         output contains "P2P: ENABLED"
     """
     expected_substring = "ENABLED"
-    
+
     print_stats(mock_cache_with_p2p)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_print_stats_outputs_connected_peers_count(mock_cache_with_p2p, captured_output):
@@ -151,11 +163,13 @@ def test_print_stats_outputs_connected_peers_count(mock_cache_with_p2p, captured
         output contains "connected_peers: 3"
     """
     expected_substring = "3"
-    
+
     print_stats(mock_cache_with_p2p)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_print_stats_outputs_encryption_enabled(mock_cache_with_encryption, captured_output):
@@ -172,11 +186,13 @@ def test_print_stats_outputs_encryption_enabled(mock_cache_with_encryption, capt
         output contains "encryption: ENABLED"
     """
     expected_substring = "ENABLED"
-    
+
     print_stats(mock_cache_with_encryption)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_print_stats_outputs_key_derivation_method(mock_cache_with_encryption, captured_output):
@@ -193,11 +209,13 @@ def test_print_stats_outputs_key_derivation_method(mock_cache_with_encryption, c
         output contains "key_derivation: PBKDF2-HMAC-SHA256"
     """
     expected_substring = "PBKDF2-HMAC-SHA256"
-    
+
     print_stats(mock_cache_with_encryption)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_print_stats_outputs_api_reduction_percentage(mock_cache_with_stats, captured_output):
@@ -214,11 +232,13 @@ def test_print_stats_outputs_api_reduction_percentage(mock_cache_with_stats, cap
         output contains "api_reduction: 60.0%"
     """
     expected_substring = "60.0%"
-    
+
     print_stats(mock_cache_with_stats)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_print_stats_outputs_time_saved_in_seconds(mock_cache_with_stats, captured_output):
@@ -235,11 +255,13 @@ def test_print_stats_outputs_time_saved_in_seconds(mock_cache_with_stats, captur
         output contains "time_saved: 150s"
     """
     expected_substring = "60.0s"
-    
+
     print_stats(mock_cache_with_stats)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_print_stats_outputs_rate_limit_impact_count(mock_cache_with_stats, captured_output):
@@ -256,10 +278,10 @@ def test_print_stats_outputs_rate_limit_impact_count(mock_cache_with_stats, capt
         output contains "rate_limit_impact: 50"
     """
     expected_substring = "50"
-    
+
     print_stats(mock_cache_with_stats)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
-
-
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )

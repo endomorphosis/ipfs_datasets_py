@@ -115,14 +115,20 @@ def test_docket_cli_main_json_output_from_json_file(tmp_path: Path) -> None:
 def test_docket_cli_can_search_source_docket_with_bm25(tmp_path: Path, monkeypatch) -> None:
     module = _load_docket_cli_module()
     docket_path = tmp_path / "docket.json"
-    docket_path.write_text(json.dumps({"docket_id": "1:24-cv-1002", "documents": []}), encoding="utf-8")
+    docket_path.write_text(
+        json.dumps({"docket_id": "1:24-cv-1002", "documents": []}), encoding="utf-8"
+    )
 
     monkeypatch.setattr(
         module.DocketDatasetBuilder,
         "build_from_json_file",
         lambda self, path, **kwargs: {"dataset_id": "docket_dataset_1", "documents": []},
     )
-    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 1, "dataset_id": "docket_dataset_1"})
+    monkeypatch.setattr(
+        module,
+        "summarize_docket_dataset",
+        lambda dataset: {"document_count": 1, "dataset_id": "docket_dataset_1"},
+    )
     monkeypatch.setattr(
         module,
         "search_docket_dataset_bm25",
@@ -164,8 +170,16 @@ def test_docket_cli_can_search_packaged_docket_with_vector(tmp_path: Path, monke
     manifest_path = tmp_path / "bundle_manifest.json"
     manifest_path.write_text("{}", encoding="utf-8")
 
-    monkeypatch.setattr(module, "load_packaged_docket_dataset", lambda path: {"dataset_id": "packaged_docket_1", "documents": []})
-    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 2, "dataset_id": "packaged_docket_1"})
+    monkeypatch.setattr(
+        module,
+        "load_packaged_docket_dataset",
+        lambda path: {"dataset_id": "packaged_docket_1", "documents": []},
+    )
+    monkeypatch.setattr(
+        module,
+        "summarize_docket_dataset",
+        lambda dataset: {"document_count": 2, "dataset_id": "packaged_docket_1"},
+    )
     monkeypatch.setattr(
         module,
         "search_docket_dataset_vector",
@@ -266,7 +280,10 @@ def test_ipfs_datasets_cli_docket_help_mentions_search_options(monkeypatch) -> N
 
     rendered = output.getvalue()
     assert "--search-backend {bm25,vector}" in rendered
-    assert "--packaged-action {summary,inspect,dashboard,report,dashboard-report,recap-fetch,recap-preflight}" in rendered
+    assert (
+        "--packaged-action {summary,inspect,dashboard,report,dashboard-report,recap-fetch,recap-preflight}"
+        in rendered
+    )
     assert "--input-type {auto,json,directory,courtlistener,pacer,tyler_host,packaged}" in rendered
     assert "--source-type-hint {json,directory,courtlistener,pacer,tyler_host,packaged}" in rendered
     assert "Import, search, inspect, and package docket datasets" in rendered
@@ -328,7 +345,9 @@ def test_docket_cli_auto_input_type_detects_directory_import(tmp_path: Path, mon
     assert Path(payload["output_path"]).exists()
 
 
-def test_docket_cli_auto_input_type_detects_courtlistener_numeric_id(tmp_path: Path, monkeypatch) -> None:
+def test_docket_cli_auto_input_type_detects_courtlistener_numeric_id(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_docket_cli_module()
     output_path = tmp_path / "auto_courtlistener_dataset.json"
 
@@ -366,63 +385,105 @@ def test_docket_cli_auto_input_type_detects_courtlistener_numeric_id(tmp_path: P
 
 def test_detect_auto_input_type_returns_json_without_hint_for_normalized_fixture() -> None:
     module = _load_docket_cli_module()
-    pacer_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "normalized_pacer_export.json"
+    pacer_fixture = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "normalized_pacer_export.json"
+    )
 
     assert module._detect_auto_input_type(str(pacer_fixture)) == "json"
 
 
 def test_detect_auto_input_type_uses_pacer_hint_for_normalized_fixture() -> None:
     module = _load_docket_cli_module()
-    pacer_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "normalized_pacer_export.json"
+    pacer_fixture = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "normalized_pacer_export.json"
+    )
 
     assert module._detect_auto_input_type(str(pacer_fixture), "pacer") == "pacer"
 
 
 def test_detect_auto_input_type_uses_tyler_hint_for_normalized_fixture() -> None:
     module = _load_docket_cli_module()
-    tyler_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "normalized_tyler_host_export.json"
+    tyler_fixture = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "normalized_tyler_host_export.json"
+    )
 
     assert module._detect_auto_input_type(str(tyler_fixture), "tyler_host") == "tyler_host"
 
 
 def test_detect_auto_input_type_uses_tyler_hint_for_camel_case_fixture() -> None:
     module = _load_docket_cli_module()
-    tyler_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_camel_case_export.json"
+    tyler_fixture = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "tyler_host_camel_case_export.json"
+    )
 
     assert module._detect_auto_input_type(str(tyler_fixture), "tyler_host") == "tyler_host"
 
 
 def test_detect_auto_input_type_uses_tyler_hint_for_wrapped_fixture() -> None:
     module = _load_docket_cli_module()
-    tyler_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_wrapped_export.json"
+    tyler_fixture = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "tyler_host_wrapped_export.json"
+    )
 
     assert module._detect_auto_input_type(str(tyler_fixture), "tyler_host") == "tyler_host"
 
 
 def test_detect_auto_input_type_detects_wrapped_tyler_fixture_without_hint() -> None:
     module = _load_docket_cli_module()
-    tyler_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_wrapped_export.json"
+    tyler_fixture = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "tyler_host_wrapped_export.json"
+    )
 
     assert module._detect_auto_input_type(str(tyler_fixture)) == "tyler_host"
 
 
 def test_detect_auto_input_type_detects_pacer_html_fixture() -> None:
     module = _load_docket_cli_module()
-    pacer_html_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+    pacer_html_fixture = (
+        Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+    )
 
     assert module._detect_auto_input_type(str(pacer_html_fixture)) == "pacer"
 
 
 def test_detect_auto_input_type_detects_wrapped_pacer_fixture_without_hint() -> None:
     module = _load_docket_cli_module()
-    pacer_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_wrapped_export.json"
+    pacer_fixture = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "pacer_wrapped_export.json"
+    )
 
     assert module._detect_auto_input_type(str(pacer_fixture)) == "pacer"
 
 
 def test_detect_auto_input_type_detects_complex_pacer_html_fixture() -> None:
     module = _load_docket_cli_module()
-    pacer_html_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_complex_sample.html"
+    pacer_html_fixture = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "pacer_docket_complex_sample.html"
+    )
 
     assert module._detect_auto_input_type(str(pacer_html_fixture)) == "pacer"
 
@@ -436,9 +497,16 @@ def test_detect_auto_input_type_detects_packaged_directory(tmp_path: Path) -> No
     assert module._detect_auto_input_type(str(package_dir)) == "packaged"
 
 
-def test_docket_cli_auto_input_type_uses_source_type_hint_for_pacer_fixture(tmp_path: Path, monkeypatch) -> None:
+def test_docket_cli_auto_input_type_uses_source_type_hint_for_pacer_fixture(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_docket_cli_module()
-    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "normalized_pacer_export.json"
+    fixture_path = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "normalized_pacer_export.json"
+    )
     output_path = tmp_path / "auto_pacer_dataset.json"
 
     captured: dict[str, object] = {}
@@ -455,7 +523,11 @@ def test_docket_cli_auto_input_type_uses_source_type_hint_for_pacer_fixture(tmp_
         )
 
     monkeypatch.setattr(module, "ingest_docket_dataset", _fake_ingest)
-    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 1, "eu_citation_count": 0})
+    monkeypatch.setattr(
+        module,
+        "summarize_docket_dataset",
+        lambda dataset: {"document_count": 1, "eu_citation_count": 0},
+    )
 
     output = io.StringIO()
     with redirect_stdout(output):
@@ -479,9 +551,16 @@ def test_docket_cli_auto_input_type_uses_source_type_hint_for_pacer_fixture(tmp_
     assert captured["source"] == str(fixture_path)
 
 
-def test_docket_cli_auto_input_type_uses_source_type_hint_for_tyler_fixture(tmp_path: Path, monkeypatch) -> None:
+def test_docket_cli_auto_input_type_uses_source_type_hint_for_tyler_fixture(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_docket_cli_module()
-    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "normalized_tyler_host_export.json"
+    fixture_path = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "normalized_tyler_host_export.json"
+    )
     output_path = tmp_path / "auto_tyler_dataset.json"
 
     captured: dict[str, object] = {}
@@ -498,7 +577,11 @@ def test_docket_cli_auto_input_type_uses_source_type_hint_for_tyler_fixture(tmp_
         )
 
     monkeypatch.setattr(module, "ingest_docket_dataset", _fake_ingest)
-    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 1, "eu_citation_count": 0})
+    monkeypatch.setattr(
+        module,
+        "summarize_docket_dataset",
+        lambda dataset: {"document_count": 1, "eu_citation_count": 0},
+    )
 
     output = io.StringIO()
     with redirect_stdout(output):
@@ -524,7 +607,12 @@ def test_docket_cli_auto_input_type_uses_source_type_hint_for_tyler_fixture(tmp_
 
 def test_docket_cli_main_json_output_from_tyler_host_camel_case_fixture(tmp_path: Path) -> None:
     module = _load_docket_cli_module()
-    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_camel_case_export.json"
+    fixture_path = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "tyler_host_camel_case_export.json"
+    )
     output_path = tmp_path / "tyler_host_camel_case_dataset.json"
 
     output = io.StringIO()
@@ -559,7 +647,12 @@ def test_docket_cli_main_json_output_from_tyler_host_camel_case_fixture(tmp_path
 
 def test_docket_cli_main_json_output_from_wrapped_tyler_host_fixture(tmp_path: Path) -> None:
     module = _load_docket_cli_module()
-    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_wrapped_export.json"
+    fixture_path = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "tyler_host_wrapped_export.json"
+    )
     output_path = tmp_path / "tyler_host_wrapped_dataset.json"
 
     output = io.StringIO()
@@ -592,9 +685,16 @@ def test_docket_cli_main_json_output_from_wrapped_tyler_host_fixture(tmp_path: P
     assert written_dataset["documents"][1]["document_number"] == "5"
 
 
-def test_docket_cli_main_json_output_from_wrapped_tyler_host_fixture_without_hint(tmp_path: Path) -> None:
+def test_docket_cli_main_json_output_from_wrapped_tyler_host_fixture_without_hint(
+    tmp_path: Path,
+) -> None:
     module = _load_docket_cli_module()
-    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_wrapped_export.json"
+    fixture_path = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "tyler_host_wrapped_export.json"
+    )
     output_path = tmp_path / "tyler_host_wrapped_no_hint_dataset.json"
 
     output = io.StringIO()
@@ -622,7 +722,9 @@ def test_docket_cli_main_json_output_from_wrapped_tyler_host_fixture_without_hin
 
 def test_docket_cli_auto_input_type_loads_pacer_html_fixture(tmp_path: Path) -> None:
     module = _load_docket_cli_module()
-    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+    fixture_path = (
+        Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+    )
     output_path = tmp_path / "auto_pacer_html_dataset.json"
 
     output = io.StringIO()
@@ -708,7 +810,11 @@ def test_docket_cli_main_json_output_from_pacer_alias(tmp_path: Path, monkeypatc
         )
 
     monkeypatch.setattr(module, "ingest_docket_dataset", _fake_ingest)
-    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 1, "eu_citation_count": 0})
+    monkeypatch.setattr(
+        module,
+        "summarize_docket_dataset",
+        lambda dataset: {"document_count": 1, "eu_citation_count": 0},
+    )
 
     output = io.StringIO()
     with redirect_stdout(output):
@@ -733,7 +839,9 @@ def test_docket_cli_main_json_output_from_pacer_alias(tmp_path: Path, monkeypatc
 
 def test_docket_cli_main_json_output_from_pacer_html_fixture(tmp_path: Path) -> None:
     module = _load_docket_cli_module()
-    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+    fixture_path = (
+        Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+    )
     output_path = tmp_path / "pacer_html_docket_dataset.json"
 
     output = io.StringIO()
@@ -762,9 +870,16 @@ def test_docket_cli_main_json_output_from_pacer_html_fixture(tmp_path: Path) -> 
     assert len(written_dataset["documents"]) == 2
 
 
-def test_docket_cli_main_json_output_from_wrapped_pacer_fixture_without_hint(tmp_path: Path) -> None:
+def test_docket_cli_main_json_output_from_wrapped_pacer_fixture_without_hint(
+    tmp_path: Path,
+) -> None:
     module = _load_docket_cli_module()
-    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_wrapped_export.json"
+    fixture_path = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "pacer_wrapped_export.json"
+    )
     output_path = tmp_path / "wrapped_pacer_dataset.json"
 
     output = io.StringIO()
@@ -794,7 +909,12 @@ def test_docket_cli_main_json_output_from_wrapped_pacer_fixture_without_hint(tmp
 
 def test_docket_cli_main_json_output_from_complex_pacer_html_fixture(tmp_path: Path) -> None:
     module = _load_docket_cli_module()
-    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_complex_sample.html"
+    fixture_path = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "legal_data"
+        / "pacer_docket_complex_sample.html"
+    )
     output_path = tmp_path / "complex_pacer_html_docket_dataset.json"
 
     output = io.StringIO()
@@ -840,7 +960,11 @@ def test_docket_cli_main_json_output_from_tyler_host_alias(tmp_path: Path, monke
         )
 
     monkeypatch.setattr(module, "ingest_docket_dataset", _fake_ingest)
-    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 2, "eu_citation_count": 0})
+    monkeypatch.setattr(
+        module,
+        "summarize_docket_dataset",
+        lambda dataset: {"document_count": 2, "eu_citation_count": 0},
+    )
 
     output = io.StringIO()
     with redirect_stdout(output):
@@ -974,7 +1098,9 @@ def test_docket_cli_can_write_courtlistener_cache_bundle(tmp_path: Path, monkeyp
     index_dir.mkdir(parents=True, exist_ok=True)
     payload_dir.mkdir(parents=True, exist_ok=True)
     payload_file = payload_dir / "abc123.json"
-    payload_file.write_text(json.dumps({"url": "https://example.test/api", "answer": 42}), encoding="utf-8")
+    payload_file.write_text(
+        json.dumps({"url": "https://example.test/api", "answer": 42}), encoding="utf-8"
+    )
     (index_dir / "abc123.json").write_text(
         json.dumps(
             {
@@ -1033,7 +1159,9 @@ def test_docket_cli_can_write_courtlistener_cache_bundle(tmp_path: Path, monkeyp
     assert cache_package["summary"]["cache_index_count"] == 1
 
 
-def test_docket_cli_end_to_end_exports_and_reloads_docket_and_cache_bundles(tmp_path: Path, monkeypatch) -> None:
+def test_docket_cli_end_to_end_exports_and_reloads_docket_and_cache_bundles(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_docket_cli_module()
     monkeypatch.setenv("IPFS_DATASETS_SAFE_ROOT", str(tmp_path))
     output_path = tmp_path / "courtlistener_docket_dataset.json"
@@ -1045,7 +1173,9 @@ def test_docket_cli_end_to_end_exports_and_reloads_docket_and_cache_bundles(tmp_
     index_dir.mkdir(parents=True, exist_ok=True)
     payload_dir.mkdir(parents=True, exist_ok=True)
     payload_file = payload_dir / "abc123.json"
-    payload_file.write_text(json.dumps({"url": "https://example.test/api", "answer": 42}), encoding="utf-8")
+    payload_file.write_text(
+        json.dumps({"url": "https://example.test/api", "answer": 42}), encoding="utf-8"
+    )
     (index_dir / "abc123.json").write_text(
         json.dumps(
             {
@@ -1112,7 +1242,9 @@ def test_docket_cli_end_to_end_exports_and_reloads_docket_and_cache_bundles(tmp_
 
     loaded_docket_from_manifest = load_packaged_docket_dataset(docket_package["manifest_json_path"])
     loaded_docket_from_zip = load_packaged_docket_dataset(docket_package["zip_path"])
-    loaded_cache_from_manifest = load_packaged_courtlistener_fetch_cache(cache_package["manifest_json_path"])
+    loaded_cache_from_manifest = load_packaged_courtlistener_fetch_cache(
+        cache_package["manifest_json_path"]
+    )
     loaded_cache_from_zip = load_packaged_courtlistener_fetch_cache(cache_package["zip_path"])
 
     assert loaded_docket_from_manifest["docket_id"] == "cl-123"
@@ -1123,7 +1255,9 @@ def test_docket_cli_end_to_end_exports_and_reloads_docket_and_cache_bundles(tmp_
     assert loaded_cache_from_zip["summary"]["cache_index_count"] == 1
 
 
-def test_docket_cli_can_enrich_packaged_bundle_with_tactician_queries(tmp_path: Path, monkeypatch) -> None:
+def test_docket_cli_can_enrich_packaged_bundle_with_tactician_queries(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_docket_cli_module()
     monkeypatch.setenv("IPFS_DATASETS_SAFE_ROOT", str(tmp_path))
 
@@ -1179,7 +1313,9 @@ def test_docket_cli_can_enrich_packaged_bundle_with_tactician_queries(tmp_path: 
     assert enriched["attached_proof_assistant_packet"]["proof_id"]
 
 
-def test_docket_cli_json_summary_surfaces_latest_routing_reason_for_packaged_enrichment(tmp_path: Path, monkeypatch) -> None:
+def test_docket_cli_json_summary_surfaces_latest_routing_reason_for_packaged_enrichment(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_docket_cli_module()
     monkeypatch.setenv("IPFS_DATASETS_SAFE_ROOT", str(tmp_path))
 
@@ -1219,7 +1355,9 @@ def test_docket_cli_json_summary_surfaces_latest_routing_reason_for_packaged_enr
             ],
         }
     )
-    package = dataset.write_package(tmp_path / "bundle_summary", package_name="cli_routing_summary_test", include_car=False)
+    package = dataset.write_package(
+        tmp_path / "bundle_summary", package_name="cli_routing_summary_test", include_car=False
+    )
     output_path = tmp_path / "enriched_summary_view.json"
     enriched_payload = dataset.to_dict()
     enriched_payload["attached_proof_assistant_packet"] = {
@@ -1300,7 +1438,9 @@ def test_docket_cli_can_inspect_packaged_bundle_routing_provenance(tmp_path: Pat
         "preferred_state_codes": [],
         "authority_backed": True,
     }
-    package = dataset.write_package(tmp_path / "inspect_bundle", package_name="inspect_bundle", include_car=False)
+    package = dataset.write_package(
+        tmp_path / "inspect_bundle", package_name="inspect_bundle", include_car=False
+    )
     output_path = tmp_path / "inspect_view.json"
 
     output = io.StringIO()
@@ -1336,7 +1476,11 @@ def test_docket_cli_prints_human_readable_packaged_inspection(tmp_path: Path) ->
             "case_name": "CLI Inspect Text Test",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -1350,7 +1494,9 @@ def test_docket_cli_prints_human_readable_packaged_inspection(tmp_path: Path) ->
         "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
         "authority_backed": True,
     }
-    package = dataset.write_package(tmp_path / "inspect_text_bundle", package_name="inspect_text_bundle", include_car=False)
+    package = dataset.write_package(
+        tmp_path / "inspect_text_bundle", package_name="inspect_text_bundle", include_car=False
+    )
     output_path = tmp_path / "inspect_text_view.json"
 
     output = io.StringIO()
@@ -1370,7 +1516,10 @@ def test_docket_cli_prints_human_readable_packaged_inspection(tmp_path: Path) ->
     assert result == 0
     text = output.getvalue()
     assert "Packaged Inspection" in text
-    assert "latest_routing_reason: Preferred parser corpora were ranked from linked citation '42 U.S.C. § 1983'" in text
+    assert (
+        "latest_routing_reason: Preferred parser corpora were ranked from linked citation '42 U.S.C. § 1983'"
+        in text
+    )
     assert "top_routing_citation: 42 U.S.C. § 1983" in text
     assert "top_routing_source_url:" in text
     assert "preferred_corpus_priority: us_code" in text
@@ -1384,7 +1533,11 @@ def test_docket_cli_can_export_packaged_markdown_report(tmp_path: Path) -> None:
             "case_name": "CLI Report Test",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -1404,7 +1557,9 @@ def test_docket_cli_can_export_packaged_markdown_report(tmp_path: Path) -> None:
         "preferred_state_codes": [],
         "authority_backed": True,
     }
-    package = dataset.write_package(tmp_path / "inspect_report_bundle", package_name="inspect_report_bundle", include_car=False)
+    package = dataset.write_package(
+        tmp_path / "inspect_report_bundle", package_name="inspect_report_bundle", include_car=False
+    )
     output_path = tmp_path / "inspect_report_view.json"
     report_path = tmp_path / "packaged_report.md"
 
@@ -1444,7 +1599,11 @@ def test_docket_cli_can_export_packaged_json_report(tmp_path: Path) -> None:
             "case_name": "CLI JSON Report Test",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -1460,7 +1619,11 @@ def test_docket_cli_can_export_packaged_json_report(tmp_path: Path) -> None:
         "preferred_state_codes": [],
         "authority_backed": True,
     }
-    package = dataset.write_package(tmp_path / "inspect_json_report_bundle", package_name="inspect_json_report_bundle", include_car=False)
+    package = dataset.write_package(
+        tmp_path / "inspect_json_report_bundle",
+        package_name="inspect_json_report_bundle",
+        include_car=False,
+    )
     output_path = tmp_path / "inspect_json_report_view.json"
     report_path = tmp_path / "packaged_report.json"
 
@@ -1498,7 +1661,11 @@ def test_docket_cli_can_load_archived_packaged_report_in_json_mode(tmp_path: Pat
             "case_name": "CLI Load Report Test",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -1509,7 +1676,9 @@ def test_docket_cli_can_load_archived_packaged_report_in_json_mode(tmp_path: Pat
         "preferred_state_codes": [],
         "authority_backed": True,
     }
-    package = dataset.write_package(tmp_path / "load_report_bundle", package_name="load_report_bundle", include_car=False)
+    package = dataset.write_package(
+        tmp_path / "load_report_bundle", package_name="load_report_bundle", include_car=False
+    )
     output_path = tmp_path / "load_report_view.json"
 
     output = io.StringIO()
@@ -1531,7 +1700,10 @@ def test_docket_cli_can_load_archived_packaged_report_in_json_mode(tmp_path: Pat
 
     assert result == 0
     payload = json.loads(output.getvalue())
-    assert payload["loaded_packaged_report"]["latest_routing_reason"] == "Archived report routing reason."
+    assert (
+        payload["loaded_packaged_report"]["latest_routing_reason"]
+        == "Archived report routing reason."
+    )
     assert payload["loaded_packaged_report"]["preferred_corpus_priority"] == ["us_code"]
 
 
@@ -1543,7 +1715,11 @@ def test_docket_cli_can_load_operator_dashboard_in_json_mode(tmp_path: Path) -> 
             "case_name": "CLI Operator Dashboard Test",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -1577,7 +1753,10 @@ def test_docket_cli_can_load_operator_dashboard_in_json_mode(tmp_path: Path) -> 
     payload = json.loads(output.getvalue())
     assert payload["operator_dashboard"]["source"] == "packaged_operator_dashboard"
     assert payload["operator_dashboard"]["summary"]["document_count"] == 1
-    assert payload["operator_dashboard"]["inspection"]["latest_routing_reason"] == "Operator dashboard routing reason."
+    assert (
+        payload["operator_dashboard"]["inspection"]["latest_routing_reason"]
+        == "Operator dashboard routing reason."
+    )
 
 
 def test_docket_cli_prints_operator_dashboard_text(tmp_path: Path) -> None:
@@ -1588,7 +1767,11 @@ def test_docket_cli_prints_operator_dashboard_text(tmp_path: Path) -> None:
             "case_name": "CLI Operator Dashboard Text",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -1632,7 +1815,11 @@ def test_docket_cli_prints_loaded_archived_markdown_report(tmp_path: Path) -> No
             "case_name": "CLI Print Archived Report Test",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -1643,7 +1830,9 @@ def test_docket_cli_prints_loaded_archived_markdown_report(tmp_path: Path) -> No
         "preferred_state_codes": [],
         "authority_backed": True,
     }
-    package = dataset.write_package(tmp_path / "print_report_bundle", package_name="print_report_bundle", include_car=False)
+    package = dataset.write_package(
+        tmp_path / "print_report_bundle", package_name="print_report_bundle", include_car=False
+    )
     output_path = tmp_path / "print_report_view.json"
 
     output = io.StringIO()
@@ -1668,7 +1857,9 @@ def test_docket_cli_prints_loaded_archived_markdown_report(tmp_path: Path) -> No
     assert "Archived markdown routing reason." in text
 
 
-def test_docket_cli_can_load_archived_operator_dashboard_report_in_json_mode(tmp_path: Path) -> None:
+def test_docket_cli_can_load_archived_operator_dashboard_report_in_json_mode(
+    tmp_path: Path,
+) -> None:
     module = _load_docket_cli_module()
     dataset = DocketDatasetBuilder().build_from_docket(
         {
@@ -1676,7 +1867,11 @@ def test_docket_cli_can_load_archived_operator_dashboard_report_in_json_mode(tmp
             "case_name": "CLI Operator Dashboard Report Test",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -1711,7 +1906,10 @@ def test_docket_cli_can_load_archived_operator_dashboard_report_in_json_mode(tmp
     assert result == 0
     payload = json.loads(output.getvalue())
     assert payload["loaded_operator_dashboard_report"]["source"] == "packaged_operator_dashboard"
-    assert payload["loaded_operator_dashboard_report"]["inspection"]["latest_routing_reason"] == "Archived operator dashboard routing reason."
+    assert (
+        payload["loaded_operator_dashboard_report"]["inspection"]["latest_routing_reason"]
+        == "Archived operator dashboard routing reason."
+    )
 
 
 def test_docket_cli_can_load_packaged_report_without_output(tmp_path: Path) -> None:
@@ -1722,7 +1920,11 @@ def test_docket_cli_can_load_packaged_report_without_output(tmp_path: Path) -> N
             "case_name": "CLI No Output Report Test",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -1733,7 +1935,9 @@ def test_docket_cli_can_load_packaged_report_without_output(tmp_path: Path) -> N
         "preferred_state_codes": [],
         "authority_backed": True,
     }
-    package = dataset.write_package(tmp_path / "no_output_bundle", package_name="no_output_bundle", include_car=False)
+    package = dataset.write_package(
+        tmp_path / "no_output_bundle", package_name="no_output_bundle", include_car=False
+    )
 
     output = io.StringIO()
     with redirect_stdout(output):
@@ -1753,10 +1957,15 @@ def test_docket_cli_can_load_packaged_report_without_output(tmp_path: Path) -> N
     assert result == 0
     payload = json.loads(output.getvalue())
     assert "output_path" not in payload
-    assert payload["loaded_packaged_report"]["latest_routing_reason"] == "No-output packaged report routing reason."
+    assert (
+        payload["loaded_packaged_report"]["latest_routing_reason"]
+        == "No-output packaged report routing reason."
+    )
 
 
-def test_docket_cli_can_emit_citation_source_audit_for_source_docket_without_output(tmp_path: Path) -> None:
+def test_docket_cli_can_emit_citation_source_audit_for_source_docket_without_output(
+    tmp_path: Path,
+) -> None:
     module = _load_docket_cli_module()
     docket_path = tmp_path / "citation_audit_source.json"
     docket_path.write_text(
@@ -1949,7 +2158,9 @@ def test_docket_cli_can_emit_packaged_citation_source_audit_without_output(tmp_p
     assert payload["citation_source_audit"]["unmatched_citation_count"] == 1
 
 
-def test_docket_cli_can_recover_citation_sources_for_source_docket_without_output(tmp_path: Path) -> None:
+def test_docket_cli_can_recover_citation_sources_for_source_docket_without_output(
+    tmp_path: Path,
+) -> None:
     module = _load_docket_cli_module()
     docket_path = tmp_path / "citation_recovery_source.json"
     docket_path.write_text(
@@ -2270,7 +2481,11 @@ def test_docket_cli_packaged_action_alias_can_emit_summary_without_output(tmp_pa
             "case_name": "CLI Packaged Action Summary",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -2300,7 +2515,9 @@ def test_docket_cli_packaged_action_alias_can_emit_summary_without_output(tmp_pa
     assert payload["packaged_summary_view"]["document_count"] == 1
 
 
-def test_docket_cli_packaged_action_alias_can_submit_recap_fetch_without_output(tmp_path: Path, monkeypatch) -> None:
+def test_docket_cli_packaged_action_alias_can_submit_recap_fetch_without_output(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_docket_cli_module()
     dataset = DocketDatasetBuilder().build_from_docket(
         {
@@ -2512,7 +2729,7 @@ def test_docket_cli_classifies_pacer_login_failures_for_recap_fetch(tmp_path: Pa
 
     def _fake_submit(*args, **kwargs):  # noqa: ANN001
         raise module.CourtListenerIngestionError(
-            'CourtListener POST failed (400) for https://www.courtlistener.com/api/rest/v4/recap-fetch/: '
+            "CourtListener POST failed (400) for https://www.courtlistener.com/api/rest/v4/recap-fetch/: "
             '{"non_field_errors":["PacerLoginException: Did not get NextGenCSO cookie when attempting PACER login."]}'
         )
 
@@ -2537,7 +2754,9 @@ def test_docket_cli_classifies_pacer_login_failures_for_recap_fetch(tmp_path: Pa
     assert payload["status"] == "error"
     assert payload["error_type"] == "pacer_login_failed"
     assert payload["details"]["provider"] == "CourtListener RECAP Fetch"
-    assert "verify_pacer_credentials_directly_in_pacer" in payload["details"]["recommended_next_steps"]
+    assert (
+        "verify_pacer_credentials_directly_in_pacer" in payload["details"]["recommended_next_steps"]
+    )
 
 
 def test_docket_cli_can_emit_recap_fetch_preflight_without_output(tmp_path: Path) -> None:
@@ -2649,7 +2868,11 @@ def test_docket_cli_rejects_conflicting_packaged_action_and_mode_flag(tmp_path: 
             "case_name": "CLI Packaged Action Conflict",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -2682,7 +2905,11 @@ def test_docket_cli_can_export_archived_operator_dashboard_report(tmp_path: Path
             "case_name": "CLI Operator Dashboard Export Test",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -2725,7 +2952,9 @@ def test_docket_cli_can_export_archived_operator_dashboard_report(tmp_path: Path
     assert "Operator dashboard export routing reason." in report_text
 
 
-def test_docket_cli_packaged_read_only_path_skips_full_dataset_load(tmp_path: Path, monkeypatch) -> None:
+def test_docket_cli_packaged_read_only_path_skips_full_dataset_load(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_docket_cli_module()
     dataset = DocketDatasetBuilder().build_from_docket(
         {
@@ -2733,7 +2962,11 @@ def test_docket_cli_packaged_read_only_path_skips_full_dataset_load(tmp_path: Pa
             "case_name": "CLI Lightweight Packaged Read",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -2753,7 +2986,9 @@ def test_docket_cli_packaged_read_only_path_skips_full_dataset_load(tmp_path: Pa
     monkeypatch.setattr(
         module,
         "load_packaged_docket_dataset",
-        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("full packaged load should not run")),
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("full packaged load should not run")
+        ),
     )
 
     output = io.StringIO()
@@ -2773,12 +3008,17 @@ def test_docket_cli_packaged_read_only_path_skips_full_dataset_load(tmp_path: Pa
 
     assert result == 0
     payload = json.loads(output.getvalue())
-    assert payload["loaded_packaged_report"]["latest_routing_reason"] == "Lightweight packaged read routing reason."
+    assert (
+        payload["loaded_packaged_report"]["latest_routing_reason"]
+        == "Lightweight packaged read routing reason."
+    )
     assert payload["summary"]["document_count"] == 1
     assert payload["summary"]["eu_citation_count"] == 0
 
 
-def test_docket_cli_packaged_read_only_path_skips_minimal_document_view(tmp_path: Path, monkeypatch) -> None:
+def test_docket_cli_packaged_read_only_path_skips_minimal_document_view(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_docket_cli_module()
     dataset = DocketDatasetBuilder().build_from_docket(
         {
@@ -2786,7 +3026,11 @@ def test_docket_cli_packaged_read_only_path_skips_minimal_document_view(tmp_path
             "case_name": "CLI Summary View Read",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -2807,7 +3051,9 @@ def test_docket_cli_packaged_read_only_path_skips_minimal_document_view(tmp_path
 
     class GuardedPackager(original_packager):
         def load_minimal_dataset_view(self, manifest_path):
-            raise AssertionError("minimal document view should not run for packaged read-only CLI path")
+            raise AssertionError(
+                "minimal document view should not run for packaged read-only CLI path"
+            )
 
     monkeypatch.setattr(module, "DocketDatasetPackager", GuardedPackager)
 
@@ -2826,7 +3072,10 @@ def test_docket_cli_packaged_read_only_path_skips_minimal_document_view(tmp_path
 
     assert result == 0
     payload = json.loads(output.getvalue())
-    assert payload["inspection"]["latest_routing_reason"] == "Summary-view packaged read routing reason."
+    assert (
+        payload["inspection"]["latest_routing_reason"]
+        == "Summary-view packaged read routing reason."
+    )
     assert payload["inspection"]["eu_citation_count"] == 0
     assert payload["inspection"]["eu_unique_citation_count"] == 0
     assert payload["inspection"]["eu_documents_with_citations"] == 0
@@ -2841,7 +3090,11 @@ def test_docket_cli_can_emit_packaged_summary_only_json_without_output(tmp_path:
             "case_name": "CLI Summary Only JSON",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -2896,7 +3149,11 @@ def test_docket_cli_prints_packaged_summary_only_text(tmp_path: Path) -> None:
             "case_name": "CLI Summary Only Text",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -2978,7 +3235,11 @@ def test_docket_cli_can_filter_packaged_summary_fields_in_json(tmp_path: Path) -
             "case_name": "CLI Summary Fields JSON",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -3021,7 +3282,11 @@ def test_docket_cli_can_filter_packaged_summary_fields_in_text(tmp_path: Path) -
             "case_name": "CLI Summary Fields Text",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -3060,7 +3325,11 @@ def test_docket_cli_can_filter_packaged_inspection_fields_in_json(tmp_path: Path
             "case_name": "CLI Inspection Fields JSON",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -3115,7 +3384,11 @@ def test_docket_cli_can_filter_packaged_inspection_fields_in_text(tmp_path: Path
             "case_name": "CLI Inspection Fields Text",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -3161,7 +3434,11 @@ def test_docket_cli_can_filter_loaded_packaged_report_fields_in_json(tmp_path: P
             "case_name": "CLI Report Fields JSON",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -3211,7 +3488,11 @@ def test_docket_cli_can_filter_loaded_packaged_report_fields_in_text(tmp_path: P
             "case_name": "CLI Report Fields Text",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -3251,7 +3532,9 @@ def test_docket_cli_can_filter_loaded_packaged_report_fields_in_text(tmp_path: P
     assert "preferred_corpus_priority" not in text
 
 
-def test_docket_cli_enrich_query_inspection_uses_enriched_dataset_not_stale_bundle(tmp_path: Path, monkeypatch) -> None:
+def test_docket_cli_enrich_query_inspection_uses_enriched_dataset_not_stale_bundle(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_docket_cli_module()
     dataset = DocketDatasetBuilder().build_from_docket(
         {
@@ -3301,7 +3584,10 @@ def test_docket_cli_enrich_query_inspection_uses_enriched_dataset_not_stale_bund
 
     assert result == 0
     payload = json.loads(output.getvalue())
-    assert payload["inspection"]["latest_routing_reason"] == "Enriched routing reason from in-memory result."
+    assert (
+        payload["inspection"]["latest_routing_reason"]
+        == "Enriched routing reason from in-memory result."
+    )
 
 
 def test_docket_cli_can_export_packaged_parsed_report_without_load_flag(tmp_path: Path) -> None:
@@ -3312,7 +3598,11 @@ def test_docket_cli_can_export_packaged_parsed_report_without_load_flag(tmp_path
             "case_name": "CLI Parsed Export",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -3360,7 +3650,11 @@ def test_docket_cli_generic_fields_alias_applies_to_active_packaged_mode(tmp_pat
             "case_name": "CLI Generic Fields",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -3408,7 +3702,11 @@ def test_docket_cli_rejects_mixing_generic_and_mode_specific_fields(tmp_path: Pa
             "case_name": "CLI Mixed Fields Error",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -3436,7 +3734,9 @@ def test_docket_cli_rejects_mixing_generic_and_mode_specific_fields(tmp_path: Pa
     except SystemExit as exc:
         assert exc.code == 2
     else:
-        raise AssertionError("Expected parser error when mixing --fields with mode-specific field flags")
+        raise AssertionError(
+            "Expected parser error when mixing --fields with mode-specific field flags"
+        )
 
 
 def test_docket_cli_rejects_report_fields_for_markdown_report_format(tmp_path: Path) -> None:
@@ -3447,7 +3747,11 @@ def test_docket_cli_rejects_report_fields_for_markdown_report_format(tmp_path: P
             "case_name": "CLI Report Fields Format Error",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -3475,7 +3779,9 @@ def test_docket_cli_rejects_report_fields_for_markdown_report_format(tmp_path: P
     except SystemExit as exc:
         assert exc.code == 2
     else:
-        raise AssertionError("Expected parser error when using --report-fields with markdown report format")
+        raise AssertionError(
+            "Expected parser error when using --report-fields with markdown report format"
+        )
 
 
 def test_docket_cli_rejects_generic_fields_for_markdown_report_format(tmp_path: Path) -> None:
@@ -3486,7 +3792,11 @@ def test_docket_cli_rejects_generic_fields_for_markdown_report_format(tmp_path: 
             "case_name": "CLI Generic Fields Format Error",
             "court": "D. Example",
             "documents": [
-                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983.",
+                },
             ],
         }
     )
@@ -3514,7 +3824,9 @@ def test_docket_cli_rejects_generic_fields_for_markdown_report_format(tmp_path: 
     except SystemExit as exc:
         assert exc.code == 2
     else:
-        raise AssertionError("Expected parser error when using --fields with markdown report format")
+        raise AssertionError(
+            "Expected parser error when using --fields with markdown report format"
+        )
 
 
 def test_docket_cli_requires_output_for_non_read_only_paths(tmp_path: Path) -> None:
@@ -3547,4 +3859,6 @@ def test_docket_cli_requires_output_for_non_read_only_paths(tmp_path: Path) -> N
     except SystemExit as exc:
         assert exc.code == 2
     else:
-        raise AssertionError("Expected parser error when --output is omitted for non-read-only command")
+        raise AssertionError(
+            "Expected parser error when --output is omitted for non-read-only command"
+        )

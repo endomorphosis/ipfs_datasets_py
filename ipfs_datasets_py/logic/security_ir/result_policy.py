@@ -44,40 +44,30 @@ class ResultSelectionPolicy:
             or not self.policy_id.strip()
             or self.policy_id != self.policy_id.strip()
         ):
-            raise SecurityResultValidationError(
-                "policy_id must be a non-empty trimmed string"
-            )
+            raise SecurityResultValidationError("policy_id must be a non-empty trimmed string")
         object.__setattr__(self, "family", SecurityResultFamily(self.family))
         for field_name in ("required_backend_ids", "allowed_backend_ids"):
             values = getattr(self, field_name)
-            if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-                values, Sequence
-            ):
+            if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
                 raise SecurityResultValidationError(
                     f"{field_name} must be a sequence of backend identifiers"
                 )
             normalized = tuple(sorted(values))
             if any(
-                not isinstance(value, str)
-                or not value.strip()
-                or value != value.strip()
+                not isinstance(value, str) or not value.strip() or value != value.strip()
                 for value in normalized
             ):
                 raise SecurityResultValidationError(
                     f"{field_name} must contain non-empty trimmed strings"
                 )
             if len(normalized) != len(set(normalized)):
-                raise SecurityResultValidationError(
-                    f"{field_name} must contain unique values"
-                )
+                raise SecurityResultValidationError(f"{field_name} must contain unique values")
             object.__setattr__(self, field_name, normalized)
         if not self.required_backend_ids:
-            raise SecurityResultValidationError(
-                "required_backend_ids must not be empty"
-            )
-        if self.allowed_backend_ids and not set(
-            self.required_backend_ids
-        ).issubset(self.allowed_backend_ids):
+            raise SecurityResultValidationError("required_backend_ids must not be empty")
+        if self.allowed_backend_ids and not set(self.required_backend_ids).issubset(
+            self.allowed_backend_ids
+        ):
             raise SecurityResultValidationError(
                 "required backends must be included in allowed_backend_ids"
             )
@@ -130,9 +120,7 @@ class ResultSelectionPolicy:
             required_backend_ids=tuple(value.get("required_backend_ids", ())),
             allowed_backend_ids=tuple(value.get("allowed_backend_ids", ())),
             configuration=FrozenMap(value.get("configuration", {})),
-            schema_version=value.get(
-                "schema_version", SECURITY_RESULT_POLICY_VERSION
-            ),
+            schema_version=value.get("schema_version", SECURITY_RESULT_POLICY_VERSION),
         )
 
 
@@ -152,12 +140,8 @@ class PortfolioVerdict:
     def __post_init__(self) -> None:
         object.__setattr__(self, "family", SecurityResultFamily(self.family))
         object.__setattr__(self, "status", ResultStatus(self.status))
-        if self.accepted_result is not None and not isinstance(
-            self.accepted_result, BoundedResult
-        ):
-            raise SecurityResultValidationError(
-                "accepted_result must be a bounded result"
-            )
+        if self.accepted_result is not None and not isinstance(self.accepted_result, BoundedResult):
+            raise SecurityResultValidationError("accepted_result must be a bounded result")
         if tuple(sorted(set(self.considered_result_digests))) != tuple(
             self.considered_result_digests
         ):
@@ -172,9 +156,7 @@ class PortfolioVerdict:
             else FrozenMap(self.backend_result_digests),
         )
         if not self.diagnostics:
-            raise SecurityResultValidationError(
-                "portfolio verdict requires explicit diagnostics"
-            )
+            raise SecurityResultValidationError("portfolio verdict requires explicit diagnostics")
         if self.schema_version != SECURITY_RESULT_POLICY_VERSION:
             raise SecurityResultValidationError(
                 f"unsupported portfolio verdict version: {self.schema_version}"
@@ -190,9 +172,7 @@ class PortfolioVerdict:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "accepted_result_digest": (
-                self.accepted_result.digest if self.accepted_result else ""
-            ),
+            "accepted_result_digest": (self.accepted_result.digest if self.accepted_result else ""),
             "backend_result_digests": self.backend_result_digests.to_dict(),
             "considered_result_digests": list(self.considered_result_digests),
             "diagnostics": list(self.diagnostics),
@@ -237,30 +217,21 @@ def select_portfolio_result(
         try:
             candidate_family = result_family(result)
         except SecurityResultValidationError:
-            diagnostics.append(
-                f"security.result.unsupported_type:{type(result).__name__}"
-            )
+            diagnostics.append(f"security.result.unsupported_type:{type(result).__name__}")
             continue
         if candidate_family is not policy.family:
             diagnostics.append(
-                "security.result.family_mismatch:"
-                f"{result.backend_id}:{candidate_family.value}"
+                f"security.result.family_mismatch:{result.backend_id}:{candidate_family.value}"
             )
             continue
-        if (
-            policy.allowed_backend_ids
-            and result.backend_id not in policy.allowed_backend_ids
-        ):
-            diagnostics.append(
-                f"security.result.backend_not_allowed:{result.backend_id}"
-            )
+        if policy.allowed_backend_ids and result.backend_id not in policy.allowed_backend_ids:
+            diagnostics.append(f"security.result.backend_not_allowed:{result.backend_id}")
             continue
         by_backend.setdefault(result.backend_id, []).append(result)
 
     missing = sorted(set(policy.required_backend_ids) - set(by_backend))
     diagnostics.extend(
-        f"security.result.required_backend_missing:{backend_id}"
-        for backend_id in missing
+        f"security.result.required_backend_missing:{backend_id}" for backend_id in missing
     )
 
     duplicate_backends = sorted(
@@ -302,23 +273,13 @@ def select_portfolio_result(
         or len(scope_keys) > 1
         or len(statuses) > 1
         or any(item.startswith("security.result.family_mismatch:") for item in diagnostics)
-        or any(
-            item.startswith("security.result.unsupported_type:")
-            for item in diagnostics
-        )
-        or any(
-            item.startswith("security.result.backend_not_allowed:")
-            for item in diagnostics
-        )
+        or any(item.startswith("security.result.unsupported_type:") for item in diagnostics)
+        or any(item.startswith("security.result.backend_not_allowed:") for item in diagnostics)
     )
     if blocking_error or len(required_results) != len(policy.required_backend_ids):
         status = _fallback_status(
             policy.family,
-            error=bool(
-                duplicate_backends
-                or len(scope_keys) > 1
-                or len(statuses) > 1
-            ),
+            error=bool(duplicate_backends or len(scope_keys) > 1 or len(statuses) > 1),
         )
         accepted_result = None
         diagnostics.append("security.result.portfolio_rejected")

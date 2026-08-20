@@ -24,9 +24,7 @@ _HF_PARQUET_PATH_ALIASES = {
     ("justicedao/ipfs_federal_register", "federal_register_parquet/laws.parquet"): (
         "federal_register.parquet",
     ),
-    ("justicedao/ipfs_uscode", "uscode_parquet/uscode.parquet"): (
-        "uscode_parquet/laws.parquet",
-    ),
+    ("justicedao/ipfs_uscode", "uscode_parquet/uscode.parquet"): ("uscode_parquet/laws.parquet",),
 }
 
 _HF_TOKEN_NAMES = (
@@ -213,7 +211,9 @@ def _download_huggingface_parquet_with_repo_path(
             if first_error is None:
                 first_error = exc
 
-    raise first_error or FileNotFoundError(f"No Hugging Face parquet candidate found for {repo_id}/{repo_path}")
+    raise first_error or FileNotFoundError(
+        f"No Hugging Face parquet candidate found for {repo_id}/{repo_path}"
+    )
 
 
 def _upload_huggingface_parquet(
@@ -259,7 +259,9 @@ def _build_merge_row_key(row: Mapping[str, Any]) -> tuple[str, ...]:
     return ("row", json.dumps(dict(row), sort_keys=True, ensure_ascii=True, default=str))
 
 
-def _merge_row_sets(existing_rows: List[Dict[str, Any]], new_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _merge_row_sets(
+    existing_rows: List[Dict[str, Any]], new_rows: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
     merged: Dict[tuple[str, ...], Dict[str, Any]] = {}
     ordered_keys: List[tuple[str, ...]] = []
 
@@ -299,15 +301,31 @@ def load_recovery_manifest(manifest_path: str | Path) -> Dict[str, Any]:
 def build_recovery_manifest_promotion_row(
     manifest: Mapping[str, Any] | str | Path,
 ) -> Dict[str, Any]:
-    payload = load_recovery_manifest(manifest) if isinstance(manifest, (str, Path)) else dict(manifest)
-    manifest_path = Path(str(payload.get("manifest_path") or "")).expanduser().resolve() if payload.get("manifest_path") else None
-    manifest_directory = manifest_path.parent if manifest_path is not None else Path(str(payload.get("manifest_directory") or "")).expanduser().resolve()
+    payload = (
+        load_recovery_manifest(manifest) if isinstance(manifest, (str, Path)) else dict(manifest)
+    )
+    manifest_path = (
+        Path(str(payload.get("manifest_path") or "")).expanduser().resolve()
+        if payload.get("manifest_path")
+        else None
+    )
+    manifest_directory = (
+        manifest_path.parent
+        if manifest_path is not None
+        else Path(str(payload.get("manifest_directory") or "")).expanduser().resolve()
+    )
 
     corpus_key = str(payload.get("corpus_key") or "").strip().lower()
     state_code = str(payload.get("state_code") or "").strip().upper()
     corpus = get_canonical_legal_corpus(corpus_key) if corpus_key else None
-    preferred_state_code = state_code if corpus_key in {"state_laws", "state_admin_rules", "state_court_rules"} else None
-    preferred_parquet_names = corpus.preferred_parquet_names(preferred_state_code) if corpus is not None else []
+    preferred_state_code = (
+        state_code
+        if corpus_key in {"state_laws", "state_admin_rules", "state_court_rules"}
+        else None
+    )
+    preferred_parquet_names = (
+        corpus.preferred_parquet_names(preferred_state_code) if corpus is not None else []
+    )
     target_filename = (
         corpus.state_parquet_filename(preferred_state_code)
         if corpus is not None and preferred_state_code
@@ -318,7 +336,11 @@ def build_recovery_manifest_promotion_row(
         if corpus is not None and corpus.parquet_dir_name.strip("/")
         else target_filename
     )
-    target_local_parquet_path = str(corpus.parquet_dir() / target_filename) if corpus is not None and target_filename else ""
+    target_local_parquet_path = (
+        str(corpus.parquet_dir() / target_filename)
+        if corpus is not None and target_filename
+        else ""
+    )
 
     candidates = [dict(item) for item in list(payload.get("candidates") or [])]
     archived_sources = [dict(item) for item in list(payload.get("archived_sources") or [])]
@@ -328,15 +350,21 @@ def build_recovery_manifest_promotion_row(
         for item in archived_sources
         if bool(item.get("success")) and str(item.get("url") or "").strip()
     ]
-    candidate_urls = [str(item.get("url") or "") for item in candidates if str(item.get("url") or "").strip()]
+    candidate_urls = [
+        str(item.get("url") or "") for item in candidates if str(item.get("url") or "").strip()
+    ]
     promotion_output_dir = manifest_directory / "canonical_promotion"
 
     return {
         "source_type": "legal_source_recovery_manifest",
         "corpus_key": corpus_key,
-        "hf_dataset_id": str(payload.get("hf_dataset_id") or (corpus.hf_dataset_id if corpus is not None else "")),
+        "hf_dataset_id": str(
+            payload.get("hf_dataset_id") or (corpus.hf_dataset_id if corpus is not None else "")
+        ),
         "citation_text": str(payload.get("citation_text") or ""),
-        "normalized_citation": str(payload.get("normalized_citation") or payload.get("citation_text") or ""),
+        "normalized_citation": str(
+            payload.get("normalized_citation") or payload.get("citation_text") or ""
+        ),
         "state_code": state_code,
         "search_query": str(payload.get("search_query") or ""),
         "generated_at": str(payload.get("generated_at") or ""),
@@ -349,7 +377,9 @@ def build_recovery_manifest_promotion_row(
         "primary_candidate_score": int(primary_candidate.get("score") or 0),
         "candidate_urls": candidate_urls,
         "archived_source_urls": archived_success_urls,
-        "manifest_path": str(manifest_path) if manifest_path is not None else str(payload.get("manifest_path") or ""),
+        "manifest_path": str(manifest_path)
+        if manifest_path is not None
+        else str(payload.get("manifest_path") or ""),
         "manifest_directory": str(manifest_directory),
         "promotion_output_dir": str(promotion_output_dir),
         "promotion_json_path": str(promotion_output_dir / "promotion_rows.json"),
@@ -371,7 +401,11 @@ def promote_recovery_manifest_to_canonical_bundle(
 ) -> Dict[str, Any]:
     payload = load_recovery_manifest(manifest_path)
     row = build_recovery_manifest_promotion_row(payload)
-    promotion_dir = Path(output_dir).expanduser().resolve() if output_dir else Path(str(row.get("promotion_output_dir") or "")).expanduser().resolve()
+    promotion_dir = (
+        Path(output_dir).expanduser().resolve()
+        if output_dir
+        else Path(str(row.get("promotion_output_dir") or "")).expanduser().resolve()
+    )
     promotion_dir.mkdir(parents=True, exist_ok=True)
 
     json_path = promotion_dir / "promotion_rows.json"
@@ -490,13 +524,15 @@ def merge_recovery_manifest_into_canonical_dataset(
                     force_download=force_hf_download,
                 )
             else:
-                hf_source_path_obj, resolved_hf_parquet_path = _download_huggingface_parquet_with_repo_path(
-                    repo_id=hf_dataset_id,
-                    repo_path=target_parquet_path,
-                    hf_token=hf_token,
-                    hf_revision=hf_revision,
-                    hf_cache_dir=hf_cache_dir,
-                    force_download=force_hf_download,
+                hf_source_path_obj, resolved_hf_parquet_path = (
+                    _download_huggingface_parquet_with_repo_path(
+                        repo_id=hf_dataset_id,
+                        repo_path=target_parquet_path,
+                        hf_token=hf_token,
+                        hf_revision=hf_revision,
+                        hf_cache_dir=hf_cache_dir,
+                        force_download=force_hf_download,
+                    )
                 )
             hf_source_path = str(Path(hf_source_path_obj).expanduser().resolve())
             existing_rows = _read_rows_from_parquet(Path(hf_source_path))
@@ -560,7 +596,10 @@ def merge_recovery_manifest_into_canonical_dataset(
                 "parquet_report": parquet_report,
                 "source": "legal_source_recovery_promotion_merge",
             }
-    merge_report_path = Path(str(bundle.get("promotion_output_dir") or target_path.parent)).expanduser().resolve() / "canonical_merge_report.json"
+    merge_report_path = (
+        Path(str(bundle.get("promotion_output_dir") or target_path.parent)).expanduser().resolve()
+        / "canonical_merge_report.json"
+    )
     merge_report = {
         "status": "success",
         "manifest_path": str(Path(manifest_path).expanduser().resolve()),
@@ -583,7 +622,9 @@ def merge_recovery_manifest_into_canonical_dataset(
         "merge_report_path": str(merge_report_path),
         "source": "legal_source_recovery_promotion_merge",
     }
-    merge_report_path.write_text(json.dumps(merge_report, indent=2, sort_keys=True), encoding="utf-8")
+    merge_report_path.write_text(
+        json.dumps(merge_report, indent=2, sort_keys=True), encoding="utf-8"
+    )
     return merge_report
 
 
@@ -632,16 +673,22 @@ def merge_recovery_manifests_into_canonical_datasets(
         target_parquet_path = str(row.get("target_parquet_path") or "").strip()
         hf_dataset_id = str(row.get("hf_dataset_id") or "").strip()
         if not target_local_path or not target_parquet_path or not hf_dataset_id:
-            manifest_errors.append({
-                "manifest_path": str(manifest_path),
-                "error": "Manifest did not resolve to a complete canonical HF parquet target.",
-            })
+            manifest_errors.append(
+                {
+                    "manifest_path": str(manifest_path),
+                    "error": "Manifest did not resolve to a complete canonical HF parquet target.",
+                }
+            )
             continue
-        grouped_rows.setdefault((hf_dataset_id, target_parquet_path, target_local_path), []).append(row)
+        grouped_rows.setdefault((hf_dataset_id, target_parquet_path, target_local_path), []).append(
+            row
+        )
 
     output_root = Path(output_dir).expanduser().resolve() if output_dir else None
     target_reports: List[Dict[str, Any]] = []
-    for (hf_dataset_id, target_parquet_path, target_local_path), rows in sorted(grouped_rows.items()):
+    for (hf_dataset_id, target_parquet_path, target_local_path), rows in sorted(
+        grouped_rows.items()
+    ):
         if output_root is not None:
             target_path = output_root / _safe_repo_path_segment(hf_dataset_id) / target_parquet_path
         else:
@@ -662,27 +709,31 @@ def merge_recovery_manifests_into_canonical_datasets(
                         force_download=force_hf_download,
                     )
                 else:
-                    hf_source_path_obj, resolved_hf_parquet_path = _download_huggingface_parquet_with_repo_path(
-                        repo_id=hf_dataset_id,
-                        repo_path=target_parquet_path,
-                        hf_token=hf_token,
-                        hf_revision=hf_revision,
-                        hf_cache_dir=hf_cache_dir,
-                        force_download=force_hf_download,
+                    hf_source_path_obj, resolved_hf_parquet_path = (
+                        _download_huggingface_parquet_with_repo_path(
+                            repo_id=hf_dataset_id,
+                            repo_path=target_parquet_path,
+                            hf_token=hf_token,
+                            hf_revision=hf_revision,
+                            hf_cache_dir=hf_cache_dir,
+                            force_download=force_hf_download,
+                        )
                     )
                 hf_source_path = str(Path(hf_source_path_obj).expanduser().resolve())
                 existing_rows = _read_rows_from_parquet(Path(hf_source_path))
                 existing_rows_source = "huggingface_dataset_parquet"
             except Exception as exc:
-                target_reports.append({
-                    "status": "error",
-                    "error": f"Unable to hydrate target parquet from Hugging Face before merge: {exc}",
-                    "hf_dataset_id": hf_dataset_id,
-                    "target_parquet_path": target_parquet_path,
-                    "resolved_hf_parquet_path": resolved_hf_parquet_path,
-                    "target_local_parquet_path": str(target_path),
-                    "incoming_row_count": len(rows),
-                })
+                target_reports.append(
+                    {
+                        "status": "error",
+                        "error": f"Unable to hydrate target parquet from Hugging Face before merge: {exc}",
+                        "hf_dataset_id": hf_dataset_id,
+                        "target_parquet_path": target_parquet_path,
+                        "resolved_hf_parquet_path": resolved_hf_parquet_path,
+                        "target_local_parquet_path": str(target_path),
+                        "incoming_row_count": len(rows),
+                    }
+                )
                 continue
         else:
             existing_rows = _read_rows_from_parquet(target_path)
@@ -703,45 +754,55 @@ def merge_recovery_manifests_into_canonical_datasets(
                     )
                 )
             except Exception as exc:
-                target_reports.append({
-                    "status": "error",
-                    "error": f"Unable to publish merged parquet to Hugging Face: {exc}",
-                    "hf_dataset_id": hf_dataset_id,
-                    "target_parquet_path": target_parquet_path,
-                    "resolved_hf_parquet_path": resolved_hf_parquet_path,
-                    "target_local_parquet_path": str(target_path),
-                    "hf_source_path": hf_source_path,
-                    "existing_rows_source": existing_rows_source,
-                    "incoming_row_count": len(rows),
-                    "merged_row_count": len(merged_rows),
-                    "parquet_report": parquet_report,
-                })
+                target_reports.append(
+                    {
+                        "status": "error",
+                        "error": f"Unable to publish merged parquet to Hugging Face: {exc}",
+                        "hf_dataset_id": hf_dataset_id,
+                        "target_parquet_path": target_parquet_path,
+                        "resolved_hf_parquet_path": resolved_hf_parquet_path,
+                        "target_local_parquet_path": str(target_path),
+                        "hf_source_path": hf_source_path,
+                        "existing_rows_source": existing_rows_source,
+                        "incoming_row_count": len(rows),
+                        "merged_row_count": len(merged_rows),
+                        "parquet_report": parquet_report,
+                    }
+                )
                 continue
 
-        target_reports.append({
-            "status": "success",
-            "hf_dataset_id": hf_dataset_id,
-            "target_parquet_path": target_parquet_path,
-            "resolved_hf_parquet_path": resolved_hf_parquet_path,
-            "target_local_parquet_path": str(target_path),
-            "hf_revision": str(hf_revision or ""),
-            "hf_source_path": hf_source_path,
-            "existing_rows_source": existing_rows_source,
-            "upload_ready": bool(hydrate_from_hf),
-            "published_merged_to_hf": bool(publish_report),
-            "publish_report": publish_report,
-            "existing_row_count": len(existing_rows),
-            "incoming_row_count": len(rows),
-            "merged_row_count": len(merged_rows),
-            "deduplicated_count": len(existing_rows) + len(rows) - len(merged_rows),
-            "parquet_report": parquet_report,
-        })
+        target_reports.append(
+            {
+                "status": "success",
+                "hf_dataset_id": hf_dataset_id,
+                "target_parquet_path": target_parquet_path,
+                "resolved_hf_parquet_path": resolved_hf_parquet_path,
+                "target_local_parquet_path": str(target_path),
+                "hf_revision": str(hf_revision or ""),
+                "hf_source_path": hf_source_path,
+                "existing_rows_source": existing_rows_source,
+                "upload_ready": bool(hydrate_from_hf),
+                "published_merged_to_hf": bool(publish_report),
+                "publish_report": publish_report,
+                "existing_row_count": len(existing_rows),
+                "incoming_row_count": len(rows),
+                "merged_row_count": len(merged_rows),
+                "deduplicated_count": len(existing_rows) + len(rows) - len(merged_rows),
+                "parquet_report": parquet_report,
+            }
+        )
 
     status_counts: Dict[str, int] = {}
     for report in target_reports:
         status = str(report.get("status") or "unknown")
         status_counts[status] = status_counts.get(status, 0) + 1
-    status = "success" if target_reports and all(str(item.get("status") or "") == "success" for item in target_reports) and not manifest_errors else "partial"
+    status = (
+        "success"
+        if target_reports
+        and all(str(item.get("status") or "") == "success" for item in target_reports)
+        and not manifest_errors
+        else "partial"
+    )
     if not target_reports and manifest_errors:
         status = "error"
 
@@ -774,25 +835,35 @@ def build_recovery_manifest_release_plan(
     workspace_root: str | Path | None = None,
     python_bin: str = "python3",
 ) -> Dict[str, Any]:
-    payload = load_recovery_manifest(manifest) if isinstance(manifest, (str, Path)) else dict(manifest)
+    payload = (
+        load_recovery_manifest(manifest) if isinstance(manifest, (str, Path)) else dict(manifest)
+    )
     row = build_recovery_manifest_promotion_row(payload)
-    manifest_path_obj = Path(str(payload.get("manifest_path") or "recovery_manifest.json")).expanduser().resolve()
-    promotion_dir = Path(output_dir).expanduser().resolve() if output_dir else Path(str(row.get("promotion_output_dir") or "")).expanduser().resolve()
-    workspace_root_path = Path(workspace_root).expanduser().resolve() if workspace_root else Path.cwd().resolve()
+    manifest_path_obj = (
+        Path(str(payload.get("manifest_path") or "recovery_manifest.json")).expanduser().resolve()
+    )
+    promotion_dir = (
+        Path(output_dir).expanduser().resolve()
+        if output_dir
+        else Path(str(row.get("promotion_output_dir") or "")).expanduser().resolve()
+    )
+    workspace_root_path = (
+        Path(workspace_root).expanduser().resolve() if workspace_root else Path.cwd().resolve()
+    )
     python_bin_quoted = shlex.quote(str(python_bin or "python3"))
     promote_command = (
         f"cd {shlex.quote(str(workspace_root_path))} && "
         f"PYTHONPATH=src {python_bin_quoted} -c "
-        f"\"from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import "
+        f'"from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import '
         f"promote_recovery_manifest_to_canonical_bundle as _promote; "
-        f"_promote({str(manifest_path_obj)!r}, output_dir={str(promotion_dir)!r})\""
+        f'_promote({str(manifest_path_obj)!r}, output_dir={str(promotion_dir)!r})"'
     )
     merge_command = (
         f"cd {shlex.quote(str(workspace_root_path))} && "
         f"PYTHONPATH=src {python_bin_quoted} -c "
-        f"\"from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import "
+        f'"from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import '
         f"merge_recovery_manifest_into_canonical_dataset as _merge; "
-        f"_merge({str(manifest_path_obj)!r}, output_dir={str(promotion_dir)!r})\""
+        f'_merge({str(manifest_path_obj)!r}, output_dir={str(promotion_dir)!r})"'
     )
     has_target_parquet = bool(str(row.get("target_local_parquet_path") or "").strip())
 
@@ -806,7 +877,9 @@ def build_recovery_manifest_release_plan(
             "stage": "merge_into_canonical_dataset",
             "command": merge_command if has_target_parquet else None,
             "status": "ready" if has_target_parquet else "blocked",
-            "reason": None if has_target_parquet else "Target canonical parquet path is not available for the recovery manifest corpus.",
+            "reason": None
+            if has_target_parquet
+            else "Target canonical parquet path is not available for the recovery manifest corpus.",
             "target_parquet_path": str(row.get("target_parquet_path") or ""),
             "target_local_parquet_path": str(row.get("target_local_parquet_path") or ""),
         },

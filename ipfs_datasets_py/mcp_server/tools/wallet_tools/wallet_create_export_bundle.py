@@ -10,7 +10,9 @@ from ipfs_datasets_py.wallet.ucan import invocation_from_token
 from ._helpers import default_blob_dir, default_wallet_dir, key_from_optional_hex, load, save
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Create a bounded encrypted wallet export bundle.")
+@tool_metadata(
+    category="wallet_tools", mcp_description="Create a bounded encrypted wallet export bundle."
+)
 async def wallet_create_export_bundle(
     wallet_id: str,
     actor_did: str,

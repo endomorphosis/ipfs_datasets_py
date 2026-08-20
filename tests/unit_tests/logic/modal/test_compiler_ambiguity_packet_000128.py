@@ -211,10 +211,7 @@ def test_compiler_exposes_packet_000128_explicit_adaptive_ambiguities() -> None:
             ModalLogicFamily.FRAME.value,
             0.338621369848,
             "adaptive_frame_frame_contested_margin_low",
-            (
-                "The rule of construction and definitions apply for purposes "
-                "of this chapter."
-            ),
+            ("The rule of construction and definitions apply for purposes of this chapter."),
         ),
         (
             "us-code-42-10903.-09391d245061f7cb",
@@ -230,10 +227,7 @@ def test_compiler_exposes_packet_000128_explicit_adaptive_ambiguities() -> None:
             ModalLogicFamily.FRAME.value,
             0.130008991424,
             "adaptive_frame_frame_contested_margin_low",
-            (
-                "The rule of construction and definitions apply for purposes "
-                "of this chapter."
-            ),
+            ("The rule of construction and definitions apply for purposes of this chapter."),
         ),
         (
             "us-code-42-10903.-09391d245061f7cb",
@@ -254,17 +248,13 @@ def test_compiler_exposes_packet_000128_explicit_adaptive_ambiguities() -> None:
         expected_type,
         source_text,
     ) in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_adaptive_ranking(
             predicted_family=predicted_family,
             target_family=target_family,
             family_margin=family_margin,
             runner_up_family=(
-                ModalLogicFamily.TEMPORAL.value
-                if predicted_family == target_family
-                else None
+                ModalLogicFamily.TEMPORAL.value if predicted_family == target_family else None
             ),
         )
         compiler._adaptive_family_ranking_from_logits = (  # type: ignore[method-assign]
@@ -315,7 +305,4 @@ def test_compiler_exposes_packet_000128_explicit_adaptive_ambiguities() -> None:
         )
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
         assert ambiguity.metadata.get("explicit_ambiguity_type") == ambiguity.ambiguity_type
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12

@@ -254,12 +254,8 @@ def _trust_policy() -> ProofTrustPolicy:
         solver_allowlist=("solver-z3",),
         compiler_allowlist=("compiler-canonical-v1",),
         security_profile_allowlist=("legal-strict",),
-        attestation_kind_allowlist=(
-            AttestationKind.DIRECT_PROOF_VERIFICATION.value,
-        ),
-        authoritative_attestation_kinds=(
-            AttestationKind.DIRECT_PROOF_VERIFICATION.value,
-        ),
+        attestation_kind_allowlist=(AttestationKind.DIRECT_PROOF_VERIFICATION.value,),
+        authoritative_attestation_kinds=(AttestationKind.DIRECT_PROOF_VERIFICATION.value,),
         required_result_authority=AuthorityKind.THEOREM_PROOF,
         minimum_security_profile="legal-strict",
         accept_simulated=False,
@@ -343,9 +339,7 @@ def test_build_helpers() -> None:
     assert verifier.interface == ATTESTED_PROOF_VERIFIER_INTERFACE
     parent = _parent_envelope()
     proof = _native_proof("helper")
-    envelope = _honest_envelope(
-        parent_cids=(parent.envelope_cid,), proof_bytes=proof
-    )
+    envelope = _honest_envelope(parent_cids=(parent.envelope_cid,), proof_bytes=proof)
     item = build_selected_evidence_item(
         envelope=envelope,
         native_proof_bytes=proof,
@@ -432,10 +426,7 @@ def test_reject_malformed_underconstrained_proof() -> None:
     )
     result = verify_selected_item(item, _context())
     assert result.grants_authority is False
-    assert (
-        REASON_UNDERCONSTRAINED in result.reasons
-        or REASON_MALFORMED_PROOF in result.reasons
-    )
+    assert REASON_UNDERCONSTRAINED in result.reasons or REASON_MALFORMED_PROOF in result.reasons
 
 
 def test_reject_real_to_simulation_fallback() -> None:
@@ -519,9 +510,7 @@ def test_reject_missing_native_and_zk_proof() -> None:
 
 def test_reject_wrong_corpus_root() -> None:
     item = _honest_item()
-    result = verify_selected_item(
-        item, _context(corpus_root_cid=_cid("other-corpus"))
-    )
+    result = verify_selected_item(item, _context(corpus_root_cid=_cid("other-corpus")))
     assert result.grants_authority is False
     assert any("root_mismatch" in reason for reason in result.reasons)
 
@@ -603,10 +592,7 @@ def test_zk_simulated_rejected_when_not_accepted() -> None:
     )
     result = verify_selected_item(item, _context(accept_simulated=False))
     assert result.grants_authority is False
-    assert any(
-        reason in result.reasons
-        for reason in (REASON_REAL_TO_SIM, "zk_simulated_rejected")
-    )
+    assert any(reason in result.reasons for reason in (REASON_REAL_TO_SIM, "zk_simulated_rejected"))
 
 
 def test_trust_policy_rejection_surfaces() -> None:
@@ -787,9 +773,7 @@ def test_legacy_authority_manifest_fixture() -> None:
     for inspection in inspections:
         assert inspection.grants_authority is False
         assert inspection.absent_bindings
-        assert set(inspection.absent_bindings).issubset(
-            set(REQUIRED_AUTHORITY_BINDINGS)
-        )
+        assert set(inspection.absent_bindings).issubset(set(REQUIRED_AUTHORITY_BINDINGS))
 
 
 def test_legacy_reader_interface_constant() -> None:

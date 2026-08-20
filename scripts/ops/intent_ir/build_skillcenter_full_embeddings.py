@@ -64,27 +64,13 @@ def _slug(value: str) -> str:
 
 def _xdg_path(environment_name: str, fallback: str) -> Path:
     configured = str(os.environ.get(environment_name) or "").strip()
-    return (
-        Path(configured).expanduser()
-        if configured
-        else Path(fallback).expanduser()
-    )
+    return Path(configured).expanduser() if configured else Path(fallback).expanduser()
 
 
 def _default_hf_snapshot(dataset_id: str, revision: str) -> Path:
     hf_home = str(os.environ.get("HF_HOME") or "").strip()
-    cache = (
-        Path(hf_home).expanduser()
-        if hf_home
-        else Path("~/.cache/huggingface").expanduser()
-    )
-    return (
-        cache
-        / "hub"
-        / ("datasets--" + dataset_id.replace("/", "--"))
-        / "snapshots"
-        / revision
-    )
+    cache = Path(hf_home).expanduser() if hf_home else Path("~/.cache/huggingface").expanduser()
+    return cache / "hub" / ("datasets--" + dataset_id.replace("/", "--")) / "snapshots" / revision
 
 
 def _load_accelerate_router() -> tuple[
@@ -109,21 +95,15 @@ def _load_accelerate_router() -> tuple[
             sys.path.remove(candidate_text)
         sys.path.insert(0, candidate_text)
         for module_name in tuple(sys.modules):
-            if module_name == "ipfs_accelerate_py" or module_name.startswith(
-                "ipfs_accelerate_py."
-            ):
+            if module_name == "ipfs_accelerate_py" or module_name.startswith("ipfs_accelerate_py."):
                 sys.modules.pop(module_name, None)
         importlib.invalidate_caches()
         try:
-            module = importlib.import_module(
-                "ipfs_accelerate_py.embeddings_router"
-            )
+            module = importlib.import_module("ipfs_accelerate_py.embeddings_router")
             return module.embed_texts_batched, module.get_last_embedding_trace
         except (ImportError, AttributeError):
             continue
-    raise RuntimeError(
-        "ipfs_accelerate_py.embeddings_router is required"
-    )
+    raise RuntimeError("ipfs_accelerate_py.embeddings_router is required")
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -174,10 +154,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     data_home = _xdg_path("XDG_DATA_HOME", "~/.local/share")
     corpus_dir = args.corpus_dir or (
-        data_home
-        / "ipfs_datasets_py/intent-ir/skillcenter-corpus"
-        / args.revision
-        / "full"
+        data_home / "ipfs_datasets_py/intent-ir/skillcenter-corpus" / args.revision / "full"
     )
     output_root = args.output_dir or (
         data_home
@@ -197,9 +174,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         available = {path.name for path in sqlite_files}
         unknown = selected - available
         if unknown:
-            raise ValueError(
-                "unknown bundle filename(s): " + ", ".join(sorted(unknown))
-            )
+            raise ValueError("unknown bundle filename(s): " + ", ".join(sorted(unknown)))
         sqlite_files = [path for path in sqlite_files if path.name in selected]
     if not sqlite_files:
         raise ValueError("no SkillCenter SQLite bundles selected")
@@ -269,9 +244,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 embedder=_embedder,
                 max_records=args.max_records_per_bundle,
             )
-            summaries.append(
-                {"bundle": path.name, "embedding_run": summary.to_dict()}
-            )
+            summaries.append({"bundle": path.name, "embedding_run": summary.to_dict()})
             print(
                 json.dumps(summaries[-1], sort_keys=True),
                 file=sys.stderr,
@@ -300,9 +273,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             coverage.add(entry_cid)
     if args.bundles is None and complete:
         if coverage != corpus.entry_cids or vector_count != EXPECTED_FULL_RECORDS:
-            raise ValueError(
-                "complete embedding run does not cover every corpus entry_cid"
-            )
+            raise ValueError("complete embedding run does not cover every corpus entry_cid")
     aggregate = {
         "complete": complete,
         "corpus_cid": corpus.manifest["files"]["corpus"]["cid"],

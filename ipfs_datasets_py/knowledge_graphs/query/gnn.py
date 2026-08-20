@@ -45,8 +45,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 class GNNLayerType(str, Enum):
     """Supported GNN message-passing layer types."""
-    GRAPH_CONV = "graph_conv"       # Simple graph convolution (sum + self-loop)
-    GRAPH_SAGE = "graph_sage"       # GraphSAGE mean aggregation
+
+    GRAPH_CONV = "graph_conv"  # Simple graph convolution (sum + self-loop)
+    GRAPH_SAGE = "graph_sage"  # GraphSAGE mean aggregation
     GRAPH_ATTENTION = "graph_attention"  # Single-head attention (simplified)
 
 
@@ -61,6 +62,7 @@ class GNNConfig:
         normalize: Whether to L2-normalise output embeddings.
         activation: Element-wise non-linearity ('relu', 'tanh', or 'none').
     """
+
     embedding_dim: int = 64
     num_layers: int = 2
     layer_type: GNNLayerType = GNNLayerType.GRAPH_SAGE
@@ -77,6 +79,7 @@ class NodeEmbedding:
         features: The embedding vector.
         layer: Which message-passing layer produced this embedding (0 = raw).
     """
+
     entity_id: str
     features: List[float]
     layer: int = 0
@@ -245,20 +248,14 @@ class GraphNeuralNetworkAdapter:
 
                 elif layer_type == GNNLayerType.GRAPH_SAGE:
                     # mean of neighbours
-                    mean_nbr = [
-                        sum(nf[i] for nf in nbrs) / len(nbrs)
-                        for i in range(dim)
-                    ]
+                    mean_nbr = [sum(nf[i] for nf in nbrs) / len(nbrs) for i in range(dim)]
                     # concatenate self + mean, then truncate to dim
                     concat = self_feat + mean_nbr
                     updated[eid] = [activate(x) for x in concat[:dim]]
 
                 else:  # GRAPH_ATTENTION — uniform attention
                     n = len(nbrs)
-                    mean_nbr = [
-                        sum(nf[i] for nf in nbrs) / n
-                        for i in range(dim)
-                    ]
+                    mean_nbr = [sum(nf[i] for nf in nbrs) / n for i in range(dim)]
                     agg = [(s + m) / 2.0 for s, m in zip(self_feat, mean_nbr)]
                     updated[eid] = [activate(x) for x in agg]
 
@@ -270,9 +267,7 @@ class GraphNeuralNetworkAdapter:
     # Full forward pass
     # ------------------------------------------------------------------
 
-    def compute_embeddings(
-        self, force_recompute: bool = False
-    ) -> Dict[str, NodeEmbedding]:
+    def compute_embeddings(self, force_recompute: bool = False) -> Dict[str, NodeEmbedding]:
         """Compute node embeddings via feature extraction → message passing → optional normalisation.
 
         Results are cached; pass ``force_recompute=True`` to invalidate.
@@ -319,9 +314,7 @@ class GraphNeuralNetworkAdapter:
             embeddings[entity_b_id].features,
         )
 
-    def find_similar_entities(
-        self, entity_id: str, top_k: int = 5
-    ) -> List[Tuple[str, float]]:
+    def find_similar_entities(self, entity_id: str, top_k: int = 5) -> List[Tuple[str, float]]:
         """Return the top-k most similar entities ranked by cosine similarity.
 
         Args:

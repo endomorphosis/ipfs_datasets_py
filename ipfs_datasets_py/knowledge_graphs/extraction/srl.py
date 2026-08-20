@@ -199,9 +199,7 @@ class SRLFrame:
 _INSTRUMENT_RE = re.compile(
     r"\b(?:with|using|by means of|via|through)\s+([\w\s]+?)(?:[,;]|$)", re.I
 )
-_LOCATION_RE = re.compile(
-    r"\b(?:in|at|on|from|to|into|near|towards?)\s+([\w\s]+?)(?:[,;]|$)", re.I
-)
+_LOCATION_RE = re.compile(r"\b(?:in|at|on|from|to|into|near|towards?)\s+([\w\s]+?)(?:[,;]|$)", re.I)
 _TIME_RE = re.compile(
     r"\b(?:on|at|in|after|before|during|when|while|since|until|yesterday|today|"
     r"tomorrow|now|then|later|earlier|(?:last|next|this)\s+\w+)\s*([\w\s]*?)(?:[,;]|$)",
@@ -215,9 +213,7 @@ _RESULT_RE = re.compile(
     r"\b(?:so that|so|resulting in|leading to|consequently|therefore)\s+([\w\s]+?)(?:[,;]|$)",
     re.I,
 )
-_RECIPIENT_RE = re.compile(
-    r"\b(?:to|for|towards?)\s+([\w]+)(?:[,;\s]|$)", re.I
-)
+_RECIPIENT_RE = re.compile(r"\b(?:to|for|towards?)\s+([\w]+)(?:[,;\s]|$)", re.I)
 
 # Common auxiliary / copula verbs to skip
 _AUX_VERBS = frozenset(
@@ -245,9 +241,7 @@ _CORE_VERBS = frozenset(
 def _looks_like_verb(token: str) -> bool:
     t = token.lower().rstrip("s")
     return (
-        t in _CORE_VERBS
-        or token.lower().endswith("ed")
-        or token.lower().endswith("ing")
+        t in _CORE_VERBS or token.lower().endswith("ed") or token.lower().endswith("ing")
     ) and token.lower() not in _AUX_VERBS
 
 
@@ -273,18 +267,38 @@ def _extract_heuristic_frames(sentence: str) -> List[SRLFrame]:
         pre_words = [w for w in words[:i] if w.lower() not in _AUX_VERBS]
         if pre_words:
             # Strip punctuation from each pre-word
-            agent_text = " ".join(
-                re.sub(r"[^a-zA-Z0-9\-_']", "", w) for w in pre_words[-2:]
-            ).strip() or None
+            agent_text = (
+                " ".join(re.sub(r"[^a-zA-Z0-9\-_']", "", w) for w in pre_words[-2:]).strip() or None
+            )
 
         # Words after the verb — simple object detection
-        post_words = words[i + 1:]
+        post_words = words[i + 1 :]
         # Stop at common prepositions / connectors to get the direct object
         obj_words: List[str] = []
         for w in post_words:
-            if w.lower() in ("in", "at", "on", "from", "to", "with", "by", "for",
-                             "because", "since", "after", "before", "when", "while",
-                             "and", "or", "but", "so", "that", "which", "who"):
+            if w.lower() in (
+                "in",
+                "at",
+                "on",
+                "from",
+                "to",
+                "with",
+                "by",
+                "for",
+                "because",
+                "since",
+                "after",
+                "before",
+                "when",
+                "while",
+                "and",
+                "or",
+                "but",
+                "so",
+                "that",
+                "which",
+                "who",
+            ):
                 break
             obj_words.append(re.sub(r"[,;.]", "", w))
         if obj_words:
@@ -304,50 +318,72 @@ def _extract_heuristic_frames(sentence: str) -> List[SRLFrame]:
         for m in _INSTRUMENT_RE.finditer(sentence):
             span_text = m.group(1).strip()
             if span_text:
-                arguments.append(RoleArgument(
-                    role=ROLE_INSTRUMENT, text=span_text,
-                    span=(m.start(1), m.end(1)), confidence=0.6,
-                ))
+                arguments.append(
+                    RoleArgument(
+                        role=ROLE_INSTRUMENT,
+                        text=span_text,
+                        span=(m.start(1), m.end(1)),
+                        confidence=0.6,
+                    )
+                )
 
         for m in _LOCATION_RE.finditer(sentence):
             span_text = m.group(1).strip()
             if span_text:
-                arguments.append(RoleArgument(
-                    role=ROLE_LOCATION, text=span_text,
-                    span=(m.start(1), m.end(1)), confidence=0.55,
-                ))
+                arguments.append(
+                    RoleArgument(
+                        role=ROLE_LOCATION,
+                        text=span_text,
+                        span=(m.start(1), m.end(1)),
+                        confidence=0.55,
+                    )
+                )
 
         for m in _TIME_RE.finditer(sentence):
             span_text = (m.group(1) or "").strip()
             if span_text:
-                arguments.append(RoleArgument(
-                    role=ROLE_TIME, text=span_text,
-                    span=(m.start(1), m.end(1)), confidence=0.55,
-                ))
+                arguments.append(
+                    RoleArgument(
+                        role=ROLE_TIME,
+                        text=span_text,
+                        span=(m.start(1), m.end(1)),
+                        confidence=0.55,
+                    )
+                )
 
         for m in _CAUSE_RE.finditer(sentence):
             span_text = m.group(1).strip()
             if span_text:
-                arguments.append(RoleArgument(
-                    role=ROLE_CAUSE, text=span_text,
-                    span=(m.start(1), m.end(1)), confidence=0.6,
-                ))
+                arguments.append(
+                    RoleArgument(
+                        role=ROLE_CAUSE,
+                        text=span_text,
+                        span=(m.start(1), m.end(1)),
+                        confidence=0.6,
+                    )
+                )
 
         for m in _RESULT_RE.finditer(sentence):
             span_text = m.group(1).strip()
             if span_text:
-                arguments.append(RoleArgument(
-                    role=ROLE_RESULT, text=span_text,
-                    span=(m.start(1), m.end(1)), confidence=0.6,
-                ))
+                arguments.append(
+                    RoleArgument(
+                        role=ROLE_RESULT,
+                        text=span_text,
+                        span=(m.start(1), m.end(1)),
+                        confidence=0.6,
+                    )
+                )
 
-        frames.append(SRLFrame(
-            predicate=clean,
-            sentence=sentence,
-            arguments=arguments,
-            confidence=0.65,
-            source="heuristic",
-        ))
+        frames.append(
+            SRLFrame(
+                predicate=clean,
+                sentence=sentence,
+                arguments=arguments,
+                confidence=0.65,
+                source="heuristic",
+            )
+        )
         break  # one frame per sentence for heuristic mode (main verb only)
 
     return frames
@@ -356,6 +392,7 @@ def _extract_heuristic_frames(sentence: str) -> List[SRLFrame]:
 # ---------------------------------------------------------------------------
 # spaCy-based extraction
 # ---------------------------------------------------------------------------
+
 
 def _extract_spacy_frames(sentence_span: Any) -> List[SRLFrame]:
     """Extract SRL frames from a spaCy *sentence span*."""
@@ -387,14 +424,21 @@ def _extract_spacy_frames(sentence_span: Any) -> List[SRLFrame]:
                 prep_text = child.text.lower()
                 if prep_text in ("with", "using", "by", "via", "through"):
                     role = ROLE_INSTRUMENT
-                elif prep_text in ("in", "at", "on", "near", "from", "to",
-                                   "into", "toward", "towards"):
+                elif prep_text in (
+                    "in",
+                    "at",
+                    "on",
+                    "near",
+                    "from",
+                    "to",
+                    "into",
+                    "toward",
+                    "towards",
+                ):
                     role = ROLE_LOCATION
-                elif prep_text in ("when", "before", "after", "during",
-                                   "since", "until", "while"):
+                elif prep_text in ("when", "before", "after", "during", "since", "until", "while"):
                     role = ROLE_TIME
-                elif prep_text in ("because", "since", "as", "for",
-                                   "due", "owing"):
+                elif prep_text in ("because", "since", "as", "for", "due", "owing"):
                     role = ROLE_CAUSE
                 else:
                     role = ROLE_THEME
@@ -404,24 +448,28 @@ def _extract_spacy_frames(sentence_span: Any) -> List[SRLFrame]:
             # Grab the subtree text for richer spans
             subtree_text = " ".join(t.text for t in child.subtree).strip()
             use_text = subtree_text if len(subtree_text) < 60 else span_text
-            arguments.append(RoleArgument(
-                role=role,
-                text=use_text,
-                span=(child.idx, child.idx + len(child.text)),
-                confidence=0.80,
-            ))
+            arguments.append(
+                RoleArgument(
+                    role=role,
+                    text=use_text,
+                    span=(child.idx, child.idx + len(child.text)),
+                    confidence=0.80,
+                )
+            )
 
         if not arguments:
             continue
 
-        frames.append(SRLFrame(
-            predicate=token.lemma_,
-            predicate_span=(token.idx, token.idx + len(token.text)),
-            sentence=sent_text,
-            arguments=arguments,
-            confidence=0.80,
-            source="spacy",
-        ))
+        frames.append(
+            SRLFrame(
+                predicate=token.lemma_,
+                predicate_span=(token.idx, token.idx + len(token.text)),
+                sentence=sent_text,
+                arguments=arguments,
+                confidence=0.80,
+                source="spacy",
+            )
+        )
 
     return frames
 
@@ -536,7 +584,8 @@ class SRLExtractor:
                 # Reuse existing entity with same (type, name) if present
                 arg_entity_type = _role_to_entity_type(arg.role)
                 existing = [
-                    e for e in result_kg.get_entities_by_name(arg.text)
+                    e
+                    for e in result_kg.get_entities_by_name(arg.text)
                     if e.entity_type == arg_entity_type
                 ]
                 if existing:
@@ -599,6 +648,7 @@ class SRLExtractor:
         sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         # Group original frames by sentence text so frame IDs match the KG
         from collections import defaultdict as _defaultdict
+
         _frame_map: dict = _defaultdict(list)
         for _f in frames:
             _frame_map[_f.sentence.strip()].append(_f)
@@ -620,11 +670,13 @@ class SRLExtractor:
         # Temporal connector patterns between consecutive sentences
         _PRECEDES_RE = re.compile(
             r"\b(?:then|next|after(ward)?s?|subsequently|later|"
-            r"following|thereafter|once)\b", re.I
+            r"following|thereafter|once)\b",
+            re.I,
         )
         _OVERLAPS_RE = re.compile(
             r"\b(?:meanwhile|simultaneously|at the same time|"
-            r"during this|concurrently|while)\b", re.I
+            r"during this|concurrently|while)\b",
+            re.I,
         )
 
         # Look at sentence pairs to create temporal links
@@ -653,11 +705,19 @@ class SRLExtractor:
             from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
 
             ea = next(
-                (e for e in kg.entities.values() if e.properties and e.properties.get("srl_frame_id") == event_a_id),
+                (
+                    e
+                    for e in kg.entities.values()
+                    if e.properties and e.properties.get("srl_frame_id") == event_a_id
+                ),
                 None,
             )
             eb = next(
-                (e for e in kg.entities.values() if e.properties and e.properties.get("srl_frame_id") == event_b_id),
+                (
+                    e
+                    for e in kg.entities.values()
+                    if e.properties and e.properties.get("srl_frame_id") == event_b_id
+                ),
                 None,
             )
             if ea and eb:
@@ -672,9 +732,7 @@ class SRLExtractor:
 
         return kg
 
-    def extract_to_triples(
-        self, text: str
-    ) -> List[Tuple[str, str, str]]:
+    def extract_to_triples(self, text: str) -> List[Tuple[str, str, str]]:
         """Convenience method: extract text and return ``(subject, relation, object)`` triples.
 
         Args:
@@ -702,9 +760,7 @@ class SRLExtractor:
         frames: List[SRLFrame] = []
         for sent in doc.sents:
             sent_frames = _extract_spacy_frames(sent)
-            frames.extend(
-                f for f in sent_frames if f.confidence >= self.min_confidence
-            )
+            frames.extend(f for f in sent_frames if f.confidence >= self.min_confidence)
         return frames
 
     def _extract_heuristic(self, text: str) -> List[SRLFrame]:
@@ -721,9 +777,7 @@ class SRLExtractor:
             if not sent:
                 continue
             sent_frames = _extract_heuristic_frames(sent)
-            frames.extend(
-                f for f in sent_frames if f.confidence >= self.min_confidence
-            )
+            frames.extend(f for f in sent_frames if f.confidence >= self.min_confidence)
         return frames
 
 

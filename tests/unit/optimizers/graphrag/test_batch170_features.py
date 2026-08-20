@@ -6,12 +6,14 @@ Methods under test:
   - LogicValidator.graph_diameter(ontology)
   - OntologyLearningAdapter.feedback_percentile_rank(value)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -27,9 +29,14 @@ def _push_opt(o, avg):
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -37,16 +44,21 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -63,6 +75,7 @@ def _ont(entities, rels):
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_gini_coefficient
 # ---------------------------------------------------------------------------
+
 
 class TestScoreGiniCoefficient:
     def test_empty_returns_zero(self):
@@ -100,6 +113,7 @@ class TestScoreGiniCoefficient:
 # OntologyCritic.dimension_correlation
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionCorrelation:
     def test_empty_returns_zero(self):
         critic = _make_critic()
@@ -128,6 +142,7 @@ class TestDimensionCorrelation:
 # ---------------------------------------------------------------------------
 # LogicValidator.graph_diameter
 # ---------------------------------------------------------------------------
+
 
 class TestGraphDiameter:
     def test_empty_returns_zero(self):
@@ -169,6 +184,7 @@ class TestGraphDiameter:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_percentile_rank
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackPercentileRank:
     def test_empty_returns_zero(self):

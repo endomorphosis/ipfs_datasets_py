@@ -91,39 +91,31 @@ from .source_executor import (
 
 
 G240_SOURCE_COMMAND_PROJECTION_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "source-runtime-command-projection.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.source-runtime-command-projection.v2"
 )
 G240_SOURCE_EXECUTOR_CONTRACT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "source-runtime-executor-contract.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.source-runtime-executor-contract.v2"
 )
 G240_SOURCE_RUNTIME_ENVIRONMENT_PROJECTION_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "source-runtime-environment-projection.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.source-runtime-environment-projection.v2"
 )
 G240_SOURCE_PHYSICAL_NAMESPACE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "source-runtime-physical-namespace.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.source-runtime-physical-namespace.v2"
 )
 G240_SOURCE_CACHE_MARKER_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "source-runtime-cache-marker.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.source-runtime-cache-marker.v2"
 )
 G240_SOURCE_ORCHESTRATION_RECEIPT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "source-runtime-orchestration-receipt.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.source-runtime-orchestration-receipt.v2"
 )
 G240_SOURCE_ORCHESTRATION_EVIDENCE_SET_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "source-runtime-orchestration-evidence-set.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.source-runtime-orchestration-evidence-set.v2"
 )
 G240_GIT_COMMIT_IDENTITY_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.git-commit-identity.v2"
 )
 G240_INTERPRETER_IDENTITY_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "python-interpreter-identity.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.python-interpreter-identity.v2"
 )
 
 _CACHE_MARKER_NAME: Final = ".g240-cache-namespace.json"
@@ -131,16 +123,10 @@ _EVIDENCE_NAME: Final = "causal-runtime-evidence.json"
 _SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 _HEX_COMMIT = re.compile(r"(?:[0-9a-f]{40}|[0-9a-f]{64})\Z")
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
-_PYTHON_MODULE = re.compile(
-    r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*\Z"
-)
+_PYTHON_MODULE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*\Z")
 _PYTHON_MODULE_ARTIFACT_PREFIX: Final = "python-module."
-_ENTRYPOINT_KINDS: Final = frozenset(
-    {"python-module", "repository-script", "installed-cli"}
-)
-_INLINE_EXECUTION_ARGUMENTS: Final = frozenset(
-    {"-c", "-e", "--eval", "--execute"}
-)
+_ENTRYPOINT_KINDS: Final = frozenset({"python-module", "repository-script", "installed-cli"})
+_INLINE_EXECUTION_ARGUMENTS: Final = frozenset({"-c", "-e", "--eval", "--execute"})
 _RESERVED_ENVIRONMENT: Final = frozenset(
     {
         "GIT_CONFIG_NOSYSTEM",
@@ -186,10 +172,7 @@ class SourceRuntimeOrchestrationError(ValueError):
 def HSSLEV2405D72() -> str:
     """Return AST-verifiable evidence for the bounded G240 implementation."""
 
-    return (
-        "fail-closed source-bound runtime namespaces, confined execution, "
-        "and detached replay"
-    )
+    return "fail-closed source-bound runtime namespaces, confined execution, and detached replay"
 
 
 def _plain(value: object) -> object:
@@ -200,27 +183,19 @@ def _plain(value: object) -> object:
             raise SourceRuntimeOrchestrationError(
                 "G240 source DAG-JSON objects require string keys"
             )
-        return {
-            str(key): _plain(member)
-            for key, member in value.items()
-        }
+        return {str(key): _plain(member) for key, member in value.items()}
     if isinstance(value, (tuple, list)):
         return [_plain(member) for member in value]
     if value is None or type(value) in {str, bool, int, float}:
         return value
     raise SourceRuntimeOrchestrationError(
-        "G240 source value is not DAG-JSON: "
-        f"{type(value).__name__}"
+        f"G240 source value is not DAG-JSON: {type(value).__name__}"
     )
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
-        raise SourceRuntimeOrchestrationError(
-            f"{field} must be an object with string keys"
-        )
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
+        raise SourceRuntimeOrchestrationError(f"{field} must be an object with string keys")
     return value
 
 
@@ -247,22 +222,14 @@ def _cid(value: object, field: str) -> str:
 
 
 def _safe_id(value: object, field: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not _SAFE_ID.fullmatch(value)
-        or value in {".", ".."}
-    ):
-        raise SourceRuntimeOrchestrationError(
-            f"{field} must be a safe nonempty identifier"
-        )
+    if not isinstance(value, str) or not _SAFE_ID.fullmatch(value) or value in {".", ".."}:
+        raise SourceRuntimeOrchestrationError(f"{field} must be a safe nonempty identifier")
     return value
 
 
 def _plan_cid(plan: AblationPlan) -> str:
     if not isinstance(plan, AblationPlan):
-        raise SourceRuntimeOrchestrationError(
-            "G240 source execution requires a typed AblationPlan"
-        )
+        raise SourceRuntimeOrchestrationError("G240 source execution requires a typed AblationPlan")
     return cid_for_dag_json(_plain(plan.to_dict()))
 
 
@@ -286,8 +253,7 @@ def g240_source_git_commit_cid(commit: str) -> str:
 def _command_cid(command: Sequence[str]) -> str:
     arguments = tuple(command)
     if not arguments or any(
-        not isinstance(item, str) or not item or "\0" in item
-        for item in arguments
+        not isinstance(item, str) or not item or "\0" in item for item in arguments
     ):
         raise SourceRuntimeOrchestrationError(
             "source command must be nonempty NUL-free argv strings"
@@ -320,9 +286,7 @@ def _interpreter_identity_v2(
     """Resolve and content-address one exact Python runtime environment."""
 
     try:
-        requested = Path(
-            sys.executable if executable_path is None else executable_path
-        )
+        requested = Path(sys.executable if executable_path is None else executable_path)
         if not requested.is_absolute():
             raise OSError("interpreter path is not absolute")
         launcher = requested.parent.resolve(strict=True) / requested.name
@@ -330,29 +294,21 @@ def _interpreter_identity_v2(
         executable = launcher.resolve(strict=True)
         metadata = executable.lstat()
         payload = executable.read_bytes()
-        launcher_target = (
-            os.readlink(launcher)
-            if stat.S_ISLNK(launcher_metadata.st_mode)
-            else None
-        )
+        launcher_target = os.readlink(launcher) if stat.S_ISLNK(launcher_metadata.st_mode) else None
     except OSError as exc:
         raise SourceRuntimeOrchestrationError(
             "cannot authenticate the current Python interpreter"
         ) from exc
     if (
         not launcher.is_absolute()
-        or not (
-            stat.S_ISLNK(launcher_metadata.st_mode)
-            or stat.S_ISREG(launcher_metadata.st_mode)
-        )
+        or not (stat.S_ISLNK(launcher_metadata.st_mode) or stat.S_ISREG(launcher_metadata.st_mode))
         or stat.S_ISLNK(metadata.st_mode)
         or not stat.S_ISREG(metadata.st_mode)
         or stat.S_IMODE(metadata.st_mode) & 0o022
         or not payload
     ):
         raise SourceRuntimeOrchestrationError(
-            "current Python interpreter is not an immutable regular "
-            "executable"
+            "current Python interpreter is not an immutable regular executable"
         )
     try:
         probe = subprocess.run(
@@ -406,11 +362,7 @@ def _interpreter_identity_v2(
     identity = {
         "schema": G240_INTERPRETER_IDENTITY_SCHEMA_V2,
         "launcher_path": launcher.as_posix(),
-        "launcher_kind": (
-            "symlink"
-            if stat.S_ISLNK(launcher_metadata.st_mode)
-            else "regular"
-        ),
+        "launcher_kind": ("symlink" if stat.S_ISLNK(launcher_metadata.st_mode) else "regular"),
         "launcher_symlink_target": launcher_target,
         "resolved_executable_path": executable.as_posix(),
         "executable_cid": cid_for_bytes(payload),
@@ -425,14 +377,10 @@ def _git_executable_identity_v2(
     """Resolve and content-address the Git binary used by G240."""
 
     candidate = (
-        shutil.which("git", path=os.defpath)
-        if executable_path is None
-        else str(executable_path)
+        shutil.which("git", path=os.defpath) if executable_path is None else str(executable_path)
     )
     if not candidate:
-        raise SourceRuntimeOrchestrationError(
-            "cannot resolve a pinned Git executable"
-        )
+        raise SourceRuntimeOrchestrationError("cannot resolve a pinned Git executable")
     try:
         requested = Path(candidate)
         if not requested.is_absolute():
@@ -461,13 +409,10 @@ def _g240_launch_arguments(
 ) -> tuple[str, ...]:
     """Translate the public path-free command into one verified executable."""
 
-    executable, interpreter_cid = _interpreter_identity_v2(
-        contract.interpreter_path
-    )
+    executable, interpreter_cid = _interpreter_identity_v2(contract.interpreter_path)
     if contract.interpreter_identity_cid != interpreter_cid:
         raise SourceRuntimeOrchestrationError(
-            "pinned Python interpreter differs from the frozen executor "
-            "identity"
+            "pinned Python interpreter differs from the frozen executor identity"
         )
     return (
         executable.as_posix(),
@@ -483,26 +428,17 @@ def _normalize_command_template(
     command = tuple(command_template)
     _command_cid(command)
     if entrypoint_kind not in _ENTRYPOINT_KINDS:
-        raise SourceRuntimeOrchestrationError(
-            "unsupported G240 source executor entrypoint kind"
-        )
+        raise SourceRuntimeOrchestrationError("unsupported G240 source executor entrypoint kind")
     if (
         not _SAFE_ID.fullmatch(command[0])
         or command[0] in {".", ".."}
-        or any(
-            item in _INLINE_EXECUTION_ARGUMENTS
-            for item in command[1:]
-        )
+        or any(item in _INLINE_EXECUTION_ARGUMENTS for item in command[1:])
     ):
         raise SourceRuntimeOrchestrationError(
             "source executor must use a path-free non-inline executable"
         )
     if entrypoint_kind == "python-module":
-        if (
-            len(command) != 3
-            or command[1] != "-m"
-            or not _PYTHON_MODULE.fullmatch(command[2])
-        ):
+        if len(command) != 3 or command[1] != "-m" or not _PYTHON_MODULE.fullmatch(command[2]):
             raise SourceRuntimeOrchestrationError(
                 "python-module executor must be '<python> -m <module>'"
             )
@@ -523,9 +459,7 @@ def _normalize_command_template(
                 "repository executor must be a normalized relative .py path"
             )
     elif len(command) != 1:
-        raise SourceRuntimeOrchestrationError(
-            "installed-cli executor accepts no argv payload"
-        )
+        raise SourceRuntimeOrchestrationError("installed-cli executor accepts no argv payload")
     return command
 
 
@@ -536,20 +470,15 @@ def _runtime_environment_artifacts(
 ) -> Mapping[str, Mapping[str, str]]:
     """Validate exact lock/receipt files used by the pinned interpreter."""
 
-    raw = {} if value is None else _mapping(
-        value, "runtime_environment_artifacts"
-    )
+    raw = {} if value is None else _mapping(value, "runtime_environment_artifacts")
     artifacts: dict[str, Mapping[str, str]] = {}
     for label in sorted(raw):
         _safe_id(label, "runtime environment artifact label")
         if label.startswith(_PYTHON_MODULE_ARTIFACT_PREFIX):
-            module_name = label.removeprefix(
-                _PYTHON_MODULE_ARTIFACT_PREFIX
-            )
+            module_name = label.removeprefix(_PYTHON_MODULE_ARTIFACT_PREFIX)
             if not _PYTHON_MODULE.fullmatch(module_name):
                 raise SourceRuntimeOrchestrationError(
-                    "Python-module runtime artifact label must end in a "
-                    "canonical import name"
+                    "Python-module runtime artifact label must end in a canonical import name"
                 )
         member = raw[label]
         if paths_are_inputs:
@@ -561,9 +490,7 @@ def _runtime_environment_artifacts(
                 ) from exc
             expected_cid: str | None = None
         else:
-            descriptor = _mapping(
-                member, f"runtime_environment_artifacts.{label}"
-            )
+            descriptor = _mapping(member, f"runtime_environment_artifacts.{label}")
             _exact(
                 descriptor,
                 {"path", "payload_cid"},
@@ -602,9 +529,7 @@ def _runtime_environment_artifacts(
             )
         observed_cid = cid_for_bytes(payload)
         if expected_cid is not None and expected_cid != observed_cid:
-            raise SourceRuntimeOrchestrationError(
-                "runtime environment artifact bytes changed"
-            )
+            raise SourceRuntimeOrchestrationError("runtime environment artifact bytes changed")
         artifacts[label] = MappingProxyType(
             {
                 "path": resolved.as_posix(),
@@ -627,9 +552,7 @@ class G240SourceExecutorContractV2:
     interpreter_identity_cid: str
     git_executable_path: str
     git_executable_cid: str
-    runtime_environment_artifacts: Mapping[
-        str, Mapping[str, str]
-    ]
+    runtime_environment_artifacts: Mapping[str, Mapping[str, str]]
     executor_identity_cid: str
     confinement_profile_cid: str
     shell: bool
@@ -652,13 +575,8 @@ class G240SourceExecutorContractV2:
         )
         object.__setattr__(self, "command_template", command)
         expected_command = _command_cid(command)
-        if (
-            _cid(self.command_template_cid, "command_template_cid")
-            != expected_command
-        ):
-            raise SourceRuntimeOrchestrationError(
-                "source command-template CID changed"
-            )
+        if _cid(self.command_template_cid, "command_template_cid") != expected_command:
+            raise SourceRuntimeOrchestrationError("source command-template CID changed")
         object.__setattr__(
             self,
             "command_template_cid",
@@ -671,29 +589,15 @@ class G240SourceExecutorContractV2:
             "executor_identity_cid",
             "confinement_profile_cid",
         ):
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
-        interpreter, interpreter_cid = _interpreter_identity_v2(
-            self.interpreter_path
-        )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
+        interpreter, interpreter_cid = _interpreter_identity_v2(self.interpreter_path)
         if interpreter_cid != self.interpreter_identity_cid:
-            raise SourceRuntimeOrchestrationError(
-                "pinned Python interpreter identity changed"
-            )
-        object.__setattr__(
-            self, "interpreter_path", interpreter.as_posix()
-        )
-        git_executable, git_cid = _git_executable_identity_v2(
-            self.git_executable_path
-        )
+            raise SourceRuntimeOrchestrationError("pinned Python interpreter identity changed")
+        object.__setattr__(self, "interpreter_path", interpreter.as_posix())
+        git_executable, git_cid = _git_executable_identity_v2(self.git_executable_path)
         if git_cid != self.git_executable_cid:
-            raise SourceRuntimeOrchestrationError(
-                "pinned Git executable identity changed"
-            )
-        object.__setattr__(
-            self, "git_executable_path", git_executable.as_posix()
-        )
+            raise SourceRuntimeOrchestrationError("pinned Git executable identity changed")
+        object.__setattr__(self, "git_executable_path", git_executable.as_posix())
         object.__setattr__(
             self,
             "runtime_environment_artifacts",
@@ -702,16 +606,10 @@ class G240SourceExecutorContractV2:
                 paths_are_inputs=False,
             ),
         )
-        if (
-            self.confinement_profile_cid
-            != G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
-        ):
-            raise SourceRuntimeOrchestrationError(
-                "source executor confinement profile changed"
-            )
-        if (
-            not isinstance(self.environment_sha256, str)
-            or not _SHA256.fullmatch(self.environment_sha256)
+        if self.confinement_profile_cid != G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2:
+            raise SourceRuntimeOrchestrationError("source executor confinement profile changed")
+        if not isinstance(self.environment_sha256, str) or not _SHA256.fullmatch(
+            self.environment_sha256
         ):
             raise SourceRuntimeOrchestrationError(
                 "source executor environment SHA-256 must be pinned"
@@ -725,9 +623,7 @@ class G240SourceExecutorContractV2:
             "holdout_permitted",
         ):
             if type(getattr(self, field)) is not bool:
-                raise SourceRuntimeOrchestrationError(
-                    f"{field} must be boolean"
-                )
+                raise SourceRuntimeOrchestrationError(f"{field} must be boolean")
         if (
             self.shell
             or not self.new_process_session
@@ -737,16 +633,13 @@ class G240SourceExecutorContractV2:
             or self.holdout_permitted
         ):
             raise SourceRuntimeOrchestrationError(
-                "source executor must be shell-free, session-isolated, "
-                "canonical, and non-holdout"
+                "source executor must be shell-free, session-isolated, canonical, and non-holdout"
             )
         expected = cid_for_dag_json(self.identity_payload())
         if self.contract_cid is None:
             object.__setattr__(self, "contract_cid", expected)
         elif _cid(self.contract_cid, "contract_cid") != expected:
-            raise SourceRuntimeOrchestrationError(
-                "source executor-contract CID changed"
-            )
+            raise SourceRuntimeOrchestrationError("source executor-contract CID changed")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -762,21 +655,15 @@ class G240SourceExecutorContractV2:
             "git_executable_cid": self.git_executable_cid,
             "runtime_environment_artifacts": {
                 label: dict(descriptor)
-                for label, descriptor in (
-                    self.runtime_environment_artifacts.items()
-                )
+                for label, descriptor in (self.runtime_environment_artifacts.items())
             },
             "executor_identity_cid": self.executor_identity_cid,
             "confinement_profile_cid": self.confinement_profile_cid,
             "shell": self.shell,
             "new_process_session": self.new_process_session,
             "close_fds_required": self.close_fds_required,
-            "production_landlock_required": (
-                self.production_landlock_required
-            ),
-            "canonical_runtime_evidence_required": (
-                self.canonical_runtime_evidence_required
-            ),
+            "production_landlock_required": (self.production_landlock_required),
+            "canonical_runtime_evidence_required": (self.canonical_runtime_evidence_required),
             "holdout_permitted": self.holdout_permitted,
         }
 
@@ -796,9 +683,7 @@ class G240SourceExecutorContractV2:
         )
         raw_command = data["command_template"]
         if not isinstance(raw_command, list):
-            raise SourceRuntimeOrchestrationError(
-                "source command template must be an array"
-            )
+            raise SourceRuntimeOrchestrationError("source command template must be an array")
         return cls(
             **{
                 **data,
@@ -820,9 +705,7 @@ def build_g240_source_executor_contract_v2(
     executor_identity_cid: str,
     interpreter_path: str | Path | None = None,
     git_executable_path: str | Path | None = None,
-    runtime_environment_artifacts: (
-        Mapping[str, str | Path] | None
-    ) = None,
+    runtime_environment_artifacts: (Mapping[str, str | Path] | None) = None,
 ) -> G240SourceExecutorContractV2:
     """Freeze an exact non-inline executor before the namespace policy."""
 
@@ -844,12 +727,8 @@ def build_g240_source_executor_contract_v2(
         command_template,
         entrypoint_kind=entrypoint_kind,
     )
-    interpreter, interpreter_identity_cid = (
-        _interpreter_identity_v2(interpreter_path)
-    )
-    git_executable, git_executable_cid = (
-        _git_executable_identity_v2(git_executable_path)
-    )
+    interpreter, interpreter_identity_cid = _interpreter_identity_v2(interpreter_path)
+    git_executable, git_executable_cid = _git_executable_identity_v2(git_executable_path)
     artifacts = _runtime_environment_artifacts(
         runtime_environment_artifacts,  # type: ignore[arg-type]
         paths_are_inputs=True,
@@ -866,9 +745,7 @@ def build_g240_source_executor_contract_v2(
         git_executable_cid=git_executable_cid,
         runtime_environment_artifacts=artifacts,
         executor_identity_cid=executor_identity_cid,
-        confinement_profile_cid=(
-            G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
-        ),
+        confinement_profile_cid=(G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2),
         shell=False,
         new_process_session=True,
         close_fds_required=True,
@@ -879,41 +756,27 @@ def build_g240_source_executor_contract_v2(
 
 
 def _paths_overlap(left: Path, right: Path) -> bool:
-    return (
-        left == right
-        or left in right.parents
-        or right in left.parents
-    )
+    return left == right or left in right.parents or right in left.parents
 
 
 def _validate_private_directory(path: Path, field: str) -> None:
     try:
         metadata = path.lstat()
     except OSError as exc:
-        raise SourceRuntimeOrchestrationError(
-            f"cannot inspect {field}"
-        ) from exc
+        raise SourceRuntimeOrchestrationError(f"cannot inspect {field}") from exc
     if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISDIR(metadata.st_mode):
-        raise SourceRuntimeOrchestrationError(
-            f"{field} must be a real directory"
-        )
+        raise SourceRuntimeOrchestrationError(f"{field} must be a real directory")
     if stat.S_IMODE(metadata.st_mode) & 0o077:
-        raise SourceRuntimeOrchestrationError(
-            f"{field} must be private to the executing user"
-        )
+        raise SourceRuntimeOrchestrationError(f"{field} must be private to the executing user")
 
 
 def _validate_regular_private_file(path: Path, field: str) -> None:
     try:
         metadata = path.lstat()
     except OSError as exc:
-        raise SourceRuntimeOrchestrationError(
-            f"cannot inspect {field}"
-        ) from exc
+        raise SourceRuntimeOrchestrationError(f"cannot inspect {field}") from exc
     if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode):
-        raise SourceRuntimeOrchestrationError(
-            f"{field} must be a regular non-symlink file"
-        )
+        raise SourceRuntimeOrchestrationError(f"{field} must be a regular non-symlink file")
 
 
 def _validate_namespace_root(
@@ -923,13 +786,9 @@ def _validate_namespace_root(
     try:
         requested = Path(namespace_root)
     except (TypeError, ValueError) as exc:
-        raise SourceRuntimeOrchestrationError(
-            "namespace_root must be a filesystem path"
-        ) from exc
+        raise SourceRuntimeOrchestrationError("namespace_root must be a filesystem path") from exc
     if not requested.is_absolute():
-        raise SourceRuntimeOrchestrationError(
-            "namespace_root must be absolute"
-        )
+        raise SourceRuntimeOrchestrationError("namespace_root must be absolute")
     resolved = requested.resolve(strict=False)
     state_root = worktree.state_root.resolve()
     source = worktree.source_checkout.resolve()
@@ -959,13 +818,9 @@ def _validate_namespace_root(
                 "cannot inspect namespace_root components"
             ) from exc
         if stat.S_ISLNK(metadata.st_mode):
-            raise SourceRuntimeOrchestrationError(
-                "namespace_root must not cross symlinks"
-            )
+            raise SourceRuntimeOrchestrationError("namespace_root must not cross symlinks")
         if not stat.S_ISDIR(metadata.st_mode):
-            raise SourceRuntimeOrchestrationError(
-                "namespace_root components must be directories"
-            )
+            raise SourceRuntimeOrchestrationError("namespace_root components must be directories")
     return resolved
 
 
@@ -976,24 +831,18 @@ def _ensure_private_directory(path: Path) -> bool:
         _validate_private_directory(path, "physical namespace directory")
         return False
     except OSError as exc:
-        raise SourceRuntimeOrchestrationError(
-            "cannot create physical namespace directory"
-        ) from exc
+        raise SourceRuntimeOrchestrationError("cannot create physical namespace directory") from exc
     _validate_private_directory(path, "physical namespace directory")
     return True
 
 
 def _ensure_private_parents(root: Path, path: Path) -> None:
     if not path.is_relative_to(root):
-        raise SourceRuntimeOrchestrationError(
-            "physical namespace escaped namespace_root"
-        )
+        raise SourceRuntimeOrchestrationError("physical namespace escaped namespace_root")
     current = root
     if not current.exists():
         parent = current.parent
-        _validate_private_directory(
-            parent, "physical namespace parent"
-        )
+        _validate_private_directory(parent, "physical namespace parent")
         _ensure_private_directory(current)
     else:
         _validate_private_directory(current, "namespace_root")
@@ -1006,13 +855,9 @@ def _create_exclusive_private_directory(path: Path) -> None:
     try:
         os.mkdir(path, 0o700)
     except FileExistsError as exc:
-        raise SourceRuntimeOrchestrationError(
-            "one-shot physical namespace already exists"
-        ) from exc
+        raise SourceRuntimeOrchestrationError("one-shot physical namespace already exists") from exc
     except OSError as exc:
-        raise SourceRuntimeOrchestrationError(
-            "cannot create one-shot physical namespace"
-        ) from exc
+        raise SourceRuntimeOrchestrationError("cannot create one-shot physical namespace") from exc
     _validate_private_directory(path, "one-shot physical namespace")
 
 
@@ -1022,9 +867,7 @@ def _reject_duplicate_pairs(
     result: dict[str, object] = {}
     for key, value in pairs:
         if key in result:
-            raise SourceRuntimeOrchestrationError(
-                f"duplicate JSON key: {key}"
-            )
+            raise SourceRuntimeOrchestrationError(f"duplicate JSON key: {key}")
         result[key] = value
     return result
 
@@ -1034,13 +877,9 @@ def _read_canonical_json(path: Path, field: str) -> tuple[object, bytes]:
     try:
         raw = path.read_bytes()
     except OSError as exc:
-        raise SourceRuntimeOrchestrationError(
-            f"cannot read {field}"
-        ) from exc
+        raise SourceRuntimeOrchestrationError(f"cannot read {field}") from exc
     if not raw or len(raw) > 64 * 1024 * 1024:
-        raise SourceRuntimeOrchestrationError(
-            f"{field} size is outside the safe bound"
-        )
+        raise SourceRuntimeOrchestrationError(f"{field} size is outside the safe bound")
     try:
         text = raw.decode("utf-8")
         value = json.loads(
@@ -1050,17 +889,13 @@ def _read_canonical_json(path: Path, field: str) -> tuple[object, bytes]:
     except (UnicodeError, json.JSONDecodeError, ValueError) as exc:
         if isinstance(exc, SourceRuntimeOrchestrationError):
             raise
-        raise SourceRuntimeOrchestrationError(
-            f"{field} is not strict UTF-8 JSON"
-        ) from exc
+        raise SourceRuntimeOrchestrationError(f"{field} is not strict UTF-8 JSON") from exc
     if (
         not text.endswith("\n")
         or text.endswith("\n\n")
         or raw != canonical_dag_json_bytes(_plain(value)) + b"\n"
     ):
-        raise SourceRuntimeOrchestrationError(
-            f"{field} is not canonical newline DAG-JSON"
-        )
+        raise SourceRuntimeOrchestrationError(f"{field} is not canonical newline DAG-JSON")
     return value, raw
 
 
@@ -1122,24 +957,11 @@ def _physical_namespace_paths(
     coordinate: G240JobNamespacePlanV2,
 ) -> tuple[Path, Path, Mapping[str, Path]]:
     policy_root = namespace_root / str(policy.policy_cid)
-    state = (
-        policy_root
-        / "state"
-        / coordinate.state_namespace_cid
-    )
-    output = (
-        policy_root
-        / "output"
-        / coordinate.output_namespace_cid
-    )
+    state = policy_root / "state" / coordinate.state_namespace_cid
+    output = policy_root / "output" / coordinate.output_namespace_cid
     caches = MappingProxyType(
         {
-            stage: (
-                policy_root
-                / "cache"
-                / stage
-                / coordinate.cache_namespace_cids[stage]
-            )
+            stage: (policy_root / "cache" / stage / coordinate.cache_namespace_cids[stage])
             for stage in coordinate.stages
         }
     )
@@ -1208,16 +1030,12 @@ def _coerce_policy_coordinate(
     str,
     G240JobNamespacePlanV2,
 ]:
-    if not isinstance(plan, AblationPlan) or not isinstance(
-        job, ScheduledCase
-    ):
+    if not isinstance(plan, AblationPlan) or not isinstance(job, ScheduledCase):
         raise SourceRuntimeOrchestrationError(
             "G240 source execution requires typed plan and job values"
         )
     if job not in plan.jobs:
-        raise SourceRuntimeOrchestrationError(
-            "scheduled job is not an exact member of the plan"
-        )
+        raise SourceRuntimeOrchestrationError("scheduled job is not an exact member of the plan")
     try:
         restored = (
             policy
@@ -1295,19 +1113,13 @@ def _validate_live_worktree(
         raise SourceRuntimeOrchestrationError(
             "G240 source worktree is not live, clean, and detached"
         ) from exc
-    top_level = {
-        item.path: item.commit
-        for item in gitlinks
-        if item.depth == 1
-    }
+    top_level = {item.path: item.commit for item in gitlinks if item.depth == 1}
     if (
         dirty
         or receipt.run_id != policy.run_id
         or receipt.base_commit != receipt.worktree_commit
-        or g240_source_git_commit_cid(receipt.worktree_commit)
-        != policy.source_commit_cid
-        or g240_recursive_gitlinks_cid(gitlinks)
-        != policy.recursive_gitlinks_cid
+        or g240_source_git_commit_cid(receipt.worktree_commit) != policy.source_commit_cid
+        or g240_recursive_gitlinks_cid(gitlinks) != policy.recursive_gitlinks_cid
         or dict(receipt.submodule_commits) != top_level
         or active_source
         != (
@@ -1334,9 +1146,7 @@ def _tracked_entrypoint_bytes(
         metadata = path.lstat()
         resolved = path.resolve()
     except OSError as exc:
-        raise SourceRuntimeOrchestrationError(
-            "source executor entrypoint is missing"
-        ) from exc
+        raise SourceRuntimeOrchestrationError("source executor entrypoint is missing") from exc
     if (
         stat.S_ISLNK(metadata.st_mode)
         or not stat.S_ISREG(metadata.st_mode)
@@ -1345,9 +1155,7 @@ def _tracked_entrypoint_bytes(
         raise SourceRuntimeOrchestrationError(
             "source executor entrypoint must be a regular worktree file"
         )
-    git_executable, observed_git_cid = _git_executable_identity_v2(
-        git_executable_path
-    )
+    git_executable, observed_git_cid = _git_executable_identity_v2(git_executable_path)
     if observed_git_cid != git_executable_cid:
         raise SourceRuntimeOrchestrationError(
             "pinned Git executable changed before source validation"
@@ -1408,23 +1216,19 @@ def _coerce_source_executor_contract(
             "source executor contract failed typed replay"
         ) from exc
     if (
-        contract.contract_cid
-        != policy.runtime_orchestration_policy_cid
+        contract.contract_cid != policy.runtime_orchestration_policy_cid
         or contract.environment_cid != policy.environment_cid
         or contract.environment_sha256 != plan.environment_sha256
     ):
         raise SourceRuntimeOrchestrationError(
-            "source executor contract differs from the frozen namespace "
-            "or launch environment"
+            "source executor contract differs from the frozen namespace or launch environment"
         )
     if (
         contract.entrypoint_kind != "repository-script"
-        or contract.command_template
-        != G240_TRACKED_SOURCE_EXECUTOR_COMMAND_V2
+        or contract.command_template != G240_TRACKED_SOURCE_EXECUTOR_COMMAND_V2
     ):
         raise SourceRuntimeOrchestrationError(
-            "G240 source launch requires the tracked production G240 "
-            "source executor"
+            "G240 source launch requires the tracked production G240 source executor"
         )
     _g240_launch_arguments(contract)
     _tracked_entrypoint_bytes(
@@ -1454,42 +1258,30 @@ def _coerce_source_execution_request(
         raise SourceRuntimeOrchestrationError(
             "G240 source execution request failed typed replay"
         ) from exc
-    live_request = (
-        request.adapter_factory_id
-        != G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
-    )
+    live_request = request.adapter_factory_id != G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
     if (
         request.execution_mode != "source"
         or request.execution_run_id != policy.run_id
         or request.source_run_id != policy.run_id
         or request.source_commit != worktree.worktree_commit
-        or g240_source_git_commit_cid(request.source_commit)
-        != policy.source_commit_cid
+        or g240_source_git_commit_cid(request.source_commit) != policy.source_commit_cid
         or request.policy_cid != policy.policy_cid
-        or request.runtime_orchestration_policy_cid
-        != contract.contract_cid
+        or request.runtime_orchestration_policy_cid != contract.contract_cid
         or request.plan_cid != _plan_cid(plan)
         or request.typed_plan != plan
         or request.typed_job != job
         or request.coordinate_cid != coordinate.coordinate_cid
-        or request.process_namespace_cid
-        != coordinate.process_namespace_cid
-        or request.state_namespace_cid
-        != coordinate.state_namespace_cid
-        or request.output_namespace_cid
-        != coordinate.output_namespace_cid
-        or dict(request.cache_namespace_cids)
-        != dict(coordinate.cache_namespace_cids)
+        or request.process_namespace_cid != coordinate.process_namespace_cid
+        or request.state_namespace_cid != coordinate.state_namespace_cid
+        or request.output_namespace_cid != coordinate.output_namespace_cid
+        or dict(request.cache_namespace_cids) != dict(coordinate.cache_namespace_cids)
         or request.environment_cid != contract.environment_cid
-        or request.environment_sha256
-        != contract.environment_sha256
+        or request.environment_sha256 != contract.environment_sha256
         or (
             live_request
             and (
-                request.interpreter_identity_cid
-                != contract.interpreter_identity_cid
-                or request.git_executable_cid
-                != contract.git_executable_cid
+                request.interpreter_identity_cid != contract.interpreter_identity_cid
+                or request.git_executable_cid != contract.git_executable_cid
                 or _plain(request.runtime_environment_artifacts)
                 != _plain(contract.runtime_environment_artifacts)
             )
@@ -1505,18 +1297,13 @@ def _coerce_source_execution_request(
 def _runtime_environment_projection_cid(
     environment_sha256: str,
 ) -> str:
-    if (
-        not isinstance(environment_sha256, str)
-        or not _SHA256.fullmatch(environment_sha256)
-    ):
+    if not isinstance(environment_sha256, str) or not _SHA256.fullmatch(environment_sha256):
         raise SourceRuntimeOrchestrationError(
             "runtime environment projection requires a SHA-256 identity"
         )
     return cid_for_dag_json(
         {
-            "schema": (
-                G240_SOURCE_RUNTIME_ENVIRONMENT_PROJECTION_SCHEMA_V2
-            ),
+            "schema": (G240_SOURCE_RUNTIME_ENVIRONMENT_PROJECTION_SCHEMA_V2),
             "legacy_environment_sha256": environment_sha256,
         }
     )
@@ -1530,11 +1317,7 @@ def _validate_runtime_coordinate(
     launch_environment_sha256: str,
 ) -> None:
     result = runtime.case_result
-    source_input = (
-        job.input_data.get("text")
-        if isinstance(job.input_data, Mapping)
-        else None
-    )
+    source_input = job.input_data.get("text") if isinstance(job.input_data, Mapping) else None
     environments = {
         stage.provenance.environment_sha256
         for stage in (*runtime.semantic_frontend, *result.stages)
@@ -1542,17 +1325,13 @@ def _validate_runtime_coordinate(
     if (
         result.run_id != plan.run_id
         or result.case_id != job.case.case_id
-        or result.case_manifest_sha256
-        != plan.case_manifest_sha256
+        or result.case_manifest_sha256 != plan.case_manifest_sha256
         or result.variant_id != job.variant_id
         or result.split is not plan.split
         or result.cache_mode is not job.cache_mode
         or launch_environment_sha256 != plan.environment_sha256
         or environments != {launch_environment_sha256}
-        or (
-            isinstance(source_input, str)
-            and runtime.source_text != source_input
-        )
+        or (isinstance(source_input, str) and runtime.source_text != source_input)
     ):
         raise SourceRuntimeOrchestrationError(
             "runtime evidence differs from the scheduled coordinate"
@@ -1565,33 +1344,21 @@ def _physical_projection_cid(
     cache_marker_cids: Mapping[str, str],
 ) -> str:
     markers = {
-        _safe_id(stage, "cache marker stage"): _cid(
-            marker, f"cache_marker_cids.{stage}"
-        )
+        _safe_id(stage, "cache marker stage"): _cid(marker, f"cache_marker_cids.{stage}")
         for stage, marker in cache_marker_cids.items()
     }
     if set(markers) != set(coordinate.stages):
-        raise SourceRuntimeOrchestrationError(
-            "physical cache marker population is incomplete"
-        )
+        raise SourceRuntimeOrchestrationError("physical cache marker population is incomplete")
     return cid_for_dag_json(
         {
             "schema": G240_SOURCE_PHYSICAL_NAMESPACE_SCHEMA_V2,
-            "process_namespace_cid": (
-                coordinate.process_namespace_cid
-            ),
+            "process_namespace_cid": (coordinate.process_namespace_cid),
             "state_namespace_cid": coordinate.state_namespace_cid,
             "output_namespace_cid": coordinate.output_namespace_cid,
-            "cache_namespace_cids": dict(
-                coordinate.cache_namespace_cids
-            ),
-            "cache_marker_cids": {
-                stage: markers[stage]
-                for stage in coordinate.stages
-            },
+            "cache_namespace_cids": dict(coordinate.cache_namespace_cids),
+            "cache_marker_cids": {stage: markers[stage] for stage in coordinate.stages},
             "directory_policy": (
-                "private-real-exclusive-state-output-"
-                "exclusive-or-exact-reuse-cache"
+                "private-real-exclusive-state-output-exclusive-or-exact-reuse-cache"
             ),
         }
     )
@@ -1625,34 +1392,18 @@ def _validate_runtime_preflight(
         },
         "G240 runtime import preflight",
     )
-    if data["schema"] != (
-        "ipfs-datasets.logic-pipeline-benchmark."
-        "runtime-import-preflight.v2"
-    ):
-        raise SourceRuntimeOrchestrationError(
-            "unsupported G240 runtime preflight schema"
-        )
-    synthetic = (
-        request.adapter_factory_id
-        == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
-    )
+    if data["schema"] != ("ipfs-datasets.logic-pipeline-benchmark.runtime-import-preflight.v2"):
+        raise SourceRuntimeOrchestrationError("unsupported G240 runtime preflight schema")
+    synthetic = request.adapter_factory_id == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
     try:
-        bootstrap_receipt = (
-            validate_g240_bootstrap_confinement_receipt_v2(
-                data["bootstrap_confinement_receipt"],
-                expected_policy=(
-                    None
-                    if landlock_sources is None
-                    else landlock_sources.policy
-                ),
-                synthetic_test_only=synthetic,
-            )
+        bootstrap_receipt = validate_g240_bootstrap_confinement_receipt_v2(
+            data["bootstrap_confinement_receipt"],
+            expected_policy=(None if landlock_sources is None else landlock_sources.policy),
+            synthetic_test_only=synthetic,
         )
-        expected_source_observation = (
-            g240_bootstrap_git_observation_cid(
-                request.source_commit,
-                role="source",
-            )
+        expected_source_observation = g240_bootstrap_git_observation_cid(
+            request.source_commit,
+            role="source",
         )
         expected_gitlink_observation = (
             None
@@ -1676,9 +1427,7 @@ def _validate_runtime_preflight(
     )
     expected_artifacts = {
         label: descriptor["payload_cid"]
-        for label, descriptor in (
-            contract.runtime_environment_artifacts.items()
-        )
+        for label, descriptor in (contract.runtime_environment_artifacts.items())
     }
     imports = _mapping(data["imports"], "runtime preflight imports")
     expected_symai_configuration_cid: str | None = None
@@ -1686,35 +1435,22 @@ def _validate_runtime_preflight(
     if not synthetic:
         try:
             inventory = CapabilityInventory.from_dict(
-                request.adapter_configuration[
-                    "capability_inventory"
-                ]
+                request.adapter_configuration["capability_inventory"]
             )
             symai_model = _symai_runtime_model(inventory)
             if symai_model is not None:
-                expected_symai_configuration_cid = (
-                    symai_runtime_configuration_cid(symai_model)
-                )
+                expected_symai_configuration_cid = symai_runtime_configuration_cid(symai_model)
                 expected_symai_configuration_relative_path = (
-                    f"{inventory.run_id}/symai-runtime/"
-                    ".symai/symai.config.json"
+                    f"{inventory.run_id}/symai-runtime/.symai/symai.config.json"
                 )
         except (TypeError, ValueError) as exc:
             raise SourceRuntimeOrchestrationError(
                 "runtime preflight SyMAI identity is invalid"
             ) from exc
     for module_name, raw in imports.items():
-        if (
-            not isinstance(module_name, str)
-            or not module_name
-            or "\0" in module_name
-        ):
-            raise SourceRuntimeOrchestrationError(
-                "runtime preflight import name is invalid"
-            )
-        descriptor = _mapping(
-            raw, f"runtime preflight import {module_name}"
-        )
+        if not isinstance(module_name, str) or not module_name or "\0" in module_name:
+            raise SourceRuntimeOrchestrationError("runtime preflight import name is invalid")
+        descriptor = _mapping(raw, f"runtime preflight import {module_name}")
         _exact(
             descriptor,
             {"module_file_cid", "version"},
@@ -1724,26 +1460,16 @@ def _validate_runtime_preflight(
             descriptor["module_file_cid"],
             f"runtime preflight import {module_name} CID",
         )
-        if descriptor["version"] is not None and not isinstance(
-            descriptor["version"], str
-        ):
-            raise SourceRuntimeOrchestrationError(
-                "runtime preflight module version is invalid"
-            )
+        if descriptor["version"] is not None and not isinstance(descriptor["version"], str):
+            raise SourceRuntimeOrchestrationError("runtime preflight module version is invalid")
     for label, artifact_cid in artifacts.items():
         if not label.startswith(_PYTHON_MODULE_ARTIFACT_PREFIX):
             continue
-        module_name = label.removeprefix(
-            _PYTHON_MODULE_ARTIFACT_PREFIX
-        )
+        module_name = label.removeprefix(_PYTHON_MODULE_ARTIFACT_PREFIX)
         imported = imports.get(module_name)
-        if (
-            not isinstance(imported, Mapping)
-            or imported.get("module_file_cid") != artifact_cid
-        ):
+        if not isinstance(imported, Mapping) or imported.get("module_file_cid") != artifact_cid:
             raise SourceRuntimeOrchestrationError(
-                "runtime preflight Python-module artifact/import join "
-                "changed"
+                "runtime preflight Python-module artifact/import join changed"
             )
     if (
         data["request_cid"] != request.request_cid
@@ -1768,28 +1494,20 @@ def _validate_runtime_preflight(
             and (
                 landlock_sources is None
                 or landlock_receipt is None
-                or data["landlock_policy_cid"]
-                != landlock_sources.policy.policy_cid
-                or data["landlock_receipt_cid"]
-                != landlock_receipt.receipt_cid
-                or bootstrap_receipt.typed_landlock_receipt
-                != landlock_receipt
-                or data["interpreter_identity_cid"]
-                != contract.interpreter_identity_cid
-                or data["git_executable_cid"]
-                != contract.git_executable_cid
+                or data["landlock_policy_cid"] != landlock_sources.policy.policy_cid
+                or data["landlock_receipt_cid"] != landlock_receipt.receipt_cid
+                or bootstrap_receipt.typed_landlock_receipt != landlock_receipt
+                or data["interpreter_identity_cid"] != contract.interpreter_identity_cid
+                or data["git_executable_cid"] != contract.git_executable_cid
                 or dict(artifacts) != expected_artifacts
-                or data["symai_configuration_cid"]
-                != expected_symai_configuration_cid
+                or data["symai_configuration_cid"] != expected_symai_configuration_cid
                 or data["symai_configuration_relative_path"]
                 != expected_symai_configuration_relative_path
                 or not imports
             )
         )
-        or bootstrap_receipt.source_commit_observation_cid
-        != expected_source_observation
-        or bootstrap_receipt.source_bound_gitlink_observation_cid
-        != expected_gitlink_observation
+        or bootstrap_receipt.source_commit_observation_cid != expected_source_observation
+        or bootstrap_receipt.source_bound_gitlink_observation_cid != expected_gitlink_observation
     ):
         raise SourceRuntimeOrchestrationError(
             "G240 runtime preflight differs from its pinned environment"
@@ -1849,9 +1567,7 @@ class G240SourceOrchestrationReceiptV2:
 
     def __post_init__(self) -> None:
         if self.schema != G240_SOURCE_ORCHESTRATION_RECEIPT_SCHEMA_V2:
-            raise SourceRuntimeOrchestrationError(
-                "unsupported G240 source orchestration schema"
-            )
+            raise SourceRuntimeOrchestrationError("unsupported G240 source orchestration schema")
         for field in (
             "policy_cid",
             "runtime_orchestration_policy_cid",
@@ -1879,9 +1595,7 @@ class G240SourceOrchestrationReceiptV2:
             "namespace_observer_identity_cid",
             "orchestration_observer_identity_cid",
         ):
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
         for field in (
             "landlock_policy_cid",
             "landlock_receipt_cid",
@@ -1891,17 +1605,13 @@ class G240SourceOrchestrationReceiptV2:
             if value is not None:
                 object.__setattr__(self, field, _cid(value, field))
         object.__setattr__(self, "job_id", _safe_id(self.job_id, "job_id"))
-        marker_values = _mapping(
-            self.cache_marker_cids, "cache_marker_cids"
-        )
+        marker_values = _mapping(self.cache_marker_cids, "cache_marker_cids")
         created_values = _mapping(
             self.cache_namespace_created_exclusive,
             "cache_namespace_created_exclusive",
         )
         if set(marker_values) != set(created_values) or not marker_values:
-            raise SourceRuntimeOrchestrationError(
-                "cache marker and creation observations differ"
-            )
+            raise SourceRuntimeOrchestrationError("cache marker and creation observations differ")
         markers: dict[str, str] = {}
         created: dict[str, bool] = {}
         for stage in sorted(marker_values):
@@ -1940,12 +1650,9 @@ class G240SourceOrchestrationReceiptV2:
             "holdout_accessed",
         ):
             if type(getattr(self, field)) is not bool:
-                raise SourceRuntimeOrchestrationError(
-                    f"{field} must be an observed boolean"
-                )
+                raise SourceRuntimeOrchestrationError(f"{field} must be an observed boolean")
         if (
-            self.confinement_profile_cid
-            != G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
+            self.confinement_profile_cid != G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
             or (
                 self.synthetic_test_only
                 and any(
@@ -1969,9 +1676,7 @@ class G240SourceOrchestrationReceiptV2:
                 )
             )
         ):
-            raise SourceRuntimeOrchestrationError(
-                "G240 source confinement evidence is incomplete"
-            )
+            raise SourceRuntimeOrchestrationError("G240 source confinement evidence is incomplete")
         if (
             type(self.active_process_count_after_reap) is not int
             or self.active_process_count_after_reap < 0
@@ -2003,16 +1708,12 @@ class G240SourceOrchestrationReceiptV2:
                 not self.holdout_accessed,
             )
         ):
-            raise SourceRuntimeOrchestrationError(
-                "G240 source orchestration is incomplete"
-            )
+            raise SourceRuntimeOrchestrationError("G240 source orchestration is incomplete")
         expected = cid_for_dag_json(self.identity_payload())
         if self.receipt_cid is None:
             object.__setattr__(self, "receipt_cid", expected)
         elif _cid(self.receipt_cid, "receipt_cid") != expected:
-            raise SourceRuntimeOrchestrationError(
-                "G240 source orchestration receipt CID changed"
-            )
+            raise SourceRuntimeOrchestrationError("G240 source orchestration receipt CID changed")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -2075,9 +1776,7 @@ def _inspect_physical_namespaces(
     _validate_private_directory(output, "source output namespace")
     markers: dict[str, str] = {}
     for stage, cache_path in caches.items():
-        _validate_private_directory(
-            cache_path, f"{stage} physical cache namespace"
-        )
+        _validate_private_directory(cache_path, f"{stage} physical cache namespace")
         expected = _cache_marker_payload(
             policy=policy,
             coordinate=coordinate,
@@ -2149,8 +1848,7 @@ class _G240LandlockTransportObservationV2:
 
     def __post_init__(self) -> None:
         if (
-            self._capability
-            is not _G240_LANDLOCK_TRANSPORT_CAPABILITY_V2
+            self._capability is not _G240_LANDLOCK_TRANSPORT_CAPABILITY_V2
             or not isinstance(
                 self.process_observation,
                 _G240SourceProcessObservationV2,
@@ -2172,9 +1870,7 @@ class _G240LandlockTransportObservationV2:
             self.receipt,
             expected_policy=self.policy_sources.policy,
         )
-        if self.receipt_payload != (
-            canonical_dag_json_bytes(expected.to_dict()) + b"\n"
-        ):
+        if self.receipt_payload != (canonical_dag_json_bytes(expected.to_dict()) + b"\n"):
             raise SourceRuntimeOrchestrationError(
                 "G240 Landlock pipe bytes differ from the typed receipt"
             )
@@ -2197,20 +1893,12 @@ def _read_g240_landlock_receipt_pipe(
                     "G240 Landlock receipt pipe exceeded its bound"
                 )
     except OSError as exc:
-        raise SourceRuntimeOrchestrationError(
-            "cannot read the G240 Landlock receipt pipe"
-        ) from exc
+        raise SourceRuntimeOrchestrationError("cannot read the G240 Landlock receipt pipe") from exc
     finally:
         os.close(descriptor)
     raw = bytes(payload)
-    if (
-        not raw
-        or not raw.endswith(b"\n")
-        or raw.endswith(b"\n\n")
-    ):
-        raise SourceRuntimeOrchestrationError(
-            "G240 Landlock receipt pipe framing is invalid"
-        )
+    if not raw or not raw.endswith(b"\n") or raw.endswith(b"\n\n"):
+        raise SourceRuntimeOrchestrationError("G240 Landlock receipt pipe framing is invalid")
     try:
         decoded = json.loads(
             raw.decode("utf-8"),
@@ -2278,22 +1966,14 @@ def _build_g240_source_orchestration_receipt_v2(
     runtime_preflight_payload: bytes,
     evidence_payload: bytes,
     process_observation: _G240SourceProcessObservationV2,
-    landlock_transport_observation: (
-        _G240LandlockTransportObservationV2 | None
-    ),
+    landlock_transport_observation: (_G240LandlockTransportObservationV2 | None),
     orchestration_observer_identity_cid: str,
-    cache_namespace_created_exclusive: (
-        Mapping[str, bool] | None
-    ) = None,
+    cache_namespace_created_exclusive: (Mapping[str, bool] | None) = None,
 ) -> G240SourceOrchestrationReceiptV2:
     """Recompute a public receipt from exact live execution sources."""
 
-    restored, plan_cid, coordinate = _coerce_policy_coordinate(
-        policy, plan, job
-    )
-    worktree = _validate_live_worktree(
-        worktree_safety_receipt, restored
-    )
+    restored, plan_cid, coordinate = _coerce_policy_coordinate(policy, plan, job)
+    worktree = _validate_live_worktree(worktree_safety_receipt, restored)
     contract = _coerce_source_executor_contract(
         executor_contract,
         policy=restored,
@@ -2311,12 +1991,8 @@ def _build_g240_source_orchestration_receipt_v2(
     )
     root = _validate_namespace_root(namespace_root, worktree)
     if not isinstance(execution_request_payload, bytes):
-        raise SourceRuntimeOrchestrationError(
-            "G240 execution request payload must be exact bytes"
-        )
-    expected_request_payload = (
-        canonical_dag_json_bytes(request.to_dict()) + b"\n"
-    )
+        raise SourceRuntimeOrchestrationError("G240 execution request payload must be exact bytes")
+    expected_request_payload = canonical_dag_json_bytes(request.to_dict()) + b"\n"
     if execution_request_payload != expected_request_payload:
         raise SourceRuntimeOrchestrationError(
             "G240 execution request bytes are not exact canonical JSON"
@@ -2331,17 +2007,12 @@ def _build_g240_source_orchestration_receipt_v2(
         "G240 private execution request",
     )
     try:
-        observed_typed_request = validate_g240_execution_request_v2(
-            observed_request
-        )
+        observed_typed_request = validate_g240_execution_request_v2(observed_request)
     except (G240SourceExecutorError, TypeError, ValueError) as exc:
         raise SourceRuntimeOrchestrationError(
             "G240 persisted execution request failed typed replay"
         ) from exc
-    if (
-        observed_request_payload != execution_request_payload
-        or observed_typed_request != request
-    ):
+    if observed_request_payload != execution_request_payload or observed_typed_request != request:
         raise SourceRuntimeOrchestrationError(
             "G240 persisted execution request differs from launch input"
         )
@@ -2361,10 +2032,7 @@ def _build_g240_source_orchestration_receipt_v2(
         raise SourceRuntimeOrchestrationError(
             "G240 runtime preflight bytes differ from the child output"
         )
-    synthetic = (
-        request.adapter_factory_id
-        == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
-    )
+    synthetic = request.adapter_factory_id == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
     if synthetic:
         if landlock_transport_observation is not None:
             raise SourceRuntimeOrchestrationError(
@@ -2380,8 +2048,7 @@ def _build_g240_source_orchestration_receipt_v2(
                 transport,
                 _G240LandlockTransportObservationV2,
             )
-            or transport._capability
-            is not _G240_LANDLOCK_TRANSPORT_CAPABILITY_V2
+            or transport._capability is not _G240_LANDLOCK_TRANSPORT_CAPABILITY_V2
             or transport.process_observation is not process_observation
         ):
             raise SourceRuntimeOrchestrationError(
@@ -2390,30 +2057,22 @@ def _build_g240_source_orchestration_receipt_v2(
         landlock_sources = transport.policy_sources
         landlock_receipt = transport.receipt
         landlock_payload = transport.receipt_payload
-    runtime_preflight_cid, _bootstrap_receipt = (
-        _validate_runtime_preflight(
+    runtime_preflight_cid, _bootstrap_receipt = _validate_runtime_preflight(
         observed_preflight,
         request=request,
         contract=contract,
         landlock_sources=landlock_sources,
         landlock_receipt=landlock_receipt,
-        expected_gitlink_commit=worktree.submodule_commits.get(
-            "ipfs_accelerate_py"
-        ),
-        )
+        expected_gitlink_commit=worktree.submodule_commits.get("ipfs_accelerate_py"),
     )
     try:
-        runtime = validate_causal_runtime_evidence_v2(
-            runtime_evidence.to_dict()
-        )
-        namespace_receipt = (
-            validate_g240_runtime_namespace_receipt_v2(
-                runtime_namespace_receipt,
-                policy=restored,
-                plan=plan,
-                job=job,
-                evidence=runtime,
-            )
+        runtime = validate_causal_runtime_evidence_v2(runtime_evidence.to_dict())
+        namespace_receipt = validate_g240_runtime_namespace_receipt_v2(
+            runtime_namespace_receipt,
+            policy=restored,
+            plan=plan,
+            job=job,
+            evidence=runtime,
         )
     except (
         RuntimeNamespaceProvenanceError,
@@ -2430,12 +2089,8 @@ def _build_g240_source_orchestration_receipt_v2(
         launch_environment_sha256=contract.environment_sha256,
     )
     if not isinstance(evidence_payload, bytes):
-        raise SourceRuntimeOrchestrationError(
-            "G240 source evidence payload must be exact bytes"
-        )
-    expected_payload = (
-        canonical_dag_json_bytes(_plain(runtime.to_dict())) + b"\n"
-    )
+        raise SourceRuntimeOrchestrationError("G240 source evidence payload must be exact bytes")
+    expected_payload = canonical_dag_json_bytes(_plain(runtime.to_dict())) + b"\n"
     if evidence_payload != expected_payload:
         raise SourceRuntimeOrchestrationError(
             "G240 source evidence bytes are not exact canonical runtime JSON"
@@ -2445,10 +2100,8 @@ def _build_g240_source_orchestration_receipt_v2(
             process_observation,
             _G240SourceProcessObservationV2,
         )
-        or process_observation._capability
-        is not _G240_SOURCE_PROCESS_CAPABILITY_V2
-        or process_observation.interpreter_identity_cid
-        != contract.interpreter_identity_cid
+        or process_observation._capability is not _G240_SOURCE_PROCESS_CAPABILITY_V2
+        or process_observation.interpreter_identity_cid != contract.interpreter_identity_cid
     ):
         raise SourceRuntimeOrchestrationError(
             "G240 source receipt requires a privately observed live process"
@@ -2468,21 +2121,20 @@ def _build_g240_source_orchestration_receipt_v2(
     if set(created) != set(coordinate.stages) or any(
         type(value) is not bool for value in created.values()
     ):
-        raise SourceRuntimeOrchestrationError(
-            "cache creation observations are incomplete"
-        )
+        raise SourceRuntimeOrchestrationError("cache creation observations are incomplete")
     observer = _cid(
         orchestration_observer_identity_cid,
         "orchestration_observer_identity_cid",
     )
     if (
-        namespace_receipt.executor_identity_cid
-        != contract.executor_identity_cid
-        or restored.namespace_authority_cid in {
+        namespace_receipt.executor_identity_cid != contract.executor_identity_cid
+        or restored.namespace_authority_cid
+        in {
             namespace_receipt.executor_identity_cid,
             namespace_receipt.observer_identity_cid,
         }
-        or observer in {
+        or observer
+        in {
             restored.namespace_authority_cid,
             namespace_receipt.executor_identity_cid,
             namespace_receipt.observer_identity_cid,
@@ -2494,16 +2146,11 @@ def _build_g240_source_orchestration_receipt_v2(
     if (
         namespace_receipt.policy_cid != restored.policy_cid
         or namespace_receipt.plan_cid != plan_cid
-        or namespace_receipt.coordinate_cid
-        != coordinate.coordinate_cid
-        or namespace_receipt.process_namespace_cid
-        != coordinate.process_namespace_cid
-        or namespace_receipt.state_namespace_cid
-        != coordinate.state_namespace_cid
-        or namespace_receipt.output_namespace_cid
-        != coordinate.output_namespace_cid
-        or dict(namespace_receipt.cache_namespace_cids)
-        != dict(coordinate.cache_namespace_cids)
+        or namespace_receipt.coordinate_cid != coordinate.coordinate_cid
+        or namespace_receipt.process_namespace_cid != coordinate.process_namespace_cid
+        or namespace_receipt.state_namespace_cid != coordinate.state_namespace_cid
+        or namespace_receipt.output_namespace_cid != coordinate.output_namespace_cid
+        or dict(namespace_receipt.cache_namespace_cids) != dict(coordinate.cache_namespace_cids)
     ):
         raise SourceRuntimeOrchestrationError(
             "runtime namespace receipt differs from executed coordinate"
@@ -2514,27 +2161,19 @@ def _build_g240_source_orchestration_receipt_v2(
         plan_cid=plan_cid,
         coordinate_cid=str(coordinate.coordinate_cid),
         job_id=job.job_id,
-        runtime_namespace_receipt_cid=str(
-            namespace_receipt.receipt_cid
-        ),
+        runtime_namespace_receipt_cid=str(namespace_receipt.receipt_cid),
         runtime_evidence_cid=runtime.receipt_cid,
         source_commit_cid=restored.source_commit_cid,
         recursive_gitlinks_cid=restored.recursive_gitlinks_cid,
         launch_environment_cid=contract.environment_cid,
         runtime_environment_projection_cid=(
-            _runtime_environment_projection_cid(
-                contract.environment_sha256
-            )
+            _runtime_environment_projection_cid(contract.environment_sha256)
         ),
-        worktree_safety_projection_cid=(
-            g240_worktree_safety_projection_cid(worktree)
-        ),
+        worktree_safety_projection_cid=(g240_worktree_safety_projection_cid(worktree)),
         process_namespace_cid=coordinate.process_namespace_cid,
         state_namespace_cid=coordinate.state_namespace_cid,
         output_namespace_cid=coordinate.output_namespace_cid,
-        cache_namespace_set_cid=g240_cache_namespace_set_cid(
-            coordinate.cache_namespace_cids
-        ),
+        cache_namespace_set_cid=g240_cache_namespace_set_cid(coordinate.cache_namespace_cids),
         cache_marker_cids=marker_cids,
         cache_namespace_created_exclusive=created,
         physical_namespace_projection_cid=(
@@ -2549,34 +2188,24 @@ def _build_g240_source_orchestration_receipt_v2(
         execution_request_cid=str(request.request_cid),
         runtime_preflight_cid=runtime_preflight_cid,
         landlock_policy_cid=(
-            None
-            if landlock_sources is None
-            else str(landlock_sources.policy.policy_cid)
+            None if landlock_sources is None else str(landlock_sources.policy.policy_cid)
         ),
         landlock_receipt_cid=(
-            None
-            if landlock_receipt is None
-            else str(landlock_receipt.receipt_cid)
+            None if landlock_receipt is None else str(landlock_receipt.receipt_cid)
         ),
         landlock_receipt_payload_cid=(
-            None
-            if landlock_payload is None
-            else cid_for_bytes(landlock_payload)
+            None if landlock_payload is None else cid_for_bytes(landlock_payload)
         ),
         evidence_payload_cid=cid_for_bytes(evidence_payload),
         executor_identity_cid=namespace_receipt.executor_identity_cid,
-        namespace_observer_identity_cid=(
-            namespace_receipt.observer_identity_cid
-        ),
+        namespace_observer_identity_cid=(namespace_receipt.observer_identity_cid),
         orchestration_observer_identity_cid=observer,
         state_namespace_created_exclusive=True,
         output_namespace_created_exclusive=True,
         cache_namespaces_private=True,
         process_group_started=process_observation.process_group_started,
         process_group_reaped=process_result.process_group_reaped,
-        active_process_count_after_reap=(
-            process_observation.active_process_count_after_reap
-        ),
+        active_process_count_after_reap=(process_observation.active_process_count_after_reap),
         worktree_clean_before=True,
         worktree_clean_after=True,
         evidence_canonical=True,
@@ -2605,9 +2234,7 @@ class G240PrivateSourceValidationSourcesV2:
     evidence_payload: bytes
     process_result: BoundedProcessResult
     process_observation: _G240SourceProcessObservationV2
-    landlock_transport_observation: (
-        _G240LandlockTransportObservationV2 | None
-    )
+    landlock_transport_observation: _G240LandlockTransportObservationV2 | None
     cache_namespace_created_exclusive: Mapping[str, bool]
 
     def __post_init__(self) -> None:
@@ -2619,8 +2246,7 @@ class G240PrivateSourceValidationSourcesV2:
                 self.process_observation,
                 _G240SourceProcessObservationV2,
             )
-            or self.process_observation._capability
-            is not _G240_SOURCE_PROCESS_CAPABILITY_V2
+            or self.process_observation._capability is not _G240_SOURCE_PROCESS_CAPABILITY_V2
             or self.process_observation.result is not self.process_result
             or (
                 self.landlock_transport_observation is not None
@@ -2630,24 +2256,20 @@ class G240PrivateSourceValidationSourcesV2:
                         _G240LandlockTransportObservationV2,
                     )
                     or (
-                        self.landlock_transport_observation
-                        .process_observation
+                        self.landlock_transport_observation.process_observation
                         is not self.process_observation
                     )
                 )
             )
         ):
             raise SourceRuntimeOrchestrationError(
-                "private source inputs lack exact bytes or live process "
-                "authority"
+                "private source inputs lack exact bytes or live process authority"
             )
         object.__setattr__(self, "namespace_root", Path(self.namespace_root))
         object.__setattr__(
             self,
             "cache_namespace_created_exclusive",
-            MappingProxyType(
-                dict(self.cache_namespace_created_exclusive)
-            ),
+            MappingProxyType(dict(self.cache_namespace_created_exclusive)),
         )
 
 
@@ -2676,9 +2298,7 @@ def validate_g240_private_source_sources_v2(
                 value.runtime_namespace_receipt,
                 G240RuntimeNamespaceReceiptV2,
             )
-            else G240RuntimeNamespaceReceiptV2.from_dict(
-                value.runtime_namespace_receipt
-            )
+            else G240RuntimeNamespaceReceiptV2.from_dict(value.runtime_namespace_receipt)
         )
         receipt = (
             value.orchestration_receipt
@@ -2686,14 +2306,10 @@ def validate_g240_private_source_sources_v2(
                 value.orchestration_receipt,
                 G240SourceOrchestrationReceiptV2,
             )
-            else G240SourceOrchestrationReceiptV2.from_dict(
-                value.orchestration_receipt
-            )
+            else G240SourceOrchestrationReceiptV2.from_dict(value.orchestration_receipt)
         )
     except (TypeError, ValueError) as exc:
-        raise SourceRuntimeOrchestrationError(
-            "G240 source receipts failed typed replay"
-        ) from exc
+        raise SourceRuntimeOrchestrationError("G240 source receipts failed typed replay") from exc
     rebuilt = _build_g240_source_orchestration_receipt_v2(
         policy=restored,
         plan=value.plan,
@@ -2708,15 +2324,9 @@ def validate_g240_private_source_sources_v2(
         runtime_preflight_payload=value.runtime_preflight_payload,
         evidence_payload=value.evidence_payload,
         process_observation=value.process_observation,
-        landlock_transport_observation=(
-            value.landlock_transport_observation
-        ),
-        orchestration_observer_identity_cid=(
-            receipt.orchestration_observer_identity_cid
-        ),
-        cache_namespace_created_exclusive=(
-            value.cache_namespace_created_exclusive
-        ),
+        landlock_transport_observation=(value.landlock_transport_observation),
+        orchestration_observer_identity_cid=(receipt.orchestration_observer_identity_cid),
+        cache_namespace_created_exclusive=(value.cache_namespace_created_exclusive),
     )
     if _plain(receipt.to_dict()) != _plain(rebuilt.to_dict()):
         raise SourceRuntimeOrchestrationError(
@@ -2741,15 +2351,10 @@ def _validate_environment(
 ) -> dict[str, str]:
     extra = {} if environment is None else dict(environment)
     if any(
-        not isinstance(key, str)
-        or not isinstance(value, str)
-        or "\0" in key
-        or "\0" in value
+        not isinstance(key, str) or not isinstance(value, str) or "\0" in key or "\0" in value
         for key, value in extra.items()
     ):
-        raise SourceRuntimeOrchestrationError(
-            "source environment must contain NUL-free strings"
-        )
+        raise SourceRuntimeOrchestrationError("source environment must contain NUL-free strings")
     reserved = sorted(
         key
         for key in extra
@@ -2776,13 +2381,11 @@ def _validate_environment(
     )
     if reserved:
         raise SourceRuntimeOrchestrationError(
-            "caller may not override reserved G240 environment keys: "
-            + ", ".join(reserved)
+            "caller may not override reserved G240 environment keys: " + ", ".join(reserved)
         )
     if extra:
         raise SourceRuntimeOrchestrationError(
-            "caller-supplied G240 environment is not content-bound: "
-            + ", ".join(sorted(extra))
+            "caller-supplied G240 environment is not content-bound: " + ", ".join(sorted(extra))
         )
     return extra
 
@@ -2817,10 +2420,7 @@ def _g240_landlock_regular_or_directory(
         path == Path("/")
         or path != lexical
         or stat.S_ISLNK(metadata.st_mode)
-        or not (
-            stat.S_ISREG(metadata.st_mode)
-            or stat.S_ISDIR(metadata.st_mode)
-        )
+        or not (stat.S_ISREG(metadata.st_mode) or stat.S_ISDIR(metadata.st_mode))
     ):
         return None
     return path
@@ -2886,21 +2486,16 @@ def _g240_parse_git_tree_entries(
         if (
             not separator
             or len(parts) != 3
-            or parts[0]
-            not in {b"100644", b"100755", b"120000", b"160000"}
+            or parts[0] not in {b"100644", b"100755", b"120000", b"160000"}
             or parts[1] not in {b"blob", b"commit"}
             or not raw_path
         ):
-            raise SourceRuntimeOrchestrationError(
-                "Git returned a malformed G240 source-tree entry"
-            )
+            raise SourceRuntimeOrchestrationError("Git returned a malformed G240 source-tree entry")
         try:
             mode = parts[0].decode("ascii")
             kind = parts[1].decode("ascii")
             object_id = parts[2].decode("ascii")
-            logical = PurePosixPath(
-                raw_path.decode("utf-8", errors="surrogateescape")
-            )
+            logical = PurePosixPath(raw_path.decode("utf-8", errors="surrogateescape"))
         except UnicodeError as exc:
             raise SourceRuntimeOrchestrationError(
                 "Git returned an undecodable G240 source-tree entry"
@@ -2912,9 +2507,7 @@ def _g240_parse_git_tree_entries(
             or "." in logical.parts
             or os.fsencode(logical.as_posix()) != raw_path
         ):
-            raise SourceRuntimeOrchestrationError(
-                "Git returned an unsafe G240 source-tree entry"
-            )
+            raise SourceRuntimeOrchestrationError("Git returned an unsafe G240 source-tree entry")
         entries.append((mode, kind, object_id, raw_path))
     return tuple(entries)
 
@@ -2926,9 +2519,7 @@ def _g240_live_git_blob_oid(
 ) -> str:
     """Hash one no-follow descriptor using Git's raw blob preimage."""
 
-    algorithm = (
-        hashlib.sha1() if len(expected_oid) == 40 else hashlib.sha256()
-    )
+    algorithm = hashlib.sha1() if len(expected_oid) == 40 else hashlib.sha256()
     algorithm.update(f"blob {metadata.st_size}\0".encode("ascii"))
     flags = os.O_RDONLY | os.O_CLOEXEC
     if hasattr(os, "O_NOFOLLOW"):
@@ -2937,20 +2528,16 @@ def _g240_live_git_blob_oid(
     try:
         descriptor = os.open(path, flags)
         before = os.fstat(descriptor)
-        if (
-            not stat.S_ISREG(before.st_mode)
-            or (
-                before.st_dev,
-                before.st_ino,
-                before.st_size,
-                before.st_mode,
-            )
-            != (
-                metadata.st_dev,
-                metadata.st_ino,
-                metadata.st_size,
-                metadata.st_mode,
-            )
+        if not stat.S_ISREG(before.st_mode) or (
+            before.st_dev,
+            before.st_ino,
+            before.st_size,
+            before.st_mode,
+        ) != (
+            metadata.st_dev,
+            metadata.st_ino,
+            metadata.st_size,
+            metadata.st_mode,
         ):
             return ""
         while True:
@@ -3021,9 +2608,7 @@ def _g240_authenticated_tree_files(
     """Select reviewed paths from a commit tree and authenticate live blobs."""
 
     if not _HEX_COMMIT.fullmatch(commit):
-        raise SourceRuntimeOrchestrationError(
-            "G240 reviewed source commit is invalid"
-        )
+        raise SourceRuntimeOrchestrationError("G240 reviewed source commit is invalid")
     source = frozenset(PurePosixPath(value) for value in source_roots)
     python = frozenset(PurePosixPath(value) for value in python_roots)
     tools = frozenset(PurePosixPath(value) for value in tool_roots)
@@ -3050,12 +2635,8 @@ def _g240_authenticated_tree_files(
         *pathspecs,
     )
     collected: set[Path] = set()
-    for mode, kind, object_id, raw_path in _g240_parse_git_tree_entries(
-        tree
-    ):
-        relative = PurePosixPath(
-            raw_path.decode("utf-8", errors="surrogateescape")
-        )
+    for mode, kind, object_id, raw_path in _g240_parse_git_tree_entries(tree):
+        relative = PurePosixPath(raw_path.decode("utf-8", errors="surrogateescape"))
         selected = (
             relative in exact
             or _g240_relative_path_within(relative, tools)
@@ -3064,8 +2645,7 @@ def _g240_authenticated_tree_files(
                 and relative.suffix.casefold() in {".py", ".so"}
             )
             or (
-                _g240_relative_path_within(relative, python)
-                and relative.suffix.casefold() == ".py"
+                _g240_relative_path_within(relative, python) and relative.suffix.casefold() == ".py"
             )
         )
         if not selected:
@@ -3089,20 +2669,15 @@ def _g240_authenticated_tree_files(
             or not stat.S_ISREG(metadata.st_mode)
         ):
             raise SourceRuntimeOrchestrationError(
-                "reviewed G240 tracked source is not one canonical regular "
-                "file"
+                "reviewed G240 tracked source is not one canonical regular file"
             )
-        if (
-            stat.S_IMODE(metadata.st_mode) & 0o022
-            or bool(metadata.st_mode & 0o111) != (mode == "100755")
+        if stat.S_IMODE(metadata.st_mode) & 0o022 or bool(metadata.st_mode & 0o111) != (
+            mode == "100755"
         ):
             raise SourceRuntimeOrchestrationError(
                 "reviewed G240 tracked source mode differs from Git"
             )
-        if (
-            _g240_live_git_blob_oid(path, metadata, object_id)
-            != object_id
-        ):
+        if _g240_live_git_blob_oid(path, metadata, object_id) != object_id:
             raise SourceRuntimeOrchestrationError(
                 "reviewed G240 tracked source bytes differ from Git"
             )
@@ -3122,9 +2697,7 @@ def _g240_landlock_source_files(
         raise SourceRuntimeOrchestrationError(
             "reviewed G240 sources require a typed worktree receipt"
         )
-    git_executable, observed_git_cid = _git_executable_identity_v2(
-        git_executable_path
-    )
+    git_executable, observed_git_cid = _git_executable_identity_v2(git_executable_path)
     if observed_git_cid != git_executable_cid:
         raise SourceRuntimeOrchestrationError(
             "pinned Git executable changed before source enumeration"
@@ -3157,9 +2730,7 @@ def _g240_landlock_source_files(
             ),
         )
     )
-    submodule_commit = worktree.submodule_commits.get(
-        "ipfs_accelerate_py"
-    )
+    submodule_commit = worktree.submodule_commits.get("ipfs_accelerate_py")
     if submodule_commit is not None:
         submodule = root / "ipfs_accelerate_py"
         try:
@@ -3178,7 +2749,9 @@ def _g240_landlock_source_files(
                 submodule,
                 "rev-parse",
                 "--show-toplevel",
-            ).decode("utf-8").strip()
+            )
+            .decode("utf-8")
+            .strip()
             != submodule.as_posix()
             or _g240_pinned_git_output(
                 git_executable,
@@ -3186,7 +2759,9 @@ def _g240_landlock_source_files(
                 "rev-parse",
                 "--verify",
                 "HEAD^{commit}",
-            ).decode("ascii").strip()
+            )
+            .decode("ascii")
+            .strip()
             != submodule_commit
         ):
             raise SourceRuntimeOrchestrationError(
@@ -3202,9 +2777,7 @@ def _g240_landlock_source_files(
             )
         )
     if not collected:
-        raise SourceRuntimeOrchestrationError(
-            "reviewed G240 tracked-source allowlist is empty"
-        )
+        raise SourceRuntimeOrchestrationError("reviewed G240 tracked-source allowlist is empty")
     return tuple(sorted(collected, key=Path.as_posix))
 
 
@@ -3213,9 +2786,7 @@ def _g240_inventory_tool_paths(
 ) -> tuple[Path, ...]:
     if request.adapter_factory_id == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2:
         return ()
-    inventory = CapabilityInventory.from_dict(
-        request.adapter_configuration["capability_inventory"]
-    )
+    inventory = CapabilityInventory.from_dict(request.adapter_configuration["capability_inventory"])
     paths: set[Path] = set()
 
     def visit(value: object, key: str | None = None) -> None:
@@ -3230,22 +2801,14 @@ def _g240_inventory_tool_paths(
         if (
             isinstance(value, str)
             and key is not None
-            and (
-                key == "path"
-                or key.endswith("_path")
-                or key == "executable"
-            )
+            and (key == "path" or key.endswith("_path") or key == "executable")
             and Path(value).is_absolute()
         ):
             observed = _g240_landlock_regular_or_directory(value)
             requested = Path(value)
-            if (
-                observed is None
-                and (requested.exists() or requested.is_symlink())
-            ):
+            if observed is None and (requested.exists() or requested.is_symlink()):
                 raise SourceRuntimeOrchestrationError(
-                    "G240 inventory tool path is not one canonical physical "
-                    "file"
+                    "G240 inventory tool path is not one canonical physical file"
                 )
             if observed is not None and observed.is_file():
                 paths.add(observed)
@@ -3276,11 +2839,7 @@ def _g240_path_within(path: Path, root: Path) -> bool:
 def _g240_protected_path_component(value: str) -> bool:
     normalized = value.casefold()
     stem = Path(normalized).stem
-    tokens = {
-        token
-        for token in re.split(r"[^a-z0-9]+", stem)
-        if token
-    }
+    tokens = {token for token in re.split(r"[^a-z0-9]+", stem) if token}
     protected_tokens = {
         "fixture",
         "fixtures",
@@ -3291,10 +2850,7 @@ def _g240_protected_path_component(value: str) -> bool:
         "holdout",
         "holdouts",
     }
-    return bool(
-        tokens & protected_tokens
-        or stem in {"performance_snapshots", "agent_supervisor"}
-    )
+    return bool(tokens & protected_tokens or stem in {"performance_snapshots", "agent_supervisor"})
 
 
 def _g240_validate_dynamic_read_path(
@@ -3329,25 +2885,17 @@ def _g240_validate_dynamic_read_path(
         Path("/root"),
     )
     protected_component = any(
-        part.casefold() in {".git", ".ssh", ".gnupg"}
-        or _g240_protected_path_component(part)
+        part.casefold() in {".git", ".ssh", ".gnupg"} or _g240_protected_path_component(part)
         for part in path.parts
     )
     if (
         protected_component
-        or any(
-            _g240_path_within(path, root)
-            for root in forbidden_roots
-        )
+        or any(_g240_path_within(path, root) for root in forbidden_roots)
         or _g240_path_within(path, source_root)
-        or (
-            _g240_path_within(path, worktree_root)
-            and path not in reviewed_worktree_files
-        )
+        or (_g240_path_within(path, worktree_root) and path not in reviewed_worktree_files)
     ):
         raise SourceRuntimeOrchestrationError(
-            f"{field} targets a forbidden Git, protected-data, or sensitive "
-            "path"
+            f"{field} targets a forbidden Git, protected-data, or sensitive path"
         )
     return path
 
@@ -3402,9 +2950,7 @@ def _g240_runtime_read_only_paths(
         "platstdlib",
         "site_packages",
     } or not isinstance(runtime["site_packages"], list):
-        raise SourceRuntimeOrchestrationError(
-            "pinned interpreter Landlock probe changed"
-        )
+        raise SourceRuntimeOrchestrationError("pinned interpreter Landlock probe changed")
     reviewed_worktree_files = frozenset(
         _g240_landlock_source_files(
             worktree,
@@ -3423,9 +2969,7 @@ def _g240_runtime_read_only_paths(
             )
         )
     for descriptor in contract.runtime_environment_artifacts.values():
-        observed = _g240_landlock_regular_or_directory(
-            descriptor["path"]
-        )
+        observed = _g240_landlock_regular_or_directory(descriptor["path"])
         if observed is None or not observed.is_file():
             raise SourceRuntimeOrchestrationError(
                 "G240 runtime artifact is not one canonical physical file"
@@ -3467,9 +3011,7 @@ def _g240_runtime_read_only_paths(
         worktree.source_checkout,
     }
     if any(path in forbidden_roots for path in candidates):
-        raise SourceRuntimeOrchestrationError(
-            "G240 Landlock may not grant a source or Git root"
-        )
+        raise SourceRuntimeOrchestrationError("G240 Landlock may not grant a source or Git root")
     return tuple(sorted(candidates, key=Path.as_posix))
 
 
@@ -3515,13 +3057,9 @@ def run_g240_source_job_v2(
 ) -> G240SourceExecutionResultV2:
     """Execute one exact source job and emit source-recomputed G240 proof."""
 
-    restored, _plan_cid_value, coordinate = _coerce_policy_coordinate(
-        policy, plan, job
-    )
+    restored, _plan_cid_value, coordinate = _coerce_policy_coordinate(policy, plan, job)
     extra_environment = _validate_environment(environment)
-    worktree = _validate_live_worktree(
-        worktree_safety_receipt, restored
-    )
+    worktree = _validate_live_worktree(worktree_safety_receipt, restored)
     contract = _coerce_source_executor_contract(
         executor_contract,
         policy=restored,
@@ -3537,23 +3075,12 @@ def run_g240_source_job_v2(
         worktree=worktree,
         contract=contract,
     )
-    synthetic = (
-        request.adapter_factory_id
-        == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
-    )
-    if (
-        synthetic
-        and _test_only_synthetic_capability
-        is not _G240_SYNTHETIC_TEST_CAPABILITY_V2
-    ):
+    synthetic = request.adapter_factory_id == G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2
+    if synthetic and _test_only_synthetic_capability is not _G240_SYNTHETIC_TEST_CAPABILITY_V2:
         raise SourceRuntimeOrchestrationError(
-            "synthetic G240 execution requires the private test-only "
-            "capability"
+            "synthetic G240 execution requires the private test-only capability"
         )
-    if (
-        not synthetic
-        and _test_only_synthetic_capability is not None
-    ):
+    if not synthetic and _test_only_synthetic_capability is not None:
         raise SourceRuntimeOrchestrationError(
             "test-only synthetic capability cannot authorize live execution"
         )
@@ -3593,19 +3120,12 @@ def run_g240_source_job_v2(
     private_policy_input = (
         None
         if landlock_sources is None
-        else canonical_dag_json_bytes(
-            g240_private_landlock_policy_payload_v2(
-                landlock_sources
-            )
-        )
+        else canonical_dag_json_bytes(g240_private_landlock_policy_payload_v2(landlock_sources))
         + b"\n"
     )
     receipt_read_descriptor: int | None = None
     receipt_write_descriptor: int | None = None
-    cache_paths = {
-        stage: physical.caches[stage].as_posix()
-        for stage in coordinate.stages
-    }
+    cache_paths = {stage: physical.caches[stage].as_posix() for stage in coordinate.stages}
     process_environment = {
         "PATH": os.defpath,
         "PYTHONPATH": worktree.worktree_root.as_posix(),
@@ -3621,58 +3141,32 @@ def run_g240_source_job_v2(
         "HSSL_G240_RUN_ID": restored.run_id,
         "HSSL_G240_PLAN_CID": coordinate.plan_cid,
         "HSSL_G240_JOB_ID": coordinate.job_id,
-        "HSSL_G240_COORDINATE_CID": str(
-            coordinate.coordinate_cid
-        ),
-        "HSSL_G240_PROCESS_NAMESPACE_CID": (
-            coordinate.process_namespace_cid
-        ),
+        "HSSL_G240_COORDINATE_CID": str(coordinate.coordinate_cid),
+        "HSSL_G240_PROCESS_NAMESPACE_CID": (coordinate.process_namespace_cid),
         "HSSL_G240_STATE_DIR": physical.state.as_posix(),
-        "HSSL_G240_STATE_NAMESPACE_CID": (
-            coordinate.state_namespace_cid
-        ),
+        "HSSL_G240_STATE_NAMESPACE_CID": (coordinate.state_namespace_cid),
         "HSSL_G240_OUTPUT_DIR": physical.output.as_posix(),
-        "HSSL_G240_OUTPUT_NAMESPACE_CID": (
-            coordinate.output_namespace_cid
-        ),
+        "HSSL_G240_OUTPUT_NAMESPACE_CID": (coordinate.output_namespace_cid),
         "HSSL_G240_EVIDENCE_PATH": physical.evidence.as_posix(),
-        "HSSL_G240_EXECUTION_REQUEST_PATH": (
-            physical.execution_request.as_posix()
-        ),
+        "HSSL_G240_EXECUTION_REQUEST_PATH": (physical.execution_request.as_posix()),
         "HSSL_G240_EXECUTION_REQUEST_CID": str(request.request_cid),
         "HSSL_G240_ENVIRONMENT_CID": contract.environment_cid,
-        "HSSL_G240_ENVIRONMENT_SHA256": (
-            contract.environment_sha256
-        ),
-        "HSSL_G240_CACHE_ROOTS_JSON": (
-            canonical_dag_json_bytes(cache_paths).decode("utf-8")
-        ),
+        "HSSL_G240_ENVIRONMENT_SHA256": (contract.environment_sha256),
+        "HSSL_G240_CACHE_ROOTS_JSON": (canonical_dag_json_bytes(cache_paths).decode("utf-8")),
         "HSSL_G240_CACHE_NAMESPACE_CIDS_JSON": (
-            canonical_dag_json_bytes(
-                dict(coordinate.cache_namespace_cids)
-            ).decode("utf-8")
+            canonical_dag_json_bytes(dict(coordinate.cache_namespace_cids)).decode("utf-8")
         ),
-        "HSSL_G240_GIT_EXECUTABLE_PATH": (
-            contract.git_executable_path
-        ),
-        "HSSL_G240_GIT_EXECUTABLE_CID": (
-            contract.git_executable_cid
-        ),
-        "HSSL_G240_CONFINEMENT_PROFILE_CID": (
-            contract.confinement_profile_cid
-        ),
+        "HSSL_G240_GIT_EXECUTABLE_PATH": (contract.git_executable_path),
+        "HSSL_G240_GIT_EXECUTABLE_CID": (contract.git_executable_cid),
+        "HSSL_G240_CONFINEMENT_PROFILE_CID": (contract.confinement_profile_cid),
         "HSSL_G240_EXPECTED_SOURCE_COMMIT": request.source_commit,
     }
     landlock_receipt: G240LandlockReceiptV1 | None = None
     landlock_receipt_payload: bytes | None = None
-    landlock_transport_observation: (
-        _G240LandlockTransportObservationV2 | None
-    ) = None
+    landlock_transport_observation: _G240LandlockTransportObservationV2 | None = None
     try:
         if synthetic:
-            process_environment[
-                _G240_SYNTHETIC_TEST_ENVIRONMENT_KEY_V2
-            ] = str(request.request_cid)
+            process_environment[_G240_SYNTHETIC_TEST_ENVIRONMENT_KEY_V2] = str(request.request_cid)
         else:
             try:
                 (
@@ -3683,9 +3177,7 @@ def run_g240_source_job_v2(
                 raise SourceRuntimeOrchestrationError(
                     "cannot create the dedicated G240 Landlock receipt pipe"
                 ) from exc
-            process_environment["HSSL_G240_LANDLOCK_RECEIPT_FD"] = str(
-                receipt_write_descriptor
-            )
+            process_environment["HSSL_G240_LANDLOCK_RECEIPT_FD"] = str(receipt_write_descriptor)
         try:
             process = run_bounded_process_group(
                 arguments,
@@ -3694,21 +3186,13 @@ def run_g240_source_job_v2(
                 cwd=worktree.worktree_root,
                 env=process_environment,
                 input_bytes=private_policy_input,
-                pass_fds=(
-                    ()
-                    if receipt_write_descriptor is None
-                    else (receipt_write_descriptor,)
-                ),
+                pass_fds=(() if receipt_write_descriptor is None else (receipt_write_descriptor,)),
             )
         finally:
             if receipt_write_descriptor is not None:
                 os.close(receipt_write_descriptor)
                 receipt_write_descriptor = None
-        if (
-            process.returncode != 0
-            or process.timed_out
-            or not process.process_group_reaped
-        ):
+        if process.returncode != 0 or process.timed_out or not process.process_group_reaped:
             raise SourceRuntimeOrchestrationError(
                 "G240 source command failed its bounded process contract: "
                 f"{process.termination_reason}"
@@ -3728,19 +3212,15 @@ def run_g240_source_job_v2(
                 owned_read_descriptor,
                 expected_policy=landlock_sources.policy,
             )
-            landlock_transport_observation = (
-                _G240LandlockTransportObservationV2(
-                    process_observation=process_observation,
-                    policy_sources=landlock_sources,
-                    receipt=landlock_receipt,
-                    receipt_payload=landlock_receipt_payload,
-                    close_fds=True,
-                    passed_descriptor_count=1,
-                    one_shot_atomic_frame=True,
-                    _capability=(
-                        _G240_LANDLOCK_TRANSPORT_CAPABILITY_V2
-                    ),
-                )
+            landlock_transport_observation = _G240LandlockTransportObservationV2(
+                process_observation=process_observation,
+                policy_sources=landlock_sources,
+                receipt=landlock_receipt,
+                receipt_payload=landlock_receipt_payload,
+                close_fds=True,
+                passed_descriptor_count=1,
+                one_shot_atomic_frame=True,
+                _capability=(_G240_LANDLOCK_TRANSPORT_CAPABILITY_V2),
             )
         elif receipt_read_descriptor is not None:
             raise SourceRuntimeOrchestrationError(
@@ -3755,17 +3235,13 @@ def run_g240_source_job_v2(
         physical.runtime_preflight,
         "G240 runtime import preflight",
     )
-    _runtime_preflight_cid, _bootstrap_receipt = (
-        _validate_runtime_preflight(
+    _runtime_preflight_cid, _bootstrap_receipt = _validate_runtime_preflight(
         preflight_value,
         request=request,
         contract=contract,
         landlock_sources=landlock_sources,
         landlock_receipt=landlock_receipt,
-        expected_gitlink_commit=worktree.submodule_commits.get(
-            "ipfs_accelerate_py"
-        ),
-        )
+        expected_gitlink_commit=worktree.submodule_commits.get("ipfs_accelerate_py"),
     )
     value, payload = _read_canonical_json(
         physical.evidence,
@@ -3784,9 +3260,7 @@ def run_g240_source_job_v2(
         launch_environment_sha256=contract.environment_sha256,
     )
     try:
-        runtime = validate_g240_runtime_for_execution_request_v2(
-            runtime, request
-        )
+        runtime = validate_g240_runtime_for_execution_request_v2(runtime, request)
     except (G240SourceExecutorError, TypeError, ValueError) as exc:
         raise SourceRuntimeOrchestrationError(
             "G240 source runtime differs from its execution request"
@@ -3833,15 +3307,9 @@ def run_g240_source_job_v2(
         runtime_preflight_payload=runtime_preflight_payload,
         evidence_payload=payload,
         process_observation=process_observation,
-        landlock_transport_observation=(
-            landlock_transport_observation
-        ),
-        orchestration_observer_identity_cid=(
-            orchestration_observer_identity_cid
-        ),
-        cache_namespace_created_exclusive=(
-            physical.cache_created_exclusive
-        ),
+        landlock_transport_observation=(landlock_transport_observation),
+        orchestration_observer_identity_cid=(orchestration_observer_identity_cid),
+        cache_namespace_created_exclusive=(physical.cache_created_exclusive),
     )
     sources = G240PrivateSourceValidationSourcesV2(
         policy=restored,
@@ -3859,12 +3327,8 @@ def run_g240_source_job_v2(
         evidence_payload=payload,
         process_result=process,
         process_observation=process_observation,
-        landlock_transport_observation=(
-            landlock_transport_observation
-        ),
-        cache_namespace_created_exclusive=(
-            physical.cache_created_exclusive
-        ),
+        landlock_transport_observation=(landlock_transport_observation),
+        cache_namespace_created_exclusive=(physical.cache_created_exclusive),
     )
     validate_g240_private_source_sources_v2(sources)
     return G240SourceExecutionResultV2(
@@ -3891,16 +3355,9 @@ class G240SourceOrchestrationEvidenceSetV2:
     evidence_set_cid: str | None = None
 
     def __post_init__(self) -> None:
-        if (
-            self.schema
-            != G240_SOURCE_ORCHESTRATION_EVIDENCE_SET_SCHEMA_V2
-        ):
-            raise SourceRuntimeOrchestrationError(
-                "unsupported G240 source evidence-set schema"
-            )
-        object.__setattr__(
-            self, "policy_cid", _cid(self.policy_cid, "policy_cid")
-        )
+        if self.schema != G240_SOURCE_ORCHESTRATION_EVIDENCE_SET_SCHEMA_V2:
+            raise SourceRuntimeOrchestrationError("unsupported G240 source evidence-set schema")
+        object.__setattr__(self, "policy_cid", _cid(self.policy_cid, "policy_cid"))
         object.__setattr__(
             self,
             "runtime_namespace_evidence_set_cid",
@@ -3910,11 +3367,7 @@ class G240SourceOrchestrationEvidenceSetV2:
             ),
         )
         plans = tuple(_cid(value, "plan_cid") for value in self.plan_cids)
-        if (
-            not plans
-            or plans != tuple(sorted(plans))
-            or len(plans) != len(set(plans))
-        ):
+        if not plans or plans != tuple(sorted(plans)) or len(plans) != len(set(plans)):
             raise SourceRuntimeOrchestrationError(
                 "source orchestration plan CIDs must be sorted and unique"
             )
@@ -3925,16 +3378,13 @@ class G240SourceOrchestrationEvidenceSetV2:
             else G240SourceOrchestrationReceiptV2.from_dict(item)
             for item in self.receipts
         )
-        order = tuple(
-            (item.plan_cid, item.job_id) for item in receipts
-        )
+        order = tuple((item.plan_cid, item.job_id) for item in receipts)
         if (
             not receipts
             or order != tuple(sorted(order))
             or len(order) != len(set(order))
             or any(
-                item.policy_cid != self.policy_cid
-                or item.plan_cid not in plans
+                item.policy_cid != self.policy_cid or item.plan_cid not in plans
                 for item in receipts
             )
         ):
@@ -3942,45 +3392,19 @@ class G240SourceOrchestrationEvidenceSetV2:
                 "source orchestration receipts are incomplete or foreign"
             )
         object.__setattr__(self, "receipts", receipts)
-        validator = _cid(
-            self.validator_identity_cid, "validator_identity_cid"
-        )
+        validator = _cid(self.validator_identity_cid, "validator_identity_cid")
         object.__setattr__(self, "validator_identity_cid", validator)
         authorities = {
             validator,
-            *(
-                receipt.executor_identity_cid
-                for receipt in receipts
-            ),
-            *(
-                receipt.namespace_observer_identity_cid
-                for receipt in receipts
-            ),
-            *(
-                receipt.orchestration_observer_identity_cid
-                for receipt in receipts
-            ),
+            *(receipt.executor_identity_cid for receipt in receipts),
+            *(receipt.namespace_observer_identity_cid for receipt in receipts),
+            *(receipt.orchestration_observer_identity_cid for receipt in receipts),
         }
         expected_count = (
             1
-            + len(
-                {
-                    receipt.executor_identity_cid
-                    for receipt in receipts
-                }
-            )
-            + len(
-                {
-                    receipt.namespace_observer_identity_cid
-                    for receipt in receipts
-                }
-            )
-            + len(
-                {
-                    receipt.orchestration_observer_identity_cid
-                    for receipt in receipts
-                }
-            )
+            + len({receipt.executor_identity_cid for receipt in receipts})
+            + len({receipt.namespace_observer_identity_cid for receipt in receipts})
+            + len({receipt.orchestration_observer_identity_cid for receipt in receipts})
         )
         if len(authorities) != expected_count:
             raise SourceRuntimeOrchestrationError(
@@ -3994,28 +3418,19 @@ class G240SourceOrchestrationEvidenceSetV2:
         if self.evidence_set_cid is None:
             object.__setattr__(self, "evidence_set_cid", expected)
         elif _cid(self.evidence_set_cid, "evidence_set_cid") != expected:
-            raise SourceRuntimeOrchestrationError(
-                "source orchestration evidence-set CID changed"
-            )
+            raise SourceRuntimeOrchestrationError("source orchestration evidence-set CID changed")
 
     @property
     def receipt_map(
         self,
     ) -> Mapping[tuple[str, str], G240SourceOrchestrationReceiptV2]:
-        return MappingProxyType(
-            {
-                (item.plan_cid, item.job_id): item
-                for item in self.receipts
-            }
-        )
+        return MappingProxyType({(item.plan_cid, item.job_id): item for item in self.receipts})
 
     def identity_payload(self) -> dict[str, object]:
         return {
             "schema": self.schema,
             "policy_cid": self.policy_cid,
-            "runtime_namespace_evidence_set_cid": (
-                self.runtime_namespace_evidence_set_cid
-            ),
+            "runtime_namespace_evidence_set_cid": (self.runtime_namespace_evidence_set_cid),
             "plan_cids": list(self.plan_cids),
             "receipts": [item.to_dict() for item in self.receipts],
             "validator_identity_cid": self.validator_identity_cid,
@@ -4031,9 +3446,7 @@ class G240SourceOrchestrationEvidenceSetV2:
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
-        data = _mapping(
-            value, "G240 source orchestration evidence set"
-        )
+        data = _mapping(value, "G240 source orchestration evidence set")
         _exact(
             data,
             set(cls.__dataclass_fields__),
@@ -4041,9 +3454,7 @@ class G240SourceOrchestrationEvidenceSetV2:
         )
         raw_plans = data["plan_cids"]
         raw_receipts = data["receipts"]
-        if not isinstance(raw_plans, list) or not isinstance(
-            raw_receipts, list
-        ):
+        if not isinstance(raw_plans, list) or not isinstance(raw_receipts, list):
             raise SourceRuntimeOrchestrationError(
                 "source orchestration plan/receipt fields must be arrays"
             )
@@ -4052,8 +3463,7 @@ class G240SourceOrchestrationEvidenceSetV2:
                 **data,
                 "plan_cids": tuple(raw_plans),
                 "receipts": tuple(
-                    G240SourceOrchestrationReceiptV2.from_dict(item)
-                    for item in raw_receipts
+                    G240SourceOrchestrationReceiptV2.from_dict(item) for item in raw_receipts
                 ),
             }
         )  # type: ignore[arg-type]
@@ -4061,9 +3471,7 @@ class G240SourceOrchestrationEvidenceSetV2:
 
 def build_g240_source_orchestration_evidence_set_v2(
     runtime_namespace_evidence_set: G240RuntimeNamespaceEvidenceSetV2,
-    validation_sources: Sequence[
-        G240PrivateSourceValidationSourcesV2
-    ],
+    validation_sources: Sequence[G240PrivateSourceValidationSourcesV2],
     *,
     validator_identity_cid: str,
 ) -> G240SourceOrchestrationEvidenceSetV2:
@@ -4079,13 +3487,8 @@ def build_g240_source_orchestration_evidence_set_v2(
     rebuilt_receipts: list[G240SourceOrchestrationReceiptV2] = []
     restored_policy: G240NamespacePolicyV2 | None = None
     for source in sources:
-        policy, _namespace_receipt, orchestration = (
-            validate_g240_private_source_sources_v2(source)
-        )
-        if (
-            restored_policy is not None
-            and policy.to_dict() != restored_policy.to_dict()
-        ):
+        policy, _namespace_receipt, orchestration = validate_g240_private_source_sources_v2(source)
+        if restored_policy is not None and policy.to_dict() != restored_policy.to_dict():
             raise SourceRuntimeOrchestrationError(
                 "source orchestration sources use different policies"
             )
@@ -4093,14 +3496,10 @@ def build_g240_source_orchestration_evidence_set_v2(
         plan_cid = _plan_cid(source.plan)
         existing = plans.setdefault(plan_cid, source.plan)
         if existing != source.plan:
-            raise SourceRuntimeOrchestrationError(
-                "source orchestration plan CID collision"
-            )
+            raise SourceRuntimeOrchestrationError("source orchestration plan CID collision")
         key = (plan_cid, source.job.job_id)
         if key in evidence:
-            raise SourceRuntimeOrchestrationError(
-                "duplicate source orchestration coordinate"
-            )
+            raise SourceRuntimeOrchestrationError("duplicate source orchestration coordinate")
         evidence[key] = source.runtime_evidence
         rebuilt_receipts.append(orchestration)
     assert restored_policy is not None
@@ -4111,9 +3510,7 @@ def build_g240_source_orchestration_evidence_set_v2(
                 runtime_namespace_evidence_set,
                 G240RuntimeNamespaceEvidenceSetV2,
             )
-            else G240RuntimeNamespaceEvidenceSetV2.from_dict(
-                runtime_namespace_evidence_set
-            )
+            else G240RuntimeNamespaceEvidenceSetV2.from_dict(runtime_namespace_evidence_set)
         )
         namespace_set = validate_g240_runtime_namespace_evidence_set_v2(
             namespace_set,
@@ -4129,23 +3526,14 @@ def build_g240_source_orchestration_evidence_set_v2(
             "runtime namespace evidence set failed source replay"
         ) from exc
     expected_keys = set(namespace_set.receipt_map)
-    actual_keys = {
-        (item.plan_cid, item.job_id)
-        for item in rebuilt_receipts
-    }
-    if (
-        namespace_set.policy.to_dict() != restored_policy.to_dict()
-        or actual_keys != expected_keys
-    ):
+    actual_keys = {(item.plan_cid, item.job_id) for item in rebuilt_receipts}
+    if namespace_set.policy.to_dict() != restored_policy.to_dict() or actual_keys != expected_keys:
         raise SourceRuntimeOrchestrationError(
-            "source orchestration population differs from G240 runtime "
-            "namespace evidence"
+            "source orchestration population differs from G240 runtime namespace evidence"
         )
     return G240SourceOrchestrationEvidenceSetV2(
         policy_cid=str(restored_policy.policy_cid),
-        runtime_namespace_evidence_set_cid=str(
-            namespace_set.evidence_set_cid
-        ),
+        runtime_namespace_evidence_set_cid=str(namespace_set.evidence_set_cid),
         plan_cids=tuple(sorted(plans)),
         receipts=tuple(
             sorted(
@@ -4163,9 +3551,7 @@ def validate_g240_source_orchestration_evidence_set_v2(
     value: object,
     *,
     runtime_namespace_evidence_set: G240RuntimeNamespaceEvidenceSetV2,
-    validation_sources: Sequence[
-        G240PrivateSourceValidationSourcesV2
-    ],
+    validation_sources: Sequence[G240PrivateSourceValidationSourcesV2],
 ) -> G240SourceOrchestrationEvidenceSetV2:
     """Rebuild a source orchestration evidence set from private sources."""
 

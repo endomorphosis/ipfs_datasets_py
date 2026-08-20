@@ -54,8 +54,16 @@ class MultiModelEmbeddingGenerator:
         self.models: Dict[str, Any] = {}
         self.tokenizers: Dict[str, Any] = {}
         self.model_configs = model_configs or [
-            {"name": "sentence-transformers/all-MiniLM-L6-v2", "dimension": 384, "type": "sentence"},
-            {"name": "sentence-transformers/multi-qa-mpnet-base-dot-v1", "dimension": 768, "type": "qa"},
+            {
+                "name": "sentence-transformers/all-MiniLM-L6-v2",
+                "dimension": 384,
+                "type": "sentence",
+            },
+            {
+                "name": "sentence-transformers/multi-qa-mpnet-base-dot-v1",
+                "dimension": 768,
+                "type": "qa",
+            },
         ]
         self.device = device
         self.cache_dir = cache_dir
@@ -95,10 +103,12 @@ class MultiModelEmbeddingGenerator:
         for config in self.model_configs:
             model_name = config["name"]
             try:
-                self.tokenizers[model_name] = AutoTokenizer.from_pretrained(model_name, cache_dir=self.cache_dir)
-                self.models[model_name] = AutoModel.from_pretrained(model_name, cache_dir=self.cache_dir).to(
-                    self.device
+                self.tokenizers[model_name] = AutoTokenizer.from_pretrained(
+                    model_name, cache_dir=self.cache_dir
                 )
+                self.models[model_name] = AutoModel.from_pretrained(
+                    model_name, cache_dir=self.cache_dir
+                ).to(self.device)
                 self.stats["models_loaded"] += 1
                 logging.info(f"Loaded model: {model_name}")
             except Exception as e:
@@ -134,7 +144,10 @@ class MultiModelEmbeddingGenerator:
         for model_name in models_to_use:
             try:
                 embeddings = self._batch_encode(
-                    model_name=model_name, chunks=all_chunks, batch_size=batch_size, normalize=normalize
+                    model_name=model_name,
+                    chunks=all_chunks,
+                    batch_size=batch_size,
+                    normalize=normalize,
                 )
                 result[model_name] = embeddings
             except Exception as e:
@@ -192,7 +205,9 @@ class MultiModelEmbeddingGenerator:
             chunks.append(current_chunk.strip())
         return chunks
 
-    def _batch_encode(self, model_name: str, chunks: List[str], batch_size: int, normalize: bool) -> List[np.ndarray]:
+    def _batch_encode(
+        self, model_name: str, chunks: List[str], batch_size: int, normalize: bool
+    ) -> List[np.ndarray]:
         # Router-first: lets callers choose local vs accelerate without changing code.
         if self.use_router:
             router_fn = _lazy_router_embed_texts() or embed_texts
@@ -220,7 +235,9 @@ class MultiModelEmbeddingGenerator:
             return embeddings
 
         if not HAS_TRANSFORMERS:
-            dimension = next((cfg["dimension"] for cfg in self.model_configs if cfg["name"] == model_name), 768)
+            dimension = next(
+                (cfg["dimension"] for cfg in self.model_configs if cfg["name"] == model_name), 768
+            )
             return [np.random.rand(dimension).astype(np.float32) for _ in chunks]
 
         # Local transformers fallback (only if router unavailable/disabled)
@@ -232,7 +249,9 @@ class MultiModelEmbeddingGenerator:
         all_embeddings: List[np.ndarray] = []
         for i in range(0, len(chunks), batch_size):
             batch_chunks = chunks[i : i + batch_size]
-            inputs = tokenizer(batch_chunks, padding=True, truncation=True, return_tensors="pt").to(self.device)
+            inputs = tokenizer(batch_chunks, padding=True, truncation=True, return_tensors="pt").to(
+                self.device
+            )
             with torch.no_grad():
                 outputs = model(**inputs)
 
@@ -257,7 +276,9 @@ class MultiModelEmbeddingGenerator:
 
         for i in range(num_chunks):
             chunk_embeddings = [embeddings[i] for _, embeddings in model_embeddings.items()]
-            normalized = [emb / np.linalg.norm(emb) for emb in chunk_embeddings if np.linalg.norm(emb) > 0]
+            normalized = [
+                emb / np.linalg.norm(emb) for emb in chunk_embeddings if np.linalg.norm(emb) > 0
+            ]
             if normalized:
                 fused_vector = np.concatenate(normalized)
                 norm = np.linalg.norm(fused_vector)
@@ -265,11 +286,18 @@ class MultiModelEmbeddingGenerator:
                     fused_vector = fused_vector / norm
                 fused.append(fused_vector.astype(np.float32))
             else:
-                fused.append(np.zeros(sum(emb.shape[0] for emb in chunk_embeddings), dtype=np.float32))
+                fused.append(
+                    np.zeros(sum(emb.shape[0] for emb in chunk_embeddings), dtype=np.float32)
+                )
 
         return fused
 
-    def store_on_ipfs(self, embeddings: Dict[str, List[np.ndarray]], metadata: Optional[Dict[str, Any]] = None, ipfs_client=None):
+    def store_on_ipfs(
+        self,
+        embeddings: Dict[str, List[np.ndarray]],
+        metadata: Optional[Dict[str, Any]] = None,
+        ipfs_client=None,
+    ):
         if ipfs_client is None:
             logging.warning("IPFS client not provided. Generating CIDs locally.")
             return {model_name: f"bafy..{uuid.uuid4().hex[:16]}" for model_name in embeddings}
@@ -303,7 +331,9 @@ class MultiModelEmbeddingGenerator:
             try:
                 block_data = ipfs_client.get_bytes(cid)
                 model_data = json.loads(block_data.decode())
-                result[model_name] = [np.array(emb, dtype=np.float32) for emb in model_data["embeddings"]]
+                result[model_name] = [
+                    np.array(emb, dtype=np.float32) for emb in model_data["embeddings"]
+                ]
             except Exception as e:
                 logging.error(f"Error loading embeddings for {model_name} from IPFS: {str(e)}")
         return result

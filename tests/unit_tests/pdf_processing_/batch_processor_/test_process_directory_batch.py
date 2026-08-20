@@ -12,7 +12,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -25,8 +25,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_proces
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 import pytest
 import json
@@ -47,13 +51,15 @@ from ipfs_datasets_py.pdf_processing.batch_processor import (
     BatchProcessor,
     ProcessingJob,
     BatchJobResult,
-    BatchStatus
+    BatchStatus,
 )
 
 import pytest
 from datetime import datetime
 from ipfs_datasets_py.pdf_processing.batch_processor import (
-    ProcessingJob, BatchJobResult, BatchStatus
+    ProcessingJob,
+    BatchJobResult,
+    BatchStatus,
 )
 
 
@@ -75,7 +81,6 @@ assert BatchProcessor.stop_processing
 assert BatchProcessor._get_resource_usage
 assert BatchProcessor.get_processing_statistics
 assert BatchProcessor.export_batch_results
-
 
 
 class TestProcessDirectoryBatch:
@@ -100,7 +105,9 @@ class TestProcessDirectoryBatch:
             yield temp_dir
 
     @pytest.mark.asyncio
-    async def test_process_directory_batch_basic_functionality(self, mock_batch_processor, temp_pdf_directory):
+    async def test_process_directory_batch_basic_functionality(
+        self, mock_batch_processor, temp_pdf_directory
+    ):
         """
         GIVEN a directory containing multiple PDF files
         AND a properly configured BatchProcessor instance
@@ -112,24 +119,25 @@ class TestProcessDirectoryBatch:
          - Pass appropriate metadata including source directory information
         """
         batch_id = await process_directory_batch(
-            directory_path=temp_pdf_directory,
-            batch_processor=mock_batch_processor
+            directory_path=temp_pdf_directory, batch_processor=mock_batch_processor
         )
-        
+
         # Verify batch_processor.process_batch was called
         mock_batch_processor.process_batch.assert_called_once()
         call_args = mock_batch_processor.process_batch.call_args
-        
+
         # Extract the pdf_paths argument
-        pdf_paths = call_args[0][0] if call_args[0] else call_args.kwargs.get('pdf_paths', [])
-        
+        pdf_paths = call_args[0][0] if call_args[0] else call_args.kwargs.get("pdf_paths", [])
+
         # Should find 4 PDF files (doc1.pdf, doc2.pdf, report_001.pdf, report_002.pdf)
         assert len(pdf_paths) == 4
-        assert all(str(path).endswith('.pdf') for path in pdf_paths)
+        assert all(str(path).endswith(".pdf") for path in pdf_paths)
         assert batch_id == "batch_abc123"
 
     @pytest.mark.asyncio
-    async def test_process_directory_batch_with_custom_pattern(self, mock_batch_processor, temp_pdf_directory):
+    async def test_process_directory_batch_with_custom_pattern(
+        self, mock_batch_processor, temp_pdf_directory
+    ):
         """
         GIVEN a directory containing PDF files with different naming patterns
         AND a custom file pattern "report_*.pdf"
@@ -142,19 +150,21 @@ class TestProcessDirectoryBatch:
         batch_id = await process_directory_batch(
             directory_path=temp_pdf_directory,
             batch_processor=mock_batch_processor,
-            file_pattern="report_*.pdf"
+            file_pattern="report_*.pdf",
         )
-        
+
         call_args = mock_batch_processor.process_batch.call_args
-        pdf_paths = call_args[0][0] if call_args[0] else call_args.kwargs.get('pdf_paths', [])
-        
+        pdf_paths = call_args[0][0] if call_args[0] else call_args.kwargs.get("pdf_paths", [])
+
         # Should find only 2 report PDF files
         assert len(pdf_paths) == 2
         assert all("report_" in str(path) for path in pdf_paths)
         assert batch_id == "batch_abc123"
 
     @pytest.mark.asyncio
-    async def test_process_directory_batch_with_max_files_limit(self, mock_batch_processor, temp_pdf_directory):
+    async def test_process_directory_batch_with_max_files_limit(
+        self, mock_batch_processor, temp_pdf_directory
+    ):
         """
         GIVEN a directory containing 4 PDF files
         AND max_files parameter set to 2
@@ -166,14 +176,12 @@ class TestProcessDirectoryBatch:
          - Select files in directory listing order
         """
         batch_id = await process_directory_batch(
-            directory_path=temp_pdf_directory,
-            batch_processor=mock_batch_processor,
-            max_files=2
+            directory_path=temp_pdf_directory, batch_processor=mock_batch_processor, max_files=2
         )
-        
+
         call_args = mock_batch_processor.process_batch.call_args
-        pdf_paths = call_args[0][0] if call_args[0] else call_args.kwargs.get('pdf_paths', [])
-        
+        pdf_paths = call_args[0][0] if call_args[0] else call_args.kwargs.get("pdf_paths", [])
+
         # Should process exactly 2 files despite 4 being available
         assert len(pdf_paths) == 2
         assert batch_id == "batch_abc123"
@@ -189,13 +197,12 @@ class TestProcessDirectoryBatch:
          - Provide clear indication of the missing directory
         """
         nonexistent_path = "/path/that/does/not/exist"
-        
+
         with pytest.raises(ValueError) as exc_info:
             await process_directory_batch(
-                directory_path=nonexistent_path,
-                batch_processor=mock_batch_processor
+                directory_path=nonexistent_path, batch_processor=mock_batch_processor
             )
-        
+
         assert "does not exist" in str(exc_info.value).lower()
         mock_batch_processor.process_batch.assert_not_called()
 
@@ -212,15 +219,16 @@ class TestProcessDirectoryBatch:
         with tempfile.TemporaryDirectory() as empty_dir:
             with pytest.raises(ValueError) as exc_info:
                 await process_directory_batch(
-                    directory_path=empty_dir,
-                    batch_processor=mock_batch_processor
+                    directory_path=empty_dir, batch_processor=mock_batch_processor
                 )
-            
+
             assert "no matching files found" in str(exc_info.value).lower()
             mock_batch_processor.process_batch.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_process_directory_batch_directory_with_no_matching_files(self, mock_batch_processor):
+    async def test_process_directory_batch_directory_with_no_matching_files(
+        self, mock_batch_processor
+    ):
         """
         GIVEN a directory containing files but no PDF files
         WHEN process_directory_batch is called with default PDF pattern
@@ -233,13 +241,12 @@ class TestProcessDirectoryBatch:
             # Create non-PDF files
             (Path(temp_dir) / "document.txt").write_text("text content")
             (Path(temp_dir) / "image.jpg").write_text("image content")
-            
+
             with pytest.raises(ValueError) as exc_info:
                 await process_directory_batch(
-                    directory_path=temp_dir,
-                    batch_processor=mock_batch_processor
+                    directory_path=temp_dir, batch_processor=mock_batch_processor
                 )
-            
+
             assert "no matching files found" in str(exc_info.value).lower()
             mock_batch_processor.process_batch.assert_not_called()
 
@@ -255,17 +262,18 @@ class TestProcessDirectoryBatch:
          - Provide clear error about expected processor type
         """
         invalid_processor = "not a batch processor"
-        
+
         with pytest.raises(TypeError) as exc_info:
             await process_directory_batch(
-                directory_path=temp_pdf_directory,
-                batch_processor=invalid_processor
+                directory_path=temp_pdf_directory, batch_processor=invalid_processor
             )
-        
+
         assert "BatchProcessor" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_process_directory_batch_negative_max_files(self, mock_batch_processor, temp_pdf_directory):
+    async def test_process_directory_batch_negative_max_files(
+        self, mock_batch_processor, temp_pdf_directory
+    ):
         """
         GIVEN a valid directory with PDF files
         AND max_files parameter set to a negative value
@@ -279,14 +287,16 @@ class TestProcessDirectoryBatch:
             await process_directory_batch(
                 directory_path=temp_pdf_directory,
                 batch_processor=mock_batch_processor,
-                max_files=-1
+                max_files=-1,
             )
-        
+
         assert "positive" in str(exc_info.value).lower()
         mock_batch_processor.process_batch.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_process_directory_batch_zero_max_files(self, mock_batch_processor, temp_pdf_directory):
+    async def test_process_directory_batch_zero_max_files(
+        self, mock_batch_processor, temp_pdf_directory
+    ):
         """
         GIVEN a valid directory with PDF files
         AND max_files parameter set to zero
@@ -298,11 +308,9 @@ class TestProcessDirectoryBatch:
         """
         with pytest.raises(ValueError) as exc_info:
             await process_directory_batch(
-                directory_path=temp_pdf_directory,
-                batch_processor=mock_batch_processor,
-                max_files=0
+                directory_path=temp_pdf_directory, batch_processor=mock_batch_processor, max_files=0
             )
-        
+
         assert "positive" in str(exc_info.value).lower()
         mock_batch_processor.process_batch.assert_not_called()
 
@@ -316,18 +324,19 @@ class TestProcessDirectoryBatch:
          - Handle file system permission issues gracefully
          - Not call the batch processor
         """
-        with patch('pathlib.Path.glob', side_effect=PermissionError("Permission denied")):
+        with patch("pathlib.Path.glob", side_effect=PermissionError("Permission denied")):
             with tempfile.TemporaryDirectory() as temp_dir:
                 with pytest.raises(PermissionError):
                     await process_directory_batch(
-                        directory_path=temp_dir,
-                        batch_processor=mock_batch_processor
+                        directory_path=temp_dir, batch_processor=mock_batch_processor
                     )
-                
+
                 mock_batch_processor.process_batch.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_process_directory_batch_metadata_inclusion(self, mock_batch_processor, temp_pdf_directory):
+    async def test_process_directory_batch_metadata_inclusion(
+        self, mock_batch_processor, temp_pdf_directory
+    ):
         """
         GIVEN a directory with PDF files
         WHEN process_directory_batch is called successfully
@@ -341,20 +350,22 @@ class TestProcessDirectoryBatch:
             directory_path=temp_pdf_directory,
             batch_processor=mock_batch_processor,
             file_pattern="*.pdf",
-            max_files=None
+            max_files=None,
         )
-        
+
         call_args = mock_batch_processor.process_batch.call_args
-        batch_metadata = call_args.kwargs.get('batch_metadata', {})
-        
+        batch_metadata = call_args.kwargs.get("batch_metadata", {})
+
         # Verify metadata includes source directory information
-        assert 'source_directory' in batch_metadata
-        assert batch_metadata['source_directory'] == temp_pdf_directory
-        assert 'file_pattern' in batch_metadata
-        assert batch_metadata['file_pattern'] == "*.pdf"
+        assert "source_directory" in batch_metadata
+        assert batch_metadata["source_directory"] == temp_pdf_directory
+        assert "file_pattern" in batch_metadata
+        assert batch_metadata["file_pattern"] == "*.pdf"
 
     @pytest.mark.asyncio
-    async def test_process_directory_batch_path_object_support(self, mock_batch_processor, temp_pdf_directory):
+    async def test_process_directory_batch_path_object_support(
+        self, mock_batch_processor, temp_pdf_directory
+    ):
         """
         GIVEN a directory path provided as a Path object instead of string
         WHEN process_directory_batch is called
@@ -364,12 +375,11 @@ class TestProcessDirectoryBatch:
          - Convert paths appropriately for internal processing
         """
         path_object = Path(temp_pdf_directory)
-        
+
         batch_id = await process_directory_batch(
-            directory_path=path_object,
-            batch_processor=mock_batch_processor
+            directory_path=path_object, batch_processor=mock_batch_processor
         )
-        
+
         mock_batch_processor.process_batch.assert_called_once()
         assert batch_id == "batch_abc123"
 
@@ -389,21 +399,20 @@ class TestProcessDirectoryBatch:
             files = ["doc1.pdf", "doc2.pdf", "report2024.pdf", "report2025.pdf", "summary.pdf"]
             for filename in files:
                 (Path(temp_dir) / filename).write_text("content")
-            
+
             # Test pattern matching files with numbers
             batch_id = await process_directory_batch(
                 directory_path=temp_dir,
                 batch_processor=mock_batch_processor,
-                file_pattern="*[0-9]*.pdf"
+                file_pattern="*[0-9]*.pdf",
             )
-            
+
             call_args = mock_batch_processor.process_batch.call_args
-            pdf_paths = call_args[0][0] if call_args[0] else call_args.kwargs.get('pdf_paths', [])
-            
+            pdf_paths = call_args[0][0] if call_args[0] else call_args.kwargs.get("pdf_paths", [])
+
             # Should match report2024.pdf, report2025.pdf, doc1.pdf, doc2.pdf
             assert len(pdf_paths) == 4
             assert batch_id == "batch_abc123"
-
 
 
 if __name__ == "__main__":

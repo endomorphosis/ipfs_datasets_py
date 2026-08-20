@@ -3,6 +3,7 @@
 Covers: from_ontology(), field computations, edge cases,
 generate_ontology_rich() integration, and public import.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -60,9 +61,7 @@ class TestOntologyGenerationResultFromOntology:
         assert result.entity_count == 5
 
     def test_relationship_count_correct(self, ontology_builder):
-        result = OntologyGenerationResult.from_ontology(
-            ontology_builder(n_entities=4, n_rels=3)
-        )
+        result = OntologyGenerationResult.from_ontology(ontology_builder(n_entities=4, n_rels=3))
         assert result.relationship_count == 3
 
     def test_entity_type_diversity_correct(self):
@@ -171,4 +170,5 @@ class TestGenerateOntologyRich:
 class TestPublicImport:
     def test_importable_from_graphrag(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyGenerationResult  # noqa: F401
+
         assert OntologyGenerationResult is not None

@@ -42,8 +42,7 @@ def test_compile_differential_report_detects_injected_temporal_mismatch() -> Non
     assert report["summary"]["has_inconsistencies"] is True
     assert report["summary"]["inconsistency_count"] >= 1
     assert any(
-        isinstance(item, dict)
-        and item.get("checks", {}).get("temporal_guard_consistent") is False
+        isinstance(item, dict) and item.get("checks", {}).get("temporal_guard_consistent") is False
         for item in report["inconsistencies"]
     )
 

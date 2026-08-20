@@ -128,10 +128,10 @@ print(df.info())
 print(df.head())
 
 # Check specific columns
-print(df[['statute_id', 'official_cite', 'legal_area']])
+print(df[["statute_id", "official_cite", "legal_area"]])
 
 # Filter by legal area
-criminal = df[df['legal_area'] == 'criminal']
+criminal = df[df["legal_area"] == "criminal"]
 print(f"Criminal statutes: {len(criminal)}")
 ```
 

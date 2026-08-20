@@ -14,7 +14,9 @@ from typing import Any, Dict, List
 logger = logging.getLogger(__name__)
 
 
-def initialize_municipal_codes_job(parameters: Dict[str, Any], *, tool_version: str = "1.0.0") -> Dict[str, Any]:
+def initialize_municipal_codes_job(
+    parameters: Dict[str, Any], *, tool_version: str = "1.0.0"
+) -> Dict[str, Any]:
     jurisdiction = parameters.get("jurisdiction")
     jurisdictions = parameters.get("jurisdictions")
 

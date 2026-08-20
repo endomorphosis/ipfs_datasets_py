@@ -13,4 +13,4 @@ Components:
 
 from .unixfs import UnixFSHandler
 
-__all__ = ['UnixFSHandler']
+__all__ = ["UnixFSHandler"]

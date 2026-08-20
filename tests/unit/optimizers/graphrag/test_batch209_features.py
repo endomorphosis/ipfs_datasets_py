@@ -10,11 +10,13 @@ Methods under test:
   - OntologyLearningAdapter.feedback_z_score_last()
   - OntologyMediator.action_uniformity_index()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -27,11 +29,13 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_entity(eid, properties=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, properties=properties or {})
 
 
@@ -44,6 +48,7 @@ def _make_rel_mock(source_id="src", target_id="tgt"):
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -53,16 +58,19 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -73,21 +81,27 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 # ── OntologyOptimizer.history_rank_of_last ───────────────────────────────────
+
 
 class TestHistoryRankOfLast:
     def test_empty_returns_zero(self):
@@ -114,6 +128,7 @@ class TestHistoryRankOfLast:
 
 # ── OntologyOptimizer.score_nearest_neighbor_delta ───────────────────────────
 
+
 class TestScoreNearestNeighborDelta:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -139,6 +154,7 @@ class TestScoreNearestNeighborDelta:
 
 # ── OntologyGenerator.entity_multi_property_count ────────────────────────────
 
+
 class TestEntityMultiPropertyCount:
     def test_empty_returns_zero(self):
         g = _make_generator()
@@ -147,23 +163,28 @@ class TestEntityMultiPropertyCount:
 
     def test_no_multi_property_entities(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("a", {"x": 1}),
-            _make_entity("b", {}),
-        ])
+        r = _make_result(
+            [
+                _make_entity("a", {"x": 1}),
+                _make_entity("b", {}),
+            ]
+        )
         assert g.entity_multi_property_count(r) == 0
 
     def test_counts_multi_property(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("a", {"x": 1, "y": 2}),
-            _make_entity("b", {"z": 3}),
-            _make_entity("c", {"p": 4, "q": 5, "r": 6}),
-        ])
+        r = _make_result(
+            [
+                _make_entity("a", {"x": 1, "y": 2}),
+                _make_entity("b", {"z": 3}),
+                _make_entity("c", {"p": 4, "q": 5, "r": 6}),
+            ]
+        )
         assert g.entity_multi_property_count(r) == 2
 
 
 # ── OntologyGenerator.relationship_avg_id_pair_length ────────────────────────
+
 
 class TestRelationshipAvgIdPairLength:
     def test_empty_returns_zero(self):
@@ -187,6 +208,7 @@ class TestRelationshipAvgIdPairLength:
 
 # ── LogicValidator.has_disconnected_subgraphs ─────────────────────────────────
 
+
 class TestHasDisconnectedSubgraphs:
     def test_empty_is_not_disconnected(self):
         v = _make_validator()
@@ -199,14 +221,17 @@ class TestHasDisconnectedSubgraphs:
 
     def test_two_components_true(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "a", "target": "b"},
-            {"source": "c", "target": "d"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "a", "target": "b"},
+                {"source": "c", "target": "d"},
+            ]
+        }
         assert v.has_disconnected_subgraphs(onto) is True
 
 
 # ── OntologyPipeline.run_score_max_run ───────────────────────────────────────
+
 
 class TestRunScoreMaxRun:
     def test_empty_returns_zero(self):
@@ -234,6 +259,7 @@ class TestRunScoreMaxRun:
 
 # ── OntologyLearningAdapter.feedback_z_score_last ─────────────────────────────
 
+
 class TestFeedbackZScoreLast:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -259,6 +285,7 @@ class TestFeedbackZScoreLast:
 
 
 # ── OntologyMediator.action_uniformity_index ──────────────────────────────────
+
 
 class TestActionUniformityIndex:
     def test_empty_returns_zero(self):

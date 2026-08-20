@@ -19,7 +19,9 @@ THEN:
 import pathlib
 import unittest
 
-_KG_DIR = pathlib.Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "knowledge_graphs"
+_KG_DIR = (
+    pathlib.Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "knowledge_graphs"
+)
 _DOCS_KG = pathlib.Path(__file__).parent.parent.parent.parent / "docs" / "knowledge_graphs"
 
 _INDEX_PATH = _DOCS_KG / "INDEX.md"
@@ -41,16 +43,18 @@ class TestIndexMdVersionUpdate(unittest.TestCase):
 
     def test_index_has_current_module_version(self):
         """INDEX.md must declare Module Version 3.22.15 (updated from 2.0.0 in session 61)."""
-        self.assertIn("3.22.15", self._text,
-                      "INDEX.md must contain '3.22.15' after session 61 update")
+        self.assertIn(
+            "3.22.15", self._text, "INDEX.md must contain '3.22.15' after session 61 update"
+        )
 
     def test_index_stale_version_2_0_0_not_in_version_header(self):
         """The old stale 'Module Version: 2.0.0' heading should no longer appear."""
         # Check the specific header line (could appear in version history row as '2.0.0' — that is OK)
         for line in self._text.splitlines():
             if "Module Version" in line and "**" in line:
-                self.assertNotIn("2.0.0", line,
-                                 "INDEX.md 'Module Version' heading should not say 2.0.0")
+                self.assertNotIn(
+                    "2.0.0", line, "INDEX.md 'Module Version' heading should not say 2.0.0"
+                )
                 break
 
     def test_index_footer_not_v2_0_0(self):
@@ -61,7 +65,7 @@ class TestIndexMdVersionUpdate(unittest.TestCase):
                 # Allow in version-history table rows (contains pipe chars)
                 if "|" not in line:
                     self.fail(
-                        f"INDEX.md line {i+1}: non-table 'Module Version: 2.0.0' should be gone: {line!r}"
+                        f"INDEX.md line {i + 1}: non-table 'Module Version: 2.0.0' should be gone: {line!r}"
                     )
 
 
@@ -73,23 +77,23 @@ class TestIndexMdCoverageUpdate(unittest.TestCase):
 
     def test_index_has_99_99_coverage(self):
         """INDEX.md must say 99.99% somewhere (test coverage stat)."""
-        self.assertIn("99.99%", self._text,
-                      "INDEX.md must contain '99.99%' test coverage stat")
+        self.assertIn("99.99%", self._text, "INDEX.md must contain '99.99%' test coverage stat")
 
     def test_index_has_3743_tests(self):
         """INDEX.md must reference 3,743+ tests."""
-        self.assertIn("3,743", self._text,
-                      "INDEX.md must mention 3,743+ tests in statistics section")
+        self.assertIn(
+            "3,743", self._text, "INDEX.md must mention 3,743+ tests in statistics section"
+        )
 
     def test_index_stale_75_percent_gone_from_stats(self):
         """The old '75% overall, 116+ tests' stat line should be gone."""
-        self.assertNotIn("75% overall", self._text,
-                         "INDEX.md should not still say '75% overall' test coverage")
+        self.assertNotIn(
+            "75% overall", self._text, "INDEX.md should not still say '75% overall' test coverage"
+        )
 
     def test_index_stale_116_plus_tests_gone(self):
         """The old '116+ tests' stat should be gone."""
-        self.assertNotIn("116+ tests", self._text,
-                         "INDEX.md should not still say '116+ tests'")
+        self.assertNotIn("116+ tests", self._text, "INDEX.md should not still say '116+ tests'")
 
 
 class TestIndexMdModuleStatusSection(unittest.TestCase):
@@ -100,28 +104,35 @@ class TestIndexMdModuleStatusSection(unittest.TestCase):
 
     def test_index_current_state_header_is_updated(self):
         """'Current State' heading in INDEX.md must reference v3.22.15."""
-        self.assertIn("v3.22.15", self._text,
-                      "INDEX.md 'Current State' heading should reference v3.22.15")
+        self.assertIn(
+            "v3.22.15", self._text, "INDEX.md 'Current State' heading should reference v3.22.15"
+        )
 
     def test_index_stale_migration_warning_removed(self):
         """The stale '⚠️ Migration Module: Needs test coverage improvement' line must be gone."""
-        self.assertNotIn("Needs test coverage improvement", self._text,
-                         "INDEX.md should not show stale migration warning (migration is 100%)")
+        self.assertNotIn(
+            "Needs test coverage improvement",
+            self._text,
+            "INDEX.md should not show stale migration warning (migration is 100%)",
+        )
 
     def test_index_no_stale_next_version_v2_0_1(self):
         """The stale 'Next Version (v2.0.1 - Q2 2026)' heading must be gone."""
-        self.assertNotIn("v2.0.1 - Q2 2026", self._text,
-                         "INDEX.md should not still list v2.0.1 as next version")
+        self.assertNotIn(
+            "v2.0.1 - Q2 2026", self._text, "INDEX.md should not still list v2.0.1 as next version"
+        )
 
     def test_index_version_history_has_3_22_15(self):
         """INDEX.md version history table should include a v3.22.15 row."""
-        self.assertIn("3.22.15", self._text,
-                      "INDEX.md version history should contain a v3.22.15 row")
+        self.assertIn(
+            "3.22.15", self._text, "INDEX.md version history should contain a v3.22.15 row"
+        )
 
     def test_index_last_updated_is_2026_02_22(self):
         """INDEX.md 'Last Updated' footer must be 2026-02-22."""
-        self.assertIn("2026-02-22", self._text,
-                      "INDEX.md Last Updated footer should say 2026-02-22")
+        self.assertIn(
+            "2026-02-22", self._text, "INDEX.md Last Updated footer should say 2026-02-22"
+        )
 
 
 class TestReadmeMdVersionUpdate(unittest.TestCase):
@@ -132,21 +143,22 @@ class TestReadmeMdVersionUpdate(unittest.TestCase):
 
     def test_readme_has_current_version(self):
         """README.md must declare **Version:** 3.22.15."""
-        self.assertIn("3.22.15", self._text,
-                      "README.md must contain '3.22.15' after session 61 update")
+        self.assertIn(
+            "3.22.15", self._text, "README.md must contain '3.22.15' after session 61 update"
+        )
 
     def test_readme_stale_version_2_1_0_not_in_version_line(self):
         """README.md version header should not say 2.1.0."""
         for line in self._text.splitlines():
             if line.strip().startswith("**Version:**"):
-                self.assertNotIn("2.1.0", line,
-                                 "README.md **Version:** header should not say 2.1.0")
+                self.assertNotIn(
+                    "2.1.0", line, "README.md **Version:** header should not say 2.1.0"
+                )
                 break
 
     def test_readme_last_updated_is_2026_02_22(self):
         """README.md 'Last Updated' must be 2026-02-22."""
-        self.assertIn("2026-02-22", self._text,
-                      "README.md Last Updated should say 2026-02-22")
+        self.assertIn("2026-02-22", self._text, "README.md Last Updated should say 2026-02-22")
 
 
 class TestRoadmapCurrentVersionUpdate(unittest.TestCase):
@@ -165,21 +177,38 @@ class TestRoadmapCurrentVersionUpdate(unittest.TestCase):
         """ROADMAP.md 'Current Version' header line must say 3.22.15 or later."""
         cv_line = self._current_version_line()
         self.assertTrue(
-            any(v in cv_line for v in ("3.22.15", "3.22.16", "3.22.17", "3.22.18", "3.22.19", "3.22.20",
-                                       "3.22.21", "3.22.22", "3.22.23", "3.22.24")),
-            f"ROADMAP.md 'Current Version' should be 3.22.15 or later; got: {cv_line!r}"
+            any(
+                v in cv_line
+                for v in (
+                    "3.22.15",
+                    "3.22.16",
+                    "3.22.17",
+                    "3.22.18",
+                    "3.22.19",
+                    "3.22.20",
+                    "3.22.21",
+                    "3.22.22",
+                    "3.22.23",
+                    "3.22.24",
+                )
+            ),
+            f"ROADMAP.md 'Current Version' should be 3.22.15 or later; got: {cv_line!r}",
         )
 
     def test_roadmap_current_version_not_still_3_22_14(self):
         """ROADMAP.md 'Current Version' header line must not still say 3.22.14."""
         cv_line = self._current_version_line()
-        self.assertNotIn("3.22.14", cv_line,
-                         f"ROADMAP.md 'Current Version' should be updated from 3.22.14; got: {cv_line!r}")
+        self.assertNotIn(
+            "3.22.14",
+            cv_line,
+            f"ROADMAP.md 'Current Version' should be updated from 3.22.14; got: {cv_line!r}",
+        )
 
     def test_roadmap_3_22_14_still_in_release_table(self):
         """3.22.14 must still appear in ROADMAP.md release table (backward-compat for session59 test)."""
-        self.assertIn("3.22.14", self._text,
-                      "3.22.14 must still appear in ROADMAP.md release table")
+        self.assertIn(
+            "3.22.14", self._text, "3.22.14 must still appear in ROADMAP.md release table"
+        )
 
 
 class TestThreeDocVersionAgreement(unittest.TestCase):
@@ -198,9 +227,22 @@ class TestThreeDocVersionAgreement(unittest.TestCase):
         for line in _read(_ROADMAP_PATH).splitlines():
             if "Current Version" in line:
                 self.assertTrue(
-                    any(v in line for v in ("3.22.15", "3.22.16", "3.22.17", "3.22.18", "3.22.19", "3.22.20",
-                                           "3.22.21", "3.22.22", "3.22.23", "3.22.24")),
-                    f"ROADMAP.md 'Current Version' should be 3.22.15+; got: {line!r}"
+                    any(
+                        v in line
+                        for v in (
+                            "3.22.15",
+                            "3.22.16",
+                            "3.22.17",
+                            "3.22.18",
+                            "3.22.19",
+                            "3.22.20",
+                            "3.22.21",
+                            "3.22.22",
+                            "3.22.23",
+                            "3.22.24",
+                        )
+                    ),
+                    f"ROADMAP.md 'Current Version' should be 3.22.15+; got: {line!r}",
                 )
                 return
         self.fail("ROADMAP.md has no 'Current Version' line")

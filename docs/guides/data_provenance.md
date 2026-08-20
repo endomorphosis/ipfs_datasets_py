@@ -17,7 +17,7 @@ source_id = manager.record_source(
     source_type="file",
     format="csv",
     location="/path/to/data.csv",
-    description="Original dataset from source"
+    description="Original dataset from source",
 )
 
 # Record a transformation
@@ -27,7 +27,7 @@ transform_id = manager.record_transformation(
     transformation_type="clean",
     tool="pandas",
     parameters={"drop_na": True},
-    description="Clean dataset by removing NA values"
+    description="Clean dataset by removing NA values",
 )
 
 # Record a merge operation
@@ -36,7 +36,7 @@ merge_id = manager.record_merge(
     output_id="merged_dataset",
     merge_type="inner_join",
     parameters={"on": "id"},
-    description="Merge datasets by ID"
+    description="Merge datasets by ID",
 )
 
 # Get lineage of a data entity
@@ -62,7 +62,7 @@ manager = EnhancedProvenanceManager(
     tracking_level="detailed",  # Options: minimal, standard, detailed, comprehensive
     visualization_engine="plotly",  # Options: matplotlib, plotly, dash
     enable_crypto_verification=True,  # Enable cryptographic verification
-    ipfs_api="/ip4/127.0.0.1/tcp/5001"  # IPFS API endpoint
+    ipfs_api="/ip4/127.0.0.1/tcp/5001",  # IPFS API endpoint
 )
 
 # Additional record types
@@ -72,7 +72,7 @@ verify_id = manager.record_verification(
     schema={"id": "integer", "name": "string"},
     pass_count=1000,
     fail_count=0,
-    description="Verify dataset schema"
+    description="Verify dataset schema",
 )
 
 # Semantic search
@@ -83,22 +83,21 @@ for result in results:
 # Time-based query
 yesterday = time.time() - 86400
 records = manager.temporal_query(
-    start_time=yesterday,
-    time_bucket="hourly",
-    record_types=["transformation", "merge"]
+    start_time=yesterday, time_bucket="hourly", record_types=["transformation", "merge"]
 )
 
 # Enhanced temporal query with precise date filtering
 import datetime
+
 records = manager.temporal_query(
     start_time=datetime.datetime(2023, 1, 1),  # Supports datetime objects
-    end_time=datetime.datetime(2023, 6, 30),   # End date (inclusive)
-    time_bucket="daily",                       # Daily aggregation
+    end_time=datetime.datetime(2023, 6, 30),  # End date (inclusive)
+    time_bucket="daily",  # Daily aggregation
     record_types=["source", "transformation", "verification"],
     data_ids=["dataset_1", "processed_dataset"],  # Filter by data IDs
-    include_metadata=True,                     # Include full metadata
-    sort_by="timestamp",                       # Sort results by timestamp
-    sort_order="descending"                    # Most recent first
+    include_metadata=True,  # Include full metadata
+    sort_by="timestamp",  # Sort results by timestamp
+    sort_order="descending",  # Most recent first
 )
 
 # Advanced lineage tracking with detailed traversal control
@@ -110,15 +109,14 @@ downstream = manager.traverse_provenance(
     record_id="raw_data",
     max_depth=3,
     direction="out",  # Only follow downstream (outputs)
-    relation_filter=["transformation", "verification"]  # Only specific relation types
+    relation_filter=["transformation", "verification"],  # Only specific relation types
 )
 print(f"Downstream traversal has {len(downstream.nodes)} nodes")
 
 # Incremental loading for large provenance graphs
-recent_transformations = manager.incremental_load_provenance({
-    "time_start": yesterday,
-    "record_types": ["transformation"]
-})
+recent_transformations = manager.incremental_load_provenance(
+    {"time_start": yesterday, "record_types": ["transformation"]}
+)
 
 # Enhanced visualization
 manager.visualize_provenance_enhanced(
@@ -129,7 +127,7 @@ manager.visualize_provenance_enhanced(
     layout="hierarchical",
     highlight_critical_path=True,
     file_path="provenance_detailed.html",
-    format="html"
+    format="html",
 )
 ```
 
@@ -142,15 +140,12 @@ The enhanced provenance system now features advanced IPLD-based storage with det
 manager = EnhancedProvenanceManager(
     enable_ipld_storage=True,
     ipfs_api="/ip4/127.0.0.1/tcp/5001",
-    enable_crypto_verification=True  # Enable cryptographic verification
+    enable_crypto_verification=True,  # Enable cryptographic verification
 )
 
 # Record provenance events (automatically stored in IPLD)
 source_id = manager.record_source(
-    output_id="dataset_1",
-    source_type="file",
-    format="csv",
-    description="Original dataset"
+    output_id="dataset_1", source_type="file", format="csv", description="Original dataset"
 )
 
 transform_id = manager.record_transformation(
@@ -158,7 +153,7 @@ transform_id = manager.record_transformation(
     output_id="processed_dataset",
     transformation_type="normalize",
     parameters={"method": "min-max"},
-    description="Normalize dataset values to [0,1] range"
+    description="Normalize dataset values to [0,1] range",
 )
 
 # Advanced graph traversal with direction control
@@ -166,39 +161,41 @@ upstream_graph = manager.traverse_provenance(
     record_id="processed_dataset",
     max_depth=3,
     direction="in",  # Only traverse upstream (inputs)
-    relation_filter=["transformation"]  # Only follow transformation relationships
+    relation_filter=["transformation"],  # Only follow transformation relationships
 )
 print(f"Upstream graph has {len(upstream_graph.nodes)} nodes and {len(upstream_graph.edges)} edges")
 
 # Incremental loading based on criteria
-recent_records = manager.incremental_load_provenance({
-    "time_start": time.time() - 3600,  # Last hour
-    "record_types": ["transformation"],
-    "data_ids": ["dataset_1", "processed_dataset"]
-})
+recent_records = manager.incremental_load_provenance(
+    {
+        "time_start": time.time() - 3600,  # Last hour
+        "record_types": ["transformation"],
+        "data_ids": ["dataset_1", "processed_dataset"],
+    }
+)
 
 # Export the entire provenance graph to a CAR file with selective options
 export_stats = manager.export_to_car(
     output_path="provenance.car",
     include_records=True,
     include_graph=True,
-    selective_record_ids=["dataset_1", "processed_dataset"]  # Only export specific records
+    selective_record_ids=["dataset_1", "processed_dataset"],  # Only export specific records
 )
 print(f"Exported provenance graph with root CID: {export_stats['root_cid']}")
-print(f"Exported {export_stats['record_count']} records and {export_stats['edge_count']} relationships")
+print(
+    f"Exported {export_stats['record_count']} records and {export_stats['edge_count']} relationships"
+)
 
 # Create a new manager to import from CAR file
 new_manager = EnhancedProvenanceManager(enable_ipld_storage=True)
 import_stats = new_manager.import_from_car(
-    car_path="provenance.car",
-    verify_integrity=True,
-    skip_existing=True
+    car_path="provenance.car", verify_integrity=True, skip_existing=True
 )
 
-if import_stats['success']:
+if import_stats["success"]:
     print(f"Imported {import_stats['record_count']} records and {import_stats['edge_count']} edges")
     print(f"Root CID: {import_stats['root_cid']}")
-    
+
     # Verify the cryptographic integrity of imported records
     if new_manager.enable_crypto_verification:
         verification_results = new_manager.verify_all_records()
@@ -218,7 +215,7 @@ storage = manager.storage
 record_batch = [
     {"id": "record1", "type": "source", "data": {...}},
     {"id": "record2", "type": "transformation", "data": {...}},
-    {"id": "record3", "type": "verification", "data": {...}}
+    {"id": "record3", "type": "verification", "data": {...}},
 ]
 cids = storage.store_batch(record_batch)
 
@@ -228,7 +225,7 @@ records = storage.get_batch(cids)
 # Batch update metadata
 updates = [
     {"id": "record1", "metadata": {"quality": "high"}},
-    {"id": "record2", "metadata": {"runtime": 0.5}}
+    {"id": "record2", "metadata": {"runtime": 0.5}},
 ]
 storage.update_metadata_batch(updates)
 ```
@@ -245,7 +242,7 @@ verify_id = manager.record_verification(
     schema={"id": "integer", "name": "string"},
     pass_count=1000,
     fail_count=0,
-    description="Verify dataset schema conforms to specification"
+    description="Verify dataset schema conforms to specification",
 )
 
 # Record annotation with proper semantic indexing
@@ -253,13 +250,17 @@ annotation_id = manager.record_annotation(
     data_id="dataset_1",
     annotation_type="quality",
     content="Dataset contains high-quality labeled examples",
-    metadata={"confidence": 0.95, "reviewer": "data_scientist_1"}
+    metadata={"confidence": 0.95, "reviewer": "data_scientist_1"},
 )
 
 # Semantic search across all record types
-results = manager.semantic_search("schema verification", include_record_types=["verification", "annotation", "transformation"])
+results = manager.semantic_search(
+    "schema verification", include_record_types=["verification", "annotation", "transformation"]
+)
 for result in results:
-    print(f"{result['record_id']} ({result['record_type']}): {result['description']} (Score: {result['score']})")
+    print(
+        f"{result['record_id']} ({result['record_type']}): {result['description']} (Score: {result['score']})"
+    )
 ```
 
 Benefits of Enhanced IPLD Storage Integration:
@@ -319,7 +320,12 @@ Cross-document lineage tracking offers the following key capabilities:
 The newly enhanced implementation brings powerful features for granular lineage tracking with complete domain awareness and boundary crossing capabilities:
 
 ```python
-from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker, LineageDomain, LineageLink, LineageNode
+from ipfs_datasets_py.cross_document_lineage import (
+    EnhancedLineageTracker,
+    LineageDomain,
+    LineageLink,
+    LineageNode,
+)
 
 # Initialize the enhanced lineage tracker
 tracker = EnhancedLineageTracker(
@@ -327,7 +333,7 @@ tracker = EnhancedLineageTracker(
         "enable_audit_integration": True,
         "enable_temporal_consistency": True,
         "enable_semantic_detection": True,
-        "enable_ipld_storage": True
+        "enable_ipld_storage": True,
     }
 )
 
@@ -336,21 +342,21 @@ source_domain_id = tracker.create_domain(
     name="SourceSystem",
     description="Original data source system",
     domain_type="system",
-    attributes={"organization": "Data Provider Inc."}
+    attributes={"organization": "Data Provider Inc."},
 )
 
 processing_domain_id = tracker.create_domain(
     name="ProcessingSystem",
     description="Data transformation system",
     domain_type="system",
-    attributes={"organization": "Analytics Team"}
+    attributes={"organization": "Analytics Team"},
 )
 
 analytics_domain_id = tracker.create_domain(
     name="AnalyticsSystem",
     description="Data analysis system",
     domain_type="system",
-    attributes={"organization": "Analytics Team"}
+    attributes={"organization": "Analytics Team"},
 )
 
 # Create boundaries between domains
@@ -358,59 +364,43 @@ source_to_processing = tracker.create_domain_boundary(
     source_domain_id=source_domain_id,
     target_domain_id=processing_domain_id,
     boundary_type="api_call",
-    attributes={"protocol": "REST", "auth_required": True}
+    attributes={"protocol": "REST", "auth_required": True},
 )
 
 processing_to_analytics = tracker.create_domain_boundary(
     source_domain_id=processing_domain_id,
     target_domain_id=analytics_domain_id,
     boundary_type="data_transfer",
-    attributes={"format": "parquet", "encryption": True}
+    attributes={"format": "parquet", "encryption": True},
 )
 
 # Create lineage nodes in specific domains
 source_node = tracker.create_node(
     node_type="dataset",
-    metadata={
-        "name": "Original Data",
-        "format": "csv",
-        "size_bytes": 1024000
-    },
+    metadata={"name": "Original Data", "format": "csv", "size_bytes": 1024000},
     domain_id=source_domain_id,
-    entity_id="original_data_001"
+    entity_id="original_data_001",
 )
 
 transform_node = tracker.create_node(
     node_type="transformation",
-    metadata={
-        "name": "Data Cleaning Process",
-        "tool": "pandas",
-        "version": "1.5.2"
-    },
+    metadata={"name": "Data Cleaning Process", "tool": "pandas", "version": "1.5.2"},
     domain_id=processing_domain_id,
-    entity_id="transform_001"
+    entity_id="transform_001",
 )
 
 processed_node = tracker.create_node(
     node_type="dataset",
-    metadata={
-        "name": "Processed Data",
-        "format": "parquet",
-        "size_bytes": 850000
-    },
+    metadata={"name": "Processed Data", "format": "parquet", "size_bytes": 850000},
     domain_id=processing_domain_id,
-    entity_id="processed_data_001"
+    entity_id="processed_data_001",
 )
 
 analytics_node = tracker.create_node(
     node_type="analysis",
-    metadata={
-        "name": "Sales Analysis",
-        "type": "trend_analysis",
-        "author": "data_scientist_1"
-    },
+    metadata={"name": "Sales Analysis", "type": "trend_analysis", "author": "data_scientist_1"},
     domain_id=analytics_domain_id,
-    entity_id="analysis_001"
+    entity_id="analysis_001",
 )
 
 # Create relationships between nodes
@@ -419,23 +409,20 @@ tracker.create_link(
     target_id=transform_node,
     relationship_type="input_to",
     metadata={"timestamp": time.time()},
-    confidence=1.0
+    confidence=1.0,
 )
 
 # Record detailed transformation information
 tracker.record_transformation_details(
     transformation_id=transform_node,
     operation_type="clean",
-    inputs=[
-        {"field": "customer_id", "type": "string"},
-        {"field": "purchase_date", "type": "date"}
-    ],
+    inputs=[{"field": "customer_id", "type": "string"}, {"field": "purchase_date", "type": "date"}],
     outputs=[
         {"field": "customer_id", "type": "string"},
-        {"field": "purchase_date", "type": "datetime"}
+        {"field": "purchase_date", "type": "datetime"},
     ],
     parameters={"drop_na": True, "convert_dates": True},
-    impact_level="field"
+    impact_level="field",
 )
 
 # Create cross-domain link
@@ -444,7 +431,7 @@ tracker.create_link(
     target_id=processed_node,
     relationship_type="output_from",
     metadata={"quality_score": 0.95},
-    confidence=1.0
+    confidence=1.0,
 )
 
 # Create another cross-domain link
@@ -454,7 +441,7 @@ tracker.create_link(
     relationship_type="analyzed_by",
     metadata={"priority": "high"},
     confidence=0.9,
-    cross_domain=True  # Explicitly mark as cross-domain
+    cross_domain=True,  # Explicitly mark as cross-domain
 )
 
 # Create versions for tracking changes
@@ -462,7 +449,7 @@ version_id = tracker.create_version(
     node_id=processed_node,
     version_number="1.0",
     change_description="Initial processed version",
-    creator_id="data_engineer_1"
+    creator_id="data_engineer_1",
 )
 ```
 
@@ -472,16 +459,18 @@ The enhanced implementation offers sophisticated querying and analysis capabilit
 
 ```python
 # Executing a flexible query against the lineage graph
-query_results = tracker.query_lineage({
-    "node_type": ["dataset", "transformation"],
-    "domain_id": processing_domain_id,
-    "start_time": time.time() - 86400,  # Last 24 hours
-    "end_time": time.time(),
-    "metadata_filters": {"format": "parquet"},
-    "include_domains": True,
-    "include_versions": True,
-    "include_transformation_details": True
-})
+query_results = tracker.query_lineage(
+    {
+        "node_type": ["dataset", "transformation"],
+        "domain_id": processing_domain_id,
+        "start_time": time.time() - 86400,  # Last 24 hours
+        "end_time": time.time(),
+        "metadata_filters": {"format": "parquet"},
+        "include_domains": True,
+        "include_versions": True,
+        "include_transformation_details": True,
+    }
+)
 
 print(f"Query returned {len(query_results.nodes)} nodes and {len(query_results.links)} links")
 
@@ -490,7 +479,7 @@ paths = tracker.find_paths(
     start_node_id=source_node,
     end_node_id=analytics_node,
     max_depth=5,
-    relationship_filter=["input_to", "output_from", "analyzed_by"]
+    relationship_filter=["input_to", "output_from", "analyzed_by"],
 )
 
 print(f"Found {len(paths)} paths from source to analytics")
@@ -499,8 +488,7 @@ for path in paths:
 
 # Detect semantic relationships between nodes based on content similarity
 semantic_relationships = tracker.detect_semantic_relationships(
-    confidence_threshold=0.7,
-    max_candidates=100
+    confidence_threshold=0.7, max_candidates=100
 )
 
 print(f"Detected {len(semantic_relationships)} semantic relationships")
@@ -517,7 +505,7 @@ subgraph = tracker.extract_subgraph(
     include_domains=True,
     include_versions=True,
     include_transformation_details=True,
-    relationship_types=["input_to", "output_from", "analyzed_by"]
+    relationship_types=["input_to", "output_from", "analyzed_by"],
 )
 
 # Check temporal consistency
@@ -534,9 +522,7 @@ print(f"Propagated {propagated_count} metadata values")
 
 # Generate a comprehensive provenance report
 report = tracker.generate_provenance_report(
-    entity_id="processed_data_001",
-    include_visualization=True,
-    format="html"
+    entity_id="processed_data_001", include_visualization=True, format="html"
 )
 
 print(f"Report generated with {report['statistics']['node_count']} nodes")
@@ -551,28 +537,24 @@ The EnhancedLineageTracker now includes comprehensive IPLD integration for decen
 ```python
 # Export the entire lineage graph to IPLD format
 root_cid = tracker.export_to_ipld(
-    include_domains=True,
-    include_versions=True,
-    include_transformation_details=True
+    include_domains=True, include_versions=True, include_transformation_details=True
 )
 
 print(f"Exported lineage graph to IPLD with root CID: {root_cid}")
 
 # Import a lineage graph from IPLD storage
 from ipfs_datasets_py.ipld.storage import IPLDStorage
+
 imported_tracker = EnhancedLineageTracker.from_ipld(
-    root_cid=root_cid,
-    ipld_storage=IPLDStorage(),
-    config={"enable_ipld_storage": True}
+    root_cid=root_cid, ipld_storage=IPLDStorage(), config={"enable_ipld_storage": True}
 )
 
 # Extract a specific entity's lineage with complete provenance
-entity_lineage = tracker.get_entity_lineage(
-    entity_id="processed_data_001",
-    include_semantic=True
-)
+entity_lineage = tracker.get_entity_lineage(entity_id="processed_data_001", include_semantic=True)
 
-print(f"Entity lineage contains {len(entity_lineage.nodes)} nodes and {len(entity_lineage.links)} links")
+print(
+    f"Entity lineage contains {len(entity_lineage.nodes)} nodes and {len(entity_lineage.links)} links"
+)
 ```
 
 ### Interactive Visualization
@@ -585,14 +567,12 @@ visualization = tracker.visualize_lineage(
     subgraph=subgraph,
     output_path="lineage_visualization.html",
     visualization_type="interactive",
-    include_domains=True
+    include_domains=True,
 )
 
 # Create static visualization for reports
 static_viz = tracker.visualize_lineage(
-    subgraph=entity_lineage,
-    output_path="entity_lineage.png",
-    visualization_type="static"
+    subgraph=entity_lineage, output_path="entity_lineage.png", visualization_type="static"
 )
 ```
 
@@ -602,23 +582,21 @@ The enhanced tracking system supports merging multiple lineage trackers:
 
 ```python
 # Create a new tracker for a different system
-other_tracker = EnhancedLineageTracker(
-    config={"enable_ipld_storage": True}
-)
+other_tracker = EnhancedLineageTracker(config={"enable_ipld_storage": True})
 
 # Add some nodes and relationships to the other tracker
 # ...
 
 # Merge the other tracker into the main tracker
 merge_stats = tracker.merge_lineage(
-    other_tracker=other_tracker,
-    conflict_resolution="newer",
-    allow_domain_merging=True
+    other_tracker=other_tracker, conflict_resolution="newer", allow_domain_merging=True
 )
 
 print(f"Merged trackers: {merge_stats}")
 print(f"Added {merge_stats['nodes_added']} nodes and {merge_stats['links_added']} links")
-print(f"Added {merge_stats['domains_added']} domains and {merge_stats['boundaries_added']} boundaries")
+print(
+    f"Added {merge_stats['domains_added']} domains and {merge_stats['boundaries_added']} boundaries"
+)
 ```
 
 ### Enhanced Cross-Document Lineage Features
@@ -677,10 +655,7 @@ audit_logger = AuditLogger.get_instance()
 manager = EnhancedProvenanceManager(enable_ipld_storage=True)
 
 # Set up bidirectional integration
-integrator = AuditProvenanceIntegrator(
-    audit_logger=audit_logger,
-    provenance_manager=manager
-)
+integrator = AuditProvenanceIntegrator(audit_logger=audit_logger, provenance_manager=manager)
 
 # Configure automatic conversion of audit events to provenance records
 integrator.setup_audit_event_listener()
@@ -692,77 +667,66 @@ audit_event = AuditEvent(
     category=AuditCategory.DATA_ACCESS,
     action="dataset_load",
     resource_id="example_dataset",
-    timestamp=datetime.datetime.now().isoformat()
+    timestamp=datetime.datetime.now().isoformat(),
 )
 record_id = integrator.provenance_from_audit_event(audit_event)
 
 # Create audit event from provenance record
 source_record = manager.create_source_record(
-    source_id="source_dataset",
-    source_type="file",
-    source_uri="ipfs://bafy..."
+    source_id="source_dataset", source_type="file", source_uri="ipfs://bafy..."
 )
 event_id = integrator.audit_from_provenance_record(source_record)
 
 # Explicitly link existing records
-integrator.link_audit_to_provenance(
-    audit_event_id="event-456",
-    provenance_record_id="record-789"
-)
+integrator.link_audit_to_provenance(audit_event_id="event-456", provenance_record_id="record-789")
 
 # Dataset-specific audit logging integration
 from ipfs_datasets_py.audit.integration import AuditDatasetIntegrator
 
 dataset_integrator = AuditDatasetIntegrator(audit_logger=audit_logger)
 load_event_id = dataset_integrator.record_dataset_load(
-    dataset_name="example_dataset",
-    dataset_id="ds123",
-    source="ipfs",
-    user="user123"
+    dataset_name="example_dataset", dataset_id="ds123", source="ipfs", user="user123"
 )
 
 # Integrated search across audit logs and provenance records
-search = ProvenanceAuditSearchIntegrator(
-    audit_logger=audit_logger,
-    provenance_manager=manager
-)
+search = ProvenanceAuditSearchIntegrator(audit_logger=audit_logger, provenance_manager=manager)
 
 # Basic search by time range and resource
 results = search.search(
     query={
         "timerange": {
             "start": (datetime.datetime.now() - datetime.timedelta(days=7)).isoformat(),
-            "end": datetime.datetime.now().isoformat()
+            "end": datetime.datetime.now().isoformat(),
         },
-        "resource_id": "example_dataset"
+        "resource_id": "example_dataset",
     },
     include_audit=True,
     include_provenance=True,
-    correlation_mode="auto"  # Automatically correlate related records
+    correlation_mode="auto",  # Automatically correlate related records
 )
 
 # Enhanced cross-document lineage-aware search
 cross_doc_results = search.search(
     query={
         "document_id": "document_1",  # Start search from this document
-        "max_depth": 3,               # Search up to 3 hops across documents
+        "max_depth": 3,  # Search up to 3 hops across documents
         "link_types": ["derived_from", "exported_from", "processes"],  # Filter by link types
         "timerange": {
             "start": (datetime.datetime.now() - datetime.timedelta(days=30)).isoformat(),
-            "end": datetime.datetime.now().isoformat()
-        }
+            "end": datetime.datetime.now().isoformat(),
+        },
     },
     include_audit=True,
     include_provenance=True,
     include_cross_document=True,  # Enable cross-document search
-    correlation_mode="auto"
+    correlation_mode="auto",
 )
 
 # Analyze cross-document search results
 if "cross_document_analysis" in cross_doc_results:
     analysis = cross_doc_results["cross_document_analysis"]
     print(f"Documents involved: {analysis.get('document_count', 0)}")
-    
+
     # Relationship types found in the search
     if "relationship_types" in analysis:
         print("Relationship types across documents:")
@@ -778,20 +742,17 @@ compliance_results = search.search(
     },
     include_audit=True,
     include_provenance=True,
-    include_cross_document=True
+    include_cross_document=True,
 )
 
 # Integrated compliance reporting
 reporter = IntegratedComplianceReporter(
-    standard=ComplianceStandard.GDPR,
-    audit_logger=audit_logger,
-    provenance_manager=manager
+    standard=ComplianceStandard.GDPR, audit_logger=audit_logger, provenance_manager=manager
 )
 
 # Generate compliance report with cross-document lineage analysis
 report = reporter.generate_report(
-    include_cross_document_analysis=True,
-    include_lineage_metrics=True
+    include_cross_document_analysis=True, include_lineage_metrics=True
 )
 
 # Export the compliance report
@@ -810,37 +771,36 @@ manager = EnhancedProvenanceManager(enable_ipld_storage=True)
 
 # Method 1: Using the DetailedLineageIntegrator for comprehensive analysis
 lineage_report = manager.create_cross_document_lineage(
-    output_path="cross_document_report.html",
-    include_visualization=True
+    output_path="cross_document_report.html", include_visualization=True
 )
 
 # Access the report with detailed cross-document insights
 print(f"Report contains {lineage_report['record_count']} records")
-print(f"Cross-document boundaries: {lineage_report.get('cross_document', {}).get('boundary_count', 0)}")
+print(
+    f"Cross-document boundaries: {lineage_report.get('cross_document', {}).get('boundary_count', 0)}"
+)
 
 # Analyze the flow patterns
-if 'flow_patterns' in lineage_report:
-    patterns = lineage_report['flow_patterns']
+if "flow_patterns" in lineage_report:
+    patterns = lineage_report["flow_patterns"]
     print("\nCommon data flow patterns:")
-    for pattern, count in patterns.get('flow_patterns', {}).items():
+    for pattern, count in patterns.get("flow_patterns", {}).items():
         print(f"- {pattern}: {count} occurrences")
-    
+
     # Identify data flow bottlenecks
     print("\nData flow bottlenecks:")
-    for bottleneck in patterns.get('bottlenecks', []):
+    for bottleneck in patterns.get("bottlenecks", []):
         print(f"- {bottleneck['id']} (score: {bottleneck['bottleneck_score']})")
-    
+
     # Check for circular dependencies
-    if 'cycles' in patterns and patterns['cycles']:
+    if "cycles" in patterns and patterns["cycles"]:
         print("\nCircular dependencies detected:")
-        for cycle in patterns['cycles']:
+        for cycle in patterns["cycles"]:
             print(f"- Cycle: {' -> '.join(cycle['cycle'])}")
 
 # Method 2: Using storage directly for more control
 lineage_graph = manager.storage.build_cross_document_lineage_graph(
-    record_ids=["dataset1", "dataset2"],
-    max_depth=3,
-    link_types=["transformation", "derivation"]
+    record_ids=["dataset1", "dataset2"], max_depth=3, link_types=["transformation", "derivation"]
 )
 
 # Analyze the cross-document lineage
@@ -859,14 +819,12 @@ manager.storage.visualize_cross_document_lineage(
     highlight_cross_document=True,
     show_metrics=True,
     file_path="cross_document_lineage.html",
-    format="html"
+    format="html",
 )
 
 # Export cross-document lineage in various formats
 lineage_data = manager.storage.export_cross_document_lineage(
-    lineage_graph=lineage_graph,
-    format="json",
-    include_records=True
+    lineage_graph=lineage_graph, format="json", include_records=True
 )
 ```
 
@@ -875,7 +833,10 @@ lineage_data = manager.storage.export_cross_document_lineage(
 The new `DetailedLineageIntegrator` class provides advanced capabilities for enriching cross-document lineage with semantic context and comprehensive relationship analysis:
 
 ```python
-from ipfs_datasets_py.cross_document_lineage_enhanced import DetailedLineageIntegrator, CrossDocumentLineageEnhancer
+from ipfs_datasets_py.cross_document_lineage_enhanced import (
+    DetailedLineageIntegrator,
+    CrossDocumentLineageEnhancer,
+)
 
 # Initialize components
 manager = EnhancedProvenanceManager(enable_ipld_storage=True)
@@ -884,8 +845,8 @@ integrator = DetailedLineageIntegrator(
     provenance_manager=manager,
     lineage_enhancer=lineage_enhancer,
     semantic_detection_level="high",  # Enable high-level semantic detection
-    flow_pattern_analysis=True,       # Enable flow pattern analysis
-    detect_document_boundaries=True   # Enable automatic document boundary detection
+    flow_pattern_analysis=True,  # Enable flow pattern analysis
+    detect_document_boundaries=True,  # Enable automatic document boundary detection
 )
 
 # Get the provenance graph
@@ -901,20 +862,19 @@ enriched_graph = integrator.enrich_lineage_semantics(integrated_graph)
 lineage_report = integrator.create_unified_lineage_report(
     integrated_graph=enriched_graph,
     include_visualization=True,
-    output_path="enhanced_lineage_report.json"
+    output_path="enhanced_lineage_report.json",
 )
 
 # Direct access through the EnhancedProvenanceManager
 cross_doc_lineage = manager.create_cross_document_lineage(
-    output_path="cross_document_lineage_report.html",
-    include_visualization=True
+    output_path="cross_document_lineage_report.html", include_visualization=True
 )
 
 # Advanced semantic analysis of document relationships
 semantic_relationships = integrator.extract_semantic_relationships(
     integrated_graph,
     min_confidence=0.75,
-    relationship_types=["transfers", "transforms", "augments", "derives"]
+    relationship_types=["transfers", "transforms", "augments", "derives"],
 )
 
 print(f"Discovered {len(semantic_relationships)} semantic relationships between documents")
@@ -928,15 +888,17 @@ for rel in semantic_relationships:
 flow_patterns = integrator.analyze_data_flow_patterns(enriched_graph)
 
 # Check detected flow patterns
-for pattern in flow_patterns['flow_patterns']:
+for pattern in flow_patterns["flow_patterns"]:
     print(f"Flow pattern: {pattern['name']}")
     print(f"  Frequency: {pattern['frequency']}")
     print(f"  Confidence: {pattern['confidence']}")
     print(f"  Nodes involved: {pattern['node_count']}")
-    
+
     # Check if this is a critical pattern
-    if pattern['is_critical']:
-        print(f"  ⚠️ CRITICAL PATTERN: This pattern affects {pattern['impact_score']} downstream nodes")
+    if pattern["is_critical"]:
+        print(
+            f"  ⚠️ CRITICAL PATTERN: This pattern affects {pattern['impact_score']} downstream nodes"
+        )
 
 # Identify potential data flow bottlenecks
 bottlenecks = integrator.identify_bottlenecks(enriched_graph)
@@ -955,15 +917,15 @@ print(f"  Cross-domain boundaries: {boundaries['cross_domain_boundaries']}")
 print(f"  Security-sensitive boundaries: {boundaries['security_sensitive_boundaries']}")
 
 # Analyze specific boundary
-for boundary_id, boundary in boundaries['boundary_details'].items():
+for boundary_id, boundary in boundaries["boundary_details"].items():
     print(f"Boundary {boundary_id}: {boundary['source']} -> {boundary['target']}")
     print(f"  Type: {boundary['type']}")
     print(f"  Security classification: {boundary['security_classification']}")
     print(f"  Control strength: {boundary['control_strength']}")
-    
+
     # Check for potential issues
-    if boundary['potential_issues']:
-        for issue in boundary['potential_issues']:
+    if boundary["potential_issues"]:
+        for issue in boundary["potential_issues"]:
             print(f"  ⚠️ Issue: {issue['description']}")
             print(f"    Severity: {issue['severity']}")
             print(f"    Recommendation: {issue['recommendation']}")
@@ -971,11 +933,11 @@ for boundary_id, boundary in boundaries['boundary_details'].items():
 # Track document lineage evolution over time
 evolution = integrator.track_document_lineage_evolution(
     document_id="document_1",
-    time_range=(time.time() - 30*86400, time.time())  # Last 30 days
+    time_range=(time.time() - 30 * 86400, time.time()),  # Last 30 days
 )
 
 # Get growth metrics
-growth = evolution['growth_metrics']
+growth = evolution["growth_metrics"]
 print(f"\nDocument growth over 30 days:")
 print(f"- Records added: {growth['record_growth']}")
 print(f"- Relationships added: {growth['relationship_growth']}")
@@ -983,14 +945,12 @@ print(f"- Growth rate: {growth['records_per_day']} records/day")
 
 # Check key events in evolution
 print("\nKey events in document evolution:")
-for event in evolution['key_events']:
+for event in evolution["key_events"]:
     print(f"- {event['formatted_time']}: {event.get('key_event_reason', 'Unknown event')}")
-    
+
 # Generate a comprehensive impact analysis report
 impact_report = integrator.analyze_flow_impact(
-    source_id="critical_document",
-    include_indirect_impacts=True,
-    impact_depth=3
+    source_id="critical_document", include_indirect_impacts=True, impact_depth=3
 )
 
 print(f"\nImpact analysis from 'critical_document':")
@@ -999,7 +959,7 @@ print(f"Indirect impacts: {impact_report['indirect_impact_count']}")
 print(f"Total impact score: {impact_report['total_impact_score']}")
 
 print("Top impacted documents:")
-for doc in impact_report['most_impacted_documents'][:3]:
+for doc in impact_report["most_impacted_documents"][:3]:
     print(f"- {doc['id']} (Impact score: {doc['impact_score']})")
 ```
 ```
@@ -1050,7 +1010,7 @@ manager.visualize_provenance_enhanced(
     file_path="provenance_interactive.html",
     width=1200,
     height=800,
-    include_metrics=True
+    include_metrics=True,
 )
 ```
 
@@ -1066,7 +1026,7 @@ manager.visualize_provenance_enhanced(
     file_path="multipartite_layout.html",
     format="html",
     include_timestamps=True,
-    include_parameters=True
+    include_parameters=True,
 )
 ```
 
@@ -1080,19 +1040,19 @@ You can customize the visualization with various options:
 # Customize visualization with advanced features
 manager.visualize_provenance_enhanced(
     data_ids=["final_dataset"],
-    max_depth=3,                 # Limit depth of traversal
-    layout="multipartite",       # Layered layout by node depth
-    highlight_critical_path=True, # Highlight the most important path
-    node_size_by="impact",       # Size nodes by their impact metric
-    edge_width_by="weight",      # Width of edges based on weight
+    max_depth=3,  # Limit depth of traversal
+    layout="multipartite",  # Layered layout by node depth
+    highlight_critical_path=True,  # Highlight the most important path
+    node_size_by="impact",  # Size nodes by their impact metric
+    edge_width_by="weight",  # Width of edges based on weight
     color_scheme="record_type",  # Color nodes by record type
-    include_parameters=True,     # Show transformation parameters
-    include_timestamps=True,     # Show timestamps on nodes
-    include_metrics=True,        # Include complexity metrics
-    format="html",               # Output as interactive HTML
+    include_parameters=True,  # Show transformation parameters
+    include_timestamps=True,  # Show timestamps on nodes
+    include_metrics=True,  # Include complexity metrics
+    format="html",  # Output as interactive HTML
     file_path="detailed_viz.html",
     width=1200,
-    height=800
+    height=800,
 )
 ```
 
@@ -1104,11 +1064,11 @@ Interactive visualizations provide rich exploration capabilities:
 # Create an interactive dashboard for provenance exploration
 manager.create_interactive_dashboard(
     base_record_ids=["dataset_1", "processed_dataset"],
-    port=8050,                   # Local port for dashboard
-    enable_filtering=True,       # Allow filtering by record type
-    enable_search=True,          # Enable search functionality
-    enable_time_slider=True,     # Include time-based filtering
-    include_metrics_panel=True   # Show metrics panel
+    port=8050,  # Local port for dashboard
+    enable_filtering=True,  # Allow filtering by record type
+    enable_search=True,  # Enable search functionality
+    enable_time_slider=True,  # Include time-based filtering
+    include_metrics_panel=True,  # Show metrics panel
 )
 ```
 
@@ -1127,9 +1087,13 @@ The enhanced provenance system offers comprehensive analytical capabilities:
 ```python
 # Calculate complexity metrics for a data entity
 metrics = manager.calculate_data_metrics("final_dataset")
-print(f"Complexity: {metrics['complexity']['node_count']} nodes, {metrics['complexity']['max_depth']} depth")
+print(
+    f"Complexity: {metrics['complexity']['node_count']} nodes, {metrics['complexity']['max_depth']} depth"
+)
 print(f"Impact: {metrics['impact']}")
-print(f"Verification: {metrics['verification']['passed']} passed, {metrics['verification']['failed']} failed")
+print(
+    f"Verification: {metrics['verification']['passed']} passed, {metrics['verification']['failed']} failed"
+)
 ```
 
 ### Enhanced Metrics Calculation
@@ -1140,10 +1104,10 @@ The metrics calculation system now properly includes source records and provides
 # Get comprehensive metrics with enhanced calculation
 enhanced_metrics = manager.calculate_data_metrics(
     data_id="processed_dataset",
-    include_source_records=True,      # Include source records in metrics
-    include_impact_analysis=True,     # Include detailed impact analysis
-    include_temporal_metrics=True,    # Include time-based metrics
-    include_verification_metrics=True # Include verification metrics
+    include_source_records=True,  # Include source records in metrics
+    include_impact_analysis=True,  # Include detailed impact analysis
+    include_temporal_metrics=True,  # Include time-based metrics
+    include_verification_metrics=True,  # Include verification metrics
 )
 
 # Access detailed complexity metrics
@@ -1186,7 +1150,7 @@ The system supports comparing metrics across multiple datasets:
 # Compare metrics across multiple datasets
 comparison = manager.compare_data_metrics(
     data_ids=["dataset_1", "processed_dataset", "final_dataset"],
-    metrics=["complexity", "impact", "verification"]
+    metrics=["complexity", "impact", "verification"],
 )
 
 # Display comparison results
@@ -1221,13 +1185,13 @@ quarterly_records = manager.temporal_query(
     start_time=datetime.datetime(2023, 1, 1),
     end_time=datetime.datetime(2023, 3, 31),
     time_bucket="daily",
-    record_types=["source", "transformation"]
+    record_types=["source", "transformation"],
 )
 
 # Analyze records by time bucket
 for bucket, bucket_records in quarterly_records.items():
     print(f"{bucket}: {len(bucket_records)} records")
-    
+
 # Get records from the last 30 days with detailed filtering
 recent_records = manager.temporal_query(
     start_time=datetime.datetime.now() - datetime.timedelta(days=30),
@@ -1235,7 +1199,7 @@ recent_records = manager.temporal_query(
     filter_function=lambda record: record.get("pass_count", 0) > 0,
     include_metadata=True,
     sort_by="timestamp",
-    sort_order="descending"
+    sort_order="descending",
 )
 
 # Time-series analysis of provenance activities
@@ -1243,7 +1207,7 @@ activity_timeseries = manager.analyze_temporal_activity(
     start_time=datetime.datetime(2023, 1, 1),
     end_time=datetime.datetime(2023, 12, 31),
     time_bucket="monthly",
-    group_by="record_type"
+    group_by="record_type",
 )
 
 # Plot activity time series
@@ -1253,7 +1217,7 @@ manager.plot_temporal_activity(
     x_label="Month",
     y_label="Record Count",
     include_cumulative=True,
-    output_path="activity_timeseries.png"
+    output_path="activity_timeseries.png",
 )
 ```
 

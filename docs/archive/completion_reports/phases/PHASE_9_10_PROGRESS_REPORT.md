@@ -40,6 +40,7 @@ def get_monitoring_summary()  # Summary statistics
 ```python
 from ipfs_datasets_py.processors.infrastructure.monitoring import monitor
 
+
 class MyProcessor:
     @monitor
     async def process_document(self, doc):

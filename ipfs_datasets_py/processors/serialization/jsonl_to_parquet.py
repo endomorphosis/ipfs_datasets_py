@@ -14,8 +14,13 @@ from typing import List, Dict, Any, Optional, Union, TextIO
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-def jsonl_to_arrow(jsonl_path: str, schema: Optional[pa.Schema] = None,
-                 force_string_columns: List[str] = None, all_strings: bool = False) -> pa.Table:
+
+def jsonl_to_arrow(
+    jsonl_path: str,
+    schema: Optional[pa.Schema] = None,
+    force_string_columns: List[str] = None,
+    all_strings: bool = False,
+) -> pa.Table:
     """
     Convert a JSONL file to an Arrow table.
 
@@ -40,18 +45,27 @@ def jsonl_to_arrow(jsonl_path: str, schema: Optional[pa.Schema] = None,
 
         for col in df.columns:
             # Skip columns that are already properly typed
-            if not is_string_dtype(df[col].dtype) and not all_strings and col not in force_string_columns:
+            if (
+                not is_string_dtype(df[col].dtype)
+                and not all_strings
+                and col not in force_string_columns
+            ):
                 continue
 
             # Check sample values
             sample_values = df[col].dropna().head(100).astype(str)
-            has_boolean_strings = any(val.lower() in ('true', 'false', 'yes', 'no', 'auto', 'null', 'none')
-                                   for val in sample_values if isinstance(val, str))
+            has_boolean_strings = any(
+                val.lower() in ("true", "false", "yes", "no", "auto", "null", "none")
+                for val in sample_values
+                if isinstance(val, str)
+            )
 
             if has_boolean_strings:
                 potentially_problematic.append(col)
-                logging.warning(f"Column '{col}' contains boolean-like strings (e.g. 'auto', 'true'). "
-                               f"Converting to object type to prevent misinterpretation.")
+                logging.warning(
+                    f"Column '{col}' contains boolean-like strings (e.g. 'auto', 'true'). "
+                    f"Converting to object type to prevent misinterpretation."
+                )
 
         # Fix all identified problematic columns
         for col in potentially_problematic:
@@ -78,7 +92,7 @@ def jsonl_to_arrow(jsonl_path: str, schema: Optional[pa.Schema] = None,
         try:
             if schema:
                 # Convert to records and then to pyarrow table
-                records = df.to_dict('records')
+                records = df.to_dict("records")
                 return pa.Table.from_pylist(records, schema=schema)
             else:
                 # Directly convert from pandas with careful type handling
@@ -99,13 +113,17 @@ def jsonl_to_arrow(jsonl_path: str, schema: Optional[pa.Schema] = None,
 
                 # Handle the problematic column
                 if problematic_col:
-                    logging.warning(f"Conversion issue detected with column '{problematic_col}'. "
-                                   f"Converting all values to strings.")
+                    logging.warning(
+                        f"Conversion issue detected with column '{problematic_col}'. "
+                        f"Converting all values to strings."
+                    )
                     # Replace the actual problematic values
                     df[problematic_col] = df[problematic_col].astype(str)
                 else:
                     # If we can't identify the column, convert all string columns
-                    logging.warning("Converting all string columns to object type to prevent type inference issues.")
+                    logging.warning(
+                        "Converting all string columns to object type to prevent type inference issues."
+                    )
                     for col in df.columns:
                         if is_string_dtype(df[col].dtype):
                             df[col] = df[col].astype(str)
@@ -118,7 +136,7 @@ def jsonl_to_arrow(jsonl_path: str, schema: Optional[pa.Schema] = None,
                         schema_dict[problematic_col] = pa.string()
                         schema = pa.schema([(name, type) for name, type in schema_dict.items()])
 
-                    records = df.to_dict('records')
+                    records = df.to_dict("records")
                     return pa.Table.from_pylist(records, schema=schema)
                 else:
                     return pa.Table.from_pandas(df, preserve_index=False)
@@ -132,28 +150,41 @@ def jsonl_to_arrow(jsonl_path: str, schema: Optional[pa.Schema] = None,
 
                 # Try one more time with string conversion
                 if schema:
-                    records = df.to_dict('records')
-                    return pa.Table.from_pylist(records, schema=pa.schema([
-                        (field.name, pa.string() if field.name in df.columns else field.type)
-                        for field in schema
-                    ]))
+                    records = df.to_dict("records")
+                    return pa.Table.from_pylist(
+                        records,
+                        schema=pa.schema(
+                            [
+                                (
+                                    field.name,
+                                    pa.string() if field.name in df.columns else field.type,
+                                )
+                                for field in schema
+                            ]
+                        ),
+                    )
                 else:
                     return pa.Table.from_pandas(df, preserve_index=False)
 
     # Read JSONL directly into pandas with more explicit type handling
     try:
         # Try to use pandas' built-in JSONL reader
-        df = pd.read_json(jsonl_path, lines=True, dtype_backend='pyarrow')
+        df = pd.read_json(jsonl_path, lines=True, dtype_backend="pyarrow")
 
         # Pre-emptively convert problematic columns to strings
         for col in df.columns:
             # Check if column has any values that might be misinterpreted
             sample_values = df[col].dropna().head(1000).astype(str)
-            if any(val.lower() in ('true', 'false', 'yes', 'no', 'auto', 'null', 'none')
-                  for val in sample_values if isinstance(val, str)):
-                logging.info(f"Converting column '{col}' to string type to prevent misinterpretation")
+            if any(
+                val.lower() in ("true", "false", "yes", "no", "auto", "null", "none")
+                for val in sample_values
+                if isinstance(val, str)
+            ):
+                logging.info(
+                    f"Converting column '{col}' to string type to prevent misinterpretation"
+                )
                 # Use object dtype instead of str to better preserve original values
-                df[col] = df[col].astype('object')
+                df[col] = df[col].astype("object")
 
         # Use our helper function to safely convert to Arrow table
         return safe_to_arrow_table(df, schema)
@@ -163,7 +194,7 @@ def jsonl_to_arrow(jsonl_path: str, schema: Optional[pa.Schema] = None,
 
         # Manual parsing as fallback
         records = []
-        with open(jsonl_path, 'r') as f:
+        with open(jsonl_path, "r") as f:
             for i, line in enumerate(f):
                 line = line.strip()
                 if line:  # Skip empty lines
@@ -181,21 +212,35 @@ def jsonl_to_arrow(jsonl_path: str, schema: Optional[pa.Schema] = None,
 
         # Process each column to prevent type inference issues
         for col in df.columns:
-            if df[col].apply(lambda x: isinstance(x, str) and x.lower() in
-                          ('true', 'false', 'yes', 'no', 'auto', 'null', 'none')).any():
-                logging.info(f"Converting column '{col}' to string type to prevent misinterpretation")
+            if (
+                df[col]
+                .apply(
+                    lambda x: (
+                        isinstance(x, str)
+                        and x.lower() in ("true", "false", "yes", "no", "auto", "null", "none")
+                    )
+                )
+                .any()
+            ):
+                logging.info(
+                    f"Converting column '{col}' to string type to prevent misinterpretation"
+                )
                 # Use object dtype instead of str to better preserve original values
-                df[col] = df[col].astype('object')
+                df[col] = df[col].astype("object")
 
         # Use our helper function to safely convert to Arrow table
         return safe_to_arrow_table(df, schema)
 
-def jsonl_to_parquet(jsonl_path: str, parquet_path: str,
-                   schema: Optional[pa.Schema] = None,
-                   compression: str = 'snappy',
-                   row_group_size: int = 100000,
-                   force_string_columns: List[str] = None,
-                   all_strings: bool = False) -> str:
+
+def jsonl_to_parquet(
+    jsonl_path: str,
+    parquet_path: str,
+    schema: Optional[pa.Schema] = None,
+    compression: str = "snappy",
+    row_group_size: int = 100000,
+    force_string_columns: List[str] = None,
+    all_strings: bool = False,
+) -> str:
     """
     Convert a JSONL file to Parquet format.
 
@@ -216,16 +261,11 @@ def jsonl_to_parquet(jsonl_path: str, parquet_path: str,
         jsonl_path,
         schema=schema,
         force_string_columns=force_string_columns,
-        all_strings=all_strings
+        all_strings=all_strings,
     )
 
     # Write to Parquet
-    pq.write_table(
-        table,
-        parquet_path,
-        compression=compression,
-        row_group_size=row_group_size
-    )
+    pq.write_table(table, parquet_path, compression=compression, row_group_size=row_group_size)
 
     # DQK-089: optional admitted-lake shadow projection (legacy parquet remains authority).
     try:
@@ -272,10 +312,14 @@ def jsonl_to_parquet(jsonl_path: str, parquet_path: str,
 
     return parquet_path
 
-def batch_jsonl_to_parquet(jsonl_dir: str, parquet_dir: str,
-                        file_pattern: str = "*.jsonl",
-                        recursive: bool = False,
-                        **kwargs) -> List[str]:
+
+def batch_jsonl_to_parquet(
+    jsonl_dir: str,
+    parquet_dir: str,
+    file_pattern: str = "*.jsonl",
+    recursive: bool = False,
+    **kwargs,
+) -> List[str]:
     """
     Convert multiple JSONL files to Parquet format.
 
@@ -310,7 +354,7 @@ def batch_jsonl_to_parquet(jsonl_dir: str, parquet_dir: str,
     for jsonl_file in files:
         # Determine output path
         rel_path = os.path.relpath(jsonl_file, jsonl_dir)
-        output_path = os.path.join(parquet_dir, rel_path.replace('.jsonl', '.parquet'))
+        output_path = os.path.join(parquet_dir, rel_path.replace(".jsonl", ".parquet"))
 
         # Create directory if needed
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -325,6 +369,7 @@ def batch_jsonl_to_parquet(jsonl_dir: str, parquet_dir: str,
 
     return output_paths
 
+
 def infer_schema_from_jsonl(jsonl_path: str, sample_size: int = 1000) -> pa.Schema:
     """
     Infer Arrow schema from a JSONL file.
@@ -338,7 +383,7 @@ def infer_schema_from_jsonl(jsonl_path: str, sample_size: int = 1000) -> pa.Sche
     """
     # Read sample records
     records = []
-    with open(jsonl_path, 'r') as f:
+    with open(jsonl_path, "r") as f:
         for i, line in enumerate(f):
             if i >= sample_size:
                 break
@@ -358,12 +403,13 @@ def infer_schema_from_jsonl(jsonl_path: str, sample_size: int = 1000) -> pa.Sche
     table = pa.Table.from_pylist(records)
     return table.schema
 
+
 def main():
     """Command-line interface for converting JSONL files to Parquet format.
-    
+
     This function provides a comprehensive CLI for converting JSON Lines files to
     Apache Parquet format with advanced type handling and batch processing capabilities.
-    
+
     Features:
         - Single file or batch directory processing
         - Recursive directory traversal with file pattern matching
@@ -371,7 +417,7 @@ def main():
         - Advanced type preservation and string column enforcement
         - Customizable row group sizes for optimal performance
         - Verbose logging and debug modes
-        
+
     Command-line Arguments:
         input: Path to input JSONL file or directory
         output: Path to output Parquet file or directory
@@ -385,53 +431,78 @@ def main():
         --string-columns: Comma-separated list of columns to force as strings
         --debug, -d: Enable debug mode with detailed error traces
         --preserve-types: Prevent automatic string-to-boolean conversion
-        
+
     Type Handling:
         The function provides sophisticated type handling to address common issues
         with automatic type inference, particularly for string values that might
         be misinterpreted as booleans (e.g., "true", "false", "yes", "no", "auto").
-        
+
     Returns:
         int: Exit code (0 for success, 1 for error)
-        
+
     Raises:
         SystemExit: On argument parsing errors or when return code is non-zero
-        
+
     Examples:
         Convert single file:
             python script.py input.jsonl output.parquet
-            
+
         Batch convert with compression:
             python script.py -b -c gzip input_dir/ output_dir/
-            
+
         Preserve string types for specific columns:
             python script.py --string-columns "id,name,status" input.jsonl output.parquet
     """
     parser = argparse.ArgumentParser(description="Convert JSONL files to Parquet format")
 
-    parser.add_argument('input', help="Input JSONL file or directory")
-    parser.add_argument('output', help="Output Parquet file or directory")
-    parser.add_argument('--batch', '-b', action='store_true', help="Process multiple files")
-    parser.add_argument('--pattern', '-p', default="*.jsonl", help="File pattern for batch mode")
-    parser.add_argument('--recursive', '-r', action='store_true', help="Recursively process subdirectories")
-    parser.add_argument('--compression', '-c', default='snappy', help="Compression codec (snappy, gzip, brotli, etc.)")
-    parser.add_argument('--row-group-size', '-g', type=int, default=100000, help="Row group size")
-    parser.add_argument('--verbose', '-v', action='store_true', help="Enable verbose logging")
-    parser.add_argument('--all-strings', '-s', action='store_true', help="Convert all string values to string type to avoid inference issues")
-    parser.add_argument('--string-columns', type=str, help="Comma-separated list of column names to force as string type")
-    parser.add_argument('--debug', '-d', action='store_true', help="Enable debug mode with detailed error information")
-    parser.add_argument('--preserve-types', action='store_true', help="Preserve original types as much as possible, preventing auto-conversion of strings to boolean")
+    parser.add_argument("input", help="Input JSONL file or directory")
+    parser.add_argument("output", help="Output Parquet file or directory")
+    parser.add_argument("--batch", "-b", action="store_true", help="Process multiple files")
+    parser.add_argument("--pattern", "-p", default="*.jsonl", help="File pattern for batch mode")
+    parser.add_argument(
+        "--recursive", "-r", action="store_true", help="Recursively process subdirectories"
+    )
+    parser.add_argument(
+        "--compression",
+        "-c",
+        default="snappy",
+        help="Compression codec (snappy, gzip, brotli, etc.)",
+    )
+    parser.add_argument("--row-group-size", "-g", type=int, default=100000, help="Row group size")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "--all-strings",
+        "-s",
+        action="store_true",
+        help="Convert all string values to string type to avoid inference issues",
+    )
+    parser.add_argument(
+        "--string-columns",
+        type=str,
+        help="Comma-separated list of column names to force as string type",
+    )
+    parser.add_argument(
+        "--debug",
+        "-d",
+        action="store_true",
+        help="Enable debug mode with detailed error information",
+    )
+    parser.add_argument(
+        "--preserve-types",
+        action="store_true",
+        help="Preserve original types as much as possible, preventing auto-conversion of strings to boolean",
+    )
 
     args = parser.parse_args()
 
     # Configure logging
     log_level = logging.DEBUG if args.debug else (logging.INFO if args.verbose else logging.WARNING)
-    logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s")
 
     # Process string columns if provided
     string_columns = None
     if args.string_columns:
-        string_columns = [col.strip() for col in args.string_columns.split(',')]
+        string_columns = [col.strip() for col in args.string_columns.split(",")]
         logging.info(f"Forcing columns to string type: {string_columns}")
 
     try:
@@ -442,7 +513,7 @@ def main():
             logging.info("Creating custom schema with type enforcement...")
 
             # Sample the input file to infer base schema
-            with open(args.input, 'r') as f:
+            with open(args.input, "r") as f:
                 sample_records = []
                 for i, line in enumerate(f):
                     if i >= 100:  # Sample first 100 records
@@ -457,6 +528,7 @@ def main():
 
             # Create pandas DataFrame for schema inference
             import pandas as pd
+
             sample_df = pd.DataFrame(sample_records)
 
             # Handle type preservation and conversions
@@ -464,20 +536,25 @@ def main():
                 # Detect and convert any columns with values that might cause type inference issues
                 for col in sample_df.columns:
                     sample_values = sample_df[col].dropna().head(100).astype(str)
-                    if any(val.lower() in ('true', 'false', 'yes', 'no', 'auto', 'null', 'none')
-                           for val in sample_values if isinstance(val, str)):
-                        sample_df[col] = sample_df[col].astype('object')
-                        logging.info(f"Preserving column '{col}' as object type to prevent misinterpretation")
+                    if any(
+                        val.lower() in ("true", "false", "yes", "no", "auto", "null", "none")
+                        for val in sample_values
+                        if isinstance(val, str)
+                    ):
+                        sample_df[col] = sample_df[col].astype("object")
+                        logging.info(
+                            f"Preserving column '{col}' as object type to prevent misinterpretation"
+                        )
             elif args.all_strings:
                 # Force all columns to string type
                 for col in sample_df.columns:
-                    sample_df[col] = sample_df[col].astype('object')
+                    sample_df[col] = sample_df[col].astype("object")
                 logging.info("Converted all columns to object type")
             elif string_columns:
                 # Force specific columns to string type
                 for col in string_columns:
                     if col in sample_df.columns:
-                        sample_df[col] = sample_df[col].astype('object')
+                        sample_df[col] = sample_df[col].astype("object")
                         logging.info(f"Converted column '{col}' to object type")
 
             # Create Arrow table from DataFrame with enforced types
@@ -491,11 +568,11 @@ def main():
 
         # Prepare parameters
         kwargs = {
-            'compression': args.compression,
-            'row_group_size': args.row_group_size,
-            'schema': schema,
-            'all_strings': args.all_strings,
-            'force_string_columns': string_columns if string_columns else None
+            "compression": args.compression,
+            "row_group_size": args.row_group_size,
+            "schema": schema,
+            "all_strings": args.all_strings,
+            "force_string_columns": string_columns if string_columns else None,
         }
 
         # For type preservation, we want to force certain known columns
@@ -504,7 +581,7 @@ def main():
             problematic_columns = []
             # Try to read first few lines to identify problematic columns
             try:
-                with open(args.input, 'r') as f:
+                with open(args.input, "r") as f:
                     for i, line in enumerate(f):
                         if i >= 5:  # Just check first 5 lines
                             break
@@ -512,7 +589,15 @@ def main():
                             data = json.loads(line.strip())
                             # Identify potential problematic columns
                             for key, value in data.items():
-                                if isinstance(value, str) and value.lower() in ('true', 'false', 'yes', 'no', 'auto', 'null', 'none'):
+                                if isinstance(value, str) and value.lower() in (
+                                    "true",
+                                    "false",
+                                    "yes",
+                                    "no",
+                                    "auto",
+                                    "null",
+                                    "none",
+                                ):
                                     problematic_columns.append(key)
                         except:
                             pass
@@ -520,14 +605,16 @@ def main():
                 # Remove duplicates
                 problematic_columns = list(set(problematic_columns))
                 if problematic_columns:
-                    logging.info(f"Identified potentially problematic columns with boolean-like strings: {problematic_columns}")
+                    logging.info(
+                        f"Identified potentially problematic columns with boolean-like strings: {problematic_columns}"
+                    )
 
                     # Add to force_string_columns
-                    force_string_cols = kwargs.get('force_string_columns', []) or []
+                    force_string_cols = kwargs.get("force_string_columns", []) or []
                     if force_string_cols:
                         force_string_cols.extend(problematic_columns)
                     else:
-                        kwargs['force_string_columns'] = problematic_columns
+                        kwargs["force_string_columns"] = problematic_columns
             except Exception as e:
                 logging.warning(f"Error scanning for problematic columns: {str(e)}")
 
@@ -538,18 +625,14 @@ def main():
                 args.output,
                 file_pattern=args.pattern,
                 recursive=args.recursive,
-                **kwargs
+                **kwargs,
             )
             print(f"Converted {len(output_paths)} files to Parquet format")
             for path in output_paths:
                 print(f"  {path}")
         else:
             # Single file conversion
-            output_path = jsonl_to_parquet(
-                args.input,
-                args.output,
-                **kwargs
-            )
+            output_path = jsonl_to_parquet(args.input, args.output, **kwargs)
             print(f"Converted {args.input} to {output_path}")
 
             # Print basic statistics
@@ -557,11 +640,12 @@ def main():
             print(f"Row count: {table.num_rows}")
             print(f"Column count: {len(table.column_names)}")
             print(f"Columns: {', '.join(table.column_names)}")
-            print(f"File size: {os.path.getsize(output_path) / (1024*1024):.2f} MB")
+            print(f"File size: {os.path.getsize(output_path) / (1024 * 1024):.2f} MB")
 
     except Exception as e:
         if args.debug:
             import traceback
+
             logging.error(f"Error: {str(e)}")
             logging.error(traceback.format_exc())
         else:
@@ -569,6 +653,7 @@ def main():
         return 1
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -6,17 +6,20 @@ Methods under test:
   - OntologyGenerator.entities_with_properties(result)
   - OntologyPipeline.score_histogram(bins)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -32,11 +35,13 @@ def _push_opt(o, avg):
 
 def _make_entity(eid, props=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, properties=props or {})
 
 
 def _make_result(entities):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=[], confidence=1.0, metadata={}, errors=[]
     )
@@ -44,11 +49,13 @@ def _make_result(entities):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -65,6 +72,7 @@ def _ont(rels):
 # ---------------------------------------------------------------------------
 # LogicValidator.multi_hop_count
 # ---------------------------------------------------------------------------
+
 
 class TestMultiHopCount:
     def test_no_edges_returns_zero(self):
@@ -103,6 +111,7 @@ class TestMultiHopCount:
 # OntologyOptimizer.score_above_percentile
 # ---------------------------------------------------------------------------
 
+
 class TestScoreAbovePercentile:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -132,6 +141,7 @@ class TestScoreAbovePercentile:
 # OntologyGenerator.entities_with_properties
 # ---------------------------------------------------------------------------
 
+
 class TestEntitiesWithProperties:
     def test_empty_result(self):
         gen = _make_generator()
@@ -159,6 +169,7 @@ class TestEntitiesWithProperties:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.score_histogram
 # ---------------------------------------------------------------------------
+
 
 class TestScoreHistogram:
     def test_empty_returns_empty(self):

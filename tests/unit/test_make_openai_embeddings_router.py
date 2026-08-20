@@ -69,10 +69,16 @@ def test_prepare_row_for_embedding_skips_json_and_url_metadata() -> None:
 
 
 def test_resolve_input_dir_supports_fish_uri() -> None:
-    path = _resolve_input_dir("fish://barberb@192.168.0.48/home/barberb/.ipfs_datasets/us_code/uscode_parquet/")
+    path = _resolve_input_dir(
+        "fish://barberb@192.168.0.48/home/barberb/.ipfs_datasets/us_code/uscode_parquet/"
+    )
     assert path == Path("/home/barberb/.ipfs_datasets/us_code/uscode_parquet")
 
 
 def test_derive_output_parquet_path_generic_and_html() -> None:
-    assert _derive_output_parquet_path(Path("/tmp/123_html.parquet")) == Path("/tmp/123_embeddings.parquet")
-    assert _derive_output_parquet_path(Path("/tmp/title_1.parquet")) == Path("/tmp/title_1_embeddings.parquet")
+    assert _derive_output_parquet_path(Path("/tmp/123_html.parquet")) == Path(
+        "/tmp/123_embeddings.parquet"
+    )
+    assert _derive_output_parquet_path(Path("/tmp/title_1.parquet")) == Path(
+        "/tmp/title_1_embeddings.parquet"
+    )

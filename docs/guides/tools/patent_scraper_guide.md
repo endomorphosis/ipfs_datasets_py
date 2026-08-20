@@ -44,26 +44,19 @@ The Patent Scraper module provides integration with the USPTO PatentsView API to
 from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     search_patents_by_keyword,
     search_patents_by_inventor,
-    search_patents_by_assignee
+    search_patents_by_assignee,
 )
 
 # Search by keyword
 patents = search_patents_by_keyword(
-    keywords=["artificial intelligence", "machine learning"],
-    limit=100
+    keywords=["artificial intelligence", "machine learning"], limit=100
 )
 
 # Search by inventor
-patents = search_patents_by_inventor(
-    inventor_name="Smith",
-    limit=50
-)
+patents = search_patents_by_inventor(inventor_name="Smith", limit=50)
 
 # Search by assignee/company
-patents = search_patents_by_assignee(
-    assignee_name="Google",
-    limit=100
-)
+patents = search_patents_by_assignee(assignee_name="Google", limit=100)
 ```
 
 ### Advanced Search
@@ -71,7 +64,7 @@ patents = search_patents_by_assignee(
 ```python
 from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
-    PatentSearchCriteria
+    PatentSearchCriteria,
 )
 
 scraper = USPTOPatentScraper(rate_limit_delay=1.0)
@@ -81,7 +74,7 @@ criteria = PatentSearchCriteria(
     date_from="2020-01-01",
     date_to="2024-12-31",
     cpc_classification=["G06F", "H04L"],
-    limit=500
+    limit=500,
 )
 
 patents = scraper.search_patents(criteria)
@@ -93,22 +86,19 @@ patents = scraper.search_patents(criteria)
 from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
     PatentSearchCriteria,
-    PatentDatasetBuilder
+    PatentDatasetBuilder,
 )
 from pathlib import Path
 
 scraper = USPTOPatentScraper(rate_limit_delay=1.0)
 builder = PatentDatasetBuilder(scraper)
 
-criteria = PatentSearchCriteria(
-    keywords=["quantum computing"],
-    limit=1000
-)
+criteria = PatentSearchCriteria(keywords=["quantum computing"], limit=1000)
 
 result = builder.build_dataset(
     criteria=criteria,
     output_format="json",
-    output_path=Path("/data/patents/quantum_computing.json")
+    output_path=Path("/data/patents/quantum_computing.json"),
 )
 
 print(f"Built dataset with {result['metadata']['patent_count']} patents")
@@ -120,14 +110,16 @@ print(f"Built dataset with {result['metadata']['patent_count']} patents")
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
-    PatentSearchCriteria
+    PatentSearchCriteria,
 )
+
 
 async def search_patents_async():
     scraper = USPTOPatentScraper()
     criteria = PatentSearchCriteria(keywords=["neural networks"])
     patents = await scraper.search_patents_async(criteria)
     return patents
+
 
 patents = asyncio.run(search_patents_async())
 ```
@@ -250,15 +242,13 @@ The patent scraper is also available as MCP tools for integration with AI assist
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_dataset_mcp_tools import (
-    ScrapeUSPTOPatentsTool
+    ScrapeUSPTOPatentsTool,
 )
 
 tool = ScrapeUSPTOPatentsTool()
-result = await tool.execute({
-    "keywords": ["machine learning"],
-    "limit": 100,
-    "output_format": "json"
-})
+result = await tool.execute(
+    {"keywords": ["machine learning"], "limit": 100, "output_format": "json"}
+)
 ```
 
 ## GraphRAG Integration

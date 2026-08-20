@@ -104,9 +104,7 @@ def test_compiler_emits_packet_001787_frame_deontic_outvoted_ambiguities() -> No
     target_family = ModalLogicFamily.DEONTIC.value
 
     for sample_id, expected_margin in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_ranking_for_margin(
             predicted_family=predicted_family,
             target_family=target_family,

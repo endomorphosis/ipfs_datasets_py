@@ -77,6 +77,7 @@ class DatasetLoader:
     def load(self, source: str) -> Dataset:
         pass
 
+
 # MCP tool (<150 lines)
 @tool_metadata(runtime="fastapi")
 async def load_dataset(source: str):
@@ -88,11 +89,14 @@ async def load_dataset(source: str):
 ```python
 # FastAPI for general tools
 @tool_metadata(runtime="fastapi")
-async def general_tool(): pass
+async def general_tool():
+    pass
+
 
 # Trio for P2P tools (50-70% faster)
 @tool_metadata(runtime="trio")
-async def p2p_tool(): pass
+async def p2p_tool():
+    pass
 ```
 
 ---
@@ -173,9 +177,10 @@ except ValueError as e:
 import pytest
 from unittest.mock import Mock, patch
 
+
 class TestComponent:
     """Test suite for Component."""
-    
+
     def test_basic_functionality(self):
         """
         GIVEN: A component instance
@@ -184,10 +189,10 @@ class TestComponent:
         """
         # Arrange
         component = Component()
-        
+
         # Act
         result = component.method()
-        
+
         # Assert
         assert result == expected
 ```
@@ -197,16 +202,19 @@ class TestComponent:
 @pytest.fixture
 def mock_server():
     """Provides mocked MCP server."""
-    with patch('mcp.server.FastMCP') as mock:
+    with patch("mcp.server.FastMCP") as mock:
         yield mock
 ```
 
 ### Parametrized Tests
 ```python
-@pytest.mark.parametrize("input,expected", [
-    ("valid", "success"),
-    ("invalid", "error"),
-])
+@pytest.mark.parametrize(
+    "input,expected",
+    [
+        ("valid", "success"),
+        ("invalid", "error"),
+    ],
+)
 def test_scenarios(input, expected):
     result = function(input)
     assert result.status == expected

@@ -58,147 +58,153 @@ Violation of corporate governance requirements may result in regulatory sanction
 
 Shareholders may bring derivative lawsuits against directors and officers for breaches of fiduciary duty. Class action lawsuits may be filed for securities fraud or other violations of shareholder rights.
 """,
-        "metadata": {
-            "method": "simulated",
-            "content_length": 2847,
-            "extraction_time": 0.001
-        }
+        "metadata": {"method": "simulated", "content_length": 2847, "extraction_time": 0.001},
     }
 
 
 def main():
     """Main entry point for local demonstration."""
-    parser = argparse.ArgumentParser(
-        description="Local end-to-end theorem proving demonstration"
-    )
+    parser = argparse.ArgumentParser(description="Local end-to-end theorem proving demonstration")
     parser.add_argument(
-        "--prover", "-p",
+        "--prover",
+        "-p",
         type=str,
         choices=["z3", "cvc5", "lean", "coq", "all"],
         default="z3",
-        help="Theorem prover to use (default: z3)"
+        help="Theorem prover to use (default: z3)",
     )
     parser.add_argument(
-        "--install-provers", "-i",
+        "--install-provers",
+        "-i",
         action="store_true",
-        help="Install theorem provers before running"
+        help="Install theorem provers before running",
     )
     parser.add_argument(
-        "--output-dir", "-o",
+        "--output-dir",
+        "-o",
         type=str,
         default="./local_proof_results",
-        help="Output directory for results"
+        help="Output directory for results",
     )
     parser.add_argument(
-        "--timeout", "-t",
+        "--timeout",
+        "-t",
         type=int,
         default=60,
-        help="Timeout for proof execution in seconds (default: 60)"
+        help="Timeout for proof execution in seconds (default: 60)",
     )
-    
+
     args = parser.parse_args()
-    
+
     print("=" * 80)
     print("LOCAL END-TO-END THEOREM PROVING DEMONSTRATION")
     print("=" * 80)
     print()
-    
+
     # Create output directory
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
-    
+
     # Step 1: Install theorem provers if requested
     if args.install_provers:
         print("Step 1: Installing theorem provers...")
-        
+
         try:
             from ipfs_datasets_py.auto_installer import get_installer
+
             installer = get_installer()
-            
+
             # Install basic dependencies first
-            installer.install_python_dependency('beartype')
-            
+            installer.install_python_dependency("beartype")
+
             # Install theorem provers
             prover_results = installer.install_theorem_provers()
-            
+
             print("Installation results:")
             for prover, success in prover_results.items():
                 status = "✓" if success else "✗"
                 print(f"  {status} {prover}: {'Success' if success else 'Failed'}")
             print()
-            
+
         except Exception as e:
             print(f"Error installing theorem provers: {e}")
             print("Continuing with available provers...")
             print()
-    
+
     # Step 2: Use simulated website content
     print("Step 2: Using simulated legal website content...")
-    
+
     website_content = create_sample_legal_website_content()
-    
+
     print(f"✓ Simulated content from: {website_content['url']}")
     print(f"  Title: {website_content['title']}")
     print(f"  Text length: {len(website_content['text']):,} characters")
     print()
-    
+
     # Show sample of content
-    sample_text = website_content['text'][:400] + "..." if len(website_content['text']) > 400 else website_content['text']
+    sample_text = (
+        website_content["text"][:400] + "..."
+        if len(website_content["text"]) > 400
+        else website_content["text"]
+    )
     print("Sample content:")
     print("-" * 40)
     print(sample_text)
     print()
-    
+
     # Step 3: Create knowledge graph from text
     print("Step 3: Creating knowledge graph from content...")
-    
+
     try:
         # Use the existing mock knowledge graph creation but adapt for corporate governance
-        knowledge_graph = create_corporate_governance_knowledge_graph(website_content['text'])
-        
+        knowledge_graph = create_corporate_governance_knowledge_graph(website_content["text"])
+
         print(f"✓ Knowledge graph created")
         print(f"  Entities: {len(knowledge_graph.entities)}")
         print(f"  Relationships: {len(knowledge_graph.relationships)}")
         print()
-        
+
     except Exception as e:
         print(f"Error creating knowledge graph: {e}")
         return 1
-    
+
     # Step 4: Convert to deontic logic
     print("Step 4: Converting to deontic logic...")
-    
+
     try:
         from ipfs_datasets_py.logic.integration import (
-            DeonticLogicConverter, LegalDomainKnowledge, ConversionContext, LegalDomain
+            DeonticLogicConverter,
+            LegalDomainKnowledge,
+            ConversionContext,
+            LegalDomain,
         )
-        
+
         # Initialize converter
         domain_knowledge = LegalDomainKnowledge()
         converter = DeonticLogicConverter(domain_knowledge)
-        
+
         # Create context for corporate governance
         context = ConversionContext(
-            source_document_path=website_content['url'],
-            document_title=website_content['title'],
+            source_document_path=website_content["url"],
+            document_title=website_content["title"],
             legal_domain=LegalDomain.CORPORATE,
             jurisdiction="Federal Securities Law, USA",
             confidence_threshold=0.6,
             enable_temporal_analysis=True,
             enable_agent_inference=True,
-            enable_condition_extraction=True
+            enable_condition_extraction=True,
         )
-        
+
         # Convert to deontic logic
         conversion_result = converter.convert_knowledge_graph_to_logic(knowledge_graph, context)
-        
+
         print(f"✓ Deontic logic conversion completed")
         print(f"  Generated formulas: {len(conversion_result.deontic_formulas)}")
         print(f"  Obligations: {conversion_result.statistics.get('obligations', 0)}")
         print(f"  Permissions: {conversion_result.statistics.get('permissions', 0)}")
         print(f"  Prohibitions: {conversion_result.statistics.get('prohibitions', 0)}")
         print()
-        
+
         # Display sample formulas
         print("Sample extracted formulas:")
         print("-" * 40)
@@ -208,54 +214,56 @@ def main():
             print(f"   FOL: {formula.to_fol_string()}")
             print(f"   Source: {formula.source_text[:80]}...")
             print()
-        
+
     except Exception as e:
         print(f"Error during deontic logic conversion: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
-    
+
     # Step 5: Execute theorem proofs
     print("Step 5: Executing theorem proofs...")
-    
+
     try:
         from ipfs_datasets_py.logic.integration import create_proof_engine
-        
+
         proof_engine = create_proof_engine(
-            temp_dir=str(output_dir / "proofs"),
-            timeout=args.timeout
+            temp_dir=str(output_dir / "proofs"), timeout=args.timeout
         )
-        
+
         # Show available provers
         prover_status = proof_engine.get_prover_status()
-        available_provers = [p for p, available in prover_status["available_provers"].items() if available]
-        
+        available_provers = [
+            p for p, available in prover_status["available_provers"].items() if available
+        ]
+
         print(f"Available provers: {available_provers}")
         print()
-        
+
         if not conversion_result.deontic_formulas:
             print("No formulas to prove")
             return 1
-        
+
         if args.prover == "all" and available_provers:
             # Test with first available prover if multiple requested
             test_prover = available_provers[0] if available_provers else "z3"
             print(f"Testing with first available prover: {test_prover}")
-            
+
             sample_formula = conversion_result.deontic_formulas[0]
             print(f"Proving formula: {sample_formula.to_fol_string()}")
             print()
-            
+
             proof_result = proof_engine.prove_deontic_formula(sample_formula, test_prover)
-            
+
             status_icon = {
-                'success': '✓',
-                'failure': '✗', 
-                'timeout': '⏱',
-                'error': '✗',
-                'unsupported': '?'
-            }.get(proof_result.status.value, '?')
-            
+                "success": "✓",
+                "failure": "✗",
+                "timeout": "⏱",
+                "error": "✗",
+                "unsupported": "?",
+            }.get(proof_result.status.value, "?")
+
             print(f"  {status_icon} Proof result: {proof_result.status.value}")
             if proof_result.execution_time > 0:
                 print(f"    Execution time: {proof_result.execution_time:.3f}s")
@@ -264,27 +272,26 @@ def main():
             if proof_result.errors:
                 print(f"    Errors: {'; '.join(proof_result.errors)}")
             print()
-            
+
         elif available_provers and args.prover in available_provers:
             # Prove with specific prover
             print(f"Proving formulas with {args.prover}...")
-            
+
             # Prove first few formulas as demonstration
             sample_formulas = conversion_result.deontic_formulas[:3]
-            
+
             for i, formula in enumerate(sample_formulas, 1):
                 print(f"Proving formula {i}: {formula.to_fol_string()}")
-                
+
                 proof_result = proof_engine.prove_deontic_formula(formula, args.prover)
-                
-                status_icon = {
-                    'success': '✓',
-                    'failure': '✗',
-                    'timeout': '⏱',
-                    'error': '✗'
-                }.get(proof_result.status.value, '?')
-                
-                print(f"  {status_icon} {proof_result.status.value} ({proof_result.execution_time:.3f}s)")
+
+                status_icon = {"success": "✓", "failure": "✗", "timeout": "⏱", "error": "✗"}.get(
+                    proof_result.status.value, "?"
+                )
+
+                print(
+                    f"  {status_icon} {proof_result.status.value} ({proof_result.execution_time:.3f}s)"
+                )
                 if proof_result.errors:
                     print(f"    Errors: {'; '.join(proof_result.errors[:1])}")
                 print()
@@ -292,64 +299,69 @@ def main():
             print(f"Prover {args.prover} not available or no provers installed")
             print("Available provers:", available_provers)
             return 1
-        
+
     except Exception as e:
         print(f"Error during proof execution: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
-    
+
     # Step 6: Save results
     print("Step 6: Saving results...")
-    
+
     try:
         # Save simulated extraction
-        with open(output_dir / "simulated_extraction.json", 'w') as f:
+        with open(output_dir / "simulated_extraction.json", "w") as f:
             json.dump(website_content, f, indent=2)
-        
+
         # Save conversion result
-        with open(output_dir / "conversion_result.json", 'w') as f:
+        with open(output_dir / "conversion_result.json", "w") as f:
             json.dump(conversion_result.to_dict(), f, indent=2, default=str)
-        
+
         # Save proof results
-        if 'proof_result' in locals():
-            with open(output_dir / f"proof_result_{args.prover}.json", 'w') as f:
+        if "proof_result" in locals():
+            with open(output_dir / f"proof_result_{args.prover}.json", "w") as f:
                 json.dump(proof_result.to_dict(), f, indent=2, default=str)
-        
+
         print(f"✓ Results saved to {output_dir}")
         print()
-        
+
     except Exception as e:
         print(f"Error saving results: {e}")
-    
+
     # Final summary
     print("LOCAL DEMONSTRATION SUMMARY")
     print("=" * 40)
     print(f"✓ Simulated text extraction from corporate governance content")
     print(f"✓ Text length: {len(website_content['text']):,} characters")
     print(f"✓ Deontic formulas generated: {len(conversion_result.deontic_formulas)}")
-    
-    if 'proof_result' in locals():
+
+    if "proof_result" in locals():
         print(f"✓ Proof execution: {proof_result.status.value} with {args.prover}")
         print(f"✓ Execution time: {proof_result.execution_time:.3f}s")
-    
+
     print(f"✓ Results saved to: {output_dir}")
     print()
     print("🎉 Local demonstration completed!")
-    
+
     return 0
 
 
 def create_corporate_governance_knowledge_graph(text: str):
     """Create a knowledge graph from corporate governance text."""
-    
+
     # Import required classes
     try:
-        from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import Entity, Relationship, KnowledgeGraph
+        from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
+            Entity,
+            Relationship,
+            KnowledgeGraph,
+        )
     except ImportError:
         # Use mock classes from the legal demo
         from demonstrate_legal_deontic_logic import Entity, Relationship, KnowledgeGraph
-    
+
     # Create entities representing corporate governance concepts
     entities = [
         Entity(
@@ -358,29 +370,29 @@ def create_corporate_governance_knowledge_graph(text: str):
             name="Board of Directors",
             properties={
                 "text": "The board of directors shall exercise oversight of the corporation's operations",
-                "role": "corporate_governance_body"
+                "role": "corporate_governance_body",
             },
-            source_text="The board of directors shall exercise oversight of the corporation's operations and strategic direction"
+            source_text="The board of directors shall exercise oversight of the corporation's operations and strategic direction",
         ),
         Entity(
             entity_id="directors",
-            entity_type="legal_agent", 
+            entity_type="legal_agent",
             name="Directors",
             properties={
                 "text": "Directors must act in good faith and in the best interests of the corporation",
-                "role": "fiduciary"
+                "role": "fiduciary",
             },
-            source_text="Directors must act in good faith and in the best interests of the corporation and its shareholders"
+            source_text="Directors must act in good faith and in the best interests of the corporation and its shareholders",
         ),
         Entity(
             entity_id="audit_committee",
             entity_type="legal_agent",
-            name="Audit Committee", 
+            name="Audit Committee",
             properties={
                 "text": "The board shall establish an audit committee comprised of independent directors",
-                "role": "oversight_committee"
+                "role": "oversight_committee",
             },
-            source_text="The board shall establish an audit committee comprised of independent directors"
+            source_text="The board shall establish an audit committee comprised of independent directors",
         ),
         Entity(
             entity_id="oversight_obligation",
@@ -389,9 +401,9 @@ def create_corporate_governance_knowledge_graph(text: str):
             properties={
                 "text": "The board of directors shall exercise oversight of the corporation's operations",
                 "action": "exercise_oversight",
-                "subject": "corporation's operations and strategic direction"
+                "subject": "corporation's operations and strategic direction",
             },
-            source_text="The board of directors shall exercise oversight of the corporation's operations and strategic direction"
+            source_text="The board of directors shall exercise oversight of the corporation's operations and strategic direction",
         ),
         Entity(
             entity_id="fiduciary_duty",
@@ -400,9 +412,9 @@ def create_corporate_governance_knowledge_graph(text: str):
             properties={
                 "text": "Directors must act in good faith and in the best interests of the corporation",
                 "action": "act_in_good_faith",
-                "beneficiary": "corporation and shareholders"
+                "beneficiary": "corporation and shareholders",
             },
-            source_text="Directors must act in good faith and in the best interests of the corporation and its shareholders"
+            source_text="Directors must act in good faith and in the best interests of the corporation and its shareholders",
         ),
         Entity(
             entity_id="audit_committee_requirement",
@@ -411,9 +423,9 @@ def create_corporate_governance_knowledge_graph(text: str):
             properties={
                 "text": "The board shall establish an audit committee comprised of independent directors",
                 "action": "establish_audit_committee",
-                "requirement": "independent directors"
+                "requirement": "independent directors",
             },
-            source_text="The board shall establish an audit committee comprised of independent directors"
+            source_text="The board shall establish an audit committee comprised of independent directors",
         ),
         Entity(
             entity_id="transaction_review_obligation",
@@ -422,9 +434,9 @@ def create_corporate_governance_knowledge_graph(text: str):
             properties={
                 "text": "The audit committee must review and approve all material transactions between the corporation and related parties",
                 "action": "review_and_approve_transactions",
-                "scope": "material transactions with related parties"
+                "scope": "material transactions with related parties",
             },
-            source_text="The audit committee must review and approve all material transactions between the corporation and related parties"
+            source_text="The audit committee must review and approve all material transactions between the corporation and related parties",
         ),
         Entity(
             entity_id="conflict_prohibition",
@@ -433,9 +445,9 @@ def create_corporate_governance_knowledge_graph(text: str):
             properties={
                 "text": "Directors are prohibited from engaging in transactions that create conflicts of interest",
                 "action": "engage_in_conflict_transactions",
-                "exception": "with proper disclosure and approval"
+                "exception": "with proper disclosure and approval",
             },
-            source_text="Directors are prohibited from engaging in transactions that create conflicts of interest without proper disclosure and approval"
+            source_text="Directors are prohibited from engaging in transactions that create conflicts of interest without proper disclosure and approval",
         ),
         Entity(
             entity_id="disclosure_obligation",
@@ -445,9 +457,9 @@ def create_corporate_governance_knowledge_graph(text: str):
                 "text": "The corporation must promptly disclose all material information that could affect the stock price",
                 "action": "disclose_material_information",
                 "timing": "promptly",
-                "scope": "information affecting stock price"
+                "scope": "information affecting stock price",
             },
-            source_text="The corporation must promptly disclose all material information that could affect the stock price"
+            source_text="The corporation must promptly disclose all material information that could affect the stock price",
         ),
         Entity(
             entity_id="insider_trading_prohibition",
@@ -456,9 +468,9 @@ def create_corporate_governance_knowledge_graph(text: str):
             properties={
                 "text": "Insider trading is strictly prohibited",
                 "action": "insider_trading",
-                "enforcement": "strict prohibition"
+                "enforcement": "strict prohibition",
             },
-            source_text="Insider trading is strictly prohibited, and the corporation must maintain policies preventing such activities"
+            source_text="Insider trading is strictly prohibited, and the corporation must maintain policies preventing such activities",
         ),
         Entity(
             entity_id="shareholder_voting_right",
@@ -467,15 +479,15 @@ def create_corporate_governance_knowledge_graph(text: str):
             properties={
                 "text": "Shareholders have the right to vote on fundamental corporate matters",
                 "action": "vote_on_corporate_matters",
-                "scope": "fundamental matters including mergers, acquisitions, major asset sales"
+                "scope": "fundamental matters including mergers, acquisitions, major asset sales",
             },
-            source_text="Shareholders have the right to vote on fundamental corporate matters including mergers, acquisitions, and major asset sales"
-        )
+            source_text="Shareholders have the right to vote on fundamental corporate matters including mergers, acquisitions, and major asset sales",
+        ),
     ]
-    
+
     # Create relationships
     entity_map = {entity.entity_id: entity for entity in entities}
-    
+
     relationships = [
         Relationship(
             relationship_id="board_oversight_duty",
@@ -483,76 +495,95 @@ def create_corporate_governance_knowledge_graph(text: str):
             source_entity=entity_map["board_of_directors"],
             target_entity=entity_map["oversight_obligation"],
             properties={"legal_basis": "corporate governance law", "enforceability": "regulatory"},
-            source_text="The board of directors shall exercise oversight of the corporation's operations and strategic direction"
+            source_text="The board of directors shall exercise oversight of the corporation's operations and strategic direction",
         ),
         Relationship(
             relationship_id="directors_fiduciary_duty",
-            relationship_type="must_fulfill", 
+            relationship_type="must_fulfill",
             source_entity=entity_map["directors"],
             target_entity=entity_map["fiduciary_duty"],
-            properties={"legal_basis": "fiduciary law", "standard": "good faith and best interests"},
-            source_text="Directors must act in good faith and in the best interests of the corporation and its shareholders"
+            properties={
+                "legal_basis": "fiduciary law",
+                "standard": "good faith and best interests",
+            },
+            source_text="Directors must act in good faith and in the best interests of the corporation and its shareholders",
         ),
         Relationship(
             relationship_id="board_audit_committee_duty",
             relationship_type="must_fulfill",
             source_entity=entity_map["board_of_directors"],
             target_entity=entity_map["audit_committee_requirement"],
-            properties={"legal_basis": "securities regulation", "composition": "independent directors"},
-            source_text="The board shall establish an audit committee comprised of independent directors"
+            properties={
+                "legal_basis": "securities regulation",
+                "composition": "independent directors",
+            },
+            source_text="The board shall establish an audit committee comprised of independent directors",
         ),
         Relationship(
             relationship_id="audit_review_duty",
             relationship_type="must_fulfill",
             source_entity=entity_map["audit_committee"],
             target_entity=entity_map["transaction_review_obligation"],
-            properties={"legal_basis": "audit committee charter", "scope": "related party transactions"},
-            source_text="The audit committee must review and approve all material transactions between the corporation and related parties"
+            properties={
+                "legal_basis": "audit committee charter",
+                "scope": "related party transactions",
+            },
+            source_text="The audit committee must review and approve all material transactions between the corporation and related parties",
         ),
         Relationship(
             relationship_id="directors_conflict_prohibition",
             relationship_type="must_not_do",
             source_entity=entity_map["directors"],
             target_entity=entity_map["conflict_prohibition"],
-            properties={"legal_basis": "conflict of interest rules", "exception": "disclosure and approval"},
-            source_text="Directors are prohibited from engaging in transactions that create conflicts of interest without proper disclosure and approval"
-        )
+            properties={
+                "legal_basis": "conflict of interest rules",
+                "exception": "disclosure and approval",
+            },
+            source_text="Directors are prohibited from engaging in transactions that create conflicts of interest without proper disclosure and approval",
+        ),
     ]
-    
+
     # Create knowledge graph
     knowledge_graph = KnowledgeGraph()
-    
+
     # Initialize dictionary-like structure to match expected interface
-    if not hasattr(knowledge_graph, 'entities') or isinstance(knowledge_graph.entities, list):
+    if not hasattr(knowledge_graph, "entities") or isinstance(knowledge_graph.entities, list):
         knowledge_graph.entities = {}
         knowledge_graph.entity_types = {}
         knowledge_graph.entity_names = {}
         knowledge_graph.entity_relationships = {}
         knowledge_graph.relationships = {}
         knowledge_graph.relationship_types = {}
-        
+
         # Initialize default collections
         from collections import defaultdict
+
         knowledge_graph.entity_types = defaultdict(set)
         knowledge_graph.entity_names = defaultdict(set)
         knowledge_graph.entity_relationships = defaultdict(set)
         knowledge_graph.relationship_types = defaultdict(set)
-    
+
     # Add entities
     for entity in entities:
         knowledge_graph.entities[entity.entity_id] = entity
         knowledge_graph.entity_types[entity.entity_type].add(entity.entity_id)
         knowledge_graph.entity_names[entity.name].add(entity.entity_id)
-    
+
     # Add relationships
     for relationship in relationships:
         knowledge_graph.relationships[relationship.relationship_id] = relationship
-        knowledge_graph.relationship_types[relationship.relationship_type].add(relationship.relationship_id)
-        if hasattr(relationship, 'source_entity') and relationship.source_entity:
-            knowledge_graph.entity_relationships[relationship.source_entity.entity_id].add(relationship.relationship_id)
-        if hasattr(relationship, 'target_entity') and relationship.target_entity:
-            knowledge_graph.entity_relationships[relationship.target_entity.entity_id].add(relationship.relationship_id)
-    
+        knowledge_graph.relationship_types[relationship.relationship_type].add(
+            relationship.relationship_id
+        )
+        if hasattr(relationship, "source_entity") and relationship.source_entity:
+            knowledge_graph.entity_relationships[relationship.source_entity.entity_id].add(
+                relationship.relationship_id
+            )
+        if hasattr(relationship, "target_entity") and relationship.target_entity:
+            knowledge_graph.entity_relationships[relationship.target_entity.entity_id].add(
+                relationship.relationship_id
+            )
+
     return knowledge_graph
 
 

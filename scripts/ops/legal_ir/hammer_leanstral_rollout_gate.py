@@ -122,29 +122,17 @@ HAMMER_ALLOWED_STATUSES = frozenset(
 
 
 STAGED_ROLLOUT_SCHEMA_VERSION = "legal-ir-hammer-leanstral-rollout-v1"
-LEGAL_IR_LEARNED_GUIDANCE_PROMOTION_SCHEMA_VERSION = (
-    "legal-ir-learned-guidance-promotion-v1"
-)
-LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION = (
-    "legal-ir-stable-autoencoder-feature-export-v1"
-)
-MULTI_SEED_PROMOTION_SCHEMA_VERSION = (
-    "legal-ir-hammer-leanstral-multi-seed-promotion-v1"
-)
+LEGAL_IR_LEARNED_GUIDANCE_PROMOTION_SCHEMA_VERSION = "legal-ir-learned-guidance-promotion-v1"
+LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION = "legal-ir-stable-autoencoder-feature-export-v1"
+MULTI_SEED_PROMOTION_SCHEMA_VERSION = "legal-ir-hammer-leanstral-multi-seed-promotion-v1"
 EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION = (
     "legal-ir-hammer-leanstral-external-validity-promotion-v1"
 )
-COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION = (
-    "legal-ir-hammer-leanstral-compiler-system-promotion-v1"
-)
-THROUGHPUT_REMEDIATION_SCHEMA_VERSION = (
-    "legal-ir-throughput-remediation-rollout-v1"
-)
+COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION = "legal-ir-hammer-leanstral-compiler-system-promotion-v1"
+THROUGHPUT_REMEDIATION_SCHEMA_VERSION = "legal-ir-throughput-remediation-rollout-v1"
 
 LEGAL_IR_EVAL_SPLITS_SCHEMA_VERSION = "legal-ir-eval-splits-v1"
-LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION = (
-    "legal-ir-semantic-equivalence-metrics-v1"
-)
+LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION = "legal-ir-semantic-equivalence-metrics-v1"
 LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION = "legal-ir-typed-grammar-decoder-v1"
 LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION = "legal-ir-uncertainty-v1"
 LEGAL_IR_FUZZING_SCHEMA_VERSION = "legal-ir-metamorphic-differential-fuzzing-v1"
@@ -152,13 +140,9 @@ LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION = "legal-ir-hard-negative-effect-v1
 LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION = "legal-ir-hard-negative-curriculum-v1"
 LEGAL_IR_SCHEMA_EVOLUTION_SCHEMA_VERSION = "legal-ir-schema-evolution-v1"
 LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION = "legal-ir-premise-security-v1"
-LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION = (
-    "legal-ir-external-benchmark-report-v1"
-)
+LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION = "legal-ir-external-benchmark-report-v1"
 LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION = "legal-ir-drift-monitor-v1"
-LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION = (
-    "legal-ir-learned-guidance-rollback-v1"
-)
+LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION = "legal-ir-learned-guidance-rollback-v1"
 LEGAL_SOURCE_TEXT_DATA_RULE = "legal_source_text_is_data_not_instructions"
 EXTERNAL_BENCHMARK_HARD_GUARDRAIL = "external_benchmark_never_training_data"
 PRODUCTION_DRIFT_AND_ROLLBACK_HARD_GUARDRAIL = "learned_guidance_is_reversible"
@@ -560,9 +544,7 @@ class ThroughputRemediationConfig:
     require_ablation_attribution: bool = True
     duration_tolerance_seconds: float = 0.0
     required_families: tuple[str, ...] = LEGAL_IR_VIEW_FAMILIES
-    required_quality_metrics: tuple[str, ...] = (
-        THROUGHPUT_REMEDIATION_QUALITY_METRICS
-    )
+    required_quality_metrics: tuple[str, ...] = THROUGHPUT_REMEDIATION_QUALITY_METRICS
 
     def __post_init__(self) -> None:
         if self.min_warm_cycles_per_hour_ratio < 1.0:
@@ -579,9 +561,9 @@ class ThroughputRemediationConfig:
             self.required_families
         ):
             raise ValueError("required_families must be non-empty and unique")
-        if not self.required_quality_metrics or len(
-            set(self.required_quality_metrics)
-        ) != len(self.required_quality_metrics):
+        if not self.required_quality_metrics or len(set(self.required_quality_metrics)) != len(
+            self.required_quality_metrics
+        ):
             raise ValueError("required_quality_metrics must be non-empty and unique")
 
 
@@ -736,7 +718,9 @@ def multi_seed_promotion_gate(
     if schema and schema != MULTI_SEED_PROMOTION_SCHEMA_VERSION:
         failures.append(f"multi_seed_schema_mismatch:{schema}")
     evidence_confidence = _finite_float(evidence.get("confidence_level"))
-    confidence_level = evidence_confidence if evidence_confidence is not None else cfg.confidence_level
+    confidence_level = (
+        evidence_confidence if evidence_confidence is not None else cfg.confidence_level
+    )
     if confidence_level <= 0.0 or confidence_level >= 1.0:
         failures.append(f"multi_seed_confidence_level_invalid:{confidence_level:g}")
         confidence_level = cfg.confidence_level
@@ -773,8 +757,7 @@ def multi_seed_promotion_gate(
         sample_count = len(effects)
         if sample_count < min_seed_count:
             failures.append(
-                f"multi_seed_metric_seed_count:{metric_name}:"
-                f"{sample_count}<{min_seed_count}"
+                f"multi_seed_metric_seed_count:{metric_name}:{sample_count}<{min_seed_count}"
             )
 
         unique_seeds = set(seed_ids)
@@ -820,15 +803,16 @@ def multi_seed_promotion_gate(
             failures.append(f"multi_seed_metric_ci_missing:{metric_name}")
         elif lower + 1.0e-12 < minimum_effect:
             failures.append(
-                f"multi_seed_metric_ci_below_threshold:{metric_name}:"
-                f"{lower:g}<{minimum_effect:g}"
+                f"multi_seed_metric_ci_below_threshold:{metric_name}:{lower:g}<{minimum_effect:g}"
             )
 
     metrics["multi_seed_metrics"] = metric_results
     metrics["seed_set"] = sorted(all_seeds, key=_seed_sort_key)
     metrics["failure_family_attribution"] = dict(sorted(all_failure_attribution.items()))
     metrics["promotion_id"] = str(evidence.get("promotion_id") or payload.get("promotion_id") or "")
-    metrics["compiler_commit"] = str(evidence.get("compiler_commit") or payload.get("compiler_commit") or "")
+    metrics["compiler_commit"] = str(
+        evidence.get("compiler_commit") or payload.get("compiler_commit") or ""
+    )
     return RolloutGateResult(
         accepted=not failures,
         failures=list(dict.fromkeys(failures)),
@@ -864,9 +848,7 @@ def staged_rollout_gate(
     if len(items) > expected_count:
         failures.append(f"stage_sequence:too_many_snapshots:{len(items)}>{expected_count}")
     if cfg.require_all_stages and len(items) != expected_count:
-        failures.append(
-            f"stage_sequence:incomplete:{len(items)}/{expected_count}"
-        )
+        failures.append(f"stage_sequence:incomplete:{len(items)}/{expected_count}")
 
     completed: list[str] = []
     rates: dict[str, float] = {}
@@ -901,8 +883,7 @@ def staged_rollout_gate(
             failures.append(f"stage_wall_clock_missing:{stage_label}")
         elif elapsed + max(0.0, cfg.duration_tolerance_seconds) < expected.duration_seconds:
             failures.append(
-                f"stage_duration:{stage_label}:elapsed_{elapsed:g}<"
-                f"{expected.duration_seconds}"
+                f"stage_duration:{stage_label}:elapsed_{elapsed:g}<{expected.duration_seconds}"
             )
         status = str(snapshot.get("status") or "").strip().lower()
         if status not in {"completed", "passed", "succeeded", "success"}:
@@ -914,9 +895,7 @@ def staged_rollout_gate(
         failures.extend(_family_guardrail_failures(snapshot, stage_label, cfg))
         failures.extend(_trusted_feedback_failures(snapshot, stage_label, cfg))
         failures.extend(_representation_snapshot_failures(snapshot, stage_label, cfg))
-        lineage_value, lineage_failures = _promotion_lineage_evidence(
-            snapshot, stage_label, cfg
-        )
+        lineage_value, lineage_failures = _promotion_lineage_evidence(snapshot, stage_label, cfg)
         failures.extend(lineage_failures)
         if lineage_value is not None:
             lineage[stage_label] = lineage_value
@@ -936,8 +915,7 @@ def staged_rollout_gate(
                 and queue_lag - previous_queue_lag > cfg.max_queue_lag_regression + 1.0e-12
             ):
                 failures.append(
-                    f"queue_lag_regression:{stage_label}:{previous_queue_lag:g}->"
-                    f"{queue_lag:g}"
+                    f"queue_lag_regression:{stage_label}:{previous_queue_lag:g}->{queue_lag:g}"
                 )
             previous_queue_lag = queue_lag
 
@@ -953,8 +931,7 @@ def staged_rollout_gate(
             rates[stage_label] = round(rate, 12)
             if (
                 previous_rate is not None
-                and previous_rate - rate
-                > cfg.max_accepted_patches_per_hour_regression + 1.0e-12
+                and previous_rate - rate > cfg.max_accepted_patches_per_hour_regression + 1.0e-12
             ):
                 failures.append(
                     f"accepted_patches_per_hour_regression:{stage_label}:"
@@ -962,9 +939,7 @@ def staged_rollout_gate(
                 )
             previous_rate = rate
 
-        rollback_value, rollback_failures = _validated_rollback_evidence(
-            snapshot, stage_label, cfg
-        )
+        rollback_value, rollback_failures = _validated_rollback_evidence(snapshot, stage_label, cfg)
         failures.extend(rollback_failures)
         if rollback_value is not None:
             rollback[stage_label] = rollback_value
@@ -981,11 +956,7 @@ def staged_rollout_gate(
                 metrics["multi_seed_statistical_promotion"] = multi_seed_result.metrics
                 failures.extend(multi_seed_result.failures)
 
-    next_stage = (
-        STAGED_ROLLOUT_STAGES[len(items)].name
-        if len(items) < expected_count
-        else None
-    )
+    next_stage = STAGED_ROLLOUT_STAGES[len(items)].name if len(items) < expected_count else None
     metrics.update(
         {
             "completed_stages": completed,
@@ -997,7 +968,8 @@ def staged_rollout_gate(
             "promotion_lineage": lineage,
             "trusted_feedback_reached_autoencoder": not any(
                 item.startswith("trusted_feedback_") for item in failures
-            ) and bool(items),
+            )
+            and bool(items),
         }
     )
     return RolloutGateResult(
@@ -1034,8 +1006,12 @@ def throughput_remediation_rollout_gate(
         failures.append(f"schema_mismatch:{schema or 'missing'}")
 
     required_domains = (
-        "stages", "matched_benchmark", "services", "artifacts",
-        "quality_families", "ablations",
+        "stages",
+        "matched_benchmark",
+        "services",
+        "artifacts",
+        "quality_families",
+        "ablations",
     )
     for domain in required_domains:
         if domain not in payload or payload.get(domain) in (None, {}, []):
@@ -1043,13 +1019,10 @@ def throughput_remediation_rollout_gate(
 
     stage_items = payload.get("stages")
     completed_stages: list[str] = []
-    if isinstance(stage_items, Sequence) and not isinstance(
-        stage_items, (str, bytes, bytearray)
-    ):
+    if isinstance(stage_items, Sequence) and not isinstance(stage_items, (str, bytes, bytearray)):
         if len(stage_items) != len(THROUGHPUT_REMEDIATION_STAGES):
             failures.append(
-                "stage_sequence:incomplete:"
-                f"{len(stage_items)}/{len(THROUGHPUT_REMEDIATION_STAGES)}"
+                f"stage_sequence:incomplete:{len(stage_items)}/{len(THROUGHPUT_REMEDIATION_STAGES)}"
             )
         for index, spec in enumerate(THROUGHPUT_REMEDIATION_STAGES):
             if index >= len(stage_items):
@@ -1109,18 +1082,17 @@ def _throughput_stage_failures(
     name = str(item.get("name") or item.get("stage") or "").strip()
     if name != spec.name:
         failures.append(f"stage_sequence:expected_{spec.name}:got_{name or 'missing'}")
-    planned = _throughput_number(
-        item.get("planned_duration_seconds", item.get("duration_seconds"))
-    )
+    planned = _throughput_number(item.get("planned_duration_seconds", item.get("duration_seconds")))
     if planned is None or abs(planned - spec.duration_seconds) > cfg.duration_tolerance_seconds:
         failures.append(f"stage_duration:{spec.name}:planned")
-    active = _throughput_number(
-        item.get("active_seconds", item.get("elapsed_seconds"))
-    )
+    active = _throughput_number(item.get("active_seconds", item.get("elapsed_seconds")))
     if active is None or active + cfg.duration_tolerance_seconds < spec.duration_seconds:
         failures.append(f"stage_duration:{spec.name}:active")
     if str(item.get("status") or "").lower() not in {
-        "completed", "passed", "succeeded", "success",
+        "completed",
+        "passed",
+        "succeeded",
+        "success",
     }:
         failures.append(f"stage_status:{spec.name}")
     if item.get("snapshot_complete") is not True:
@@ -1141,9 +1113,11 @@ def _throughput_stage_failures(
     if orphan_count is None or orphan_count != 0.0:
         failures.append(f"orphaned_children:{spec.name}")
     processes = item.get("managed_processes")
-    if not isinstance(processes, Sequence) or isinstance(
-        processes, (str, bytes, bytearray)
-    ) or not processes:
+    if (
+        not isinstance(processes, Sequence)
+        or isinstance(processes, (str, bytes, bytearray))
+        or not processes
+    ):
         failures.append(f"evidence_missing:stage:{spec.name}:managed_processes")
     else:
         for process in processes:
@@ -1152,9 +1126,18 @@ def _throughput_stage_failures(
                 continue
             state = str(process.get("status") or process.get("state") or "").lower()
             code = _throughput_number(process.get("exit_code", process.get("returncode")))
-            if process.get("orphaned") is not False or state not in {
-                "completed", "exited", "stopped", "terminated", "cleaned",
-            } or code != 0.0:
+            if (
+                process.get("orphaned") is not False
+                or state
+                not in {
+                    "completed",
+                    "exited",
+                    "stopped",
+                    "terminated",
+                    "cleaned",
+                }
+                or code != 0.0
+            ):
                 failures.append(
                     f"orphaned_or_failed_managed_process:{spec.name}:"
                     f"{process.get('name', 'unknown')}"
@@ -1191,7 +1174,9 @@ def _throughput_stage_failures(
             )
             if cfg.verify_rollback_artifacts and valid:
                 try:
-                    valid = Path(path).is_file() and snapshot_sha256(path) == digest.removeprefix("sha256:")
+                    valid = Path(path).is_file() and snapshot_sha256(path) == digest.removeprefix(
+                        "sha256:"
+                    )
                 except OSError:
                     valid = False
             if not valid:
@@ -1225,7 +1210,8 @@ def _throughput_benchmark_failures(
                 continue
             values[(cache, arm)] = block
             for key in (
-                "cycles_per_hour", "samples_per_second",
+                "cycles_per_hour",
+                "samples_per_second",
                 "state_to_accepted_patch_lag_p95_seconds",
             ):
                 number = _throughput_number(block.get(key))
@@ -1252,15 +1238,14 @@ def _throughput_benchmark_failures(
         failures.append("throughput_threshold:warm_cycles_per_hour")
     if sample_ratio + 1e-12 < cfg.min_samples_per_second_ratio:
         failures.append("throughput_threshold:warm_samples_per_second")
-    if cfg.require_lower_state_to_accepted_patch_p95 and not metrics[
-        "state_to_accepted_patch_lag_improved"
-    ]:
+    if (
+        cfg.require_lower_state_to_accepted_patch_p95
+        and not metrics["state_to_accepted_patch_lag_improved"]
+    ):
         failures.append("throughput_threshold:state_to_accepted_patch_lag_p95")
 
 
-def _throughput_service_failures(
-    services: Mapping[str, Any], failures: list[str]
-) -> None:
+def _throughput_service_failures(services: Mapping[str, Any], failures: list[str]) -> None:
     for name in ("cuda_autoencoder", "leanstral", "hammer", "codex"):
         if not isinstance(services.get(name), Mapping):
             failures.append(f"evidence_missing:services:{name}")
@@ -1382,7 +1367,8 @@ def _throughput_quality_failures(
                 else after[metric] + 1e-12 < before[metric]
             )
             family_metrics[metric] = {
-                "baseline": before[metric], "candidate": after[metric],
+                "baseline": before[metric],
+                "candidate": after[metric],
                 "regression": regressed,
             }
             if regressed:
@@ -1477,7 +1463,11 @@ def _managed_process_failures(
     if isinstance(raw, Mapping):
         raw = raw.get("processes", raw.get("managed_processes"))
     if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes, bytearray)) or not raw:
-        return [f"managed_process_evidence_missing:{stage}"] if cfg.require_managed_process_evidence else []
+        return (
+            [f"managed_process_evidence_missing:{stage}"]
+            if cfg.require_managed_process_evidence
+            else []
+        )
     failures: list[str] = []
     for index, process in enumerate(raw):
         if not isinstance(process, Mapping):
@@ -1491,7 +1481,11 @@ def _managed_process_failures(
         )
         state = str(process.get("status") or process.get("state") or "").strip().lower()
         orphaned = process.get("orphaned") is True or state in {
-            "orphaned", "running", "alive", "unknown", "leaked"
+            "orphaned",
+            "running",
+            "alive",
+            "unknown",
+            "leaked",
         }
         if orphaned:
             failures.append(f"orphaned_managed_process:{stage}:{name}")
@@ -1532,9 +1526,7 @@ def _family_guardrail_failures(
     return failures
 
 
-def _paired_guardrail_regression(
-    values: Mapping[str, Any], guardrail: str
-) -> bool | None:
+def _paired_guardrail_regression(values: Mapping[str, Any], guardrail: str) -> bool | None:
     """Recompute a declared family guardrail when paired values are present."""
 
     baseline = values.get("baseline")
@@ -1622,9 +1614,7 @@ def _trusted_feedback_failures(
     )
     source_digest = str(value.get("source_digest") or value.get("feedback_digest") or "")
     received_digest = str(
-        value.get("autoencoder_source_digest")
-        or value.get("applied_feedback_digest")
-        or ""
+        value.get("autoencoder_source_digest") or value.get("applied_feedback_digest") or ""
     )
     applied_ids = value.get("applied_feedback_ids", value.get("guidance_ids"))
     ids_prove_delivery = (
@@ -1674,9 +1664,7 @@ def _representation_snapshot_failures(
             require_successful_representation_promotion=(
                 cfg.require_successful_representation_promotion
             ),
-            require_complete_representation_evidence=(
-                cfg.require_complete_representation_evidence
-            ),
+            require_complete_representation_evidence=(cfg.require_complete_representation_evidence),
         ),
         metrics,
         warnings,
@@ -1713,7 +1701,9 @@ def _stage_queue_lag(snapshot: Mapping[str, Any]) -> float | None:
         result = _first_finite(value, ("p95_seconds", "queue_lag_p95_seconds", "p95"))
         if result is not None:
             return result
-    return _first_finite(snapshot, ("queue_lag_p95_seconds", "program_synthesis_queue_lag_p95_seconds"))
+    return _first_finite(
+        snapshot, ("queue_lag_p95_seconds", "program_synthesis_queue_lag_p95_seconds")
+    )
 
 
 def _staged_multi_seed_result(
@@ -1795,19 +1785,14 @@ def _promotion_lineage_evidence(
         or ""
     ).strip()
     produced_by = str(
-        value.get("produced_by")
-        or value.get("producer")
-        or value.get("tool")
-        or ""
+        value.get("produced_by") or value.get("producer") or value.get("tool") or ""
     ).strip()
 
     failures: list[str] = []
     if not rollout_id:
         failures.append(f"promotion_lineage_incomplete:{stage}:rollout_id")
     if lineage_stage and lineage_stage != stage:
-        failures.append(
-            f"promotion_lineage_stage_mismatch:{stage}:{lineage_stage}"
-        )
+        failures.append(f"promotion_lineage_stage_mismatch:{stage}:{lineage_stage}")
     if not lineage_stage:
         failures.append(f"promotion_lineage_incomplete:{stage}:stage")
     for name, digest in (
@@ -1937,9 +1922,7 @@ def _promotion_threshold_failures(
         )
         if before is not None and after is not None:
             if before <= 0.0 or after < 0.0:
-                failures.append(
-                    f"{metric_name}_invalid:{stage}:{before:g}->{after:g}"
-                )
+                failures.append(f"{metric_name}_invalid:{stage}:{before:g}->{after:g}")
                 continue
             observed = (after - before) / before
             if direction == "reduction":
@@ -1960,10 +1943,7 @@ def _promotion_threshold_failures(
                 "required": minimum,
             }
         if observed + 1.0e-12 < minimum:
-            failures.append(
-                f"{metric_name}_below_threshold:{stage}:"
-                f"{observed:g}<{minimum:g}"
-            )
+            failures.append(f"{metric_name}_below_threshold:{stage}:{observed:g}<{minimum:g}")
     return metrics, failures
 
 
@@ -2088,7 +2068,9 @@ def hard_guardrail_metrics_csv() -> str:
     return ",".join(DEFAULT_HARD_GUARDRAIL_METRICS)
 
 
-def rollout_gate(summary: Mapping[str, Any], config: RolloutGateConfig | None = None) -> RolloutGateResult:
+def rollout_gate(
+    summary: Mapping[str, Any], config: RolloutGateConfig | None = None
+) -> RolloutGateResult:
     cfg = config or RolloutGateConfig()
     failures: list[str] = []
     warnings: list[str] = []
@@ -2275,12 +2257,8 @@ def compiler_system_promotion_gate(
         failures.append("staged_rollout_evidence_missing")
     if external_result is not None:
         metrics["external_validity"] = external_result.metrics
-        failures.extend(
-            f"external_validity:{failure}" for failure in external_result.failures
-        )
-        warnings.extend(
-            f"external_validity:{warning}" for warning in external_result.warnings
-        )
+        failures.extend(f"external_validity:{failure}" for failure in external_result.failures)
+        warnings.extend(f"external_validity:{warning}" for warning in external_result.warnings)
     elif cfg.require_external_validity:
         failures.append("external_validity_promotion_evidence_missing")
 
@@ -2339,9 +2317,7 @@ def compiler_system_promotion_gate(
     metrics["evidence_domains"] = domain_metrics
     metrics["domain_status"] = domain_status
     metrics["bindings"] = binding_metrics
-    metrics["evidence_complete"] = all(
-        domain_status.get(domain) for domain in cfg.required_domains
-    )
+    metrics["evidence_complete"] = all(domain_status.get(domain) for domain in cfg.required_domains)
     metrics["rollback_ready"] = bool(domain_status.get("rollback_readiness"))
     metrics["promotion_decision"] = "accepted" if not failures else "blocked"
 
@@ -2388,16 +2364,8 @@ def render_compiler_system_promotion_report(
                 f"{_compiler_system_report_detail(domain, entry)} |"
             )
     lines.extend(["", "## Required Conformance Capabilities", ""])
-    conformance = (
-        domains.get("conformance_evidence")
-        if isinstance(domains, Mapping)
-        else None
-    )
-    capabilities = (
-        conformance.get("capabilities")
-        if isinstance(conformance, Mapping)
-        else None
-    )
+    conformance = domains.get("conformance_evidence") if isinstance(domains, Mapping) else None
+    capabilities = conformance.get("capabilities") if isinstance(conformance, Mapping) else None
     for capability in COMPILER_SYSTEM_REQUIRED_CONFORMANCE_CAPABILITIES:
         status = "unknown"
         if isinstance(capabilities, Mapping):
@@ -2413,9 +2381,7 @@ def render_compiler_system_promotion_report(
             canonical = values.get("canonical")
             sources = values.get("sources")
             source_count = len(sources) if isinstance(sources, Mapping) else 0
-            lines.append(
-                f"- `{field}`: `{canonical or 'missing'}` from `{source_count}` source(s)"
-            )
+            lines.append(f"- `{field}`: `{canonical or 'missing'}` from `{source_count}` source(s)")
     if result.failures:
         lines.extend(["", "## Promotion Blockers", ""])
         lines.extend(f"- `{failure}`" for failure in result.failures)
@@ -2478,7 +2444,10 @@ def _compiler_system_external_validity_result(
             "external_validity_evidence",
         ),
     )
-    if packet is None and str(payload.get("schema_version") or "") == EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION:
+    if (
+        packet is None
+        and str(payload.get("schema_version") or "") == EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION
+    ):
         packet = payload
     if packet is None:
         return None
@@ -2539,10 +2508,11 @@ def _compiler_system_domain_failures(
                     "hard_negatives",
                 ):
                     if external_domains.get(required) is not True:
-                        failures.append(
-                            f"evaluation_integrity:external_domain_blocked:{required}"
-                        )
-        leak_free = packet.get("leak_free_splits") is True or packet.get("leakage_count") in (0, 0.0)
+                        failures.append(f"evaluation_integrity:external_domain_blocked:{required}")
+        leak_free = packet.get("leak_free_splits") is True or packet.get("leakage_count") in (
+            0,
+            0.0,
+        )
         fixed_canary = packet.get("fixed_canary") is True or packet.get("fixed_sample_set") is True
         multi_seed = packet.get("multi_seed") is True or packet.get("multi_seed_statistics") is True
         if not leak_free:
@@ -2565,7 +2535,9 @@ def _compiler_system_domain_failures(
             failures.append("external_validity:promotion_gate_blocked")
         if packet.get("accepted") is False:
             failures.append("external_validity:accepted_false")
-        details["accepted"] = packet.get("accepted", external_result.accepted if external_result else None)
+        details["accepted"] = packet.get(
+            "accepted", external_result.accepted if external_result else None
+        )
         return failures, warnings, details
 
     expected_schemas = COMPILER_SYSTEM_DOMAIN_SCHEMA_VERSIONS.get(domain, ())
@@ -2577,7 +2549,9 @@ def _compiler_system_domain_failures(
             )
 
     if domain == "compiler_source_maps":
-        valid = _truthy_path(packet, ("valid", "source_map_validation.valid", "traceability_complete"))
+        valid = _truthy_path(
+            packet, ("valid", "source_map_validation.valid", "traceability_complete")
+        )
         if not valid:
             failures.append("compiler_source_maps:traceability_not_validated")
         details["traceability_complete"] = valid
@@ -2587,7 +2561,9 @@ def _compiler_system_domain_failures(
             ("unresolved_count", "unresolved_symbol_count", "error_count"),
         )
         if unresolved is None:
-            unresolved = 0.0 if _truthy_path(packet, ("valid", "resolved", "allowed_for_use")) else None
+            unresolved = (
+                0.0 if _truthy_path(packet, ("valid", "resolved", "allowed_for_use")) else None
+            )
         if unresolved is None or unresolved > 0:
             failures.append(
                 f"symbols:unresolved_symbols:{'missing' if unresolved is None else f'{unresolved:g}'}"
@@ -2599,7 +2575,9 @@ def _compiler_system_domain_failures(
             ("unresolved_count", "unresolved_citation_count", "ambiguous_count"),
         )
         if unresolved is None:
-            unresolved = 0.0 if _truthy_path(packet, ("valid", "resolved", "allowed_for_use")) else None
+            unresolved = (
+                0.0 if _truthy_path(packet, ("valid", "resolved", "allowed_for_use")) else None
+            )
         if unresolved is None or unresolved > 0:
             failures.append(
                 f"citations:unresolved_or_ambiguous:{'missing' if unresolved is None else f'{unresolved:g}'}"
@@ -2617,7 +2595,9 @@ def _compiler_system_domain_failures(
     elif domain == "ambiguity":
         unresolved = _first_finite(packet, ("unresolved_count", "unresolved_ambiguity_count"))
         if unresolved is None:
-            unresolved = 0.0 if _truthy_path(packet, ("resolved", "all_resolved", "accepted")) else None
+            unresolved = (
+                0.0 if _truthy_path(packet, ("resolved", "all_resolved", "accepted")) else None
+            )
         if unresolved is None or unresolved > 0:
             failures.append(
                 f"ambiguity:unresolved:{'missing' if unresolved is None else f'{unresolved:g}'}"
@@ -2630,7 +2610,9 @@ def _compiler_system_domain_failures(
             failures.append("pass_management:deterministic_order_missing")
         if packet.get("source_map_preserved") is False:
             failures.append("pass_management:source_map_not_preserved")
-        details["deterministic_order"] = _truthy_path(packet, ("deterministic_order", "deterministic_output_order", "valid"))
+        details["deterministic_order"] = _truthy_path(
+            packet, ("deterministic_order", "deterministic_output_order", "valid")
+        )
     elif domain == "backend_conformance":
         allowed = packet.get("promotion_allowed")
         if allowed is not True and not _truthy_path(packet, ("accepted", "valid")):
@@ -2648,7 +2630,9 @@ def _compiler_system_domain_failures(
             failures.append("reproducible_builds:digest_missing")
         details.update({"reproducible": reproducible, "digest_present": bool(digest)})
     elif domain == "incremental_compilation":
-        correct = _truthy_path(packet, ("cache_correct", "invalidation_valid", "successful", "valid"))
+        correct = _truthy_path(
+            packet, ("cache_correct", "invalidation_valid", "successful", "valid")
+        )
         if not correct:
             failures.append("incremental_compilation:cache_or_invalidation_not_valid")
         details["cache_correct"] = correct
@@ -2669,7 +2653,9 @@ def _compiler_system_domain_failures(
         details["valid"] = valid
     elif domain == "diagnostics":
         error_count = _first_finite(packet, ("error_count", "errors"))
-        lsp_ready = _truthy_path(packet, ("lsp_ready", "lsp_diagnostics_ready", "valid", "accepted"))
+        lsp_ready = _truthy_path(
+            packet, ("lsp_ready", "lsp_diagnostics_ready", "valid", "accepted")
+        )
         if not lsp_ready:
             failures.append("diagnostics:lsp_not_ready")
         if error_count is not None and error_count > 0:
@@ -2681,13 +2667,19 @@ def _compiler_system_domain_failures(
             failures.append("apis:cli_api_parity_missing")
         details["cli_api_parity"] = parity
     elif domain == "interoperability":
-        conformant = _truthy_path(packet, ("round_trip_conformant", "conformant", "valid", "accepted"))
-        explicit_loss = _truthy_path(packet, ("loss_markers_explicit", "unsupported_diagnostics_explicit", "loss_explicit"))
+        conformant = _truthy_path(
+            packet, ("round_trip_conformant", "conformant", "valid", "accepted")
+        )
+        explicit_loss = _truthy_path(
+            packet, ("loss_markers_explicit", "unsupported_diagnostics_explicit", "loss_explicit")
+        )
         if not conformant:
             failures.append("interoperability:round_trip_not_conformant")
         if not explicit_loss:
             failures.append("interoperability:loss_markers_not_explicit")
-        details.update({"round_trip_conformant": conformant, "loss_markers_explicit": explicit_loss})
+        details.update(
+            {"round_trip_conformant": conformant, "loss_markers_explicit": explicit_loss}
+        )
     elif domain == "conformance_evidence":
         conformance_failures, conformance_details = _compiler_conformance_failures(
             packet,
@@ -2802,9 +2794,7 @@ def _compiler_system_rollback_packet_from_subgates(
     external_result: RolloutGateResult | None,
 ) -> Mapping[str, Any] | None:
     external_domains = (
-        external_result.metrics.get("evidence_domains")
-        if external_result is not None
-        else None
+        external_result.metrics.get("evidence_domains") if external_result is not None else None
     )
     if isinstance(external_domains, Mapping):
         rollback = external_domains.get("rollback_readiness")
@@ -2841,9 +2831,7 @@ def _compiler_system_binding_failures(
     return _external_validity_binding_failures(
         payload,
         relevant,
-        ExternalValidityPromotionConfig(
-            required_binding_fields=cfg.required_binding_fields
-        ),
+        ExternalValidityPromotionConfig(required_binding_fields=cfg.required_binding_fields),
     )
 
 
@@ -2995,9 +2983,11 @@ def _external_domain_failures(
         return _external_benchmark_failures(packet, cfg)
     if domain == "rollback_readiness":
         return _rollback_readiness_failures(packet)
-    return [f"external_validity_unknown_domain:{domain}"], [], {
-        "schema_version": _schema_version(packet)
-    }
+    return (
+        [f"external_validity_unknown_domain:{domain}"],
+        [],
+        {"schema_version": _schema_version(packet)},
+    )
 
 
 def _leak_free_split_failures(
@@ -3158,12 +3148,16 @@ def _uncertainty_failures(
         failures.append("uncertainty:failed_families:" + ",".join(failed_families))
     if unsupported:
         failures.append("uncertainty:unsupported_guidance:" + ",".join(unsupported))
-    return failures, [], {
-        "schema_version": _schema_version(packet),
-        "block_reasons": block_reasons,
-        "failed_families": failed_families,
-        "unsupported_guidance_ids": unsupported,
-    }
+    return (
+        failures,
+        [],
+        {
+            "schema_version": _schema_version(packet),
+            "block_reasons": block_reasons,
+            "failed_families": failed_families,
+            "unsupported_guidance_ids": unsupported,
+        },
+    )
 
 
 def _fuzzing_failures(
@@ -3192,12 +3186,16 @@ def _fuzzing_failures(
         )
     if failed_mutations:
         failures.append("fuzzing:failed_mutations:" + ",".join(failed_mutations))
-    return failures, [], {
-        "schema_version": _schema_version(packet),
-        "mutation_count": mutation_count,
-        "trusted_negative_count": trusted_negative_count,
-        "failed_mutation_ids": failed_mutations,
-    }
+    return (
+        failures,
+        [],
+        {
+            "schema_version": _schema_version(packet),
+            "mutation_count": mutation_count,
+            "trusted_negative_count": trusted_negative_count,
+            "failed_mutation_ids": failed_mutations,
+        },
+    )
 
 
 def _hard_negative_failures(
@@ -3210,7 +3208,9 @@ def _hard_negative_failures(
         (LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION, LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION),
     )
     failures.extend(_status_failures("hard_negatives", packet))
-    reduction = _first_finite(packet, ("false_positive_reduction", "semantic_false_positive_reduction"))
+    reduction = _first_finite(
+        packet, ("false_positive_reduction", "semantic_false_positive_reduction")
+    )
     negative_count = _first_finite(packet, ("negative_example_count", "accepted_count"))
     trusted_positive_count = _first_finite(packet, ("trusted_positive_count",))
     if packet.get("hard_negative_guard_passed") is False:
@@ -3228,12 +3228,16 @@ def _hard_negative_failures(
         failures.append("hard_negatives:negative_examples_missing")
     if trusted_positive_count is None or trusted_positive_count <= 0:
         failures.append("hard_negatives:trusted_positive_evidence_missing")
-    return failures, [], {
-        "schema_version": _schema_version(packet),
-        "false_positive_reduction": reduction,
-        "negative_example_count": negative_count,
-        "trusted_positive_count": trusted_positive_count,
-    }
+    return (
+        failures,
+        [],
+        {
+            "schema_version": _schema_version(packet),
+            "false_positive_reduction": reduction,
+            "negative_example_count": negative_count,
+            "trusted_positive_count": trusted_positive_count,
+        },
+    )
 
 
 def _schema_compatibility_failures(
@@ -3251,7 +3255,11 @@ def _schema_compatibility_failures(
     reusable = packet.get("reusable")
     compatibility = str(packet.get("compatibility") or "").strip()
     issues = packet.get("issues")
-    issue_count = len(issues) if isinstance(issues, Sequence) and not isinstance(issues, (str, bytes, bytearray)) else None
+    issue_count = (
+        len(issues)
+        if isinstance(issues, Sequence) and not isinstance(issues, (str, bytes, bytearray))
+        else None
+    )
     if cfg.require_schema_reusable and reusable is not True:
         failures.append("schema_compatibility:not_reusable")
     if compatibility and compatibility != "compatible":
@@ -3264,13 +3272,17 @@ def _schema_compatibility_failures(
             if severity == "error":
                 code = str(issue.get("code") or index)
                 failures.append(f"schema_compatibility:error_issue:{code}")
-    return failures, [], {
-        "schema_version": schema,
-        "schema_version_id": schema_id,
-        "compatibility": compatibility,
-        "reusable": reusable,
-        "issue_count": issue_count,
-    }
+    return (
+        failures,
+        [],
+        {
+            "schema_version": schema,
+            "schema_version_id": schema_id,
+            "compatibility": compatibility,
+            "reusable": reusable,
+            "issue_count": issue_count,
+        },
+    )
 
 
 def _poisoning_defense_failures(
@@ -3290,10 +3302,7 @@ def _poisoning_defense_failures(
     if not hard_rule:
         hard_rule = _find_string_value(packet, LEGAL_SOURCE_TEXT_DATA_RULE)
     if cfg.require_poisoning_hard_rule and hard_rule != LEGAL_SOURCE_TEXT_DATA_RULE:
-        failures.append(
-            "poisoning_defenses:hard_rule_missing:"
-            f"{hard_rule or 'missing'}"
-        )
+        failures.append(f"poisoning_defenses:hard_rule_missing:{hard_rule or 'missing'}")
     if packet.get("poisoned_payloads_rejected") is False:
         failures.append("poisoning_defenses:poisoned_payloads_not_rejected")
     if packet.get("blocks_training") is False:
@@ -3302,14 +3311,22 @@ def _poisoning_defense_failures(
         failures.append("poisoning_defenses:does_not_block_promotion")
     rejected_count = _first_finite(packet, ("rejected_count", "poisoned_rejected_count"))
     tested = _string_sequence(packet.get("tested_poisoning_families"))
-    if rejected_count is None and not tested and packet.get("poisoned_payloads_rejected") is not True:
+    if (
+        rejected_count is None
+        and not tested
+        and packet.get("poisoned_payloads_rejected") is not True
+    ):
         failures.append("poisoning_defenses:rejection_evidence_missing")
-    return failures, [], {
-        "schema_version": _schema_version(packet),
-        "hard_rule": hard_rule,
-        "rejected_count": rejected_count,
-        "tested_poisoning_families": tested,
-    }
+    return (
+        failures,
+        [],
+        {
+            "schema_version": _schema_version(packet),
+            "hard_rule": hard_rule,
+            "rejected_count": rejected_count,
+            "tested_poisoning_families": tested,
+        },
+    )
 
 
 def _external_benchmark_failures(
@@ -3351,13 +3368,17 @@ def _external_benchmark_failures(
         failures.append("external_benchmark_scores:hard_guardrail_missing")
     if cfg.require_external_benchmark_separate_from_canary and separate is not True:
         failures.append("external_benchmark_scores:not_separate_from_internal_canary")
-    return failures, [], {
-        "schema_version": _schema_version(packet),
-        "external_validity_score": score,
-        "packet_count": packet_count,
-        "failed_packet_ids": failed_packets,
-        "separate_from_internal_canary_metrics": separate,
-    }
+    return (
+        failures,
+        [],
+        {
+            "schema_version": _schema_version(packet),
+            "external_validity_score": score,
+            "packet_count": packet_count,
+            "failed_packet_ids": failed_packets,
+            "separate_from_internal_canary_metrics": separate,
+        },
+    )
 
 
 def _rollback_readiness_failures(
@@ -3366,11 +3387,15 @@ def _rollback_readiness_failures(
     failures: list[str] = []
     schema = _schema_version(packet)
     schema_id = str(packet.get("schema_version_id") or "").strip()
-    if schema not in {
-        LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION,
-        LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION,
-        "",
-    } and schema_id != LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION:
+    if (
+        schema
+        not in {
+            LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION,
+            LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION,
+            "",
+        }
+        and schema_id != LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION
+    ):
         failures.append(f"rollback_readiness:schema_mismatch:{schema}")
     status = str(packet.get("status") or "").strip().lower()
     accepted = packet.get("accepted")
@@ -3390,11 +3415,11 @@ def _rollback_readiness_failures(
         rollback_metadata = packet.get("rollback_evidence")
     if not isinstance(rollback_metadata, Mapping):
         rollback_metadata = {}
-    rollback_id = str(rollback_metadata.get("rollback_id") or packet.get("rollback_id") or "").strip()
+    rollback_id = str(
+        rollback_metadata.get("rollback_id") or packet.get("rollback_id") or ""
+    ).strip()
     disable_action = str(
-        rollback_metadata.get("disable_action")
-        or packet.get("disable_action")
-        or ""
+        rollback_metadata.get("disable_action") or packet.get("disable_action") or ""
     ).strip()
     restorable = (
         rollback_metadata.get("restorable") is True
@@ -3405,15 +3430,19 @@ def _rollback_readiness_failures(
         failures.append("rollback_readiness:rollback_id_missing")
     if not (disable_action or restorable):
         failures.append("rollback_readiness:disable_or_restore_action_missing")
-    return failures, [], {
-        "schema_version": schema,
-        "status": status,
-        "accepted": accepted,
-        "rollback_required": rollback_required,
-        "rollback_id": rollback_id,
-        "disable_action": disable_action,
-        "restorable": restorable,
-    }
+    return (
+        failures,
+        [],
+        {
+            "schema_version": schema,
+            "status": status,
+            "accepted": accepted,
+            "rollback_required": rollback_required,
+            "rollback_id": rollback_id,
+            "disable_action": disable_action,
+            "restorable": restorable,
+        },
+    )
 
 
 def _external_validity_binding_failures(
@@ -3440,7 +3469,9 @@ def _external_validity_binding_failures(
             value = _binding_value(field, packet)
             if value:
                 sources[domain] = value
-        normalized = {source: _normalize_binding_value(field, value) for source, value in sources.items()}
+        normalized = {
+            source: _normalize_binding_value(field, value) for source, value in sources.items()
+        }
         unique_values = sorted(set(normalized.values()))
         canonical = unique_values[0] if len(unique_values) == 1 else ""
         metrics[field] = {
@@ -3518,7 +3549,10 @@ def _external_domain_schema_versions(domain: str) -> tuple[str, ...]:
     if domain == "hard_negatives":
         return (LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION, LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION)
     if domain == "rollback_readiness":
-        return (LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION, LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION)
+        return (
+            LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION,
+            LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION,
+        )
     mapping = {
         "leak_free_splits": LEGAL_IR_EVAL_SPLITS_SCHEMA_VERSION,
         "semantic_metrics": LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION,
@@ -3538,7 +3572,9 @@ def _external_report_detail(domain: str, entry: Mapping[str, Any]) -> str:
     if not entry.get("present"):
         return "`missing`"
     if domain == "external_benchmark_scores":
-        return f"`score={entry.get('external_validity_score')}, packets={entry.get('packet_count')}`"
+        return (
+            f"`score={entry.get('external_validity_score')}, packets={entry.get('packet_count')}`"
+        )
     if domain == "multi_seed_statistics":
         metrics = entry.get("metrics")
         if isinstance(metrics, Mapping):
@@ -3710,9 +3746,7 @@ def _source_copy_failures(
     failures: list[str] = []
     source_copy_values = {
         path: value
-        for path, value in _collect_named_numeric_values(
-            summary, cfg.source_copy_keys
-        ).items()
+        for path, value in _collect_named_numeric_values(summary, cfg.source_copy_keys).items()
         # Paired promotion baselines are comparison evidence, not the state that
         # would be activated by this rollout.
         if ".baseline." not in f".{path}."
@@ -3762,13 +3796,9 @@ def _representation_promotion_failures(
     schema = str(report.get("schema_version") or "").strip()
     metrics["representation_promotion_schema_version"] = schema
     if (
-        (promoted or require_success or cfg.require_complete_representation_evidence)
-        and schema != LEGAL_IR_LEARNED_GUIDANCE_PROMOTION_SCHEMA_VERSION
-    ):
-        failures.append(
-            "representation_promotion_schema_mismatch:"
-            f"{schema or 'missing'}"
-        )
+        promoted or require_success or cfg.require_complete_representation_evidence
+    ) and schema != LEGAL_IR_LEARNED_GUIDANCE_PROMOTION_SCHEMA_VERSION:
+        failures.append(f"representation_promotion_schema_mismatch:{schema or 'missing'}")
     report_outcome = str(
         report.get("report_outcome")
         or report.get("promotion_report_outcome")
@@ -3784,9 +3814,7 @@ def _representation_promotion_failures(
     }:
         failures.append(f"representation_promotion_report_outcome_invalid:{report_outcome}")
     if promoted and report_outcome and report_outcome != "success":
-        failures.append(
-            f"representation_promotion_outcome_mismatch:{report_outcome}:promoted"
-        )
+        failures.append(f"representation_promotion_outcome_mismatch:{report_outcome}:promoted")
     if not promoted and report_outcome == "success":
         failures.append("representation_promotion_outcome_mismatch:success:not_promoted")
     if require_success and not promoted:
@@ -3797,9 +3825,10 @@ def _representation_promotion_failures(
 
     raw_evidence = report.get("canary_evidence")
     evidence = raw_evidence if isinstance(raw_evidence, Mapping) else None
-    evidence_required = promoted or require_success or (
-        cfg.require_representation_promotion
-        and cfg.require_complete_representation_evidence
+    evidence_required = (
+        promoted
+        or require_success
+        or (cfg.require_representation_promotion and cfg.require_complete_representation_evidence)
     )
     if evidence is None:
         if evidence_required:
@@ -3831,9 +3860,7 @@ def _representation_promotion_failures(
         )
 
     raw_family_metrics = evidence.get("family_metrics")
-    family_metrics = (
-        raw_family_metrics if isinstance(raw_family_metrics, Mapping) else {}
-    )
+    family_metrics = raw_family_metrics if isinstance(raw_family_metrics, Mapping) else {}
     represented_families = _represented_view_families(report, family_metrics)
     metrics["representation_view_families"] = list(represented_families)
     if evidence_required and not represented_families:
@@ -3845,24 +3872,19 @@ def _representation_promotion_failures(
         raw_family = family_metrics.get(family)
         if not isinstance(raw_family, Mapping):
             if enforce_complete:
-                failures.append(
-                    f"representation_canary_family_evidence_missing:{family}"
-                )
+                failures.append(f"representation_canary_family_evidence_missing:{family}")
             continue
         baseline = _normalized_representation_metrics(raw_family.get("baseline"))
         candidate = _normalized_representation_metrics(raw_family.get("candidate"))
         deltas: dict[str, float] = {}
         for metric_name in cfg.required_representation_metrics:
-            canonical_name = _REPRESENTATION_METRIC_ALIASES.get(
-                metric_name, metric_name
-            )
+            canonical_name = _REPRESENTATION_METRIC_ALIASES.get(metric_name, metric_name)
             before = baseline.get(canonical_name)
             after = candidate.get(canonical_name)
             if before is None or after is None:
                 if enforce_complete:
                     failures.append(
-                        "representation_canary_evidence_incomplete:"
-                        f"{family}:{canonical_name}"
+                        f"representation_canary_evidence_incomplete:{family}:{canonical_name}"
                     )
                 continue
             improvement = (
@@ -3902,9 +3924,7 @@ def _representation_promotion_failures(
             if marker not in calculated_markers:
                 failures.append(f"representation_declared_metric_regression:{marker}")
 
-    missing_declared = _string_sequence(
-        evidence.get("missing_guardrail_evidence")
-    )
+    missing_declared = _string_sequence(evidence.get("missing_guardrail_evidence"))
     if missing_declared and evidence_required:
         metrics["representation_declared_missing_evidence"] = missing_declared
         failures.extend(
@@ -3989,24 +4009,26 @@ def _representation_report_binding_failures(
     else:
         export_id = str(learned_export.get("export_id") or "").strip()
         export_schema = str(learned_export.get("schema_version") or "").strip()
-        export_sha = str(
-            learned_export.get("sha256")
-            or learned_export.get("export_sha256")
-            or report.get("learned_export_sha256")
-            or ""
-        ).strip().lower()
+        export_sha = (
+            str(
+                learned_export.get("sha256")
+                or learned_export.get("export_sha256")
+                or report.get("learned_export_sha256")
+                or ""
+            )
+            .strip()
+            .lower()
+        )
         metrics["representation_learned_export_sha256"] = export_sha
         if require_complete and not export_id:
             failures.append("representation_learned_export_id_missing")
         if source_export_id and export_id and source_export_id != export_id:
             failures.append(
-                "representation_learned_export_id_mismatch:"
-                f"{source_export_id}!={export_id}"
+                f"representation_learned_export_id_mismatch:{source_export_id}!={export_id}"
             )
         if require_complete and export_schema != LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION:
             failures.append(
-                "representation_learned_export_schema_mismatch:"
-                f"{export_schema or 'missing'}"
+                f"representation_learned_export_schema_mismatch:{export_schema or 'missing'}"
             )
         if require_complete and not _valid_sha256(export_sha):
             failures.append("representation_learned_export_sha256_missing")
@@ -4044,11 +4066,7 @@ def _representation_report_binding_failures(
             "latest_compiler_snapshot.compiler_commit",
         ),
     )
-    if (
-        expected_compiler_commit
-        and compiler_commit
-        and expected_compiler_commit != compiler_commit
-    ):
+    if expected_compiler_commit and compiler_commit and expected_compiler_commit != compiler_commit:
         failures.append(
             "representation_promotion_report_stale:compiler_commit:"
             f"{compiler_commit}!={expected_compiler_commit}"
@@ -4062,13 +4080,11 @@ def _representation_report_binding_failures(
         bound_evidence = str(fixed_binding.get("evidence_id") or "").strip()
         if canary_id and bound_canary and bound_canary != canary_id:
             failures.append(
-                "representation_fixed_canary_binding_mismatch:"
-                f"{bound_canary}!={canary_id}"
+                f"representation_fixed_canary_binding_mismatch:{bound_canary}!={canary_id}"
             )
         if evidence_id and bound_evidence and bound_evidence != evidence_id:
             failures.append(
-                "representation_fixed_canary_evidence_mismatch:"
-                f"{bound_evidence}!={evidence_id}"
+                f"representation_fixed_canary_evidence_mismatch:{bound_evidence}!={evidence_id}"
             )
         if require_complete and not bound_canary:
             failures.append("representation_fixed_canary_binding_id_missing")
@@ -4084,8 +4100,7 @@ def _representation_report_binding_failures(
     )
     if expected_canary_id and canary_id and expected_canary_id != canary_id:
         failures.append(
-            "representation_promotion_report_stale:fixed_canary:"
-            f"{canary_id}!={expected_canary_id}"
+            f"representation_promotion_report_stale:fixed_canary:{canary_id}!={expected_canary_id}"
         )
 
     proof_receipts = report.get("proof_receipts")
@@ -4104,9 +4119,7 @@ def _representation_report_binding_failures(
                 continue
             receipt_id = str(receipt.get("receipt_id") or receipt.get("id") or "").strip()
             if require_complete and not receipt_id:
-                failures.append(
-                    f"representation_proof_receipt_id_missing:index_{index}"
-                )
+                failures.append(f"representation_proof_receipt_id_missing:index_{index}")
             if promoted and receipt.get("trusted") is False:
                 failures.append(f"representation_proof_receipt_untrusted:{receipt_id or index}")
 
@@ -4138,14 +4151,11 @@ def _representation_report_binding_failures(
             ("unsafe_feature_count", "forbidden_feature_marker_count"),
         )
         if unsafe_count is not None and unsafe_count > 0.0:
-            failures.append(
-                f"representation_source_copy_unsafe_features:{unsafe_count:g}"
-            )
+            failures.append(f"representation_source_copy_unsafe_features:{unsafe_count:g}")
         regressions = _string_sequence(source_copy.get("source_copy_regressions"))
         if promoted and regressions:
             failures.append(
-                "representation_source_copy_declared_regression:"
-                + ",".join(regressions)
+                "representation_source_copy_declared_regression:" + ",".join(regressions)
             )
 
     activation = report.get("activation_state")
@@ -4158,8 +4168,7 @@ def _representation_report_binding_failures(
         active_id = str(activation.get("active_promotion_id") or "").strip()
         if promoted and promotion_id and active_id and active_id != promotion_id:
             failures.append(
-                "representation_activation_promotion_id_mismatch:"
-                f"{active_id}!={promotion_id}"
+                f"representation_activation_promotion_id_mismatch:{active_id}!={promotion_id}"
             )
         if promoted and not active_id:
             failures.append("representation_activation_promotion_id_missing")
@@ -4173,8 +4182,7 @@ def _representation_report_binding_failures(
         activation_key = str(rollback.get("activation_key") or "").strip()
         if promotion_id and activation_key and activation_key != promotion_id:
             failures.append(
-                "representation_rollback_activation_key_mismatch:"
-                f"{activation_key}!={promotion_id}"
+                f"representation_rollback_activation_key_mismatch:{activation_key}!={promotion_id}"
             )
         rollback_export = str(rollback.get("source_export_id") or "").strip()
         if source_export_id and rollback_export and rollback_export != source_export_id:
@@ -4185,8 +4193,7 @@ def _representation_report_binding_failures(
         rollback_canary = str(rollback.get("canary_evidence_id") or "").strip()
         if evidence_id and rollback_canary and rollback_canary != evidence_id:
             failures.append(
-                "representation_rollback_canary_evidence_mismatch:"
-                f"{rollback_canary}!={evidence_id}"
+                f"representation_rollback_canary_evidence_mismatch:{rollback_canary}!={evidence_id}"
             )
 
     report_path = str(report.get("report_artifact_path") or "").strip()
@@ -4201,8 +4208,7 @@ def _representation_report_binding_failures(
     )
     if expected_report_path and report_path and expected_report_path != report_path:
         failures.append(
-            "representation_promotion_report_path_mismatch:"
-            f"{report_path}!={expected_report_path}"
+            f"representation_promotion_report_path_mismatch:{report_path}!={expected_report_path}"
         )
     if expected_report_path and require_complete and not report_path:
         failures.append("representation_promotion_report_path_missing")
@@ -4238,13 +4244,9 @@ def _promotion_was_allowed(report: Mapping[str, Any]) -> bool:
 def _represented_view_families(
     report: Mapping[str, Any], family_metrics: Mapping[str, Any]
 ) -> tuple[str, ...]:
-    represented = {
-        family for family in LEGAL_IR_VIEW_FAMILIES if family in family_metrics
-    }
+    represented = {family for family in LEGAL_IR_VIEW_FAMILIES if family in family_metrics}
     records = report.get("guidance_records", report.get("records"))
-    if isinstance(records, Sequence) and not isinstance(
-        records, (str, bytes, bytearray)
-    ):
+    if isinstance(records, Sequence) and not isinstance(records, (str, bytes, bytearray)):
         for record in records:
             if not isinstance(record, Mapping):
                 continue
@@ -4252,9 +4254,7 @@ def _represented_view_families(
             if family:
                 represented.add(family)
     required = report.get("required_view_families")
-    if isinstance(required, Sequence) and not isinstance(
-        required, (str, bytes, bytearray)
-    ):
+    if isinstance(required, Sequence) and not isinstance(required, (str, bytes, bytearray)):
         for value in required:
             family = _canonical_view_family(value)
             if family:
@@ -4288,9 +4288,7 @@ def _normalized_representation_metrics(value: Any) -> dict[str, float]:
     return normalized
 
 
-def _representation_regression_limit(
-    cfg: RolloutGateConfig, metric_name: str
-) -> float:
+def _representation_regression_limit(cfg: RolloutGateConfig, metric_name: str) -> float:
     if metric_name == "symbolic_validity_success_rate":
         return max(0.0, cfg.max_symbolic_validity_regression)
     if metric_name == "hammer_proof_success_rate":
@@ -4316,13 +4314,8 @@ def _representation_regression_failure(
         "reconstruction_success_rate": "representation_reconstruction_rate_regression",
         "source_copy_penalty": "representation_source_copy_penalty_regression",
     }
-    prefix = prefixes.get(
-        metric_name, "representation_per_view_ir_metric_regression"
-    )
-    return (
-        f"{prefix}:{family}:{metric_name}:{before:g}->{after:g}:"
-        f"{regression:g}>{allowed:g}"
-    )
+    prefix = prefixes.get(metric_name, "representation_per_view_ir_metric_regression")
+    return f"{prefix}:{family}:{metric_name}:{before:g}->{after:g}:{regression:g}>{allowed:g}"
 
 
 def _declared_representation_regressions(
@@ -4336,11 +4329,7 @@ def _declared_representation_regressions(
     }
     for key, default_metric in declared_metrics.items():
         for item in _string_sequence(evidence.get(key)):
-            marker = (
-                item
-                if ":" in item or not default_metric
-                else f"{item}:{default_metric}"
-            )
+            marker = item if ":" in item or not default_metric else f"{item}:{default_metric}"
             if marker not in result:
                 result.append(marker)
     return result
@@ -4443,9 +4432,7 @@ def _productivity_value(value: Any) -> float | None:
     return sum(values) if values else None
 
 
-def _first_summary_string(
-    payload: Mapping[str, Any], paths: Sequence[str]
-) -> str:
+def _first_summary_string(payload: Mapping[str, Any], paths: Sequence[str]) -> str:
     for path in paths:
         current: Any = payload
         for part in path.split("."):
@@ -4466,9 +4453,7 @@ def _valid_sha256(value: str) -> bool:
     return len(text) == 64 and all(char in "0123456789abcdef" for char in text)
 
 
-def _first_finite(
-    payload: Mapping[str, Any], keys: Sequence[str]
-) -> float | None:
+def _first_finite(payload: Mapping[str, Any], keys: Sequence[str]) -> float | None:
     for key in keys:
         number = _finite_float(payload.get(key))
         if number is not None:
@@ -4477,9 +4462,7 @@ def _first_finite(
 
 
 def _string_sequence(value: Any) -> list[str]:
-    if not isinstance(value, Sequence) or isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
         return []
     return [str(item) for item in value if str(item)]
 
@@ -4551,10 +4534,11 @@ def _todo_activity_failures(
             _finite_float(summary.get("leanstral_projection_seeded_total"), 0.0) or 0
         ),
     }
-    latest_seeded = int(_finite_float(summary.get("latest_program_synthesis_seeded_count"), 0.0) or 0)
+    latest_seeded = int(
+        _finite_float(summary.get("latest_program_synthesis_seeded_count"), 0.0) or 0
+    )
     latest_preinsert_deduped = int(
-        _finite_float(summary.get("latest_program_synthesis_preinsert_deduped_count"), 0.0)
-        or 0
+        _finite_float(summary.get("latest_program_synthesis_preinsert_deduped_count"), 0.0) or 0
     )
     queue_counts["latest_seeded"] = latest_seeded
     queue_counts["latest_preinsert_deduped"] = latest_preinsert_deduped
@@ -4703,8 +4687,12 @@ def _multi_seed_paired_effects(
     )
     if baseline_by_seed or candidate_by_seed:
         common = sorted(set(baseline_by_seed).intersection(candidate_by_seed), key=_seed_sort_key)
-        missing_baseline = sorted(set(candidate_by_seed).difference(baseline_by_seed), key=_seed_sort_key)
-        missing_candidate = sorted(set(baseline_by_seed).difference(candidate_by_seed), key=_seed_sort_key)
+        missing_baseline = sorted(
+            set(candidate_by_seed).difference(baseline_by_seed), key=_seed_sort_key
+        )
+        missing_candidate = sorted(
+            set(baseline_by_seed).difference(candidate_by_seed), key=_seed_sort_key
+        )
         if missing_baseline:
             failures.append("multi_seed_metric_unpaired_baseline:" + ",".join(missing_baseline))
         if missing_candidate:
@@ -4771,9 +4759,7 @@ def _multi_seed_pairing_failure(
     observed_seeds: set[str],
 ) -> str:
     declared = _string_seed_set(
-        payload.get("seed_set")
-        or payload.get("seeds_evaluated")
-        or payload.get("configured_seeds")
+        payload.get("seed_set") or payload.get("seeds_evaluated") or payload.get("configured_seeds")
     )
     if not declared:
         return ""
@@ -4859,11 +4845,7 @@ def _effect_statistics(
             "ci_upper": None,
         }
     mean = sum(effects) / count
-    variance = (
-        sum((value - mean) ** 2 for value in effects) / (count - 1)
-        if count > 1
-        else None
-    )
+    variance = sum((value - mean) ** 2 for value in effects) / (count - 1) if count > 1 else None
     if count > 1 and variance is not None:
         standard_error = math.sqrt(variance / count)
         critical = _t_critical(confidence_level, count - 1)
@@ -4999,8 +4981,12 @@ def build_parser() -> argparse.ArgumentParser:
     gate_parser.add_argument("--max-compiler-ir-ce-regression", type=float, default=0.05)
     gate_parser.add_argument("--max-compiler-ir-cosine-regression", type=float, default=0.05)
     gate_parser.add_argument("--max-source-copy-penalty", type=float, default=0.35)
-    gate_parser.add_argument("--require-hammer-cycle", action=argparse.BooleanOptionalAction, default=True)
-    gate_parser.add_argument("--require-todo-activity", action=argparse.BooleanOptionalAction, default=True)
+    gate_parser.add_argument(
+        "--require-hammer-cycle", action=argparse.BooleanOptionalAction, default=True
+    )
+    gate_parser.add_argument(
+        "--require-todo-activity", action=argparse.BooleanOptionalAction, default=True
+    )
     gate_parser.add_argument(
         "--require-available-hammer-backend",
         action=argparse.BooleanOptionalAction,
@@ -5102,15 +5088,15 @@ def build_parser() -> argparse.ArgumentParser:
         "throughput-remediation-gate",
         help="Gate the complete matched benchmark and five-stage rollout envelope",
     )
+    remediation_parser.add_argument("--evidence-path", "--summary-path", required=True, type=Path)
     remediation_parser.add_argument(
-        "--evidence-path", "--summary-path", required=True, type=Path
-    )
-    remediation_parser.add_argument(
-        "--evidence-output", type=Path,
+        "--evidence-output",
+        type=Path,
         help="Atomically store the machine-readable promotion decision",
     )
     remediation_parser.add_argument(
-        "--report-output", type=Path,
+        "--report-output",
+        type=Path,
         help="Atomically store the Markdown operator decision report",
     )
     remediation_parser.add_argument(
@@ -5118,12 +5104,8 @@ def build_parser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=False,
     )
-    remediation_parser.add_argument(
-        "--max-checkpoint-bytes", type=int, default=512 * 1024 * 1024
-    )
-    remediation_parser.add_argument(
-        "--max-summary-bytes", type=int, default=16 * 1024 * 1024
-    )
+    remediation_parser.add_argument("--max-checkpoint-bytes", type=int, default=512 * 1024 * 1024)
+    remediation_parser.add_argument("--max-summary-bytes", type=int, default=16 * 1024 * 1024)
     remediation_parser.set_defaults(func=_cmd_throughput_remediation_gate)
 
     external_parser = subparsers.add_parser(
@@ -5163,9 +5145,7 @@ def build_parser() -> argparse.ArgumentParser:
         "compiler-system-promotion-gate",
         help="Run the final LegalIR compiler-system promotion gate",
     )
-    system_parser.add_argument(
-        "--evidence-path", "--summary-path", required=True, type=Path
-    )
+    system_parser.add_argument("--evidence-path", "--summary-path", required=True, type=Path)
     system_parser.add_argument(
         "--evidence-output",
         type=Path,
@@ -5213,15 +5193,11 @@ def _cmd_gate(args: argparse.Namespace) -> int:
             require_complete_representation_evidence=(
                 args.require_complete_representation_evidence
             ),
-            max_per_view_ir_metric_regression=(
-                args.max_per_view_ir_metric_regression
-            ),
+            max_per_view_ir_metric_regression=(args.max_per_view_ir_metric_regression),
             max_symbolic_validity_regression=args.max_symbolic_validity_regression,
             max_hammer_proof_rate_regression=args.max_hammer_proof_rate_regression,
             max_reconstruction_rate_regression=args.max_reconstruction_rate_regression,
-            max_source_copy_penalty_regression=(
-                args.max_source_copy_penalty_regression
-            ),
+            max_source_copy_penalty_regression=(args.max_source_copy_penalty_regression),
             max_todo_productivity_regression=args.max_todo_productivity_regression,
             require_multi_seed_statistical_promotion=(
                 args.require_multi_seed_statistical_promotion
@@ -5320,10 +5296,7 @@ def _cmd_throughput_remediation_gate(args: argparse.Namespace) -> int:
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         result = RolloutGateResult(
             accepted=False,
-            failures=[
-                f"throughput_remediation_evidence_unreadable:"
-                f"{type(exc).__name__}:{exc}"
-            ],
+            failures=[f"throughput_remediation_evidence_unreadable:{type(exc).__name__}:{exc}"],
             metrics={"schema_version": THROUGHPUT_REMEDIATION_SCHEMA_VERSION},
         )
     decision = result.to_dict()
@@ -5349,9 +5322,7 @@ def _cmd_external_validity_gate(args: argparse.Namespace) -> int:
             payload,
             ExternalValidityPromotionConfig(
                 min_semantic_score=args.min_semantic_score,
-                min_typed_decoding_success_rate=(
-                    args.min_typed_decoding_success_rate
-                ),
+                min_typed_decoding_success_rate=(args.min_typed_decoding_success_rate),
                 max_typed_decoding_source_copy_penalty=(
                     args.max_typed_decoding_source_copy_penalty
                 ),
@@ -5367,9 +5338,7 @@ def _cmd_external_validity_gate(args: argparse.Namespace) -> int:
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         result = RolloutGateResult(
             accepted=False,
-            failures=[
-                f"external_validity_evidence_unreadable:{type(exc).__name__}:{exc}"
-            ],
+            failures=[f"external_validity_evidence_unreadable:{type(exc).__name__}:{exc}"],
             metrics={"schema_version": EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION},
         )
     decision = result.to_dict()
@@ -5397,9 +5366,7 @@ def _cmd_compiler_system_promotion_gate(args: argparse.Namespace) -> int:
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         result = RolloutGateResult(
             accepted=False,
-            failures=[
-                f"compiler_system_evidence_unreadable:{type(exc).__name__}:{exc}"
-            ],
+            failures=[f"compiler_system_evidence_unreadable:{type(exc).__name__}:{exc}"],
             metrics={"schema_version": COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION},
         )
     decision = result.to_dict()

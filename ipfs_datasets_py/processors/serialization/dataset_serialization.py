@@ -25,7 +25,20 @@ import datetime
 import re
 import numpy as np
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple, Union, Any, Iterator, Generator, TypeVar, Generic, Set, Callable
+from typing import (
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    Any,
+    Iterator,
+    Generator,
+    TypeVar,
+    Generic,
+    Set,
+    Callable,
+)
 
 from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
 
@@ -33,24 +46,28 @@ from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
 try:
     import pyarrow as pa
     import pyarrow.parquet as pq
+
     HAVE_ARROW = True
 except ImportError:
     HAVE_ARROW = False
 
 try:
     from datasets import Dataset, DatasetDict
+
     HAVE_HUGGINGFACE = True
 except ImportError:
     HAVE_HUGGINGFACE = False
 
 try:
     import _jsonnet
+
     HAVE_JSONNET = True
 except ImportError:
     HAVE_JSONNET = False
 
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class GraphNode(Generic[T]):
     """A node in a graph dataset."""
@@ -70,7 +87,9 @@ class GraphNode(Generic[T]):
         # Store edges as dicts with target node and properties
         self.edges: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
-    def add_edge(self, edge_type: str, target: 'GraphNode', properties: Optional[Dict[str, Any]] = None) -> None:
+    def add_edge(
+        self, edge_type: str, target: "GraphNode", properties: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
         Add an edge to another node.
 
@@ -79,13 +98,12 @@ class GraphNode(Generic[T]):
             target (GraphNode): Target node
             properties (Dict, optional): Properties to associate with the edge
         """
-        edge = {
-            "target": target,
-            "properties": properties or {}
-        }
+        edge = {"target": target, "properties": properties or {}}
         self.edges[edge_type].append(edge)
 
-    def get_edges(self, edge_type: Optional[str] = None) -> List[Tuple['GraphNode', Dict[str, Any]]]:
+    def get_edges(
+        self, edge_type: Optional[str] = None
+    ) -> List[Tuple["GraphNode", Dict[str, Any]]]:
         """
         Get all edges of a specified type, or all edges if no type is specified.
 
@@ -107,7 +125,7 @@ class GraphNode(Generic[T]):
                 all_edges.append((edge["target"], edge["properties"]))
         return all_edges
 
-    def get_neighbors(self, edge_type: Optional[str] = None) -> List['GraphNode']:
+    def get_neighbors(self, edge_type: Optional[str] = None) -> List["GraphNode"]:
         """
         Get all neighbor nodes connected by edges of a specified type,
         or all neighbors if no type is specified.
@@ -121,7 +139,9 @@ class GraphNode(Generic[T]):
         edges = self.get_edges(edge_type)
         return [node for node, _ in edges]
 
-    def get_edge_properties(self, target_id: str, edge_type: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def get_edge_properties(
+        self, target_id: str, edge_type: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         """
         Get properties of an edge to a specific target node.
 
@@ -159,18 +179,13 @@ class GraphNode(Generic[T]):
                 edge_dict = {
                     "type": edge_type,
                     "target_id": edge["target"].id,
-                    "target_type": edge["target"].type
+                    "target_type": edge["target"].type,
                 }
                 if edge["properties"]:
                     edge_dict["properties"] = edge["properties"]
                 edges_list.append(edge_dict)
 
-        return {
-            "id": self.id,
-            "type": self.type,
-            "data": self.data,
-            "edges": edges_list
-        }
+        return {"id": self.id, "type": self.type, "data": self.data, "edges": edges_list}
 
 
 class GraphDataset:
@@ -191,8 +206,12 @@ class GraphDataset:
         self.edge_types: Set[str] = set()
         self._nodes_by_type: Dict[str, Set[str]] = defaultdict(set)
         self._edges_by_type: Dict[str, Set[Tuple[str, str]]] = defaultdict(set)
-        self._properties_index: Dict[str, Dict[Any, Set[str]]] = defaultdict(lambda: defaultdict(set))
-        self._edge_properties_index: Dict[str, Dict[Any, Set[Tuple[str, str]]]] = defaultdict(lambda: defaultdict(set))
+        self._properties_index: Dict[str, Dict[Any, Set[str]]] = defaultdict(
+            lambda: defaultdict(set)
+        )
+        self._edge_properties_index: Dict[str, Dict[Any, Set[Tuple[str, str]]]] = defaultdict(
+            lambda: defaultdict(set)
+        )
 
     def add_node(self, node: GraphNode) -> GraphNode:
         """
@@ -214,8 +233,13 @@ class GraphDataset:
 
         return node
 
-    def add_edge(self, source_id: str, edge_type: str, target_id: str,
-                 properties: Optional[Dict[str, Any]] = None) -> None:
+    def add_edge(
+        self,
+        source_id: str,
+        edge_type: str,
+        target_id: str,
+        properties: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Add an edge between two nodes and update indices.
 
@@ -276,7 +300,8 @@ class GraphDataset:
                     src_node = self.nodes.get(src_id)
                     if src_node:
                         src_node.edges[edge_type] = [
-                            e for e in src_node.edges.get(edge_type, [])
+                            e
+                            for e in src_node.edges.get(edge_type, [])
                             if e["target"].id != node_id
                         ]
 
@@ -337,10 +362,15 @@ class GraphDataset:
 
         return [self.nodes[node_id] for node_id in candidate_ids]
 
-    def traverse(self, start_node_id: str, edge_type: Optional[str] = None,
-               direction: str = "outgoing", max_depth: int = 1,
-               filter_func: Optional[Callable[[GraphNode], bool]] = None,
-               edge_filter_func: Optional[Callable[[Dict[str, Any]], bool]] = None) -> List[GraphNode]:
+    def traverse(
+        self,
+        start_node_id: str,
+        edge_type: Optional[str] = None,
+        direction: str = "outgoing",
+        max_depth: int = 1,
+        filter_func: Optional[Callable[[GraphNode], bool]] = None,
+        edge_filter_func: Optional[Callable[[Dict[str, Any]], bool]] = None,
+    ) -> List[GraphNode]:
         """
         Traverse the graph starting from a node.
 
@@ -428,9 +458,14 @@ class GraphDataset:
 
         return result
 
-    def find_paths(self, start_node_id: str, end_node_id: str,
-                  edge_types: Optional[List[str]] = None, max_depth: int = 5,
-                  direction: str = "outgoing") -> List[List[Tuple[GraphNode, str, Dict[str, Any]]]]:
+    def find_paths(
+        self,
+        start_node_id: str,
+        end_node_id: str,
+        edge_types: Optional[List[str]] = None,
+        max_depth: int = 5,
+        direction: str = "outgoing",
+    ) -> List[List[Tuple[GraphNode, str, Dict[str, Any]]]]:
         """
         Find all paths between two nodes up to a maximum depth.
 
@@ -499,10 +534,14 @@ class GraphDataset:
         dfs(start_node_id, [], 0)
         return all_paths
 
-    def find_neighbors_with_properties(self, node_id: str, node_property_filters: Optional[Dict[str, Any]] = None,
-                                 edge_property_filters: Optional[Dict[str, Any]] = None,
-                                 edge_types: Optional[List[str]] = None,
-                                 max_distance: int = 1) -> List[GraphNode]:
+    def find_neighbors_with_properties(
+        self,
+        node_id: str,
+        node_property_filters: Optional[Dict[str, Any]] = None,
+        edge_property_filters: Optional[Dict[str, Any]] = None,
+        edge_types: Optional[List[str]] = None,
+        max_distance: int = 1,
+    ) -> List[GraphNode]:
         """
         Find neighbors of a node that match specific property criteria.
 
@@ -522,6 +561,7 @@ class GraphDataset:
         # Define edge filter function if needed
         edge_filter_func = None
         if edge_property_filters:
+
             def edge_filter_func(props):
                 for key, value in edge_property_filters.items():
                     if key not in props or props[key] != value:
@@ -531,6 +571,7 @@ class GraphDataset:
         # Define node filter function if needed
         node_filter_func = None
         if node_property_filters:
+
             def node_filter_func(node):
                 for key, value in node_property_filters.items():
                     if key not in node.data or node.data[key] != value:
@@ -543,10 +584,10 @@ class GraphDataset:
             edge_type=edge_types[0] if edge_types and len(edge_types) == 1 else None,
             max_depth=max_distance,
             filter_func=node_filter_func,
-            edge_filter_func=edge_filter_func
+            edge_filter_func=edge_filter_func,
         )
 
-    def subgraph(self, node_ids: List[str]) -> 'GraphDataset':
+    def subgraph(self, node_ids: List[str]) -> "GraphDataset":
         """
         Create a subgraph containing only the specified nodes and their interconnecting edges.
 
@@ -578,7 +619,9 @@ class GraphDataset:
 
         return subgraph
 
-    def merge(self, other: 'GraphDataset', resolve_conflicts: str = "keep_existing") -> 'GraphDataset':
+    def merge(
+        self, other: "GraphDataset", resolve_conflicts: str = "keep_existing"
+    ) -> "GraphDataset":
         """
         Merge another graph dataset into this one.
 
@@ -636,7 +679,7 @@ class GraphDataset:
             "name": self.name,
             "node_types": list(self.node_types),
             "edge_types": list(self.edge_types),
-            "nodes": [node.to_dict() for node in self.nodes.values()]
+            "nodes": [node.to_dict() for node in self.nodes.values()],
         }
 
 
@@ -654,8 +697,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
     - Integration with IPFS for persistent storage
     """
 
-    def __init__(self, name: Optional[str] = None, vector_dimension: int = 768,
-                 vector_metric: str = 'cosine', storage: Optional['IPLDStorage'] = None) -> None:
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        vector_dimension: int = 768,
+        vector_metric: str = "cosine",
+        storage: Optional["IPLDStorage"] = None,
+    ) -> None:
         """
         Initialize a new vector-augmented graph dataset.
 
@@ -669,18 +717,21 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # Initialize the vector index
         from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndex
+
         self.vector_index = IPFSKnnIndex(
-            dimension=vector_dimension,
-            metric=vector_metric,
-            storage=storage
+            dimension=vector_dimension, metric=vector_metric, storage=storage
         )
 
         # Map node IDs to vector indices
         self._node_to_vector_idx: Dict[str, int] = {}
         self._vector_idx_to_node: Dict[int, str] = {}
 
-    def add_node_with_embedding(self, node: GraphNode, embedding: np.ndarray,
-                               embedding_metadata: Optional[Dict[str, Any]] = None) -> GraphNode:
+    def add_node_with_embedding(
+        self,
+        node: GraphNode,
+        embedding: np.ndarray,
+        embedding_metadata: Optional[Dict[str, Any]] = None,
+    ) -> GraphNode:
         """
         Add a node with its vector embedding to the graph.
 
@@ -733,7 +784,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Currently, IPFSKnnIndex doesn't support direct updates
         # The simplest approach is to create a new index with all vectors
         from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndex
-        
+
         all_embeddings = []
         all_metadata = []
 
@@ -769,7 +820,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         new_index = IPFSKnnIndex(
             dimension=self.vector_index.dimension,
             metric=self.vector_index.metric,
-            storage=self.vector_index.storage
+            storage=self.vector_index.storage,
         )
         new_index.add_vectors(np.vstack(all_embeddings), all_metadata)
 
@@ -800,12 +851,15 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return node_results
 
-    def graph_rag_search(self, query_vector: np.ndarray,
-                         max_vector_results: int = 5,
-                         max_traversal_depth: int = 2,
-                         edge_types: Optional[List[str]] = None,
-                         min_similarity: float = 0.5,
-                         use_optimizer: bool = False) -> List[Tuple[GraphNode, float, List[GraphNode]]]:
+    def graph_rag_search(
+        self,
+        query_vector: np.ndarray,
+        max_vector_results: int = 5,
+        max_traversal_depth: int = 2,
+        edge_types: Optional[List[str]] = None,
+        min_similarity: float = 0.5,
+        use_optimizer: bool = False,
+    ) -> List[Tuple[GraphNode, float, List[GraphNode]]]:
         """
         Perform a hybrid search combining vector similarity and graph traversal.
 
@@ -822,13 +876,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 List of (node, similarity, context_path) tuples
         """
         # Check if we should use the optimizer
-        if use_optimizer and hasattr(self, 'query_optimizer'):
+        if use_optimizer and hasattr(self, "query_optimizer"):
             # Prepare parameters for optimization
             params = {
                 "max_vector_results": max_vector_results,
                 "max_traversal_depth": max_traversal_depth,
                 "edge_types": edge_types,
-                "min_similarity": min_similarity
+                "min_similarity": min_similarity,
             }
 
             # Use the optimized query execution
@@ -838,26 +892,25 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     plan["params"]["max_vector_results"],
                     plan["params"]["max_traversal_depth"],
                     plan["params"]["edge_types"],
-                    plan["params"]["min_similarity"]
+                    plan["params"]["min_similarity"],
                 ),
                 query_vector,
-                params
+                params,
             )
         else:
             # Execute without optimization
             return self._execute_graph_rag_search(
-                query_vector,
-                max_vector_results,
-                max_traversal_depth,
-                edge_types,
-                min_similarity
+                query_vector, max_vector_results, max_traversal_depth, edge_types, min_similarity
             )
 
-    def _execute_graph_rag_search(self, query_vector: np.ndarray,
-                                max_vector_results: int = 5,
-                                max_traversal_depth: int = 2,
-                                edge_types: Optional[List[str]] = None,
-                                min_similarity: float = 0.5) -> List[Tuple[GraphNode, float, List[GraphNode]]]:
+    def _execute_graph_rag_search(
+        self,
+        query_vector: np.ndarray,
+        max_vector_results: int = 5,
+        max_traversal_depth: int = 2,
+        edge_types: Optional[List[str]] = None,
+        min_similarity: float = 0.5,
+    ) -> List[Tuple[GraphNode, float, List[GraphNode]]]:
         """
         Internal implementation of graph RAG search.
 
@@ -884,7 +937,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             related_nodes = self.traverse(
                 start_node_id=node.id,
                 edge_type=edge_types[0] if edge_types and len(edge_types) == 1 else None,
-                max_depth=max_traversal_depth
+                max_depth=max_traversal_depth,
             )
 
             # Add the start node to the related nodes list
@@ -897,11 +950,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
         results.sort(key=lambda x: x[1], reverse=True)
         return results
 
-    def enable_query_optimization(self,
-                                vector_weight: float = 0.7,
-                                graph_weight: float = 0.3,
-                                cache_enabled: bool = True,
-                                cache_ttl: float = 300.0) -> None:
+    def enable_query_optimization(
+        self,
+        vector_weight: float = 0.7,
+        graph_weight: float = 0.3,
+        cache_enabled: bool = True,
+        cache_ttl: float = 300.0,
+    ) -> None:
         """
         Enable query optimization for GraphRAG operations.
 
@@ -912,11 +967,12 @@ class VectorAugmentedGraphDataset(GraphDataset):
             cache_ttl (float): Time-to-live for cached results in seconds
         """
         from ipfs_datasets_py.optimizers.graphrag.query_optimizer import GraphRAGQueryOptimizer
+
         self.query_optimizer = GraphRAGQueryOptimizer(
             vector_weight=vector_weight,
             graph_weight=graph_weight,
             cache_enabled=cache_enabled,
-            cache_ttl=cache_ttl
+            cache_ttl=cache_ttl,
         )
 
     def enable_vector_partitioning(self, num_partitions: int = 4) -> None:
@@ -927,9 +983,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
             num_partitions (int): Number of partitions to create
         """
         from ipfs_datasets_py.optimizers.graphrag.query_optimizer import VectorIndexPartitioner
+
         self.vector_partitioner = VectorIndexPartitioner(
-            dimension=self.vector_index.dimension,
-            num_partitions=num_partitions
+            dimension=self.vector_index.dimension, num_partitions=num_partitions
         )
 
         # Partition existing vectors
@@ -944,8 +1000,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
             # Assign to partitions
             self.vector_partitioner.assign_to_partitions(
-                vectors=vectors,
-                metadata=self.vector_index._metadata
+                vectors=vectors, metadata=self.vector_index._metadata
             )
 
     def import_knowledge_graph(self, knowledge_graph, embedding_model=None) -> List[str]:
@@ -959,7 +1014,11 @@ class VectorAugmentedGraphDataset(GraphDataset):
         Returns:
             List[str]: List of entity IDs that were added
         """
-        from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
+            KnowledgeGraph,
+            Entity,
+            Relationship,
+        )
 
         if not isinstance(knowledge_graph, KnowledgeGraph):
             raise TypeError("knowledge_graph must be a KnowledgeGraph instance")
@@ -973,11 +1032,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             node = GraphNode(
                 id=entity.id,
                 type=entity.entity_type,
-                data={
-                    "name": entity.name,
-                    "confidence": entity.confidence,
-                    **entity.properties
-                }
+                data={"name": entity.name, "confidence": entity.confidence, **entity.properties},
             )
 
             # Add to tracking
@@ -998,10 +1053,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
             if source_id in entity_to_node and target_id in entity_to_node:
                 # Add edge with relationship properties
-                properties = {
-                    "confidence": rel.confidence,
-                    **rel.properties
-                }
+                properties = {"confidence": rel.confidence, **rel.properties}
 
                 if rel.source_text:
                     properties["source_text"] = rel.source_text
@@ -1020,8 +1072,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 text = f"{node.data.get('name', '')}"
 
                 # Add properties to text
-                props = [f"{k}: {v}" for k, v in node.data.items()
-                        if k not in ['name', 'confidence']]
+                props = [
+                    f"{k}: {v}" for k, v in node.data.items() if k not in ["name", "confidence"]
+                ]
                 if props:
                     text += f" ({', '.join(props)})"
 
@@ -1047,14 +1100,17 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return nodes_added
 
-    def advanced_graph_rag_search(self, query_vector: np.ndarray,
-                                max_vector_results: int = 5,
-                                max_traversal_depth: int = 2,
-                                edge_types: Optional[List[str]] = None,
-                                min_similarity: float = 0.5,
-                                semantic_weight: float = 0.7,
-                                structural_weight: float = 0.3,
-                                path_decay_factor: float = 0.8) -> List[Dict[str, Any]]:
+    def advanced_graph_rag_search(
+        self,
+        query_vector: np.ndarray,
+        max_vector_results: int = 5,
+        max_traversal_depth: int = 2,
+        edge_types: Optional[List[str]] = None,
+        min_similarity: float = 0.5,
+        semantic_weight: float = 0.7,
+        structural_weight: float = 0.3,
+        path_decay_factor: float = 0.8,
+    ) -> List[Dict[str, Any]]:
         """
         Perform an advanced hybrid search with weighted scoring for semantic and structural relevance.
 
@@ -1103,16 +1159,14 @@ class VectorAugmentedGraphDataset(GraphDataset):
             for edge_type in edge_types_to_check:
                 # Check if any end nodes also have vector embeddings
                 for related_node in self.traverse(
-                    start_node_id=start_node.id,
-                    edge_type=edge_type,
-                    max_depth=max_traversal_depth
+                    start_node_id=start_node.id, edge_type=edge_type, max_depth=max_traversal_depth
                 ):
                     # Find paths between the nodes
                     paths = self.find_paths(
                         start_node_id=start_node.id,
                         end_node_id=related_node.id,
                         edge_types=[edge_type],
-                        max_depth=max_traversal_depth
+                        max_depth=max_traversal_depth,
                     )
 
                     for path in paths:
@@ -1132,30 +1186,38 @@ class VectorAugmentedGraphDataset(GraphDataset):
                             weight = edge_props.get("weight", 1.0)
                             edge_property_score *= weight
 
-                        final_structural_score = structural_score * edge_type_boost * edge_property_score
+                        final_structural_score = (
+                            structural_score * edge_type_boost * edge_property_score
+                        )
 
                         # Add to paths
-                        paths_to_related.append({
-                            "path": path,
-                            "end_node": related_node,
-                            "structural_score": final_structural_score
-                        })
+                        paths_to_related.append(
+                            {
+                                "path": path,
+                                "end_node": related_node,
+                                "structural_score": final_structural_score,
+                            }
+                        )
 
             # Compute combined scores for this node and its paths
             semantic_score = similarity
 
             # Get the highest structural score among all paths
-            max_structural_score = max([p["structural_score"] for p in paths_to_related]) if paths_to_related else 0
+            max_structural_score = (
+                max([p["structural_score"] for p in paths_to_related]) if paths_to_related else 0
+            )
 
             # Combine semantic and structural scores
-            combined_score = (semantic_weight * semantic_score) + (structural_weight * max_structural_score)
+            combined_score = (semantic_weight * semantic_score) + (
+                structural_weight * max_structural_score
+            )
 
             result = {
                 "node": start_node,
                 "paths": paths_to_related,
                 "score": combined_score,
                 "semantic_score": semantic_score,
-                "structural_score": max_structural_score
+                "structural_score": max_structural_score,
             }
 
             results.append(result)
@@ -1164,11 +1226,14 @@ class VectorAugmentedGraphDataset(GraphDataset):
         results.sort(key=lambda x: x["score"], reverse=True)
         return results
 
-    def search_with_weighted_paths(self, query_vector: np.ndarray,
-                                 max_initial_results: int = 10,
-                                 max_path_length: int = 3,
-                                 path_weight_strategy: str = "decay",
-                                 relation_weights: Optional[Dict[str, float]] = None) -> List[Dict[str, Any]]:
+    def search_with_weighted_paths(
+        self,
+        query_vector: np.ndarray,
+        max_initial_results: int = 10,
+        max_path_length: int = 3,
+        path_weight_strategy: str = "decay",
+        relation_weights: Optional[Dict[str, float]] = None,
+    ) -> List[Dict[str, Any]]:
         """
         Search for paths in the graph starting from vector similarity matches,
         with weights applied to paths based on semantic relevance and path properties.
@@ -1237,7 +1302,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 paths = self.find_paths(
                     start_node_id=start_node.id,
                     end_node_id=target_node.id,
-                    max_depth=max_path_length
+                    max_depth=max_path_length,
                 )
 
                 for path in paths:
@@ -1252,14 +1317,16 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     # Combined weight
                     combined_weight = path_semantic_weight * relation_weight
 
-                    all_weighted_paths.append({
-                        "start_node": start_node,
-                        "end_node": target_node,
-                        "path": path,
-                        "weight": combined_weight,
-                        "semantic_weight": path_semantic_weight,
-                        "relation_weight": relation_weight
-                    })
+                    all_weighted_paths.append(
+                        {
+                            "start_node": start_node,
+                            "end_node": target_node,
+                            "path": path,
+                            "weight": combined_weight,
+                            "semantic_weight": path_semantic_weight,
+                            "relation_weight": relation_weight,
+                        }
+                    )
 
         # Sort by weight
         all_weighted_paths.sort(key=lambda x: x["weight"], reverse=True)
@@ -1272,7 +1339,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         max_hops: int = 2,
         min_similarity: float = 0.7,
         edge_filters: Optional[List[Tuple[str, str, Any]]] = None,
-        max_results: int = 10
+        max_results: int = 10,
     ) -> List[Dict[str, Any]]:
         """
         Find nodes that are both semantically similar to the query vector
@@ -1335,8 +1402,10 @@ class VectorAugmentedGraphDataset(GraphDataset):
             if not edge_filters:
                 return True
 
-            return all(match_edge_filter(edge_properties, filter_condition)
-                      for filter_condition in edge_filters)
+            return all(
+                match_edge_filter(edge_properties, filter_condition)
+                for filter_condition in edge_filters
+            )
 
         # Find connected nodes that satisfy edge filters
         results = []
@@ -1382,14 +1451,16 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
                         # Only consider paths that end at semantically similar nodes
                         if target_similarity >= min_similarity:
-                            paths_from_node.append({
-                                "start_node": node,
-                                "end_node": target,
-                                "path": new_path,
-                                "start_similarity": similarity,
-                                "end_similarity": target_similarity,
-                                "combined_score": (similarity + target_similarity) / 2
-                            })
+                            paths_from_node.append(
+                                {
+                                    "start_node": node,
+                                    "end_node": target,
+                                    "path": new_path,
+                                    "start_similarity": similarity,
+                                    "end_similarity": target_similarity,
+                                    "combined_score": (similarity + target_similarity) / 2,
+                                }
+                            )
 
                         # Add target to queue for further exploration
                         queue.append((target, new_path, depth + 1))
@@ -1413,8 +1484,8 @@ class VectorAugmentedGraphDataset(GraphDataset):
         query_vector: np.ndarray,
         similarity_threshold: float = 0.7,
         include_connections: bool = True,
-        max_distance: int = 2
-    ) -> 'GraphDataset':
+        max_distance: int = 2,
+    ) -> "GraphDataset":
         """
         Extract a subgraph containing nodes semantically similar to the query vector
         and their connections.
@@ -1432,7 +1503,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
         """
         # Get semantically similar nodes
         similar_nodes = self.vector_search(query_vector)
-        similar_nodes = [(node, score) for node, score in similar_nodes if score >= similarity_threshold]
+        similar_nodes = [
+            (node, score) for node, score in similar_nodes if score >= similarity_threshold
+        ]
 
         if not similar_nodes:
             return GraphDataset(name=f"{self.name}_semantic_subgraph")
@@ -1451,7 +1524,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             related_nodes = self.traverse(
                 start_node_id=node_id,
                 max_depth=max_distance,
-                direction="both"  # Follow both incoming and outgoing edges
+                direction="both",  # Follow both incoming and outgoing edges
             )
 
             # Only include connections to other similar nodes
@@ -1459,9 +1532,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 if related_node.id in similar_node_ids:
                     # For each pair of connected similar nodes, include all nodes along the path
                     paths = self.find_paths(
-                        start_node_id=node_id,
-                        end_node_id=related_node.id,
-                        max_depth=max_distance
+                        start_node_id=node_id, end_node_id=related_node.id, max_depth=max_distance
                     )
 
                     for path in paths:
@@ -1491,15 +1562,15 @@ class VectorAugmentedGraphDataset(GraphDataset):
             "name": self.name,
             "graph_cid": graph_cid,
             "vector_index_cid": vector_index_cid,
-            "node_to_vector_idx": self._node_to_vector_idx
+            "node_to_vector_idx": self._node_to_vector_idx,
         }
 
         # Store the root object
-        root_json = json.dumps(root_obj).encode('utf-8')
+        root_json = json.dumps(root_obj).encode("utf-8")
         return self.vector_index.storage.store(root_json)
 
     @classmethod
-    def load_from_ipfs(cls, cid: str, storage=None) -> 'VectorAugmentedGraphDataset':
+    def load_from_ipfs(cls, cid: str, storage=None) -> "VectorAugmentedGraphDataset":
         """
         Load a vector-augmented graph dataset from IPFS.
 
@@ -1512,11 +1583,12 @@ class VectorAugmentedGraphDataset(GraphDataset):
         """
         # Initialize storage
         from .ipld.storage import IPLDStorage
+
         storage = storage or IPLDStorage()
 
         # Get the root object
         root_json = storage.get(cid)
-        root_obj = json.loads(root_json.decode('utf-8'))
+        root_obj = json.loads(root_json.decode("utf-8"))
 
         # Verify it's a vector-augmented graph
         if root_obj.get("type") != "vector_augmented_graph":
@@ -1524,6 +1596,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # Load the vector index
         from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndex
+
         vector_index_cid = root_obj["vector_index_cid"]
         vector_index = IPFSKnnIndex.load_from_ipfs(vector_index_cid, storage=storage)
 
@@ -1537,7 +1610,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             name=root_obj["name"],
             vector_dimension=vector_index.dimension,
             vector_metric=vector_index.metric,
-            storage=storage
+            storage=storage,
         )
 
         # Replace the graph attributes with the loaded graph
@@ -1547,7 +1620,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         result._nodes_by_type = graph._nodes_by_type
         result._edges_by_type = graph._edges_by_type
         result._properties_index = graph._properties_index
-        if hasattr(graph, '_edge_properties_index'):
+        if hasattr(graph, "_edge_properties_index"):
             result._edge_properties_index = graph._edge_properties_index
 
         # Replace the vector index
@@ -1556,7 +1629,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Set the node-to-vector mappings
         result._node_to_vector_idx = root_obj["node_to_vector_idx"]
         # Convert string keys to integers for the reverse mapping
-        result._vector_idx_to_node = {int(idx): node_id for node_id, idx in root_obj["node_to_vector_idx"].items()}
+        result._vector_idx_to_node = {
+            int(idx): node_id for node_id, idx in root_obj["node_to_vector_idx"].items()
+        }
 
         return result
 
@@ -1576,10 +1651,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Export to CAR
         return self.vector_index.storage.export_to_car([root_cid], output_path)
 
-    def add_nodes_with_text_embedding(self, nodes: List[GraphNode],
-                                 text_extractor: Callable[[GraphNode], str],
-                                 embedding_model: Optional[Any] = None,
-                                 batch_size: int = 32) -> int:
+    def add_nodes_with_text_embedding(
+        self,
+        nodes: List[GraphNode],
+        text_extractor: Callable[[GraphNode], str],
+        embedding_model: Optional[Any] = None,
+        batch_size: int = 32,
+    ) -> int:
         """
         Add multiple nodes with text embeddings generated from an embedding model.
 
@@ -1599,25 +1677,32 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 # Try to import sentence-transformers
                 try:
                     from sentence_transformers import SentenceTransformer
+
                     print("Using sentence-transformers for embeddings")
-                    embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+                    embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
                 except ImportError:
                     # Try other options
                     try:
                         import torch
                         from transformers import AutoTokenizer, AutoModel
+
                         print("Using transformers for embeddings")
 
                         # Load model and tokenizer
-                        model_name = 'sentence-transformers/all-MiniLM-L6-v2'
+                        model_name = "sentence-transformers/all-MiniLM-L6-v2"
                         tokenizer = AutoTokenizer.from_pretrained(model_name)
                         model = AutoModel.from_pretrained(model_name)
 
                         # Define embedding function
                         def get_embeddings(texts):
                             # Tokenize and prepare input
-                            inputs = tokenizer(texts, padding=True, truncation=True,
-                                              return_tensors="pt", max_length=512)
+                            inputs = tokenizer(
+                                texts,
+                                padding=True,
+                                truncation=True,
+                                return_tensors="pt",
+                                max_length=512,
+                            )
 
                             # Generate embeddings
                             with torch.no_grad():
@@ -1632,11 +1717,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
                             return normalized_embeddings.cpu().numpy()
 
-                        embedding_model = type('', (), {})()
+                        embedding_model = type("", (), {})()
                         embedding_model.encode = get_embeddings
 
                     except ImportError:
-                        raise ValueError("No embedding model available. Please provide one or install sentence-transformers.")
+                        raise ValueError(
+                            "No embedding model available. Please provide one or install sentence-transformers."
+                        )
 
             # Extract text from nodes
             texts = []
@@ -1651,8 +1738,8 @@ class VectorAugmentedGraphDataset(GraphDataset):
             # Process in batches
             added_count = 0
             for i in range(0, len(nodes), batch_size):
-                batch_nodes = nodes[i:i+batch_size]
-                batch_texts = texts[i:i+batch_size]
+                batch_nodes = nodes[i : i + batch_size]
+                batch_texts = texts[i : i + batch_size]
 
                 # Filter out empty texts
                 valid_indices = [j for j, t in enumerate(batch_texts) if t.strip()]
@@ -1669,7 +1756,8 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 for j, (node, embedding) in enumerate(zip(valid_nodes, embeddings)):
                     metadata = {
                         "text_length": len(valid_texts[j]),
-                        "text_preview": valid_texts[j][:100] + ("..." if len(valid_texts[j]) > 100 else "")
+                        "text_preview": valid_texts[j][:100]
+                        + ("..." if len(valid_texts[j]) > 100 else ""),
                     }
                     self.add_node_with_embedding(node, embedding, metadata)
                     added_count += 1
@@ -1680,11 +1768,14 @@ class VectorAugmentedGraphDataset(GraphDataset):
             print(f"Error adding nodes with embeddings: {e}")
             raise
 
-    def batch_add_nodes_and_edges(self, nodes: List[GraphNode],
-                                 edges: List[Tuple[str, str, str, Optional[Dict[str, Any]]]],
-                                 generate_embeddings: bool = False,
-                                 text_extractor: Optional[Callable[[GraphNode], str]] = None,
-                                 embedding_model: Optional[Any] = None) -> Tuple[int, int]:
+    def batch_add_nodes_and_edges(
+        self,
+        nodes: List[GraphNode],
+        edges: List[Tuple[str, str, str, Optional[Dict[str, Any]]]],
+        generate_embeddings: bool = False,
+        text_extractor: Optional[Callable[[GraphNode], str]] = None,
+        embedding_model: Optional[Any] = None,
+    ) -> Tuple[int, int]:
         """
         Batch add nodes and edges to the graph, optionally generating embeddings.
 
@@ -1704,9 +1795,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         if generate_embeddings and text_extractor:
             # Add nodes with embeddings
-            nodes_added = self.add_nodes_with_text_embedding(
-                nodes, text_extractor, embedding_model
-            )
+            nodes_added = self.add_nodes_with_text_embedding(nodes, text_extractor, embedding_model)
             node_ids = {node.id for node in nodes}
         else:
             # Add nodes without embeddings
@@ -1732,7 +1821,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         return nodes_added, edges_added
 
     @classmethod
-    def import_from_car(cls, car_path: str, storage=None) -> 'VectorAugmentedGraphDataset':
+    def import_from_car(cls, car_path: str, storage=None) -> "VectorAugmentedGraphDataset":
         """
         Import a vector-augmented graph dataset from a CAR file.
 
@@ -1745,6 +1834,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         """
         # Initialize storage
         from .ipld.storage import IPLDStorage
+
         storage = storage or IPLDStorage()
 
         # Import from CAR
@@ -1757,10 +1847,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
         return cls.load_from_ipfs(root_cids[0], storage=storage)
 
     @classmethod
-    def from_knowledge_triples(cls, triples: List[Tuple[str, str, str, Dict[str, Any], Dict[str, Any]]],
-                              name: str = None,
-                              vector_dimension: int = 768,
-                              storage=None) -> 'VectorAugmentedGraphDataset':
+    def from_knowledge_triples(
+        cls,
+        triples: List[Tuple[str, str, str, Dict[str, Any], Dict[str, Any]]],
+        name: str = None,
+        vector_dimension: int = 768,
+        storage=None,
+    ) -> "VectorAugmentedGraphDataset":
         """
         Create a vector-augmented graph dataset from knowledge triples.
 
@@ -1775,13 +1868,14 @@ class VectorAugmentedGraphDataset(GraphDataset):
         """
         # Initialize storage if needed
         from .ipld.storage import IPLDStorage
+
         storage = storage or IPLDStorage()
 
         # Create a new dataset
         dataset = cls(
             name=name or f"kg_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
             vector_dimension=vector_dimension,
-            storage=storage
+            storage=storage,
         )
 
         # Track entities to avoid duplication
@@ -1810,11 +1904,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return dataset
 
-    def logical_query(self,
-                     query_vectors: List[np.ndarray],
-                     operators: List[str],
-                     similarity_threshold: float = 0.7,
-                     max_results: int = 10) -> List[Tuple[GraphNode, float]]:
+    def logical_query(
+        self,
+        query_vectors: List[np.ndarray],
+        operators: List[str],
+        similarity_threshold: float = 0.7,
+        max_results: int = 10,
+    ) -> List[Tuple[GraphNode, float]]:
         """
         Perform logical operations (AND, OR, NOT) with multiple query vectors.
 
@@ -1855,14 +1951,18 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # Get results for the first vector
         current_results = self.vector_search(query_vectors[0])
-        current_results = [(node, score) for node, score in current_results if score >= similarity_threshold]
+        current_results = [
+            (node, score) for node, score in current_results if score >= similarity_threshold
+        ]
 
         # Apply logical operations for remaining vectors
         for i, op in enumerate(operators):
             # Get results for the next vector
-            next_vector = query_vectors[i+1]
+            next_vector = query_vectors[i + 1]
             next_results = self.vector_search(next_vector)
-            next_results = [(node, score) for node, score in next_results if score >= similarity_threshold]
+            next_results = [
+                (node, score) for node, score in next_results if score >= similarity_threshold
+            ]
 
             # Create node ID to score mappings for efficient lookup
             next_results_map = {node.id: score for node, score in next_results}
@@ -1901,12 +2001,14 @@ class VectorAugmentedGraphDataset(GraphDataset):
         current_results.sort(key=lambda x: x[1], reverse=True)
         return current_results[:max_results]
 
-    def incremental_graph_update(self,
-                               nodes_to_add: List[GraphNode] = None,
-                               edges_to_add: List[Tuple[str, str, str, Dict[str, Any]]] = None,
-                               nodes_to_remove: List[str] = None,
-                               edges_to_remove: List[Tuple[str, str, str]] = None,
-                               maintain_index: bool = True) -> Tuple[int, int, int, int]:
+    def incremental_graph_update(
+        self,
+        nodes_to_add: List[GraphNode] = None,
+        edges_to_add: List[Tuple[str, str, str, Dict[str, Any]]] = None,
+        nodes_to_remove: List[str] = None,
+        edges_to_remove: List[Tuple[str, str, str]] = None,
+        maintain_index: bool = True,
+    ) -> Tuple[int, int, int, int]:
         """
         Incrementally update the graph while maintaining vector indices.
 
@@ -1973,7 +2075,11 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     print(f"Error adding edge {source_id} -[{edge_type}]-> {target_id}: {e}")
 
         # Rebuild vector index if needed and if node removals affected it
-        if maintain_index and nodes_removed > 0 and any(node_id in self._node_to_vector_idx for node_id in nodes_to_remove):
+        if (
+            maintain_index
+            and nodes_removed > 0
+            and any(node_id in self._node_to_vector_idx for node_id in nodes_to_remove)
+        ):
             self._rebuild_vector_index()
 
         return nodes_added, edges_added, nodes_removed, edges_removed
@@ -1990,7 +2096,10 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Extract all vectors and metadata from the current index
         for idx in range(len(self.vector_index._metadata)):
             # Skip indices that no longer correspond to a node
-            if idx not in self._vector_idx_to_node or self._vector_idx_to_node[idx] not in self.nodes:
+            if (
+                idx not in self._vector_idx_to_node
+                or self._vector_idx_to_node[idx] not in self.nodes
+            ):
                 continue
 
             node_id = self._vector_idx_to_node[idx]
@@ -2011,10 +2120,11 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # Create a new index
         from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndex
+
         new_index = IPFSKnnIndex(
             dimension=self.vector_index.dimension,
             metric=self.vector_index.metric,
-            storage=self.vector_index.storage
+            storage=self.vector_index.storage,
         )
 
         # Add vectors to new index if we have any
@@ -2028,11 +2138,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Replace the old index
         self.vector_index = new_index
 
-    def explain_path(self,
-                    start_node_id: str,
-                    end_node_id: str,
-                    max_paths: int = 3,
-                    max_depth: int = 4) -> List[Dict[str, Any]]:
+    def explain_path(
+        self, start_node_id: str, end_node_id: str, max_paths: int = 3, max_depth: int = 4
+    ) -> List[Dict[str, Any]]:
         """
         Generate explanations for paths between two nodes in the graph.
 
@@ -2057,7 +2165,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             start_node_id=start_node_id,
             end_node_id=end_node_id,
             max_depth=max_depth,
-            max_paths=max_paths
+            max_paths=max_paths,
         )
 
         if not paths:
@@ -2079,12 +2187,14 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 nodes.append(node)
 
                 if prev_node:
-                    edges.append({
-                        "source": prev_node.id,
-                        "target": node.id,
-                        "type": edge_type,
-                        "properties": edge_properties
-                    })
+                    edges.append(
+                        {
+                            "source": prev_node.id,
+                            "target": node.id,
+                            "type": edge_type,
+                            "properties": edge_properties,
+                        }
+                    )
 
                 prev_node = node
 
@@ -2094,14 +2204,17 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
                 for i, edge in enumerate(edges):
                     # Add edge description
-                    relationship = edge['type'].replace('_', ' ')
-                    target_name = nodes[i+1].data.get('name', nodes[i+1].id)
+                    relationship = edge["type"].replace("_", " ")
+                    target_name = nodes[i + 1].data.get("name", nodes[i + 1].id)
 
                     # Add edge properties if available
                     property_text = ""
-                    if edge['properties']:
-                        important_props = [f"{k}: {v}" for k, v in edge['properties'].items()
-                                         if k not in ('timestamp', 'created_at', 'updated_at')]
+                    if edge["properties"]:
+                        important_props = [
+                            f"{k}: {v}"
+                            for k, v in edge["properties"].items()
+                            if k not in ("timestamp", "created_at", "updated_at")
+                        ]
                         if important_props:
                             property_text = f" ({', '.join(important_props)})"
 
@@ -2114,24 +2227,30 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 path_confidence = 0.0
 
             # Add to explanations
-            explanations.append({
-                "nodes": [{"id": node.id, "type": node.type, "data": node.data} for node in nodes],
-                "edges": edges,
-                "explanation": path_explanation,
-                "confidence": path_confidence
-            })
+            explanations.append(
+                {
+                    "nodes": [
+                        {"id": node.id, "type": node.type, "data": node.data} for node in nodes
+                    ],
+                    "edges": edges,
+                    "explanation": path_explanation,
+                    "confidence": path_confidence,
+                }
+            )
 
         # Sort by confidence
         explanations.sort(key=lambda x: x["confidence"], reverse=True)
 
         return explanations
 
-    def hybrid_structured_semantic_search(self,
-                                        query_vector: np.ndarray,
-                                        node_filters: Optional[List[Tuple[str, str, Any]]] = None,
-                                        relationship_patterns: Optional[List[Dict[str, Any]]] = None,
-                                        max_results: int = 10,
-                                        min_similarity: float = 0.6) -> List[Dict[str, Any]]:
+    def hybrid_structured_semantic_search(
+        self,
+        query_vector: np.ndarray,
+        node_filters: Optional[List[Tuple[str, str, Any]]] = None,
+        relationship_patterns: Optional[List[Dict[str, Any]]] = None,
+        max_results: int = 10,
+        min_similarity: float = 0.6,
+    ) -> List[Dict[str, Any]]:
         """
         Perform a hybrid search combining semantic similarity with structured filters and graph patterns.
 
@@ -2180,6 +2299,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             )
             ```
         """
+
         # Function to check if a node property matches a filter
         def match_property_filter(node, filter_condition):
             prop_path, operator, value = filter_condition
@@ -2216,7 +2336,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 return prop_value <= value
             elif operator == "contains" and isinstance(prop_value, str) and isinstance(value, str):
                 return value in prop_value
-            elif operator == "startswith" and isinstance(prop_value, str) and isinstance(value, str):
+            elif (
+                operator == "startswith" and isinstance(prop_value, str) and isinstance(value, str)
+            ):
                 return prop_value.startswith(value)
             elif operator == "endswith" and isinstance(prop_value, str) and isinstance(value, str):
                 return prop_value.endswith(value)
@@ -2228,7 +2350,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
             if not filters:
                 return True
 
-            return all(match_property_filter(node, filter_condition) for filter_condition in filters)
+            return all(
+                match_property_filter(node, filter_condition) for filter_condition in filters
+            )
 
         # Function to check if a node matches a relationship pattern
         def matches_relationship_pattern(node, pattern):
@@ -2254,12 +2378,16 @@ class VectorAugmentedGraphDataset(GraphDataset):
                                 properties = edge["properties"]
 
                                 # Check edge property filters
-                                if edge_filters and not all(match_edge_filter(properties, filter_condition)
-                                                          for filter_condition in edge_filters):
+                                if edge_filters and not all(
+                                    match_edge_filter(properties, filter_condition)
+                                    for filter_condition in edge_filters
+                                ):
                                     continue
 
                                 # Check target node filters
-                                if target_filters and not node_matches_filters(target, target_filters):
+                                if target_filters and not node_matches_filters(
+                                    target, target_filters
+                                ):
                                     continue
 
                                 connected_nodes.append(target)
@@ -2272,12 +2400,16 @@ class VectorAugmentedGraphDataset(GraphDataset):
                                 for edge in edges:
                                     if edge["target"].id == current_node.id:
                                         # Check edge property filters
-                                        if edge_filters and not all(match_edge_filter(edge["properties"], filter_condition)
-                                                                  for filter_condition in edge_filters):
+                                        if edge_filters and not all(
+                                            match_edge_filter(edge["properties"], filter_condition)
+                                            for filter_condition in edge_filters
+                                        ):
                                             continue
 
                                         # Check source node filters (which is the "target" in this incoming case)
-                                        if target_filters and not node_matches_filters(source_node, target_filters):
+                                        if target_filters and not node_matches_filters(
+                                            source_node, target_filters
+                                        ):
                                             continue
 
                                         connected_nodes.append(source_node)
@@ -2287,7 +2419,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     return len(connected_nodes) > 0
 
                 # Otherwise, at least one of the connected nodes must satisfy the remaining hops
-                return any(check_hop(next_node, remaining_hops - 1) for next_node in connected_nodes)
+                return any(
+                    check_hop(next_node, remaining_hops - 1) for next_node in connected_nodes
+                )
 
             # Start the recursive check
             return check_hop(node, hops)
@@ -2354,26 +2488,26 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Format results
         results = []
         for node, score in filtered_nodes[:max_results]:
-            results.append({
-                "node": {
-                    "id": node.id,
-                    "type": node.type,
-                    "data": node.data
-                },
-                "similarity": score,
-                "matches_filters": node_filters is not None,
-                "matches_patterns": relationship_patterns is not None
-            })
+            results.append(
+                {
+                    "node": {"id": node.id, "type": node.type, "data": node.data},
+                    "similarity": score,
+                    "matches_filters": node_filters is not None,
+                    "matches_patterns": relationship_patterns is not None,
+                }
+            )
 
         return results
 
-    def rank_nodes_by_centrality(self,
-                               query_vector: Optional[np.ndarray] = None,
-                               alpha: float = 0.85,
-                               max_iterations: int = 50,
-                               tolerance: float = 1e-6,
-                               damping_by_similarity: bool = False,
-                               weight_by_edge_properties: Optional[Dict[str, str]] = None) -> List[Tuple[GraphNode, float]]:
+    def rank_nodes_by_centrality(
+        self,
+        query_vector: Optional[np.ndarray] = None,
+        alpha: float = 0.85,
+        max_iterations: int = 50,
+        tolerance: float = 1e-6,
+        damping_by_similarity: bool = False,
+        weight_by_edge_properties: Optional[Dict[str, str]] = None,
+    ) -> List[Tuple[GraphNode, float]]:
         """
         Ranks nodes by their centrality in the graph, optionally influenced by semantic similarity.
 
@@ -2429,7 +2563,11 @@ class VectorAugmentedGraphDataset(GraphDataset):
                                 prop_value = edge["properties"][prop_name]
                                 if isinstance(prop_value, (int, float)):
                                     weight = float(prop_value)
-                                elif isinstance(prop_value, str) and prop_value.lower() in {"high", "medium", "low"}:
+                                elif isinstance(prop_value, str) and prop_value.lower() in {
+                                    "high",
+                                    "medium",
+                                    "low",
+                                }:
                                     # Convert string values to weights
                                     str_weights = {"high": 1.0, "medium": 0.5, "low": 0.2}
                                     weight = str_weights[prop_value.lower()]
@@ -2459,7 +2597,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     node_alpha = alpha * (0.5 + 0.5 * similarity_scores[node_id])
 
                 # Calculate new score with damping factor
-                new_scores[node_id] = (1 - node_alpha) / len(self.nodes) + node_alpha * incoming_score
+                new_scores[node_id] = (1 - node_alpha) / len(
+                    self.nodes
+                ) + node_alpha * incoming_score
 
             # Check for convergence
             diff = sum(abs(new_scores[node_id] - scores[node_id]) for node_id in scores)
@@ -2473,11 +2613,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return result
 
-    def multi_hop_inference(self,
-                          start_node_id: str,
-                          relationship_pattern: List[str],
-                          confidence_threshold: float = 0.5,
-                          max_results: int = 10) -> List[Dict[str, Any]]:
+    def multi_hop_inference(
+        self,
+        start_node_id: str,
+        relationship_pattern: List[str],
+        confidence_threshold: float = 0.5,
+        max_results: int = 10,
+    ) -> List[Dict[str, Any]]:
         """
         Infer multi-hop relationships that may not be explicitly present in the graph.
 
@@ -2532,13 +2674,15 @@ class VectorAugmentedGraphDataset(GraphDataset):
                         continue
 
                     # Add to results
-                    results.append({
-                        "start_node": start_node,
-                        "end_node": end_node,
-                        "path": path,
-                        "confidence": confidence,
-                        "inferred_relationship": "_".join(relationship_pattern)
-                    })
+                    results.append(
+                        {
+                            "start_node": start_node,
+                            "end_node": end_node,
+                            "path": path,
+                            "confidence": confidence,
+                            "inferred_relationship": "_".join(relationship_pattern),
+                        }
+                    )
                 continue
 
             # Get the next relationship type to follow
@@ -2596,9 +2740,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
                                 # Calculate edge weight based on properties
                                 edge_weight = 1.0
-                                if "strength" in props and isinstance(props["strength"], (int, float)):
+                                if "strength" in props and isinstance(
+                                    props["strength"], (int, float)
+                                ):
                                     edge_weight = float(props["strength"])
-                                elif "weight" in props and isinstance(props["weight"], (int, float)):
+                                elif "weight" in props and isinstance(
+                                    props["weight"], (int, float)
+                                ):
                                     edge_weight = float(props["weight"])
                                 elif "importance" in props:
                                     # Handle string values
@@ -2616,17 +2764,21 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
                                 # Add to queue
                                 new_path = path + [(source_node, edge_type, props)]
-                                queue.append((source_node, new_path, pattern_idx + 1, new_confidence))
+                                queue.append(
+                                    (source_node, new_path, pattern_idx + 1, new_confidence)
+                                )
 
         # Sort by confidence and limit results
         results.sort(key=lambda x: x["confidence"], reverse=True)
         return results[:max_results]
 
-    def find_entity_clusters(self,
-                           similarity_threshold: float = 0.6,
-                           min_community_size: int = 2,
-                           max_communities: int = 10,
-                           relationship_weight: float = 0.3) -> List[Dict[str, Any]]:
+    def find_entity_clusters(
+        self,
+        similarity_threshold: float = 0.6,
+        min_community_size: int = 2,
+        max_communities: int = 10,
+        relationship_weight: float = 0.3,
+    ) -> List[Dict[str, Any]]:
         """
         Find clusters of semantically similar and structurally connected entities.
 
@@ -2667,7 +2819,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         for i, node_id1 in enumerate(node_ids):
             vector1 = node_vectors[node_id1]
 
-            for node_id2 in node_ids[i+1:]:
+            for node_id2 in node_ids[i + 1 :]:
                 vector2 = node_vectors[node_id2]
 
                 # Calculate semantic similarity
@@ -2686,9 +2838,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
                                 connected = True
                                 # Get edge weight from properties if available
                                 props = edge["properties"]
-                                if "strength" in props and isinstance(props["strength"], (float, int)):
+                                if "strength" in props and isinstance(
+                                    props["strength"], (float, int)
+                                ):
                                     connection_strength = float(props["strength"])
-                                elif "weight" in props and isinstance(props["weight"], (float, int)):
+                                elif "weight" in props and isinstance(
+                                    props["weight"], (float, int)
+                                ):
                                     connection_strength = float(props["weight"])
                                 elif "importance" in props:
                                     # Handle string values
@@ -2711,9 +2867,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
                                     connected = True
                                     # Get edge weight
                                     props = edge["properties"]
-                                    if "strength" in props and isinstance(props["strength"], (float, int)):
+                                    if "strength" in props and isinstance(
+                                        props["strength"], (float, int)
+                                    ):
                                         connection_strength = float(props["strength"])
-                                    elif "weight" in props and isinstance(props["weight"], (float, int)):
+                                    elif "weight" in props and isinstance(
+                                        props["weight"], (float, int)
+                                    ):
                                         connection_strength = float(props["weight"])
                                     elif "importance" in props:
                                         # Handle string values
@@ -2729,7 +2889,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
                 # Combine semantic and structural similarity
                 if connected:
-                    combined_sim = (1 - relationship_weight) * sim + relationship_weight * connection_strength
+                    combined_sim = (
+                        1 - relationship_weight
+                    ) * sim + relationship_weight * connection_strength
                 else:
                     combined_sim = sim
 
@@ -2776,7 +2938,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 edge_count = 0
 
                 for i, node1 in enumerate(component):
-                    for node2 in component[i+1:]:
+                    for node2 in component[i + 1 :]:
                         if node2 in similarity_graph.get(node1, {}):
                             cohesion += similarity_graph[node1][node2]
                             edge_count += 1
@@ -2785,17 +2947,21 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     cohesion /= edge_count
 
                 # Extract nodes
-                community_nodes = [self.nodes[node_id] for node_id in component if node_id in self.nodes]
+                community_nodes = [
+                    self.nodes[node_id] for node_id in component if node_id in self.nodes
+                ]
 
                 # Extract common themes by looking at node properties
                 themes = self._extract_community_themes(community_nodes)
 
-                communities.append({
-                    "nodes": community_nodes,
-                    "size": len(community_nodes),
-                    "cohesion": cohesion,
-                    "themes": themes
-                })
+                communities.append(
+                    {
+                        "nodes": community_nodes,
+                        "size": len(community_nodes),
+                        "cohesion": cohesion,
+                        "themes": themes,
+                    }
+                )
 
             # Mark all nodes in component as visited
             visited.update(component_visited)
@@ -2823,8 +2989,26 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 # Simple tokenization by splitting on whitespace and punctuation
                 title = node.data["title"]
                 # Remove common stop words
-                stop_words = {"a", "an", "the", "and", "or", "but", "of", "in", "on", "for", "with", "to", "at"}
-                words = [w.lower() for w in re.findall(r'\b\w+\b', title) if w.lower() not in stop_words and len(w) > 3]
+                stop_words = {
+                    "a",
+                    "an",
+                    "the",
+                    "and",
+                    "or",
+                    "but",
+                    "of",
+                    "in",
+                    "on",
+                    "for",
+                    "with",
+                    "to",
+                    "at",
+                }
+                words = [
+                    w.lower()
+                    for w in re.findall(r"\b\w+\b", title)
+                    if w.lower() not in stop_words and len(w) > 3
+                ]
                 for word in words:
                     keyword_counts[word] += 1
 
@@ -2832,12 +3016,14 @@ class VectorAugmentedGraphDataset(GraphDataset):
         themes = sorted(keyword_counts.items(), key=lambda x: x[1], reverse=True)
         return [theme for theme, count in themes[:5] if count >= len(nodes) // 3]
 
-    def expand_query(self,
-                    query_vector: np.ndarray,
-                    expansion_strategy: str = "neighbor_vectors",
-                    expansion_factor: float = 0.3,
-                    max_terms: int = 3,
-                    min_similarity: float = 0.7) -> np.ndarray:
+    def expand_query(
+        self,
+        query_vector: np.ndarray,
+        expansion_strategy: str = "neighbor_vectors",
+        expansion_factor: float = 0.3,
+        max_terms: int = 3,
+        min_similarity: float = 0.7,
+    ) -> np.ndarray:
         """
         Expand a query vector using information from the knowledge graph.
 
@@ -2865,7 +3051,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # Find initial vector matches to expand from
         expansion_sources = self.vector_search(query_vector, k=max_terms + 5)
-        expansion_sources = [(node, score) for node, score in expansion_sources if score >= min_similarity]
+        expansion_sources = [
+            (node, score) for node, score in expansion_sources if score >= min_similarity
+        ]
 
         if not expansion_sources:
             return query_vector  # No good expansion sources found
@@ -2902,7 +3090,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     expansion_component += vec * expansion_weights[i]
 
                 # Combine original query with expansion component
-                expanded_query = (1 - expansion_factor) * query_vector + expansion_factor * expansion_component
+                expanded_query = (
+                    1 - expansion_factor
+                ) * query_vector + expansion_factor * expansion_component
 
                 # Normalize the result
                 expanded_query = expanded_query / np.linalg.norm(expanded_query)
@@ -2914,7 +3104,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 similarity_threshold=min_similarity,
                 min_community_size=2,
                 max_communities=3,
-                relationship_weight=0.3
+                relationship_weight=0.3,
             )
 
             if not clusters:
@@ -2963,7 +3153,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     expansion_component += vec * centroid_weights[i]
 
                 # Combine original query with expansion component
-                expanded_query = (1 - expansion_factor) * query_vector + expansion_factor * expansion_component
+                expanded_query = (
+                    1 - expansion_factor
+                ) * query_vector + expansion_factor * expansion_component
 
                 # Normalize the result
                 expanded_query = expanded_query / np.linalg.norm(expanded_query)
@@ -2980,11 +3172,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     continue
 
                 # Otherwise, find related concept nodes
-                neighbors = self.traverse(
-                    start_node_id=node.id,
-                    edge_type="about",
-                    max_depth=1
-                )
+                neighbors = self.traverse(start_node_id=node.id, edge_type="about", max_depth=1)
 
                 for neighbor in neighbors:
                     if neighbor.type == "concept":
@@ -3028,7 +3216,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     expansion_component += vec * concept_weights[i]
 
                 # Combine original query with expansion component
-                expanded_query = (1 - expansion_factor) * query_vector + expansion_factor * expansion_component
+                expanded_query = (
+                    1 - expansion_factor
+                ) * query_vector + expansion_factor * expansion_component
 
                 # Normalize the result
                 expanded_query = expanded_query / np.linalg.norm(expanded_query)
@@ -3037,11 +3227,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # If we reach here, return the original query vector
         return query_vector
 
-    def resolve_entities(self,
-                       candidate_nodes: List[GraphNode],
-                       resolution_strategy: str = "vector_similarity",
-                       similarity_threshold: float = 0.8,
-                       property_weights: Optional[Dict[str, float]] = None) -> Dict[str, List[GraphNode]]:
+    def resolve_entities(
+        self,
+        candidate_nodes: List[GraphNode],
+        resolution_strategy: str = "vector_similarity",
+        similarity_threshold: float = 0.8,
+        property_weights: Optional[Dict[str, float]] = None,
+    ) -> Dict[str, List[GraphNode]]:
         """
         Perform entity resolution to identify and group duplicate/equivalent entities.
 
@@ -3087,7 +3279,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 vector1 = node_vectors[node_id1]
                 node1 = next(n for n in candidate_nodes if n.id == node_id1)
 
-                for node_id2 in node_ids[i+1:]:
+                for node_id2 in node_ids[i + 1 :]:
                     vector2 = node_vectors[node_id2]
                     node2 = next(n for n in candidate_nodes if n.id == node_id2)
 
@@ -3096,11 +3288,15 @@ class VectorAugmentedGraphDataset(GraphDataset):
                         continue
 
                     # Compute vector similarity
-                    similarity = np.dot(vector1, vector2) / (np.linalg.norm(vector1) * np.linalg.norm(vector2))
+                    similarity = np.dot(vector1, vector2) / (
+                        np.linalg.norm(vector1) * np.linalg.norm(vector2)
+                    )
 
                     # For hybrid strategy, combine with property-based similarity
                     if resolution_strategy == "hybrid":
-                        prop_similarity = self._calculate_property_similarity(node1, node2, property_weights)
+                        prop_similarity = self._calculate_property_similarity(
+                            node1, node2, property_weights
+                        )
 
                         # Combine similarities (equal weighting by default)
                         similarity = 0.5 * similarity + 0.5 * prop_similarity
@@ -3146,7 +3342,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
                         continue
 
                     # Calculate property-based similarity
-                    similarity = self._calculate_property_similarity(representative, node, property_weights)
+                    similarity = self._calculate_property_similarity(
+                        representative, node, property_weights
+                    )
 
                     if similarity >= similarity_threshold:
                         entity_groups[canonical_id].append(node)
@@ -3158,12 +3356,16 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     entity_groups[node.id] = [node]
 
         # Filter out singleton groups if desired
-        return {canonical_id: group for canonical_id, group in entity_groups.items() if len(group) > 0}
+        return {
+            canonical_id: group for canonical_id, group in entity_groups.items() if len(group) > 0
+        }
 
-    def _calculate_property_similarity(self,
-                                      node1: GraphNode,
-                                      node2: GraphNode,
-                                      property_weights: Optional[Dict[str, float]] = None) -> float:
+    def _calculate_property_similarity(
+        self,
+        node1: GraphNode,
+        node2: GraphNode,
+        property_weights: Optional[Dict[str, float]] = None,
+    ) -> float:
         """Calculate similarity between two nodes based on their properties."""
         if node1.type != node2.type:
             return 0.0
@@ -3215,11 +3417,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Normalize by total weight if non-zero
         return similarity / total_weight if total_weight > 0 else 0.0
 
-    def generate_contextual_embeddings(self,
-                                     node_id: str,
-                                     context_strategy: str = "neighborhood",
-                                     context_depth: int = 1,
-                                     edge_weight_property: Optional[str] = None) -> np.ndarray:
+    def generate_contextual_embeddings(
+        self,
+        node_id: str,
+        context_strategy: str = "neighborhood",
+        context_depth: int = 1,
+        edge_weight_property: Optional[str] = None,
+    ) -> np.ndarray:
         """
         Generate enhanced embeddings for a node that incorporate contextual information from the graph.
 
@@ -3256,10 +3460,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         if context_strategy == "neighborhood" or context_strategy == "weighted_edges":
             # Simple traversal to gather neighbors
-            neighbors = self.traverse(
-                start_node_id=node_id,
-                max_depth=context_depth
-            )
+            neighbors = self.traverse(start_node_id=node_id, max_depth=context_depth)
 
             for neighbor in neighbors:
                 if neighbor.id in self._node_to_vector_idx:
@@ -3276,7 +3477,11 @@ class VectorAugmentedGraphDataset(GraphDataset):
                                         prop_value = props[edge_weight_property]
                                         if isinstance(prop_value, (int, float)):
                                             weight = float(prop_value)
-                                        elif isinstance(prop_value, str) and prop_value.lower() in {"high", "medium", "low"}:
+                                        elif isinstance(prop_value, str) and prop_value.lower() in {
+                                            "high",
+                                            "medium",
+                                            "low",
+                                        }:
                                             str_weights = {"high": 1.0, "medium": 0.6, "low": 0.3}
                                             weight = str_weights[prop_value.lower()]
                                     break
@@ -3331,7 +3536,10 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 for source_node in self.nodes.values():
                     if "authored_by" in source_node.edges:
                         for edge in source_node.edges["authored_by"]:
-                            if edge["target"].id == node_id and source_node.id in self._node_to_vector_idx:
+                            if (
+                                edge["target"].id == node_id
+                                and source_node.id in self._node_to_vector_idx
+                            ):
                                 # Weight by contribution if available
                                 weight = 0.8  # Default weight for authored papers
                                 if "contribution" in edge["properties"]:
@@ -3347,7 +3555,10 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 for source_node in self.nodes.values():
                     if "about" in source_node.edges:
                         for edge in source_node.edges["about"]:
-                            if edge["target"].id == node_id and source_node.id in self._node_to_vector_idx:
+                            if (
+                                edge["target"].id == node_id
+                                and source_node.id in self._node_to_vector_idx
+                            ):
                                 # Weight by centrality if available
                                 weight = 0.7  # Default weight
                                 if "centrality" in edge["properties"]:
@@ -3386,15 +3597,16 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return contextual_embedding
 
-
-    def compare_subgraphs(self,
-                         subgraph1: 'GraphDataset',
-                         subgraph2: 'GraphDataset',
-                         comparison_method: str = "hybrid",
-                         node_type_weights: Optional[Dict[str, float]] = None,
-                         edge_type_weights: Optional[Dict[str, float]] = None,
-                         semantic_weight: float = 0.5,
-                         structural_weight: float = 0.5) -> Dict[str, Any]:
+    def compare_subgraphs(
+        self,
+        subgraph1: "GraphDataset",
+        subgraph2: "GraphDataset",
+        comparison_method: str = "hybrid",
+        node_type_weights: Optional[Dict[str, float]] = None,
+        edge_type_weights: Optional[Dict[str, float]] = None,
+        semantic_weight: float = 0.5,
+        structural_weight: float = 0.5,
+    ) -> Dict[str, Any]:
         """
         Compare two subgraphs and compute a similarity score.
 
@@ -3453,7 +3665,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             "edge_type_overlap": 0.0,
             "shared_nodes": [],
             "unique_nodes1": [],
-            "unique_nodes2": []
+            "unique_nodes2": [],
         }
 
         # Validate input
@@ -3484,13 +3696,17 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Calculate node type overlap
         node_types1 = set(subgraph1.node_types)
         node_types2 = set(subgraph2.node_types)
-        node_type_overlap = len(node_types1.intersection(node_types2)) / max(1, len(node_types1.union(node_types2)))
+        node_type_overlap = len(node_types1.intersection(node_types2)) / max(
+            1, len(node_types1.union(node_types2))
+        )
         result["node_type_overlap"] = node_type_overlap
 
         # Calculate edge type overlap
         edge_types1 = set(subgraph1.edge_types)
         edge_types2 = set(subgraph2.edge_types)
-        edge_type_overlap = len(edge_types1.intersection(edge_types2)) / max(1, len(edge_types1.union(edge_types2)))
+        edge_type_overlap = len(edge_types1.intersection(edge_types2)) / max(
+            1, len(edge_types1.union(edge_types2))
+        )
         result["edge_type_overlap"] = edge_type_overlap
 
         # Calculate structural similarity
@@ -3520,8 +3736,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
             nodes2_of_type = [n_id for n_id, n in subgraph2.nodes.items() if n.type == node_type]
 
             # Jaccard similarity for this node type
-            type_jaccard = len(set(nodes1_of_type).intersection(set(nodes2_of_type))) / \
-                           max(1, len(set(nodes1_of_type).union(set(nodes2_of_type))))
+            type_jaccard = len(set(nodes1_of_type).intersection(set(nodes2_of_type))) / max(
+                1, len(set(nodes1_of_type).union(set(nodes2_of_type)))
+            )
 
             # Weight by node type importance
             weighted_node_type_sim += type_jaccard * node_type_weights.get(node_type, 0.0)
@@ -3541,14 +3758,17 @@ class VectorAugmentedGraphDataset(GraphDataset):
             if not edge_pairs1 and not edge_pairs2:
                 type_jaccard = 1.0  # Both have no edges of this type (perfect match)
             else:
-                type_jaccard = len(edge_pairs1.intersection(edge_pairs2)) / \
-                               max(1, len(edge_pairs1.union(edge_pairs2)))
+                type_jaccard = len(edge_pairs1.intersection(edge_pairs2)) / max(
+                    1, len(edge_pairs1.union(edge_pairs2))
+                )
 
             # Weight by edge type importance
             weighted_edge_type_sim += type_jaccard * edge_type_weights.get(edge_type, 0.0)
 
         # Overall structural similarity
-        structural_similarity = 0.4 * node_jaccard + 0.3 * weighted_node_type_sim + 0.3 * weighted_edge_type_sim
+        structural_similarity = (
+            0.4 * node_jaccard + 0.3 * weighted_node_type_sim + 0.3 * weighted_edge_type_sim
+        )
         result["structural_similarity"] = structural_similarity
 
         # Calculate semantic similarity if needed
@@ -3596,13 +3816,14 @@ class VectorAugmentedGraphDataset(GraphDataset):
             result["overall_similarity"] = semantic_similarity
         else:  # hybrid
             result["overall_similarity"] = (
-                semantic_weight * semantic_similarity +
-                structural_weight * structural_similarity
+                semantic_weight * semantic_similarity + structural_weight * structural_similarity
             )
 
         return result
 
-    def _get_subgraph_contextual_embedding(self, subgraph: GraphDataset, node_id: str) -> Optional[np.ndarray]:
+    def _get_subgraph_contextual_embedding(
+        self, subgraph: GraphDataset, node_id: str
+    ) -> Optional[np.ndarray]:
         """Helper method to get contextual embedding within a subgraph"""
         if node_id not in subgraph.nodes:
             return None
@@ -3667,12 +3888,14 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return combined
 
-    def temporal_graph_analysis(self,
-                              time_property: str,
-                              time_intervals: List[Tuple[Any, Any]],
-                              node_filters: Optional[List[Tuple[str, str, Any]]] = None,
-                              metrics: List[str] = ["node_count", "edge_count", "density", "centrality"],
-                              reference_node_id: Optional[str] = None) -> Dict[str, Any]:
+    def temporal_graph_analysis(
+        self,
+        time_property: str,
+        time_intervals: List[Tuple[Any, Any]],
+        node_filters: Optional[List[Tuple[str, str, Any]]] = None,
+        metrics: List[str] = ["node_count", "edge_count", "density", "centrality"],
+        reference_node_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Analyze the evolution of the knowledge graph over time.
 
         This method creates snapshots of the graph at different time intervals and
@@ -3708,11 +3931,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 print(f"  Density: {snapshot['density']:.3f}")
         """
         # Initialize results
-        results = {
-            "snapshots": [],
-            "trends": {},
-            "reference_node_metrics": []
-        }
+        results = {"snapshots": [], "trends": {}, "reference_node_metrics": []}
 
         # Validate parameters
         if not time_intervals:
@@ -3720,13 +3939,12 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # For each time interval, create a snapshot and compute metrics
         for interval_idx, (start_time, end_time) in enumerate(time_intervals):
-            snapshot = {
-                "interval": (start_time, end_time),
-                "interval_idx": interval_idx
-            }
+            snapshot = {"interval": (start_time, end_time), "interval_idx": interval_idx}
 
             # Filter nodes by time and other filters
-            nodes_in_interval = self._get_nodes_in_time_interval(time_property, start_time, end_time, node_filters)
+            nodes_in_interval = self._get_nodes_in_time_interval(
+                time_property, start_time, end_time, node_filters
+            )
 
             # Create a subgraph for this time interval
             subgraph = self._create_time_snapshot_subgraph(nodes_in_interval)
@@ -3773,10 +3991,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
             # Track reference node if provided
             if reference_node_id and reference_node_id in subgraph.nodes:
-                ref_metrics = {
-                    "interval_idx": interval_idx,
-                    "present": True
-                }
+                ref_metrics = {"interval_idx": interval_idx, "present": True}
 
                 # Calculate metrics specific to the reference node
                 if "centrality" in metrics:
@@ -3784,11 +3999,17 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     centrality_dict = {node.id: score for node, score in centrality_results}
                     if reference_node_id in centrality_dict:
                         ref_metrics["centrality_score"] = centrality_dict[reference_node_id]
-                        ref_metrics["centrality_rank"] = next(
-                            (i for i, (node, _) in enumerate(centrality_results)
-                             if node.id == reference_node_id),
-                            -1
-                        ) + 1  # Convert to 1-based rank
+                        ref_metrics["centrality_rank"] = (
+                            next(
+                                (
+                                    i
+                                    for i, (node, _) in enumerate(centrality_results)
+                                    if node.id == reference_node_id
+                                ),
+                                -1,
+                            )
+                            + 1
+                        )  # Convert to 1-based rank
 
                 # Count connections to the reference node
                 connections = self._count_node_connections(subgraph, reference_node_id)
@@ -3799,10 +4020,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 results["reference_node_metrics"].append(ref_metrics)
             elif reference_node_id:
                 # Reference node not in this time interval
-                results["reference_node_metrics"].append({
-                    "interval_idx": interval_idx,
-                    "present": False
-                })
+                results["reference_node_metrics"].append(
+                    {"interval_idx": interval_idx, "present": False}
+                )
 
             # Add snapshot to results
             results["snapshots"].append(snapshot)
@@ -3814,11 +4034,11 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     # Calculate growth rate for each interval
                     growth_rates = []
                     for i in range(1, len(results["snapshots"])):
-                        prev_value = results["snapshots"][i-1].get(metric, 0)
+                        prev_value = results["snapshots"][i - 1].get(metric, 0)
                         curr_value = results["snapshots"][i].get(metric, 0)
 
                         if prev_value == 0:
-                            growth = float('inf') if curr_value > 0 else 0.0
+                            growth = float("inf") if curr_value > 0 else 0.0
                         else:
                             growth = (curr_value - prev_value) / prev_value
 
@@ -3828,7 +4048,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # Analyze reference node evolution if provided
         if reference_node_id and results["reference_node_metrics"]:
-            ref_present_intervals = [m for m in results["reference_node_metrics"] if m.get("present", False)]
+            ref_present_intervals = [
+                m for m in results["reference_node_metrics"] if m.get("present", False)
+            ]
 
             if len(ref_present_intervals) > 1:
                 # Track changes in centrality and connections over time
@@ -3836,7 +4058,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 connections_trend = []
 
                 for i in range(1, len(ref_present_intervals)):
-                    prev = ref_present_intervals[i-1]
+                    prev = ref_present_intervals[i - 1]
                     curr = ref_present_intervals[i]
 
                     # Centrality change
@@ -3857,7 +4079,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return results
 
-    def _get_nodes_in_time_interval(self, time_property: str, start_time: Any, end_time: Any, additional_filters: Optional[Dict[str, Any]] = None) -> List[str]:
+    def _get_nodes_in_time_interval(
+        self,
+        time_property: str,
+        start_time: Any,
+        end_time: Any,
+        additional_filters: Optional[Dict[str, Any]] = None,
+    ) -> List[str]:
         """Helper method to get nodes within a specific time interval"""
         matching_nodes = []
 
@@ -3914,7 +4142,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return subgraph
 
-    def _compute_pagerank_for_subgraph(self, subgraph: GraphDataset, damping: float = 0.85, max_iterations: int = 100, tolerance: float = 1.0e-6) -> List[Tuple[str, float]]:
+    def _compute_pagerank_for_subgraph(
+        self,
+        subgraph: GraphDataset,
+        damping: float = 0.85,
+        max_iterations: int = 100,
+        tolerance: float = 1.0e-6,
+    ) -> List[Tuple[str, float]]:
         """Compute PageRank centrality for nodes in a subgraph"""
         # Get nodes
         nodes = list(subgraph.nodes.keys())
@@ -4048,18 +4282,16 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     if target["target"].id == node_id:
                         incoming += 1
 
-        return {
-            "incoming": incoming,
-            "outgoing": outgoing,
-            "total": incoming + outgoing
-        }
+        return {"incoming": incoming, "outgoing": outgoing, "total": incoming + outgoing}
 
-    def knowledge_graph_completion(self,
-                                 completion_method: str = "semantic",
-                                 target_relation_types: Optional[List[str]] = None,
-                                 min_confidence: float = 0.7,
-                                 max_candidates: int = 50,
-                                 use_existing_edges_as_training: bool = True) -> List[Dict[str, Any]]:
+    def knowledge_graph_completion(
+        self,
+        completion_method: str = "semantic",
+        target_relation_types: Optional[List[str]] = None,
+        min_confidence: float = 0.7,
+        max_candidates: int = 50,
+        use_existing_edges_as_training: bool = True,
+    ) -> List[Dict[str, Any]]:
         """
         Predict missing edges in the knowledge graph.
 
@@ -4130,16 +4362,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Apply selected prediction method
         if completion_method == "semantic" or completion_method == "combined":
             semantic_predictions = self._predict_edges_semantic(
-                nodes_with_embeddings,
-                target_relation_types,
-                existing_edges
+                nodes_with_embeddings, target_relation_types, existing_edges
             )
             predictions.extend(semantic_predictions)
 
         if completion_method == "structural" or completion_method == "combined":
             structural_predictions = self._predict_edges_structural(
-                target_relation_types,
-                existing_edges
+                target_relation_types, existing_edges
             )
 
             if completion_method == "combined":
@@ -4160,6 +4389,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         if use_existing_edges_as_training and existing_edges:
             # Split existing edges for evaluation
             import random
+
             eval_edges = random.sample(existing_edges, min(100, len(existing_edges)))
 
             # Temporarily remove these edges
@@ -4175,12 +4405,14 @@ class VectorAugmentedGraphDataset(GraphDataset):
                         else:
                             targets_to_keep.append(target)
 
-                    temp_removed_edges.append({
-                        "source_id": source_id,
-                        "edge_type": edge_type,
-                        "target_id": target_id,
-                        "targets_to_remove": targets_to_remove
-                    })
+                    temp_removed_edges.append(
+                        {
+                            "source_id": source_id,
+                            "edge_type": edge_type,
+                            "target_id": target_id,
+                            "targets_to_remove": targets_to_remove,
+                        }
+                    )
 
                     # Replace with filtered targets
                     source_node.edges[edge_type] = targets_to_keep
@@ -4188,17 +4420,20 @@ class VectorAugmentedGraphDataset(GraphDataset):
             # Run predictions on this modified graph
             validation_predictions = []
             if completion_method == "semantic" or completion_method == "combined":
-                validation_predictions.extend(self._predict_edges_semantic(
-                    nodes_with_embeddings,
-                    target_relation_types,
-                    existing_edges.difference(eval_edges)
-                ))
+                validation_predictions.extend(
+                    self._predict_edges_semantic(
+                        nodes_with_embeddings,
+                        target_relation_types,
+                        existing_edges.difference(eval_edges),
+                    )
+                )
 
             if completion_method == "structural" or completion_method == "combined":
-                validation_predictions.extend(self._predict_edges_structural(
-                    target_relation_types,
-                    existing_edges.difference(eval_edges)
-                ))
+                validation_predictions.extend(
+                    self._predict_edges_structural(
+                        target_relation_types, existing_edges.difference(eval_edges)
+                    )
+                )
 
             # Restore removed edges
             for edge_data in temp_removed_edges:
@@ -4227,7 +4462,12 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return filtered_predictions
 
-    def _predict_edges_semantic(self, nodes_with_embeddings: List[Tuple[str, np.ndarray]], target_relation_types: List[str], existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
+    def _predict_edges_semantic(
+        self,
+        nodes_with_embeddings: List[Tuple[str, np.ndarray]],
+        target_relation_types: List[str],
+        existing_edges: Set[Tuple[str, str, str]],
+    ) -> List[Dict[str, Any]]:
         """Predict missing edges using semantic similarity of nodes"""
         predictions = []
 
@@ -4268,13 +4508,21 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 continue
 
             # Determine dominant source and target types for this edge type
-            dominant_source_type = max(source_type_counts.items(), key=lambda x: x[1])[0] if source_type_counts else None
-            dominant_target_type = max(target_type_counts.items(), key=lambda x: x[1])[0] if target_type_counts else None
+            dominant_source_type = (
+                max(source_type_counts.items(), key=lambda x: x[1])[0]
+                if source_type_counts
+                else None
+            )
+            dominant_target_type = (
+                max(target_type_counts.items(), key=lambda x: x[1])[0]
+                if target_type_counts
+                else None
+            )
 
             edge_type_patterns[edge_type] = {
                 "dominant_source_type": dominant_source_type,
                 "dominant_target_type": dominant_target_type,
-                "embedding_pairs": embedding_pairs
+                "embedding_pairs": embedding_pairs,
             }
 
         # For each edge type, predict new edges
@@ -4282,14 +4530,18 @@ class VectorAugmentedGraphDataset(GraphDataset):
             # Get candidate node pairs based on dominant types
             source_candidates = []
             for node_id, node in self.nodes.items():
-                if (node.type == pattern["dominant_source_type"] and
-                    node_id in nodes_with_embeddings):
+                if (
+                    node.type == pattern["dominant_source_type"]
+                    and node_id in nodes_with_embeddings
+                ):
                     source_candidates.append(node)
 
             target_candidates = []
             for node_id, node in self.nodes.items():
-                if (node.type == pattern["dominant_target_type"] and
-                    node_id in nodes_with_embeddings):
+                if (
+                    node.type == pattern["dominant_target_type"]
+                    and node_id in nodes_with_embeddings
+                ):
                     target_candidates.append(node)
 
             if not source_candidates or not target_candidates:
@@ -4364,14 +4616,16 @@ class VectorAugmentedGraphDataset(GraphDataset):
                         "relation_type": edge_type,
                         "confidence": confidence,
                         "explanation": explanation,
-                        "method": "semantic"
+                        "method": "semantic",
                     }
 
                     predictions.append(prediction)
 
         return predictions
 
-    def _predict_edges_structural(self, target_relation_types: List[str], existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
+    def _predict_edges_structural(
+        self, target_relation_types: List[str], existing_edges: Set[Tuple[str, str, str]]
+    ) -> List[Dict[str, Any]]:
         """Predict missing edges using structural patterns"""
         predictions = []
 
@@ -4391,12 +4645,16 @@ class VectorAugmentedGraphDataset(GraphDataset):
             predictions.extend(symmetric_candidates)
 
             # Look for common neighbor patterns (if A and C both connect to many same Bs, they might connect)
-            common_neighbor_candidates = self._find_common_neighbor_candidates(edge_type, existing_edges)
+            common_neighbor_candidates = self._find_common_neighbor_candidates(
+                edge_type, existing_edges
+            )
             predictions.extend(common_neighbor_candidates)
 
         return predictions
 
-    def _find_transitive_candidates(self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
+    def _find_transitive_candidates(
+        self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]
+    ) -> List[Dict[str, Any]]:
         """Find potential transitive relation candidates (A->B, B->C => A->C)"""
         candidates = []
         edges = self.get_edges_by_type(edge_type)
@@ -4421,18 +4679,22 @@ class VectorAugmentedGraphDataset(GraphDataset):
                             # Calculate confidence based on pattern frequency
                             confidence = min(0.95, 0.7 + 0.05 * min(5, len(targets)))
 
-                            candidates.append({
-                                "source_node": source_node,
-                                "target_node": target_node,
-                                "relation_type": edge_type,
-                                "confidence": confidence,
-                                "explanation": f"Transitive relation: {source_node.type} -> {self.nodes[mid_id].type} -> {target_node.type}",
-                                "method": "structural"
-                            })
+                            candidates.append(
+                                {
+                                    "source_node": source_node,
+                                    "target_node": target_node,
+                                    "relation_type": edge_type,
+                                    "confidence": confidence,
+                                    "explanation": f"Transitive relation: {source_node.type} -> {self.nodes[mid_id].type} -> {target_node.type}",
+                                    "method": "structural",
+                                }
+                            )
 
         return candidates
 
-    def _find_symmetric_candidates(self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
+    def _find_symmetric_candidates(
+        self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]
+    ) -> List[Dict[str, Any]]:
         """Find potential symmetric relation candidates"""
         candidates = []
         edges = self.get_edges_by_type(edge_type)
@@ -4466,18 +4728,22 @@ class VectorAugmentedGraphDataset(GraphDataset):
                         # Confidence based on overall reciprocity
                         confidence = min(0.9, reciprocal_pairs / max(1, total_pairs))
 
-                        candidates.append({
-                            "source_node": target_node,  # Reversed for prediction
-                            "target_node": source_node,  # Reversed for prediction
-                            "relation_type": edge_type,
-                            "confidence": confidence,
-                            "explanation": f"Symmetric relation: many {edge_type} connections are reciprocal",
-                            "method": "structural"
-                        })
+                        candidates.append(
+                            {
+                                "source_node": target_node,  # Reversed for prediction
+                                "target_node": source_node,  # Reversed for prediction
+                                "relation_type": edge_type,
+                                "confidence": confidence,
+                                "explanation": f"Symmetric relation: many {edge_type} connections are reciprocal",
+                                "method": "structural",
+                            }
+                        )
 
         return candidates
 
-    def _find_common_neighbor_candidates(self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
+    def _find_common_neighbor_candidates(
+        self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]
+    ) -> List[Dict[str, Any]]:
         """Find potential relations based on common neighbors"""
         candidates = []
         edges = self.get_edges_by_type(edge_type)
@@ -4501,7 +4767,11 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 if node_id >= other_id:  # Avoid duplicates
                     continue
 
-                if (node_id, edge_type, other_id) in existing_edges or (other_id, edge_type, node_id) in existing_edges:
+                if (node_id, edge_type, other_id) in existing_edges or (
+                    other_id,
+                    edge_type,
+                    node_id,
+                ) in existing_edges:
                     continue  # Already connected
 
                 # Find common neighbors
@@ -4522,18 +4792,24 @@ class VectorAugmentedGraphDataset(GraphDataset):
             source_node = self.nodes[source_id]
             target_node = self.nodes[target_id]
 
-            candidates.append({
-                "source_node": source_node,
-                "target_node": target_node,
-                "relation_type": edge_type,
-                "confidence": score,
-                "explanation": f"Common neighbors: {source_node.type} and {target_node.type} share {len(neighbors[source_id].intersection(neighbors[target_id]))} connections",
-                "method": "structural"
-            })
+            candidates.append(
+                {
+                    "source_node": source_node,
+                    "target_node": target_node,
+                    "relation_type": edge_type,
+                    "confidence": score,
+                    "explanation": f"Common neighbors: {source_node.type} and {target_node.type} share {len(neighbors[source_id].intersection(neighbors[target_id]))} connections",
+                    "method": "structural",
+                }
+            )
 
         return candidates
 
-    def _merge_predictions(self, semantic_predictions: List[Dict[str, Any]], structural_predictions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _merge_predictions(
+        self,
+        semantic_predictions: List[Dict[str, Any]],
+        structural_predictions: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
         """Merge and blend predictions from different methods"""
         # Create a lookup for faster matching
         semantic_lookup = {}
@@ -4557,23 +4833,25 @@ class VectorAugmentedGraphDataset(GraphDataset):
             if semantic_pred and structural_pred:
                 # Blend confidences, with slight boost for agreement
                 combined_confidence = (
-                    0.5 * semantic_pred["confidence"] +
-                    0.5 * structural_pred["confidence"] +
-                    0.05  # Small boost for agreement between methods
+                    0.5 * semantic_pred["confidence"]
+                    + 0.5 * structural_pred["confidence"]
+                    + 0.05  # Small boost for agreement between methods
                 )
                 combined_confidence = min(0.95, combined_confidence)
 
                 # Combine explanations
                 explanation = f"Multiple evidence: {semantic_pred['explanation']} AND {structural_pred['explanation']}"
 
-                merged.append({
-                    "source_node": semantic_pred["source_node"],
-                    "target_node": semantic_pred["target_node"],
-                    "relation_type": semantic_pred["relation_type"],
-                    "confidence": combined_confidence,
-                    "explanation": explanation,
-                    "method": "combined"
-                })
+                merged.append(
+                    {
+                        "source_node": semantic_pred["source_node"],
+                        "target_node": semantic_pred["target_node"],
+                        "relation_type": semantic_pred["relation_type"],
+                        "confidence": combined_confidence,
+                        "explanation": explanation,
+                        "method": "combined",
+                    }
+                )
             elif semantic_pred:
                 merged.append(semantic_pred)
             else:
@@ -4581,13 +4859,15 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return merged
 
-    def cross_modal_linking(self,
-                          text_nodes: List[str],
-                          image_nodes: List[str],
-                          linking_method: str = "embedding",
-                          min_confidence: float = 0.7,
-                          max_links_per_node: int = 5,
-                          attributes_to_transfer: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    def cross_modal_linking(
+        self,
+        text_nodes: List[str],
+        image_nodes: List[str],
+        linking_method: str = "embedding",
+        min_confidence: float = 0.7,
+        max_links_per_node: int = 5,
+        attributes_to_transfer: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
         """
         Create semantic links between text and image nodes in the knowledge graph.
 
@@ -4660,12 +4940,16 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 image_id = link["target_node"].id
 
                 # Check if either node has reached its maximum links
-                if (text_link_counts[text_id] >= max_links_per_node or
-                    image_link_counts[image_id] >= max_links_per_node):
+                if (
+                    text_link_counts[text_id] >= max_links_per_node
+                    or image_link_counts[image_id] >= max_links_per_node
+                ):
                     continue
 
                 # Add the link
-                edge_type = self._determine_cross_modal_edge_type(link["source_node"], link["target_node"])
+                edge_type = self._determine_cross_modal_edge_type(
+                    link["source_node"], link["target_node"]
+                )
 
                 # Create edge properties
                 edge_props = {"confidence": link["confidence"], "method": "embedding"}
@@ -4686,13 +4970,15 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 image_link_counts[image_id] += 1
 
                 # Add to results
-                established_links.append({
-                    "source_node": link["source_node"],
-                    "target_node": link["target_node"],
-                    "edge_type": edge_type,
-                    "confidence": link["confidence"],
-                    "method": "embedding"
-                })
+                established_links.append(
+                    {
+                        "source_node": link["source_node"],
+                        "target_node": link["target_node"],
+                        "edge_type": edge_type,
+                        "confidence": link["confidence"],
+                        "method": "embedding",
+                    }
+                )
 
         # Create metadata-based links if needed
         if linking_method in ["metadata", "hybrid"]:
@@ -4709,17 +4995,23 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 image_id = link["target_node"].id
 
                 # Skip if this exact link was already created by embedding method
-                if any(l["source_node"].id == text_id and l["target_node"].id == image_id
-                       for l in established_links):
+                if any(
+                    l["source_node"].id == text_id and l["target_node"].id == image_id
+                    for l in established_links
+                ):
                     continue
 
                 # Check if either node has reached its maximum links
-                if (text_link_counts[text_id] >= max_links_per_node or
-                    image_link_counts[image_id] >= max_links_per_node):
+                if (
+                    text_link_counts[text_id] >= max_links_per_node
+                    or image_link_counts[image_id] >= max_links_per_node
+                ):
                     continue
 
                 # Add the link
-                edge_type = self._determine_cross_modal_edge_type(link["source_node"], link["target_node"])
+                edge_type = self._determine_cross_modal_edge_type(
+                    link["source_node"], link["target_node"]
+                )
 
                 # Create edge properties
                 edge_props = {"confidence": link["confidence"], "method": "metadata"}
@@ -4744,17 +5036,21 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 image_link_counts[image_id] += 1
 
                 # Add to results
-                established_links.append({
-                    "source_node": link["source_node"],
-                    "target_node": link["target_node"],
-                    "edge_type": edge_type,
-                    "confidence": link["confidence"],
-                    "method": "metadata"
-                })
+                established_links.append(
+                    {
+                        "source_node": link["source_node"],
+                        "target_node": link["target_node"],
+                        "edge_type": edge_type,
+                        "confidence": link["confidence"],
+                        "method": "metadata",
+                    }
+                )
 
         return established_links
 
-    def _establish_cross_modal_links_by_embedding(self, text_nodes: List[GraphNode], image_nodes: List[GraphNode], min_confidence: float) -> List[Tuple[GraphNode, GraphNode, str, float]]:
+    def _establish_cross_modal_links_by_embedding(
+        self, text_nodes: List[GraphNode], image_nodes: List[GraphNode], min_confidence: float
+    ) -> List[Tuple[GraphNode, GraphNode, str, float]]:
         """Helper method to establish links between text and image nodes using embeddings"""
         links = []
 
@@ -4792,15 +5088,19 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
                 # Only consider pairs above the confidence threshold
                 if similarity >= min_confidence:
-                    links.append({
-                        "source_node": text_node,
-                        "target_node": image_node,
-                        "confidence": float(similarity)
-                    })
+                    links.append(
+                        {
+                            "source_node": text_node,
+                            "target_node": image_node,
+                            "confidence": float(similarity),
+                        }
+                    )
 
         return links
 
-    def _establish_cross_modal_links_by_metadata(self, text_nodes: List[GraphNode], image_nodes: List[GraphNode], min_confidence: float) -> List[Tuple[GraphNode, GraphNode, str, float]]:
+    def _establish_cross_modal_links_by_metadata(
+        self, text_nodes: List[GraphNode], image_nodes: List[GraphNode], min_confidence: float
+    ) -> List[Tuple[GraphNode, GraphNode, str, float]]:
         """Helper method to establish links between text and image nodes using metadata matching"""
         links = []
 
@@ -4812,7 +5112,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             "tags": ["tags", "keywords"],
             "author": ["author", "creator"],
             "date": ["date", "created_at", "timestamp"],
-            "topic": ["topic", "category"]
+            "topic": ["topic", "category"],
         }
 
         # Field importance weights for confidence calculation
@@ -4822,7 +5122,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             "tags": 0.2,
             "author": 0.1,
             "date": 0.05,
-            "topic": 0.1
+            "topic": 0.1,
         }
 
         # For each text-image pair, calculate a matching score
@@ -4839,16 +5139,24 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
                 # Only consider pairs above the confidence threshold
                 if similarity >= min_confidence:
-                    links.append({
-                        "source_node": text_node,
-                        "target_node": image_node,
-                        "confidence": similarity,
-                        "matched_fields": matched_fields
-                    })
+                    links.append(
+                        {
+                            "source_node": text_node,
+                            "target_node": image_node,
+                            "confidence": similarity,
+                            "matched_fields": matched_fields,
+                        }
+                    )
 
         return links
 
-    def _calculate_metadata_similarity(self, text_node: GraphNode, image_node: GraphNode, field_mappings: Dict[str, List[str]], field_weights: Dict[str, float]) -> Tuple[float, List[str]]:
+    def _calculate_metadata_similarity(
+        self,
+        text_node: GraphNode,
+        image_node: GraphNode,
+        field_mappings: Dict[str, List[str]],
+        field_weights: Dict[str, float],
+    ) -> Tuple[float, List[str]]:
         """Calculate similarity between text and image nodes based on metadata"""
         total_score = 0.0
         total_weight = 0.0
@@ -4972,11 +5280,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Default to "visualizes" from text to image
         return "visualizes"
 
-    def schema_based_validation(self,
-                               node_schemas: Optional[Dict[str, Dict[str, Any]]] = None,
-                               edge_schemas: Optional[Dict[str, Dict[str, Any]]] = None,
-                               fix_violations: bool = False,
-                               validation_mode: str = "strict") -> Dict[str, Any]:
+    def schema_based_validation(
+        self,
+        node_schemas: Optional[Dict[str, Dict[str, Any]]] = None,
+        edge_schemas: Optional[Dict[str, Dict[str, Any]]] = None,
+        fix_violations: bool = False,
+        validation_mode: str = "strict",
+    ) -> Dict[str, Any]:
         """Validate the graph against schemas and optionally fix violations.
 
         This method enforces data quality by validating node and edge properties
@@ -5047,7 +5357,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             "node_violations": {},
             "edge_violations": {},
             "fixed_violations": 0,
-            "schema_coverage": 0.0
+            "schema_coverage": 0.0,
         }
 
         # Use default schemas if none provided
@@ -5124,15 +5434,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
             "paper": {
                 "title": {"type": "string", "required": True},
                 "year": {"type": "number", "required": False},
-                "citation_count": {"type": "number", "min": 0}
+                "citation_count": {"type": "number", "min": 0},
             },
-            "author": {
-                "name": {"type": "string", "required": True}
-            },
+            "author": {"name": {"type": "string", "required": True}},
             "concept": {
                 "name": {"type": "string", "required": True},
-                "definition": {"type": "string"}
-            }
+                "definition": {"type": "string"},
+            },
         }
 
     def _get_default_edge_schemas(self) -> Dict[str, Dict[str, Dict[str, Any]]]:
@@ -5140,19 +5448,21 @@ class VectorAugmentedGraphDataset(GraphDataset):
         return {
             "cites": {
                 "importance": {"type": "string", "enum": ["high", "medium", "low"]},
-                "section": {"type": "string"}
+                "section": {"type": "string"},
             },
             "authored_by": {
                 "contribution": {"type": "string", "enum": ["primary", "secondary", "tertiary"]},
-                "year": {"type": "number"}
+                "year": {"type": "number"},
             },
             "about": {
                 "centrality": {"type": "string", "enum": ["primary", "secondary"]},
-                "strength": {"type": "number", "min": 0.0, "max": 1.0}
-            }
+                "strength": {"type": "number", "min": 0.0, "max": 1.0},
+            },
         }
 
-    def _validate_against_schema(self, data: Dict[str, Any], schema: Dict[str, Dict[str, Any]], validation_mode: str) -> List[Dict[str, Any]]:
+    def _validate_against_schema(
+        self, data: Dict[str, Any], schema: Dict[str, Dict[str, Any]], validation_mode: str
+    ) -> List[Dict[str, Any]]:
         """Validate data against a schema and return violations"""
         violations = []
 
@@ -5160,11 +5470,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
         for field_name, rules in schema.items():
             # Check if field is required but missing
             if rules.get("required", False) and field_name not in data:
-                violations.append({
-                    "field": field_name,
-                    "error": "required_field_missing",
-                    "severity": "error"
-                })
+                violations.append(
+                    {"field": field_name, "error": "required_field_missing", "severity": "error"}
+                )
                 continue
 
             # Skip checks for missing optional fields
@@ -5190,13 +5498,15 @@ class VectorAugmentedGraphDataset(GraphDataset):
                     valid_type = True
 
                 if not valid_type:
-                    violations.append({
-                        "field": field_name,
-                        "error": "invalid_type",
-                        "expected": expected_type,
-                        "actual": type(value).__name__,
-                        "severity": "error"
-                    })
+                    violations.append(
+                        {
+                            "field": field_name,
+                            "error": "invalid_type",
+                            "expected": expected_type,
+                            "actual": type(value).__name__,
+                            "severity": "error",
+                        }
+                    )
                     # Skip further checks for this field if type is invalid
                     continue
 
@@ -5206,69 +5516,87 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
             # Enum validation
             if "enum" in rules and value not in rules["enum"]:
-                violations.append({
-                    "field": field_name,
-                    "error": "invalid_enum_value",
-                    "expected": rules["enum"],
-                    "actual": value,
-                    "severity": "error" if validation_mode == "strict" else "warning"
-                })
+                violations.append(
+                    {
+                        "field": field_name,
+                        "error": "invalid_enum_value",
+                        "expected": rules["enum"],
+                        "actual": value,
+                        "severity": "error" if validation_mode == "strict" else "warning",
+                    }
+                )
 
             # Min/max validation for numbers
             if isinstance(value, (int, float)):
                 if "min" in rules and value < rules["min"]:
-                    violations.append({
-                        "field": field_name,
-                        "error": "value_below_minimum",
-                        "minimum": rules["min"],
-                        "actual": value,
-                        "severity": "error" if validation_mode == "strict" else "warning"
-                    })
+                    violations.append(
+                        {
+                            "field": field_name,
+                            "error": "value_below_minimum",
+                            "minimum": rules["min"],
+                            "actual": value,
+                            "severity": "error" if validation_mode == "strict" else "warning",
+                        }
+                    )
 
                 if "max" in rules and value > rules["max"]:
-                    violations.append({
-                        "field": field_name,
-                        "error": "value_above_maximum",
-                        "maximum": rules["max"],
-                        "actual": value,
-                        "severity": "error" if validation_mode == "strict" else "warning"
-                    })
+                    violations.append(
+                        {
+                            "field": field_name,
+                            "error": "value_above_maximum",
+                            "maximum": rules["max"],
+                            "actual": value,
+                            "severity": "error" if validation_mode == "strict" else "warning",
+                        }
+                    )
 
             # String pattern validation
             if isinstance(value, str) and "pattern" in rules:
                 import re
+
                 if not re.match(rules["pattern"], value):
-                    violations.append({
-                        "field": field_name,
-                        "error": "pattern_mismatch",
-                        "pattern": rules["pattern"],
-                        "actual": value,
-                        "severity": "error" if validation_mode == "strict" else "warning"
-                    })
+                    violations.append(
+                        {
+                            "field": field_name,
+                            "error": "pattern_mismatch",
+                            "pattern": rules["pattern"],
+                            "actual": value,
+                            "severity": "error" if validation_mode == "strict" else "warning",
+                        }
+                    )
 
             # String length validation
             if isinstance(value, str):
                 if "minLength" in rules and len(value) < rules["minLength"]:
-                    violations.append({
-                        "field": field_name,
-                        "error": "string_too_short",
-                        "minimum_length": rules["minLength"],
-                        "actual_length": len(value),
-                        "severity": "error" if validation_mode == "strict" else "warning"
-                    })
+                    violations.append(
+                        {
+                            "field": field_name,
+                            "error": "string_too_short",
+                            "minimum_length": rules["minLength"],
+                            "actual_length": len(value),
+                            "severity": "error" if validation_mode == "strict" else "warning",
+                        }
+                    )
 
                 if "maxLength" in rules and len(value) > rules["maxLength"]:
-                    violations.append({
-                        "field": field_name,
-                        "error": "string_too_long",
-                        "maximum_length": rules["maxLength"],
-                        "actual_length": len(value),
-                        "severity": "error" if validation_mode == "strict" else "warning"
-                    })
+                    violations.append(
+                        {
+                            "field": field_name,
+                            "error": "string_too_long",
+                            "maximum_length": rules["maxLength"],
+                            "actual_length": len(value),
+                            "severity": "error" if validation_mode == "strict" else "warning",
+                        }
+                    )
 
         return violations
 
-    def _fix_schema_violations(self, data: Dict[str, Any], schema: Dict[str, Dict[str, Any]], violations: List[Dict[str, Any]]) -> int:
+    def _fix_schema_violations(
+        self,
+        data: Dict[str, Any],
+        schema: Dict[str, Dict[str, Any]],
+        violations: List[Dict[str, Any]],
+    ) -> int:
         """Fix schema violations where possible and return count of fixed violations"""
         fixed_count = 0
 
@@ -5329,11 +5657,13 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return fixed_count
 
-    def hierarchical_path_search(self,
-                               query_vector: np.ndarray,
-                               target_node_types: Optional[List[str]] = None,
-                               max_results: int = 10,
-                               guidance_properties: Optional[Dict[str, float]] = None) -> List[Dict[str, Any]]:
+    def hierarchical_path_search(
+        self,
+        query_vector: np.ndarray,
+        target_node_types: Optional[List[str]] = None,
+        max_results: int = 10,
+        guidance_properties: Optional[Dict[str, float]] = None,
+    ) -> List[Dict[str, Any]]:
         """
         Perform hierarchical path search combining semantic search with graph navigation.
 
@@ -5394,7 +5724,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 "relevance": 1.0,
                 "importance": 0.8,
                 "centrality": 0.6,
-                "strength": 0.7
+                "strength": 0.7,
             }
 
         # Find concept nodes most similar to the query as starting points
@@ -5438,7 +5768,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 target_node_types=target_node_types,
                 guidance_properties=guidance_properties,
                 max_paths=max_results * 2,  # Get more paths than needed for filtering
-                max_depth=4  # Limit path length for performance
+                max_depth=4,  # Limit path length for performance
             )
 
             result_paths.extend(paths)
@@ -5449,13 +5779,15 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Return top paths
         return result_paths[:max_results]
 
-    def cross_document_reasoning(self,
-                               query: str,
-                               document_node_types: List[str] = ["document", "paper"],
-                               max_hops: int = 2,
-                               min_relevance: float = 0.6,
-                               max_documents: int = 5,
-                               reasoning_depth: str = "moderate") -> Dict[str, Any]:
+    def cross_document_reasoning(
+        self,
+        query: str,
+        document_node_types: List[str] = ["document", "paper"],
+        max_hops: int = 2,
+        min_relevance: float = 0.6,
+        max_documents: int = 5,
+        reasoning_depth: str = "moderate",
+    ) -> Dict[str, Any]:
         """
         Perform reasoning across multiple documents in the knowledge graph.
 
@@ -5523,16 +5855,26 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Prepare and return the final result
         return {
             "answer": synthesis_result["answer"],
-            "documents": [{"id": doc.id, "title": doc.data.get("title", "Untitled"),
-                          "relevance": score} for doc, score in initial_documents],
+            "documents": [
+                {"id": doc.id, "title": doc.data.get("title", "Untitled"), "relevance": score}
+                for doc, score in initial_documents
+            ],
             "evidence_paths": evidence_chains,
             "confidence": confidence,
             "reasoning_trace": synthesis_result["reasoning_trace"],
-            "generated_query_vector": query_vector.tolist()
+            "generated_query_vector": query_vector.tolist(),
         }
 
-    def _find_guided_paths(self, start_node, start_similarity, query_vector,
-                          target_node_types, guidance_properties, max_paths, max_depth):
+    def _find_guided_paths(
+        self,
+        start_node,
+        start_similarity,
+        query_vector,
+        target_node_types,
+        guidance_properties,
+        max_paths,
+        max_depth,
+    ):
         """Find guided paths using the canonical semantic traversal engine."""
         from ipfs_datasets_py.knowledge_graphs.query.semantic_traversal import (
             EmbeddingGuidedTraversal,
@@ -5618,9 +5960,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             if end_node is None or end_node.type not in target_node_types:
                 continue
             path_nodes = [
-                self.nodes[node_id]
-                for node_id in traversal_path.node_ids
-                if node_id in self.nodes
+                self.nodes[node_id] for node_id in traversal_path.node_ids if node_id in self.nodes
             ]
             edge_types = list(traversal_path.relationship_types)
             candidate = traversal_result.candidates[end_id]
@@ -5634,9 +5974,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 {
                     "path": path_nodes,
                     "transitions": edge_types,
-                    "overall_score": (
-                        0.6 * semantic_score + 0.4 * structural_score
-                    ),
+                    "overall_score": (0.6 * semantic_score + 0.4 * structural_score),
                     "semantic_score": semantic_score,
                     "structural_score": structural_score,
                     "end_node": end_node,
@@ -5652,7 +5990,9 @@ class VectorAugmentedGraphDataset(GraphDataset):
         )
         return paths[:max_paths]
 
-    def _calculate_edge_score(self, edge_properties: Dict[str, Any], guidance_properties: Dict[str, float]) -> float:
+    def _calculate_edge_score(
+        self, edge_properties: Dict[str, Any], guidance_properties: Dict[str, float]
+    ) -> float:
         """Calculate a score for an edge based on its properties and guidance weights"""
         if not edge_properties or not guidance_properties:
             return 0.5  # Default score
@@ -5688,7 +6028,12 @@ class VectorAugmentedGraphDataset(GraphDataset):
         else:
             return 0.5  # Default score
 
-    def _calculate_structural_score(self, path_nodes: List[GraphNode], edge_types: List[str], guidance_properties: Dict[str, float]) -> float:
+    def _calculate_structural_score(
+        self,
+        path_nodes: List[GraphNode],
+        edge_types: List[str],
+        guidance_properties: Dict[str, float],
+    ) -> float:
         """Calculate a structural quality score for a path"""
         if len(path_nodes) <= 1:
             return 0.0
@@ -5748,7 +6093,7 @@ class DatasetSerializer:
     - Vector embeddings
     """
 
-    def __init__(self, storage: Optional['IPLDStorage'] = None) -> None:
+    def __init__(self, storage: Optional["IPLDStorage"] = None) -> None:
         """
         Initialize a new DatasetSerializer.
 
@@ -5758,7 +6103,9 @@ class DatasetSerializer:
         """
         self.storage = storage or IPLDStorage()
 
-    def serialize_arrow_table(self, table: 'pa.Table', hash_columns: Optional[List[str]] = None) -> str:
+    def serialize_arrow_table(
+        self, table: "pa.Table", hash_columns: Optional[List[str]] = None
+    ) -> str:
         """
         Serialize an Arrow table to IPLD.
 
@@ -5795,7 +6142,7 @@ class DatasetSerializer:
             "type": "arrow_table",
             "num_rows": table.num_rows,
             "schema": schema_cid,
-            "columns": column_cids
+            "columns": column_cids,
         }
 
         # If hash columns are specified, add a content hash
@@ -5815,7 +6162,7 @@ class DatasetSerializer:
         root_cid = self.storage.store_json(root_obj)
         return root_cid
 
-    def deserialize_arrow_table(self, cid: str) -> 'pa.Table':
+    def deserialize_arrow_table(self, cid: str) -> "pa.Table":
         """
         Deserialize an Arrow table from IPLD.
 
@@ -5860,7 +6207,14 @@ class DatasetSerializer:
         table = pa.Table.from_arrays(columns, schema=schema)
         return table
 
-    def export_to_jsonl(self, data: Union['pa.Table', 'datasets.Dataset', 'pd.DataFrame', Dict[str, Any]], output_path: str, orient: str = "records", lines: bool = True, compression: Optional[str] = None) -> bool:
+    def export_to_jsonl(
+        self,
+        data: Union["pa.Table", "datasets.Dataset", "pd.DataFrame", Dict[str, Any]],
+        output_path: str,
+        orient: str = "records",
+        lines: bool = True,
+        compression: Optional[str] = None,
+    ) -> bool:
         """
         Export data to a JSONL file.
 
@@ -5883,8 +6237,7 @@ class DatasetSerializer:
         if HAVE_ARROW and isinstance(data, pa.Table):
             arrow_table = data
         elif HAVE_HUGGINGFACE and (
-            isinstance(data, Dataset) or
-            (isinstance(data, DatasetDict) and len(data) > 0)
+            isinstance(data, Dataset) or (isinstance(data, DatasetDict) and len(data) > 0)
         ):
             if isinstance(data, DatasetDict):
                 # Take the first split by default
@@ -5894,10 +6247,13 @@ class DatasetSerializer:
         else:
             try:
                 import pandas as pd
+
                 if isinstance(data, pd.DataFrame):
                     # Use pandas to_json with lines=True for JSONL format
                     if compression:
-                        data.to_json(output_path, orient=orient, lines=lines, compression=compression)
+                        data.to_json(
+                            output_path, orient=orient, lines=lines, compression=compression
+                        )
                     else:
                         data.to_json(output_path, orient=orient, lines=lines)
                     return output_path
@@ -5909,12 +6265,15 @@ class DatasetSerializer:
                 # Open file with appropriate compression
                 if compression == "gzip":
                     import gzip
+
                     f = gzip.open(output_path, "wt")
                 elif compression == "bz2":
                     import bz2
+
                     f = bz2.open(output_path, "wt")
                 elif compression == "xz":
                     import lzma
+
                     f = lzma.open(output_path, "wt")
                 else:
                     f = open(output_path, "w")
@@ -5948,6 +6307,7 @@ class DatasetSerializer:
                 # Convert Arrow table to pandas first for more control over JSON format
                 try:
                     import pandas as pd
+
                     df = arrow_table.to_pandas()
 
                     # Use pandas to_json with lines=True for JSONL format
@@ -5990,7 +6350,14 @@ class DatasetSerializer:
             row = {col: table.column(col)[i].as_py() for col in table.column_names}
             file_obj.write(json.dumps(row) + "\n")
 
-    def import_from_jsonl(self, input_path: str, schema: Optional['pa.Schema'] = None, compression: Optional[str] = None, infer_schema: bool = True, max_rows_for_inference: int = 1000) -> 'pa.Table':
+    def import_from_jsonl(
+        self,
+        input_path: str,
+        schema: Optional["pa.Schema"] = None,
+        compression: Optional[str] = None,
+        infer_schema: bool = True,
+        max_rows_for_inference: int = 1000,
+    ) -> "pa.Table":
         """
         Import data from a JSONL file.
 
@@ -6018,6 +6385,7 @@ class DatasetSerializer:
             if compression == "gzip":
                 # For compressed files, we need to decompress first
                 import gzip
+
                 with gzip.open(input_path, "rt") as f:
                     # Read the decompressed data to temporary file
                     with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_f:
@@ -6026,30 +6394,40 @@ class DatasetSerializer:
                             temp_f.write(line)
 
                 # Read from temporary file
-                table = pa.json.read_json(temp_path, read_options=read_options, parse_options=parse_options)
+                table = pa.json.read_json(
+                    temp_path, read_options=read_options, parse_options=parse_options
+                )
                 # Clean up
                 os.unlink(temp_path)
             elif compression == "bz2":
                 import bz2
+
                 with bz2.open(input_path, "rt") as f:
                     with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_f:
                         temp_path = temp_f.name
                         for line in f:
                             temp_f.write(line)
-                table = pa.json.read_json(temp_path, read_options=read_options, parse_options=parse_options)
+                table = pa.json.read_json(
+                    temp_path, read_options=read_options, parse_options=parse_options
+                )
                 os.unlink(temp_path)
             elif compression == "xz":
                 import lzma
+
                 with lzma.open(input_path, "rt") as f:
                     with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_f:
                         temp_path = temp_f.name
                         for line in f:
                             temp_f.write(line)
-                table = pa.json.read_json(temp_path, read_options=read_options, parse_options=parse_options)
+                table = pa.json.read_json(
+                    temp_path, read_options=read_options, parse_options=parse_options
+                )
                 os.unlink(temp_path)
             else:
                 # For uncompressed files, read directly
-                table = pa.json.read_json(input_path, read_options=read_options, parse_options=parse_options)
+                table = pa.json.read_json(
+                    input_path, read_options=read_options, parse_options=parse_options
+                )
 
             return table
         except Exception as e:
@@ -6059,12 +6437,15 @@ class DatasetSerializer:
             # Open file with appropriate compression
             if compression == "gzip":
                 import gzip
+
                 f = gzip.open(input_path, "rt")
             elif compression == "bz2":
                 import bz2
+
                 f = bz2.open(input_path, "rt")
             elif compression == "xz":
                 import lzma
+
                 f = lzma.open(input_path, "rt")
             else:
                 f = open(input_path, "r")
@@ -6086,6 +6467,7 @@ class DatasetSerializer:
             # Convert to Arrow table
             if records:
                 import pyarrow as pa
+
                 try:
                     # Try to convert list of dicts to Arrow table
                     table = pa.Table.from_pylist(records)
@@ -6096,7 +6478,9 @@ class DatasetSerializer:
             else:
                 return pa.Table.from_pylist([])
 
-    def convert_jsonl_to_huggingface(self, input_path: str, compression: Optional[str] = None) -> 'datasets.Dataset':
+    def convert_jsonl_to_huggingface(
+        self, input_path: str, compression: Optional[str] = None
+    ) -> "datasets.Dataset":
         """
         Convert a JSONL file to a HuggingFace dataset.
 
@@ -6119,7 +6503,12 @@ class DatasetSerializer:
         # Convert to HuggingFace dataset
         return Dataset(arrow_table=table)
 
-    def export_to_jsonnet(self, data: Union['pa.Table', List[Dict[str, Any]], Dict[str, Any]], output_path: str, pretty: bool = True) -> str:
+    def export_to_jsonnet(
+        self,
+        data: Union["pa.Table", List[Dict[str, Any]], Dict[str, Any]],
+        output_path: str,
+        pretty: bool = True,
+    ) -> str:
         """
         Export data to a Jsonnet file.
 
@@ -6131,7 +6520,7 @@ class DatasetSerializer:
         Returns:
             str: Path to the created Jsonnet file
         """
-        if HAVE_ARROW and hasattr(data, 'to_pylist'):
+        if HAVE_ARROW and hasattr(data, "to_pylist"):
             records = data.to_pylist()
         else:
             records = data
@@ -6140,11 +6529,16 @@ class DatasetSerializer:
             records = [records]
 
         jsonnet_str = json.dumps(records, indent=2) if pretty else json.dumps(records)
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(jsonnet_str)
         return output_path
 
-    def import_from_jsonnet(self, jsonnet_path: str, ext_vars: Optional[Dict[str, str]] = None, tla_vars: Optional[Dict[str, str]] = None) -> 'pa.Table':
+    def import_from_jsonnet(
+        self,
+        jsonnet_path: str,
+        ext_vars: Optional[Dict[str, str]] = None,
+        tla_vars: Optional[Dict[str, str]] = None,
+    ) -> "pa.Table":
         """
         Import data from a Jsonnet file to an Arrow table.
 
@@ -6165,11 +6559,7 @@ class DatasetSerializer:
         ext_vars = ext_vars or {}
         tla_vars = tla_vars or {}
 
-        json_str = _jsonnet.evaluate_file(
-            jsonnet_path,
-            ext_vars=ext_vars,
-            tla_vars=tla_vars
-        )
+        json_str = _jsonnet.evaluate_file(jsonnet_path, ext_vars=ext_vars, tla_vars=tla_vars)
 
         data = json.loads(json_str)
         if not isinstance(data, list):
@@ -6177,7 +6567,12 @@ class DatasetSerializer:
 
         return pa.Table.from_pylist(data)
 
-    def convert_jsonnet_to_arrow(self, jsonnet_str: str, ext_vars: Optional[Dict[str, str]] = None, tla_vars: Optional[Dict[str, str]] = None) -> 'pa.Table':
+    def convert_jsonnet_to_arrow(
+        self,
+        jsonnet_str: str,
+        ext_vars: Optional[Dict[str, str]] = None,
+        tla_vars: Optional[Dict[str, str]] = None,
+    ) -> "pa.Table":
         """
         Convert a Jsonnet string to an Arrow table.
 
@@ -6199,10 +6594,7 @@ class DatasetSerializer:
         tla_vars = tla_vars or {}
 
         evaluated = _jsonnet.evaluate_snippet(
-            "snippet",
-            jsonnet_str,
-            ext_vars=ext_vars,
-            tla_vars=tla_vars
+            "snippet", jsonnet_str, ext_vars=ext_vars, tla_vars=tla_vars
         )
 
         data = json.loads(evaluated)
@@ -6211,7 +6603,12 @@ class DatasetSerializer:
 
         return pa.Table.from_pylist(data)
 
-    def serialize_jsonnet(self, jsonnet_path: str, ext_vars: Optional[Dict[str, str]] = None, tla_vars: Optional[Dict[str, str]] = None) -> str:
+    def serialize_jsonnet(
+        self,
+        jsonnet_path: str,
+        ext_vars: Optional[Dict[str, str]] = None,
+        tla_vars: Optional[Dict[str, str]] = None,
+    ) -> str:
         """
         Serialize a Jsonnet file to IPLD for storage on IPFS.
 
@@ -6229,11 +6626,7 @@ class DatasetSerializer:
         ext_vars = ext_vars or {}
         tla_vars = tla_vars or {}
 
-        json_str = _jsonnet.evaluate_file(
-            jsonnet_path,
-            ext_vars=ext_vars,
-            tla_vars=tla_vars
-        )
+        json_str = _jsonnet.evaluate_file(jsonnet_path, ext_vars=ext_vars, tla_vars=tla_vars)
 
         data = json.loads(json_str)
 
@@ -6244,13 +6637,15 @@ class DatasetSerializer:
             "metadata": {
                 "created_at": datetime.datetime.now().isoformat(),
                 "ext_vars": ext_vars,
-                "tla_vars": tla_vars
-            }
+                "tla_vars": tla_vars,
+            },
         }
 
         return self.storage.store_json(dataset)
 
-    def deserialize_jsonnet(self, cid: str, output_path: Optional[str] = None) -> Union[List[Dict[str, Any]], str]:
+    def deserialize_jsonnet(
+        self, cid: str, output_path: Optional[str] = None
+    ) -> Union[List[Dict[str, Any]], str]:
         """
         Deserialize a Jsonnet dataset from IPLD.
 
@@ -6270,13 +6665,15 @@ class DatasetSerializer:
         if output_path:
             if not isinstance(data, list):
                 data = [data]
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 f.write(json.dumps(data, indent=2))
             return output_path
 
         return data
 
-    def convert_arrow_to_jsonl(self, table: 'pa.Table', output_path: str, compression: Optional[str] = None) -> str:
+    def convert_arrow_to_jsonl(
+        self, table: "pa.Table", output_path: str, compression: Optional[str] = None
+    ) -> str:
         """
         Convert an Arrow table to a JSONL file.
 
@@ -6290,7 +6687,13 @@ class DatasetSerializer:
         """
         return self.export_to_jsonl(table, output_path, compression=compression)
 
-    def serialize_jsonl(self, input_path: str, hash_records: bool = True, compression: Optional[str] = None, batch_size: int = 1000) -> str:
+    def serialize_jsonl(
+        self,
+        input_path: str,
+        hash_records: bool = True,
+        compression: Optional[str] = None,
+        batch_size: int = 1000,
+    ) -> str:
         """
         Serialize a JSONL file to IPLD with efficient streaming.
 
@@ -6310,12 +6713,15 @@ class DatasetSerializer:
         match compression:
             case "gzip":
                 import gzip
+
                 file_obj = gzip.open(input_path, "rt")
             case "bz2":
                 import bz2
+
                 file_obj = bz2.open(input_path, "rt")
             case "xz":
                 import lzma
+
                 file_obj = lzma.open(input_path, "rt")
             case _:
                 file_obj = open(input_path, "r")
@@ -6354,10 +6760,9 @@ class DatasetSerializer:
                 total_records += len(batch_cids)
 
             # Create index of all records
-            index_cid = self.storage.store_json({
-                "total_records": total_records,
-                "record_cids": record_cids
-            })
+            index_cid = self.storage.store_json(
+                {"total_records": total_records, "record_cids": record_cids}
+            )
 
             # Create metadata for the dataset
             metadata = {
@@ -6365,15 +6770,11 @@ class DatasetSerializer:
                 "source": os.path.basename(input_path),
                 "record_count": total_records,
                 "created_at": datetime.datetime.now().isoformat(),
-                "compression": compression
+                "compression": compression,
             }
 
             # Create root object
-            root_obj = {
-                "type": "jsonl_dataset",
-                "metadata": metadata,
-                "index": index_cid
-            }
+            root_obj = {"type": "jsonl_dataset", "metadata": metadata, "index": index_cid}
 
             # Store and return root CID
             root_cid = self.storage.store_json(root_obj)
@@ -6401,7 +6802,7 @@ class DatasetSerializer:
             # Compute deterministic CID based on content if requested
             if hash_records:
                 # Compute SHA-256 hash of the record content
-                record_hash = hashlib.sha256(record_json.encode('utf-8')).hexdigest()
+                record_hash = hashlib.sha256(record_json.encode("utf-8")).hexdigest()
 
                 # Use hash as CID key for deterministic storing
                 record_cid = self.storage.store_json(record, key=record_hash)
@@ -6413,7 +6814,13 @@ class DatasetSerializer:
 
         return record_cids
 
-    def deserialize_jsonl(self, cid: str, output_path: Optional[str] = None, compression: Optional[str] = None, max_records: Optional[int] = None) -> Union[List[Dict[str, Any]], str]:
+    def deserialize_jsonl(
+        self,
+        cid: str,
+        output_path: Optional[str] = None,
+        compression: Optional[str] = None,
+        max_records: Optional[int] = None,
+    ) -> Union[List[Dict[str, Any]], str]:
         """
         Deserialize a JSONL dataset from IPLD.
 
@@ -6453,12 +6860,15 @@ class DatasetSerializer:
             match compression:
                 case "gzip":
                     import gzip
+
                     file_obj = gzip.open(output_path, "wt")
                 case "bz2":
                     import bz2
+
                     file_obj = bz2.open(output_path, "wt")
                 case "xz":
                     import lzma
+
                     file_obj = lzma.open(output_path, "wt")
                 case _:
                     file_obj = open(output_path, "w")
@@ -6481,7 +6891,12 @@ class DatasetSerializer:
 
             return records
 
-    def serialize_huggingface_dataset(self, dataset: 'datasets.Dataset', split: str = "train", hash_columns: Optional[List[str]] = None) -> str:
+    def serialize_huggingface_dataset(
+        self,
+        dataset: "datasets.Dataset",
+        split: str = "train",
+        hash_columns: Optional[List[str]] = None,
+    ) -> str:
         """
         Serialize a HuggingFace dataset to IPLD.
 
@@ -6513,7 +6928,7 @@ class DatasetSerializer:
 
         # Create root object with dataset info
         info_dict = {}
-        if hasattr(dataset, 'info') and dataset.info is not None:
+        if hasattr(dataset, "info") and dataset.info is not None:
             # Extract relevant info
             info = dataset.info
             info_dict = {
@@ -6521,20 +6936,18 @@ class DatasetSerializer:
                 "citation": info.citation,
                 "homepage": info.homepage,
                 "license": info.license,
-                "features": self._serialize_features(dataset.features) if hasattr(dataset, 'features') else None
+                "features": self._serialize_features(dataset.features)
+                if hasattr(dataset, "features")
+                else None,
             }
 
-        root_obj = {
-            "type": "huggingface_dataset",
-            "table_cid": table_cid,
-            "info": info_dict
-        }
+        root_obj = {"type": "huggingface_dataset", "table_cid": table_cid, "info": info_dict}
 
         # Store the root object
         root_cid = self.storage.store_json(root_obj)
         return root_cid
 
-    def deserialize_huggingface_dataset(self, cid: str) -> 'datasets.Dataset':
+    def deserialize_huggingface_dataset(self, cid: str) -> "datasets.Dataset":
         """
         Deserialize a HuggingFace dataset from IPLD.
 
@@ -6573,12 +6986,15 @@ class DatasetSerializer:
             try:
                 if HAVE_HUGGINGFACE:
                     from datasets import DatasetInfo
+
                     dataset_info = DatasetInfo(
                         description=info.get("description", ""),
                         citation=info.get("citation", ""),
                         homepage=info.get("homepage", ""),
                         license=info.get("license", ""),
-                        features=self._deserialize_features(info.get("features")) if "features" in info else None
+                        features=self._deserialize_features(info.get("features"))
+                        if "features" in info
+                        else None,
                     )
                     # This might fail with AttributeError if info is read-only
                     dataset.info = dataset_info
@@ -6587,7 +7003,9 @@ class DatasetSerializer:
 
         return dataset
 
-    def serialize_dataset_streaming(self, chunks_iter: Iterator[Union['pa.Table', Dict[str, Any]]]) -> str:
+    def serialize_dataset_streaming(
+        self, chunks_iter: Iterator[Union["pa.Table", Dict[str, Any]]]
+    ) -> str:
         """
         Serialize a dataset in streaming mode.
 
@@ -6638,7 +7056,7 @@ class DatasetSerializer:
                 "num_chunks": len(chunk_cids),
                 "total_rows": total_rows,
                 "schema": self._schema_to_dict(schema) if schema else None,
-                "chunks": chunk_cids
+                "chunks": chunk_cids,
             }
 
             # Store the root object
@@ -6647,9 +7065,12 @@ class DatasetSerializer:
 
         finally:
             import shutil
+
             shutil.rmtree(temp_dir)
 
-    def deserialize_dataset_streaming(self, cid: str) -> Iterator[Union['pa.Table', Dict[str, Any]]]:
+    def deserialize_dataset_streaming(
+        self, cid: str
+    ) -> Iterator[Union["pa.Table", Dict[str, Any]]]:
         """
         Deserialize a dataset in streaming mode.
 
@@ -6676,7 +7097,7 @@ class DatasetSerializer:
                 if HAVE_ARROW:
                     data = {
                         "id": pa.array(list(range(10))),
-                        "value": pa.array([float(i * 1.5) for i in range(10)])
+                        "value": pa.array([float(i * 1.5) for i in range(10)]),
                     }
                     yield pa.Table.from_pydict(data)
                 else:
@@ -6684,6 +7105,7 @@ class DatasetSerializer:
                     class MockChunk:
                         def __len__(self):
                             return 10
+
                     yield MockChunk()
 
     def _schema_to_dict(self, schema):
@@ -6695,15 +7117,13 @@ class DatasetSerializer:
             field_dict = {
                 "name": field.name,
                 "nullable": field.nullable,
-                "type": self._type_to_dict(field.type)
+                "type": self._type_to_dict(field.type),
             }
             if field.metadata:
                 field_dict["metadata"] = {k.decode(): v.decode() for k, v in field.metadata.items()}
             fields.append(field_dict)
 
-        schema_dict = {
-            "fields": fields
-        }
+        schema_dict = {"fields": fields}
         if schema.metadata:
             schema_dict["metadata"] = {k.decode(): v.decode() for k, v in schema.metadata.items()}
 
@@ -6723,7 +7143,7 @@ class DatasetSerializer:
                 field_dict["name"],
                 self._dict_to_type(field_dict["type"]),
                 nullable=field_dict.get("nullable", True),
-                metadata=metadata
+                metadata=metadata,
             )
             fields.append(field)
 
@@ -6743,7 +7163,12 @@ class DatasetSerializer:
             return {"type": "bool"}
         elif pa.types.is_integer(type_obj):
             # Handle different integer types
-            if pa.types.is_int8(type_obj) or pa.types.is_int16(type_obj) or pa.types.is_int32(type_obj) or pa.types.is_int64(type_obj):
+            if (
+                pa.types.is_int8(type_obj)
+                or pa.types.is_int16(type_obj)
+                or pa.types.is_int32(type_obj)
+                or pa.types.is_int64(type_obj)
+            ):
                 return {"type": "int", "bit_width": type_obj.bit_width, "is_signed": True}
             else:
                 return {"type": "int", "bit_width": type_obj.bit_width, "is_signed": False}
@@ -6774,12 +7199,15 @@ class DatasetSerializer:
         elif pa.types.is_list(type_obj):
             return {"type": "list", "value_type": self._type_to_dict(type_obj.value_type)}
         elif pa.types.is_struct(type_obj):
-            return {"type": "struct", "fields": [self._schema_to_dict(pa.schema([field])) for field in type_obj]}
+            return {
+                "type": "struct",
+                "fields": [self._schema_to_dict(pa.schema([field])) for field in type_obj],
+            }
         elif pa.types.is_map(type_obj):
             return {
                 "type": "map",
                 "key_type": self._type_to_dict(type_obj.key_type),
-                "item_type": self._type_to_dict(type_obj.item_type)
+                "item_type": self._type_to_dict(type_obj.item_type),
             }
         else:
             # For unsupported types, store as string representation
@@ -6818,7 +7246,10 @@ class DatasetSerializer:
         elif type_name == "struct":
             return pa.struct([self._dict_to_schema(field) for field in type_dict["fields"]])
         elif type_name == "map":
-            return pa.map_(self._dict_to_type(type_dict["key_type"]), self._dict_to_type(type_dict["item_type"]))
+            return pa.map_(
+                self._dict_to_type(type_dict["key_type"]),
+                self._dict_to_type(type_dict["item_type"]),
+            )
         else:
             # For unsupported types, default to string
             return pa.string()
@@ -6881,12 +7312,10 @@ class DatasetSerializer:
                 result[name] = {
                     "dtype": str(feature.dtype),
                     "id": feature.id if hasattr(feature, "id") else None,
-                    "_type": feature._type if hasattr(feature, "_type") else type(feature).__name__
+                    "_type": feature._type if hasattr(feature, "_type") else type(feature).__name__,
                 }
             else:
-                result[name] = {
-                    "_type": type(feature).__name__
-                }
+                result[name] = {"_type": type(feature).__name__}
 
         return result
 
@@ -6905,6 +7334,7 @@ class DatasetSerializer:
                 # we would need to handle all the different feature types
                 if feature.get("_type") == "Value" and "dtype" in feature:
                     from datasets.features import Value
+
                     features[name] = Value(feature["dtype"])
 
             return Features(features)
@@ -6930,7 +7360,7 @@ class DatasetSerializer:
         for i, node in enumerate(graph_dict["nodes"]):
             # Store node data as a separate block
             node_data = node.pop("data")
-            node_data_json = json.dumps(node_data).encode('utf-8')
+            node_data_json = json.dumps(node_data).encode("utf-8")
             node_data_cid = self.storage.store(node_data_json)
 
             # Replace the data with the CID
@@ -6938,13 +7368,15 @@ class DatasetSerializer:
             node_data_cids[node["id"]] = node_data_cid
 
         # Store graph structure
-        graph_json = json.dumps({
-            "name": graph_dict["name"],
-            "node_types": graph_dict["node_types"],
-            "edge_types": graph_dict["edge_types"],
-            "nodes": graph_dict["nodes"],
-            "node_data_cids": node_data_cids
-        }).encode('utf-8')
+        graph_json = json.dumps(
+            {
+                "name": graph_dict["name"],
+                "node_types": graph_dict["node_types"],
+                "edge_types": graph_dict["edge_types"],
+                "nodes": graph_dict["nodes"],
+                "node_data_cids": node_data_cids,
+            }
+        ).encode("utf-8")
 
         return self.storage.store(graph_json)
 
@@ -6960,7 +7392,7 @@ class DatasetSerializer:
         """
         # Get the graph structure
         graph_json = self.storage.get(cid)
-        graph_dict = json.loads(graph_json.decode('utf-8'))
+        graph_dict = json.loads(graph_json.decode("utf-8"))
 
         # Create a new graph dataset
         graph = GraphDataset(name=graph_dict["name"])
@@ -6971,7 +7403,7 @@ class DatasetSerializer:
             # Get node data from CID
             node_data_cid = node["data_cid"]
             node_data_json = self.storage.get(node_data_cid)
-            node_data = json.loads(node_data_json.decode('utf-8'))
+            node_data = json.loads(node_data_json.decode("utf-8"))
 
             # Create node
             node_obj = GraphNode(id=node["id"], type=node["type"], data=node_data)
@@ -6996,7 +7428,9 @@ class DatasetSerializer:
 
         return graph
 
-    def serialize_vectors(self, vectors: List[np.ndarray], metadata: Optional[List[Dict[str, Any]]] = None) -> str:
+    def serialize_vectors(
+        self, vectors: List[np.ndarray], metadata: Optional[List[Dict[str, Any]]] = None
+    ) -> str:
         """
         Serialize vector embeddings to IPLD.
 
@@ -7011,18 +7445,18 @@ class DatasetSerializer:
         vector_lists = [v.tolist() for v in vectors]
 
         # Create vector data
-        vector_data = {
-            "vectors": vector_lists
-        }
+        vector_data = {"vectors": vector_lists}
 
         if metadata:
             vector_data["metadata"] = metadata
 
         # Store as JSON
-        vector_json = json.dumps(vector_data).encode('utf-8')
+        vector_json = json.dumps(vector_data).encode("utf-8")
         return self.storage.store(vector_json)
 
-    def deserialize_vectors(self, cid: str) -> Tuple[List[np.ndarray], Optional[List[Dict[str, Any]]]]:
+    def deserialize_vectors(
+        self, cid: str
+    ) -> Tuple[List[np.ndarray], Optional[List[Dict[str, Any]]]]:
         """
         Deserialize vector embeddings from IPLD.
 
@@ -7034,7 +7468,7 @@ class DatasetSerializer:
         """
         # Get the vector data
         vector_json = self.storage.get(cid)
-        vector_data = json.loads(vector_json.decode('utf-8'))
+        vector_data = json.loads(vector_json.decode("utf-8"))
 
         # Convert lists to numpy arrays
         vectors = [np.array(v) for v in vector_data["vectors"]]
@@ -7080,7 +7514,7 @@ class DatasetSerializer:
             "empirical": 2,
             "data": 2,
             "measurement": 2,
-            "validation": 2
+            "validation": 2,
         }
 
         # Initialize vector with small random values
@@ -7097,11 +7531,13 @@ class DatasetSerializer:
         query_vector = query_vector / np.linalg.norm(query_vector)
         return query_vector
 
-    def _find_relevant_documents(self,
-                               query_vector: np.ndarray,
-                               document_node_types: List[str],
-                               min_relevance: float,
-                               max_documents: int) -> List[Tuple[GraphNode, float]]:
+    def _find_relevant_documents(
+        self,
+        query_vector: np.ndarray,
+        document_node_types: List[str],
+        min_relevance: float,
+        max_documents: int,
+    ) -> List[Tuple[GraphNode, float]]:
         """
         Find documents semantically relevant to the query vector.
 
@@ -7115,17 +7551,21 @@ class DatasetSerializer:
             List of tuples containing (document_node, relevance_score).
         """
         # Search for nodes with similar vectors
-        all_similar_nodes = self.vector_search(query_vector, k=max_documents*2)
+        all_similar_nodes = self.vector_search(query_vector, k=max_documents * 2)
 
         # Filter for document nodes and minimum relevance
-        document_nodes = [(node, score) for node, score in all_similar_nodes
-                         if node.type in document_node_types and score >= min_relevance]
+        document_nodes = [
+            (node, score)
+            for node, score in all_similar_nodes
+            if node.type in document_node_types and score >= min_relevance
+        ]
 
         # Return the top N most relevant document nodes
         return document_nodes[:max_documents]
 
-    def _extract_key_entities_from_documents(self,
-                                         documents: List[Tuple[GraphNode, float]]) -> Dict[str, Dict[str, Any]]:
+    def _extract_key_entities_from_documents(
+        self, documents: List[Tuple[GraphNode, float]]
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Extract key entities referenced in the documents.
 
@@ -7182,7 +7622,7 @@ class DatasetSerializer:
                                 "entity": target,
                                 "relevance": entity_relevance,
                                 "mentioned_in": [doc_node.id],
-                                "edge_types": [edge_type]
+                                "edge_types": [edge_type],
                             }
                         else:
                             # Update existing entity
@@ -7195,16 +7635,21 @@ class DatasetSerializer:
                                 entities[target.id]["edge_types"].append(edge_type)
 
         # Sort entities by relevance and filter to keep the most relevant
-        sorted_entities = {k: v for k, v in sorted(
-            entities.items(), key=lambda item: item[1]["relevance"], reverse=True
-        )[:30]}  # Keep top 30 entities
+        sorted_entities = {
+            k: v
+            for k, v in sorted(
+                entities.items(), key=lambda item: item[1]["relevance"], reverse=True
+            )[:30]
+        }  # Keep top 30 entities
 
         return sorted_entities
 
-    def _find_entity_mediated_connections(self,
-                                       documents: List[Tuple[GraphNode, float]],
-                                       entities: Dict[str, Dict[str, Any]],
-                                       max_hops: int) -> List[Dict[str, Any]]:
+    def _find_entity_mediated_connections(
+        self,
+        documents: List[Tuple[GraphNode, float]],
+        entities: Dict[str, Dict[str, Any]],
+        max_hops: int,
+    ) -> List[Dict[str, Any]]:
         """
         Find connections between documents mediated by shared entities.
 
@@ -7229,21 +7674,24 @@ class DatasetSerializer:
                     if doc1_id not in doc_ids:
                         continue
 
-                    for doc2_id in mentioned_in[i+1:]:
+                    for doc2_id in mentioned_in[i + 1 :]:
                         if doc2_id not in doc_ids:
                             continue
 
                         # Create a direct entity-mediated connection
-                        connections.append({
-                            "type": "entity_mediated",
-                            "source_doc": doc1_id,
-                            "target_doc": doc2_id,
-                            "mediating_entity": entity_id,
-                            "entity_type": entity_info["entity"].type,
-                            "entity_relevance": entity_info["relevance"],
-                            "hops": 1,
-                            "strength": entity_info["relevance"] * 0.8  # Base connection strength
-                        })
+                        connections.append(
+                            {
+                                "type": "entity_mediated",
+                                "source_doc": doc1_id,
+                                "target_doc": doc2_id,
+                                "mediating_entity": entity_id,
+                                "entity_type": entity_info["entity"].type,
+                                "entity_relevance": entity_info["relevance"],
+                                "hops": 1,
+                                "strength": entity_info["relevance"]
+                                * 0.8,  # Base connection strength
+                            }
+                        )
 
         # For multi-hop connections (if max_hops > 1)
         if max_hops > 1:
@@ -7259,7 +7707,7 @@ class DatasetSerializer:
                 entity_doc_graph[entity_id] = {
                     "type": "entity",
                     "connections": entity_info["mentioned_in"],
-                    "relevance": entity_info["relevance"]
+                    "relevance": entity_info["relevance"],
                 }
 
                 # Add connections from documents to entity
@@ -7274,7 +7722,10 @@ class DatasetSerializer:
                         continue
 
                     # Skip if we already have a direct connection
-                    if any(c["source_doc"] == doc1_id and c["target_doc"] == doc2_id for c in connections):
+                    if any(
+                        c["source_doc"] == doc1_id and c["target_doc"] == doc2_id
+                        for c in connections
+                    ):
                         continue
 
                     # Search for a path from doc1 to doc2 through entities
@@ -7293,8 +7744,11 @@ class DatasetSerializer:
                             if not path_entities:
                                 continue
 
-                            entity_strengths = [entity_doc_graph[e]["relevance"]
-                                               for e in path_entities if e in entity_doc_graph]
+                            entity_strengths = [
+                                entity_doc_graph[e]["relevance"]
+                                for e in path_entities
+                                if e in entity_doc_graph
+                            ]
 
                             if not entity_strengths:
                                 continue
@@ -7302,15 +7756,18 @@ class DatasetSerializer:
                             path_strength = sum(entity_strengths) / len(entity_strengths)
 
                             # Add multi-hop connection
-                            connections.append({
-                                "type": "multi_hop",
-                                "source_doc": doc1_id,
-                                "target_doc": doc2_id,
-                                "mediating_entities": path_entities,
-                                "path": path,
-                                "hops": hops,
-                                "strength": path_strength * (0.7 ** (hops - 1))  # Decay with hops
-                            })
+                            connections.append(
+                                {
+                                    "type": "multi_hop",
+                                    "source_doc": doc1_id,
+                                    "target_doc": doc2_id,
+                                    "mediating_entities": path_entities,
+                                    "path": path,
+                                    "hops": hops,
+                                    "strength": path_strength
+                                    * (0.7 ** (hops - 1)),  # Decay with hops
+                                }
+                            )
                             break
 
                         # If we've reached max hops, don't explore further
@@ -7322,12 +7779,16 @@ class DatasetSerializer:
                             if neighbor not in visited:
                                 # Only increment hop count when moving from doc to doc
                                 new_hops = hops
-                                if entity_doc_graph.get(current, {}).get("type") == "document" and \
-                                   entity_doc_graph.get(neighbor, {}).get("type") == "entity":
+                                if (
+                                    entity_doc_graph.get(current, {}).get("type") == "document"
+                                    and entity_doc_graph.get(neighbor, {}).get("type") == "entity"
+                                ):
                                     # Moving from doc to entity, don't increment hop
                                     new_hops = hops
-                                elif entity_doc_graph.get(current, {}).get("type") == "entity" and \
-                                     entity_doc_graph.get(neighbor, {}).get("type") == "document":
+                                elif (
+                                    entity_doc_graph.get(current, {}).get("type") == "entity"
+                                    and entity_doc_graph.get(neighbor, {}).get("type") == "document"
+                                ):
                                     # Moving from entity to doc, increment hop
                                     new_hops = hops + 1
 
@@ -7338,10 +7799,12 @@ class DatasetSerializer:
         connections.sort(key=lambda x: x["strength"], reverse=True)
         return connections
 
-    def _analyze_document_evidence_chains(self,
-                                       documents: List[Tuple[GraphNode, float]],
-                                       connections: List[Dict[str, Any]],
-                                       reasoning_depth: str) -> List[Dict[str, Any]]:
+    def _analyze_document_evidence_chains(
+        self,
+        documents: List[Tuple[GraphNode, float]],
+        connections: List[Dict[str, Any]],
+        reasoning_depth: str,
+    ) -> List[Dict[str, Any]]:
         """
         Analyze document evidence chains based on reasoning depth.
 
@@ -7377,18 +7840,20 @@ class DatasetSerializer:
                     doc2_info = self._extract_document_entity_info(doc2, entity_id)
 
                     if doc1_info and doc2_info:
-                        evidence_chains.append({
-                            "type": "basic",
-                            "documents": [conn["source_doc"], conn["target_doc"]],
-                            "entity": entity_id,
-                            "entity_type": conn["entity_type"],
-                            "doc1_context": doc1_info,
-                            "doc2_context": doc2_info,
-                            "strength": conn["strength"],
-                            "potential_inference": f"Connection between '{doc1.data.get('title', doc1.id)}' and "
-                                                 f"'{doc2.data.get('title', doc2.id)}' through "
-                                                 f"{conn['entity_type']} entity."
-                        })
+                        evidence_chains.append(
+                            {
+                                "type": "basic",
+                                "documents": [conn["source_doc"], conn["target_doc"]],
+                                "entity": entity_id,
+                                "entity_type": conn["entity_type"],
+                                "doc1_context": doc1_info,
+                                "doc2_context": doc2_info,
+                                "strength": conn["strength"],
+                                "potential_inference": f"Connection between '{doc1.data.get('title', doc1.id)}' and "
+                                f"'{doc2.data.get('title', doc2.id)}' through "
+                                f"{conn['entity_type']} entity.",
+                            }
+                        )
 
         elif reasoning_depth == "moderate":
             # Moderate reasoning considers entity relationships and contradictions
@@ -7410,21 +7875,25 @@ class DatasetSerializer:
                         doc2_info = self._extract_document_entity_info(doc2, entity_id)
 
                         # Check for complementary or contradictory information
-                        info_relation = self._analyze_entity_information_relation(doc1_info, doc2_info)
+                        info_relation = self._analyze_entity_information_relation(
+                            doc1_info, doc2_info
+                        )
 
-                        evidence_chains.append({
-                            "type": "moderate",
-                            "documents": [conn["source_doc"], conn["target_doc"]],
-                            "entity": entity_id,
-                            "entity_type": conn["entity_type"],
-                            "doc1_context": doc1_info,
-                            "doc2_context": doc2_info,
-                            "information_relation": info_relation,
-                            "strength": conn["strength"],
-                            "potential_inference": self._generate_inference_for_info_relation(
-                                doc1, doc2, entity_id, conn["entity_type"], info_relation
-                            )
-                        })
+                        evidence_chains.append(
+                            {
+                                "type": "moderate",
+                                "documents": [conn["source_doc"], conn["target_doc"]],
+                                "entity": entity_id,
+                                "entity_type": conn["entity_type"],
+                                "doc1_context": doc1_info,
+                                "doc2_context": doc2_info,
+                                "information_relation": info_relation,
+                                "strength": conn["strength"],
+                                "potential_inference": self._generate_inference_for_info_relation(
+                                    doc1, doc2, entity_id, conn["entity_type"], info_relation
+                                ),
+                            }
+                        )
 
                     # For multi-hop connections
                     elif conn["type"] == "multi_hop":
@@ -7437,24 +7906,28 @@ class DatasetSerializer:
                             doc2_info = self._extract_document_entity_info(doc2, entity_id)
 
                             if doc1_info or doc2_info:
-                                entity_chain_info.append({
-                                    "entity": entity_id,
-                                    "doc1_info": doc1_info,
-                                    "doc2_info": doc2_info
-                                })
+                                entity_chain_info.append(
+                                    {
+                                        "entity": entity_id,
+                                        "doc1_info": doc1_info,
+                                        "doc2_info": doc2_info,
+                                    }
+                                )
 
                         if entity_chain_info:
-                            evidence_chains.append({
-                                "type": "moderate",
-                                "documents": [conn["source_doc"], conn["target_doc"]],
-                                "mediating_entities": mediating_entities,
-                                "entity_chain_info": entity_chain_info,
-                                "path": conn.get("path", []),
-                                "strength": conn["strength"],
-                                "potential_inference": self._generate_inference_for_entity_chain(
-                                    doc1, doc2, entity_chain_info
-                                )
-                            })
+                            evidence_chains.append(
+                                {
+                                    "type": "moderate",
+                                    "documents": [conn["source_doc"], conn["target_doc"]],
+                                    "mediating_entities": mediating_entities,
+                                    "entity_chain_info": entity_chain_info,
+                                    "path": conn.get("path", []),
+                                    "strength": conn["strength"],
+                                    "potential_inference": self._generate_inference_for_entity_chain(
+                                        doc1, doc2, entity_chain_info
+                                    ),
+                                }
+                            )
 
         else:  # Deep reasoning
             # Deep reasoning considers transitive relationships and knowledge gaps
@@ -7484,19 +7957,21 @@ class DatasetSerializer:
                         doc1, doc2, entity_id, conn["entity_type"], info_relation, knowledge_gaps
                     )
 
-                    evidence_chains.append({
-                        "type": "deep",
-                        "documents": [conn["source_doc"], conn["target_doc"]],
-                        "entity": entity_id,
-                        "entity_type": conn["entity_type"],
-                        "doc1_context": doc1_info,
-                        "doc2_context": doc2_info,
-                        "information_relation": info_relation,
-                        "knowledge_gaps": knowledge_gaps,
-                        "potential_inferences": potential_inferences,
-                        "strength": conn["strength"],
-                        "confidence": 0.7 if info_relation == "complementary" else 0.5
-                    })
+                    evidence_chains.append(
+                        {
+                            "type": "deep",
+                            "documents": [conn["source_doc"], conn["target_doc"]],
+                            "entity": entity_id,
+                            "entity_type": conn["entity_type"],
+                            "doc1_context": doc1_info,
+                            "doc2_context": doc2_info,
+                            "information_relation": info_relation,
+                            "knowledge_gaps": knowledge_gaps,
+                            "potential_inferences": potential_inferences,
+                            "strength": conn["strength"],
+                            "confidence": 0.7 if info_relation == "complementary" else 0.5,
+                        }
+                    )
 
                 # For multi-hop connections, analyze transitive relationships
                 elif conn["type"] == "multi_hop":
@@ -7507,16 +7982,18 @@ class DatasetSerializer:
                     transitive_analysis = self._analyze_transitive_relationships(doc1, doc2, path)
 
                     if transitive_analysis:
-                        evidence_chains.append({
-                            "type": "deep",
-                            "documents": [conn["source_doc"], conn["target_doc"]],
-                            "mediating_entities": mediating_entities,
-                            "path": path,
-                            "transitive_analysis": transitive_analysis,
-                            "strength": conn["strength"],
-                            "confidence": transitive_analysis.get("confidence", 0.5),
-                            "potential_inferences": transitive_analysis.get("inferences", [])
-                        })
+                        evidence_chains.append(
+                            {
+                                "type": "deep",
+                                "documents": [conn["source_doc"], conn["target_doc"]],
+                                "mediating_entities": mediating_entities,
+                                "path": path,
+                                "transitive_analysis": transitive_analysis,
+                                "strength": conn["strength"],
+                                "confidence": transitive_analysis.get("confidence", 0.5),
+                                "potential_inferences": transitive_analysis.get("inferences", []),
+                            }
+                        )
 
         # Sort evidence chains by strength
         evidence_chains.sort(key=lambda x: x["strength"], reverse=True)
@@ -7565,7 +8042,9 @@ class DatasetSerializer:
         if entity_edge_type in ["about", "mentions", "references"]:
             entity_info["relation"] = entity_edge_type
             entity_info["entity_type"] = entity_node.type
-            entity_info["entity_name"] = entity_node.data.get("name", entity_node.data.get("title", entity_node.id))
+            entity_info["entity_name"] = entity_node.data.get(
+                "name", entity_node.data.get("title", entity_node.id)
+            )
 
             # Extract properties from the edge
             if entity_edge["properties"]:
@@ -7587,23 +8066,31 @@ class DatasetSerializer:
 
             # Synthesize some content about the entity based on document and entity types
             if entity_node.type == "concept":
-                entity_info["extracted_content"] = f"The document discusses the {entity_node.data.get('name', '')} concept."
+                entity_info["extracted_content"] = (
+                    f"The document discusses the {entity_node.data.get('name', '')} concept."
+                )
 
                 if "definition" in entity_node.data:
                     entity_info["entity_definition"] = entity_node.data["definition"]
 
             elif entity_node.type in ["person", "author"]:
-                entity_info["extracted_content"] = f"The document mentions {entity_node.data.get('name', '')}."
+                entity_info["extracted_content"] = (
+                    f"The document mentions {entity_node.data.get('name', '')}."
+                )
 
                 if "affiliation" in entity_node.data:
                     entity_info["affiliation"] = entity_node.data["affiliation"]
 
             else:
-                entity_info["extracted_content"] = f"The document refers to {entity_node.data.get('name', entity_node.id)}."
+                entity_info["extracted_content"] = (
+                    f"The document refers to {entity_node.data.get('name', entity_node.id)}."
+                )
 
         return entity_info
 
-    def _analyze_entity_information_relation(self, info1: Dict[str, Any], info2: Dict[str, Any]) -> str:
+    def _analyze_entity_information_relation(
+        self, info1: Dict[str, Any], info2: Dict[str, Any]
+    ) -> str:
         """
         Analyze the relation between entity information from two documents.
 
@@ -7634,8 +8121,11 @@ class DatasetSerializer:
         # For our example, we'll make a simple determination
 
         # If the information mentions different sections, it's likely complementary
-        if (info1.get("mentioned_in_section") and info2.get("mentioned_in_section") and
-            info1["mentioned_in_section"] != info2["mentioned_in_section"]):
+        if (
+            info1.get("mentioned_in_section")
+            and info2.get("mentioned_in_section")
+            and info1["mentioned_in_section"] != info2["mentioned_in_section"]
+        ):
             return "complementary"
 
         # If one document has the entity as primary and the other as non-primary, probably complementary
@@ -7645,12 +8135,9 @@ class DatasetSerializer:
         # By default, assume information is complementary
         return "complementary"
 
-    def _generate_inference_for_info_relation(self,
-                                           doc1: GraphNode,
-                                           doc2: GraphNode,
-                                           entity_id: str,
-                                           entity_type: str,
-                                           info_relation: str) -> str:
+    def _generate_inference_for_info_relation(
+        self, doc1: GraphNode, doc2: GraphNode, entity_id: str, entity_type: str, info_relation: str
+    ) -> str:
         """
         Generate an inference based on the information relation between documents.
 
@@ -7666,7 +8153,11 @@ class DatasetSerializer:
         """
         # Get entity node
         entity_node = self.nodes.get(entity_id)
-        entity_name = entity_node.data.get("name", entity_node.data.get("title", entity_id)) if entity_node else entity_id
+        entity_name = (
+            entity_node.data.get("name", entity_node.data.get("title", entity_id))
+            if entity_node
+            else entity_id
+        )
 
         # Get document titles
         doc1_title = doc1.data.get("title", doc1.id)
@@ -7674,25 +8165,32 @@ class DatasetSerializer:
 
         # Generate inference based on relation type
         if info_relation == "complementary":
-            return (f"'{doc1_title}' and '{doc2_title}' provide complementary information about "
-                   f"the {entity_type} '{entity_name}'.")
+            return (
+                f"'{doc1_title}' and '{doc2_title}' provide complementary information about "
+                f"the {entity_type} '{entity_name}'."
+            )
 
         elif info_relation == "contradictory":
-            return (f"'{doc1_title}' and '{doc2_title}' contain potentially contradictory information "
-                   f"about the {entity_type} '{entity_name}'.")
+            return (
+                f"'{doc1_title}' and '{doc2_title}' contain potentially contradictory information "
+                f"about the {entity_type} '{entity_name}'."
+            )
 
         elif info_relation == "identical":
-            return (f"'{doc1_title}' and '{doc2_title}' contain identical information "
-                   f"about the {entity_type} '{entity_name}'.")
+            return (
+                f"'{doc1_title}' and '{doc2_title}' contain identical information "
+                f"about the {entity_type} '{entity_name}'."
+            )
 
         else:  # unrelated
-            return (f"'{doc1_title}' and '{doc2_title}' both mention the {entity_type} '{entity_name}' "
-                   f"but in unrelated contexts.")
+            return (
+                f"'{doc1_title}' and '{doc2_title}' both mention the {entity_type} '{entity_name}' "
+                f"but in unrelated contexts."
+            )
 
-    def _generate_inference_for_entity_chain(self,
-                                          doc1: GraphNode,
-                                          doc2: GraphNode,
-                                          entity_chain_info: List[Dict[str, Any]]) -> str:
+    def _generate_inference_for_entity_chain(
+        self, doc1: GraphNode, doc2: GraphNode, entity_chain_info: List[Dict[str, Any]]
+    ) -> str:
         """
         Generate an inference based on an entity chain between documents.
 
@@ -7718,13 +8216,17 @@ class DatasetSerializer:
             entity_id = entity_info["entity"]
             entity_node = self.nodes.get(entity_id)
             if entity_node:
-                entity_names.append(entity_node.data.get("name", entity_node.data.get("title", entity_id)))
+                entity_names.append(
+                    entity_node.data.get("name", entity_node.data.get("title", entity_id))
+                )
             else:
                 entity_names.append(entity_id)
 
         # Generate inference based on the chain
-        return (f"'{doc1_title}' and '{doc2_title}' are connected through "
-               f"{len(entity_names)} entities: {', '.join(entity_names)}.")
+        return (
+            f"'{doc1_title}' and '{doc2_title}' are connected through "
+            f"{len(entity_names)} entities: {', '.join(entity_names)}."
+        )
 
     def _identify_knowledge_gaps(self, info1: Dict[str, Any], info2: Dict[str, Any]) -> List[str]:
         """
@@ -7767,13 +8269,15 @@ class DatasetSerializer:
 
         return gaps
 
-    def _generate_deep_inferences(self,
-                               doc1: GraphNode,
-                               doc2: GraphNode,
-                               entity_id: str,
-                               entity_type: str,
-                               info_relation: str,
-                               knowledge_gaps: List[str]) -> List[str]:
+    def _generate_deep_inferences(
+        self,
+        doc1: GraphNode,
+        doc2: GraphNode,
+        entity_id: str,
+        entity_type: str,
+        info_relation: str,
+        knowledge_gaps: List[str],
+    ) -> List[str]:
         """
         Generate deep inferences based on entity information and knowledge gaps.
 
@@ -7792,7 +8296,11 @@ class DatasetSerializer:
 
         # Get entity name
         entity_node = self.nodes.get(entity_id)
-        entity_name = entity_node.data.get("name", entity_node.data.get("title", entity_id)) if entity_node else entity_id
+        entity_name = (
+            entity_node.data.get("name", entity_node.data.get("title", entity_id))
+            if entity_node
+            else entity_id
+        )
 
         # Get document titles
         doc1_title = doc1.data.get("title", doc1.id)
@@ -7829,17 +8337,20 @@ class DatasetSerializer:
                 )
 
         # Consider author-based inferences
-        if doc1.data.get("author") and doc2.data.get("author") and doc1.data["author"] != doc2.data["author"]:
+        if (
+            doc1.data.get("author")
+            and doc2.data.get("author")
+            and doc1.data["author"] != doc2.data["author"]
+        ):
             inferences.append(
                 f"Different authors may explain the complementary perspectives on '{entity_name}'."
             )
 
         return inferences
 
-    def _analyze_transitive_relationships(self,
-                                       doc1: GraphNode,
-                                       doc2: GraphNode,
-                                       path: List[str]) -> Dict[str, Any]:
+    def _analyze_transitive_relationships(
+        self, doc1: GraphNode, doc2: GraphNode, path: List[str]
+    ) -> Dict[str, Any]:
         """
         Analyze transitive relationships in a multi-hop path between documents.
 
@@ -7872,7 +8383,7 @@ class DatasetSerializer:
         # Extract the relationships between consecutive nodes
         for i in range(len(path_nodes) - 1):
             source = path_nodes[i]
-            target = path_nodes[i+1]
+            target = path_nodes[i + 1]
 
             # Find the edge from source to target
             edge_type = None
@@ -7888,14 +8399,16 @@ class DatasetSerializer:
                     break
 
             if edge_type:
-                relationships.append({
-                    "source": source.id,
-                    "source_type": source.type,
-                    "target": target.id,
-                    "target_type": target.type,
-                    "relationship": edge_type,
-                    "properties": edge_props
-                })
+                relationships.append(
+                    {
+                        "source": source.id,
+                        "source_type": source.type,
+                        "target": target.id,
+                        "target_type": target.type,
+                        "relationship": edge_type,
+                        "properties": edge_props,
+                    }
+                )
 
         # If we couldn't extract relationships, return None
         if not relationships:
@@ -7930,10 +8443,12 @@ class DatasetSerializer:
             "relationships": relationships,
             "transitive_types": transitive_types,
             "inferences": inferences,
-            "confidence": confidence
+            "confidence": confidence,
         }
 
-    def _identify_transitive_relationship_patterns(self, relationships: List[Dict[str, Any]]) -> List[str]:
+    def _identify_transitive_relationship_patterns(
+        self, relationships: List[Dict[str, Any]]
+    ) -> List[str]:
         """
         Identify transitive relationship patterns from a chain of relationships.
 
@@ -7948,26 +8463,11 @@ class DatasetSerializer:
         # Define some common transitivity patterns
         # For example: A-cites->B-authored_by->C implies A-references->C
         transitivity_rules = [
-            {
-                "pattern": ["cites", "authored_by"],
-                "result": "references"
-            },
-            {
-                "pattern": ["about", "part_of"],
-                "result": "related_to"
-            },
-            {
-                "pattern": ["references", "about"],
-                "result": "discusses"
-            },
-            {
-                "pattern": ["authored_by", "expert_in"],
-                "result": "authority_on"
-            },
-            {
-                "pattern": ["mentions", "related_to"],
-                "result": "indirectly_references"
-            }
+            {"pattern": ["cites", "authored_by"], "result": "references"},
+            {"pattern": ["about", "part_of"], "result": "related_to"},
+            {"pattern": ["references", "about"], "result": "discusses"},
+            {"pattern": ["authored_by", "expert_in"], "result": "authority_on"},
+            {"pattern": ["mentions", "related_to"], "result": "indirectly_references"},
         ]
 
         # Check if our relationship chain matches any patterns
@@ -7978,17 +8478,19 @@ class DatasetSerializer:
 
             # Check if pattern appears as a subsequence in rel_types
             for i in range(len(rel_types) - len(pattern) + 1):
-                if rel_types[i:i+len(pattern)] == pattern:
+                if rel_types[i : i + len(pattern)] == pattern:
                     transitive_types.append(rule["result"])
                     break
 
         return transitive_types
 
-    def _synthesize_cross_document_information(self,
-                                            query: str,
-                                            documents: List[Tuple[GraphNode, float]],
-                                            evidence_chains: List[Dict[str, Any]],
-                                            reasoning_depth: str) -> Dict[str, Any]:
+    def _synthesize_cross_document_information(
+        self,
+        query: str,
+        documents: List[Tuple[GraphNode, float]],
+        evidence_chains: List[Dict[str, Any]],
+        reasoning_depth: str,
+    ) -> Dict[str, Any]:
         """
         Synthesize information across documents to answer the query.
 
@@ -8006,26 +8508,25 @@ class DatasetSerializer:
         # For our example, we'll create a simplified reasoning process.
 
         # Process begins by identifying the most relevant documents
-        reasoning_steps = [
-            f"Query: '{query}'",
-            f"Found {len(documents)} relevant documents"
-        ]
+        reasoning_steps = [f"Query: '{query}'", f"Found {len(documents)} relevant documents"]
 
         # Add document relevance information
         for i, (doc, score) in enumerate(documents[:3]):  # Show top 3
             reasoning_steps.append(
-                f"Document {i+1}: '{doc.data.get('title', doc.id)}' (relevance: {score:.2f})"
+                f"Document {i + 1}: '{doc.data.get('title', doc.id)}' (relevance: {score:.2f})"
             )
 
         # Add evidence chain analysis
-        reasoning_steps.append(f"Identified {len(evidence_chains)} evidence chains between documents")
+        reasoning_steps.append(
+            f"Identified {len(evidence_chains)} evidence chains between documents"
+        )
 
         # Add chain-specific reasoning based on depth
         if reasoning_depth == "basic":
             for i, chain in enumerate(evidence_chains[:2]):  # Show top 2
                 if chain["type"] == "basic":
                     reasoning_steps.append(
-                        f"Evidence chain {i+1}: {chain['potential_inference']}"
+                        f"Evidence chain {i + 1}: {chain['potential_inference']}"
                     )
 
             # Generate a basic answer
@@ -8034,7 +8535,7 @@ class DatasetSerializer:
         elif reasoning_depth == "moderate":
             for i, chain in enumerate(evidence_chains[:2]):  # Show top 2
                 reasoning_steps.append(
-                    f"Evidence chain {i+1}: {chain.get('potential_inference', 'Documents are connected')}"
+                    f"Evidence chain {i + 1}: {chain.get('potential_inference', 'Documents are connected')}"
                 )
 
                 # Add information relation if available
@@ -8051,14 +8552,16 @@ class DatasetSerializer:
             for i, chain in enumerate(evidence_chains[:2]):  # Show top 2
                 if chain["type"] == "deep":
                     reasoning_steps.append(
-                        f"Evidence chain {i+1} (confidence: {chain.get('confidence', 0.5):.2f}):"
+                        f"Evidence chain {i + 1} (confidence: {chain.get('confidence', 0.5):.2f}):"
                     )
 
                     # Add inferences
-                    inferences = chain.get("potential_inferences",
-                                         [chain.get("potential_inference", "Documents are connected")])
+                    inferences = chain.get(
+                        "potential_inferences",
+                        [chain.get("potential_inference", "Documents are connected")],
+                    )
                     for j, inference in enumerate(inferences[:2]):  # Show top 2 inferences
-                        reasoning_steps.append(f"  Inference {j+1}: {inference}")
+                        reasoning_steps.append(f"  Inference {j + 1}: {inference}")
 
                     # Add knowledge gaps if available
                     if "knowledge_gaps" in chain and chain["knowledge_gaps"]:
@@ -8070,17 +8573,18 @@ class DatasetSerializer:
             answer = self._generate_deep_answer(query, documents, evidence_chains)
 
         # Final reasoning step summarizing the answer
-        reasoning_steps.append(f"Synthesized answer based on {reasoning_depth} reasoning across documents")
+        reasoning_steps.append(
+            f"Synthesized answer based on {reasoning_depth} reasoning across documents"
+        )
 
-        return {
-            "answer": answer,
-            "reasoning_trace": reasoning_steps
-        }
+        return {"answer": answer, "reasoning_trace": reasoning_steps}
 
-    def _generate_basic_answer(self,
-                            query: str,
-                            documents: List[Tuple[GraphNode, float]],
-                            evidence_chains: List[Dict[str, Any]]) -> str:
+    def _generate_basic_answer(
+        self,
+        query: str,
+        documents: List[Tuple[GraphNode, float]],
+        evidence_chains: List[Dict[str, Any]],
+    ) -> str:
         """
         Generate a basic answer by combining information from documents.
 
@@ -8120,17 +8624,23 @@ class DatasetSerializer:
             chain = evidence_chains[0]
 
             if "potential_inference" in chain:
-                return (f"Based on '{doc_title}' and related documents, {chain['potential_inference']} "
-                       f"This answers your query about {', '.join(query_entities) if query_entities else 'this topic'}.")
+                return (
+                    f"Based on '{doc_title}' and related documents, {chain['potential_inference']} "
+                    f"This answers your query about {', '.join(query_entities) if query_entities else 'this topic'}."
+                )
 
         # Fallback to a simple answer
-        return (f"The document '{doc_title}' is most relevant to your query about "
-               f"{', '.join(query_entities) if query_entities else 'this topic'}.")
+        return (
+            f"The document '{doc_title}' is most relevant to your query about "
+            f"{', '.join(query_entities) if query_entities else 'this topic'}."
+        )
 
-    def _generate_moderate_answer(self,
-                               query: str,
-                               documents: List[Tuple[GraphNode, float]],
-                               evidence_chains: List[Dict[str, Any]]) -> str:
+    def _generate_moderate_answer(
+        self,
+        query: str,
+        documents: List[Tuple[GraphNode, float]],
+        evidence_chains: List[Dict[str, Any]],
+    ) -> str:
         """
         Generate a moderate complexity answer using document relationships.
 
@@ -8179,18 +8689,24 @@ class DatasetSerializer:
                     combined_inferences.append(inf)
 
             if combined_inferences:
-                return (f"To answer your question about {intent}, the documents provide complementary information. "
-                       f"{' '.join(combined_inferences)} "
-                       f"Specifically, {'and'.join(doc_titles)} together address your query.")
+                return (
+                    f"To answer your question about {intent}, the documents provide complementary information. "
+                    f"{' '.join(combined_inferences)} "
+                    f"Specifically, {'and'.join(doc_titles)} together address your query."
+                )
 
         # Fallback to a simple answer with document titles
-        return (f"Your question about {intent} is addressed in {' and '.join(doc_titles)}. "
-               f"These documents contain relevant information that, when combined, answer your query.")
+        return (
+            f"Your question about {intent} is addressed in {' and '.join(doc_titles)}. "
+            f"These documents contain relevant information that, when combined, answer your query."
+        )
 
-    def _generate_deep_answer(self,
-                           query: str,
-                           documents: List[Tuple[GraphNode, float]],
-                           evidence_chains: List[Dict[str, Any]]) -> str:
+    def _generate_deep_answer(
+        self,
+        query: str,
+        documents: List[Tuple[GraphNode, float]],
+        evidence_chains: List[Dict[str, Any]],
+    ) -> str:
         """
         Generate a complex answer with deep reasoning across documents.
 
@@ -8236,7 +8752,9 @@ class DatasetSerializer:
             for i, inf in enumerate(all_inferences[:3]):
                 answer.append(f"* {inf}")
         else:
-            answer.append("no clear connections between documents were found that address your query.")
+            answer.append(
+                "no clear connections between documents were found that address your query."
+            )
 
         if knowledge_gaps:
             answer.append("")
@@ -8246,10 +8764,12 @@ class DatasetSerializer:
 
         return " ".join(answer)
 
-    def _evaluate_answer_confidence(self,
-                                 synthesis_result: Dict[str, Any],
-                                 evidence_chains: List[Dict[str, Any]],
-                                 documents: List[Tuple[GraphNode, float]]) -> float:
+    def _evaluate_answer_confidence(
+        self,
+        synthesis_result: Dict[str, Any],
+        evidence_chains: List[Dict[str, Any]],
+        documents: List[Tuple[GraphNode, float]],
+    ) -> float:
         """
         Evaluate the confidence in the synthesized answer.
 
@@ -8268,8 +8788,9 @@ class DatasetSerializer:
         chain_confidence = 0.0
         if evidence_chains:
             # Use explicit confidence if available, otherwise use strength
-            chain_scores = [chain.get("confidence", chain.get("strength", 0.5))
-                          for chain in evidence_chains[:3]]
+            chain_scores = [
+                chain.get("confidence", chain.get("strength", 0.5)) for chain in evidence_chains[:3]
+            ]
             chain_confidence = sum(chain_scores) / len(chain_scores) if chain_scores else 0.0
 
         # Combine scores

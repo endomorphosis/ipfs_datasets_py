@@ -14,6 +14,7 @@ from typing import Dict, List, Optional, Tuple, Union, Any, Iterator
 # Check for dependencies
 try:
     from archivenow import archivenow
+
     HAVE_ARCHIVENOW = True
 except ImportError:
     HAVE_ARCHIVENOW = False
@@ -21,18 +22,21 @@ except ImportError:
 try:
     import ipwb
     from ipwb import indexer, replay, util
+
     HAVE_IPWB = True
 except ImportError:
     HAVE_IPWB = False
 
 try:
     import pyarrow as pa
+
     HAVE_ARROW = True
 except ImportError:
     HAVE_ARROW = False
 
 try:
     from bs4 import BeautifulSoup
+
     HAVE_BS4 = True
 except ImportError:
     HAVE_BS4 = False
@@ -90,7 +94,7 @@ class WebArchiveProcessor:
         parameter passing for maximum flexibility and stateless operation.
 
     Public Methods:
-        create_warc(url: str, output_path: Optional[str] = None, 
+        create_warc(url: str, output_path: Optional[str] = None,
                    options: Optional[Dict[str, Any]] = None) -> str:
             Create WARC files using ArchiveNow with configurable crawling agents
             and depth parameters for comprehensive site archival.
@@ -113,29 +117,29 @@ class WebArchiveProcessor:
 
     Usage Examples:
         processor = WebArchiveProcessor()
-        
+
         # Create comprehensive site archive
         warc_path = processor.create_warc(
             url="https://example.com",
             output_path="/archives/example.warc.gz",
             options={"agent": "squidwarc", "depth": 3}
         )
-        
+
         # Index archive to IPFS
         index_result = processor.index_warc(
             warc_path=warc_path,
             output_path="/indexes/example.cdxj"
         )
-        
+
         # Extract structured dataset
         dataset_path = processor.extract_dataset_from_cdxj(
             cdxj_path="/indexes/example.cdxj",
             output_format="arrow"
         )
-        
+
         # Extract text content for analysis
         text_content = processor.extract_text_from_warc(warc_path)
-        
+
         # Analyze link structure
         link_network = processor.extract_links_from_warc(warc_path)
 
@@ -143,12 +147,12 @@ class WebArchiveProcessor:
         Required:
         - archivenow: Web content archival with multiple engine support
         - ipwb: IPFS-based web archive indexing and replay functionality
-        
+
         Optional:
         - pyarrow: High-performance dataset storage and Arrow format support
         - beautifulsoup4: Advanced HTML parsing and content extraction
         - requests: HTTP client for web content retrieval and validation
-        
+
     Notes:
         - WARC file creation requires network connectivity and target site accessibility
         - IPFS indexing requires a running IPFS node for distributed storage operations
@@ -163,7 +167,9 @@ class WebArchiveProcessor:
         """Initialize a new WebArchiveProcessor."""
         pass
 
-    def create_warc(self, url: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> str:
+    def create_warc(
+        self, url: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None
+    ) -> str:
         """
         Create WARC Archive Files with Advanced Crawling and Configuration Options
 
@@ -186,18 +192,18 @@ class WebArchiveProcessor:
                 publicly accessible. The URL serves as the starting point for crawling
                 operations and determines the base domain for relative link resolution.
                 Examples: "https://example.com", "http://blog.example.org/posts/2024"
-            
+
             output_path (Optional[str], default=None): Destination path for the generated
                 WARC file. If None, a temporary path will be generated automatically based
                 on the URL domain and timestamp. The path should include the .warc or
                 .warc.gz extension to indicate compression preference. Parent directories
                 will be created automatically if they don't exist.
                 Examples: "/archives/example.warc.gz", "~/documents/site_backup.warc"
-            
+
             options (Optional[Dict[str, Any]], default=None): Advanced configuration
                 dictionary for customizing crawling behavior and archive creation parameters.
                 Supported configuration keys include:
-                
+
                 - agent (str): Crawling agent to use. Options: "wget" (fast, lightweight),
                   "squidwarc" (JavaScript support, dynamic content). Default: "wget"
                 - depth (int): Maximum crawl depth from starting URL. 0 = single page,
@@ -211,7 +217,7 @@ class WebArchiveProcessor:
                 - exclude_patterns (List[str]): URL patterns to exclude from crawl
                 - timeout (int): Request timeout in seconds. Default: 30
                 - compress (bool): Enable GZIP compression for WARC output. Default: True
-                
+
                 Example: {"agent": "squidwarc", "depth": 3, "delay": 2.0, "compress": True}
 
         Returns:
@@ -242,7 +248,7 @@ class WebArchiveProcessor:
             # Basic single-page archival
             processor = WebArchiveProcessor()
             warc_path = processor.create_warc("https://example.com")
-            
+
             # Advanced site crawling with custom configuration
             options = {
                 "agent": "squidwarc",
@@ -256,7 +262,7 @@ class WebArchiveProcessor:
                 output_path="/archives/blog_complete.warc.gz",
                 options=options
             )
-            
+
             # Blog archival with pattern filtering
             blog_options = {
                 "agent": "wget",
@@ -281,7 +287,9 @@ class WebArchiveProcessor:
             - Temporary files are cleaned up automatically if creation fails partway through
         """
         if not HAVE_ARCHIVENOW:
-            raise ImportError("ArchiveNow is required for WARC creation. Install with pip install archivenow")
+            raise ImportError(
+                "ArchiveNow is required for WARC creation. Install with pip install archivenow"
+            )
 
         # Set default options
         if options is None:
@@ -307,7 +315,12 @@ class WebArchiveProcessor:
 
         return result
 
-    def index_warc(self, warc_path: str, output_path: Optional[str] = None, encryption_key: Optional[str] = None) -> str:
+    def index_warc(
+        self,
+        warc_path: str,
+        output_path: Optional[str] = None,
+        encryption_key: Optional[str] = None,
+    ) -> str:
         """
         Index WARC Files to IPFS with Advanced Distributed Storage and Security Features
 
@@ -334,13 +347,13 @@ class WebArchiveProcessor:
                 records with proper headers and content structure. Both compressed and
                 uncompressed WARC files are supported for processing.
                 Example: "/archives/example_site.warc.gz"
-            
+
             output_path (Optional[str], default=None): Destination path for the generated
                 CDXJ index file. If None, the output path will be automatically generated
                 based on the input WARC filename with a .cdxj extension. The directory
                 structure will be created automatically if it doesn't exist.
                 Example: "/indexes/example_site.cdxj"
-            
+
             encryption_key (Optional[str], default=None): Cryptographic key for encrypting
                 the archived content before IPFS storage. When provided, content is
                 encrypted using AES-256 encryption, ensuring privacy while maintaining
@@ -358,7 +371,7 @@ class WebArchiveProcessor:
                 - timestamp_range (Tuple[str, str]): Earliest and latest timestamps found
                 - content_types (List[str]): Content types detected in archived resources
                 - encryption_enabled (bool): Whether encryption was applied to the content
-                
+
                 Example: {
                     "cdxj_path": "/indexes/example.cdxj",
                     "ipfs_hash": "QmYourContentHashHere123",
@@ -394,14 +407,14 @@ class WebArchiveProcessor:
             processor = WebArchiveProcessor()
             result = processor.index_warc("/archives/site.warc.gz")
             print(f"IPFS Hash: {result['ipfs_hash']}")
-            
+
             # Encrypted indexing with custom output path
             encrypted_result = processor.index_warc(
                 warc_path="/archives/sensitive_site.warc",
                 output_path="/secure_indexes/sensitive.cdxj",
                 encryption_key="your-256-bit-encryption-key-here"
             )
-            
+
             # Batch indexing multiple WARC files
             warc_files = ["/archives/site1.warc", "/archives/site2.warc"]
             results = []
@@ -427,9 +440,7 @@ class WebArchiveProcessor:
             raise FileNotFoundError(f"WARC file not found: {warc_path}")
 
         # Set up indexing options
-        index_options = {
-            "quiet": True
-        }
+        index_options = {"quiet": True}
 
         if encryption_key:
             index_options["encryptionKey"] = encryption_key
@@ -443,7 +454,9 @@ class WebArchiveProcessor:
 
         return output_path
 
-    def extract_dataset_from_cdxj(self, cdxj_path: str, output_format: str = "arrow") -> Union[List[Dict[str, Any]], Any]:
+    def extract_dataset_from_cdxj(
+        self, cdxj_path: str, output_format: str = "arrow"
+    ) -> Union[List[Dict[str, Any]], Any]:
         """
         Extract Structured Datasets from CDXJ Index Files with Advanced Schema Generation
 
@@ -469,11 +482,11 @@ class WebArchiveProcessor:
                 properly formatted JSON records with URL, timestamp, and metadata fields.
                 Both compressed (.cdxj.gz) and uncompressed (.cdxj) files are supported.
                 Example: "/indexes/example_site.cdxj"
-            
+
             output_format (str, default="arrow"): Target format for dataset generation.
                 Supported formats include:
-                
-                - "arrow": Apache Arrow format optimized for analytical queries and 
+
+                - "arrow": Apache Arrow format optimized for analytical queries and
                   cross-language compatibility. Provides columnar storage with advanced
                   compression and zero-copy reads for high-performance data processing.
                 - "huggingface": HuggingFace datasets format optimized for machine learning
@@ -490,27 +503,27 @@ class WebArchiveProcessor:
         Returns:
             Union[Dataset, Dict[str, Any], str]: Dataset in the specified format with
                 comprehensive content structure and metadata preservation:
-                
+
                 For "arrow" format:
                 - Returns pyarrow.Table with optimized columnar storage
                 - Includes schema with proper data types and null handling
                 - Supports efficient filtering and aggregation operations
-                
+
                 For "huggingface" format:
                 - Returns datasets.Dataset with ML-optimized features
                 - Includes automatic feature inference and type casting
                 - Supports batch processing and distributed training workflows
-                
+
                 For "parquet" format:
                 - Returns str path to the generated Parquet file
                 - Optimized for storage efficiency and query performance
                 - Compatible with all major data processing frameworks
-                
+
                 For "json" format:
                 - Returns str path to the generated JSON Lines file
                 - Human-readable format with complete metadata preservation
                 - Suitable for streaming processing and manual inspection
-                
+
                 For "dict" format:
                 - Returns List[Dict[str, Any]] with immediate memory access
                 - No serialization overhead for immediate processing
@@ -540,19 +553,19 @@ class WebArchiveProcessor:
                 cdxj_path="/indexes/news_site.cdxj",
                 output_format="arrow"
             )
-            
+
             # Create ML-ready HuggingFace dataset
             hf_dataset = processor.extract_dataset_from_cdxj(
                 cdxj_path="/indexes/research_papers.cdxj",
                 output_format="huggingface"
             )
-            
+
             # Generate Parquet for long-term storage
             parquet_path = processor.extract_dataset_from_cdxj(
                 cdxj_path="/indexes/large_archive.cdxj",
                 output_format="parquet"
             )
-            
+
             # In-memory processing with dict format
             records = processor.extract_dataset_from_cdxj(
                 cdxj_path="/indexes/small_site.cdxj",
@@ -578,45 +591,48 @@ class WebArchiveProcessor:
             raise FileNotFoundError(f"CDXJ file not found: {cdxj_path}")
 
         # Read the CDXJ file
-        with open(cdxj_path, 'r') as f:
+        with open(cdxj_path, "r") as f:
             cdxj_lines = f.readlines()
 
         # Extract data from each line
         records = []
         for line in cdxj_lines:
             line = line.strip()
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
 
             # Parse the CDXJ line
             try:
-                uri_k, timestamp, json_str = line.split(' ', 2)
+                uri_k, timestamp, json_str = line.split(" ", 2)
                 record = json.loads(json_str)
 
                 # Add the URI and timestamp
-                record['uri_k'] = uri_k
-                record['timestamp'] = timestamp
+                record["uri_k"] = uri_k
+                record["timestamp"] = timestamp
 
                 # Convert surt format to regular URI if needed
-                if 'uri' not in record and uri_k:
+                if "uri" not in record and uri_k:
                     from ipwb.util import unsurt
-                    record['uri'] = unsurt(uri_k)
+
+                    record["uri"] = unsurt(uri_k)
 
                 # Get the content if possible
-                if 'ipfs' in record:
+                if "ipfs" in record:
                     try:
-                        content = util.pull_from_ipfs(record['ipfs'])
+                        content = util.pull_from_ipfs(record["ipfs"])
 
                         # Extract text if possible
-                        if 'mime' in record and record['mime'].startswith('text/html') and HAVE_BS4:
-                            soup = BeautifulSoup(content, 'html.parser')
-                            record['text'] = soup.get_text(separator=' ', strip=True)
+                        if "mime" in record and record["mime"].startswith("text/html") and HAVE_BS4:
+                            soup = BeautifulSoup(content, "html.parser")
+                            record["text"] = soup.get_text(separator=" ", strip=True)
                         else:
                             # Just store the raw content
-                            record['content'] = content
+                            record["content"] = content
 
                     except Exception as e:
-                        print(f"Warning: Could not retrieve content for {record.get('uri', uri_k)}: {e}")
+                        print(
+                            f"Warning: Could not retrieve content for {record.get('uri', uri_k)}: {e}"
+                        )
 
                 records.append(record)
 
@@ -629,7 +645,9 @@ class WebArchiveProcessor:
 
         elif output_format == "arrow":
             if not HAVE_ARROW:
-                raise ImportError("PyArrow is required for Arrow output. Install with pip install pyarrow")
+                raise ImportError(
+                    "PyArrow is required for Arrow output. Install with pip install pyarrow"
+                )
 
             # Convert to PyArrow table
             # First, normalize the records to have the same keys
@@ -648,7 +666,7 @@ class WebArchiveProcessor:
 
             # Handle binary data in the table
             for key in data:
-                if key == 'content' and data[key][0] is not None:
+                if key == "content" and data[key][0] is not None:
                     # If content is binary, use binary type
                     data[key] = pa.array(data[key], type=pa.binary())
 
@@ -658,7 +676,9 @@ class WebArchiveProcessor:
             try:
                 from datasets import Dataset
             except ImportError:
-                raise ImportError("HuggingFace datasets is required for HuggingFace output. Install with pip install datasets")
+                raise ImportError(
+                    "HuggingFace datasets is required for HuggingFace output. Install with pip install datasets"
+                )
 
             # Convert to HuggingFace dataset
             if HAVE_ARROW:
@@ -668,7 +688,9 @@ class WebArchiveProcessor:
             else:
                 # Use dict as intermediate format
                 data = self.extract_dataset_from_cdxj(cdxj_path, output_format="dict")
-                return Dataset.from_dict({key: [record.get(key) for record in data] for key in data[0]})
+                return Dataset.from_dict(
+                    {key: [record.get(key) for record in data] for key in data[0]}
+                )
 
         else:
             raise ValueError(f"Unknown output format: {output_format}")
@@ -705,7 +727,7 @@ class WebArchiveProcessor:
             List[Dict[str, Any]]: Comprehensive list of extracted text records with
                 detailed metadata and content structure preservation. Each record
                 contains the following fields:
-                
+
                 - uri (str): Original URL of the archived resource
                 - timestamp (str): ISO 8601 timestamp of archive capture
                 - text_content (str): Extracted and normalized text content
@@ -720,7 +742,7 @@ class WebArchiveProcessor:
                   - headers (Dict[str, str]): Relevant HTTP headers
                   - extraction_method (str): Text extraction technique used
                   - normalization_applied (List[str]): Text processing steps applied
-                
+
                 Example record:
                 {
                     "uri": "https://example.com/article/123",
@@ -765,24 +787,24 @@ class WebArchiveProcessor:
             text_records = processor.extract_text_from_warc(
                 "/archives/news_site.warc.gz"
             )
-            
+
             # Process extracted text for analysis
             for record in text_records:
                 print(f"URL: {record['uri']}")
                 print(f"Language: {record['language']}")
                 print(f"Word Count: {record['word_count']}")
                 print(f"Text: {record['text_content'][:100]}...")
-            
+
             # Filter records by content type and quality
             html_content = [
                 record for record in text_records
                 if record['content_type'].startswith('text/html')
                 and record['word_count'] > 50
             ]
-            
+
             # Create text corpus for machine learning
             corpus = [record['text_content'] for record in text_records]
-            
+
             # Analyze language distribution
             languages = {}
             for record in text_records:
@@ -800,7 +822,9 @@ class WebArchiveProcessor:
             - Text quality varies depending on original web content structure and completeness
         """
         if not HAVE_BS4:
-            raise ImportError("BeautifulSoup is required for text extraction. Install with pip install beautifulsoup4")
+            raise ImportError(
+                "BeautifulSoup is required for text extraction. Install with pip install beautifulsoup4"
+            )
 
         if not os.path.isfile(warc_path):
             raise FileNotFoundError(f"WARC file not found: {warc_path}")
@@ -809,31 +833,30 @@ class WebArchiveProcessor:
         try:
             from warcio.archiveiterator import ArchiveIterator
         except ImportError:
-            raise ImportError("warcio is required for WARC processing. Install with pip install warcio")
+            raise ImportError(
+                "warcio is required for WARC processing. Install with pip install warcio"
+            )
 
         # Process the WARC file
         records = []
-        with open(warc_path, 'rb') as f:
+        with open(warc_path, "rb") as f:
             for record in ArchiveIterator(f):
-                if record.rec_type == 'response' and record.http_headers:
+                if record.rec_type == "response" and record.http_headers:
                     # Get the URI
-                    uri = record.rec_headers.get_header('WARC-Target-URI')
+                    uri = record.rec_headers.get_header("WARC-Target-URI")
 
                     # Get the content type
-                    content_type = record.http_headers.get_header('Content-Type')
+                    content_type = record.http_headers.get_header("Content-Type")
 
                     # Process HTML content
-                    if content_type and 'text/html' in content_type:
+                    if content_type and "text/html" in content_type:
                         content = record.content_stream().read()
 
                         # Extract text using BeautifulSoup
-                        soup = BeautifulSoup(content, 'html.parser')
-                        text = soup.get_text(separator=' ', strip=True)
+                        soup = BeautifulSoup(content, "html.parser")
+                        text = soup.get_text(separator=" ", strip=True)
 
-                        records.append({
-                            'uri': uri,
-                            'text': text
-                        })
+                        records.append({"uri": uri, "text": text})
 
         return records
 
@@ -867,7 +890,7 @@ class WebArchiveProcessor:
         Returns:
             List[Dict[str, Any]]: Comprehensive list of link relationship records with
                 detailed metadata and network topology information. Each record contains:
-                
+
                 - source_uri (str): URL of the page containing the link
                 - target_uri (str): Destination URL of the link
                 - source_timestamp (str): ISO 8601 timestamp of source page archive
@@ -886,7 +909,7 @@ class WebArchiveProcessor:
                   - position_in_page (int): Approximate position within document
                   - link_depth (int): Navigation depth from page root
                   - validation_status (str): Link accessibility validation result
-                
+
                 Example record:
                 {
                     "source_uri": "https://example.com/index.html",
@@ -937,7 +960,7 @@ class WebArchiveProcessor:
             link_records = processor.extract_links_from_warc(
                 "/archives/company_site.warc.gz"
             )
-            
+
             # Analyze internal vs external links
             internal_links = [
                 link for link in link_records
@@ -947,7 +970,7 @@ class WebArchiveProcessor:
                 link for link in link_records
                 if link['relationship'] == 'external'
             ]
-            
+
             # Build site navigation graph
             navigation_graph = {}
             for link in link_records:
@@ -956,15 +979,15 @@ class WebArchiveProcessor:
                 if source not in navigation_graph:
                     navigation_graph[source] = []
                 navigation_graph[source].append(target)
-            
+
             # Find most linked pages
             link_counts = {}
             for link in link_records:
                 target = link['target_uri']
                 link_counts[target] = link_counts.get(target, 0) + 1
-            popular_pages = sorted(link_counts.items(), 
+            popular_pages = sorted(link_counts.items(),
                                  key=lambda x: x[1], reverse=True)[:10]
-            
+
             # Analyze navigation patterns
             nav_links = [
                 link for link in link_records
@@ -982,7 +1005,9 @@ class WebArchiveProcessor:
             - Temporal context preservation allows for link evolution analysis over time
         """
         if not HAVE_BS4:
-            raise ImportError("BeautifulSoup is required for link extraction. Install with pip install beautifulsoup4")
+            raise ImportError(
+                "BeautifulSoup is required for link extraction. Install with pip install beautifulsoup4"
+            )
 
         if not os.path.isfile(warc_path):
             raise FileNotFoundError(f"WARC file not found: {warc_path}")
@@ -991,39 +1016,40 @@ class WebArchiveProcessor:
         try:
             from warcio.archiveiterator import ArchiveIterator
         except ImportError:
-            raise ImportError("warcio is required for WARC processing. Install with pip install warcio")
+            raise ImportError(
+                "warcio is required for WARC processing. Install with pip install warcio"
+            )
 
         # Process the WARC file
         links = []
-        with open(warc_path, 'rb') as f:
+        with open(warc_path, "rb") as f:
             for record in ArchiveIterator(f):
-                if record.rec_type == 'response' and record.http_headers:
+                if record.rec_type == "response" and record.http_headers:
                     # Get the URI
-                    uri = record.rec_headers.get_header('WARC-Target-URI')
+                    uri = record.rec_headers.get_header("WARC-Target-URI")
 
                     # Get the content type
-                    content_type = record.http_headers.get_header('Content-Type')
+                    content_type = record.http_headers.get_header("Content-Type")
 
                     # Process HTML content
-                    if content_type and 'text/html' in content_type:
+                    if content_type and "text/html" in content_type:
                         content = record.content_stream().read()
 
                         # Extract links using BeautifulSoup
-                        soup = BeautifulSoup(content, 'html.parser')
-                        for link in soup.find_all('a', href=True):
-                            href = link['href']
+                        soup = BeautifulSoup(content, "html.parser")
+                        for link in soup.find_all("a", href=True):
+                            href = link["href"]
 
                             # Resolve relative URLs
-                            if href.startswith('/'):
+                            if href.startswith("/"):
                                 import urllib.parse
+
                                 base_url = urllib.parse.urlparse(uri)
                                 href = f"{base_url.scheme}://{base_url.netloc}{href}"
 
-                            links.append({
-                                'source': uri,
-                                'target': href,
-                                'text': link.get_text(strip=True)
-                            })
+                            links.append(
+                                {"source": uri, "target": href, "text": link.get_text(strip=True)}
+                            )
 
         return links
 
@@ -1058,14 +1084,14 @@ class WebArchiveProcessor:
         Returns:
             Dict[str, Any]: Comprehensive metadata analysis results containing detailed
                 archive statistics and content characteristics:
-                
+
                 - file_info (Dict[str, Any]): Basic file information including:
                   - file_path (str): Absolute path to the WARC file
                   - file_size (int): Size of the WARC file in bytes
                   - compression_format (str): Compression type (none, gzip, etc.)
                   - creation_date (str): File creation timestamp
                   - modification_date (str): Last modification timestamp
-                
+
                 - archive_statistics (Dict[str, Any]): Archive-level statistics including:
                   - total_records (int): Total number of WARC records
                   - record_types (Dict[str, int]): Count by WARC record type
@@ -1074,14 +1100,14 @@ class WebArchiveProcessor:
                   - temporal_range (Tuple[str, str]): Earliest and latest timestamps
                   - content_size_total (int): Total content size in bytes
                   - average_response_time (float): Average response time if available
-                
+
                 - content_analysis (Dict[str, Any]): Content type and structure analysis:
                   - content_types (Dict[str, int]): Distribution of MIME types
                   - response_codes (Dict[int, int]): HTTP response code distribution
                   - language_distribution (Dict[str, int]): Detected languages
                   - encoding_types (Dict[str, int]): Character encoding distribution
                   - resource_categories (Dict[str, int]): Content category classification
-                
+
                 - quality_metrics (Dict[str, Any]): Archive quality and completeness metrics:
                   - successful_responses (int): Count of 2xx HTTP responses
                   - error_responses (int): Count of 4xx/5xx HTTP responses
@@ -1089,13 +1115,13 @@ class WebArchiveProcessor:
                   - incomplete_records (int): Records with missing or corrupted content
                   - duplicate_content (int): Estimated duplicate content instances
                   - preservation_score (float): Overall preservation quality score (0-1)
-                
+
                 - temporal_analysis (Dict[str, Any]): Time-based pattern analysis:
                   - capture_frequency (Dict[str, int]): Captures per time period
                   - peak_activity_periods (List[str]): Time periods with high activity
                   - content_freshness (Dict[str, float]): Age distribution of content
                   - update_patterns (Dict[str, int]): Content modification patterns
-                
+
                 - provenance_information (Dict[str, Any]): Archival process metadata:
                   - archive_software (str): Software used for archive creation
                   - crawler_settings (Dict[str, Any]): Configuration and parameters
@@ -1122,23 +1148,23 @@ class WebArchiveProcessor:
             metadata = processor.extract_metadata_from_warc(
                 "/archives/news_site_2024.warc.gz"
             )
-            
+
             # Analyze archive quality and completeness
             quality = metadata['quality_metrics']
-            success_rate = (quality['successful_responses'] / 
+            success_rate = (quality['successful_responses'] /
                           metadata['archive_statistics']['total_records'])
             print(f"Archive success rate: {success_rate:.2%}")
-            
+
             # Review content type distribution
             content_types = metadata['content_analysis']['content_types']
-            for mime_type, count in sorted(content_types.items(), 
+            for mime_type, count in sorted(content_types.items(),
                                          key=lambda x: x[1], reverse=True):
                 print(f"{mime_type}: {count} resources")
-            
+
             # Examine temporal coverage
             temporal_range = metadata['archive_statistics']['temporal_range']
             print(f"Archive spans from {temporal_range[0]} to {temporal_range[1]}")
-            
+
             # Assess preservation quality
             preservation_score = metadata['quality_metrics']['preservation_score']
             if preservation_score > 0.8:
@@ -1165,43 +1191,50 @@ class WebArchiveProcessor:
         try:
             from warcio.archiveiterator import ArchiveIterator
         except ImportError:
-            raise ImportError("warcio is required for WARC processing. Install with pip install warcio")
+            raise ImportError(
+                "warcio is required for WARC processing. Install with pip install warcio"
+            )
 
         # Process the WARC file
         metadata = {
-            'filename': os.path.basename(warc_path),
-            'size': os.path.getsize(warc_path),
-            'records': 0,
-            'content_types': {},
-            'domains': {}
+            "filename": os.path.basename(warc_path),
+            "size": os.path.getsize(warc_path),
+            "records": 0,
+            "content_types": {},
+            "domains": {},
         }
 
-        with open(warc_path, 'rb') as f:
+        with open(warc_path, "rb") as f:
             for record in ArchiveIterator(f):
-                metadata['records'] += 1
+                metadata["records"] += 1
 
-                if record.rec_type == 'response' and record.http_headers:
+                if record.rec_type == "response" and record.http_headers:
                     # Get the URI
-                    uri = record.rec_headers.get_header('WARC-Target-URI')
+                    uri = record.rec_headers.get_header("WARC-Target-URI")
 
                     # Get the content type
-                    content_type = record.http_headers.get_header('Content-Type')
+                    content_type = record.http_headers.get_header("Content-Type")
                     if content_type:
-                        metadata['content_types'][content_type] = metadata['content_types'].get(content_type, 0) + 1
+                        metadata["content_types"][content_type] = (
+                            metadata["content_types"].get(content_type, 0) + 1
+                        )
 
                     # Get the domain
                     if uri:
                         import urllib.parse
+
                         try:
                             domain = urllib.parse.urlparse(uri).netloc
-                            metadata['domains'][domain] = metadata['domains'].get(domain, 0) + 1
+                            metadata["domains"][domain] = metadata["domains"].get(domain, 0) + 1
                         except:
                             pass
 
         return metadata
 
 
-def index_warc(warc_path: str, output_path: Optional[str] = None, encryption_key: Optional[str] = None) -> str:
+def index_warc(
+    warc_path: str, output_path: Optional[str] = None, encryption_key: Optional[str] = None
+) -> str:
     """
     Convenience function to index a WARC file using IPWB.
 
@@ -1217,7 +1250,9 @@ def index_warc(warc_path: str, output_path: Optional[str] = None, encryption_key
     return processor.index_warc(warc_path, output_path, encryption_key)
 
 
-def create_warc(url: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> str:
+def create_warc(
+    url: str, output_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None
+) -> str:
     """
     Convenience function to create a WARC file using ArchiveNow.
 

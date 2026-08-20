@@ -25,7 +25,6 @@ from ipfs_datasets_py.workflow_automation.enhanced_workflows import (
 )
 
 
-
 _WORKFLOW_SERVICE: MockWorkflowService = get_default_workflow_service()
 
 
@@ -130,9 +129,7 @@ async def enhanced_batch_processing(
         "checkpoints_created": total_items // processing_params.get("checkpoint_interval", 50),
         "output_location": output_config["destination"],
         "output_size_mb": 256.7,
-        "compression_ratio": 0.75
-        if output_config.get("compression", "none") != "none"
-        else 1.0,
+        "compression_ratio": 0.75 if output_config.get("compression", "none") != "none" else 1.0,
     }
 
 
@@ -205,4 +202,3 @@ async def enhanced_data_pipeline(
         }
 
     return result
-

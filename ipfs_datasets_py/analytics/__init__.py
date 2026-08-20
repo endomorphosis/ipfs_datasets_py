@@ -36,8 +36,9 @@ try:
         TrendDetectionEngine,
         GlobalKnowledgeGraphIntegrator,
         analyze_multiple_websites,
-        create_global_knowledge_graph
+        create_global_knowledge_graph,
     )
+
     _HAVE_CROSS_WEBSITE = True
 except ImportError as e:
     _HAVE_CROSS_WEBSITE = False
@@ -55,24 +56,23 @@ except ImportError as e:
 
 __all__ = [
     # Core analysis engine (always available)
-    'AnalysisEngine',
-    'ClusteringAlgorithm',
-    'QualityMetric',
-    'DimensionalityMethod',
-    'ClusterResult',
-    'QualityAssessment',
-    'DimensionalityResult',
-    'get_analysis_engine',
-    
+    "AnalysisEngine",
+    "ClusteringAlgorithm",
+    "QualityMetric",
+    "DimensionalityMethod",
+    "ClusterResult",
+    "QualityAssessment",
+    "DimensionalityResult",
+    "get_analysis_engine",
     # Cross-website analysis (optional)
-    'CrossWebsiteAnalyzer',
-    'WebsiteCorrelation',
-    'GlobalTrend', 
-    'CrossSiteAnalysisReport',
-    'GlobalKnowledgeGraph',
-    'ContentSimilarityAnalyzer',
-    'TrendDetectionEngine',
-    'GlobalKnowledgeGraphIntegrator',
-    'analyze_multiple_websites',
-    'create_global_knowledge_graph',
+    "CrossWebsiteAnalyzer",
+    "WebsiteCorrelation",
+    "GlobalTrend",
+    "CrossSiteAnalysisReport",
+    "GlobalKnowledgeGraph",
+    "ContentSimilarityAnalyzer",
+    "TrendDetectionEngine",
+    "GlobalKnowledgeGraphIntegrator",
+    "analyze_multiple_websites",
+    "create_global_knowledge_graph",
 ]

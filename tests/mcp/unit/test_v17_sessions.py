@@ -11,6 +11,7 @@ CD140  logic/api.py smoke: all __all__ symbols load without ImportError
 CE141  PipelineMetricsRecorder(audit_log=...) records summary on each run
 CH144  delegation_audit_tool — 7 MCP tools for DelegationManager + PolicyAuditLog
 """
+
 from __future__ import annotations
 
 import warnings
@@ -20,6 +21,7 @@ import pytest
 # ===========================================================================
 # BX134 — NLPolicyConflictDetector.detect_and_warn()
 # ===========================================================================
+
 
 class TestBX134DetectAndWarn:
     """BX134: detect_and_warn emits UserWarning and writes audit entries."""
@@ -32,6 +34,7 @@ class TestBX134DetectAndWarn:
                 self.action = action
                 self.actor = actor or "*"
                 self.resource = resource or "*"
+
         return [
             _Clause("permission", "read"),
             _Clause("prohibition", "read"),
@@ -39,10 +42,14 @@ class TestBX134DetectAndWarn:
 
     def _make_audit(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         return PolicyAuditLog()
 
     def test_no_conflicts_no_warnings(self):
-        from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import NLPolicyConflictDetector
+        from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
+            NLPolicyConflictDetector,
+        )
+
         det = NLPolicyConflictDetector()
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -51,7 +58,10 @@ class TestBX134DetectAndWarn:
         assert len(w) == 0
 
     def test_conflict_emits_user_warning(self, two_conflict_clauses):
-        from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import NLPolicyConflictDetector
+        from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
+            NLPolicyConflictDetector,
+        )
+
         det = NLPolicyConflictDetector()
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -62,7 +72,10 @@ class TestBX134DetectAndWarn:
         assert "conflict" in str(w[0].message).lower()
 
     def test_conflict_writes_audit_entry(self, two_conflict_clauses):
-        from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import NLPolicyConflictDetector
+        from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
+            NLPolicyConflictDetector,
+        )
+
         det = NLPolicyConflictDetector()
         audit = self._make_audit()
         with warnings.catch_warnings(record=True):
@@ -75,7 +88,10 @@ class TestBX134DetectAndWarn:
 
     def test_no_audit_when_audit_log_none(self, two_conflict_clauses):
         """Should not raise even without audit_log."""
-        from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import NLPolicyConflictDetector
+        from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
+            NLPolicyConflictDetector,
+        )
+
         det = NLPolicyConflictDetector()
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
@@ -83,12 +99,17 @@ class TestBX134DetectAndWarn:
         assert len(conflicts) == 1
 
     def test_policy_cid_used_in_audit(self, two_conflict_clauses):
-        from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import NLPolicyConflictDetector
+        from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
+            NLPolicyConflictDetector,
+        )
+
         det = NLPolicyConflictDetector()
         audit = self._make_audit()
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
-            det.detect_and_warn(two_conflict_clauses, audit_log=audit, policy_cid="custom-policy-123")
+            det.detect_and_warn(
+                two_conflict_clauses, audit_log=audit, policy_cid="custom-policy-123"
+            )
         entry = audit.recent(1)[0]
         assert entry.policy_cid == "custom-policy-123"
 
@@ -97,15 +118,18 @@ class TestBX134DetectAndWarn:
 # BZ136 — UCANPolicyBridge.evaluate_with_manager()
 # ===========================================================================
 
+
 class TestBZ136EvaluateWithManager:
     """BZ136: evaluate_with_manager uses real DelegationManager for UCAN check."""
 
     def _make_bridge(self):
         from ipfs_datasets_py.logic.integration.ucan_policy_bridge import UCANPolicyBridge
+
         return UCANPolicyBridge()
 
     def _make_manager(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         return DelegationManager()
 
     def test_manager_none_falls_back_to_evaluate(self):
@@ -162,23 +186,28 @@ class TestBZ136EvaluateWithManager:
 # CA137 — DispatchPipeline audit_log parameter
 # ===========================================================================
 
+
 class TestCA137DispatchPipelineAudit:
     """CA137: DispatchPipeline records each stage result to PolicyAuditLog."""
 
     def _make_audit(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         return PolicyAuditLog()
 
     def _make_allow_stage(self, name="allow"):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineStage
+
         return PipelineStage(name=name, handler=lambda i: {"allowed": True})
 
     def _make_deny_stage(self, name="deny"):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineStage
+
         return PipelineStage(name=name, handler=lambda i: {"allowed": False, "reason": "denied"})
 
     def test_audit_log_receives_allow_entry(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import DispatchPipeline
+
         audit = self._make_audit()
         pipeline = DispatchPipeline(audit_log=audit)
         pipeline.add_stage(self._make_allow_stage())
@@ -189,6 +218,7 @@ class TestCA137DispatchPipelineAudit:
 
     def test_audit_log_receives_deny_entry(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import DispatchPipeline
+
         audit = self._make_audit()
         pipeline = DispatchPipeline(audit_log=audit)
         pipeline.add_stage(self._make_deny_stage())
@@ -200,6 +230,7 @@ class TestCA137DispatchPipelineAudit:
     def test_no_audit_when_audit_log_none(self):
         """No audit_log → pipeline runs without error."""
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import DispatchPipeline
+
         pipeline = DispatchPipeline(audit_log=None)
         pipeline.add_stage(self._make_allow_stage())
         result = pipeline.run({"tool": "read"})
@@ -207,6 +238,7 @@ class TestCA137DispatchPipelineAudit:
 
     def test_two_stages_two_audit_entries(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import DispatchPipeline
+
         audit = self._make_audit()
         pipeline = DispatchPipeline(audit_log=audit, short_circuit=False)
         pipeline.add_stage(self._make_allow_stage("s1"))
@@ -216,6 +248,7 @@ class TestCA137DispatchPipelineAudit:
 
     def test_short_circuit_limits_audit_entries(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import DispatchPipeline
+
         audit = self._make_audit()
         pipeline = DispatchPipeline(audit_log=audit, short_circuit=True)
         pipeline.add_stage(self._make_deny_stage("deny"))
@@ -226,6 +259,7 @@ class TestCA137DispatchPipelineAudit:
 
     def test_actor_field_in_audit_entry(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import DispatchPipeline
+
         audit = self._make_audit()
         pipeline = DispatchPipeline(audit_log=audit)
         pipeline.add_stage(self._make_allow_stage())
@@ -238,11 +272,13 @@ class TestCA137DispatchPipelineAudit:
 # CB138 — detect_i18n_conflicts / I18NConflictResult
 # ===========================================================================
 
+
 class TestCB138I18NConflicts:
     """CB138: detect_i18n_conflicts for French/Spanish/German."""
 
     def test_french_permission_and_prohibition(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_conflicts
+
         text = "Alice peut utiliser le système mais ne doit pas partager les données"
         r = detect_i18n_conflicts(text, language="fr")
         assert r.has_permission is True
@@ -252,6 +288,7 @@ class TestCB138I18NConflicts:
 
     def test_french_permission_only(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_conflicts
+
         r = detect_i18n_conflicts("L'agent peut accéder au système", language="fr")
         assert r.has_permission is True
         assert r.has_prohibition is False
@@ -259,6 +296,7 @@ class TestCB138I18NConflicts:
 
     def test_spanish_simultaneous_conflict(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_conflicts
+
         text = "El agente puede acceder pero no debe compartir los datos"
         r = detect_i18n_conflicts(text, language="es")
         assert r.has_permission is True
@@ -268,6 +306,7 @@ class TestCB138I18NConflicts:
 
     def test_german_prohibition_only(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_conflicts
+
         r = detect_i18n_conflicts("Das ist verboten", language="de")
         assert r.has_prohibition is True
         assert r.has_permission is False
@@ -276,6 +315,7 @@ class TestCB138I18NConflicts:
 
     def test_unknown_language_returns_no_conflict(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_conflicts
+
         r = detect_i18n_conflicts("some text", language="xx")
         assert r.has_permission is False
         assert r.has_prohibition is False
@@ -283,6 +323,7 @@ class TestCB138I18NConflicts:
 
     def test_i18n_result_to_dict(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_conflicts
+
         r = detect_i18n_conflicts("peut accéder mais interdit", language="fr")
         d = r.to_dict()
         assert "language" in d
@@ -292,12 +333,14 @@ class TestCB138I18NConflicts:
 
     def test_matched_keywords_populated(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_conflicts
+
         r = detect_i18n_conflicts("peut accéder mais interdit d'exporter", language="fr")
         assert "peut" in r.matched_permission_keywords
         assert "interdit" in r.matched_prohibition_keywords
 
     def test_i18n_result_class_available_from_api(self):
         import ipfs_datasets_py.logic.api as api
+
         assert "detect_i18n_conflicts" in api.__all__
         assert "I18NConflictResult" in api.__all__
 
@@ -306,29 +349,36 @@ class TestCB138I18NConflicts:
 # CC139 — DelegationChain.to_ascii_tree() + __str__ + __len__
 # ===========================================================================
 
+
 class TestCC139DelegationChainAscii:
     """CC139: DelegationChain ASCII visualization."""
 
     def _make_chain(self, n=2):
         import time
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationChain, DelegationToken, Capability,
+            DelegationChain,
+            DelegationToken,
+            Capability,
         )
+
         chain = DelegationChain()
         now = time.time()
         cap = Capability(resource="logic/*", ability="invoke/*")
         dids = [f"did:key:actor{i}" for i in range(n + 1)]
         for i in range(n):
-            chain.append(DelegationToken(
-                issuer=dids[i],
-                audience=dids[i + 1],
-                capabilities=[cap],
-                expiry=now + 3600,
-            ))
+            chain.append(
+                DelegationToken(
+                    issuer=dids[i],
+                    audience=dids[i + 1],
+                    capabilities=[cap],
+                    expiry=now + 3600,
+                )
+            )
         return chain
 
     def test_empty_chain_returns_sentinel(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationChain
+
         c = DelegationChain()
         assert c.to_ascii_tree() == "(empty chain)"
 
@@ -368,6 +418,7 @@ class TestCC139DelegationChainAscii:
 
     def test_len_empty_chain(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationChain
+
         assert len(DelegationChain()) == 0
 
     def test_single_token_uses_corner_only(self):
@@ -387,11 +438,13 @@ class TestCC139DelegationChainAscii:
 # CD140 — logic/api.py smoke tests
 # ===========================================================================
 
+
 class TestCD140ApiSmoke:
     """CD140: all __all__ symbols in logic/api.py load without ImportError."""
 
     def test_all_symbols_importable(self):
         import ipfs_datasets_py.logic.api as api
+
         errors = []
         for name in api.__all__:
             if not hasattr(api, name):
@@ -400,33 +453,39 @@ class TestCD140ApiSmoke:
 
     def test_all_list_is_nonempty(self):
         import ipfs_datasets_py.logic.api as api
+
         assert len(api.__all__) > 50  # well over 50 symbols expected
 
     def test_delegation_manager_accessible(self):
         import ipfs_datasets_py.logic.api as api
+
         if "DelegationManager" not in api.__all__:
             pytest.skip("DelegationManager not available")
         assert hasattr(api, "DelegationManager")
 
     def test_detect_i18n_conflicts_accessible(self):
         import ipfs_datasets_py.logic.api as api
+
         if "detect_i18n_conflicts" not in api.__all__:
             pytest.skip("detect_i18n_conflicts not available")
         assert callable(api.detect_i18n_conflicts)
 
     def test_i18n_result_class_accessible(self):
         import ipfs_datasets_py.logic.api as api
+
         if "I18NConflictResult" not in api.__all__:
             pytest.skip("I18NConflictResult not available")
         assert api.I18NConflictResult is not None
 
     def test_ucan_policy_bridge_accessible(self):
         import ipfs_datasets_py.logic.api as api
+
         assert "UCANPolicyBridge" in api.__all__
         assert hasattr(api, "UCANPolicyBridge")
 
     def test_detect_conflicts_callable(self):
         import ipfs_datasets_py.logic.api as api
+
         if "detect_conflicts" not in api.__all__:
             pytest.skip("detect_conflicts not available")
         assert callable(api.detect_conflicts)
@@ -436,15 +495,18 @@ class TestCD140ApiSmoke:
 # CE141 — PipelineMetricsRecorder(audit_log=...) records on record_run
 # ===========================================================================
 
+
 class TestCE141MetricsRecorderAudit:
     """CE141: PipelineMetricsRecorder writes summary audit entry on record_run."""
 
     def _make_audit(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         return PolicyAuditLog()
 
     def test_record_run_allow_writes_audit(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         audit = self._make_audit()
         rec = PipelineMetricsRecorder(audit_log=audit)
         rec.record_run(allowed=True)
@@ -454,6 +516,7 @@ class TestCE141MetricsRecorderAudit:
 
     def test_record_run_deny_writes_audit(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         audit = self._make_audit()
         rec = PipelineMetricsRecorder(audit_log=audit)
         rec.record_run(allowed=False)
@@ -462,11 +525,13 @@ class TestCE141MetricsRecorderAudit:
 
     def test_no_audit_when_audit_log_none(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         rec = PipelineMetricsRecorder(audit_log=None)
         rec.record_run(allowed=True)  # should not raise
 
     def test_multiple_runs_multiple_entries(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         audit = self._make_audit()
         rec = PipelineMetricsRecorder(audit_log=audit)
         rec.record_run(allowed=True)
@@ -476,6 +541,7 @@ class TestCE141MetricsRecorderAudit:
 
     def test_audit_entry_uses_namespace(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         audit = self._make_audit()
         rec = PipelineMetricsRecorder(namespace="my_pipeline", audit_log=audit)
         rec.record_run(allowed=True)
@@ -484,6 +550,7 @@ class TestCE141MetricsRecorderAudit:
 
     def test_counters_still_increment_with_audit(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         audit = self._make_audit()
         rec = PipelineMetricsRecorder(audit_log=audit)
         rec.record_run(allowed=True)
@@ -499,6 +566,7 @@ class TestCE141MetricsRecorderAudit:
 # CH144 — delegation_audit_tool MCP tools
 # ===========================================================================
 
+
 class TestCH144DelegationAuditTool:
     """CH144: 7 MCP tools for DelegationManager + PolicyAuditLog."""
 
@@ -506,12 +574,14 @@ class TestCH144DelegationAuditTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (
             DELEGATION_AUDIT_TOOLS,
         )
+
         assert len(DELEGATION_AUDIT_TOOLS) >= 7  # CI145 added delegation_chain_ascii (v18)
 
     def test_all_tools_have_name_description_function(self):
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (
             DELEGATION_AUDIT_TOOLS,
         )
+
         for t in DELEGATION_AUDIT_TOOLS:
             assert "name" in t
             assert "description" in t
@@ -521,6 +591,7 @@ class TestCH144DelegationAuditTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (
             delegation_get_metrics,
         )
+
         r = delegation_get_metrics()
         assert r["status"] == "ok"
         assert "token_count" in r
@@ -530,6 +601,7 @@ class TestCH144DelegationAuditTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (
             audit_log_stats,
         )
+
         r = audit_log_stats()
         assert r["status"] == "ok"
         assert "total_recorded" in r
@@ -538,6 +610,7 @@ class TestCH144DelegationAuditTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (
             audit_log_recent,
         )
+
         r = audit_log_recent(n=5)
         assert r["status"] == "ok"
         assert isinstance(r["entries"], list)
@@ -546,6 +619,7 @@ class TestCH144DelegationAuditTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (
             delegation_add_token,
         )
+
         r = delegation_add_token(
             issuer="did:key:root",
             audience="did:key:agent",
@@ -560,6 +634,7 @@ class TestCH144DelegationAuditTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (
             delegation_revoke,
         )
+
         r = delegation_revoke("some-cid-xyz")
         assert r["status"] == "ok"
         assert r["revoked_cid"] == "some-cid-xyz"
@@ -568,6 +643,7 @@ class TestCH144DelegationAuditTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (
             delegation_revoke_chain,
         )
+
         r = delegation_revoke_chain("root-cid-abc")
         assert r["status"] == "ok"
         assert "revoked_count" in r
@@ -577,6 +653,7 @@ class TestCH144DelegationAuditTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (
             delegation_can_invoke,
         )
+
         r = delegation_can_invoke(principal="alice", tool="read")
         assert r["status"] == "ok"
         assert "allowed" in r
@@ -586,6 +663,7 @@ class TestCH144DelegationAuditTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (
             DELEGATION_AUDIT_TOOLS,
         )
+
         names = [t["name"] for t in DELEGATION_AUDIT_TOOLS]
         assert all(isinstance(n, str) for n in names)
         assert "delegation_add_token" in names

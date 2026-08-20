@@ -144,9 +144,7 @@ def _outcome(
         status=status,
         invalid_control=False,
         verification_authority=(
-            VerificationAuthority.NATIVE_KERNEL
-            if verified
-            else VerificationAuthority.NONE
+            VerificationAuthority.NATIVE_KERNEL if verified else VerificationAuthority.NONE
         ),
         kernel_accepted=verified,
         kernel_receipt_sha256=_sha(f"{case_id}:kernel") if verified else None,
@@ -213,9 +211,7 @@ def test_objective_marker_and_report_wrapper_are_stable() -> None:
         ("confidence_level", float("nan")),
     ],
 )
-def test_statistical_plan_rejects_nonreproducible_settings(
-    field: str, value: object
-) -> None:
+def test_statistical_plan_rejects_nonreproducible_settings(field: str, value: object) -> None:
     arguments: dict[str, object] = {
         "seed": 1,
         "bootstrap_samples": 10,
@@ -251,9 +247,10 @@ def test_seeded_stratified_bootstrap_is_canonical_and_local() -> None:
     assert [item["measured_count"] for item in first.strata] == [6, 6]
 
     changed_seed = statistics.analyze_paired(spec, rows, plan=_plan(74))
-    assert changed_seed.summary["candidate_minus_baseline"] == first.summary[
-        "candidate_minus_baseline"
-    ]
+    assert (
+        changed_seed.summary["candidate_minus_baseline"]
+        == first.summary["candidate_minus_baseline"]
+    )
     assert changed_seed.case_traces == first.case_traces
     assert changed_seed.plan_sha256 != first.plan_sha256
 
@@ -320,15 +317,11 @@ def test_binary_swap_reverses_delta_but_not_exact_p_value() -> None:
             row.candidate_value,
             row.baseline_value,
         )
-        for row in _binary_rows(
-            both=1, baseline_only=1, candidate_only=4, neither=2
-        )
+        for row in _binary_rows(both=1, baseline_only=1, candidate_only=4, neither=2)
     )
     right = statistics.analyze_paired(_spec(), swapped_rows, plan=_plan())
 
-    assert right.summary["candidate_minus_baseline"] == -left.summary[
-        "candidate_minus_baseline"
-    ]
+    assert right.summary["candidate_minus_baseline"] == -left.summary["candidate_minus_baseline"]
     assert right.p_value_raw == left.p_value_raw
 
 
@@ -350,14 +343,10 @@ def test_no_discordance_and_zero_baseline_are_explicit() -> None:
         plan=_plan(),
     )
 
-    assert no_discordance.summary["binary"]["test_status"] == (
-        "no_discordant_pairs"
-    )
+    assert no_discordance.summary["binary"]["test_status"] == ("no_discordant_pairs")
     assert no_discordance.p_value_raw == 1.0
     assert zero_baseline.summary["relative_delta"] is None
-    assert zero_baseline.summary["relative_delta_missing_reason"] == (
-        "baseline_estimate_zero"
-    )
+    assert zero_baseline.summary["relative_delta_missing_reason"] == ("baseline_estimate_zero")
 
 
 def test_missingness_remains_null_and_preserves_strata_and_receipts() -> None:
@@ -475,9 +464,7 @@ def test_invalid_values_duplicates_and_mixed_cache_fail_closed() -> None:
     with pytest.raises(statistics.StatisticsError, match="both"):
         _observation("half", 1.0, None)
     with pytest.raises(statistics.StatisticsError, match="exactly 0 or 1"):
-        statistics.analyze_paired(
-            _spec(), [_observation("nonbinary", 0.5, 1.0)], plan=_plan()
-        )
+        statistics.analyze_paired(_spec(), [_observation("nonbinary", 0.5, 1.0)], plan=_plan())
     row = _observation("duplicate", 0.0, 1.0)
     with pytest.raises(statistics.StatisticsError, match="duplicate case"):
         statistics.analyze_paired(_spec(), [row, row], plan=_plan())
@@ -486,9 +473,7 @@ def test_invalid_values_duplicates_and_mixed_cache_fail_closed() -> None:
             _spec(),
             [
                 _observation("cold", 0.0, 1.0),
-                _observation(
-                    "warm", 0.0, 1.0, cache_mode=CacheMode.WARM
-                ),
+                _observation("warm", 0.0, 1.0, cache_mode=CacheMode.WARM),
             ],
             plan=_plan(),
         )
@@ -660,14 +645,8 @@ def test_statistics_report_recomputes_aggregates_pareto_and_digest() -> None:
     analysis = statistics.analyze_requests([request], plan=plan)[0]
     source_digests = tuple(
         sorted(
-            {
-                trace["baseline_result_sha256"]
-                for trace in analysis.case_traces
-            }
-            | {
-                trace["candidate_result_sha256"]
-                for trace in analysis.case_traces
-            }
+            {trace["baseline_result_sha256"] for trace in analysis.case_traces}
+            | {trace["candidate_result_sha256"] for trace in analysis.case_traces}
         )
     )
     candidate = statistics.ParetoCandidate(
@@ -679,11 +658,7 @@ def test_statistics_report_recomputes_aggregates_pareto_and_digest() -> None:
     value = statistics.build_statistics_report(
         plan,
         [request],
-        pareto_objectives=[
-            statistics.ParetoObjective(
-                "quality", MetricDirection.MAXIMIZE
-            )
-        ],
+        pareto_objectives=[statistics.ParetoObjective("quality", MetricDirection.MAXIMIZE)],
         pareto_candidates=[candidate],
     )
 
@@ -723,9 +698,7 @@ def test_canonical_statistics_loader_and_additive_cli(tmp_path: Path) -> None:
         [
             statistics.AnalysisRequest(
                 _spec(),
-                _binary_rows(
-                    both=1, baseline_only=0, candidate_only=1, neither=1
-                ),
+                _binary_rows(both=1, baseline_only=0, candidate_only=1, neither=1),
             )
         ],
     )
@@ -792,12 +765,8 @@ def test_report_builder_is_canonical_for_request_and_pareto_input_order() -> Non
         analyses,
         strict=True,
     ):
-        case_receipts = {
-            str(trace["baseline_result_sha256"])
-            for trace in analysis.case_traces
-        } | {
-            str(trace["candidate_result_sha256"])
-            for trace in analysis.case_traces
+        case_receipts = {str(trace["baseline_result_sha256"]) for trace in analysis.case_traces} | {
+            str(trace["candidate_result_sha256"]) for trace in analysis.case_traces
         }
         candidates.append(
             statistics.ParetoCandidate(

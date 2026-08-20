@@ -105,12 +105,14 @@ from typing import Any, Literal
 DeonticOp = Literal["O", "P", "F"]
 TemporalRel = Literal["before", "after", "by", "within", "during"]
 
+
 @dataclass(frozen=True)
 class SourceRef:
     id: str
     text: str
     uri: str | None = None
     span: tuple[int, int] | None = None
+
 
 @dataclass(frozen=True)
 class Entity:
@@ -119,11 +121,13 @@ class Entity:
     label: str
     attrs: dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass(frozen=True)
 class FrameContext:
     jurisdiction: str | None = None
     modality_context: str | None = None
     time_anchor: str | None = None
+
 
 @dataclass(frozen=True)
 class Frame:
@@ -132,6 +136,7 @@ class Frame:
     predicate: str
     slots: dict[str, str]
     context: FrameContext = field(default_factory=FrameContext)
+
 
 @dataclass(frozen=True)
 class TemporalConstraint:
@@ -142,12 +147,14 @@ class TemporalConstraint:
     value: int | None = None
     unit: str | None = None
 
+
 @dataclass(frozen=True)
 class DefinitionRule:
     id: str
     kind: Literal["means", "includes"]
     lhs_frame_ref: str
     rhs_formula: str
+
 
 @dataclass(frozen=True)
 class Norm:
@@ -159,6 +166,7 @@ class Norm:
     temporal_constraint_refs: tuple[str, ...] = ()
     priority: int = 0
     source_ref: str | None = None
+
 
 @dataclass(frozen=True)
 class LegalIR:

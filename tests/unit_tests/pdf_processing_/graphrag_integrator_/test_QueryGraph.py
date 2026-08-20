@@ -10,7 +10,10 @@ from unittest.mock import Mock, patch, AsyncMock
 
 
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import (
-    GraphRAGIntegrator, Entity, Relationship, KnowledgeGraph
+    GraphRAGIntegrator,
+    Entity,
+    Relationship,
+    KnowledgeGraph,
 )
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
 
@@ -20,7 +23,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -33,8 +36,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/graphrag_int
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/graphrag_integrator_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator
 
@@ -73,7 +80,7 @@ try:
     from ipfs_datasets_py.ipld import IPLDStorage
     from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
 except ImportError as e:
-    raise ImportError(f"Could into import the module's dependencies: {e}") 
+    raise ImportError(f"Could into import the module's dependencies: {e}")
 
 
 class TestQueryGraph:
@@ -83,7 +90,7 @@ class TestQueryGraph:
     def integrator(self):
         """Create a GraphRAGIntegrator instance for testing."""
         integrator = GraphRAGIntegrator()
-        
+
         # Setup sample global entities
         integrator.global_entities = {
             "entity_1": Entity(
@@ -93,7 +100,7 @@ class TestQueryGraph:
                 description="Software engineer at ACME Corp",
                 confidence=0.9,
                 source_chunks=["chunk_1"],
-                properties={"role": "engineer"}
+                properties={"role": "engineer"},
             ),
             "entity_2": Entity(
                 id="entity_2",
@@ -102,7 +109,7 @@ class TestQueryGraph:
                 description="Technology company specializing in AI",
                 confidence=0.8,
                 source_chunks=["chunk_1"],
-                properties={"industry": "technology"}
+                properties={"industry": "technology"},
             ),
             "entity_3": Entity(
                 id="entity_3",
@@ -111,27 +118,24 @@ class TestQueryGraph:
                 description="City in California",
                 confidence=0.7,
                 source_chunks=["chunk_2"],
-                properties={"state": "California"}
-            )
+                properties={"state": "California"},
+            ),
         }
-        
+
         # Setup sample knowledge graphs
         mock_graph_1 = Mock(spec=KnowledgeGraph)
         mock_graph_1.relationships = []
         mock_graph_1.entities = []
-        
+
         mock_graph_2 = Mock(spec=KnowledgeGraph)
         mock_graph_2.relationships = []
         mock_graph_2.entities = []
-        
-        integrator.knowledge_graphs = {
-            "graph_1": mock_graph_1,
-            "graph_2": mock_graph_2
-        }
-        
+
+        integrator.knowledge_graphs = {"graph_1": mock_graph_1, "graph_2": mock_graph_2}
+
         # Setup sample global graph
         integrator.global_graph = Mock()
-        
+
         return integrator
 
     @pytest.fixture
@@ -146,7 +150,7 @@ class TestQueryGraph:
                 description="John Smith works for ACME Corp",
                 confidence=0.9,
                 source_chunks=["chunk_1"],
-                properties={}
+                properties={},
             ),
             Relationship(
                 id="rel_2",
@@ -156,8 +160,8 @@ class TestQueryGraph:
                 description="John Smith is located in San Francisco",
                 confidence=0.8,
                 source_chunks=["chunk_2"],
-                properties={}
-            )
+                properties={},
+            ),
         ]
 
     @pytest.mark.asyncio
@@ -172,18 +176,18 @@ class TestQueryGraph:
         # Mock the global graph to return relationships
         integrator.global_graph.edges.return_value = [
             ("entity_1", "entity_2", {"relationship": sample_relationships[0]}),
-            ("entity_1", "entity_3", {"relationship": sample_relationships[1]})
+            ("entity_1", "entity_3", {"relationship": sample_relationships[1]}),
         ]
-        
+
         result = await integrator.query_graph("software engineer", max_results=5)
-        
+
         assert isinstance(result, dict)
         assert "query" in result
         assert "entities" in result
         assert "relationships" in result
         assert "total_matches" in result
         assert "timestamp" in result
-        
+
         assert result["query"] == "software engineer"
         assert isinstance(result["entities"], list)
         assert isinstance(result["relationships"], list)
@@ -199,17 +203,23 @@ class TestQueryGraph:
         """
         # Setup specific graph entities
         graph_entities = [
-            Entity(id="graph_entity_1", name="Graph Entity", type="person",
-                  description="Entity in specific graph", confidence=0.8,
-                  source_chunks=["chunk_graph"], properties={})
+            Entity(
+                id="graph_entity_1",
+                name="Graph Entity",
+                type="person",
+                description="Entity in specific graph",
+                confidence=0.8,
+                source_chunks=["chunk_graph"],
+                properties={},
+            )
         ]
         mock_graph = Mock(spec=KnowledgeGraph)
         mock_graph.entities = graph_entities
         mock_graph.relationships = []
         integrator.knowledge_graphs["graph_1"] = mock_graph
-        
+
         result = await integrator.query_graph("Graph Entity", graph_id="graph_1")
-        
+
         assert result["query"] == "Graph Entity"
         # Should search only the specific graph, not global entities
 
@@ -222,9 +232,9 @@ class TestQueryGraph:
         AND entities should be found regardless of case differences
         """
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("JOHN SMITH")  # Uppercase query
-        
+
         # Should find "John Smith" entity despite case difference
         assert isinstance(result["entities"], list)
 
@@ -237,9 +247,9 @@ class TestQueryGraph:
         AND relevance scores should reflect name match quality
         """
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("John")
-        
+
         # Should find entities with "John" in the name
         matching_entities = [e for e in result["entities"] if "john" in e.get("name", "").lower()]
         assert len(matching_entities) > 0
@@ -253,9 +263,9 @@ class TestQueryGraph:
         AND type matches should contribute to relevance scoring
         """
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("person")
-        
+
         # Should find entities of type "person"
         person_entities = [e for e in result["entities"] if e.get("type") == "person"]
         assert len(person_entities) > 0
@@ -269,12 +279,13 @@ class TestQueryGraph:
         AND description matches should be properly scored
         """
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("software engineer")
-        
+
         # Should find entities with "software engineer" in description
-        matching_entities = [e for e in result["entities"] 
-                           if "software engineer" in e.get("description", "").lower()]
+        matching_entities = [
+            e for e in result["entities"] if "software engineer" in e.get("description", "").lower()
+        ]
         assert len(matching_entities) > 0
 
     @pytest.mark.asyncio
@@ -294,13 +305,13 @@ class TestQueryGraph:
                 description="Test description",
                 confidence=0.5,
                 source_chunks=[f"chunk_{i}"],
-                properties={}
+                properties={},
             )
-        
+
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("Test", max_results=5)
-        
+
         # Should return at most 5 entities
         assert len(result["entities"]) <= 5
         assert result["total_matches"] >= 5  # But total_matches should reflect all matches
@@ -314,9 +325,9 @@ class TestQueryGraph:
         AND highest scoring entities should appear first
         """
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("smith")
-        
+
         if len(result["entities"]) > 1:
             # Check that entities are ordered by relevance (assuming relevance field exists)
             relevance_scores = []
@@ -327,12 +338,14 @@ class TestQueryGraph:
                     relevance_scores.append(1.0)
                 else:
                     relevance_scores.append(0.0)
-            
+
             # Should be in descending order
             assert relevance_scores == sorted(relevance_scores, reverse=True)
 
     @pytest.mark.asyncio
-    async def test_query_graph_related_relationships_inclusion(self, integrator, sample_relationships):
+    async def test_query_graph_related_relationships_inclusion(
+        self, integrator, sample_relationships
+    ):
         """
         GIVEN matching entities that have relationships
         WHEN query_graph is called
@@ -342,9 +355,9 @@ class TestQueryGraph:
         integrator.global_graph.edges.return_value = [
             ("entity_1", "entity_2", {"relationship": sample_relationships[0]})
         ]
-        
+
         result = await integrator.query_graph("John Smith")
-        
+
         # Should include relationships for matching entities
         assert isinstance(result["relationships"], list)
         if result["relationships"]:
@@ -364,9 +377,9 @@ class TestQueryGraph:
         AND proper structure should still be maintained
         """
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("nonexistent_entity_xyz")
-        
+
         assert result["entities"] == []
         assert result["relationships"] == []
         assert result["total_matches"] == 0
@@ -461,24 +474,24 @@ class TestQueryGraph:
             - 'timestamp': ISO format timestamp
         """
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("test query")
-        
+
         # Verify required keys
-        required_keys = ['query', 'entities', 'relationships', 'total_matches', 'timestamp']
+        required_keys = ["query", "entities", "relationships", "total_matches", "timestamp"]
         for key in required_keys:
             assert key in result
-        
+
         # Verify types
-        assert isinstance(result['query'], str)
-        assert isinstance(result['entities'], list)
-        assert isinstance(result['relationships'], list)
-        assert isinstance(result['total_matches'], int)
-        assert isinstance(result['timestamp'], str)
-        
+        assert isinstance(result["query"], str)
+        assert isinstance(result["entities"], list)
+        assert isinstance(result["relationships"], list)
+        assert isinstance(result["total_matches"], int)
+        assert isinstance(result["timestamp"], str)
+
         # Verify timestamp format (ISO)
         try:
-            datetime.fromisoformat(result['timestamp'].replace('Z', '+00:00'))
+            datetime.fromisoformat(result["timestamp"].replace("Z", "+00:00"))
         except ValueError:
             pytest.fail("Timestamp is not in ISO format")
 
@@ -492,13 +505,21 @@ class TestQueryGraph:
         AND numpy arrays should be converted to lists if present
         """
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("John")
-        
+
         for entity in result["entities"]:
             assert isinstance(entity, dict)
             # Verify entity has expected fields
-            expected_fields = ['id', 'name', 'type', 'description', 'confidence', 'source_chunks', 'properties']
+            expected_fields = [
+                "id",
+                "name",
+                "type",
+                "description",
+                "confidence",
+                "source_chunks",
+                "properties",
+            ]
             for field in expected_fields:
                 assert field in entity
 
@@ -513,14 +534,22 @@ class TestQueryGraph:
         integrator.global_graph.edges.return_value = [
             ("entity_1", "entity_2", {"relationship": sample_relationships[0]})
         ]
-        
+
         result = await integrator.query_graph("John")
-        
+
         for relationship in result["relationships"]:
             assert isinstance(relationship, dict)
             # Verify relationship has expected fields
-            expected_fields = ['id', 'source_entity_id', 'target_entity_id', 'relationship_type', 
-                             'description', 'confidence', 'source_chunks', 'properties']
+            expected_fields = [
+                "id",
+                "source_entity_id",
+                "target_entity_id",
+                "relationship_type",
+                "description",
+                "confidence",
+                "source_chunks",
+                "properties",
+            ]
             for field in expected_fields:
                 assert field in relationship
 
@@ -538,7 +567,7 @@ class TestQueryGraph:
         timestamp_str = result["timestamp"]
 
         # Verify timestamp is in ISO format by parsing it
-        parsed_timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+        parsed_timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
         assert isinstance(parsed_timestamp, datetime)
 
     @pytest.mark.asyncio
@@ -549,12 +578,12 @@ class TestQueryGraph:
         THEN the timestamp should be greater than or equal to the time just before the function call
         """
         integrator.global_graph.edges.return_value = []
-        
+
         before_time = datetime.now()
         result = await integrator.query_graph("test")
 
         timestamp_str = result["timestamp"]
-        timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+        timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
 
         # Verify timestamp is after before_time
         assert before_time <= timestamp.replace(tzinfo=None)
@@ -570,10 +599,10 @@ class TestQueryGraph:
 
         result = await integrator.query_graph("test")
         after_time = datetime.now()
-        
+
         timestamp_str = result["timestamp"]
-        timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-        
+        timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+
         # Verify timestamp is before after_time
         assert timestamp.replace(tzinfo=None) <= after_time
 
@@ -594,13 +623,13 @@ class TestQueryGraph:
                 description="Matching description",
                 confidence=0.8,
                 source_chunks=[f"chunk_{i}"],
-                properties={}
+                properties={},
             )
-        
+
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("Matching", max_results=3)
-        
+
         # Should return only 3 entities but report all 10 as total matches
         assert len(result["entities"]) <= 3
         assert result["total_matches"] >= 10
@@ -623,13 +652,13 @@ class TestQueryGraph:
                 description="Large test entity",
                 confidence=0.5,
                 source_chunks=[f"chunk_{i}"],
-                properties={}
+                properties={},
             )
-        
+
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("Large", max_results=100)
-        
+
         # Should complete efficiently
         assert isinstance(result, dict)
         assert len(result["entities"]) <= 100
@@ -644,14 +673,14 @@ class TestQueryGraph:
         AND matching should work correctly despite special characters
         """
         integrator.global_graph.edges.return_value = []
-        
+
         special_queries = [
             "Dr. Smith-Jones",
             "O'Connor & Associates",
             "Query with @#$%^&*() symbols",
-            "Multi-line\nquery\twith\ttabs"
+            "Multi-line\nquery\twith\ttabs",
         ]
-        
+
         for query in special_queries:
             result = await integrator.query_graph(query)
             assert isinstance(result, dict)
@@ -673,13 +702,13 @@ class TestQueryGraph:
             description="Persona con caracteres unicode",
             confidence=0.8,
             source_chunks=["chunk_unicode"],
-            properties={}
+            properties={},
         )
-        
+
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("José")
-        
+
         # Should handle unicode correctly
         assert isinstance(result, dict)
         assert result["query"] == "José"
@@ -695,9 +724,9 @@ class TestQueryGraph:
         integrator.global_entities = {}
         integrator.knowledge_graphs = {}
         integrator.global_graph.edges.return_value = []
-        
+
         result = await integrator.query_graph("any query")
-        
+
         assert result["entities"] == []
         assert result["relationships"] == []
         assert result["total_matches"] == 0
@@ -712,9 +741,9 @@ class TestQueryGraph:
         AND no race conditions should occur
         """
         import anyio
-        
+
         integrator.global_graph.edges.return_value = []
-        
+
         # Execute multiple queries concurrently
         queries = ["query1", "query2", "query3", "query4", "query5"]
         tasks = [integrator.query_graph(query) for query in queries]
@@ -727,14 +756,14 @@ class TestQueryGraph:
         async with anyio.create_task_group() as tg:
             for i, coro in enumerate(tasks):
                 tg.start_soon(_run_one, i, coro)
-        
+
         # Verify all results are correct and independent
         assert len(results) == 5
         for i, result in enumerate(results):
             assert result["query"] == queries[i]
             assert isinstance(result, dict)
             # Each result should have the same structure
-            required_keys = ['query', 'entities', 'relationships', 'total_matches', 'timestamp']
+            required_keys = ["query", "entities", "relationships", "total_matches", "timestamp"]
             for key in required_keys:
                 assert key in result
 

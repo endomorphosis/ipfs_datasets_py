@@ -26,7 +26,9 @@ except Exception:
                 sys.modules.pop(_module_name, None)
         sys.path.insert(0, str(_repo_root))
         try:
-            _module = importlib.import_module("ipfs_datasets_py.processors.multimedia.email_duckdb_index")
+            _module = importlib.import_module(
+                "ipfs_datasets_py.processors.multimedia.email_duckdb_index"
+            )
             _build_email_duckdb_index = getattr(_module, "build_email_duckdb_index", None)
             _search_email_duckdb_index = getattr(_module, "search_email_duckdb_index", None)
         except Exception:
@@ -172,7 +174,9 @@ def build_email_graphrag_artifacts(
     graph.to_json(str(graph_path))
 
     corpus_path = graphrag_dir / "email_corpus_records.json"
-    corpus_path.write_text(json.dumps(email_corpus_records, indent=2, ensure_ascii=False), encoding="utf-8")
+    corpus_path.write_text(
+        json.dumps(email_corpus_records, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
     duckdb_index_summary: dict[str, Any] | None = None
     if emit_duckdb_index:
@@ -214,7 +218,10 @@ def build_email_duckdb_artifacts(
     append: bool = False,
 ) -> dict[str, Any]:
     if _build_email_duckdb_index is None:
-        return {"status": "duckdb_index_unavailable", "manifest_path": str(Path(manifest_path).expanduser().resolve())}
+        return {
+            "status": "duckdb_index_unavailable",
+            "manifest_path": str(Path(manifest_path).expanduser().resolve()),
+        }
     try:
         return _build_email_duckdb_index(
             manifest_path=manifest_path,
@@ -240,7 +247,12 @@ def search_email_graphrag_duckdb(
     bm25_b: float = 0.75,
 ) -> dict[str, Any]:
     if _search_email_duckdb_index is None:
-        return {"status": "duckdb_index_unavailable", "query": query, "result_count": 0, "results": []}
+        return {
+            "status": "duckdb_index_unavailable",
+            "query": query,
+            "result_count": 0,
+            "results": [],
+        }
     return _search_email_duckdb_index(
         index_path=index_path,
         query=query,
@@ -251,4 +263,8 @@ def search_email_graphrag_duckdb(
     )
 
 
-__all__ = ["build_email_duckdb_artifacts", "build_email_graphrag_artifacts", "search_email_graphrag_duckdb"]
+__all__ = [
+    "build_email_duckdb_artifacts",
+    "build_email_graphrag_artifacts",
+    "search_email_graphrag_duckdb",
+]

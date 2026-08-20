@@ -58,7 +58,9 @@ def paths_from_unified_diff(unified_diff: str) -> list[str]:
     """Return unique file paths touched by a Git-style unified diff."""
 
     paths: list[str] = []
-    for match in re.finditer(r"^diff --git a/(.+?) b/(.+?)$", str(unified_diff or ""), flags=re.MULTILINE):
+    for match in re.finditer(
+        r"^diff --git a/(.+?) b/(.+?)$", str(unified_diff or ""), flags=re.MULTILINE
+    ):
         for candidate in (match.group(1), match.group(2)):
             if candidate == "/dev/null":
                 continue
@@ -181,7 +183,9 @@ def snapshot_patch_paths(repo_root: Path, unified_diff: str) -> dict[str, Option
     return snapshot_paths(repo_root, paths_from_unified_diff(unified_diff))
 
 
-def restore_path_snapshots(repo_root: Path, snapshots: Mapping[str, Optional[str]]) -> dict[str, Any]:
+def restore_path_snapshots(
+    repo_root: Path, snapshots: Mapping[str, Optional[str]]
+) -> dict[str, Any]:
     """Restore files captured by :func:`snapshot_paths`."""
 
     errors: list[str] = []
@@ -208,7 +212,9 @@ def restore_path_snapshots(repo_root: Path, snapshots: Mapping[str, Optional[str
     return {"valid": not errors, "restored": restored, "errors": errors}
 
 
-def retained_change_summary(repo_root: Path, snapshots: Mapping[str, Optional[str]]) -> dict[str, Any]:
+def retained_change_summary(
+    repo_root: Path, snapshots: Mapping[str, Optional[str]]
+) -> dict[str, Any]:
     """Summarize whether snapshotted files still differ after apply/rollback work."""
 
     changed_files: list[str] = []
@@ -463,8 +469,12 @@ def git_path_activity_snapshot(
     paths = unique_normalized_paths(target_paths)
     revision_range = f"{run_baseline_head}..HEAD"
     head = run_command_fn(["git", "rev-parse", "--short", "HEAD"], cwd=repo_root, timeout=timeout)
-    status = run_command_fn(["git", "status", "--short", "--", *paths], cwd=repo_root, timeout=timeout)
-    diff_stat = run_command_fn(["git", "diff", "--stat", "--", *paths], cwd=repo_root, timeout=timeout)
+    status = run_command_fn(
+        ["git", "status", "--short", "--", *paths], cwd=repo_root, timeout=timeout
+    )
+    diff_stat = run_command_fn(
+        ["git", "diff", "--stat", "--", *paths], cwd=repo_root, timeout=timeout
+    )
     recent_commits = run_command_fn(
         ["git", "log", "--oneline", f"-{max(1, int(recent_commit_count))}", "--", *paths],
         cwd=repo_root,
@@ -481,9 +491,7 @@ def git_path_activity_snapshot(
         timeout=timeout,
     )
     uncommitted_files = [
-        line.strip()
-        for line in str(status.get("stdout") or "").splitlines()
-        if line.strip()
+        line.strip() for line in str(status.get("stdout") or "").splitlines() if line.strip()
     ]
     return {
         "head": str(head.get("stdout") or "").strip(),
@@ -518,10 +526,14 @@ def unique_normalized_paths(paths: Iterable[str]) -> list[str]:
     return ordered
 
 
-def paths_from_file_edits(edits: Iterable[Mapping[str, Any]], *, path_key: str = "path") -> list[str]:
+def paths_from_file_edits(
+    edits: Iterable[Mapping[str, Any]], *, path_key: str = "path"
+) -> list[str]:
     """Return unique paths from complete-file edit records."""
 
-    return unique_normalized_paths(str(edit.get(path_key) or "") for edit in edits if isinstance(edit, Mapping))
+    return unique_normalized_paths(
+        str(edit.get(path_key) or "") for edit in edits if isinstance(edit, Mapping)
+    )
 
 
 def paths_from_patch_and_file_edits(patch: str, edits: Iterable[Mapping[str, Any]]) -> list[str]:
@@ -584,7 +596,9 @@ def unified_diff_stats(
             if current_file is not None:
                 current_file["deletions"] = int(current_file["deletions"]) + 1
     for item in per_file:
-        item["deletion_heavy"] = int(item["deletions"]) > int(item["insertions"]) and int(item["deletions"]) > 0
+        item["deletion_heavy"] = (
+            int(item["deletions"]) > int(item["insertions"]) and int(item["deletions"]) > 0
+        )
     deletion_heavy_files = [str(item["path"]) for item in per_file if item.get("deletion_heavy")]
     return {
         "files_changed": len(files),

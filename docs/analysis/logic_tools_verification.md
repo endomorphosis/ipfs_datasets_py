@@ -44,10 +44,7 @@ As of June 28, 2025, the First-Order Logic (FOL) and Deontic First-Order Logic t
 ```python
 from ipfs_datasets_py.mcp_server.tools.dataset_tools import text_to_fol
 
-result = await text_to_fol(
-    text_input="All cats are animals",
-    output_format="json"
-)
+result = await text_to_fol(text_input="All cats are animals", output_format="json")
 # Returns formal logic representation
 ```
 
@@ -56,9 +53,7 @@ result = await text_to_fol(
 from ipfs_datasets_py.mcp_server.tools.dataset_tools import legal_text_to_deontic
 
 result = await legal_text_to_deontic(
-    text_input="Citizens must pay taxes by April 15th",
-    jurisdiction="us",
-    document_type="statute"
+    text_input="Citizens must pay taxes by April 15th", jurisdiction="us", document_type="statute"
 )
 # Returns deontic logic with obligations, permissions, prohibitions
 ```

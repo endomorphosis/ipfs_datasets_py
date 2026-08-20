@@ -34,19 +34,19 @@ class TestQueryVisualizationHelper:
             "duration": 1.0,
             "params": {"query_type": "fact_verification"},
         }
-        
+
         mock_visualizer = Mock()
         mock_visualizer.visualize_query_plan.return_value = Mock()
-        
+
         mock_metrics_collector = Mock()
         mock_metrics_collector.get_query_metrics.return_value = metrics
-        
+
         result = QueryVisualizationHelper.visualize_query_plan(
             visualizer=mock_visualizer,
             metrics_collector=mock_metrics_collector,
             query_id="query_123",
         )
-        
+
         assert result is not None
         mock_metrics_collector.get_query_metrics.assert_called_once_with("query_123")
         mock_visualizer.visualize_query_plan.assert_called_once()
@@ -57,13 +57,13 @@ class TestQueryVisualizationHelper:
         mock_metrics_collector = Mock()
         mock_metrics_collector.get_query_metrics.return_value = None
         mock_metrics_collector.get_recent_metrics.return_value = []
-        
+
         result = QueryVisualizationHelper.visualize_query_plan(
             visualizer=mock_visualizer,
             metrics_collector=mock_metrics_collector,
             query_id="nonexistent",
         )
-        
+
         assert result is None
 
     def test_visualize_query_plan_uses_recent_query(self):
@@ -73,20 +73,20 @@ class TestQueryVisualizationHelper:
             "duration": 1.0,
             "params": {},
         }
-        
+
         mock_visualizer = Mock()
         mock_visualizer.visualize_query_plan.return_value = Mock()
-        
+
         mock_metrics_collector = Mock()
         mock_metrics_collector.get_recent_metrics.return_value = [{"query_id": "recent_query"}]
         mock_metrics_collector.get_query_metrics.return_value = metrics
-        
+
         result = QueryVisualizationHelper.visualize_query_plan(
             visualizer=mock_visualizer,
             metrics_collector=mock_metrics_collector,
             last_query_id=None,
         )
-        
+
         assert result is not None
         mock_metrics_collector.get_recent_metrics.assert_called_once()
 
@@ -101,16 +101,16 @@ class TestQueryVisualizationHelper:
     def test_visualize_metrics_dashboard_creates_output_file(self):
         """Should generate default output file if not provided."""
         mock_visualizer = Mock()
-        
+
         metrics_dir = "/tmp/metrics"
         mock_metrics_collector = Mock()
         mock_metrics_collector.metrics_dir = metrics_dir
-        
+
         result = QueryVisualizationHelper.visualize_metrics_dashboard(
             visualizer=mock_visualizer,
             metrics_collector=mock_metrics_collector,
         )
-        
+
         # Should have created a file path
         assert result is not None
         assert metrics_dir in result
@@ -129,19 +129,19 @@ class TestQueryVisualizationHelper:
         """Should use recent queries if IDs not specified."""
         mock_visualizer = Mock()
         mock_visualizer.visualize_performance_comparison.return_value = Mock()
-        
+
         mock_metrics_collector = Mock()
         mock_metrics_collector.get_recent_metrics.return_value = [
             {"query_id": "q1"},
             {"query_id": "q2"},
             {"query_id": "q3"},
         ]
-        
+
         result = QueryVisualizationHelper.visualize_performance_comparison(
             visualizer=mock_visualizer,
             metrics_collector=mock_metrics_collector,
         )
-        
+
         assert result is not None
         mock_visualizer.visualize_performance_comparison.assert_called_once()
         call_kwargs = mock_visualizer.visualize_performance_comparison.call_args[1]
@@ -159,15 +159,15 @@ class TestQueryVisualizationHelper:
         """Should delegate to visualizer with specified query ID."""
         mock_visualizer = Mock()
         mock_visualizer.visualize_resource_usage.return_value = Mock()
-        
+
         mock_metrics_collector = Mock()
-        
+
         result = QueryVisualizationHelper.visualize_resource_usage(
             visualizer=mock_visualizer,
             metrics_collector=mock_metrics_collector,
             query_id="query_456",
         )
-        
+
         assert result is not None
         mock_visualizer.visualize_resource_usage.assert_called_once()
         call_kwargs = mock_visualizer.visualize_resource_usage.call_args[1]
@@ -184,12 +184,12 @@ class TestQueryVisualizationHelper:
         """Should delegate to visualizer with specified limit."""
         mock_visualizer = Mock()
         mock_visualizer.visualize_query_patterns.return_value = Mock()
-        
+
         result = QueryVisualizationHelper.visualize_query_patterns(
             visualizer=mock_visualizer,
             limit=20,
         )
-        
+
         assert result is not None
         call_kwargs = mock_visualizer.visualize_query_patterns.call_args[1]
         assert call_kwargs["limit"] == 20

@@ -11,6 +11,7 @@ Tools:
 - legal_archive_results
 - legal_get_archive_stats
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.processors.legal_scrapers import LegalWebArchiveSearch
+
     _HAVE_LWAS = True
 except Exception:
     _HAVE_LWAS = False
@@ -45,8 +47,10 @@ def legal_web_archive_search(
     try:
         searcher = LegalWebArchiveSearch(archive_dir=archive_dir, auto_archive=archive_results)
         results = searcher.unified_search(
-            query=query, max_results=max_results,
-            include_archives=include_archives, archive_results=archive_results
+            query=query,
+            max_results=max_results,
+            include_archives=include_archives,
+            archive_results=archive_results,
         )
         return {"status": "success", **results}
     except Exception as exc:
@@ -68,8 +72,11 @@ def legal_search_archives_only(
         return {"status": "error", "error": "Missing required parameter: query"}
     try:
         results = LegalWebArchiveSearch().search_archives(
-            query=query, from_date=from_date, to_date=to_date,
-            domains=domains, max_results=max_results,
+            query=query,
+            from_date=from_date,
+            to_date=to_date,
+            domains=domains,
+            max_results=max_results,
         )
         return {"status": "success", **results}
     except Exception as exc:

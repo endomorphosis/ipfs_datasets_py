@@ -56,9 +56,7 @@ def test_prover_syntax_renders_target_specific_ascii_dialects():
         assert records["frame_logic"]["exported_formula"].startswith("legal_norm(")
         for target, expected_formula in expected_by_target.items():
             assert records[target]["exported_formula"] == expected_formula
-            assert not any(
-                connective in expected_formula for connective in ("∀", "∧", "→", "¬")
-            )
+            assert not any(connective in expected_formula for connective in ("∀", "∧", "→", "¬"))
             assert records[target]["diagnostics"] == []
 
 
@@ -73,26 +71,24 @@ def test_prover_syntax_canonicalizes_textual_modality_tokens_for_typed_ir_obliga
 
     for norm in variants:
         records = {
-            target.target: target.to_dict()
-            for target in validate_ir_with_provers(norm).targets
+            target.target: target.to_dict() for target in validate_ir_with_provers(norm).targets
         }
 
         assert records["fol"]["exported_formula"].startswith("forall x.")
         assert records["deontic_fol"]["exported_formula"].startswith("O(forall x.")
         assert records["deontic_cec"]["exported_formula"].startswith("Happens(")
         assert "HoldsAt(O(" in records["deontic_cec"]["exported_formula"]
-        assert records["deontic_fol"]["target_dialect_profile"][
-            "source_deontic_operator"
-        ] == "O"
-        assert records["deontic_temporal_fol"]["target_dialect_profile"][
-            "source_deontic_operator"
-        ] == "O"
+        assert records["deontic_fol"]["target_dialect_profile"]["source_deontic_operator"] == "O"
+        assert (
+            records["deontic_temporal_fol"]["target_dialect_profile"]["source_deontic_operator"]
+            == "O"
+        )
 
 
 def test_prover_syntax_uses_prompt_context_obligation_for_detail_only_rows():
-    parsed = extract_normative_elements(
-        "The Director is authorized and directed to adopt rules."
-    )[0]
+    parsed = extract_normative_elements("The Director is authorized and directed to adopt rules.")[
+        0
+    ]
     detail = {
         "schema_version": parsed["schema_version"],
         "source_id": f"{parsed['source_id']}:detail",
@@ -115,17 +111,12 @@ def test_prover_syntax_uses_prompt_context_obligation_for_detail_only_rows():
         },
     }
     norm = LegalNormIR.from_parser_element(detail)
-    records = {
-        target.target: target.to_dict()
-        for target in validate_ir_with_provers(norm).targets
-    }
+    records = {target.target: target.to_dict() for target in validate_ir_with_provers(norm).targets}
 
     assert norm.modality == "O"
     assert records["deontic_fol"]["exported_formula"].startswith("O(forall x.")
     assert records["deontic_temporal_fol"]["exported_formula"].startswith("always(O(")
-    assert records["deontic_fol"]["target_dialect_profile"][
-        "source_deontic_operator"
-    ] == "O"
+    assert records["deontic_fol"]["target_dialect_profile"]["source_deontic_operator"] == "O"
 
 
 def test_prover_syntax_records_carry_decoder_context_for_local_targets():
@@ -206,9 +197,7 @@ def test_prover_syntax_records_carry_target_dialect_profiles():
         "deontic_first_order",
         "deontic_temporal_first_order",
     ]
-    assert records["frame_logic"]["target_dialect_profile"]["required_wrappers"] == [
-        "legal_norm"
-    ]
+    assert records["frame_logic"]["target_dialect_profile"]["required_wrappers"] == ["legal_norm"]
     assert records["deontic_cec"]["target_dialect_profile"]["required_wrappers"] == [
         "Happens",
         "HoldsAt",
@@ -239,14 +228,9 @@ def test_prover_syntax_records_carry_target_parse_profiles():
         extract_normative_elements("The tenant must pay rent monthly.")[0]
     )
 
-    records = {
-        target.target: target.to_dict()
-        for target in validate_ir_with_provers(norm).targets
-    }
+    records = {target.target: target.to_dict() for target in validate_ir_with_provers(norm).targets}
 
-    assert records["frame_logic"]["target_parse_profile"]["top_level_symbol"] == (
-        "legal_norm"
-    )
+    assert records["frame_logic"]["target_parse_profile"]["top_level_symbol"] == ("legal_norm")
     assert records["frame_logic"]["target_parse_profile"]["frame_slots"] == [
         "actor",
         "action",
@@ -259,9 +243,10 @@ def test_prover_syntax_records_carry_target_parse_profiles():
     assert records["fol"]["target_parse_profile"]["top_level_symbol"] == "forall"
     assert records["fol"]["target_parse_profile"]["quantifier_variables"] == ["x"]
     assert records["deontic_fol"]["target_parse_profile"]["wrapper_sequence"] == ["O"]
-    assert records["deontic_temporal_fol"]["target_parse_profile"][
-        "wrapper_sequence"
-    ] == ["always", "O"]
+    assert records["deontic_temporal_fol"]["target_parse_profile"]["wrapper_sequence"] == [
+        "always",
+        "O",
+    ]
     assert all(
         record["target_parse_profile"]["target_parse_profile_complete"] is True
         for record in records.values()
@@ -280,12 +265,7 @@ def test_prover_syntax_records_carry_target_parse_profiles():
         "HoldsAt",
     ]
     assert records["fol"]["target_components"]["parse_quantifier_variables"] == ["x"]
-    assert len(
-        {
-            record["target_parse_profile_fingerprint"]
-            for record in records.values()
-        }
-    ) == 5
+    assert len({record["target_parse_profile_fingerprint"] for record in records.values()}) == 5
 
 
 def test_prover_syntax_records_carry_reconstruction_token_profiles():
@@ -316,43 +296,34 @@ def test_prover_syntax_records_carry_reconstruction_token_profiles():
     for text, expected_tokens in examples:
         norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
         records = {
-            target.target: target.to_dict()
-            for target in validate_ir_with_provers(norm).targets
+            target.target: target.to_dict() for target in validate_ir_with_provers(norm).targets
         }
 
         assert len(records) == 5
         assert all(
-            record["reconstruction_token_profile"]["source_salient_tokens"]
-            == expected_tokens
+            record["reconstruction_token_profile"]["source_salient_tokens"] == expected_tokens
             for record in records.values()
         )
         assert all(
-            record["reconstruction_token_profile"]["decoded_salient_tokens"]
-            == expected_tokens
+            record["reconstruction_token_profile"]["decoded_salient_tokens"] == expected_tokens
             for record in records.values()
         )
         assert all(
-            record["reconstruction_token_profile"][
-                "reconstruction_token_profile_complete"
-            ]
-            is True
+            record["reconstruction_token_profile"]["reconstruction_token_profile_complete"] is True
             for record in records.values()
         )
         assert all(
-            record["target_components"]["reconstruction_token_profile_complete"]
-            is True
+            record["target_components"]["reconstruction_token_profile_complete"] is True
             for record in records.values()
         )
         assert all(
             record["target_components"]["salient_token_coverage_rate"] == 1.0
             for record in records.values()
         )
-        assert len(
-            {
-                record["reconstruction_token_profile_fingerprint"]
-                for record in records.values()
-            }
-        ) == 5
+        assert (
+            len({record["reconstruction_token_profile_fingerprint"] for record in records.values()})
+            == 5
+        )
 
 
 def test_prover_reconstruction_profile_preserves_blocked_reference_tokens_without_repair_clearance():
@@ -379,8 +350,7 @@ def test_prover_reconstruction_profile_preserves_blocked_reference_tokens_withou
         for record in records
     )
     assert all(
-        record["reconstruction_token_profile"]["added_decoded_tokens"] == []
-        for record in records
+        record["reconstruction_token_profile"]["added_decoded_tokens"] == [] for record in records
     )
     assert all(
         record["target_components"]["reconstruction_token_profile_complete"] is True
@@ -412,8 +382,7 @@ def test_prover_syntax_records_audit_grounded_ir_slots_across_targets():
         assert all(record["ungrounded_ir_slots"] == [] for record in records)
         assert all(record["missing_ir_slots"] == missing_slots for record in records)
         assert all(
-            record["target_components"]["grounded_ir_slots"] == grounded_slots
-            for record in records
+            record["target_components"]["grounded_ir_slots"] == grounded_slots for record in records
         )
         assert all(
             record["target_components"]["grounded_ir_slot_count"] == len(grounded_slots)
@@ -484,8 +453,7 @@ def test_prover_syntax_records_align_decoder_ir_and_formula_slots():
             for record in records
         )
         assert all(
-            record["decoded_ir_slot_alignment"]["formula_ungrounded_slots"]
-            == formula_ungrounded
+            record["decoded_ir_slot_alignment"]["formula_ungrounded_slots"] == formula_ungrounded
             for record in records
         )
         assert all(
@@ -541,17 +509,23 @@ def test_prover_syntax_records_audit_omitted_formula_slots_across_targets():
         assert len(records) == 5
         assert len({record["slot_alignment_fingerprint"] for record in records}) == 1
         assert all(record["omitted_formula_slot_names"] == omitted_slot_names for record in records)
-        assert all(record["decoded_omitted_formula_slots"] == decoded_omitted_slots for record in records)
-        assert all(record["grounded_omitted_formula_slots"] == grounded_omitted_slots for record in records)
-        assert all(record["ungrounded_omitted_formula_slots"] == ungrounded_omitted_slots for record in records)
+        assert all(
+            record["decoded_omitted_formula_slots"] == decoded_omitted_slots for record in records
+        )
+        assert all(
+            record["grounded_omitted_formula_slots"] == grounded_omitted_slots for record in records
+        )
+        assert all(
+            record["ungrounded_omitted_formula_slots"] == ungrounded_omitted_slots
+            for record in records
+        )
         assert all(
             record["decoded_ir_slot_alignment"]["omitted_formula_slot_count"]
             == len(omitted_slot_names)
             for record in records
         )
         assert all(
-            record["decoded_ir_slot_alignment"]["omitted_formula_slot_alignment_complete"]
-            is True
+            record["decoded_ir_slot_alignment"]["omitted_formula_slot_alignment_complete"] is True
             for record in records
         )
         assert all(
@@ -559,18 +533,15 @@ def test_prover_syntax_records_audit_omitted_formula_slots_across_targets():
             for record in records
         )
         assert all(
-            record["target_components"]["omitted_formula_slot_names"]
-            == omitted_slot_names
+            record["target_components"]["omitted_formula_slot_names"] == omitted_slot_names
             for record in records
         )
         assert all(
-            record["target_components"]["omitted_formula_slot_alignment_complete"]
-            is True
+            record["target_components"]["omitted_formula_slot_alignment_complete"] is True
             for record in records
         )
         assert all(
-            record["target_quality_gate"]["omitted_formula_slot_names"]
-            == omitted_slot_names
+            record["target_quality_gate"]["omitted_formula_slot_names"] == omitted_slot_names
             for record in records
         )
         assert all(
@@ -578,7 +549,9 @@ def test_prover_syntax_records_audit_omitted_formula_slots_across_targets():
             == grounded_omitted_slots
             for record in records
         )
-        assert all(record["target_quality_gate"]["failed_quality_checks"] == [] for record in records)
+        assert all(
+            record["target_quality_gate"]["failed_quality_checks"] == [] for record in records
+        )
 
 
 def test_prover_syntax_records_audit_target_formula_symbols():
@@ -608,8 +581,7 @@ def test_prover_syntax_records_audit_target_formula_symbols():
         assert len(records) == 5
         assert all(record["source_formula_symbols"] == expected_symbols for record in records)
         assert all(
-            record["target_symbol_alignment"]["source_formula_symbols"]
-            == expected_symbols
+            record["target_symbol_alignment"]["source_formula_symbols"] == expected_symbols
             for record in records
         )
         assert all(
@@ -644,26 +616,20 @@ def test_prover_syntax_symbol_audit_keeps_blocked_reference_formula_grounded():
     assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
     assert norm.proof_ready is False
     assert all(
-        record["source_formula_symbols"] == ["Secretary", "PublishNotice"]
-        for record in records
+        record["source_formula_symbols"] == ["Secretary", "PublishNotice"] for record in records
     )
     assert all(
         record["target_symbol_alignment"]["missing_exported_formula_symbols"] == []
         for record in records
     )
-    assert all(
-        "Section552" not in record["exported_formula_symbols"]
-        for record in records
-    )
+    assert all("Section552" not in record["exported_formula_symbols"] for record in records)
     assert all(record["proof_ready"] is False for record in records)
     assert all(record["requires_validation"] is True for record in records)
 
 
 def test_prover_syntax_records_expose_mental_state_components():
     norm = LegalNormIR.from_parser_element(
-        extract_normative_elements(
-            "The inspector shall knowingly approve the discharge."
-        )[0]
+        extract_normative_elements("The inspector shall knowingly approve the discharge.")[0]
     )
 
     records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
@@ -674,8 +640,7 @@ def test_prover_syntax_records_expose_mental_state_components():
         for record in records
     )
     assert all(
-        record["grounded_decoded_slots"]
-        == ["actor", "modality", "mental_state", "action"]
+        record["grounded_decoded_slots"] == ["actor", "modality", "mental_state", "action"]
         for record in records
     )
     assert all("mental_state" in record["grounded_ir_slots"] for record in records)
@@ -696,18 +661,18 @@ def test_prover_syntax_semantic_fingerprints_change_when_ir_slots_change():
     )
 
     tenant_records = [target.to_dict() for target in validate_ir_with_provers(tenant).targets]
-    permittee_records = [
-        target.to_dict() for target in validate_ir_with_provers(permittee).targets
-    ]
+    permittee_records = [target.to_dict() for target in validate_ir_with_provers(permittee).targets]
 
     assert len({record["ir_semantic_fingerprint"] for record in tenant_records}) == 1
     assert len({record["ir_semantic_fingerprint"] for record in permittee_records}) == 1
-    assert tenant_records[0]["ir_semantic_fingerprint"] != permittee_records[0][
-        "ir_semantic_fingerprint"
-    ]
-    assert tenant_records[0]["decoded_slot_fingerprint"] != permittee_records[0][
-        "decoded_slot_fingerprint"
-    ]
+    assert (
+        tenant_records[0]["ir_semantic_fingerprint"]
+        != permittee_records[0]["ir_semantic_fingerprint"]
+    )
+    assert (
+        tenant_records[0]["decoded_slot_fingerprint"]
+        != permittee_records[0]["decoded_slot_fingerprint"]
+    )
     assert tenant_records[0]["decoded_slots"] == ["actor", "modality", "action"]
     assert permittee_records[0]["decoded_slots"] == ["actor", "modality", "action"]
 
@@ -727,20 +692,21 @@ def test_prover_syntax_target_components_cover_frame_applicability_and_blocked_r
         for target in validate_ir_with_provers(applicability).targets
     }
     blocked_records = {
-        target.target: target.to_dict()
-        for target in validate_ir_with_provers(blocked).targets
+        target.target: target.to_dict() for target in validate_ir_with_provers(blocked).targets
     }
 
     assert applicability_records["fol"]["target_components"]["uses_first_order_quantifier"] is False
     assert applicability_records["fol"]["target_components"]["uses_deontic_wrapper"] is False
-    assert applicability_records["deontic_temporal_fol"]["target_components"][
-        "uses_temporal_wrapper"
-    ] is True
+    assert (
+        applicability_records["deontic_temporal_fol"]["target_components"]["uses_temporal_wrapper"]
+        is True
+    )
     assert blocked_records["fol"]["target_components"]["uses_first_order_quantifier"] is True
     assert blocked_records["deontic_fol"]["target_components"]["uses_deontic_wrapper"] is True
-    assert blocked_records["deontic_temporal_fol"]["target_components"][
-        "uses_temporal_wrapper"
-    ] is True
+    assert (
+        blocked_records["deontic_temporal_fol"]["target_components"]["uses_temporal_wrapper"]
+        is True
+    )
     assert blocked_records["fol"]["proof_ready"] is False
     assert blocked_records["fol"]["requires_validation"] is True
     assert "cross_reference_requires_resolution" in blocked.blockers
@@ -766,9 +732,7 @@ def test_prover_syntax_records_expose_phase8_target_quality_gates():
     resolved_records = [
         target.to_dict() for target in validate_ir_with_provers(formula_resolved).targets
     ]
-    blocked_records = [
-        target.to_dict() for target in validate_ir_with_provers(blocked).targets
-    ]
+    blocked_records = [target.to_dict() for target in validate_ir_with_provers(blocked).targets]
 
     assert all(
         record["target_quality_gate"]["formal_validation_complete"] is True
@@ -782,12 +746,7 @@ def test_prover_syntax_records_expose_phase8_target_quality_gates():
         record["target_quality_gate"]["failed_quality_checks"] == []
         for record in proof_ready_records
     )
-    assert len(
-        {
-            record["target_quality_gate_fingerprint"]
-            for record in proof_ready_records
-        }
-    ) == 5
+    assert len({record["target_quality_gate_fingerprint"] for record in proof_ready_records}) == 5
 
     assert all(
         record["target_quality_gate"]["formal_validation_complete"] is True
@@ -798,8 +757,7 @@ def test_prover_syntax_records_expose_phase8_target_quality_gates():
         for record in resolved_records
     )
     assert all(
-        record["target_quality_gate"]["parser_proof_ready"] is False
-        for record in resolved_records
+        record["target_quality_gate"]["parser_proof_ready"] is False for record in resolved_records
     )
 
     assert all(
@@ -807,8 +765,7 @@ def test_prover_syntax_records_expose_phase8_target_quality_gates():
         for record in blocked_records
     )
     assert all(
-        record["target_quality_gate"]["formula_proof_ready"] is False
-        for record in blocked_records
+        record["target_quality_gate"]["formula_proof_ready"] is False for record in blocked_records
     )
     assert all(
         record["target_quality_gate"]["failed_quality_checks"]

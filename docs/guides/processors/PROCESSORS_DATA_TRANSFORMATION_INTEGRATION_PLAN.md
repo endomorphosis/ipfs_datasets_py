@@ -519,11 +519,11 @@ ipfs_datasets_py/
 **Example: data_transformation/multimedia/__init__.py** (already implemented):
 ```python
 import warnings
+
 warnings.warn(
-    "data_transformation.multimedia is deprecated. "
-    "Use processors.multimedia instead.",
+    "data_transformation.multimedia is deprecated. Use processors.multimedia instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 from ipfs_datasets_py.processors.multimedia import *
 ```

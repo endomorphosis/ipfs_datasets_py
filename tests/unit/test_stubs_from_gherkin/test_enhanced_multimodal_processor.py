@@ -4,11 +4,13 @@ Test stubs for enhanced_multimodal_processor module.
 Feature: Enhanced Multimodal Processor
   Enhanced processing for multiple media types
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_document_with_complex_layout():
@@ -83,6 +85,7 @@ def video_with_audio():
 
 
 # Test scenarios
+
 
 def test_process_mixed_media_document():
     """
@@ -173,6 +176,7 @@ def test_generate_multimodal_summaries():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a document with complex layout")
@@ -343,4 +347,3 @@ def unified_embeddings_are_generated():
     """Step: Then unified embeddings are generated"""
     # TODO: Implement step
     pass
-

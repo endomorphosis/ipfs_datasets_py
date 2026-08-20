@@ -19,9 +19,9 @@ class TestDiffOntologies:
         """Test diffing two empty ontologies."""
         before = {"entities": [], "relationships": []}
         after = {"entities": [], "relationships": []}
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert not diff.has_changes
         assert diff.total_changes == 0
         assert len(diff.entities_added) == 0
@@ -34,9 +34,9 @@ class TestDiffOntologies:
             "entities": [{"id": "e1", "type": "Person", "text": "Alice"}],
             "relationships": [],
         }
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert diff.has_changes
         assert len(diff.entities_added) == 1
         assert diff.entities_added[0]["id"] == "e1"
@@ -48,9 +48,9 @@ class TestDiffOntologies:
             "relationships": [],
         }
         after = {"entities": [], "relationships": []}
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert diff.has_changes
         assert len(diff.entities_removed) == 1
         assert diff.entities_removed[0]["id"] == "e1"
@@ -65,9 +65,9 @@ class TestDiffOntologies:
             "entities": [{"id": "e1", "type": "Person", "text": "Alice Smith"}],
             "relationships": [],
         }
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert diff.has_changes
         assert len(diff.entities_modified) == 1
         assert diff.entities_modified[0]["id"] == "e1"
@@ -84,9 +84,9 @@ class TestDiffOntologies:
             "entities": [{"id": "e1", "type": "Organization", "text": "Alice"}],
             "relationships": [],
         }
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert len(diff.entities_modified) == 1
 
     def test_entity_modified_confidence(self):
@@ -99,9 +99,9 @@ class TestDiffOntologies:
             "entities": [{"id": "e1", "type": "Person", "text": "Alice", "confidence": 0.95}],
             "relationships": [],
         }
-        
+
         diff = diff_ontologies(before, after, compare_confidence=True, confidence_threshold=0.01)
-        
+
         assert len(diff.entities_modified) == 1
 
     def test_entity_confidence_below_threshold(self):
@@ -114,9 +114,9 @@ class TestDiffOntologies:
             "entities": [{"id": "e1", "type": "Person", "text": "Alice", "confidence": 0.805}],
             "relationships": [],
         }
-        
+
         diff = diff_ontologies(before, after, compare_confidence=True, confidence_threshold=0.01)
-        
+
         # 0.005 change is below 0.01 threshold
         assert len(diff.entities_modified) == 0
 
@@ -130,9 +130,9 @@ class TestDiffOntologies:
             "entities": [{"id": "e1", "type": "Person", "text": "Alice", "confidence": 0.99}],
             "relationships": [],
         }
-        
+
         diff = diff_ontologies(before, after, compare_confidence=False)
-        
+
         assert len(diff.entities_modified) == 0
 
     def test_entity_properties_modified(self):
@@ -149,9 +149,9 @@ class TestDiffOntologies:
             ],
             "relationships": [],
         }
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert len(diff.entities_modified) == 1
 
     def test_relationship_added(self):
@@ -159,13 +159,11 @@ class TestDiffOntologies:
         before = {"entities": [], "relationships": []}
         after = {
             "entities": [],
-            "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}
-            ],
+            "relationships": [{"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}],
         }
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert len(diff.relationships_added) == 1
         assert diff.relationships_added[0]["id"] == "r1"
 
@@ -173,23 +171,19 @@ class TestDiffOntologies:
         """Test detecting removed relationships."""
         before = {
             "entities": [],
-            "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}
-            ],
+            "relationships": [{"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}],
         }
         after = {"entities": [], "relationships": []}
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert len(diff.relationships_removed) == 1
 
     def test_relationship_modified(self):
         """Test detecting relationship modifications."""
         before = {
             "entities": [],
-            "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}
-            ],
+            "relationships": [{"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}],
         }
         after = {
             "entities": [],
@@ -197,9 +191,9 @@ class TestDiffOntologies:
                 {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "works_with"}
             ],
         }
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert len(diff.relationships_modified) == 1
 
     def test_complex_diff(self):
@@ -223,9 +217,9 @@ class TestDiffOntologies:
                 # r1 removed
             ],
         }
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert diff.has_changes
         assert len(diff.entities_added) == 1  # e3
         assert len(diff.entities_removed) == 1  # e2
@@ -242,7 +236,7 @@ class TestFormatDiff:
         """Test formatting an empty diff."""
         diff = DiffResult()
         formatted = format_diff(diff)
-        
+
         assert "Ontology Diff" in formatted
         assert "+0 added" in formatted
         assert "-0 removed" in formatted
@@ -254,7 +248,7 @@ class TestFormatDiff:
             entities_removed=[],
         )
         formatted = format_diff(diff)
-        
+
         assert "+1 added" in formatted
         assert "Total changes: 1" in formatted
 
@@ -262,10 +256,12 @@ class TestFormatDiff:
         """Test verbose formatting with details."""
         diff = DiffResult(
             entities_added=[{"id": "e1", "type": "Person", "text": "Alice"}],
-            relationships_removed=[{"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}],
+            relationships_removed=[
+                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}
+            ],
         )
         formatted = format_diff(diff, verbose=True)
-        
+
         assert "Entities Added:" in formatted
         assert "e1: Alice (Person)" in formatted
         assert "Relationships Removed:" in formatted
@@ -283,7 +279,7 @@ class TestFormatDiff:
             ]
         )
         formatted = format_diff(diff, verbose=True)
-        
+
         assert "Entities Modified:" in formatted
         assert "e1:" in formatted
         assert "text: Alice → Alice Smith" in formatted
@@ -297,7 +293,7 @@ class TestComputeDiffStats:
         """Test stats for no changes."""
         diff = DiffResult()
         stats = compute_diff_stats(diff)
-        
+
         assert stats["entities_net_change"] == 0
         assert stats["relationships_net_change"] == 0
         assert stats["has_changes"] is False
@@ -310,7 +306,7 @@ class TestComputeDiffStats:
             entities_removed=[{"id": "e4"}],
         )
         stats = compute_diff_stats(diff)
-        
+
         assert stats["entities_net_change"] == 2  # 3 added - 1 removed
 
     def test_stats_entities_net_negative(self):
@@ -320,7 +316,7 @@ class TestComputeDiffStats:
             entities_removed=[{"id": "e2"}, {"id": "e3"}],
         )
         stats = compute_diff_stats(diff)
-        
+
         assert stats["entities_net_change"] == -1  # 1 added - 2 removed
 
     def test_stats_modification_rate(self):
@@ -331,7 +327,7 @@ class TestComputeDiffStats:
             relationships_added=[{"id": "r1"}],
         )
         stats = compute_diff_stats(diff)
-        
+
         # 2 modified out of (1+2+1) = 4 items -> 0.5
         assert stats["modification_rate"] == pytest.approx(0.5)
 
@@ -342,7 +338,7 @@ class TestComputeDiffStats:
             relationships_removed=[{"id": "r1"}],
         )
         stats = compute_diff_stats(diff)
-        
+
         assert "entities_net_change" in stats
         assert "relationships_net_change" in stats
         assert "modification_rate" in stats
@@ -386,9 +382,9 @@ class TestEdgeCases:
         """Test diffing ontologies with missing keys."""
         before = {}  # Missing entities and relationships
         after = {"entities": [{"id": "e1", "text": "Alice"}]}
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert len(diff.entities_added) == 1
 
     def test_diff_duplicate_ids(self):
@@ -404,9 +400,9 @@ class TestEdgeCases:
             "entities": [{"id": "e1", "text": "Alice v3"}],
             "relationships": [],
         }
-        
+
         diff = diff_ontologies(before, after)
-        
+
         # Should compare against last version (Alice v2)
         assert len(diff.entities_modified) == 1
 
@@ -420,21 +416,19 @@ class TestEdgeCases:
             "entities": [{"id": "e1", "text": "Alice", "properties": {}}],
             "relationships": [],
         }
-        
+
         diff = diff_ontologies(before, after)
-        
+
         # None vs {} should be considered different
         assert len(diff.entities_modified) == 1
 
     def test_format_diff_with_special_characters(self):
         """Test formatting with special characters in text."""
         diff = DiffResult(
-            entities_added=[
-                {"id": "e1", "type": "Person", "text": "Alice \"Ace\" Smith"}
-            ]
+            entities_added=[{"id": "e1", "type": "Person", "text": 'Alice "Ace" Smith'}]
         )
         formatted = format_diff(diff, verbose=True)
-        
+
         assert 'Alice "Ace" Smith' in formatted
 
     def test_diff_relationship_direction_change(self):
@@ -463,7 +457,7 @@ class TestEdgeCases:
                 }
             ],
         }
-        
+
         diff = diff_ontologies(before, after)
-        
+
         assert len(diff.relationships_modified) == 1

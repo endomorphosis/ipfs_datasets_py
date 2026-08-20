@@ -5,10 +5,12 @@ Feature: UCANManager.has_capability()
   Tests the has_capability() method of UCANManager.
   This callable checks if a DID has authorization for a resource and action.
 """
+
 import pytest
 
 
 # Fixtures for Background
+
 
 @pytest.fixture
 def a_ucanmanager_instance_is_initialized():
@@ -39,10 +41,15 @@ def the_token_has_capability_resourcefilesecrettxt_actionread():
 
 # Test scenarios
 
-def test_has_capability_returns_true_for_exact_match(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+
+def test_has_capability_returns_true_for_exact_match(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability returns True for exact match
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -53,10 +60,14 @@ def test_has_capability_returns_true_for_exact_match(a_ucanmanager_instance_is_i
     pass
 
 
-def test_has_capability_returns_false_when_resource_does_not_match(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+def test_has_capability_returns_false_when_resource_does_not_match(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability returns False when resource does not match
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -67,10 +78,14 @@ def test_has_capability_returns_false_when_resource_does_not_match(a_ucanmanager
     pass
 
 
-def test_has_capability_returns_false_when_action_does_not_match(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+def test_has_capability_returns_false_when_action_does_not_match(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability returns False when action does not match
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -81,10 +96,14 @@ def test_has_capability_returns_false_when_action_does_not_match(a_ucanmanager_i
     pass
 
 
-def test_has_capability_returns_false_when_did_has_no_capabilities(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+def test_has_capability_returns_false_when_did_has_no_capabilities(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability returns False when DID has no capabilities
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -95,10 +114,14 @@ def test_has_capability_returns_false_when_did_has_no_capabilities(a_ucanmanager
     pass
 
 
-def test_has_capability_matches_wildcard_resource_with_specific_action(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+def test_has_capability_matches_wildcard_resource_with_specific_action(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability matches wildcard resource with specific action
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -110,10 +133,14 @@ def test_has_capability_matches_wildcard_resource_with_specific_action(a_ucanman
     pass
 
 
-def test_has_capability_matches_specific_resource_with_wildcard_action(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+def test_has_capability_matches_specific_resource_with_wildcard_action(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability matches specific resource with wildcard action
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -125,10 +152,14 @@ def test_has_capability_matches_specific_resource_with_wildcard_action(a_ucanman
     pass
 
 
-def test_has_capability_matches_full_wildcard(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+def test_has_capability_matches_full_wildcard(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability matches full wildcard
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -140,10 +171,14 @@ def test_has_capability_matches_full_wildcard(a_ucanmanager_instance_is_initiali
     pass
 
 
-def test_has_capability_returns_false_for_expired_token(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+def test_has_capability_returns_false_for_expired_token(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability returns False for expired token
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -155,10 +190,14 @@ def test_has_capability_returns_false_for_expired_token(a_ucanmanager_instance_i
     pass
 
 
-def test_has_capability_returns_false_for_revoked_token(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+def test_has_capability_returns_false_for_revoked_token(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability returns False for revoked token
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -170,10 +209,14 @@ def test_has_capability_returns_false_for_revoked_token(a_ucanmanager_instance_i
     pass
 
 
-def test_has_capability_checks_all_valid_tokens_for_did(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+def test_has_capability_checks_all_valid_tokens_for_did(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability checks all valid tokens for DID
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -186,10 +229,14 @@ def test_has_capability_checks_all_valid_tokens_for_did(a_ucanmanager_instance_i
     pass
 
 
-def test_has_capability_returns_true_when_any_token_matches(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+def test_has_capability_returns_true_when_any_token_matches(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability returns True when any token matches
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -202,10 +249,14 @@ def test_has_capability_returns_true_when_any_token_matches(a_ucanmanager_instan
     pass
 
 
-def test_has_capability_fails_when_manager_not_initialized(a_ucanmanager_instance_is_initialized, a_valid_token_exists_with_audiencedidkeybob, the_token_has_capability_resourcefilesecrettxt_actionread):
+def test_has_capability_fails_when_manager_not_initialized(
+    a_ucanmanager_instance_is_initialized,
+    a_valid_token_exists_with_audiencedidkeybob,
+    the_token_has_capability_resourcefilesecrettxt_actionread,
+):
     """
     Scenario: Has capability fails when manager not initialized
-    
+
     Given a UCANManager instance is initialized
     Given a valid token exists with audience="did:key:bob"
     Given the token has capability resource="file://secret.txt" action="read"
@@ -215,4 +266,3 @@ def test_has_capability_fails_when_manager_not_initialized(a_ucanmanager_instanc
     """
     # TODO: Implement test
     pass
-

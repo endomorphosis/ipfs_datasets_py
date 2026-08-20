@@ -296,9 +296,7 @@ def test_view_registry_has_exact_ids_stable_identity_and_no_alias_resolution() -
 
     assert registry.view_ids == ("view:facts", "view:modal")
     assert registry.resolve("view:modal").logic_family == "deontic"
-    assert registry.identity.digest == ViewRegistry.from_dict(
-        registry.to_dict()
-    ).identity.digest
+    assert registry.identity.digest == ViewRegistry.from_dict(registry.to_dict()).identity.digest
     with pytest.raises(KeyError):
         registry.resolve("modal")
     with pytest.raises(FormalizationValidationError, match="unique"):
@@ -393,9 +391,7 @@ def test_proof_obligations_are_declarations_not_solver_results() -> None:
     with pytest.raises(FormalizationValidationError, match="unknown assumptions"):
         replace(
             artifact,
-            proof_obligations=(
-                replace(obligation, assumption_ids=("assumption:missing",)),
-            ),
+            proof_obligations=(replace(obligation, assumption_ids=("assumption:missing",)),),
         )
 
 

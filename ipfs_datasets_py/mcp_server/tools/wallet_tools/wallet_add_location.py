@@ -8,7 +8,9 @@ from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
 from ._helpers import default_blob_dir, default_wallet_dir, key_from_optional_hex, load, save
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Add an encrypted location record to a wallet.")
+@tool_metadata(
+    category="wallet_tools", mcp_description="Add an encrypted location record to a wallet."
+)
 async def wallet_add_location(
     wallet_id: str,
     actor_did: str,

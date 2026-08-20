@@ -35,7 +35,9 @@ def _build_reasoner() -> tuple[
     Dict[str, Dict[str, Any]],
     Dict[str, Dict[str, bool]],
 ]:
-    ir_file = parse_cnl_sentence("Company A shall file report within 30 days.", jurisdiction="us/federal")
+    ir_file = parse_cnl_sentence(
+        "Company A shall file report within 30 days.", jurisdiction="us/federal"
+    )
     ir_forbid = parse_cnl_sentence("Company A shall not dump waste.", jurisdiction="us/federal")
     ir_backup = parse_cnl_sentence(
         "Company A shall submit backup report within 10 days unless emergency.",
@@ -167,7 +169,9 @@ def test_reasoner_queries_and_proofs() -> None:
             out = reasoner.explain_proof(proof_id, format=case.get("format", "nl"))
             if case.get("expect_reconstructed_nl"):
                 assert len(out["reconstructed_nl"]) >= 1
-                assert any("shall" in s.lower() or "may" in s.lower() for s in out["reconstructed_nl"])
+                assert any(
+                    "shall" in s.lower() or "may" in s.lower() for s in out["reconstructed_nl"]
+                )
             if case.get("expect_ir_refs"):
                 assert any(step.get("ir_refs") for step in out.get("steps", []))
             if case.get("expect_provenance"):

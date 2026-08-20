@@ -12,11 +12,13 @@ Methods under test:
   - OntologyMediator.most_improved_action()
   - OntologyCritic.score_is_above_baseline(score, baseline)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -30,29 +32,40 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_pipeline(domain="test"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline(domain=domain)
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(adapter, score, actions=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     adapter._feedback.append(FeedbackRecord(final_score=score, action_types=actions or []))
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -60,6 +73,7 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
@@ -77,6 +91,7 @@ class _FakeOntology:
 
 # ── OntologyOptimizer.__repr__ ────────────────────────────────────────────────
 
+
 class TestOptimizerRepr:
     def test_repr_contains_class_name(self):
         o = _make_optimizer()
@@ -93,6 +108,7 @@ class TestOptimizerRepr:
 
 
 # ── OntologyOptimizer.score_cumulative_max ────────────────────────────────────
+
 
 class TestScoreCumulativeMax:
     def test_empty_returns_empty(self):
@@ -121,6 +137,7 @@ class TestScoreCumulativeMax:
 
 # ── OntologyPipeline.__repr__ ─────────────────────────────────────────────────
 
+
 class TestPipelineRepr:
     def test_repr_contains_class_name(self):
         assert "OntologyPipeline" in repr(_make_pipeline())
@@ -135,19 +152,23 @@ class TestPipelineRepr:
 
 # ── FeedbackRecord.__repr__ ───────────────────────────────────────────────────
 
+
 class TestFeedbackRecordRepr:
     def test_repr_contains_class_name(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
         r = FeedbackRecord(final_score=0.75)
         assert "FeedbackRecord" in repr(r)
 
     def test_repr_contains_score(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
         r = FeedbackRecord(final_score=0.75)
         assert "0.750" in repr(r)
 
 
 # ── OntologyLearningAdapter.feedback_ewma ────────────────────────────────────
+
 
 class TestFeedbackEWMA:
     def test_empty_returns_zero(self):
@@ -173,6 +194,7 @@ class TestFeedbackEWMA:
 
 
 # ── OntologyLearningAdapter.feedback_normalized ───────────────────────────────
+
 
 class TestFeedbackNormalized:
     def test_empty_returns_empty(self):
@@ -202,9 +224,11 @@ class TestFeedbackNormalized:
 
 # ── LogicValidator.fanout_ratio ───────────────────────────────────────────────
 
+
 class TestFanoutRatio:
     def _make_validator(self):
         from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
         return LogicValidator()
 
     def test_no_rels_returns_zero(self):
@@ -225,9 +249,11 @@ class TestFanoutRatio:
 
 # ── LogicValidator.symmetric_pair_count ───────────────────────────────────────
 
+
 class TestSymmetricPairCount:
     def _make_validator(self):
         from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
         return LogicValidator()
 
     def test_no_rels_returns_zero(self):
@@ -252,11 +278,13 @@ class TestSymmetricPairCount:
 
 # ── OntologyMediator.most_improved_action ─────────────────────────────────────
 
+
 class TestMostImprovedAction:
     def _make_mediator(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         return OntologyMediator(generator=OntologyGenerator(), critic=OntologyCritic(use_llm=False))
 
     def test_no_feedback_returns_none(self):
@@ -279,12 +307,23 @@ class TestMostImprovedAction:
 
 # ── OntologyCritic.score_is_above_baseline ────────────────────────────────────
 
+
 class TestScoreIsAboveBaseline:
     def test_all_above_returns_true(self):
         critic = _make_critic()
-        score = _make_score(**{d: 0.9 for d in
-                               ["completeness", "consistency", "clarity",
-                                "granularity", "relationship_coherence", "domain_alignment"]})
+        score = _make_score(
+            **{
+                d: 0.9
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         assert critic.score_is_above_baseline(score, baseline=0.5)
 
     def test_one_below_returns_false(self):

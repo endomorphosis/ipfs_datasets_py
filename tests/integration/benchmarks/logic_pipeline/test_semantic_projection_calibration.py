@@ -35,9 +35,7 @@ from benchmarks.logic_pipeline.semantic_reassessment import (
 
 
 def _input_digest(text: str) -> str:
-    return hashlib.sha256(
-        canonical_json({"text": text}).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(canonical_json({"text": text}).encode("utf-8")).hexdigest()
 
 
 def _stage_name(producer_id: str) -> StageName:
@@ -58,9 +56,7 @@ def _coordinate(
     logic = target.logic_family if correct else "fol"
     semantic_target = target.target if correct else "unrelated_action"
     semantic_class = target.semantic_class if correct else "disproved"
-    predicates = (
-        target.predicates if correct else ("unrelated_action",)
-    )
+    predicates = target.predicates if correct else ("unrelated_action",)
     entities = target.entities if correct else ("unrelated_entity",)
     completeness = {
         "logic_family": True,
@@ -92,9 +88,7 @@ def _coordinate(
         "validation_errors": [],
     }
     evidence_cid = (
-        cid_for_dag_json(response)
-        if stage is StageName.SYMAI
-        else cid_for_dag_json(modal_ir)
+        cid_for_dag_json(response) if stage is StageName.SYMAI else cid_for_dag_json(modal_ir)
     )
     projection = SemanticProjection.create(
         producer_id=producer_id,
@@ -110,9 +104,7 @@ def _coordinate(
     )
     if stage is StageName.COMPILER:
         payload: dict[str, object] = {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"),
             "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
             "source_cid": target.source_cid,
             "modal_ir": modal_ir,
@@ -122,9 +114,7 @@ def _coordinate(
         }
     elif stage is StageName.SPACY:
         payload = {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"),
             "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
             "document": {"source_cid": target.source_cid},
             "modal_ir": modal_ir,
@@ -134,9 +124,7 @@ def _coordinate(
     else:
         raw_output = canonical_json(response)
         payload = {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"),
             "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
             "source_cid": target.source_cid,
             "raw_output": raw_output,
@@ -234,7 +222,5 @@ def test_synthetic_grid_proves_coverage_but_cannot_open_gate() -> None:
     for producer_id in SEMANTIC_PRODUCER_IDS_V2:
         assert all(
             count == 20
-            for count in report["coverage"]["field_coordinate_counts"][
-                producer_id
-            ].values()
+            for count in report["coverage"]["field_coordinate_counts"][producer_id].values()
         )

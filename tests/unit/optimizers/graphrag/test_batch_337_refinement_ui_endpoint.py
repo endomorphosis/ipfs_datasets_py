@@ -10,7 +10,9 @@ from ipfs_datasets_py.optimizers.graphrag.refinement_ui_endpoint import create_r
 
 
 class _FakeMediator:
-    def suggest_refinement_strategy(self, ontology: Dict[str, Any], score: Any, context: Any) -> Dict[str, Any]:
+    def suggest_refinement_strategy(
+        self, ontology: Dict[str, Any], score: Any, context: Any
+    ) -> Dict[str, Any]:
         return {
             "action": "add_missing_properties",
             "priority": "medium",
@@ -29,7 +31,9 @@ class _FakeMediator:
             "summary": {"count": len(strategies)},
         }
 
-    def refine_ontology(self, ontology: Dict[str, Any], feedback: Any, context: Any) -> Dict[str, Any]:
+    def refine_ontology(
+        self, ontology: Dict[str, Any], feedback: Any, context: Any
+    ) -> Dict[str, Any]:
         recommendations = [r.lower() for r in getattr(feedback, "recommendations", [])]
         updated = {
             "entities": [dict(entity) for entity in ontology.get("entities", [])],

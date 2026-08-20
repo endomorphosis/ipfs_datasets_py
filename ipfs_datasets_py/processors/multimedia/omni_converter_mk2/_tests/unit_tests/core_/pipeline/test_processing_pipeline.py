@@ -12,7 +12,6 @@ from core._processing_pipeline import ProcessingPipeline
 from core import make_processing_pipeline
 
 
-
 import hashlib
 
 from configs import configs, Configs
@@ -38,6 +37,7 @@ from core.output_formatter._output_formatter import OutputFormatter
 from core.content_sanitizer import ContentSanitizer
 from monitors import make_security_monitor, SecurityMonitor
 
+
 class _ProcessingPipelineResources(TypedDict):
     file_format_detector: Callable
     file_validator: Callable
@@ -50,6 +50,7 @@ class _ProcessingPipelineResources(TypedDict):
     logger: Logger
     hashlib: ModuleType
 
+
 real_resources: _ProcessingPipelineResources = {
     "file_format_detector": make_file_format_detector(),
     "file_validator": make_file_validator(),
@@ -61,24 +62,26 @@ real_resources: _ProcessingPipelineResources = {
     "processing_result": ProcessingResult,
     "pipeline_status": PipelineStatus(),
     "logger": logger,
-    "hashlib": hashlib
+    "hashlib": hashlib,
 }
+
 
 def make_mock_resources():
     """Create a mock resources dictionary for testing."""
     return {
-        'file_format_detector': MagicMock(spec=FileFormatDetector),
-        'file_validator': MagicMock(spec=FileValidator),
-        'content_extractor': MagicMock(spec=ContentExtractor),
-        'content_sanitizer': MagicMock(spec=ContentSanitizer),
-        'text_normalizer': MagicMock(spec=TextNormalizer),
-        'output_formatter': MagicMock(spec=OutputFormatter),
-        'processing_result': MagicMock(spec=ProcessingResult),
-        'pipeline_status': MagicMock(spec=PipelineStatus),
-        'security_monitor': MagicMock(spec=SecurityMonitor),
-        'logger': MagicMock(spec=Logger),
-        'hashlib': MagicMock(spec=hashlib),
+        "file_format_detector": MagicMock(spec=FileFormatDetector),
+        "file_validator": MagicMock(spec=FileValidator),
+        "content_extractor": MagicMock(spec=ContentExtractor),
+        "content_sanitizer": MagicMock(spec=ContentSanitizer),
+        "text_normalizer": MagicMock(spec=TextNormalizer),
+        "output_formatter": MagicMock(spec=OutputFormatter),
+        "processing_result": MagicMock(spec=ProcessingResult),
+        "pipeline_status": MagicMock(spec=PipelineStatus),
+        "security_monitor": MagicMock(spec=SecurityMonitor),
+        "logger": MagicMock(spec=Logger),
+        "hashlib": MagicMock(spec=hashlib),
     }
+
 
 class TestProcessingPipelineInit(unittest.TestCase):
     """Test ProcessingPipeline initialization."""
@@ -87,18 +90,18 @@ class TestProcessingPipelineInit(unittest.TestCase):
         """Set up test fixtures."""
         # Create a temp directory for test files
         self.temp_dir = tempfile.mkdtemp()
-        
+
         # Create test files
         self.test_file_path = os.path.join(self.temp_dir, "test_file.txt")
-        with open(self.test_file_path, 'w') as f:
+        with open(self.test_file_path, "w") as f:
             f.write("Test content")
-        
+
         self.large_file_path = os.path.join(self.temp_dir, "large_file.txt")
-        with open(self.large_file_path, 'w') as f:
+        with open(self.large_file_path, "w") as f:
             f.write("A" * (15 * 1024 * 1024))  # 15 MB file (exceeds text limit)
-        
+
         self.executable_file_path = os.path.join(self.temp_dir, "test_script.sh")
-        with open(self.executable_file_path, 'w') as f:
+        with open(self.executable_file_path, "w") as f:
             f.write("#!/bin/sh\necho 'Hello, world!'")
 
     def tearDown(self):
@@ -129,10 +132,10 @@ class TestProcessingPipelineInit(unittest.TestCase):
 
         # Create instance with no arguments
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
-        
+
         # Verify instance creation
         self.assertIsInstance(pipeline, ProcessingPipeline)
-        
+
         # Verify configs is set to default
         self.assertIsNotNone(pipeline.configs)
         self.assertIsInstance(pipeline.configs, Configs)
@@ -152,37 +155,37 @@ class TestProcessingPipelineInit(unittest.TestCase):
         self.assertIsInstance(pipeline._listeners, list)
         self.assertEqual(pipeline._listeners, [])
 
+
 class TestProcessingPipelineProcessFile(unittest.TestCase):
     """Test ProcessingPipeline.process_file method."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         self.mock_resources = {
-            'file_format_detector': MagicMock(),
-            'file_validator': MagicMock(),
-            'content_extractor': MagicMock(),
-            'content_sanitizer': MagicMock(),
-            'text_normalizer': MagicMock(),
-            'output_formatter': MagicMock(),
-            'processing_result': MagicMock(),
-            'pipeline_status': MagicMock(),
-            'security_monitor': MagicMock(),
-            'logger': MagicMock(),
-            'hashlib': MagicMock()
+            "file_format_detector": MagicMock(),
+            "file_validator": MagicMock(),
+            "content_extractor": MagicMock(),
+            "content_sanitizer": MagicMock(),
+            "text_normalizer": MagicMock(),
+            "output_formatter": MagicMock(),
+            "processing_result": MagicMock(),
+            "pipeline_status": MagicMock(),
+            "security_monitor": MagicMock(),
+            "logger": MagicMock(),
+            "hashlib": MagicMock(),
         }
         self.mock_configs = MagicMock()
-        
+
         # Create temporary test file
-        self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt')
+        self.temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt")
         self.temp_file.write("Test content for processing")
         self.temp_file.close()
         self.test_file_path = self.temp_file.name
-    
+
     def tearDown(self):
         """Clean up test fixtures."""
         if os.path.exists(self.test_file_path):
             os.unlink(self.test_file_path)
-    
 
     def test_process_file_valid_file_default_params(self):
         """
@@ -203,40 +206,39 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
-            output_path='/tmp/test_output.txt',
-            format='txt',
+            output_path="/tmp/test_output.txt",
+            format="txt",
             errors=[],
-            metadata={'extracted_text': 'Test content'},
-            content_hash='abc123',
-            timestamp=datetime.now()
+            metadata={"extracted_text": "Test content"},
+            content_hash="abc123",
+            timestamp=datetime.now(),
         )
-        
+
         # Create pipeline with mocked components
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
-        pipeline._format_detector.detect.return_value = 'txt'
+        pipeline._format_detector.detect.return_value = "txt"
         pipeline._file_validator.validate.return_value = True
-        pipeline._content_extractor.extract.return_value = 'Test content'
-        pipeline._text_normalizer.normalize.return_value = 'Test content'
-        pipeline._output_formatter.format.return_value = 'Test content'
-        pipeline._hashlib.sha256.return_value.hexdigest.return_value = 'abc123'
-        
+        pipeline._content_extractor.extract.return_value = "Test content"
+        pipeline._text_normalizer.normalize.return_value = "Test content"
+        pipeline._output_formatter.format.return_value = "Test content"
+        pipeline._hashlib.sha256.return_value.hexdigest.return_value = "abc123"
+
         # Mock the process_file method to return our mock result
         pipeline.process_file = MagicMock(return_value=mock_result)
-        
+
         # Call process_file
         result = pipeline.process_file(self.test_file_path)
-        
+
         # Verify result
         self.assertIsInstance(result, ProcessingResult)
         self.assertTrue(result.success)
         self.assertEqual(result.file_path, self.test_file_path)
-        self.assertTrue(result.output_path.endswith('.txt'))
-        self.assertEqual(result.format, 'txt')
+        self.assertTrue(result.output_path.endswith(".txt"))
+        self.assertEqual(result.format, "txt")
         self.assertEqual(result.errors, [])
         self.assertIsNotNone(result.metadata)
         self.assertIsNotNone(result.content_hash)
         self.assertIsInstance(result.timestamp, datetime)
-    
 
     def test_process_file_with_output_format_txt(self):
         """
@@ -249,21 +251,20 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
-            output_path='/tmp/test_output.txt',
-            format='txt',
+            output_path="/tmp/test_output.txt",
+            format="txt",
             errors=[],
             metadata={},
-            content_hash='abc123',
-            timestamp=datetime.now()
+            content_hash="abc123",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=mock_result)
-        
-        result = pipeline.process_file(self.test_file_path, output_format='txt')
-        
-        self.assertTrue(result.output_path.endswith('.txt'))
-    
+
+        result = pipeline.process_file(self.test_file_path, output_format="txt")
+
+        self.assertTrue(result.output_path.endswith(".txt"))
 
     def test_process_file_with_output_format_md(self):
         """
@@ -276,21 +277,20 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
-            output_path='/tmp/test_output.md',
-            format='txt',
+            output_path="/tmp/test_output.md",
+            format="txt",
             errors=[],
             metadata={},
-            content_hash='abc123',
-            timestamp=datetime.now()
+            content_hash="abc123",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=mock_result)
-        
-        result = pipeline.process_file(self.test_file_path, output_format='md')
-        
-        self.assertTrue(result.output_path.endswith('.md'))
-    
+
+        result = pipeline.process_file(self.test_file_path, output_format="md")
+
+        self.assertTrue(result.output_path.endswith(".md"))
 
     def test_process_file_with_output_path_as_file(self):
         """
@@ -300,25 +300,24 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Output is written to specified file path
         - ProcessingResult.output_path matches provided path
         """
-        custom_output_path = '/path/to/output.txt'
+        custom_output_path = "/path/to/output.txt"
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
             output_path=custom_output_path,
-            format='txt',
+            format="txt",
             errors=[],
             metadata={},
-            content_hash='abc123',
-            timestamp=datetime.now()
+            content_hash="abc123",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=mock_result)
-        
+
         result = pipeline.process_file(self.test_file_path, output_path=custom_output_path)
-        
+
         self.assertEqual(result.output_path, custom_output_path)
-    
 
     def test_process_file_with_output_path_as_directory(self):
         """
@@ -329,27 +328,26 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Output filename based on input filename
         - Extension replaced with output_format extension
         """
-        output_dir = '/path/to/dir/'
-        expected_output = '/path/to/dir/test_file.txt'
+        output_dir = "/path/to/dir/"
+        expected_output = "/path/to/dir/test_file.txt"
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
             output_path=expected_output,
-            format='txt',
+            format="txt",
             errors=[],
             metadata={},
-            content_hash='abc123',
-            timestamp=datetime.now()
+            content_hash="abc123",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=mock_result)
-        
+
         result = pipeline.process_file(self.test_file_path, output_path=output_dir)
-        
+
         self.assertTrue(result.output_path.startswith(output_dir))
-        self.assertTrue(result.output_path.endswith('.txt'))
-    
+        self.assertTrue(result.output_path.endswith(".txt"))
 
     def test_process_file_with_normalizers(self):
         """
@@ -360,26 +358,26 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Normalizers applied in order
         - ProcessingResult reflects normalized content
         """
-        normalizers = ['normalizer1', 'normalizer2']
+        normalizers = ["normalizer1", "normalizer2"]
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
-            output_path='/tmp/output.txt',
-            format='txt',
+            output_path="/tmp/output.txt",
+            format="txt",
             errors=[],
-            metadata={'normalizers_applied': normalizers},
-            content_hash='abc123',
-            timestamp=datetime.now()
+            metadata={"normalizers_applied": normalizers},
+            content_hash="abc123",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=mock_result)
-        
+
         result = pipeline.process_file(self.test_file_path, normalizers=normalizers)
-        
+
         # Verify normalizers were passed and applied
         pipeline.process_file.assert_called_with(self.test_file_path, normalizers=normalizers)
-        self.assertIn('normalizers_applied', result.metadata)
+        self.assertIn("normalizers_applied", result.metadata)
 
     def test_process_file_without_normalizers(self):
         """
@@ -392,22 +390,21 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
-            output_path='/tmp/output.txt',
-            format='txt',
+            output_path="/tmp/output.txt",
+            format="txt",
             errors=[],
-            metadata={'normalization_skipped': True},
-            content_hash='abc123',
-            timestamp=datetime.now()
+            metadata={"normalization_skipped": True},
+            content_hash="abc123",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=mock_result)
-        
+
         result = pipeline.process_file(self.test_file_path, normalizers=None)
-        
+
         pipeline.process_file.assert_called_with(self.test_file_path, normalizers=None)
         self.assertTrue(result.success)
-    
 
     def test_process_file_nonexistent_file(self):
         """
@@ -419,12 +416,11 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         """
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(side_effect=FileNotFoundError("File not found"))
-        
+
         with self.assertRaises(FileNotFoundError) as context:
-            pipeline.process_file('/nonexistent/file.txt')
-        
+            pipeline.process_file("/nonexistent/file.txt")
+
         self.assertIn("File not found", str(context.exception))
-    
 
     def test_process_file_permission_denied(self):
         """
@@ -435,15 +431,13 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Error message indicates permission denied
         """
 
-        
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(side_effect=PermissionError("Permission denied"))
-        
+
         with self.assertRaises(PermissionError) as context:
-            pipeline.process_file('/restricted/file.txt')
-        
+            pipeline.process_file("/restricted/file.txt")
+
         self.assertIn("Permission denied", str(context.exception))
-    
 
     def test_process_file_unsupported_format(self):
         """
@@ -454,15 +448,13 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Error message indicates format not supported
         """
 
-        
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(side_effect=ValueError("Unsupported file format"))
-        
+
         with self.assertRaises(ValueError) as context:
-            pipeline.process_file('/path/to/unsupported.xyz')
-        
+            pipeline.process_file("/path/to/unsupported.xyz")
+
         self.assertIn("Unsupported file format", str(context.exception))
-    
 
     def test_process_file_invalid_output_format(self):
         """
@@ -473,15 +465,13 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Error indicates invalid output format
         """
 
-        
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(side_effect=ValueError("Invalid output format"))
-        
+
         with self.assertRaises(ValueError) as context:
-            pipeline.process_file(self.test_file_path, output_format='invalid')
-        
+            pipeline.process_file(self.test_file_path, output_format="invalid")
+
         self.assertIn("Invalid output format", str(context.exception))
-    
 
     def test_process_file_existing_output_collision(self):
         """
@@ -492,29 +482,26 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - ProcessingResult.output_path includes hash prefix
         """
 
-
-        
         # Mock result with hash prefix in filename
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
-            output_path='/tmp/abc1_test_file.txt',
-            format='txt',
+            output_path="/tmp/abc1_test_file.txt",
+            format="txt",
             errors=[],
-            metadata={'collision_resolved': True},
-            content_hash='abc123',
-            timestamp=datetime.now()
+            metadata={"collision_resolved": True},
+            content_hash="abc123",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=mock_result)
-        
+
         result = pipeline.process_file(self.test_file_path)
-        
+
         # Verify hash prefix is present
-        self.assertTrue('abc1' in result.output_path)
-        self.assertTrue(result.metadata.get('collision_resolved', False))
-    
+        self.assertTrue("abc1" in result.output_path)
+        self.assertTrue(result.metadata.get("collision_resolved", False))
 
     def test_process_file_status_updates(self):
         """
@@ -525,34 +512,32 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         - Status updates include relevant stage information
         """
 
-
-        
         # Mock listener
         mock_listener = MagicMock()
-        
+
         # Mock result
         mock_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
-            output_path='/tmp/output.txt',
-            format='txt',
+            output_path="/tmp/output.txt",
+            format="txt",
             errors=[],
             metadata={},
-            content_hash='abc123',
-            timestamp=datetime.now()
+            content_hash="abc123",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.register_listener = MagicMock()
         pipeline.process_file = MagicMock(return_value=mock_result)
         pipeline._notify_listeners = MagicMock()
-        
+
         # Register listener
         pipeline.register_listener(mock_listener)
-        
+
         # Process file
         result = pipeline.process_file(self.test_file_path)
-        
+
         # Verify listener was registered
         pipeline.register_listener.assert_called_with(mock_listener)
 
@@ -568,21 +553,21 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         mock_result = ProcessingResult(
             success=False,
             file_path=self.test_file_path,
-            output_path='',
-            format='txt',
-            errors=['Content extraction failed: Invalid file structure'],
-            metadata={'extraction_attempted': True},
-            content_hash='',
-            timestamp=datetime.now()
+            output_path="",
+            format="txt",
+            errors=["Content extraction failed: Invalid file structure"],
+            metadata={"extraction_attempted": True},
+            content_hash="",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=mock_result)
-        
+
         result = pipeline.process_file(self.test_file_path)
-        
+
         self.assertFalse(result.success)
-        self.assertIn('Content extraction failed', result.errors[0])
+        self.assertIn("Content extraction failed", result.errors[0])
 
     def test_process_file_error_during_normalization(self):
         """
@@ -595,26 +580,26 @@ class TestProcessingPipelineProcessFile(unittest.TestCase):
         mock_result = ProcessingResult(
             success=False,
             file_path=self.test_file_path,
-            output_path='',
-            format='txt',
-            errors=['Normalization failed: Invalid normalizer configuration'],
-            metadata={'normalization_attempted': True},
-            content_hash='',
-            timestamp=datetime.now()
+            output_path="",
+            format="txt",
+            errors=["Normalization failed: Invalid normalizer configuration"],
+            metadata={"normalization_attempted": True},
+            content_hash="",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=mock_result)
-        
-        result = pipeline.process_file(self.test_file_path, normalizers=['failing_normalizer'])
-        
+
+        result = pipeline.process_file(self.test_file_path, normalizers=["failing_normalizer"])
+
         self.assertFalse(result.success)
-        self.assertIn('Normalization failed', result.errors[0])
+        self.assertIn("Normalization failed", result.errors[0])
 
 
 class TestProcessingPipelineStatus(unittest.TestCase):
     """Test ProcessingPipeline.status property."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         self.mock_resources = make_mock_resources()
@@ -630,11 +615,11 @@ class TestProcessingPipelineStatus(unittest.TestCase):
         - Status indicates ready/idle state
         """
         initial_status = {
-            'state': 'idle',
-            'current_file': None,
-            'progress': 0,
-            'stage': 'ready',
-            'last_updated': datetime.now()
+            "state": "idle",
+            "current_file": None,
+            "progress": 0,
+            "stage": "ready",
+            "last_updated": datetime.now(),
         }
 
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
@@ -644,10 +629,10 @@ class TestProcessingPipelineStatus(unittest.TestCase):
         status = pipeline.status
 
         self.assertIsInstance(status, dict)
-        self.assertEqual(status['state'], 'idle')
-        self.assertIsNone(status['current_file'])
-        self.assertEqual(status['progress'], 0)
-        self.assertEqual(status['stage'], 'ready')
+        self.assertEqual(status["state"], "idle")
+        self.assertIsNone(status["current_file"])
+        self.assertEqual(status["progress"], 0)
+        self.assertEqual(status["stage"], "ready")
 
     def test_status_during_processing(self):
         """
@@ -659,23 +644,23 @@ class TestProcessingPipelineStatus(unittest.TestCase):
         - Contains progress information if available
         """
         processing_status = {
-            'state': 'processing',
-            'current_file': '/path/to/file.txt',
-            'progress': 50,
-            'stage': 'content_extraction',
-            'last_updated': datetime.now()
+            "state": "processing",
+            "current_file": "/path/to/file.txt",
+            "progress": 50,
+            "stage": "content_extraction",
+            "last_updated": datetime.now(),
         }
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         # Mock the _status object's to_dict method to return our test data
         pipeline._status.to_dict.return_value = processing_status
-        
+
         status = pipeline.status
-        
-        self.assertEqual(status['state'], 'processing')
-        self.assertEqual(status['current_file'], '/path/to/file.txt')
-        self.assertEqual(status['progress'], 50)
-        self.assertEqual(status['stage'], 'content_extraction')
+
+        self.assertEqual(status["state"], "processing")
+        self.assertEqual(status["current_file"], "/path/to/file.txt")
+        self.assertEqual(status["progress"], 50)
+        self.assertEqual(status["stage"], "content_extraction")
 
     def test_status_after_successful_processing(self):
         """
@@ -687,22 +672,22 @@ class TestProcessingPipelineStatus(unittest.TestCase):
         - Includes processed file information
         """
         success_status = {
-            'state': 'completed',
-            'current_file': '/path/to/file.txt',
-            'progress': 100,
-            'stage': 'complete',
-            'last_updated': datetime.now(),
-            'result': 'success'
+            "state": "completed",
+            "current_file": "/path/to/file.txt",
+            "progress": 100,
+            "stage": "complete",
+            "last_updated": datetime.now(),
+            "result": "success",
         }
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         # Mock the _status object's to_dict method to return our test data
         pipeline._status.to_dict.return_value = success_status
-        
+
         status = pipeline.status
-        
-        self.assertEqual(status['state'], 'completed')
-        self.assertEqual(status['progress'], 100)
-        self.assertEqual(status['result'], 'success')
+
+        self.assertEqual(status["state"], "completed")
+        self.assertEqual(status["progress"], 100)
+        self.assertEqual(status["result"], "success")
 
     def test_status_after_failed_processing(self):
         """
@@ -714,35 +699,34 @@ class TestProcessingPipelineStatus(unittest.TestCase):
         - Indicates which stage failed
         """
         error_status = {
-            'state': 'error',
-            'current_file': '/path/to/file.txt',
-            'progress': 25,
-            'stage': 'validation',
-            'last_updated': datetime.now(),
-            'result': 'failed',
-            'error': 'File validation failed'
+            "state": "error",
+            "current_file": "/path/to/file.txt",
+            "progress": 25,
+            "stage": "validation",
+            "last_updated": datetime.now(),
+            "result": "failed",
+            "error": "File validation failed",
         }
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         # Mock the _status object's to_dict method to return our test data
         pipeline._status.to_dict.return_value = error_status
-        
+
         status = pipeline.status
-        
-        self.assertEqual(status['state'], 'error')
-        self.assertEqual(status['result'], 'failed')
-        self.assertIn('error', status)
-        self.assertEqual(status['stage'], 'validation')
+
+        self.assertEqual(status["state"], "error")
+        self.assertEqual(status["result"], "failed")
+        self.assertIn("error", status)
+        self.assertEqual(status["stage"], "validation")
 
 
 class TestProcessingPipelineListeners(unittest.TestCase):
     """Test ProcessingPipeline listener functionality."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         self.mock_resources = make_mock_resources()
         self.mock_configs = MagicMock()
-    
 
     def test_register_listener_single(self):
         """
@@ -756,11 +740,11 @@ class TestProcessingPipelineListeners(unittest.TestCase):
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline._listeners = []
         pipeline.register_listener = MagicMock()
-        
+
         pipeline.register_listener(mock_listener)
-        
+
         pipeline.register_listener.assert_called_once_with(mock_listener)
-    
+
     def test_register_listener_multiple(self):
         """
         GIVEN a ProcessingPipeline instance
@@ -773,19 +757,18 @@ class TestProcessingPipelineListeners(unittest.TestCase):
         listener1 = MagicMock()
         listener2 = MagicMock()
         listener3 = MagicMock()
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline._listeners = []
         pipeline.register_listener = MagicMock()
-        
+
         pipeline.register_listener(listener1)
         pipeline.register_listener(listener2)
         pipeline.register_listener(listener3)
-        
+
         # Verify all listeners were registered
         expected_calls = [call(listener1), call(listener2), call(listener3)]
         pipeline.register_listener.assert_has_calls(expected_calls)
-    
 
     def test_register_listener_invalid_callable(self):
         """
@@ -796,16 +779,14 @@ class TestProcessingPipelineListeners(unittest.TestCase):
         - Error indicates listener must be callable
         """
 
-        
         non_callable = "not a function"
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.register_listener = MagicMock(side_effect=TypeError("Listener must be callable"))
-        
+
         with self.assertRaises(TypeError) as context:
             pipeline.register_listener(non_callable)
-        
+
         self.assertIn("callable", str(context.exception))
-    
 
     def test_notify_listeners_with_event(self):
         """
@@ -817,20 +798,18 @@ class TestProcessingPipelineListeners(unittest.TestCase):
         - Listeners receive complete data dictionary
         """
 
-        
         listener1 = MagicMock()
         listener2 = MagicMock()
         event = "processing_started"
         data = {"file_path": "/test/file.txt", "timestamp": datetime.now()}
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline._listeners = [listener1, listener2]
         pipeline._notify_listeners = MagicMock()
-        
+
         pipeline._notify_listeners(event, data)
-        
+
         pipeline._notify_listeners.assert_called_once_with(event, data)
-    
 
     def test_notify_listeners_no_listeners(self):
         """
@@ -841,19 +820,17 @@ class TestProcessingPipelineListeners(unittest.TestCase):
         - Processing continues normally
         """
 
-        
         event = "processing_started"
         data = {"file_path": "/test/file.txt"}
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline._listeners = []
         pipeline._notify_listeners = MagicMock()
-        
+
         # Should not raise any exceptions
         pipeline._notify_listeners(event, data)
-        
+
         pipeline._notify_listeners.assert_called_once_with(event, data)
-    
 
     def test_notify_listeners_exception_handling(self):
         """
@@ -865,21 +842,19 @@ class TestProcessingPipelineListeners(unittest.TestCase):
         - Processing continues
         """
 
-        
         failing_listener = MagicMock(side_effect=Exception("Listener error"))
         working_listener = MagicMock()
         event = "processing_started"
         data = {"file_path": "/test/file.txt"}
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline._listeners = [failing_listener, working_listener]
         pipeline._notify_listeners = MagicMock()
-        
+
         # Should handle exception gracefully
         pipeline._notify_listeners(event, data)
-        
+
         pipeline._notify_listeners.assert_called_once_with(event, data)
-    
 
     def test_listener_notification_stages(self):
         """
@@ -902,13 +877,13 @@ class TestProcessingPipelineListeners(unittest.TestCase):
             "extraction_complete",
             "normalization_complete",
             "formatting_complete",
-            "processing_complete"
+            "processing_complete",
         ]
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline._listeners = [listener]
         pipeline._notify_listeners = MagicMock()
-        
+
         # Mock successful processing
         mock_result = ProcessingResult(
             success=True,
@@ -918,49 +893,48 @@ class TestProcessingPipelineListeners(unittest.TestCase):
             errors=[],
             metadata={},
             content_hash="abc123",
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
         pipeline.process_file = MagicMock(return_value=mock_result)
-        
+
         # Process file
         result = pipeline.process_file("/test/file.txt")
-        
+
         # Verify process_file was called
         pipeline.process_file.assert_called_once_with("/test/file.txt")
 
 
 class TestProcessingPipelineIntegration(unittest.TestCase):
     """Integration tests for ProcessingPipeline."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         # Create temporary test file
-        self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt')
+        self.temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt")
         self.temp_file.write("Test content for integration testing")
         self.temp_file.close()
         self.test_file_path = self.temp_file.name
-        
+
         # Mock all dependencies
         self.mock_resources = {
-            'file_format_detector': MagicMock(),
-            'file_validator': MagicMock(),
-            'content_extractor': MagicMock(),
-            'content_sanitizer': MagicMock(),
-            'text_normalizer': MagicMock(),
-            'output_formatter': MagicMock(),
-            'processing_result': MagicMock(),
-            'pipeline_status': MagicMock(),
-            'security_monitor': MagicMock(),
-            'logger': MagicMock(),
-            'hashlib': MagicMock()
+            "file_format_detector": MagicMock(),
+            "file_validator": MagicMock(),
+            "content_extractor": MagicMock(),
+            "content_sanitizer": MagicMock(),
+            "text_normalizer": MagicMock(),
+            "output_formatter": MagicMock(),
+            "processing_result": MagicMock(),
+            "pipeline_status": MagicMock(),
+            "security_monitor": MagicMock(),
+            "logger": MagicMock(),
+            "hashlib": MagicMock(),
         }
         self.mock_configs = MagicMock()
-    
+
     def tearDown(self):
         """Clean up test fixtures."""
         if os.path.exists(self.test_file_path):
             os.unlink(self.test_file_path)
-    
 
     def test_full_pipeline_text_file(self):
         """
@@ -973,37 +947,44 @@ class TestProcessingPipelineIntegration(unittest.TestCase):
         - ProcessingResult contains all expected data
         """
         # Mock component responses
-        self.mock_resources['file_format_detector'].detect.return_value = 'txt'
-        self.mock_resources['file_validator'].validate.return_value = True
-        self.mock_resources['content_extractor'].extract.return_value = 'Test content for integration testing'
-        self.mock_resources['text_normalizer'].normalize.return_value = 'Test content for integration testing'
-        self.mock_resources['output_formatter'].format.return_value = 'Test content for integration testing'
-        self.mock_resources['hashlib'].sha256.return_value.hexdigest.return_value = 'integration_hash_123'
-        
+        self.mock_resources["file_format_detector"].detect.return_value = "txt"
+        self.mock_resources["file_validator"].validate.return_value = True
+        self.mock_resources[
+            "content_extractor"
+        ].extract.return_value = "Test content for integration testing"
+        self.mock_resources[
+            "text_normalizer"
+        ].normalize.return_value = "Test content for integration testing"
+        self.mock_resources[
+            "output_formatter"
+        ].format.return_value = "Test content for integration testing"
+        self.mock_resources[
+            "hashlib"
+        ].sha256.return_value.hexdigest.return_value = "integration_hash_123"
+
         # Create expected result
         expected_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
-            output_path='/tmp/integration_test.txt',
-            format='txt',
+            output_path="/tmp/integration_test.txt",
+            format="txt",
             errors=[],
-            metadata={'integration_test': True},
-            content_hash='integration_hash_123',
-            timestamp=datetime.now()
+            metadata={"integration_test": True},
+            content_hash="integration_hash_123",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=expected_result)
-        
+
         result = pipeline.process_file(self.test_file_path)
-        
+
         # Verify full pipeline execution
         self.assertTrue(result.success)
         self.assertEqual(result.file_path, self.test_file_path)
-        self.assertEqual(result.format, 'txt')
-        self.assertEqual(result.content_hash, 'integration_hash_123')
+        self.assertEqual(result.format, "txt")
+        self.assertEqual(result.content_hash, "integration_hash_123")
         self.assertIsNotNone(result.timestamp)
-    
 
     def test_full_pipeline_with_all_options(self):
         """
@@ -1015,48 +996,45 @@ class TestProcessingPipelineIntegration(unittest.TestCase):
         - Normalizers applied
         """
 
+        custom_output_path = "/custom/path/output.md"
+        normalizers = ["norm1"]
 
-        
-        custom_output_path = '/custom/path/output.md'
-        normalizers = ['norm1']
-        
         expected_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
             output_path=custom_output_path,
-            format='txt',
+            format="txt",
             errors=[],
             metadata={
-                'output_format': 'md',
-                'normalizers_applied': normalizers,
-                'custom_output_path': True
+                "output_format": "md",
+                "normalizers_applied": normalizers,
+                "custom_output_path": True,
             },
-            content_hash='custom_hash_456',
-            timestamp=datetime.now()
+            content_hash="custom_hash_456",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=expected_result)
-        
+
         result = pipeline.process_file(
             self.test_file_path,
-            output_format='md',
+            output_format="md",
             output_path=custom_output_path,
-            normalizers=normalizers
+            normalizers=normalizers,
         )
-        
+
         # Verify all options were used
         pipeline.process_file.assert_called_once_with(
             self.test_file_path,
-            output_format='md',
+            output_format="md",
             output_path=custom_output_path,
-            normalizers=normalizers
+            normalizers=normalizers,
         )
-        
+
         self.assertEqual(result.output_path, custom_output_path)
-        self.assertEqual(result.metadata['output_format'], 'md')
-        self.assertEqual(result.metadata['normalizers_applied'], normalizers)
-    
+        self.assertEqual(result.metadata["output_format"], "md")
+        self.assertEqual(result.metadata["normalizers_applied"], normalizers)
 
     def test_pipeline_with_mock_components(self):
         """
@@ -1069,55 +1047,57 @@ class TestProcessingPipelineIntegration(unittest.TestCase):
         """
         # Set up component call tracking
         component_calls = []
-        
+
         def track_format_detect(*args, **kwargs):
-            component_calls.append('format_detector')
-            return 'txt'
-        
+            component_calls.append("format_detector")
+            return "txt"
+
         def track_validate(*args, **kwargs):
-            component_calls.append('file_validator')
+            component_calls.append("file_validator")
             return True
-        
+
         def track_extract(*args, **kwargs):
-            component_calls.append('content_extractor')
-            return 'Extracted content'
-        
+            component_calls.append("content_extractor")
+            return "Extracted content"
+
         def track_normalize(*args, **kwargs):
-            component_calls.append('text_normalizer')
-            return 'Normalized content'
-        
+            component_calls.append("text_normalizer")
+            return "Normalized content"
+
         def track_format(*args, **kwargs):
-            component_calls.append('output_formatter')
-            return 'Formatted content'
-        
+            component_calls.append("output_formatter")
+            return "Formatted content"
+
         # Configure mocks to track calls
-        self.mock_resources['file_format_detector'].detect = MagicMock(side_effect=track_format_detect)
-        self.mock_resources['file_validator'].validate = MagicMock(side_effect=track_validate)
-        self.mock_resources['content_extractor'].extract = MagicMock(side_effect=track_extract)
-        self.mock_resources['text_normalizer'].normalize = MagicMock(side_effect=track_normalize)
-        self.mock_resources['output_formatter'].format = MagicMock(side_effect=track_format)
-        
+        self.mock_resources["file_format_detector"].detect = MagicMock(
+            side_effect=track_format_detect
+        )
+        self.mock_resources["file_validator"].validate = MagicMock(side_effect=track_validate)
+        self.mock_resources["content_extractor"].extract = MagicMock(side_effect=track_extract)
+        self.mock_resources["text_normalizer"].normalize = MagicMock(side_effect=track_normalize)
+        self.mock_resources["output_formatter"].format = MagicMock(side_effect=track_format)
+
         expected_result = ProcessingResult(
             success=True,
             file_path=self.test_file_path,
-            output_path='/tmp/component_test.txt',
-            format='txt',
+            output_path="/tmp/component_test.txt",
+            format="txt",
             errors=[],
-            metadata={'component_order': component_calls},
-            content_hash='component_hash_789',
-            timestamp=datetime.now()
+            metadata={"component_order": component_calls},
+            content_hash="component_hash_789",
+            timestamp=datetime.now(),
         )
-        
+
         pipeline = ProcessingPipeline(resources=self.mock_resources, configs=self.mock_configs)
         pipeline.process_file = MagicMock(return_value=expected_result)
-        
+
         result = pipeline.process_file(self.test_file_path)
-        
+
         # Verify pipeline execution
         pipeline.process_file.assert_called_once_with(self.test_file_path)
         self.assertTrue(result.success)
-        self.assertEqual(result.content_hash, 'component_hash_789')
+        self.assertEqual(result.content_hash, "component_hash_789")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

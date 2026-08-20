@@ -4,11 +4,13 @@ Test stubs for advanced_media_processing module.
 Feature: Advanced Media Processing
   Advanced multimedia processing capabilities
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_media_file_and_target_format():
@@ -47,6 +49,7 @@ def audio_with_multiple_speakers():
 
 
 # Test scenarios
+
 
 def test_extract_video_keyframes():
     """
@@ -137,6 +140,7 @@ def test_convert_media_format():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a media file and target format")
@@ -279,4 +283,3 @@ def thumbnails_at_intervals_are_created():
     """Step: Then thumbnails at intervals are created"""
     # TODO: Implement step
     pass
-

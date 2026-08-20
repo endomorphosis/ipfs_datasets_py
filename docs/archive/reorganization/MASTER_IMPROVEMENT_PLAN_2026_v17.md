@@ -116,8 +116,7 @@ assert "blocked" in restored._deny_list
 ```python
 if self._max_chain_depth > 0 and len(chain) > self._max_chain_depth:
     raise ValueError(
-        f"Delegation chain length {len(chain)} exceeds max_chain_depth "
-        f"{self._max_chain_depth}"
+        f"Delegation chain length {len(chain)} exceeds max_chain_depth {self._max_chain_depth}"
     )
 ```
 

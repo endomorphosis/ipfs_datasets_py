@@ -79,11 +79,13 @@ def _optional_import_notice(message: str) -> None:
     else:
         logging.debug(message)
 
+
 # File type detection (lazy; see __getattr__)
 HAVE_FILE_DETECTOR = False
 FileTypeDetector = None
 DetectionMethod = None
 DetectionStrategy = None
+
 
 def _dedupe_root_logging_handlers() -> None:
     """
@@ -149,7 +151,9 @@ def initialize(
     # Optional SyMAI engine registration (kept best-effort).
     should_register = register_symai_engines
     if should_register is None:
-        should_register = os.environ.get("IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER", "").strip().lower() in {
+        should_register = os.environ.get(
+            "IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER", ""
+        ).strip().lower() in {
             "1",
             "true",
             "yes",
@@ -166,6 +170,7 @@ def initialize(
 
     return resolved_deps
 
+
 # File conversion (Phase 1: Import & Wrap existing libraries)
 # NOTE: this is intentionally lazy to avoid import-time side effects from optional
 # subsystems (PDF pipelines, auto-installers, accelerate patching, etc.).
@@ -173,6 +178,7 @@ HAVE_FILE_CONVERTER = False
 
 # Import automated dependency installer
 if _MINIMAL_IMPORTS:
+
     class _MinimalInstaller:
         auto_install = False
         verbose = False
@@ -197,6 +203,7 @@ else:
         ensure_repo_installer_current()
     except Exception:
         pass
+
 
 class _FallbackIPFSDatasets:
     """Fallback IPFSDatasets interface when core dependencies are missing."""
@@ -344,6 +351,7 @@ else:
         try:
             # from .mcp_server.tools.embedding_tools import embedding_generation
             from .mcp_server.tools.vector_tools import create_vector_index
+
             HAVE_MCP_TOOLS = True
         except ImportError:
             HAVE_MCP_TOOLS = False
@@ -360,6 +368,7 @@ else:
     if _ENABLE_FASTAPI_IMPORTS:
         try:
             from .mcp_server.fastapi_service import app as fastapi_app
+
             HAVE_FASTAPI = True
         except ImportError:
             HAVE_FASTAPI = False
@@ -382,6 +391,7 @@ if _MINIMAL_IMPORTS:
 else:
     try:
         from .ipfs_knn_index import IPFSKnnIndex
+
         HAVE_KNN = True
     except ImportError:
         HAVE_KNN = False
@@ -481,11 +491,11 @@ HAVE_QUERY_ENGINE = False
 HAVE_PDF_PROCESSING = False
 
 _PDF_LAZY_EXPORTS = {
-    'PDFProcessor': 'HAVE_PDF_PROCESSOR',
-    'MultiEngineOCR': 'HAVE_MULTI_ENGINE_OCR',
-    'LLMOptimizer': 'HAVE_LLM_OPTIMIZER',
-    'GraphRAGIntegrator': 'HAVE_GRAPHRAG_INTEGRATOR',
-    'QueryEngine': 'HAVE_QUERY_ENGINE',
+    "PDFProcessor": "HAVE_PDF_PROCESSOR",
+    "MultiEngineOCR": "HAVE_MULTI_ENGINE_OCR",
+    "LLMOptimizer": "HAVE_LLM_OPTIMIZER",
+    "GraphRAGIntegrator": "HAVE_GRAPHRAG_INTEGRATOR",
+    "QueryEngine": "HAVE_QUERY_ENGINE",
 }
 
 
@@ -504,16 +514,17 @@ def _lazy_import_pdf_symbol(name: str):
     if (
         (not _MINIMAL_IMPORTS)
         and installer.auto_install
-        and os.environ.get('IPFS_DATASETS_INSTALL_ON_IMPORT', 'false').strip().lower() in {'1', 'true', 'yes', 'on'}
+        and os.environ.get("IPFS_DATASETS_INSTALL_ON_IMPORT", "false").strip().lower()
+        in {"1", "true", "yes", "on"}
     ):
         try:
             from .auto_installer import install_for_component
 
-            for _component in ('pdf', 'ocr'):
+            for _component in ("pdf", "ocr"):
                 install_for_component(_component)
 
-            if os.environ.get('IPFS_DATASETS_INSTALL_SYMAI_ROUTER', 'false').lower() == 'true':
-                install_for_component('symai_router')
+            if os.environ.get("IPFS_DATASETS_INSTALL_SYMAI_ROUTER", "false").lower() == "true":
+                install_for_component("symai_router")
         except Exception as e:
             _optional_import_notice(
                 f"Auto-install for PDF components failed during lazy import: {e}"
@@ -595,7 +606,9 @@ def __getattr__(name: str):
 
             if globals().get("dataset_serialization") is None:
                 try:
-                    from .data_transformation.serialization import dataset_serialization as _dataset_serialization  # type: ignore
+                    from .data_transformation.serialization import (
+                        dataset_serialization as _dataset_serialization,
+                    )  # type: ignore
 
                     globals()["dataset_serialization"] = _dataset_serialization
                 except Exception:
@@ -638,7 +651,9 @@ def __getattr__(name: str):
             HAVE_CAR_CONVERSION = False
             return globals()[name]
         try:
-            from .data_transformation.serialization.car_conversion import DataInterchangeUtils as _DataInterchangeUtils
+            from .data_transformation.serialization.car_conversion import (
+                DataInterchangeUtils as _DataInterchangeUtils,
+            )
 
             globals()["DataInterchangeUtils"] = _DataInterchangeUtils
             HAVE_CAR_CONVERSION = True
@@ -870,7 +885,9 @@ def __getattr__(name: str):
             globals()["HAVE_VECTOR_TOOLS"] = False
             return None
         try:
-            from .search.vector_tools import VectorSimilarityCalculator as _VectorSimilarityCalculator
+            from .search.vector_tools import (
+                VectorSimilarityCalculator as _VectorSimilarityCalculator,
+            )
 
             globals()["VectorSimilarityCalculator"] = _VectorSimilarityCalculator
             globals()["HAVE_VECTOR_TOOLS"] = True
@@ -894,13 +911,19 @@ def __getattr__(name: str):
             globals()["HAVE_EMBEDDINGS"] = False
             return None
         try:
-            from .embeddings.core import IPFSEmbeddings as _IPFSEmbeddings, PerformanceMetrics as _PerformanceMetrics
+            from .embeddings.core import (
+                IPFSEmbeddings as _IPFSEmbeddings,
+                PerformanceMetrics as _PerformanceMetrics,
+            )
             from .embeddings.schema import (
                 EmbeddingModel as _EmbeddingModel,
                 EmbeddingRequest as _EmbeddingRequest,
                 EmbeddingResponse as _EmbeddingResponse,
             )
-            from .embeddings.chunker import Chunker as _Chunker, ChunkingStrategy as _ChunkingStrategy
+            from .embeddings.chunker import (
+                Chunker as _Chunker,
+                ChunkingStrategy as _ChunkingStrategy,
+            )
 
             globals()["IPFSEmbeddings"] = _IPFSEmbeddings
             globals()["PerformanceMetrics"] = _PerformanceMetrics
@@ -916,7 +939,12 @@ def __getattr__(name: str):
             globals()["HAVE_EMBEDDINGS"] = False
             return None
 
-    if name in {"BaseVectorStore", "QdrantVectorStore", "ElasticsearchVectorStore", "FAISSVectorStore"}:
+    if name in {
+        "BaseVectorStore",
+        "QdrantVectorStore",
+        "ElasticsearchVectorStore",
+        "FAISSVectorStore",
+    }:
         if _MINIMAL_IMPORTS:
             globals()[name] = None
             globals()["HAVE_VECTOR_STORES"] = False
@@ -924,7 +952,9 @@ def __getattr__(name: str):
         try:
             from .vector_stores.base import BaseVectorStore as _BaseVectorStore
             from .vector_stores.qdrant_store import QdrantVectorStore as _QdrantVectorStore
-            from .vector_stores.elasticsearch_store import ElasticsearchVectorStore as _ElasticsearchVectorStore
+            from .vector_stores.elasticsearch_store import (
+                ElasticsearchVectorStore as _ElasticsearchVectorStore,
+            )
             from .vector_stores.faiss_store import FAISSVectorStore as _FAISSVectorStore
 
             globals()["BaseVectorStore"] = _BaseVectorStore
@@ -938,7 +968,12 @@ def __getattr__(name: str):
             globals()["HAVE_VECTOR_STORES"] = False
             return None
 
-    if name in {"is_accelerate_available", "get_accelerate_status", "AccelerateManager", "HAVE_ACCELERATE_MANAGER"}:
+    if name in {
+        "is_accelerate_available",
+        "get_accelerate_status",
+        "AccelerateManager",
+        "HAVE_ACCELERATE_MANAGER",
+    }:
         if _MINIMAL_IMPORTS:
             if name == "HAVE_ACCELERATE_MANAGER":
                 globals()[name] = False
@@ -983,7 +1018,10 @@ def __getattr__(name: str):
             HAVE_FILE_CONVERTER = False
             return globals()[name]
         try:
-            from .file_converter import FileConverter as _FileConverter, ConversionResult as _ConversionResult
+            from .file_converter import (
+                FileConverter as _FileConverter,
+                ConversionResult as _ConversionResult,
+            )
 
             globals()["FileConverter"] = _FileConverter
             globals()["ConversionResult"] = _ConversionResult
@@ -1080,25 +1118,58 @@ def __getattr__(name: str):
         "MockAuthService": (".processors.auth.auth_engine", "MockAuthService"),
         # processors/development
         "TestGeneratorCore": (".processors.development.test_generator_engine", "TestGeneratorCore"),
-        "TestGeneratorConfig": (".processors.development.test_generator_engine", "TestGeneratorConfig"),
-        "generate_test_file": (".processors.development.test_generator_engine", "generate_test_file"),
+        "TestGeneratorConfig": (
+            ".processors.development.test_generator_engine",
+            "TestGeneratorConfig",
+        ),
+        "generate_test_file": (
+            ".processors.development.test_generator_engine",
+            "generate_test_file",
+        ),
         # processors/discord
-        "discord_analyze_channel": (".processors.discord.discord_analysis_engine", "discord_analyze_channel"),
-        "discord_export_channel": (".processors.discord.discord_export_engine", "discord_export_channel"),
+        "discord_analyze_channel": (
+            ".processors.discord.discord_analysis_engine",
+            "discord_analyze_channel",
+        ),
+        "discord_export_channel": (
+            ".processors.discord.discord_export_engine",
+            "discord_export_channel",
+        ),
         # web_archiving engines
         "SerpStackSearchAPI": (".web_archiving.serpstack_engine", "SerpStackSearchAPI"),
         "OpenVerseSearchAPI": (".web_archiving.openverse_engine", "OpenVerseSearchAPI"),
-        "GitHubRepositoryScraper": (".web_archiving.github_repository_engine", "GitHubRepositoryScraper"),
+        "GitHubRepositoryScraper": (
+            ".web_archiving.github_repository_engine",
+            "GitHubRepositoryScraper",
+        ),
         # processors/legal_scrapers engines
-        "ClinicalTrialsScraper": (".scrapers.medical.clinical_trials_engine", "ClinicalTrialsScraper"),
+        "ClinicalTrialsScraper": (
+            ".scrapers.medical.clinical_trials_engine",
+            "ClinicalTrialsScraper",
+        ),
         "PubMedScraper": (".scrapers.medical.pubmed_engine", "PubMedScraper"),
         "AIDatasetBuilder": (".scrapers.medical.ai_dataset_builder_engine", "AIDatasetBuilder"),
         "USPTOPatentScraper": (".processors.legal_scrapers.patent_engine", "USPTOPatentScraper"),
-        "PatentDatasetBuilder": (".processors.legal_scrapers.patent_engine", "PatentDatasetBuilder"),
-        "MunicipalScraperFallbacks": (".processors.legal_scrapers.municipal_scraper_engine", "MunicipalScraperFallbacks"),
-        "StateLawsUpdateScheduler": (".processors.legal_scrapers.state_laws_scheduler_engine", "StateLawsUpdateScheduler"),
-        "IncrementalUpdateTracker": (".processors.legal_scrapers.incremental_updates_engine", "IncrementalUpdateTracker"),
-        "FederalRegisterVerifier": (".processors.legal_scrapers.federal_register_verifier", "FederalRegisterVerifier"),
+        "PatentDatasetBuilder": (
+            ".processors.legal_scrapers.patent_engine",
+            "PatentDatasetBuilder",
+        ),
+        "MunicipalScraperFallbacks": (
+            ".processors.legal_scrapers.municipal_scraper_engine",
+            "MunicipalScraperFallbacks",
+        ),
+        "StateLawsUpdateScheduler": (
+            ".processors.legal_scrapers.state_laws_scheduler_engine",
+            "StateLawsUpdateScheduler",
+        ),
+        "IncrementalUpdateTracker": (
+            ".processors.legal_scrapers.incremental_updates_engine",
+            "IncrementalUpdateTracker",
+        ),
+        "FederalRegisterVerifier": (
+            ".processors.legal_scrapers.federal_register_verifier",
+            "FederalRegisterVerifier",
+        ),
         "USCodeVerifier": (".processors.legal_scrapers.us_code_verifier", "USCodeVerifier"),
     }
 
@@ -1109,171 +1180,176 @@ def __getattr__(name: str):
         module_path, attr_name = _CANONICAL_MODULE_MAP[name]
         try:
             import importlib as _importlib
+
             _mod = _importlib.import_module(module_path, package=__name__)
             _val = getattr(_mod, attr_name)
             globals()[name] = _val
             return _val
         except Exception as _exc:
             globals()[name] = None
-            _optional_import_notice(f"Canonical module {module_path}.{attr_name} unavailable: {_exc}")
+            _optional_import_notice(
+                f"Canonical module {module_path}.{attr_name} unavailable: {_exc}"
+            )
             return None
 
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
+
 # Define base exports that should always be available
 __all__ = [
     # Original exports
-    's3_kit',
-    'test_fio', 
-    'config',
+    "s3_kit",
+    "test_fio",
+    "config",
     # Lazy core exports (safe even if unavailable)
-    'ipfs_datasets_py',
-    'IPFSDatasets',
-    'FileConverter',
-    'ConversionResult',
-    'load_dataset',
-    'ensure_module',
-    'lazy_import',
+    "ipfs_datasets_py",
+    "IPFSDatasets",
+    "FileConverter",
+    "ConversionResult",
+    "load_dataset",
+    "ensure_module",
+    "lazy_import",
 ]
 
 # Conditionally add exports based on available components
 if HAVE_IPLD:
-    __all__.extend([
-        'IPLDStorage',
-        'IPLDSchema',
-        'OptimizedEncoder',
-        'OptimizedDecoder',
-        'BatchProcessor',
-        'create_batch_processor',
-        'optimize_node_structure'
-    ])
+    __all__.extend(
+        [
+            "IPLDStorage",
+            "IPLDSchema",
+            "OptimizedEncoder",
+            "OptimizedDecoder",
+            "BatchProcessor",
+            "create_batch_processor",
+            "optimize_node_structure",
+        ]
+    )
 
 if HAVE_DATASET_SERIALIZATION:
-    __all__.extend([
-        'DatasetSerializer',
-        'GraphDataset',
-        'GraphNode',
-        'VectorAugmentedGraphDataset'
-    ])
+    __all__.extend(
+        ["DatasetSerializer", "GraphDataset", "GraphNode", "VectorAugmentedGraphDataset"]
+    )
 
 if HAVE_DATASET_MANAGER:
-    __all__.extend(['DatasetManager'])
+    __all__.extend(["DatasetManager"])
 
 if HAVE_CAR_CONVERSION:
-    __all__.extend(['DataInterchangeUtils'])
+    __all__.extend(["DataInterchangeUtils"])
 
 if HAVE_UNIXFS:
-    __all__.extend([
-        'UnixFSHandler',
-        'FixedSizeChunker',
-        'RabinChunker'
-    ])
+    __all__.extend(["UnixFSHandler", "FixedSizeChunker", "RabinChunker"])
 
 if HAVE_WEB_ARCHIVE:
-    __all__.extend(['WebArchiveProcessor'])
+    __all__.extend(["WebArchiveProcessor"])
 
 if HAVE_VECTOR_TOOLS:
-    __all__.extend(['VectorSimilarityCalculator'])
+    __all__.extend(["VectorSimilarityCalculator"])
 
 if HAVE_SEARCH:
-    __all__.extend(['search'])
+    __all__.extend(["search"])
 
 if HAVE_P2P_WORKFLOW_SCHEDULER:
-    __all__.extend([
-        'P2PWorkflowScheduler',
-        'WorkflowDefinition',
-        'WorkflowTag',
-        'MerkleClock',
-        'FibonacciHeap',
-        'calculate_hamming_distance',
-        'get_scheduler'
-    ])
+    __all__.extend(
+        [
+            "P2PWorkflowScheduler",
+            "WorkflowDefinition",
+            "WorkflowTag",
+            "MerkleClock",
+            "FibonacciHeap",
+            "calculate_hamming_distance",
+            "get_scheduler",
+        ]
+    )
 
 if HAVE_EMBEDDINGS:
-    __all__.extend([
-        'IPFSEmbeddings',
-        'PerformanceMetrics',
-        'EmbeddingModel', 
-        'EmbeddingRequest',
-        'EmbeddingResponse',
-        'Chunker',
-        'ChunkingStrategy'
-    ])
+    __all__.extend(
+        [
+            "IPFSEmbeddings",
+            "PerformanceMetrics",
+            "EmbeddingModel",
+            "EmbeddingRequest",
+            "EmbeddingResponse",
+            "Chunker",
+            "ChunkingStrategy",
+        ]
+    )
 
 if HAVE_VECTOR_STORES:
-    __all__.extend([
-        'BaseVectorStore',
-        'QdrantVectorStore',
-        'ElasticsearchVectorStore',
-        'FAISSVectorStore'
-    ])
+    __all__.extend(
+        ["BaseVectorStore", "QdrantVectorStore", "ElasticsearchVectorStore", "FAISSVectorStore"]
+    )
 
 if HAVE_GRAPHRAG_PROCESSOR:
-    __all__.extend([
-        'UnifiedGraphRAGProcessor',  # Recommended unified implementation
-        'GraphRAGConfiguration',
-        'GraphRAGResult',
-        'GraphRAGProcessor',  # Legacy (deprecated)
-        'MockGraphRAGProcessor'  # Legacy (deprecated)
-    ])
+    __all__.extend(
+        [
+            "UnifiedGraphRAGProcessor",  # Recommended unified implementation
+            "GraphRAGConfiguration",
+            "GraphRAGResult",
+            "GraphRAGProcessor",  # Legacy (deprecated)
+            "MockGraphRAGProcessor",  # Legacy (deprecated)
+        ]
+    )
 
 if HAVE_KNN:
-    __all__.extend(['IPFSKnnIndex'])
+    __all__.extend(["IPFSKnnIndex"])
 
-# Always export RAG components  
-__all__.extend([
-    'GraphRAGQueryOptimizer',
-    'GraphRAGQueryStats',
-    'QueryRewriter',
-    'QueryBudgetManager', 
-    'UnifiedGraphRAGQueryOptimizer'
-])
+# Always export RAG components
+__all__.extend(
+    [
+        "GraphRAGQueryOptimizer",
+        "GraphRAGQueryStats",
+        "QueryRewriter",
+        "QueryBudgetManager",
+        "UnifiedGraphRAGQueryOptimizer",
+    ]
+)
 
 if HAVE_KG_EXTRACTION:
-    __all__.extend([
-        'KnowledgeGraph',
-        'KnowledgeGraphExtractor',
-        'Entity',
-        'Relationship'
-    ])
+    __all__.extend(["KnowledgeGraph", "KnowledgeGraphExtractor", "Entity", "Relationship"])
 
 # Always export LLM components
-__all__.extend([
-    'LLMInterface',
-    'MockLLMInterface', 
-    'LLMConfig',
-    'PromptTemplate',
-    'LLMInterfaceFactory',
-    'GraphRAGPromptTemplates',
-    'GraphRAGLLMProcessor',
-    'ReasoningEnhancer'
-])
+__all__.extend(
+    [
+        "LLMInterface",
+        "MockLLMInterface",
+        "LLMConfig",
+        "PromptTemplate",
+        "LLMInterfaceFactory",
+        "GraphRAGPromptTemplates",
+        "GraphRAGLLMProcessor",
+        "ReasoningEnhancer",
+    ]
+)
 
 if HAVE_GRAPHRAG_INTEGRATION:
-    __all__.extend(['enhance_dataset_with_llm'])
+    __all__.extend(["enhance_dataset_with_llm"])
 
 if HAVE_AUDIT:
-    __all__.extend([
-        'AuditLogger',
-        'AuditEvent',
-        'AuditLevel',
-        'AuditCategory',
-        'IntrusionDetection',
-        'SecurityAlertManager',
-        'AdaptiveSecurityManager',
-        'ResponseRule',
-        'ResponseAction'
-    ])
+    __all__.extend(
+        [
+            "AuditLogger",
+            "AuditEvent",
+            "AuditLevel",
+            "AuditCategory",
+            "IntrusionDetection",
+            "SecurityAlertManager",
+            "AdaptiveSecurityManager",
+            "ResponseRule",
+            "ResponseAction",
+        ]
+    )
 
 if HAVE_PDF_PROCESSING:
-    __all__.extend([
-        'PDFProcessor', 
-        'MultiEngineOCR', 
-        'LLMOptimizer', 
-        'GraphRAGIntegrator', 
-        'QueryEngine', 
-        'BatchProcessor'
-    ])
+    __all__.extend(
+        [
+            "PDFProcessor",
+            "MultiEngineOCR",
+            "LLMOptimizer",
+            "GraphRAGIntegrator",
+            "QueryEngine",
+            "BatchProcessor",
+        ]
+    )
 
 # Web Text Extraction (lazy; see __getattr__).
 HAVE_WEB_TEXT_EXTRACTOR = False
@@ -1303,6 +1379,7 @@ try:
     if (not _MINIMAL_IMPORTS) and _ENABLE_FINANCE_DASHBOARD_IMPORTS:
         # Core package modules — canonical locations (Phase E+F migration)
         from .knowledge_graphs import finance_graphrag as graphrag_news_analyzer
+
         # Finance scrapers: canonical package engines (not mcp_server.tools shims)
         from .processors.finance.stock_scraper_engine import (
             StockDataScraper,
@@ -1334,6 +1411,7 @@ try:
             scrape_github_repository,
             analyze_repository_health,
         )
+
         # Standalone MCP functions still live in tools/ shims because they wrap
         # async calls with anyio.run() and perform MCP-specific error handling.
         # The *classes* above come from canonical engines; these *functions* remain
@@ -1341,12 +1419,14 @@ try:
         from .mcp_server.tools.finance_data_tools import stock_scrapers as _stock_scrapers
         from .mcp_server.tools.finance_data_tools import news_scrapers as _news_scrapers
         from .mcp_server.tools.finance_data_tools import finance_theorems as _finance_theorems
+
         fetch_stock_data = _stock_scrapers.fetch_stock_data
         fetch_financial_news = _news_scrapers.fetch_financial_news
         list_financial_theorems = _finance_theorems.list_financial_theorems
 
         # Embedding analysis (still in tools/ shim — kept for compat)
         from .mcp_server.tools.finance_data_tools import embedding_correlation
+
         VectorEmbeddingAnalyzer = embedding_correlation.VectorEmbeddingAnalyzer
         GraphRAGNewsAnalyzer = graphrag_news_analyzer.GraphRAGNewsAnalyzer
         analyze_executive_performance = graphrag_news_analyzer.analyze_executive_performance
@@ -1362,6 +1442,7 @@ try:
             error_pattern_detector,
             auto_healing_coordinator,
         )
+
         analyze_github_actions = github_actions_analyzer.analyze_github_actions
         parse_systemd_logs = systemd_log_parser.parse_systemd_logs
         parse_kubernetes_logs = kubernetes_log_analyzer.parse_kubernetes_logs
@@ -1406,7 +1487,7 @@ try:
 except (ImportError, AttributeError) as e:
     HAVE_SOFTWARE_ENGINEERING_TOOLS = False
     HAVE_FINANCE_TOOLS = False
-    
+
     # Set finance tools to None
     StockDataScraper = None
     NewsScraperBase = None
@@ -1418,7 +1499,7 @@ except (ImportError, AttributeError) as e:
     list_financial_theorems = None
     analyze_executive_performance = None
     analyze_embedding_market_correlation = None
-    
+
     # Set software engineering tools to None
     scrape_github_repository = None
     analyze_github_actions = None
@@ -1432,7 +1513,7 @@ except (ImportError, AttributeError) as e:
     coordinate_auto_healing = None
     list_software_theorems = None
     validate_against_theorem = None
-    
+
     if installer.verbose:
         _optional_import_notice(
             f"Finance/Software engineering tools unavailable due to missing dependencies: {e}"

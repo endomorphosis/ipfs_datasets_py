@@ -17,7 +17,7 @@ lineage_tracker = EnhancedLineageTracker(
         "enable_audit_integration": True,
         "enable_semantic_detection": True,
         "enable_temporal_consistency": True,
-        "enable_ipld_storage": True
+        "enable_ipld_storage": True,
     }
 )
 
@@ -25,20 +25,18 @@ lineage_tracker = EnhancedLineageTracker(
 data_processing_domain = lineage_tracker.create_domain(
     name="DataProcessing",
     description="Domain for data transformation operations",
-    domain_type="processing"
+    domain_type="processing",
 )
 
 storage_domain = lineage_tracker.create_domain(
-    name="Storage",
-    description="Domain for data storage systems",
-    domain_type="storage"
+    name="Storage", description="Domain for data storage systems", domain_type="storage"
 )
 
 analytics_domain = lineage_tracker.create_domain(
     name="Analytics",
     description="Domain for analytics and reporting",
     domain_type="analytics",
-    attributes={"compliance_level": "high"}
+    attributes={"compliance_level": "high"},
 )
 
 # Create domain boundaries to manage cross-domain data flow
@@ -46,14 +44,14 @@ lineage_tracker.create_domain_boundary(
     source_domain_id=data_processing_domain,
     target_domain_id=storage_domain,
     boundary_type="data_export",
-    attributes={"encryption": "AES-256"}
+    attributes={"encryption": "AES-256"},
 )
 
 lineage_tracker.create_domain_boundary(
     source_domain_id=storage_domain,
     target_domain_id=analytics_domain,
     boundary_type="data_import",
-    attributes={"access_control": "role_based"}
+    attributes={"access_control": "role_based"},
 )
 
 # Create nodes representing data artifacts in different domains
@@ -61,21 +59,21 @@ raw_data_node = lineage_tracker.create_node(
     node_type="dataset",
     metadata={"format": "csv", "size": "2.3GB", "record_count": 1000000},
     domain_id=data_processing_domain,
-    entity_id="raw_sales_data"
+    entity_id="raw_sales_data",
 )
 
 cleaned_data_node = lineage_tracker.create_node(
     node_type="dataset",
     metadata={"format": "parquet", "size": "1.8GB", "record_count": 950000},
     domain_id=data_processing_domain,
-    entity_id="cleaned_sales_data"
+    entity_id="cleaned_sales_data",
 )
 
 transform_node = lineage_tracker.create_node(
     node_type="transformation",
     metadata={"tool": "pandas", "execution_time": "45min"},
     domain_id=data_processing_domain,
-    entity_id="clean_transform_01"
+    entity_id="clean_transform_01",
 )
 
 # Record detailed transformation information
@@ -84,14 +82,14 @@ lineage_tracker.record_transformation_details(
     operation_type="data_cleaning",
     inputs=[
         {"field": "sales_amount", "type": "float"},
-        {"field": "transaction_date", "type": "date"}
+        {"field": "transaction_date", "type": "date"},
     ],
     outputs=[
         {"field": "sales_amount", "type": "float", "null_count": 0},
-        {"field": "transaction_date", "type": "date", "format": "yyyy-mm-dd"}
+        {"field": "transaction_date", "type": "date", "format": "yyyy-mm-dd"},
     ],
     parameters={"drop_na": True, "convert_dates": True},
-    impact_level="field"
+    impact_level="field",
 )
 
 # Create relationships between nodes
@@ -99,14 +97,14 @@ lineage_tracker.create_link(
     source_id=raw_data_node,
     target_id=transform_node,
     relationship_type="input_to",
-    metadata={"timestamp": "2023-04-01T08:15:00"}
+    metadata={"timestamp": "2023-04-01T08:15:00"},
 )
 
 lineage_tracker.create_link(
     source_id=transform_node,
     target_id=cleaned_data_node,
     relationship_type="output_from",
-    metadata={"timestamp": "2023-04-01T09:00:00"}
+    metadata={"timestamp": "2023-04-01T09:00:00"},
 )
 
 # Create cross-domain relationships
@@ -114,7 +112,7 @@ storage_node = lineage_tracker.create_node(
     node_type="storage_system",
     metadata={"type": "object_store", "provider": "internal"},
     domain_id=storage_domain,
-    entity_id="data_lake_01"
+    entity_id="data_lake_01",
 )
 
 lineage_tracker.create_link(
@@ -122,7 +120,7 @@ lineage_tracker.create_link(
     target_id=storage_node,
     relationship_type="stored_in",
     metadata={"timestamp": "2023-04-01T09:30:00"},
-    cross_domain=True
+    cross_domain=True,
 )
 
 # Create version information
@@ -130,21 +128,21 @@ lineage_tracker.create_version(
     node_id=cleaned_data_node,
     version_number="1.0.2",
     change_description="Fixed date format inconsistencies",
-    creator_id="data_engineer_1"
+    creator_id="data_engineer_1",
 )
 
 # Query the lineage graph for analytics domain dependencies
-analytics_dependencies = lineage_tracker.query_lineage({
-    "domain_id": analytics_domain,
-    "node_type": ["dataset", "report"],
-    "relationship_type": ["derived_from", "based_on"]
-})
+analytics_dependencies = lineage_tracker.query_lineage(
+    {
+        "domain_id": analytics_domain,
+        "node_type": ["dataset", "report"],
+        "relationship_type": ["derived_from", "based_on"],
+    }
+)
 
 # Find all paths between raw data and analytics results
 paths = lineage_tracker.find_paths(
-    start_node_id=raw_data_node,
-    end_node_id=analytics_node,
-    max_depth=5
+    start_node_id=raw_data_node, end_node_id=analytics_node, max_depth=5
 )
 
 # Detect potential semantic relationships
@@ -152,24 +150,18 @@ semantic_relationships = lineage_tracker.detect_semantic_relationships()
 
 # Generate a visualization of the lineage graph
 lineage_tracker.visualize_lineage(
-    output_path="cross_domain_lineage.html",
-    visualization_type="interactive",
-    include_domains=True
+    output_path="cross_domain_lineage.html", visualization_type="interactive", include_domains=True
 )
 
 # Export lineage data to IPLD for decentralized storage
 root_cid = lineage_tracker.export_to_ipld(
-    include_domains=True,
-    include_versions=True,
-    include_transformation_details=True
+    include_domains=True, include_versions=True, include_transformation_details=True
 )
 print(f"Lineage graph stored on IPLD with root CID: {root_cid}")
 
 # Generate comprehensive provenance report
 report = lineage_tracker.generate_provenance_report(
-    entity_id="cleaned_sales_data",
-    include_visualization=True,
-    format="html"
+    entity_id="cleaned_sales_data", include_visualization=True, format="html"
 )
 ```
 
@@ -214,7 +206,7 @@ manager = EnhancedProvenanceManager(
     default_agent_id="ipld-integration-example",
     tracking_level="detailed",
     enable_crypto_verification=True,  # Enable cryptographic verification
-    ipfs_api="/ip4/127.0.0.1/tcp/5001"  # IPFS API endpoint
+    ipfs_api="/ip4/127.0.0.1/tcp/5001",  # IPFS API endpoint
 )
 
 # Record provenance events (automatically stored in IPLD)
@@ -223,7 +215,7 @@ source_id = manager.record_source(
     source_type="file",
     format="csv",
     location="/path/to/dataset.csv",
-    description="Original CSV dataset"
+    description="Original CSV dataset",
 )
 
 # Transformation
@@ -233,7 +225,7 @@ transform_id = manager.record_transformation(
     transformation_type="clean",
     tool="pandas",
     parameters={"drop_na": True, "drop_duplicates": True},
-    description="Clean dataset by removing NA values and duplicates"
+    description="Clean dataset by removing NA values and duplicates",
 )
 
 # Verification
@@ -243,7 +235,7 @@ verify_id = manager.record_verification(
     schema={"id": "integer", "name": "string", "value": "float"},
     pass_count=1000,
     fail_count=0,
-    description="Verify data schema"
+    description="Verify data schema",
 )
 
 # Check IPLD storage status
@@ -261,19 +253,19 @@ print(f"Root CID: {root_cid}")
 import_manager = EnhancedProvenanceManager(
     storage_path=os.path.join(temp_dir, "import"),
     enable_ipld_storage=True,
-    enable_crypto_verification=True
+    enable_crypto_verification=True,
 )
 
 # Import the provenance graph from CAR file
 success = import_manager.import_from_car(car_path)
 if success:
     print(f"Successfully imported provenance graph with {len(import_manager.records)} records")
-    
+
     # Verify the integrity of the imported records
     verification_results = import_manager.verify_all_records()
     valid_count = sum(1 for v in verification_results.values() if v)
     print(f"Valid records: {valid_count}/{len(verification_results)}")
-    
+
     # Run a query on the imported graph
     lineage = import_manager.get_lineage("dataset-002")
     print(f"Lineage of dataset-002: {len(lineage)} records")
@@ -305,21 +297,16 @@ from ipfs_datasets_py.audit.integration import AuditProvenanceIntegrator
 from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager
 
 # Create the audit logger
-audit_logger = AuditLogger(
-    log_file="audit.log",
-    console_level=AuditLevel.WARNING
-)
+audit_logger = AuditLogger(log_file="audit.log", console_level=AuditLevel.WARNING)
 
 # Create the provenance manager
 provenance_manager = EnhancedProvenanceManager(
-    storage_path="provenance_data",
-    default_agent_id="integration-example"
+    storage_path="provenance_data", default_agent_id="integration-example"
 )
 
 # Set up the integration
 integrator = AuditProvenanceIntegrator(
-    audit_logger=audit_logger,
-    provenance_manager=provenance_manager
+    audit_logger=audit_logger, provenance_manager=provenance_manager
 )
 
 # Set up bidirectional integration
@@ -336,11 +323,7 @@ audit_logger.log_event(
     subject="input_dataset",
     object="output_dataset",
     status="success",
-    details={
-        "transformation_type": "clean",
-        "tool": "pandas",
-        "parameters": {"drop_na": True}
-    }
+    details={"transformation_type": "clean", "tool": "pandas", "parameters": {"drop_na": True}},
 )
 
 # The above audit event will automatically create a transformation record in the provenance system
@@ -368,11 +351,12 @@ import pandas as pd
 # Create the audit logger
 audit_logger = AuditLogger(log_file="dataset_processing.log")
 
+
 # Function that uses audit logging
 def process_dataset(df, operations, dataset_name):
     """Process a dataset with auditing."""
     result_df = df.copy()
-    
+
     # Log the start of processing
     audit_logger.log_event(
         level=AuditLevel.INFO,
@@ -381,15 +365,15 @@ def process_dataset(df, operations, dataset_name):
         subject=dataset_name,
         object=None,
         status="success",
-        details={"shape": str(df.shape), "columns": list(df.columns)}
+        details={"shape": str(df.shape), "columns": list(df.columns)},
     )
-    
+
     # Apply each operation with audit logging
     for op_name, op_func, op_args in operations:
         try:
             # Apply the operation
             result_df = op_func(result_df, **op_args)
-            
+
             # Log the operation
             audit_logger.log_event(
                 level=AuditLevel.INFO,
@@ -401,8 +385,8 @@ def process_dataset(df, operations, dataset_name):
                 details={
                     "operation": op_name,
                     "args": op_args,
-                    "result_shape": str(result_df.shape)
-                }
+                    "result_shape": str(result_df.shape),
+                },
             )
         except Exception as e:
             # Log the failure
@@ -413,14 +397,10 @@ def process_dataset(df, operations, dataset_name):
                 subject=dataset_name,
                 object=None,
                 status="failure",
-                details={
-                    "operation": op_name,
-                    "args": op_args,
-                    "error": str(e)
-                }
+                details={"operation": op_name, "args": op_args, "error": str(e)},
             )
             raise
-    
+
     # Log the completion of processing
     audit_logger.log_event(
         level=AuditLevel.INFO,
@@ -429,23 +409,30 @@ def process_dataset(df, operations, dataset_name):
         subject=dataset_name,
         object=f"{dataset_name}_processed",
         status="success",
-        details={"final_shape": str(result_df.shape)}
+        details={"final_shape": str(result_df.shape)},
     )
-    
+
     return result_df
 
+
 # Example usage
-df = pd.DataFrame({
-    "id": range(1, 11),
-    "value": [1, 2, None, 4, 5, 6, None, 8, 9, 10],
-    "category": ["A", "B", "A", "B", "A", "B", "A", "B", "A", "B"]
-})
+df = pd.DataFrame(
+    {
+        "id": range(1, 11),
+        "value": [1, 2, None, 4, 5, 6, None, 8, 9, 10],
+        "category": ["A", "B", "A", "B", "A", "B", "A", "B", "A", "B"],
+    }
+)
 
 # Define operations
 operations = [
     ("drop_na", lambda df, **kwargs: df.dropna(), {}),
     ("filter", lambda df, **kwargs: df[df["value"] > kwargs["threshold"]], {"threshold": 5}),
-    ("aggregate", lambda df, **kwargs: df.groupby(kwargs["by"]).sum().reset_index(), {"by": "category"})
+    (
+        "aggregate",
+        lambda df, **kwargs: df.groupby(kwargs["by"]).sum().reset_index(),
+        {"by": "category"},
+    ),
 ]
 
 # Process the dataset with audit logging
@@ -467,14 +454,14 @@ security_manager = SecurityManager(
     config={
         "enable_encryption": True,
         "enable_access_control": True,
-        "key_storage": "secure_storage"
+        "key_storage": "secure_storage",
     }
 )
 
 # Create encryption keys for sensitive data
 encryption_key_id = security_manager.create_encryption_key(
     key_name="lineage-sensitive-data",
-    key_description="Key for encrypting sensitive lineage metadata"
+    key_description="Key for encrypting sensitive lineage metadata",
 )
 
 # Set up access policies for lineage data
@@ -484,15 +471,15 @@ security_manager.create_resource_policy(
         "admin": ["read", "write", "delete", "grant"],
         "data_steward": ["read", "write"],
         "analyst": ["read"],
-        "auditor": ["read"]
-    }
+        "auditor": ["read"],
+    },
 )
 
 # Initialize audit logger with security integration
 audit_logger = AuditLogger(
     log_file="lineage_audit.log",
     console_level=AuditLevel.WARNING,
-    security_manager=security_manager
+    security_manager=security_manager,
 )
 
 # Create enhanced lineage tracker with security and audit integration
@@ -502,7 +489,7 @@ lineage_tracker = EnhancedLineageTracker(
         "enable_ipld_storage": True,
         "security_manager": security_manager,
         "audit_logger": audit_logger,
-        "encryption_key_id": encryption_key_id
+        "encryption_key_id": encryption_key_id,
     }
 )
 
@@ -514,8 +501,8 @@ finance_domain = lineage_tracker.create_domain(
         "sensitivity": "high",
         "compliance_frameworks": ["SOX", "GDPR"],
         "data_owners": ["finance_team"],
-        "security_classification": "restricted"
-    }
+        "security_classification": "restricted",
+    },
 )
 
 analytics_domain = lineage_tracker.create_domain(
@@ -524,8 +511,8 @@ analytics_domain = lineage_tracker.create_domain(
     attributes={
         "sensitivity": "medium",
         "data_owners": ["analytics_team"],
-        "security_classification": "internal"
-    }
+        "security_classification": "internal",
+    },
 )
 
 # Set up secure boundary between domains
@@ -537,13 +524,13 @@ lineage_tracker.create_domain_boundary(
         "encryption": "AES-256",
         "access_control": "role_based",
         "data_masking": "enabled",
-        "approval_required": True
+        "approval_required": True,
     },
     constraints=[
         {"type": "field_level", "fields": ["ssn", "account_number"], "action": "mask"},
         {"type": "time_constraint", "hours": "8-17", "days": "mon-fri"},
-        {"type": "approval", "approvers": ["data_governance_team"]}
-    ]
+        {"type": "approval", "approvers": ["data_governance_team"]},
+    ],
 )
 
 # Create sensitive data node with security controls
@@ -556,11 +543,11 @@ sensitive_data = lineage_tracker.create_node(
         "security_controls": {
             "encryption": "column-level",
             "access_restriction": "need-to-know",
-            "retention_policy": "3 years"
-        }
+            "retention_policy": "3 years",
+        },
     },
     domain_id=finance_domain,
-    entity_id="financial_transactions"
+    entity_id="financial_transactions",
 )
 
 # Record access to sensitive data with audit trail
@@ -568,7 +555,7 @@ with audit_logger.audit_context(
     category=AuditCategory.DATA_ACCESS,
     operation="read",
     subject="financial_transactions",
-    status="success"
+    status="success",
 ):
     # Create a transformation with security context
     transform_node = lineage_tracker.create_node(
@@ -579,31 +566,31 @@ with audit_logger.audit_context(
             "security_context": {
                 "authentication": "mfa",
                 "authorization": "role_based",
-                "security_clearance": "confidential"
-            }
+                "security_clearance": "confidential",
+            },
         },
         domain_id=finance_domain,
-        entity_id="anonymize_transform"
+        entity_id="anonymize_transform",
     )
-    
+
     # Record detailed transformation with security controls
     lineage_tracker.record_transformation_details(
         transformation_id=transform_node,
         operation_type="anonymization",
         inputs=[
             {"field": "customer_id", "type": "string", "sensitivity": "high"},
-            {"field": "transaction_amount", "type": "decimal", "sensitivity": "medium"}
+            {"field": "transaction_amount", "type": "decimal", "sensitivity": "medium"},
         ],
         outputs=[
             {"field": "customer_hash", "type": "string", "sensitivity": "low"},
-            {"field": "transaction_amount", "type": "decimal", "sensitivity": "medium"}
+            {"field": "transaction_amount", "type": "decimal", "sensitivity": "medium"},
         ],
         parameters={
             "anonymization_method": "sha256",
             "salt": "secure-random-salt",
-            "k_anonymity": 5
+            "k_anonymity": 5,
         },
-        impact_level="field"
+        impact_level="field",
     )
 
 # Create cross-domain link with security controls for data crossing boundary
@@ -616,11 +603,11 @@ anonymized_data = lineage_tracker.create_node(
         "security_controls": {
             "encryption": "transport-only",
             "access_restriction": "department-level",
-            "retention_policy": "1 year"
-        }
+            "retention_policy": "1 year",
+        },
     },
     domain_id=analytics_domain,
-    entity_id="anonymized_transactions"
+    entity_id="anonymized_transactions",
 )
 
 # Create link that crosses domain boundary with security context
@@ -633,10 +620,10 @@ lineage_tracker.create_link(
         "security_context": {
             "boundary_crossing_approved_by": "data_governance_team",
             "security_validation": "passed",
-            "compliance_check": "passed"
-        }
+            "compliance_check": "passed",
+        },
     },
-    cross_domain=True
+    cross_domain=True,
 )
 
 # Generate comprehensive security-enhanced provenance report
@@ -645,7 +632,7 @@ report = lineage_tracker.generate_provenance_report(
     include_visualization=True,
     format="html",
     include_security_context=True,
-    include_audit_trail=True
+    include_audit_trail=True,
 )
 
 # Export secured lineage data to IPLD with encrypted sensitive information
@@ -653,7 +640,7 @@ root_cid = lineage_tracker.export_to_ipld(
     include_domains=True,
     include_versions=True,
     include_transformation_details=True,
-    encrypt_sensitive_data=True
+    encrypt_sensitive_data=True,
 )
 print(f"Secure lineage graph stored on IPLD with root CID: {root_cid}")
 ```
@@ -675,10 +662,7 @@ temp_dir = tempfile.mkdtemp()
 audit_log_path = os.path.join(temp_dir, "audit.log")
 
 # Create audit logger
-audit_logger = AuditLogger(
-    log_file=audit_log_path,
-    console_level=AuditLevel.INFO
-)
+audit_logger = AuditLogger(log_file=audit_log_path, console_level=AuditLevel.INFO)
 
 # Create provenance manager with IPLD storage and audit integration
 provenance_manager = EnhancedProvenanceManager(
@@ -687,13 +671,12 @@ provenance_manager = EnhancedProvenanceManager(
     default_agent_id="integrated-example",
     tracking_level="detailed",
     audit_logger=audit_logger,
-    enable_crypto_verification=True
+    enable_crypto_verification=True,
 )
 
 # Set up bidirectional integration
 integrator = AuditProvenanceIntegrator(
-    audit_logger=audit_logger,
-    provenance_manager=provenance_manager
+    audit_logger=audit_logger, provenance_manager=provenance_manager
 )
 integrator.setup_audit_event_listener()
 
@@ -708,8 +691,8 @@ audit_logger.log_event(
     details={
         "transformation_type": "normalize",
         "tool": "sklearn",
-        "parameters": {"method": "minmax"}
-    }
+        "parameters": {"method": "minmax"},
+    },
 )
 
 # The above audit event will automatically:

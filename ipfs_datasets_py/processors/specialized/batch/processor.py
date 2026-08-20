@@ -38,6 +38,7 @@ Integration Points:
     • Audit Systems: Comprehensive logging for compliance and debugging
     • External APIs: RESTful interfaces for batch management and status queries
 """
+
 import anyio
 import concurrent.futures
 import inspect
@@ -57,10 +58,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 
 import psutil
-from pydantic import (
-    BaseModel, 
-    PositiveInt
-)
+from pydantic import BaseModel, PositiveInt
 
 
 from ipfs_datasets_py.processors.storage.ipld import IPLDStorage
@@ -106,6 +104,7 @@ class ProcessingJob:
         processing_time (float): Time in seconds required to process this job.
             0.0 for jobs that haven't completed.
     """
+
     job_id: str
     pdf_path: str
     metadata: Dict[str, Any]
@@ -115,7 +114,7 @@ class ProcessingJob:
     error_message: Optional[str] = None
     result: Optional[Dict[str, Any]] = None
     processing_time: float = 0.0
-    
+
     def __post_init__(self) -> None:
         """
         Initialize computed fields after dataclass instantiation.
@@ -133,7 +132,7 @@ class ProcessingJob:
             >>> # created_at is automatically set
             >>> job = ProcessingJob(job_id='job_1', pdf_path='/doc.pdf', metadata={})
             >>> print(job.created_at)  # Shows current timestamp
-            
+
             >>> # created_at can be explicitly provided
             >>> job = ProcessingJob(
             ...     job_id='job_2',
@@ -153,6 +152,7 @@ class ProcessingJob:
         """
         if not self.created_at:
             self.created_at = datetime.now().isoformat()
+
 
 @dataclass
 class BatchJobResult:
@@ -179,7 +179,7 @@ class BatchJobResult:
         chunk_count (int): Number of text chunks generated. 0 if failed.
         error_message (Optional[str]): Detailed error message if processing failed.
             None for successful jobs.
-    
+
     Example:
         >>> # Successful job result
         >>> result = BatchJobResult(
@@ -193,7 +193,7 @@ class BatchJobResult:
         ...     relationship_count=10,
         ...     chunk_count=5
         ... )
-        
+
         >>> # Failed job result
         >>> failed_result = BatchJobResult(
         ...     job_id='job_124',
@@ -202,6 +202,7 @@ class BatchJobResult:
         ...     error_message='Failed to extract text from PDF'
         ... )
     """
+
     job_id: str
     status: str
     processing_time: float
@@ -212,6 +213,7 @@ class BatchJobResult:
     relationship_count: int = 0
     chunk_count: int = 0
     error_message: Optional[str] = None
+
 
 @dataclass
 class BatchStatus:
@@ -237,7 +239,7 @@ class BatchStatus:
         throughput (float): Documents processed per second for completed batches.
         resource_usage (Dict[str, Any]): Current resource usage statistics including
             memory, CPU, and worker thread information.
-    
+
     Example:
         >>> # Example batch status for a running batch
         >>> status = BatchStatus(
@@ -259,6 +261,7 @@ class BatchStatus:
         ...     }
         ... )
     """
+
     batch_id: str
     total_jobs: int
     completed_jobs: int
@@ -271,6 +274,7 @@ class BatchStatus:
     average_job_time: float = 0.0
     throughput: float = 0.0  # documents per second
     resource_usage: Dict[str, Any] = None
+
 
 class BatchProcessor:
     """
@@ -323,20 +327,20 @@ class BatchProcessor:
             enable_monitoring=True,
             enable_audit=True
         )
-        
+
         # Process batch with progress callback
         def progress_callback(status):
             print(f"Progress: {status.completed_jobs}/{status.total_jobs}")
-        
+
         batch_id = await processor.process_batch(
             pdf_paths=["/docs/paper1.pdf", "/docs/paper2.pdf"],
             priority=8,
             callback=progress_callback
         )
-        
+
         # Monitor batch status
         status = await processor.get_batch_status(batch_id)
-        
+
         # Export results when complete
         output_file = await processor.export_batch_results(batch_id, format="json")
 
@@ -348,17 +352,18 @@ class BatchProcessor:
         - Audit logs provide detailed information for compliance and debugging
         - The class is thread-safe and supports concurrent batch operations
     """
-    
-    def __init__(self,
-                 max_workers: int = None,
-                 max_memory_mb: int = 4096,
-                 storage: Optional[IPLDStorage] = None,
-                 enable_monitoring: bool = False,
-                 enable_audit: bool = True,
-                 pdf_processor: Optional['PDFProcessor'] = None,
-                 llm_optimizer: Optional['LLMOptimizer'] = None,
-                 graphrag_integrator: Optional['GraphRAGIntegrator'] = None
-                 ) -> None:
+
+    def __init__(
+        self,
+        max_workers: int = None,
+        max_memory_mb: int = 4096,
+        storage: Optional[IPLDStorage] = None,
+        enable_monitoring: bool = False,
+        enable_audit: bool = True,
+        pdf_processor: Optional["PDFProcessor"] = None,
+        llm_optimizer: Optional["LLMOptimizer"] = None,
+        graphrag_integrator: Optional["GraphRAGIntegrator"] = None,
+    ) -> None:
         """
         Initialize the BatchProcessor with configuration for concurrent PDF processing operations.
 
@@ -420,7 +425,7 @@ class BatchProcessor:
         Examples:
             >>> # Basic initialization with default settings
             >>> processor = BatchProcessor()
-            
+
             >>> # High-performance setup with monitoring
             >>> processor = BatchProcessor(
             ...     max_workers=12,
@@ -428,7 +433,7 @@ class BatchProcessor:
             ...     enable_monitoring=True,
             ...     enable_audit=True
             ... )
-            
+
             >>> # Custom storage with limited resources
             >>> custom_storage = IPLDStorage(config={'cache_size': '1GB'})
             >>> processor = BatchProcessor(
@@ -448,29 +453,33 @@ class BatchProcessor:
         # Validate input parameters
         if max_workers is not None and (not isinstance(max_workers, int) or max_workers < 1):
             raise ValueError("max_workers must be a positive integer")
-        
+
         if not isinstance(max_memory_mb, int) or max_memory_mb < 512:
-            msg = "max_memory_mb must be positive" if max_memory_mb < 0 else "max_memory_mb must be at least 512 MB"
+            msg = (
+                "max_memory_mb must be positive"
+                if max_memory_mb < 0
+                else "max_memory_mb must be at least 512 MB"
+            )
             raise ValueError(msg)
 
         # Store configuration flags
         self.enable_monitoring: bool = enable_monitoring
         self.enable_audit: bool = enable_audit
-        
+
         self.max_workers: int = max_workers or min(mp.cpu_count(), 8)
         self.max_memory_mb: int = max_memory_mb
         self.storage = storage or IPLDStorage()
-        
+
         # Initialize monitoring and audit
         self.audit_logger = AuditLogger() if enable_audit else None
-        
+
         if enable_monitoring:
             try:
                 from ..monitoring import MonitoringConfig, MetricsConfig
+
                 config = MonitoringConfig()
                 config.metrics = MetricsConfig(
-                    output_file="batch_processing_metrics.json",
-                    prometheus_export=True
+                    output_file="batch_processing_metrics.json", prometheus_export=True
                 )
                 # Create and configure monitoring system
                 self.monitoring = MonitoringSystem()
@@ -484,36 +493,40 @@ class BatchProcessor:
         self.pdf_processor = pdf_processor or PDFProcessor(storage=self.storage)
         self.llm_optimizer = llm_optimizer or LLMOptimizer()
         self.graphrag_integrator = graphrag_integrator or GraphRAGIntegrator(storage=self.storage)
-        
+
         # Job management
         self.job_queue: Queue = Queue()
         self.batch_jobs: Dict[str, List[ProcessingJob]] = {}  # batch_id -> list of jobs
-        self.batch_results: Dict[str, Dict[str, List[BatchJobResult]]] = {}  # batch_id -> {'completed': [], 'failed': []}
+        self.batch_results: Dict[
+            str, Dict[str, List[BatchJobResult]]
+        ] = {}  # batch_id -> {'completed': [], 'failed': []}
         self.active_batches: Dict[str, BatchStatus] = {}
-        
+
         # Worker management
         self.workers: List[threading.Thread] = []
         self.worker_pool: Optional[concurrent.futures.ProcessPoolExecutor] = None
         self.is_processing = False
         self.stop_event = threading.Event()
-        
+
         # Performance tracking
         self.processing_stats = {
-            'total_processed': 0,
-            'total_failed': 0,
-            'total_processing_time': 0.0,
-            'peak_memory_usage': 0.0,
-            'average_throughput': 0.0,
-            'batches_created': 0,
-            'start_time': datetime.now().isoformat()
+            "total_processed": 0,
+            "total_failed": 0,
+            "total_processing_time": 0.0,
+            "peak_memory_usage": 0.0,
+            "average_throughput": 0.0,
+            "batches_created": 0,
+            "start_time": datetime.now().isoformat(),
         }
-    
+
     @monitor
-    async def process_batch(self,
-                           pdf_paths: List[Union[str, Path]],
-                           batch_metadata: Optional[Dict[str, Any]] = None,
-                           priority: int = 5,
-                           callback: Optional[Callable] = None) -> str:
+    async def process_batch(
+        self,
+        pdf_paths: List[Union[str, Path]],
+        batch_metadata: Optional[Dict[str, Any]] = None,
+        priority: int = 5,
+        callback: Optional[Callable] = None,
+    ) -> str:
         """
         Process a batch of PDF documents through the complete processing pipeline concurrently.
 
@@ -559,11 +572,11 @@ class BatchProcessor:
             ...     '/docs/report2.pdf',
             ...     '/docs/report3.pdf'
             ... ])
-            
+
             >>> # High-priority batch with metadata and progress tracking
             >>> def progress_update(status):
             ...     print(f"Progress: {status.completed_jobs}/{status.total_jobs}")
-            
+
             >>> batch_id = await processor.process_batch(
             ...     pdf_paths=[Path('/research/paper1.pdf'), Path('/research/paper2.pdf')],
             ...     batch_metadata={
@@ -574,11 +587,11 @@ class BatchProcessor:
             ...     priority=8,
             ...     callback=progress_update
             ... )
-            
+
             >>> # Async progress callback
             >>> async def async_progress(status):
             ...     await save_progress_to_db(status)
-            
+
             >>> batch_id = await processor.process_batch(
             ...     pdf_paths=pdf_file_list,
             ...     callback=async_progress
@@ -595,13 +608,13 @@ class BatchProcessor:
         # Validate inputs
         if not pdf_paths:
             raise ValueError("PDF paths list cannot be empty")
-        
+
         if not isinstance(priority, int) or priority < 1 or priority > 10:
             raise ValueError("Priority must be an integer between 1 and 10")
-        
+
         if callback is not None and not callable(callback):
             raise TypeError("Callback must be callable")
-        
+
         # Validate file existence
         for pdf_path in pdf_paths:
             path_obj = Path(pdf_path)
@@ -609,11 +622,11 @@ class BatchProcessor:
                 raise FileNotFoundError(f"PDF file not found: {pdf_path}")
             if not path_obj.is_file():
                 raise ValueError(f"Path is not a file: {pdf_path}")
-        
+
         batch_id = f"batch_{uuid.uuid4().hex[:8]}"
-        
+
         logger.info(f"Starting batch processing: {batch_id} with {len(pdf_paths)} documents")
-        
+
         # Create batch status
         batch_status = BatchStatus(
             batch_id=batch_id,
@@ -622,14 +635,14 @@ class BatchProcessor:
             failed_jobs=0,
             pending_jobs=len(pdf_paths),
             processing_jobs=0,
-            start_time=datetime.now().isoformat()
+            start_time=datetime.now().isoformat(),
         )
         self.active_batches[batch_id] = batch_status
-        
+
         # Initialize batch tracking
         self.batch_jobs[batch_id] = []
-        self.batch_results[batch_id] = {'completed': [], 'failed': []}
-        
+        self.batch_results[batch_id] = {"completed": [], "failed": []}
+
         # Create processing jobs
         jobs = []
         for i, pdf_path in enumerate(pdf_paths):
@@ -637,29 +650,29 @@ class BatchProcessor:
                 job_id=f"{batch_id}_job_{i:04d}",
                 pdf_path=str(pdf_path),
                 metadata={
-                    'batch_id': batch_id,
-                    'batch_metadata': batch_metadata or {},
-                    'job_index': i
+                    "batch_id": batch_id,
+                    "batch_metadata": batch_metadata or {},
+                    "job_index": i,
                 },
-                priority=priority
+                priority=priority,
             )
             jobs.append(job)
             self.batch_jobs[batch_id].append(job)  # Track job by batch
             self.job_queue.put(job)
-        
+
         # Audit logging
         if self.audit_logger:
             self.audit_logger.data_access(
                 "batch_processing_start",
                 resource_id=batch_id,
                 resource_type="pdf_batch",
-                metadata={'job_count': len(jobs)}
+                metadata={"job_count": len(jobs)},
             )
-        
+
         # Start processing if not already running
         if not self.is_processing:
             await self._start_workers()
-        
+
         # Monitor progress
         if callback:
             threading.Thread(
@@ -667,9 +680,9 @@ class BatchProcessor:
                 args=(self._monitor_batch_progress, batch_id, callback),
                 daemon=True,
             ).start()
-        
+
         return batch_id
-    
+
     async def _start_workers(self):
         """
         Initialize and start worker threads for concurrent batch processing operations.
@@ -710,31 +723,29 @@ class BatchProcessor:
         """
         if self.is_processing:
             return
-        
+
         self.is_processing = True
         self.stop_event.clear()
-        
+
         logger.info(f"Starting {self.max_workers} worker threads")
-        
+
         # Create worker threads
         for i in range(self.max_workers):
             try:
                 worker = threading.Thread(
-                    target=self._worker_loop,
-                    args=(f"worker_{i}",),
-                    daemon=True
+                    target=self._worker_loop, args=(f"worker_{i}",), daemon=True
                 )
                 worker.start()
                 self.workers.append(worker)
             except OSError as e:
                 logger.warning(f"Could not create worker thread {i}: {e}")
                 continue
-        
+
         # Create process pool for CPU-intensive tasks
         self.worker_pool = concurrent.futures.ProcessPoolExecutor(
             max_workers=min(self.max_workers, mp.cpu_count())
         )
-    
+
     def _worker_loop(self, worker_name: str) -> None:
         """
         Main execution loop for individual worker threads processing PDF documents from the job queue.
@@ -785,32 +796,32 @@ class BatchProcessor:
             - Processing is fully asynchronous using asyncio.run for each job
         """
         logger.info(f"Worker {worker_name} started")
-        
+
         while not self.stop_event.is_set():
             try:
                 # Get job from queue with timeout
                 job = self.job_queue.get(timeout=1.0)
-                
+
                 if job is None:  # Shutdown signal
                     break
-                
+
                 # Process job
                 result = anyio.run(self._process_single_job, job, worker_name)
-                
+
                 # Update batch status
                 self._update_batch_status(job, result)
-                
+
                 # Mark queue task as done
                 self.job_queue.task_done()
-                
+
             except queue.Empty:
                 continue
             except Exception as e:
                 logger.error(f"Worker {worker_name} error: {e}")
                 continue
-        
+
         logger.info(f"Worker {worker_name} stopped")
-    
+
     async def _process_single_job(self, job: ProcessingJob, worker_name: str) -> BatchJobResult:
         """
         Process a single PDF document through the complete processing pipeline with comprehensive error handling.
@@ -876,40 +887,39 @@ class BatchProcessor:
         """
         start_time = time.time()
         job.status = "processing"
-        
+
         logger.info(f"Worker {worker_name} processing {job.job_id}: {job.pdf_path}")
-        
+
         # Performance monitoring
         if self.monitoring:
             operation_context = self.monitoring.track_operation(
-                "batch_pdf_processing",
-                tags=["batch", "pdf", job.job_id]
+                "batch_pdf_processing", tags=["batch", "pdf", job.job_id]
             )
         else:
             operation_context = None
-        
+
         try:
             with operation_context if operation_context else nullcontext():
                 # Stage 1: PDF Processing
                 pdf_result = await self.pdf_processor.process_pdf(
-                    job.pdf_path,
-                    metadata=job.metadata
+                    job.pdf_path, metadata=job.metadata
                 )
-                
-                if pdf_result.get('status') != 'success':
-                    raise Exception(f"PDF processing failed: {pdf_result.get('message', 'Unknown error')}")
-                
+
+                if pdf_result.get("status") != "success":
+                    raise Exception(
+                        f"PDF processing failed: {pdf_result.get('message', 'Unknown error')}"
+                    )
+
                 # Stage 2: LLM Optimization
                 llm_document = await self.llm_optimizer.optimize_for_llm(
-                    pdf_result['decomposed_content'],
-                    pdf_result['metadata']
+                    pdf_result["decomposed_content"], pdf_result["metadata"]
                 )
-                
+
                 # Stage 3: GraphRAG Integration
                 knowledge_graph = await self.graphrag_integrator.integrate_document(llm_document)
-                
+
                 processing_time = time.time() - start_time
-                
+
                 # Create successful result
                 result = BatchJobResult(
                     job_id=job.job_id,
@@ -920,39 +930,39 @@ class BatchProcessor:
                     ipld_cid=knowledge_graph.ipld_cid,
                     entity_count=len(knowledge_graph.entities),
                     relationship_count=len(knowledge_graph.relationships),
-                    chunk_count=len(knowledge_graph.chunks)
+                    chunk_count=len(knowledge_graph.chunks),
                 )
-                
+
                 # Store in batch-specific results
-                batch_id = job.metadata.get('batch_id')
+                batch_id = job.metadata.get("batch_id")
                 if batch_id and batch_id in self.batch_results:
-                    self.batch_results[batch_id]['completed'].append(result)
-                
-                self.processing_stats['total_processed'] += 1
-                self.processing_stats['total_processing_time'] += processing_time
-                
+                    self.batch_results[batch_id]["completed"].append(result)
+
+                self.processing_stats["total_processed"] += 1
+                self.processing_stats["total_processing_time"] += processing_time
+
                 logger.info(f"Job {job.job_id} completed in {processing_time:.2f}s")
                 return result
-                
+
         except Exception as e:
             processing_time = time.time() - start_time
             error_message = str(e)
-            
+
             logger.error(f"Job {job.job_id} failed: {error_message}")
-            
+
             # Create failed result
             result = BatchJobResult(
                 job_id=job.job_id,
                 status="failed",
                 processing_time=processing_time,
-                error_message=error_message
+                error_message=error_message,
             )
-            
+
             # Store in batch-specific results
-            batch_id = job.metadata.get('batch_id')
+            batch_id = job.metadata.get("batch_id")
             if batch_id and batch_id in self.batch_results:
-                self.batch_results[batch_id]['failed'].append(result)
-                self.processing_stats['total_failed'] += 1
+                self.batch_results[batch_id]["failed"].append(result)
+                self.processing_stats["total_failed"] += 1
 
             # Audit logging for failure
             if self.audit_logger:
@@ -960,11 +970,11 @@ class BatchProcessor:
                     "batch_job_failed",
                     resource_id=job.job_id,
                     resource_type="pdf_processing_job",
-                    metadata={'error': error_message}
+                    metadata={"error": error_message},
                 )
-            
+
             return result
-    
+
     def _update_batch_status(self, job: ProcessingJob, result: BatchJobResult) -> None:
         """
         Update batch-level status and metrics based on individual job completion results.
@@ -1022,38 +1032,40 @@ class BatchProcessor:
             - Final metrics are automatically calculated upon batch completion
             - Invalid batch_id in job metadata is silently ignored to prevent worker crashes
         """
-        batch_id = job.metadata.get('batch_id')
+        batch_id = job.metadata.get("batch_id")
         if not batch_id or batch_id not in self.active_batches:
             return
-        
+
         batch_status = self.active_batches[batch_id]
-        
+
         if result.status == "completed":
             batch_status.completed_jobs += 1
         elif result.status == "failed":
             batch_status.failed_jobs += 1
-        
+
         batch_status.pending_jobs = max(0, batch_status.pending_jobs - 1)
         batch_status.total_processing_time += result.processing_time
-        
+
         # Calculate metrics
         total_finished = batch_status.completed_jobs + batch_status.failed_jobs
         if total_finished > 0:
             batch_status.average_job_time = batch_status.total_processing_time / total_finished
-        
+
         # Check if batch is complete
         if total_finished >= batch_status.total_jobs:
             batch_status.end_time = datetime.now().isoformat()
-            
+
             # Calculate throughput
-            start_dt = datetime.fromisoformat(batch_status.start_time.replace('Z', '+00:00'))
-            end_dt = datetime.fromisoformat(batch_status.end_time.replace('Z', '+00:00'))
+            start_dt = datetime.fromisoformat(batch_status.start_time.replace("Z", "+00:00"))
+            end_dt = datetime.fromisoformat(batch_status.end_time.replace("Z", "+00:00"))
             duration = (end_dt - start_dt).total_seconds()
-            
+
             if duration > 0:
                 batch_status.throughput = batch_status.completed_jobs / duration
-            
-            logger.info(f"Batch {batch_id} completed: {batch_status.completed_jobs}/{batch_status.total_jobs} successful")
+
+            logger.info(
+                f"Batch {batch_id} completed: {batch_status.completed_jobs}/{batch_status.total_jobs} successful"
+            )
 
     async def _monitor_batch_progress(self, batch_id: str, callback: Callable) -> None:
         """
@@ -1078,7 +1090,7 @@ class BatchProcessor:
 
         Returns:
             None
-                
+
         Raises:
             ValueError: If batch_id does not correspond to an active batch.
             TypeError: If callback is not callable or has incorrect signature.
@@ -1094,13 +1106,13 @@ class BatchProcessor:
             >>> # Synchronous progress callback
             >>> def print_progress(status):
             ...     print(f"Batch {status.batch_id}: {status.completed_jobs}/{status.total_jobs}")
-            
+
             >>> await processor._monitor_batch_progress('batch_123', print_progress)
-            
+
             >>> # Asynchronous progress callback with database updates
             >>> async def save_progress(status):
             ...     await database.update_batch_progress(status.batch_id, status.completed_jobs)
-            
+
             >>> await processor._monitor_batch_progress('batch_456', save_progress)
 
         Notes:
@@ -1113,7 +1125,7 @@ class BatchProcessor:
         """
         while batch_id in self.active_batches:
             batch_status = self.active_batches[batch_id]
-            
+
             # Call progress callback
             try:
                 if inspect.iscoroutinefunction(callback):
@@ -1122,15 +1134,15 @@ class BatchProcessor:
                     callback(batch_status)
             except Exception as e:
                 logger.error(f"Progress callback error: {e}")
-            
+
             # Check if batch is complete
             total_finished = batch_status.completed_jobs + batch_status.failed_jobs
             if total_finished >= batch_status.total_jobs:
                 break
-            
+
             # Wait before next update
             await anyio.sleep(5.0)
-    
+
     async def get_batch_status(self, batch_id: str) -> Optional[Dict[str, Any]]:
         """
         Retrieve current status and metrics for a specific batch processing operation.
@@ -1171,7 +1183,7 @@ class BatchProcessor:
             >>> if status:
             ...     print(f"Progress: {status['completed_jobs']}/{status['total_jobs']}")
             ...     print(f"Memory usage: {status['resource_usage']['memory_mb']:.1f} MB")
-            
+
             >>> # Check if batch is complete
             >>> status = await processor.get_batch_status(batch_id)
             >>> if status and status['end_time']:
@@ -1188,15 +1200,15 @@ class BatchProcessor:
         """
         if batch_id not in self.active_batches:
             return None
-        
+
         batch_status = self.active_batches[batch_id]
-        
+
         # Get resource usage
         resource_usage = self._get_resource_usage()
         batch_status.resource_usage = resource_usage
-        
+
         return asdict(batch_status)
-    
+
     async def list_active_batches(self) -> List[Dict[str, Any]]:
         """
         Retrieve status information for all currently active (incomplete) batch processing operations.
@@ -1233,13 +1245,13 @@ class BatchProcessor:
             >>> for batch in active_batches:
             ...     progress = batch['completed_jobs'] / batch['total_jobs']
             ...     print(f"Batch {batch['batch_id']}: {progress:.1%} complete")
-            
+
             >>> # Check system load across all batches
             >>> batches = await processor.list_active_batches()
             >>> total_jobs = sum(b['total_jobs'] for b in batches)
             >>> total_completed = sum(b['completed_jobs'] for b in batches)
             >>> print(f"System progress: {total_completed}/{total_jobs} jobs")
-            
+
             >>> # Find oldest running batch
             >>> if active_batches:
             ...     oldest = min(active_batches, key=lambda b: b['start_time'])
@@ -1253,19 +1265,18 @@ class BatchProcessor:
             - Results are ordered by batch_id for consistent iteration
         """
         active_batches = []
-        
-        for batch_id, batch_status in self.active_batches.items():
 
+        for batch_id, batch_status in self.active_batches.items():
             # Only include batches that are not complete
             total_finished = batch_status.completed_jobs + batch_status.failed_jobs
 
             if total_finished < batch_status.total_jobs:
                 batch_dict = asdict(batch_status)
-                batch_dict['resource_usage'] = self._get_resource_usage()
+                batch_dict["resource_usage"] = self._get_resource_usage()
                 active_batches.append(batch_dict)
-        
+
         return active_batches
-    
+
     async def cancel_batch(self, batch_id: str) -> bool:
         """
         Cancel an active batch processing operation and remove pending jobs from the queue.
@@ -1306,7 +1317,7 @@ class BatchProcessor:
             ...     print("Batch cancelled successfully")
             >>> else:
             ...     print("Batch not found or already complete")
-            
+
             >>> # Cancel batch and check final status
             >>> await processor.cancel_batch(batch_id)
             >>> status = await processor.get_batch_status(batch_id)
@@ -1323,49 +1334,49 @@ class BatchProcessor:
         """
         if batch_id not in self.active_batches:
             return False
-        
+
         batch_status = self.active_batches[batch_id]
-        
+
         # Check if batch is already completed
         if batch_status.end_time is not None:
             return False
-        
+
         logger.info(f"Canceling batch {batch_id}")
-        
+
         # Mark batch as cancelled
         batch_status.end_time = datetime.now().isoformat()
-        
+
         # Remove pending jobs for this batch
         remaining_jobs = []
         cancelled_count = 0
-        
+
         try:
             while True:
                 job = self.job_queue.get_nowait()
-                if job.metadata.get('batch_id') == batch_id:
+                if job.metadata.get("batch_id") == batch_id:
                     cancelled_count += 1
                 else:
                     remaining_jobs.append(job)
         except queue.Empty:
             pass
-        
+
         # Put back non-cancelled jobs
         for job in remaining_jobs:
             self.job_queue.put(job)
-        
+
         logger.info(f"Cancelled {cancelled_count} pending jobs for batch {batch_id}")
-        
+
         # Audit logging
         if self.audit_logger:
             self.audit_logger.data_access(
                 "batch_processing_cancelled",
                 resource_id=batch_id,
                 resource_type="pdf_batch",
-                metadata={'cancelled_jobs': cancelled_count}
+                metadata={"cancelled_jobs": cancelled_count},
             )
-        
+
         return True
-    
+
     async def stop_processing(self, timeout: float = 30.0) -> None:
         """
         Gracefully stop all batch processing operations and shutdown worker threads.
@@ -1403,13 +1414,13 @@ class BatchProcessor:
         Examples:
             >>> # Graceful shutdown with default timeout
             >>> await processor.stop_processing()
-            
+
             >>> # Quick shutdown for emergency situations
             >>> await processor.stop_processing(timeout=5.0)
-            
+
             >>> # Patient shutdown allowing long jobs to complete
             >>> await processor.stop_processing(timeout=120.0)
-            
+
             >>> # Shutdown and restart with new configuration
             >>> await processor.stop_processing()
             >>> processor = BatchProcessor(max_workers=16)
@@ -1424,36 +1435,36 @@ class BatchProcessor:
         """
         if timeout <= 0:
             raise ValueError("timeout must be positive")
-            
+
         if not self.is_processing:
             return
-        
+
         logger.info("Stopping batch processing...")
-        
+
         # Signal workers to stop
         self.stop_event.set()
-        
+
         # Add None jobs to wake up workers
         for _ in range(len(self.workers)):
             self.job_queue.put(None)
-        
+
         # Wait for workers to finish
         start_time = time.time()
         for worker in self.workers:
             remaining_time = timeout - (time.time() - start_time)
             if remaining_time > 0:
                 worker.join(timeout=remaining_time)
-        
+
         # Shutdown process pool
         if self.worker_pool:
             self.worker_pool.shutdown(wait=True)
             self.worker_pool = None
-        
+
         self.workers.clear()
         self.is_processing = False
-        
+
         logger.info("Batch processing stopped")
-    
+
     def _get_resource_usage(self) -> Dict[str, Any]:
         """
         Collect and return current system resource usage statistics for monitoring and throttling.
@@ -1487,12 +1498,12 @@ class BatchProcessor:
             >>> print(f"Memory: {usage['memory_mb']:.1f} MB ({usage['memory_percent']:.1f}%)")
             >>> print(f"CPU: {usage['cpu_percent']:.1f}%")
             >>> print(f"Active workers: {usage['active_workers']}/{processor.max_workers}")
-            
+
             >>> # Monitor queue backlog
             >>> usage = processor._get_resource_usage()
             >>> if usage['queue_size'] > 100:
             ...     print("Large queue backlog detected")
-            
+
             >>> # Check for memory pressure
             >>> usage = processor._get_resource_usage()
             >>> if usage['memory_mb'] > processor.max_memory_mb:
@@ -1508,41 +1519,41 @@ class BatchProcessor:
         """
         try:
             process = psutil.Process()
-            
+
             # Memory usage
             memory_info = process.memory_info()
             memory_mb = memory_info.rss / 1024 / 1024
             memory_percent = process.memory_percent()
-            
+
             # CPU usage
             cpu_percent = process.cpu_percent()
-            
+
             # Update peak memory
-            if memory_mb > self.processing_stats.get('peak_memory_usage', 0):
-                self.processing_stats['peak_memory_usage'] = memory_mb
-            
+            if memory_mb > self.processing_stats.get("peak_memory_usage", 0):
+                self.processing_stats["peak_memory_usage"] = memory_mb
+
             # Worker thread count
             active_workers = len([w for w in self.workers if w.is_alive()])
-            
+
             return {
-                'memory_mb': memory_mb,
-                'memory_percent': memory_percent,
-                'cpu_percent': cpu_percent,
-                'active_workers': active_workers,
-                'queue_size': self.job_queue.qsize(),
-                'peak_memory_mb': self.processing_stats.get('peak_memory_usage', 0)
+                "memory_mb": memory_mb,
+                "memory_percent": memory_percent,
+                "cpu_percent": cpu_percent,
+                "active_workers": active_workers,
+                "queue_size": self.job_queue.qsize(),
+                "peak_memory_mb": self.processing_stats.get("peak_memory_usage", 0),
             }
         except Exception as e:
             # Fallback for testing or missing psutil
             return {
-                'memory_mb': 1024.0,
-                'memory_percent': 25.0,
-                'cpu_percent': 15.0,
-                'active_workers': len(self.workers),
-                'queue_size': self.job_queue.qsize(),
-                'peak_memory_mb': self.processing_stats.get('peak_memory_usage', 1024.0)
+                "memory_mb": 1024.0,
+                "memory_percent": 25.0,
+                "cpu_percent": 15.0,
+                "active_workers": len(self.workers),
+                "queue_size": self.job_queue.qsize(),
+                "peak_memory_mb": self.processing_stats.get("peak_memory_usage", 1024.0),
             }
-    
+
     async def get_processing_statistics(self) -> Dict[str, Any]:
         """
         Retrieve comprehensive processing statistics and performance metrics across all batch operations.
@@ -1575,17 +1586,17 @@ class BatchProcessor:
             >>> print(f"Success rate: {stats['success_rate']:.2%}")
             >>> print(f"Average job time: {stats['average_job_time']:.2f} seconds")
             >>> print(f"Total processed: {stats['total_processed']} documents")
-            
+
             >>> # Monitor system performance
             >>> stats = await processor.get_processing_statistics()
             >>> throughput = stats['total_processed'] / (stats['total_processing_time'] / 3600)
             >>> print(f"Throughput: {throughput:.1f} documents/hour")
-            
+
             >>> # Check processing quality
             >>> stats = await processor.get_processing_statistics()
             >>> if stats['success_rate'] < 0.95:
             ...     print(f"Warning: Low success rate ({stats['success_rate']:.2%})")
-            
+
             >>> # System health check
             >>> stats = await processor.get_processing_statistics()
             >>> memory_usage = stats['resource_usage']['memory_mb']
@@ -1601,42 +1612,42 @@ class BatchProcessor:
             - Method is safe to call frequently for monitoring dashboards
         """
         # Calculate from batch-specific results
-        total_processed = sum(len(results['completed']) for results in self.batch_results.values())
-        total_failed = sum(len(results['failed']) for results in self.batch_results.values())
-        
+        total_processed = sum(len(results["completed"]) for results in self.batch_results.values())
+        total_failed = sum(len(results["failed"]) for results in self.batch_results.values())
+
         total_jobs = total_processed + total_failed
-        
+
         # Calculate total processing time
         all_completed = []
         all_failed = []
         for results in self.batch_results.values():
-            all_completed.extend(results['completed'])
-            all_failed.extend(results['failed'])
-        
+            all_completed.extend(results["completed"])
+            all_failed.extend(results["failed"])
+
         total_processing_time = sum(job.processing_time for job in all_completed + all_failed)
-        
+
         stats = {
-            'total_processed': total_processed,
-            'total_failed': total_failed,
-            'total_jobs': total_jobs,
-            'success_rate': total_processed / total_jobs if total_jobs > 0 else 0.0,
-            'total_processing_time': total_processing_time,
-            'average_job_time': (
+            "total_processed": total_processed,
+            "total_failed": total_failed,
+            "total_jobs": total_jobs,
+            "success_rate": total_processed / total_jobs if total_jobs > 0 else 0.0,
+            "total_processing_time": total_processing_time,
+            "average_job_time": (
                 sum(job.processing_time for job in all_completed) / total_processed
-                if total_processed > 0 else 0.0
+                if total_processed > 0
+                else 0.0
             ),
-            'active_batches': len(self.active_batches),
-            'completed_jobs_count': total_processed,
-            'failed_jobs_count': total_failed,
-            'resource_usage': self._get_resource_usage()
+            "active_batches": len(self.active_batches),
+            "completed_jobs_count": total_processed,
+            "failed_jobs_count": total_failed,
+            "resource_usage": self._get_resource_usage(),
         }
-        
+
         return stats
-    
-    async def export_batch_results(self, 
-                                  batch_id: str,
-                                  format: str = "json",
-                                  output_path: Optional[str] = None) -> str:
+
+    async def export_batch_results(
+        self, batch_id: str, format: str = "json", output_path: Optional[str] = None
+    ) -> str:
         """
         Export comprehensive batch processing results and metrics to a structured file format.
 
@@ -1674,14 +1685,14 @@ class BatchProcessor:
             >>> # Export to default JSON file
             >>> export_path = await processor.export_batch_results('batch_abc123')
             >>> print(f"Results exported to: {export_path}")
-            
+
             >>> # Export to specific CSV file for analysis
             >>> csv_path = await processor.export_batch_results(
             ...     batch_id='batch_abc123',
             ...     format='csv',
             ...     output_path='/reports/batch_analysis.csv'
             ... )
-            
+
             >>> # Export with timestamp in filename
             >>> json_path = await processor.export_batch_results(
             ...     batch_id='batch_xyz789',
@@ -1699,58 +1710,61 @@ class BatchProcessor:
         """
         if batch_id not in self.active_batches:
             raise ValueError(f"Batch {batch_id} not found")
-        
+
         batch_status = self.active_batches[batch_id]
-        
+
         # Get batch-specific results
-        batch_completed_jobs = self.batch_results.get(batch_id, {}).get('completed', [])
-        batch_failed_jobs = self.batch_results.get(batch_id, {}).get('failed', [])
-        
+        batch_completed_jobs = self.batch_results.get(batch_id, {}).get("completed", [])
+        batch_failed_jobs = self.batch_results.get(batch_id, {}).get("failed", [])
+
         # Generate output path if not provided
         if not output_path:
             timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
             output_path = f"batch_results_{batch_id}_{timestamp}.{format}"
-        
+
         output_path = Path(output_path)
-        
+
         # Export based on format
-        if format.lower() == 'json':
+        if format.lower() == "json":
             export_data = {
-                'batch_id': batch_id,
-                'batch_status': asdict(batch_status),
-                'completed_jobs': [asdict(result) for result in batch_completed_jobs],
-                'failed_jobs': [asdict(result) for result in batch_failed_jobs],
-                'export_timestamp': datetime.utcnow().isoformat()
+                "batch_id": batch_id,
+                "batch_status": asdict(batch_status),
+                "completed_jobs": [asdict(result) for result in batch_completed_jobs],
+                "failed_jobs": [asdict(result) for result in batch_failed_jobs],
+                "export_timestamp": datetime.utcnow().isoformat(),
             }
-            
-            with open(output_path, 'w') as f:
+
+            with open(output_path, "w") as f:
                 json.dump(export_data, f, indent=2)
-        
-        elif format.lower() == 'csv':
+
+        elif format.lower() == "csv":
             import csv
-            
+
             all_results = batch_completed_jobs + batch_failed_jobs
-            
-            with open(output_path, 'w', newline='') as f:
+
+            with open(output_path, "w", newline="") as f:
                 if all_results:
                     fieldnames = list(asdict(all_results[0]).keys())
                     writer = csv.DictWriter(f, fieldnames=fieldnames)
                     writer.writeheader()
-                    
+
                     for result in all_results:
                         writer.writerow(asdict(result))
-        
+
         else:
             raise ValueError(f"Unsupported export format: {format}")
-        
+
         logger.info(f"Batch results exported to {output_path}")
         return str(output_path)
 
+
 # Utility functions for batch processing
-async def process_directory_batch(directory_path: str,
-                                 batch_processor: BatchProcessor,
-                                 file_pattern: str = "*.pdf",
-                                 max_files: Optional[int] = None) -> str:
+async def process_directory_batch(
+    directory_path: str,
+    batch_processor: BatchProcessor,
+    file_pattern: str = "*.pdf",
+    max_files: Optional[int] = None,
+) -> str:
     """
     Discover and process all PDF files in a directory as a single batch operation with automatic file discovery.
 
@@ -1799,7 +1813,7 @@ async def process_directory_batch(directory_path: str,
         ...     batch_processor=processor
         ... )
         >>> print(f"Processing batch: {batch_id}")
-        
+
         >>> # Process only report PDFs with file limit
         >>> batch_id = await process_directory_batch(
         ...     directory_path='/documents/reports',
@@ -1807,11 +1821,11 @@ async def process_directory_batch(directory_path: str,
         ...     file_pattern='report_*.pdf',
         ...     max_files=50
         ... )
-        
+
         >>> # Process with specific pattern and monitoring
         >>> def progress_callback(status):
         ...     print(f"Processed {status.completed_jobs}/{status.total_jobs} files")
-        >>> 
+        >>>
         >>> processor = BatchProcessor(enable_monitoring=True)
         >>> batch_id = await process_directory_batch(
         ...     directory_path=Path('/archives/documents'),
@@ -1829,41 +1843,41 @@ async def process_directory_batch(directory_path: str,
     """
     # Validate batch_processor parameter
     if not isinstance(batch_processor, BatchProcessor):
-        raise TypeError(f"batch_processor must be a BatchProcessor instance, got {type(batch_processor).__name__}")
-    
+        raise TypeError(
+            f"batch_processor must be a BatchProcessor instance, got {type(batch_processor).__name__}"
+        )
+
     # Validate max_files parameter
     if max_files is not None:
         if not isinstance(max_files, int):
             raise ValueError("max_files must be an integer or None")
         if max_files <= 0:
             raise ValueError("max_files must be positive")
-    
+
     directory = Path(directory_path)
-    
+
     if not directory.exists():
         raise ValueError(f"Directory does not exist: {directory_path}")
-    
+
     # Find PDF files
     pdf_files = list(directory.glob(file_pattern))
-    
+
     if max_files and max_files > 0:
         pdf_files = pdf_files[:max_files]
-    
+
     if not pdf_files:
         raise ValueError(f"No matching files found in {directory_path}")
-    
+
     logger.info(f"Found {len(pdf_files)} PDF files for batch processing")
-    
+
     # Start batch processing
     batch_id = await batch_processor.process_batch(
         pdf_files,
         batch_metadata={
-            'source_directory': str(directory),
-            'file_pattern': file_pattern,
-            'total_files_found': len(pdf_files)
-        }
+            "source_directory": str(directory),
+            "file_pattern": file_pattern,
+            "total_files_found": len(pdf_files),
+        },
     )
-    
+
     return batch_id
-
-

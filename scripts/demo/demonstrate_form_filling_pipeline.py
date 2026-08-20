@@ -74,6 +74,7 @@ def _check(label: str, ok: bool, detail: str = "") -> None:
 # Step 1: create a synthetic AcroForm PDF
 # ---------------------------------------------------------------------------
 
+
 def _create_sample_pdf(path: str) -> None:
     """Build a minimal AcroForm PDF for the demo."""
     try:
@@ -113,7 +114,8 @@ def _create_sample_pdf(path: str) -> None:
     page.insert_text(
         (72, 330),
         "If you have dependents, complete Schedule D.",
-        fontsize=9, color=(0.5, 0.5, 0.5),
+        fontsize=9,
+        color=(0.5, 0.5, 0.5),
     )
     doc.save(path, garbage=4, deflate=True)
     doc.close()
@@ -122,6 +124,7 @@ def _create_sample_pdf(path: str) -> None:
 # ---------------------------------------------------------------------------
 # Main demo
 # ---------------------------------------------------------------------------
+
 
 async def main() -> None:
     print(BANNER)
@@ -253,7 +256,9 @@ async def main() -> None:
         # ------------------------------------------------------------------
 
         if pdf_exists and "rule_set" in dir():
-            from ipfs_datasets_py.processors.form_requirements_verifier import FormRequirementsVerifier
+            from ipfs_datasets_py.processors.form_requirements_verifier import (
+                FormRequirementsVerifier,
+            )
 
             verifier = FormRequirementsVerifier()
             report = verifier.verify(
@@ -297,7 +302,7 @@ async def main() -> None:
                 elapsed = time.time() - t0
 
                 _check(
-                    f"Certificate generated in {elapsed*1000:.1f}ms (simulated={cert.is_simulated})",
+                    f"Certificate generated in {elapsed * 1000:.1f}ms (simulated={cert.is_simulated})",
                     True,
                 )
                 if cert.is_simulated:
@@ -328,6 +333,7 @@ async def main() -> None:
             pdf_generate_zkp_certificate,
             pdf_verify_zkp_certificate,
         )
+
         _check("pdf_fill_form_agent imported", True)
         _check("pdf_generate_zkp_certificate imported", True)
         _check("pdf_verify_zkp_certificate imported", True)

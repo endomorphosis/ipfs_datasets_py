@@ -96,9 +96,7 @@ def _facet(
         candidate_rule_index=cand_idx,
         gold_value=list(gold_value) if isinstance(gold_value, tuple) else gold_value,
         candidate_value=(
-            list(candidate_value)
-            if isinstance(candidate_value, tuple)
-            else candidate_value
+            list(candidate_value) if isinstance(candidate_value, tuple) else candidate_value
         ),
     )
 
@@ -129,16 +127,17 @@ def _baseline_two_rules() -> CanonicalRuleIR:
 def test_interfaces_and_acceptance_floor_are_frozen() -> None:
     assert PILOT_RESIDUAL_TRIGGERS_INTERFACE == "PilotResidualTriggers@1"
     assert PILOT_RESIDUAL_TRIGGER_MAP_INTERFACE == "PilotResidualTriggerMap@1"
-    assert PILOT_RESIDUAL_TRIGGER_DETECTOR_INTERFACE == (
-        "PilotResidualTriggerDetector@1"
-    )
+    assert PILOT_RESIDUAL_TRIGGER_DETECTOR_INTERFACE == ("PilotResidualTriggerDetector@1")
     assert MIN_NONZERO_PILOTS_WITH_TRIGGERS == 3
     assert PRODUCTION_NO_REPAIR_ARM_ID == BASELINE_ARM_ID
     assert "no_repair" in PRODUCTION_NO_REPAIR_ARM_ID
     assert production_path_is_no_repair() is True
-    assert production_path_is_no_repair(
-        "typed_deontic__no_guidance__selective_repair__hammer_cvc5__deterministic"
-    ) is False
+    assert (
+        production_path_is_no_repair(
+            "typed_deontic__no_guidance__selective_repair__hammer_cvc5__deterministic"
+        )
+        is False
+    )
 
 
 def test_projectable_facets_require_l1_field_slots() -> None:
@@ -186,9 +185,7 @@ def test_triggers_from_facets_prefer_higher_loss_and_bound_slots() -> None:
         ),
     )
     policy = SelectiveRepairPolicy(max_repair_slots=2)
-    triggers = triggers_from_residual_facets(
-        facets, baseline_ir=baseline, policy=policy
-    )
+    triggers = triggers_from_residual_facets(facets, baseline_ir=baseline, policy=policy)
     assert len(triggers) == 2
     assert triggers[0].path == "rules[0].conditions"
     assert triggers[0].kind is RepairTriggerKind.MISSING
@@ -230,13 +227,8 @@ def test_catalog_projection_meets_coverage_acceptance() -> None:
 
     assert trigger_map.interface == PILOT_RESIDUAL_TRIGGER_MAP_INTERFACE
     assert trigger_map.meets_coverage_acceptance is True
-    assert (
-        trigger_map.triggered_nonzero_pilot_count
-        >= MIN_NONZERO_PILOTS_WITH_TRIGGERS
-    )
-    assert set(trigger_map.nonzero_case_ids_with_triggers) <= set(
-        NONZERO_PILOT_CASE_IDS
-    )
+    assert trigger_map.triggered_nonzero_pilot_count >= MIN_NONZERO_PILOTS_WITH_TRIGGERS
+    assert set(trigger_map.nonzero_case_ids_with_triggers) <= set(NONZERO_PILOT_CASE_IDS)
     # Stronger than the floor when residual facets support it.
     assert trigger_map.triggered_nonzero_pilot_count >= 3
 
@@ -266,10 +258,13 @@ def test_catalog_projection_meets_coverage_acceptance() -> None:
 
     # construction_contract skips whole missing-rule residual.
     construction = by_case["construction_contract"]
-    assert any(
-        path == "rules[8]" or path.startswith("rules[8]")
-        for path in construction.skipped_residual_paths
-    ) or construction.projectable_residual_count < construction.residual_count
+    assert (
+        any(
+            path == "rules[8]" or path.startswith("rules[8]")
+            for path in construction.skipped_residual_paths
+        )
+        or construction.projectable_residual_count < construction.residual_count
+    )
 
     payload = trigger_map.to_dict()
     assert payload["production_arm_id"] == PRODUCTION_NO_REPAIR_ARM_ID
@@ -290,11 +285,7 @@ def test_validate_coverage_fails_when_too_few_pilots_trigger() -> None:
             ),
             PilotCaseTriggerRecord(
                 case_id="exec_order_1",
-                triggers=(
-                    RepairTrigger(
-                        0, "temporal", RepairTriggerKind.MISSING, evidence="x"
-                    ),
-                ),
+                triggers=(RepairTrigger(0, "temporal", RepairTriggerKind.MISSING, evidence="x"),),
                 residual_count=1,
                 projectable_residual_count=1,
                 forward_loss=0.05,
@@ -317,11 +308,7 @@ def test_validate_coverage_fails_when_too_few_pilots_trigger() -> None:
 
 def test_untriggered_fields_preserved_invariant() -> None:
     baseline = _baseline_two_rules()
-    triggers = (
-        RepairTrigger(
-            0, "temporal", RepairTriggerKind.MISSING, evidence="empty temporal"
-        ),
-    )
+    triggers = (RepairTrigger(0, "temporal", RepairTriggerKind.MISSING, evidence="empty temporal"),)
     repaired_ok = CanonicalRuleIR(
         (
             replace(baseline.rules[0], temporal=("within_24_hours",)),
@@ -339,9 +326,7 @@ def test_untriggered_fields_preserved_invariant() -> None:
         )
     )
     assert untriggered_fields_preserved(baseline, repaired_ok, triggers) is True
-    assert (
-        untriggered_fields_preserved(baseline, repaired_bad, triggers) is False
-    )
+    assert untriggered_fields_preserved(baseline, repaired_bad, triggers) is False
     assert untriggered_fields_preserved(baseline, baseline, triggers) is True
 
 
@@ -402,9 +387,7 @@ def test_selective_repair_with_residual_triggers_scopes_field_changes() -> None:
 
         def construct(self, request: ConstructorRequest) -> ConstructorResult:
             del request
-            return ConstructorResult(
-                ComponentStatus.SUCCESS, canonical_ir=baseline
-            )
+            return ConstructorResult(ComponentStatus.SUCCESS, canonical_ir=baseline)
 
     class Client:
         endpoint = LEANSTRAL_ENDPOINT
@@ -449,9 +432,7 @@ def test_selective_repair_with_residual_triggers_scopes_field_changes() -> None:
     assert construction.receipt.status is RepairAttemptStatus.ACCEPTED
     assert construction.result.canonical_ir == repaired
     assert construction.baseline_result.canonical_ir == baseline
-    assert untriggered_fields_preserved(
-        baseline, construction.result.canonical_ir, triggers
-    )
+    assert untriggered_fields_preserved(baseline, construction.result.canonical_ir, triggers)
     assert construction.receipt.triggers
     # Outside-trigger rewrite must be rejected by structural selection rules.
     hijacked = CanonicalRuleIR(
@@ -483,18 +464,14 @@ def test_selective_repair_with_residual_triggers_scopes_field_changes() -> None:
     )
     bad = bad_repairer.construct_with_diagnostics(request)
     assert bad.receipt.status is not RepairAttemptStatus.ACCEPTED
-    assert bad.result.canonical_ir == baseline or bad.result.status is (
-        ComponentStatus.FAILED
-    )
+    assert bad.result.canonical_ir == baseline or bad.result.status is (ComponentStatus.FAILED)
     if bad.result.canonical_ir is not None:
         # Fail-closed: unrepaired baseline retained on rejection/failure path.
         assert bad.receipt.baseline_retained is True
 
 
 def test_catalog_detector_resolves_case_id_and_zero_otherwise() -> None:
-    trigger_map = project_pilot_residual_trigger_map(
-        load_plateau_residual_catalog()
-    )
+    trigger_map = project_pilot_residual_trigger_map(load_plateau_residual_catalog())
     detector = CatalogPilotResidualTriggerDetector(trigger_map)
     vocab = AllowedAtomVocabulary(
         actors=("a",),
@@ -550,17 +527,13 @@ def test_catalog_detector_resolves_case_id_and_zero_otherwise() -> None:
         baseline,
     )
     assert found
-    assert {item.path for item in found} == {
-        item.path for item in record.triggers
-    }
+    assert {item.path for item in found} == {item.path for item in record.triggers}
 
 
 def test_pilot_detector_identity_and_empty_triggers() -> None:
     detector = PilotResidualTriggerDetector(())
     assert detector.identity == PILOT_RESIDUAL_TRIGGER_DETECTOR_INTERFACE
-    vocab = AllowedAtomVocabulary(
-        actors=("a",), actions=("b",), objects=("c",), qualifiers=()
-    )
+    vocab = AllowedAtomVocabulary(actors=("a",), actions=("b",), objects=("c",), qualifiers=())
     assert (
         detector.detect(
             ConstructorRequest("x", vocab, {}),
@@ -579,17 +552,13 @@ def test_fixture_activation_pack_still_passes() -> None:
 
 def test_default_production_path_remains_no_repair() -> None:
     assert production_path_is_no_repair() is True
-    trigger_map = project_pilot_residual_trigger_map(
-        load_plateau_residual_catalog()
-    )
+    trigger_map = project_pilot_residual_trigger_map(load_plateau_residual_catalog())
     assert "no_repair" in trigger_map.production_arm_id
     # Projection alone does not force selective repair into production.
     assert trigger_map.production_arm_id == BASELINE_ARM_ID
     # Detectors are opt-in; empty / unbound case yields no model-facing triggers.
     detector = CatalogPilotResidualTriggerDetector(trigger_map)
-    vocab = AllowedAtomVocabulary(
-        actors=("a",), actions=("b",), objects=("c",), qualifiers=()
-    )
+    vocab = AllowedAtomVocabulary(actors=("a",), actions=("b",), objects=("c",), qualifiers=())
     assert (
         detector.detect(
             ConstructorRequest("unrelated source", vocab, {}),
@@ -679,9 +648,7 @@ def test_policy_validate_accepts_projected_catalog_triggers() -> None:
             assert len(validated) == 1
             assert validated[0].canonical_field == trigger.canonical_field
             assert validated[0].kind is trigger.kind
-            assert untriggered_fields_preserved(
-                baseline, baseline, validated
-            )
+            assert untriggered_fields_preserved(baseline, baseline, validated)
         assert case_id  # keep case_id referenced for clarity in failures
 
 
@@ -689,11 +656,7 @@ def test_control_cannot_carry_triggers_on_record() -> None:
     with pytest.raises(PilotResidualTriggerError, match="zero-residual"):
         PilotCaseTriggerRecord(
             case_id=ZERO_RESIDUAL_CONTROL_CASE_ID,
-            triggers=(
-                RepairTrigger(
-                    0, "temporal", RepairTriggerKind.MISSING, evidence="bad"
-                ),
-            ),
+            triggers=(RepairTrigger(0, "temporal", RepairTriggerKind.MISSING, evidence="bad"),),
             residual_count=0,
             projectable_residual_count=0,
             forward_loss=0.0,

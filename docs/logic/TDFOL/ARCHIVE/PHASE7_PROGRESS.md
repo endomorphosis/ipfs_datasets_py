@@ -86,9 +86,9 @@ from ipfs_datasets_py.logic.TDFOL.nl import NLPreprocessor
 preprocessor = NLPreprocessor()
 doc = preprocessor.process("All contractors must pay taxes within 30 days.")
 
-print(doc.entities)      # Agent: contractors, Action: pay, Object: taxes
-print(doc.temporal)      # "within 30 days" (deadline)
-print(doc.modalities)    # ['must']
+print(doc.entities)  # Agent: contractors, Action: pay, Object: taxes
+print(doc.temporal)  # "within 30 days" (deadline)
+print(doc.modalities)  # ['must']
 ```
 
 ### Success Criteria

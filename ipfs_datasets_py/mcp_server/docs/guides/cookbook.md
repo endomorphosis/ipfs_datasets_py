@@ -14,14 +14,15 @@ import asyncio
 import anyio
 from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
 
+
 async def main():
     manager = HierarchicalToolManager()
 
     # --- Basic parallel dispatch ---
     calls = [
-        {"category": "dataset_tools", "tool": "load_dataset",     "params": {"source": "squad"}},
-        {"category": "graph_tools",   "tool": "query_knowledge_graph"},
-        {"category": "vector_tools",  "tool": "search_vector_index", "params": {"query": "AI"}},
+        {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "squad"}},
+        {"category": "graph_tools", "tool": "query_knowledge_graph"},
+        {"category": "vector_tools", "tool": "search_vector_index", "params": {"query": "AI"}},
     ]
 
     results = await manager.dispatch_parallel(calls)
@@ -46,6 +47,7 @@ async def main():
     except Exception as exc:
         print(f"One call failed: {exc}")
 
+
 anyio.run(main)
 ```
 
@@ -68,15 +70,17 @@ import asyncio
 import anyio
 from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import CircuitBreaker
 
+
 async def fragile_service(x: int) -> str:
     if x < 3:
         raise ConnectionError("service unavailable")
     return f"ok:{x}"
 
+
 async def main():
     breaker = CircuitBreaker(
         name="fragile_svc",
-        failure_threshold=3,   # trip after 3 consecutive failures
+        failure_threshold=3,  # trip after 3 consecutive failures
         recovery_timeout=5.0,  # probe again after 5 seconds
     )
 
@@ -93,7 +97,7 @@ async def main():
     try:
         await breaker.call(fragile_service, 99)
     except Exception as exc:
-        print(f"Rejected: {exc}")    # CircuitBreakerOpenError
+        print(f"Rejected: {exc}")  # CircuitBreakerOpenError
 
     # Simulate recovery window passing
     await asyncio.sleep(6)
@@ -110,6 +114,7 @@ async def main():
 
     # Manual reset (always returns to CLOSED)
     breaker.reset()
+
 
 anyio.run(main)
 ```
@@ -144,25 +149,29 @@ print(f"Logged in as: {user_data['username']}")  # "demo"
 
 # --- Revoke (e.g. on logout) ---
 success = auth.revoke_token(token)
-print(f"Revoked: {success}")   # True
+print(f"Revoked: {success}")  # True
 
 # --- Subsequent verify returns None ---
 user_data = auth.verify_token(token)
-print(f"After revoke: {user_data}")   # None
+print(f"After revoke: {user_data}")  # None
 
 # --- authenticate() raises 401 for revoked tokens ---
 import asyncio
 from fastapi import HTTPException
+
+
 async def check():
     try:
         await auth.authenticate(token)
     except HTTPException as exc:
-        print(f"401: {exc.detail}")   # "Token has been revoked"
+        print(f"401: {exc.detail}")  # "Token has been revoked"
+
+
 asyncio.run(check())
 
 # --- Invalid token returns False from revoke_token ---
 bad = auth.revoke_token("not.a.valid.jwt")
-print(f"Bad token revoke: {bad}")   # False
+print(f"Bad token revoke: {bad}")  # False
 ```
 
 **Production notes:**
@@ -207,10 +216,13 @@ exporter.record_tool_call(
 
 # Periodically push latest stats from the collector.
 import asyncio
+
+
 async def metrics_loop():
     while True:
         exporter.update()
         await asyncio.sleep(15)
+
 
 print(exporter.get_info())
 ```
@@ -238,17 +250,22 @@ tracer = MCPTracer()
 
 # Manual span management.
 import anyio
+
+
 async def traced_dispatch(manager, category, tool, params):
     with tracer.start_dispatch_span(category, tool, params) as span:
         result = await manager.dispatch(category, tool, params)
         tracer.set_span_ok(span, result)
         return result
 
+
 # Decorator style.
 @tracer.trace_tool_call
 async def load_my_dataset(category: str, tool: str, params: dict):
     from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
+
     return await HierarchicalToolManager().dispatch(category, tool, params)
+
 
 print(tracer.get_info())
 ```
@@ -264,6 +281,7 @@ import anyio
 from ipfs_datasets_py.mcp_server.grpc_transport import GRPCTransportAdapter
 from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
 
+
 async def main():
     manager = HierarchicalToolManager()
     adapter = GRPCTransportAdapter(manager, host="[::]", port=50051)
@@ -274,6 +292,7 @@ async def main():
 
         # Handle a request programmatically.
         from ipfs_datasets_py.mcp_server.grpc_transport import GRPCToolRequest
+
         req = GRPCToolRequest(
             category="dataset_tools",
             tool="load_dataset",
@@ -288,6 +307,7 @@ async def main():
         print(f"gRPC unavailable: {exc}")
 
     print(adapter.get_info())
+
 
 anyio.run(main)
 ```

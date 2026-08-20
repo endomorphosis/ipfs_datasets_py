@@ -4,11 +4,13 @@ Test stubs for jsonnet_utils module.
 Feature: Jsonnet Configuration
   Template-based configuration using Jsonnet
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_jsonnet_configuration_template():
@@ -92,6 +94,7 @@ def multiple_jsonnet_templates():
 
 
 # Test scenarios
+
 
 def test_parse_jsonnet_template():
     """
@@ -194,6 +197,7 @@ def test_merge_jsonnet_configurations():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a Jsonnet configuration template")

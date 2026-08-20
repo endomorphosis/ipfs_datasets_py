@@ -96,7 +96,9 @@ def require_module(
 
     if message is None:
         if extra:
-            message = f"Optional dependency '{module_name}' is required. Install via: pip install {extra}"
+            message = (
+                f"Optional dependency '{module_name}' is required. Install via: pip install {extra}"
+            )
         else:
             message = f"Optional dependency '{module_name}' is required."
 

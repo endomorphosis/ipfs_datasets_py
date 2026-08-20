@@ -10,10 +10,10 @@ optimizer types while preserving all existing functionality.
 Example:
     >>> from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOptimizer
     >>> from ipfs_datasets_py.optimizers.common import OptimizerConfig, OptimizationContext
-    >>> 
+    >>>
     >>> config = OptimizerConfig(max_iterations=5, target_score=0.85)
     >>> optimizer = LogicTheoremOptimizer(config=config)
-    >>> 
+    >>>
     >>> context = OptimizationContext(
     ...     session_id="session-001",
     ...     input_data=text_data,
@@ -61,6 +61,7 @@ try:
     from ipfs_datasets_py.optimizers.optimizer_learning_metrics import (
         OptimizerLearningMetricsCollector,
     )
+
     _HAVE_LEARNING_METRICS = True
 except ImportError:  # pragma: no cover
     OptimizerLearningMetricsCollector = None  # type: ignore[assignment,misc]
@@ -87,25 +88,25 @@ class StatementValidationResult:
 
 class LogicTheoremOptimizer(BaseOptimizer):
     """Unified optimizer for logic theorem extraction and validation.
-    
+
     This optimizer implements the BaseOptimizer interface for logic theorem
     optimization. It wraps existing logic_theorem_optimizer components:
-    
+
     - LogicExtractor: Generates logical statements from input data
     - LogicCritic: Evaluates logical consistency and quality
     - LogicOptimizer: Provides improvement recommendations
     - ProverIntegration: Validates statements with theorem provers
-    
+
     The optimizer supports multiple logic formalisms (FOL, TDFOL, CEC, Modal,
     Deontic) and can validate using Z3, CVC5, Lean, or Coq theorem provers.
-    
+
     Args:
         config: Optimizer configuration
         llm_backend: Optional LLM backend for extraction
         extraction_mode: Logic formalism to extract (default: AUTO)
         use_provers: List of theorem provers to use (default: ['z3'])
         domain: Domain context (legal, medical, general, etc.)
-    
+
     Example:
         >>> optimizer = LogicTheoremOptimizer(
         ...     config=OptimizerConfig(target_score=0.9),
@@ -120,7 +121,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         ... )
         >>> result = optimizer.run_session(contract_text, context)
     """
-    
+
     def __init__(
         self,
         config: Optional[OptimizerConfig] = None,
@@ -135,7 +136,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         logger: Optional[logging.Logger] = None,
     ):
         """Initialize the unified logic theorem optimizer.
-        
+
         Args:
             config: Optimizer configuration
             llm_backend: Optional LLM backend for extraction
@@ -155,10 +156,12 @@ class LogicTheoremOptimizer(BaseOptimizer):
                 instance is created automatically.
             logger: Optional logger instance for dependency injection
         """
-        super().__init__(config=config, llm_backend=llm_backend, metrics_collector=metrics_collector)
+        super().__init__(
+            config=config, llm_backend=llm_backend, metrics_collector=metrics_collector
+        )
         self._log = logger or _logging.getLogger(__name__)
-        resolved_use_provers = ['z3'] if use_provers is None else list(use_provers)
-        
+        resolved_use_provers = ["z3"] if use_provers is None else list(use_provers)
+
         # Initialize components
         self.extractor = LogicExtractor(
             backend=llm_backend,
@@ -170,12 +173,12 @@ class LogicTheoremOptimizer(BaseOptimizer):
             use_provers=resolved_use_provers,
             enable_cache=enable_caching,
         )
-        
+
         # Store settings
         self.extraction_mode = extraction_mode
         self.domain = domain
         self.allow_mock_fallback = allow_mock_fallback
-        
+
         # Track extraction history for optimization
         self.extraction_history: List[ExtractionResult] = []
         self._last_critic_score: Optional[CriticScore] = None
@@ -323,12 +326,12 @@ class LogicTheoremOptimizer(BaseOptimizer):
             )
             per_statement.append(
                 {
-                    'index': idx,
-                    'statement': str(statement),
-                    'overall_valid': aggregated.overall_valid,
-                    'confidence': aggregated.confidence,
-                    'agreement_rate': aggregated.agreement_rate,
-                    'verified_by': aggregated.verified_by,
+                    "index": idx,
+                    "statement": str(statement),
+                    "overall_valid": aggregated.overall_valid,
+                    "confidence": aggregated.confidence,
+                    "agreement_rate": aggregated.agreement_rate,
+                    "verified_by": aggregated.verified_by,
                 }
             )
             verified_by.extend(list(aggregated.verified_by or []))
@@ -342,27 +345,27 @@ class LogicTheoremOptimizer(BaseOptimizer):
             all_valid=all_valid,
             provers_used=provers_used,
             errors=errors,
-            details={'statements': per_statement},
+            details={"statements": per_statement},
         )
-        
+
     def generate(
         self,
         input_data: Any,
         context: OptimizationContext,
     ) -> ExtractionResult:
         """Generate initial logical statements from input data.
-        
+
         Uses LogicExtractor to extract formal logic statements from the
         input data. Supports various data types (text, JSON, knowledge graphs)
         and logic formalisms (FOL, TDFOL, CEC, etc.).
-        
+
         Args:
             input_data: Input data to extract logic from
             context: Optimization context
-            
+
         Returns:
             ExtractionResult containing logical statements
-            
+
         Raises:
             ValueError: If input data is invalid
             RuntimeError: If extraction fails
@@ -370,10 +373,10 @@ class LogicTheoremOptimizer(BaseOptimizer):
         try:
             # Determine data type
             data_type = self._infer_data_type(input_data)
-            
+
             # Create extraction config with extraction mode
             config = LogicExtractionConfig(extraction_mode=self.extraction_mode)
-            
+
             # Create extraction context
             extraction_context = LogicExtractionContext(
                 data=input_data,
@@ -381,36 +384,36 @@ class LogicTheoremOptimizer(BaseOptimizer):
                 domain=context.domain or self.domain,
                 config=config,
                 previous_extractions=self.extraction_history[-3:],  # Last 3 for context
-                hints=context.metadata.get('hints'),
+                hints=context.metadata.get("hints"),
             )
-            
+
             # Extract logical statements
             result = self.extractor.extract(extraction_context)
-            
+
             if not result.success:
                 raise RuntimeError(f"Extraction failed: {result.errors}")
-            
+
             # Store in history
             self.extraction_history.append(result)
-            
+
             self._log.info(
                 f"Generated {len(result.statements)} logical statements "
                 f"using {self.extraction_mode.value} formalism"
             )
-            
+
             return result
-            
+
         except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             self._log.error(f"Generation failed: {e}")
             raise RuntimeError(f"Failed to generate logical statements: {e}")
-    
+
     def critique(
         self,
         artifact: ExtractionResult,
         context: OptimizationContext,
     ) -> Tuple[float, List[str]]:
         """Evaluate quality of extracted logical statements.
-        
+
         Uses LogicCritic to evaluate the statements across multiple dimensions:
         - Soundness: Logical validity
         - Completeness: Coverage of input data
@@ -418,16 +421,16 @@ class LogicTheoremOptimizer(BaseOptimizer):
         - Ontology Alignment: Alignment with knowledge graph
         - Parsability: Can be parsed by theorem provers
         - Expressiveness: Captures nuance
-        
+
         Args:
             artifact: ExtractionResult to evaluate
             context: Optimization context
-            
+
         Returns:
             Tuple of (overall_score, feedback_list)
             - overall_score: Weighted score from 0 to 1
             - feedback_list: List of improvement suggestions
-            
+
         Raises:
             ValueError: If artifact is invalid
         """
@@ -435,34 +438,32 @@ class LogicTheoremOptimizer(BaseOptimizer):
             # Evaluate with critic
             critic_score: CriticScore = self.critic.evaluate(artifact)
             self._last_critic_score = critic_score
-            
+
             # Build feedback list from critic results
             feedback = []
-            
+
             # Add weaknesses as feedback
             feedback.extend(critic_score.weaknesses)
-            
+
             # Add specific recommendations
             feedback.extend(critic_score.recommendations)
-            
+
             # Add dimension-specific feedback
             for dim_score in critic_score.dimension_scores:
                 if dim_score.score < 0.7:  # Below acceptable threshold
-                    feedback.append(
-                        f"Improve {dim_score.dimension.value}: {dim_score.feedback}"
-                    )
-            
+                    feedback.append(f"Improve {dim_score.dimension.value}: {dim_score.feedback}")
+
             self._log.info(
                 f"Critique complete: score={critic_score.overall:.2f}, "
                 f"feedback_count={len(feedback)}"
             )
-            
+
             return critic_score.overall, feedback
-            
+
         except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             self._log.error(f"Critique failed: {e}")
             raise ValueError(f"Failed to critique artifact: {e}")
-    
+
     def optimize(
         self,
         artifact: ExtractionResult,
@@ -471,19 +472,19 @@ class LogicTheoremOptimizer(BaseOptimizer):
         context: OptimizationContext,
     ) -> ExtractionResult:
         """Improve logical statements based on critique feedback.
-        
+
         Uses LogicOptimizer to analyze feedback and generate improved
         logical statements. Applies recommendations to refine extraction.
-        
+
         Args:
             artifact: Current extraction result
             score: Current quality score
             feedback: List of improvement suggestions
             context: Optimization context
-            
+
         Returns:
             Improved ExtractionResult
-            
+
         Raises:
             RuntimeError: If optimization fails
         """
@@ -499,10 +500,10 @@ class LogicTheoremOptimizer(BaseOptimizer):
                     )
                 )
             optimization_report = self.legacy_optimizer.analyze_batch(session_results)
-            
+
             # Combine feedback from critique and optimizer
             combined_feedback = feedback + optimization_report.recommendations
-            
+
             # Create improved extraction context with feedback
             improved_config = LogicExtractionConfig(
                 extraction_mode=artifact.context.extraction_mode
@@ -516,50 +517,49 @@ class LogicTheoremOptimizer(BaseOptimizer):
                 previous_extractions=self.extraction_history[-3:],
                 hints=combined_feedback,  # Use feedback as hints
             )
-            
+
             # Re-extract with improved context
             improved_result = self.extractor.extract(improved_context)
-            
+
             if not improved_result.success:
                 self._log.warning(
-                    f"Optimization extraction failed, returning original: "
-                    f"{improved_result.errors}"
+                    f"Optimization extraction failed, returning original: {improved_result.errors}"
                 )
                 return artifact  # Return original if optimization fails
-            
+
             # Store improved result
             self.extraction_history.append(improved_result)
-            
+
             self._log.info(
                 f"Optimization complete: {len(improved_result.statements)} statements, "
                 f"previous_score={score:.2f}"
             )
-            
+
             return improved_result
-            
+
         except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             self._log.error(f"Optimization failed: {e}")
             # Return original artifact rather than failing completely
             self._log.warning("Returning original artifact due to optimization failure")
             return artifact
-    
+
     def validate(
         self,
         artifact: ExtractionResult,
         context: OptimizationContext,
     ) -> bool:
         """Validate logical statements using theorem provers.
-        
+
         Uses ProverIntegration to validate statements with configured
         theorem provers (Z3, CVC5, Lean, Coq). Checks for:
         - Syntactic validity
         - Logical consistency
         - Satisfiability
-        
+
         Args:
             artifact: ExtractionResult to validate
             context: Optimization context
-            
+
         Returns:
             True if statements are valid, False otherwise
         """
@@ -567,34 +567,32 @@ class LogicTheoremOptimizer(BaseOptimizer):
             # Validate each statement with provers
             all_valid = True
             validation_results = []
-            
+
             for statement in artifact.statements:
                 # Verify the full statement so adapters can inspect metadata and formalism.
                 is_valid = self.prover_adapter.verify_statement(statement).overall_valid
                 validation_results.append(is_valid)
                 all_valid = all_valid and is_valid
-            
+
             valid_count = sum(validation_results)
             total_count = len(validation_results)
-            
-            self._log.info(
-                f"Validation complete: {valid_count}/{total_count} statements valid"
-            )
-            
+
+            self._log.info(f"Validation complete: {valid_count}/{total_count} statements valid")
+
             # Return True if at least 80% are valid (allow some tolerance)
             return valid_count >= (total_count * 0.8) if total_count > 0 else True
-            
+
         except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             self._log.error(f"Validation failed: {e}")
             # On validation error, be conservative and return False
             return False
-    
+
     def _infer_data_type(self, input_data: Any) -> DataType:
         """Infer data type from input data.
-        
+
         Args:
             input_data: Input data to infer type from
-            
+
         Returns:
             Inferred DataType
         """
@@ -602,17 +600,17 @@ class LogicTheoremOptimizer(BaseOptimizer):
             return DataType.TEXT
         elif isinstance(input_data, dict):
             # Check if it's a knowledge graph structure
-            if 'nodes' in input_data and 'edges' in input_data:
+            if "nodes" in input_data and "edges" in input_data:
                 return DataType.KNOWLEDGE_GRAPH
             return DataType.JSON
         elif isinstance(input_data, (list, tuple)):
             return DataType.STRUCTURED
         else:
             return DataType.MIXED
-    
+
     def get_capabilities(self) -> Dict[str, Any]:
         """Get optimizer capabilities.
-        
+
         Returns:
             Dictionary describing capabilities including:
             - Base optimizer capabilities
@@ -621,13 +619,13 @@ class LogicTheoremOptimizer(BaseOptimizer):
             - Evaluation dimensions
         """
         base_capabilities = super().get_capabilities()
-        
+
         logic_capabilities = {
-            'extraction_modes': [mode.value for mode in ExtractionMode],
-            'theorem_provers': self.prover_adapter.get_available_provers(),
-            'evaluation_dimensions': [dim.value for dim in CriticDimensions],
-            'domain': self.domain,
-            'current_extraction_mode': self.extraction_mode.value,
+            "extraction_modes": [mode.value for mode in ExtractionMode],
+            "theorem_provers": self.prover_adapter.get_available_provers(),
+            "evaluation_dimensions": [dim.value for dim in CriticDimensions],
+            "domain": self.domain,
+            "current_extraction_mode": self.extraction_mode.value,
         }
-        
+
         return {**base_capabilities, **logic_capabilities}

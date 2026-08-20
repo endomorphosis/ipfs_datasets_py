@@ -265,11 +265,11 @@ class ZKPVerifier:
     def __init__(
         self,
         backend: str = "simulated",  # Add parameter
-        security_level: int = 128
+        security_level: int = 128,
     ):
         self._backend = get_backend(backend)  # Use backend
         # ... rest of init
-    
+
     def verify_proof(self, proof):
         # Delegate to backend
         return self._backend.verify_proof(proof)
@@ -301,9 +301,10 @@ class ZKPVerifier:
    ```python
    # Before:
    from ipfs_datasets_py.logic.zkp import BooleanCircuit
-   
+
    # After (Option C):
    from ipfs_datasets_py.logic.zkp import ZKPCircuit as BooleanCircuit
+
    # Or if we renamed:
    from ipfs_datasets_py.logic.zkp import BooleanCircuit
    ```
@@ -497,17 +498,17 @@ For production ZKP, see PRODUCTION_UPGRADE_PATH.md.
 def test_verifier_rejects_malformed_proof():
     """P0.1: Verifier should reject malformed proof gracefully."""
     verifier = ZKPVerifier()
-    
+
     # Create malformed proof (missing fields)
     malformed = object()  # Not even a ZKPProof
-    
+
     # Should return False, not raise
     result = verifier.verify_proof(malformed)
     assert result is False  # Rejected
-    
+
     # Check stats
     stats = verifier.get_stats()
-    assert stats['proofs_rejected'] >= 1
+    assert stats["proofs_rejected"] >= 1
 ```
 
 #### 3.3 Example Integration Tests (4 hours)
@@ -518,13 +519,14 @@ def test_verifier_rejects_malformed_proof():
 def test_zkp_basic_demo_runs():
     """Verify zkp_basic_demo.py runs without errors."""
     import subprocess
+
     result = subprocess.run(
-        ['python', 'ipfs_datasets_py/logic/zkp/examples/zkp_basic_demo.py'],
+        ["python", "ipfs_datasets_py/logic/zkp/examples/zkp_basic_demo.py"],
         capture_output=True,
-        text=True
+        text=True,
     )
     assert result.returncode == 0
-    assert 'Proof valid' in result.stdout
+    assert "Proof valid" in result.stdout
 ```
 
 **Tasks**:

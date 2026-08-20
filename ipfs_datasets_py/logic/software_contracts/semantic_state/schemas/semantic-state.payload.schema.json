@@ -1,0 +1,1103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/semantic-state.payload.schema.json",
+  "title": "Semantic-state closed payload models v1",
+  "description": "Closed, fail-closed JSON Schema for datasets-owned semantic-state durable value records. Unknown fields and unsupported schema versions are rejected. Raw bytes are never embedded in structured DAG-JSON; bundle blocks are verified separately via software_contracts.content.",
+  "oneOf": [
+    { "$ref": "#/$defs/semanticStateRoot" },
+    { "$ref": "#/$defs/semanticStateProducer" },
+    { "$ref": "#/$defs/sortedPairIndex" },
+    { "$ref": "#/$defs/symbolFactNode" },
+    { "$ref": "#/$defs/artifactFactNode" },
+    { "$ref": "#/$defs/semanticLinkNode" },
+    { "$ref": "#/$defs/symbolMerkleNode" },
+    { "$ref": "#/$defs/semanticCapsule" },
+    { "$ref": "#/$defs/environmentBinding" },
+    { "$ref": "#/$defs/environmentBindingSet" },
+    { "$ref": "#/$defs/relevantBindingProjection" },
+    { "$ref": "#/$defs/semanticBindingDelta" },
+    { "$ref": "#/$defs/semanticInvalidationObligation" },
+    { "$ref": "#/$defs/semanticInvalidationPlan" },
+    { "$ref": "#/$defs/capsuleFreshness" },
+    { "$ref": "#/$defs/verifiedSourceEvidence" },
+    { "$ref": "#/$defs/selectionPolicy" },
+    { "$ref": "#/$defs/selectionRule" },
+    { "$ref": "#/$defs/reasonPath" },
+    { "$ref": "#/$defs/testSelection" },
+    { "$ref": "#/$defs/testOutcome" },
+    { "$ref": "#/$defs/testRunFacts" },
+    { "$ref": "#/$defs/testOracleComparison" },
+    { "$ref": "#/$defs/analysisLimitation" }
+  ],
+  "$defs": {
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "cidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cid" }]
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nfcStringOrEmpty": {
+      "type": "string",
+      "maxLength": 16384
+    },
+    "nfcStringOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nfcString" }]
+    },
+    "gitOidOrNull": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$|^[0-9a-f]{64}$"
+        }
+      ]
+    },
+    "nonnegInt": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "basisPointsOrNull": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "integer", "minimum": 0, "maximum": 10000 }
+      ]
+    },
+    "analysisConfidence": {
+      "type": "string",
+      "enum": ["exact", "conservative", "heuristic", "opaque"]
+    },
+    "relationType": {
+      "type": "string",
+      "enum": [
+        "imports",
+        "calls",
+        "inherits",
+        "implements",
+        "reads_state",
+        "writes_state",
+        "raises",
+        "catches",
+        "serializes",
+        "deserializes",
+        "validates",
+        "tested_by",
+        "uses_fixture",
+        "configured_by",
+        "generated_from",
+        "proof_depends_on"
+      ]
+    },
+    "linkTargetKind": {
+      "type": "string",
+      "enum": ["symbol", "artifact", "unresolved"]
+    },
+    "bindingKind": {
+      "type": "string",
+      "enum": [
+        "dependency_manifest",
+        "dependency_lock",
+        "pytest_config",
+        "pytest_plugin",
+        "proof_config",
+        "policy",
+        "interface_descriptor",
+        "generated_input",
+        "python_toolchain",
+        "semantic_schema",
+        "semantic_compiler"
+      ]
+    },
+    "bindingScope": {
+      "type": "string",
+      "enum": ["global", "package", "module", "symbol", "unknown"]
+    },
+    "freshnessState": {
+      "type": "string",
+      "enum": ["fresh", "stale", "unknown"]
+    },
+    "admissionDecision": {
+      "type": "string",
+      "enum": [
+        "exact_substitute",
+        "conservative_substitute_with_caveats",
+        "raw_source_required"
+      ]
+    },
+    "selectionFallback": {
+      "type": "string",
+      "enum": ["none", "full_pytest", "full_proofs", "both"]
+    },
+    "selectionRuleKind": {
+      "type": "string",
+      "enum": [
+        "include",
+        "exclude",
+        "force_full",
+        "force_full_pytest",
+        "force_full_proofs"
+      ]
+    },
+    "normalizedTestStatus": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed",
+        "skipped",
+        "xfailed",
+        "xpassed",
+        "error",
+        "timeout"
+      ]
+    },
+    "obligationOrigin": {
+      "type": "string",
+      "enum": ["isi", "environment"]
+    },
+    "oracleApplicability": {
+      "type": "string",
+      "enum": ["applicable", "not_applicable"]
+    },
+    "strictDagJson": {
+      "description": "Strict DAG-JSON value: null, bool, safe int, string, array, or string-keyed object. Floats and host types are rejected by the Python decoder.",
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        { "type": "string", "maxLength": 16384 },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/strictDagJson" }
+        },
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/strictDagJson" }
+        }
+      ]
+    },
+    "sourceSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "path",
+        "start_line",
+        "start_column",
+        "end_line",
+        "end_column"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-source-span@1"
+        },
+        "path": { "$ref": "#/$defs/nfcString" },
+        "start_line": { "$ref": "#/$defs/nonnegInt" },
+        "start_column": { "$ref": "#/$defs/nonnegInt" },
+        "end_line": { "$ref": "#/$defs/nonnegInt" },
+        "end_column": { "$ref": "#/$defs/nonnegInt" }
+      }
+    },
+    "sourceSpanOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sourceSpan" }]
+    },
+    "pairEntry": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "$ref": "#/$defs/nfcString" },
+        { "$ref": "#/$defs/cid" }
+      ],
+      "items": false
+    },
+    "sortedPairIndex": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "pairs", "index_cid"],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-sorted-pair-index@1"
+        },
+        "pairs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/pairEntry" }
+        },
+        "index_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "semanticStateProducer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "repository_state_cid",
+        "repository_snapshot_cid",
+        "git_commit_oid_or_null",
+        "git_tree_oid_or_null",
+        "source_manifest_cid",
+        "semantic_index_schema",
+        "extractor_name",
+        "extractor_version"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-state-producer@1"
+        },
+        "repository_state_cid": { "$ref": "#/$defs/cid" },
+        "repository_snapshot_cid": { "$ref": "#/$defs/cid" },
+        "git_commit_oid_or_null": { "$ref": "#/$defs/gitOidOrNull" },
+        "git_tree_oid_or_null": { "$ref": "#/$defs/gitOidOrNull" },
+        "source_manifest_cid": { "$ref": "#/$defs/cid" },
+        "semantic_index_schema": { "$ref": "#/$defs/nfcString" },
+        "extractor_name": { "$ref": "#/$defs/nfcString" },
+        "extractor_version": { "$ref": "#/$defs/nfcString" }
+      }
+    },
+    "semanticStateRoot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "repository_id",
+        "producer",
+        "semantic_state_schema",
+        "merkle_compiler_version",
+        "capsule_schema",
+        "capsule_compiler_version",
+        "symbol_fact_index_cid",
+        "artifact_fact_index_cid",
+        "semantic_link_index_cid",
+        "symbol_node_index_cid",
+        "capsule_index_cid",
+        "environment_binding_set_cid",
+        "analysis_limitation_index_cid",
+        "root_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-state-root@1"
+        },
+        "repository_id": { "$ref": "#/$defs/nfcString" },
+        "producer": { "$ref": "#/$defs/semanticStateProducer" },
+        "semantic_state_schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-state@1"
+        },
+        "merkle_compiler_version": { "const": "1" },
+        "capsule_schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-capsule@1"
+        },
+        "capsule_compiler_version": { "const": "1" },
+        "symbol_fact_index_cid": { "$ref": "#/$defs/cid" },
+        "artifact_fact_index_cid": { "$ref": "#/$defs/cid" },
+        "semantic_link_index_cid": { "$ref": "#/$defs/cid" },
+        "symbol_node_index_cid": { "$ref": "#/$defs/cid" },
+        "capsule_index_cid": { "$ref": "#/$defs/cid" },
+        "environment_binding_set_cid": { "$ref": "#/$defs/cid" },
+        "analysis_limitation_index_cid": { "$ref": "#/$defs/cid" },
+        "root_cid": { "$ref": "#/$defs/cid" }
+      },
+      "not": {
+        "anyOf": [
+          { "required": ["history"] },
+          { "required": ["histories"] },
+          { "required": ["selection"] },
+          { "required": ["selections"] },
+          { "required": ["receipt"] },
+          { "required": ["receipts"] },
+          { "required": ["clock"] },
+          { "required": ["clocks"] },
+          { "required": ["local_path"] },
+          { "required": ["local_paths"] },
+          { "required": ["lease"] },
+          { "required": ["leases"] },
+          { "required": ["generation"] },
+          { "required": ["generations"] },
+          { "required": ["model"] },
+          { "required": ["model_data"] },
+          { "required": ["envelope"] },
+          { "required": ["envelope_cid"] },
+          { "required": ["execution_envelope"] },
+          { "required": ["dag_event"] },
+          { "required": ["previous_root"] },
+          { "required": ["previous_root_cid"] },
+          { "required": ["timestamp"] },
+          { "required": ["wal_position"] }
+        ]
+      }
+    },
+    "symbolFactNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "stable_symbol_id",
+        "version_cid",
+        "repository_id",
+        "source_cid",
+        "span",
+        "confidence",
+        "symbol",
+        "fact_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-symbol-fact@1"
+        },
+        "stable_symbol_id": { "$ref": "#/$defs/cid" },
+        "version_cid": { "$ref": "#/$defs/cid" },
+        "repository_id": { "$ref": "#/$defs/nfcString" },
+        "source_cid": { "$ref": "#/$defs/cidOrNull" },
+        "span": { "$ref": "#/$defs/sourceSpanOrNull" },
+        "confidence": { "$ref": "#/$defs/analysisConfidence" },
+        "symbol": { "$ref": "#/$defs/strictDagJson" },
+        "fact_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "artifactFactNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "artifact_id",
+        "kind",
+        "path",
+        "source_cid",
+        "confidence",
+        "artifact",
+        "fact_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-artifact-fact@1"
+        },
+        "artifact_id": { "$ref": "#/$defs/nfcString" },
+        "kind": { "$ref": "#/$defs/nfcString" },
+        "path": { "$ref": "#/$defs/nfcString" },
+        "source_cid": { "$ref": "#/$defs/cidOrNull" },
+        "confidence": { "$ref": "#/$defs/analysisConfidence" },
+        "artifact": { "$ref": "#/$defs/strictDagJson" },
+        "fact_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "semanticLinkNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "edge_id",
+        "source_stable_id",
+        "source_version_cid",
+        "source_fact_cid",
+        "target_kind",
+        "target_stable_id",
+        "target_version_cid",
+        "target_fact_cid",
+        "relation",
+        "source_span",
+        "extraction_method",
+        "confidence",
+        "extractor_version",
+        "metadata",
+        "link_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-link@1"
+        },
+        "edge_id": { "$ref": "#/$defs/cid" },
+        "source_stable_id": { "$ref": "#/$defs/cid" },
+        "source_version_cid": { "$ref": "#/$defs/cid" },
+        "source_fact_cid": { "$ref": "#/$defs/cid" },
+        "target_kind": { "$ref": "#/$defs/linkTargetKind" },
+        "target_stable_id": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nfcString" }]
+        },
+        "target_version_cid": { "$ref": "#/$defs/cidOrNull" },
+        "target_fact_cid": { "$ref": "#/$defs/cidOrNull" },
+        "relation": { "$ref": "#/$defs/relationType" },
+        "source_span": { "$ref": "#/$defs/sourceSpanOrNull" },
+        "extraction_method": { "$ref": "#/$defs/nfcString" },
+        "confidence": { "$ref": "#/$defs/analysisConfidence" },
+        "extractor_version": { "$ref": "#/$defs/nfcString" },
+        "metadata": { "$ref": "#/$defs/strictDagJson" },
+        "link_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "symbolMerkleNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "stable_symbol_id",
+        "version_cid",
+        "symbol_fact_cid",
+        "capsule_cid",
+        "incoming_link_cids",
+        "outgoing_link_cids",
+        "confidence",
+        "raw_source_required_reasons",
+        "node_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-symbol-merkle-node@1"
+        },
+        "stable_symbol_id": { "$ref": "#/$defs/cid" },
+        "version_cid": { "$ref": "#/$defs/cid" },
+        "symbol_fact_cid": { "$ref": "#/$defs/cid" },
+        "capsule_cid": { "$ref": "#/$defs/cid" },
+        "incoming_link_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" }
+        },
+        "outgoing_link_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" }
+        },
+        "confidence": { "$ref": "#/$defs/analysisConfidence" },
+        "raw_source_required_reasons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "node_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "semanticCapsule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "stable_symbol_id",
+        "version_cid",
+        "semantic_index_schema",
+        "extractor_version",
+        "capsule_schema",
+        "capsule_compiler_version",
+        "source_slice_path",
+        "source_cid",
+        "symbol_fact_cid",
+        "signature",
+        "annotations",
+        "defaults",
+        "decorators",
+        "contracts",
+        "effects",
+        "exception_behavior",
+        "schema_relations",
+        "serialization_relations",
+        "test_refs",
+        "fixture_refs",
+        "proof_obligation_refs",
+        "dependency_stable_ids",
+        "dependency_version_cids",
+        "dependency_fact_cids",
+        "dependency_link_ids",
+        "confidence",
+        "relevant_binding_projection_cid",
+        "docstring_hint",
+        "metadata",
+        "capsule_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-capsule@1"
+        },
+        "stable_symbol_id": { "$ref": "#/$defs/cid" },
+        "version_cid": { "$ref": "#/$defs/cid" },
+        "semantic_index_schema": { "$ref": "#/$defs/nfcString" },
+        "extractor_version": { "$ref": "#/$defs/nfcString" },
+        "capsule_schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-capsule@1"
+        },
+        "capsule_compiler_version": { "const": "1" },
+        "source_slice_path": { "$ref": "#/$defs/nfcStringOrEmpty" },
+        "source_cid": { "$ref": "#/$defs/cidOrNull" },
+        "symbol_fact_cid": { "$ref": "#/$defs/cidOrNull" },
+        "signature": { "$ref": "#/$defs/strictDagJson" },
+        "annotations": { "$ref": "#/$defs/strictDagJson" },
+        "defaults": { "$ref": "#/$defs/strictDagJson" },
+        "decorators": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "contracts": { "$ref": "#/$defs/strictDagJson" },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "exception_behavior": { "$ref": "#/$defs/strictDagJson" },
+        "schema_relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "serialization_relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "test_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "fixture_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "proof_obligation_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "dependency_stable_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "dependency_version_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" }
+        },
+        "dependency_fact_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" }
+        },
+        "dependency_link_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" }
+        },
+        "confidence": { "$ref": "#/$defs/analysisConfidence" },
+        "relevant_binding_projection_cid": { "$ref": "#/$defs/cidOrNull" },
+        "docstring_hint": { "$ref": "#/$defs/nfcStringOrNull" },
+        "metadata": { "$ref": "#/$defs/strictDagJson" },
+        "capsule_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "environmentBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "binding_id",
+        "kind",
+        "version_cid",
+        "scope",
+        "extraction_authority",
+        "confidence",
+        "subject_id",
+        "content_cid",
+        "metadata",
+        "record_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-environment-binding@1"
+        },
+        "binding_id": { "$ref": "#/$defs/nfcString" },
+        "kind": { "$ref": "#/$defs/bindingKind" },
+        "version_cid": { "$ref": "#/$defs/cid" },
+        "scope": { "$ref": "#/$defs/bindingScope" },
+        "extraction_authority": { "$ref": "#/$defs/nfcString" },
+        "confidence": { "$ref": "#/$defs/analysisConfidence" },
+        "subject_id": { "$ref": "#/$defs/nfcStringOrNull" },
+        "content_cid": { "$ref": "#/$defs/cidOrNull" },
+        "metadata": { "$ref": "#/$defs/strictDagJson" },
+        "record_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "environmentBindingSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "bindings", "binding_set_cid"],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-environment-binding-set@1"
+        },
+        "bindings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/environmentBinding" }
+        },
+        "binding_set_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "relevantBindingProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "stable_symbol_id",
+        "binding_ids",
+        "includes_global",
+        "binding_set_cid",
+        "projection_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-relevant-binding-projection@1"
+        },
+        "stable_symbol_id": { "$ref": "#/$defs/cid" },
+        "binding_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "includes_global": { "type": "boolean" },
+        "binding_set_cid": { "$ref": "#/$defs/cidOrNull" },
+        "projection_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "semanticBindingDelta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "previous_binding_set_cid",
+        "current_binding_set_cid",
+        "added_binding_ids",
+        "deleted_binding_ids",
+        "modified_binding_ids",
+        "unchanged_binding_ids",
+        "previous_version_cids",
+        "current_version_cids",
+        "delta_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-binding-delta@1"
+        },
+        "previous_binding_set_cid": { "$ref": "#/$defs/cidOrNull" },
+        "current_binding_set_cid": { "$ref": "#/$defs/cid" },
+        "added_binding_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "deleted_binding_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "modified_binding_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "unchanged_binding_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "previous_version_cids": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/cid" }
+        },
+        "current_version_cids": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/cid" }
+        },
+        "delta_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "semanticInvalidationObligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "obligation_id",
+        "subject_id",
+        "reason_code",
+        "remediation_kind",
+        "confidence",
+        "origin",
+        "old_identity",
+        "new_identity",
+        "supporting_edge_ids",
+        "supporting_link_cids",
+        "details"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-invalidation-obligation@1"
+        },
+        "obligation_id": { "$ref": "#/$defs/cid" },
+        "subject_id": { "$ref": "#/$defs/nfcString" },
+        "reason_code": { "$ref": "#/$defs/nfcString" },
+        "remediation_kind": { "$ref": "#/$defs/nfcString" },
+        "confidence": { "$ref": "#/$defs/analysisConfidence" },
+        "origin": { "$ref": "#/$defs/obligationOrigin" },
+        "old_identity": { "$ref": "#/$defs/nfcStringOrNull" },
+        "new_identity": { "$ref": "#/$defs/nfcStringOrNull" },
+        "supporting_edge_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "supporting_link_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" }
+        },
+        "details": { "$ref": "#/$defs/strictDagJson" }
+      }
+    },
+    "semanticInvalidationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "previous_root_cid",
+        "current_root_cid",
+        "isi_plan_cid",
+        "obligations",
+        "plan_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-invalidation-plan@1"
+        },
+        "previous_root_cid": { "$ref": "#/$defs/cidOrNull" },
+        "current_root_cid": { "$ref": "#/$defs/cid" },
+        "isi_plan_cid": { "$ref": "#/$defs/cidOrNull" },
+        "obligations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/semanticInvalidationObligation" }
+        },
+        "plan_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "capsuleFreshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "capsule_cid",
+        "root_cid",
+        "capsule_schema",
+        "capsule_compiler_version",
+        "producer_repository_state_cid",
+        "relevant_binding_projection_cid",
+        "freshness",
+        "admission",
+        "applicable_obligation_ids",
+        "caveats",
+        "assessment_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-capsule-freshness@1"
+        },
+        "capsule_cid": { "$ref": "#/$defs/cid" },
+        "root_cid": { "$ref": "#/$defs/cid" },
+        "capsule_schema": { "$ref": "#/$defs/nfcString" },
+        "capsule_compiler_version": { "$ref": "#/$defs/nfcString" },
+        "producer_repository_state_cid": { "$ref": "#/$defs/cid" },
+        "relevant_binding_projection_cid": { "$ref": "#/$defs/cidOrNull" },
+        "freshness": { "$ref": "#/$defs/freshnessState" },
+        "admission": { "$ref": "#/$defs/admissionDecision" },
+        "applicable_obligation_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "caveats": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "assessment_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "verifiedSourceEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "stable_symbol_id",
+        "producer_state_cid",
+        "source_cid",
+        "source_slice_path",
+        "start_offset",
+        "end_offset",
+        "extractor_name",
+        "extractor_version",
+        "evidence_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-verified-source-evidence@1"
+        },
+        "stable_symbol_id": { "$ref": "#/$defs/cid" },
+        "producer_state_cid": { "$ref": "#/$defs/cid" },
+        "source_cid": { "$ref": "#/$defs/cid" },
+        "source_slice_path": { "$ref": "#/$defs/nfcString" },
+        "start_offset": { "$ref": "#/$defs/nonnegInt" },
+        "end_offset": { "$ref": "#/$defs/nonnegInt" },
+        "extractor_name": { "$ref": "#/$defs/nfcString" },
+        "extractor_version": { "$ref": "#/$defs/nfcString" },
+        "evidence_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "selectionPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "policy_id",
+        "allow_full_fallback",
+        "include_proofs",
+        "include_fixtures",
+        "max_selected_tests",
+        "metadata",
+        "policy_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-selection-policy@1"
+        },
+        "policy_id": { "$ref": "#/$defs/nfcString" },
+        "allow_full_fallback": { "type": "boolean" },
+        "include_proofs": { "type": "boolean" },
+        "include_fixtures": { "type": "boolean" },
+        "max_selected_tests": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nonnegInt" }]
+        },
+        "metadata": { "$ref": "#/$defs/strictDagJson" },
+        "policy_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "selectionRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "rule_id", "kind", "subjects", "reason", "rule_cid"],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-selection-rule@1"
+        },
+        "rule_id": { "$ref": "#/$defs/nfcString" },
+        "kind": { "$ref": "#/$defs/selectionRuleKind" },
+        "subjects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "reason": { "$ref": "#/$defs/nfcString" },
+        "rule_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "reasonPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "seed_subject_id",
+        "target_node_id",
+        "edge_ids",
+        "link_cids",
+        "relation_steps",
+        "path_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-reason-path@1"
+        },
+        "seed_subject_id": { "$ref": "#/$defs/nfcString" },
+        "target_node_id": { "$ref": "#/$defs/nfcString" },
+        "edge_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "link_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" }
+        },
+        "relation_steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "path_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "testSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "previous_root_cid",
+        "current_root_cid",
+        "selected_pytest_node_ids",
+        "selected_proof_ids",
+        "reason_paths",
+        "covered_seed_obligation_ids",
+        "unresolved_obligation_ids",
+        "known_test_universe_cid",
+        "known_test_universe_count",
+        "fallback",
+        "fallback_reasons",
+        "policy_cid",
+        "selection_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-test-selection@1"
+        },
+        "previous_root_cid": { "$ref": "#/$defs/cidOrNull" },
+        "current_root_cid": { "$ref": "#/$defs/cid" },
+        "selected_pytest_node_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "selected_proof_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "reason_paths": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/reasonPath" }
+        },
+        "covered_seed_obligation_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "unresolved_obligation_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "known_test_universe_cid": { "$ref": "#/$defs/cidOrNull" },
+        "known_test_universe_count": { "$ref": "#/$defs/nonnegInt" },
+        "fallback": { "$ref": "#/$defs/selectionFallback" },
+        "fallback_reasons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "policy_cid": { "$ref": "#/$defs/cidOrNull" },
+        "selection_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "testOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "node_id",
+        "status",
+        "failure_fingerprint",
+        "outcome_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-test-outcome@1"
+        },
+        "node_id": { "$ref": "#/$defs/nfcString" },
+        "status": { "$ref": "#/$defs/normalizedTestStatus" },
+        "failure_fingerprint": { "$ref": "#/$defs/nfcStringOrNull" },
+        "outcome_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "testRunFacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "run_id", "outcomes", "facts_cid"],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-test-run-facts@1"
+        },
+        "run_id": { "$ref": "#/$defs/nfcString" },
+        "outcomes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/testOutcome" }
+        },
+        "facts_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "testOracleComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "selection_cid",
+        "baseline_facts_cid",
+        "selected_facts_cid",
+        "candidate_full_facts_cid",
+        "applicability",
+        "new_regressions",
+        "missed_regressions",
+        "true_positives",
+        "false_negatives",
+        "false_positives",
+        "fixture_recall_bp",
+        "fixture_precision_bp",
+        "selected_count",
+        "full_count",
+        "selection_ratio_bp",
+        "execution_reduction_bp",
+        "fallback_rate_bp",
+        "changed_outcome_node_ids",
+        "regression_recall_bp",
+        "comparison_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-test-oracle-comparison@1"
+        },
+        "selection_cid": { "$ref": "#/$defs/cid" },
+        "baseline_facts_cid": { "$ref": "#/$defs/cid" },
+        "selected_facts_cid": { "$ref": "#/$defs/cid" },
+        "candidate_full_facts_cid": { "$ref": "#/$defs/cid" },
+        "applicability": { "$ref": "#/$defs/oracleApplicability" },
+        "new_regressions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "missed_regressions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "true_positives": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "false_negatives": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "false_positives": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "fixture_recall_bp": { "$ref": "#/$defs/basisPointsOrNull" },
+        "fixture_precision_bp": { "$ref": "#/$defs/basisPointsOrNull" },
+        "selected_count": { "$ref": "#/$defs/nonnegInt" },
+        "full_count": { "$ref": "#/$defs/nonnegInt" },
+        "selection_ratio_bp": { "$ref": "#/$defs/basisPointsOrNull" },
+        "execution_reduction_bp": { "$ref": "#/$defs/basisPointsOrNull" },
+        "fallback_rate_bp": { "$ref": "#/$defs/basisPointsOrNull" },
+        "changed_outcome_node_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nfcString" }
+        },
+        "regression_recall_bp": { "$ref": "#/$defs/basisPointsOrNull" },
+        "comparison_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "analysisLimitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "code",
+        "message",
+        "subject_id",
+        "confidence",
+        "limitation_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-analysis-limitation@1"
+        },
+        "code": { "$ref": "#/$defs/nfcString" },
+        "message": { "$ref": "#/$defs/nfcString" },
+        "subject_id": { "$ref": "#/$defs/nfcStringOrNull" },
+        "confidence": { "$ref": "#/$defs/analysisConfidence" },
+        "limitation_cid": { "$ref": "#/$defs/cid" }
+      }
+    }
+  }
+}

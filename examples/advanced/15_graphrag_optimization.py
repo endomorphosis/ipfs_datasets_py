@@ -20,14 +20,14 @@ from pathlib import Path
 
 async def demo_ontology_generation():
     """Generate optimized ontology from documents."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 1: Automatic Ontology Generation")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🏗️  Ontology Generation")
     print("   Automatically discover entity types and relationship schemas")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.knowledge_graphs import OntologyGenerator
 
 generator = OntologyGenerator(
@@ -61,21 +61,21 @@ for entity_type in ontology.entity_types:
 # Export ontology
 ontology.export("ontology.owl", format="owl")  # Web Ontology Language
 ontology.export("ontology.json", format="json")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_graph_schema_optimization():
     """Optimize knowledge graph schema."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 2: Graph Schema Optimization")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n⚙️  Schema Optimization")
     print("   Improve query performance with optimized schema")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.knowledge_graphs import GraphSchemaOptimizer
 
 optimizer = GraphSchemaOptimizer()
@@ -112,21 +112,21 @@ for rec in recommendations:
 # - Denormalize for common join patterns
 # - Cache frequent subgraph queries
 # - Partition by geographic region or domain
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_graph_pruning():
     """Prune irrelevant nodes and edges."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 3: Graph Pruning and Compression")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n✂️  Graph Pruning")
     print("   Remove noise and irrelevant information")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.knowledge_graphs import GraphPruner
 
 pruner = GraphPruner(
@@ -161,21 +161,21 @@ print(f"\\nQuality metrics:")
 print(f"  Information retention: {quality.information_retention:.1%}")
 print(f"  Query performance: {quality.query_speedup:.1f}x faster")
 print(f"  Storage savings: {quality.storage_reduction:.1%}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_query_optimization():
     """Optimize GraphRAG queries."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 4: Query Optimization")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🚀 Query Optimization")
     print("   Optimize query execution for speed and relevance")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import GraphRAGQueryOptimizer
 
 optimizer = GraphRAGQueryOptimizer(
@@ -217,21 +217,21 @@ print(f"Execution time: {results.execution_ms}ms")
 
 # Cache for future queries
 optimizer.cache_result(query, results)
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_incremental_updates():
     """Handle incremental graph updates efficiently."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 5: Incremental Updates")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📈 Incremental Updates")
     print("   Add new data without full rebuild")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.knowledge_graphs import IncrementalGraphBuilder
 
 builder = IncrementalGraphBuilder(
@@ -276,21 +276,21 @@ if updates.conflicts:
 
 # Rebuild indexes only for affected parts
 await builder.rebuild_indexes(incremental=True)
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_distributed_graphrag():
     """Scale GraphRAG across multiple nodes."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 6: Distributed GraphRAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🌐 Distributed GraphRAG")
     print("   Scale to billions of entities")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import DistributedGraphRAG
 
 # Setup distributed system
@@ -331,21 +331,21 @@ print(f"  Total results: {len(results)}")
 print(f"  Nodes queried: {results.nodes_queried}")
 print(f"  Total time: {results.total_ms}ms")
 print(f"  Max node time: {results.max_node_ms}ms")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_performance_monitoring():
     """Monitor and tune GraphRAG performance."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 7: Performance Monitoring")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📊 Performance Monitoring")
     print("   Monitor and optimize in production")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.search import GraphRAGMonitor
 
 monitor = GraphRAGMonitor(
@@ -389,65 +389,65 @@ tuner = monitor.get_auto_tuner()
 await tuner.enable(
     parameters=["cache_size", "parallelism", "batch_size"]
 )
-    '''
-    
+    """
+
     print(example_code)
 
 
 def show_tips():
     """Show tips for GraphRAG optimization."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TIPS FOR GRAPHRAG OPTIMIZATION")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n1. Ontology Design:")
     print("   - Start with automatic generation, refine manually")
     print("   - Keep entity types focused and specific")
     print("   - Use hierarchical types for flexibility")
     print("   - Define clear relationship semantics")
-    
+
     print("\n2. Performance Optimization:")
     print("   - Index frequently queried properties")
     print("   - Cache common queries and subgraphs")
     print("   - Limit graph traversal depth")
     print("   - Use denormalization for hot paths")
-    
+
     print("\n3. Graph Quality:")
     print("   - Prune low-confidence edges regularly")
     print("   - Validate against ground truth")
     print("   - Monitor entity/relationship distribution")
     print("   - Handle conflicts systematically")
-    
+
     print("\n4. Scaling Strategies:")
     print("   - Partition by domain or geography")
     print("   - Use Neo4j or other graph DBs for large scale")
     print("   - Implement sharding for >100M entities")
     print("   - Consider read replicas for query load")
-    
+
     print("\n5. Incremental Updates:")
     print("   - Update in batches, not one-by-one")
     print("   - Rebuild indexes incrementally")
     print("   - Version your graph snapshots")
     print("   - Implement rollback capability")
-    
+
     print("\n6. Query Optimization:")
     print("   - Analyze slow queries regularly")
     print("   - Use query plan analysis")
     print("   - Implement query result caching")
     print("   - Consider materialized views")
-    
+
     print("\n7. Monitoring:")
     print("   - Track latency percentiles (P50, P95, P99)")
     print("   - Monitor cache hit rates")
     print("   - Alert on error rate spikes")
     print("   - Log slow queries for analysis")
-    
+
     print("\n8. Production Checklist:")
     print("   - Backup and disaster recovery")
     print("   - Security and access control")
     print("   - Rate limiting and throttling")
     print("   - Load testing and capacity planning")
-    
+
     print("\n9. Next Steps:")
     print("   - See 12_graphrag_basic.py for fundamentals")
     print("   - See 16_logic_enhanced_rag.py for logic integration")
@@ -455,10 +455,10 @@ def show_tips():
 
 async def main():
     """Run all GraphRAG optimization demonstrations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("IPFS DATASETS PYTHON - GRAPHRAG OPTIMIZATION")
-    print("="*70)
-    
+    print("=" * 70)
+
     await demo_ontology_generation()
     await demo_graph_schema_optimization()
     await demo_graph_pruning()
@@ -466,12 +466,12 @@ async def main():
     await demo_incremental_updates()
     await demo_distributed_graphrag()
     await demo_performance_monitoring()
-    
+
     show_tips()
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("✅ GRAPHRAG OPTIMIZATION EXAMPLES COMPLETE")
-    print("="*70)
+    print("=" * 70)
 
 
 if __name__ == "__main__":

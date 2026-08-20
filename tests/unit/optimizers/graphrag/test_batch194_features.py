@@ -10,11 +10,13 @@ Methods under test:
   - OntologyLearningAdapter.feedback_negative_rate(threshold)
   - OntologyMediator.action_gini()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -27,14 +29,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -42,26 +50,31 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, props=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, properties=props or {})
 
 
 def _make_result(entities=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(entities=entities or [], relationships=[], confidence=1.0)
 
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -72,21 +85,27 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 # ── OntologyOptimizer.history_span ───────────────────────────────────────────
+
 
 class TestHistorySpan:
     def test_empty_returns_zero(self):
@@ -112,6 +131,7 @@ class TestHistorySpan:
 
 
 # ── OntologyOptimizer.history_change_rate ────────────────────────────────────
+
 
 class TestHistoryChangeRate:
     def test_empty_returns_zero(self):
@@ -145,6 +165,7 @@ class TestHistoryChangeRate:
 
 # ── OntologyOptimizer.history_trend_direction ────────────────────────────────
 
+
 class TestHistoryTrendDirection:
     def test_empty_returns_stable(self):
         o = _make_optimizer()
@@ -176,18 +197,31 @@ class TestHistoryTrendDirection:
 
 # ── OntologyCritic.dimension_top_k ───────────────────────────────────────────
 
+
 class TestDimensionTopK:
     def test_top_1_returns_best_dimension(self):
         c = _make_critic()
-        s = _make_score(completeness=0.9, consistency=0.3, clarity=0.5,
-                        granularity=0.2, relationship_coherence=0.7, domain_alignment=0.1)
+        s = _make_score(
+            completeness=0.9,
+            consistency=0.3,
+            clarity=0.5,
+            granularity=0.2,
+            relationship_coherence=0.7,
+            domain_alignment=0.1,
+        )
         result = c.dimension_top_k(s, k=1)
         assert result == ["completeness"]
 
     def test_top_3_sorted_descending(self):
         c = _make_critic()
-        s = _make_score(completeness=0.9, consistency=0.8, clarity=0.7,
-                        granularity=0.3, relationship_coherence=0.4, domain_alignment=0.2)
+        s = _make_score(
+            completeness=0.9,
+            consistency=0.8,
+            clarity=0.7,
+            granularity=0.3,
+            relationship_coherence=0.4,
+            domain_alignment=0.2,
+        )
         result = c.dimension_top_k(s, k=3)
         assert result == ["completeness", "consistency", "clarity"]
 
@@ -199,6 +233,7 @@ class TestDimensionTopK:
 
 
 # ── OntologyGenerator.entity_property_keys ───────────────────────────────────
+
 
 class TestEntityPropertyKeys:
     def test_empty_returns_empty_set(self):
@@ -213,15 +248,18 @@ class TestEntityPropertyKeys:
 
     def test_union_of_all_keys(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("e1", props={"name": "Alice", "age": 30}),
-            _make_entity("e2", props={"name": "Bob", "role": "admin"}),
-        ])
+        r = _make_result(
+            [
+                _make_entity("e1", props={"name": "Alice", "age": 30}),
+                _make_entity("e2", props={"name": "Bob", "role": "admin"}),
+            ]
+        )
         keys = g.entity_property_keys(r)
         assert keys == {"name", "age", "role"}
 
 
 # ── OntologyPipeline.run_score_mean ──────────────────────────────────────────
+
 
 class TestRunScoreMean:
     def test_empty_returns_zero(self):
@@ -241,6 +279,7 @@ class TestRunScoreMean:
 
 
 # ── OntologyLearningAdapter.feedback_negative_rate ───────────────────────────
+
 
 class TestFeedbackNegativeRate:
     def test_empty_returns_zero(self):
@@ -267,6 +306,7 @@ class TestFeedbackNegativeRate:
 
 
 # ── OntologyMediator.action_gini ─────────────────────────────────────────────
+
 
 class TestActionGini:
     def test_no_actions_returns_zero(self):

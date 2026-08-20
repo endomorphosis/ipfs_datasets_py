@@ -274,7 +274,7 @@ Alabama (AL), Connecticut (CT), District of Columbia (DC), Delaware (DE), Georgi
 import pandas as pd
 
 # Load California data
-df = pd.read_parquet('~/.ipfs_datasets/state_laws/test_samples/CA_sample.parquet')
+df = pd.read_parquet("~/.ipfs_datasets/state_laws/test_samples/CA_sample.parquet")
 
 # Basic info
 print(df.shape)  # (10, 13)
@@ -284,7 +284,7 @@ print(df.columns)
 #  'metadata', 'scraped_at', 'scraper_version']
 
 # Sample rows
-print(df[['state_code', 'official_cite', 'legal_area']].head())
+print(df[["state_code", "official_cite", "legal_area"]].head())
 #   state_code            official_cite    legal_area
 # 0         CA  Cal. Penal Code § 1         criminal
 # 1         CA  Cal. Penal Code § 2         criminal

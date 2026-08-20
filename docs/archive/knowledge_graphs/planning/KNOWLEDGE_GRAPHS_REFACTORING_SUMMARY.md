@@ -183,6 +183,7 @@ Transform `ipfs_datasets_py/knowledge_graphs/` into a **fully-fledged, Neo4j-com
 ```python
 # Change ONLY the import and connection URI
 from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
+
 driver = GraphDatabase.driver("ipfs://localhost:5001")
 # Rest of code works as-is!
 ```
@@ -206,11 +207,7 @@ with session.write_transaction() as tx:
 
 #### 4. JSON-LD Translation
 ```python
-jsonld = {
-    "@context": "https://schema.org/",
-    "@type": "Person",
-    "name": "Alice"
-}
+jsonld = {"@context": "https://schema.org/", "@type": "Person", "name": "Alice"}
 ipld_graph = translator.jsonld_to_ipld(jsonld)
 ```
 

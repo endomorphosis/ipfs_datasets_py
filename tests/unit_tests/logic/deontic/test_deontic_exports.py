@@ -1,6 +1,5 @@
 """Tests for IR-derived deterministic export records."""
 
-
 from ipfs_datasets_py.logic.deontic.exports import (
     active_repair_details_from_parser_elements,
     build_decoder_record_from_ir,
@@ -92,12 +91,12 @@ def test_ir_export_records_preserve_enumerated_child_provenance():
 
 
 def test_deterministic_parser_capability_profiles_cover_duty_authority_and_enumerations():
-    duty = LegalNormIR.from_parser_element(extract_normative_elements(
-        "The tenant must pay rent monthly."
-    )[0])
-    authority = LegalNormIR.from_parser_element(extract_normative_elements(
-        "The Director is delegated authority to approve permits."
-    )[0])
+    duty = LegalNormIR.from_parser_element(
+        extract_normative_elements("The tenant must pay rent monthly.")[0]
+    )
+    authority = LegalNormIR.from_parser_element(
+        extract_normative_elements("The Director is delegated authority to approve permits.")[0]
+    )
     enumerated = [
         LegalNormIR.from_parser_element(element)
         for element in extract_normative_elements(
@@ -106,9 +105,7 @@ def test_deterministic_parser_capability_profiles_cover_duty_authority_and_enume
         )
     ]
 
-    records = build_deterministic_parser_capability_profile_records(
-        [duty, authority, *enumerated]
-    )
+    records = build_deterministic_parser_capability_profile_records([duty, authority, *enumerated])
 
     assert [record["source_id"] for record in records] == [
         duty.source_id,
@@ -149,9 +146,7 @@ def test_deterministic_parser_capability_profiles_cover_duty_authority_and_enume
 
 
 def test_deterministic_parser_capability_profile_includes_grounded_mental_state_slot():
-    element = extract_normative_elements(
-        "The inspector shall knowingly approve the discharge."
-    )[0]
+    element = extract_normative_elements("The inspector shall knowingly approve the discharge.")[0]
     norm = LegalNormIR.from_parser_element(element)
 
     record = build_deterministic_parser_capability_profile_record(norm)
@@ -165,27 +160,33 @@ def test_deterministic_parser_capability_profile_includes_grounded_mental_state_
     grounding = {item["slot"]: item for item in record["slot_grounding"]}
     assert grounding["mental_state"]["spans"] == [[20, 29]]
     assert grounding["action"]["spans"] == [[30, 51]]
-    assert record["formula"] == (
-        "O(∀x (Inspector(x) ∧ Knowingly(x) → ApproveDischarge(x)))"
-    )
+    assert record["formula"] == ("O(∀x (Inspector(x) ∧ Knowingly(x) → ApproveDischarge(x)))")
 
 
 def test_deterministic_parser_capability_profiles_cover_deadlines_procedure_and_sanctions():
-    temporal = LegalNormIR.from_parser_element(extract_normative_elements(
-        "The Director shall issue a permit within 10 days after application."
-    )[0])
-    procedure = LegalNormIR.from_parser_element(extract_normative_elements(
-        "Upon receipt of an application, the Bureau shall inspect the premises before approval."
-    )[0])
-    sanction = LegalNormIR.from_parser_element(extract_normative_elements(
-        "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation."
-    )[0])
+    temporal = LegalNormIR.from_parser_element(
+        extract_normative_elements(
+            "The Director shall issue a permit within 10 days after application."
+        )[0]
+    )
+    procedure = LegalNormIR.from_parser_element(
+        extract_normative_elements(
+            "Upon receipt of an application, the Bureau shall inspect the premises before approval."
+        )[0]
+    )
+    sanction = LegalNormIR.from_parser_element(
+        extract_normative_elements(
+            "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation."
+        )[0]
+    )
 
-    records = build_deterministic_parser_capability_profile_records([
-        temporal,
-        procedure,
-        sanction,
-    ])
+    records = build_deterministic_parser_capability_profile_records(
+        [
+            temporal,
+            procedure,
+            sanction,
+        ]
+    )
 
     assert [record["capability_family"] for record in records] == [
         "temporal_deadline_duty",
@@ -316,7 +317,10 @@ def test_deterministic_parser_capability_profiles_cover_administrative_review_re
         ),
     ]
 
-    norms = [LegalNormIR.from_parser_element(extract_normative_elements(text)[0]) for text, _, _ in examples]
+    norms = [
+        LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        for text, _, _ in examples
+    ]
     records = build_deterministic_parser_capability_profile_records(norms)
 
     assert [record["capability_family"] for record in records] == [
@@ -409,29 +413,33 @@ def test_deterministic_parser_capability_profiles_cover_remedy_information_and_p
 
 
 def test_deterministic_parser_capability_profiles_cover_scope_definition_and_lifecycle_families():
-    definition = LegalNormIR.from_parser_element(extract_normative_elements(
-        'In this section, the term "food cart" means a mobile food vending unit.'
-    )[0])
-    applicability = LegalNormIR.from_parser_element(extract_normative_elements(
-        "This section applies to food carts and mobile vendors."
-    )[0])
-    exemption = LegalNormIR.from_parser_element(extract_normative_elements(
-        "A permit is not required for emergency work."
-    )[0])
-    valid_lifecycle = LegalNormIR.from_parser_element(extract_normative_elements(
-        "The license is valid for 30 days."
-    )[0])
-    expiry_lifecycle = LegalNormIR.from_parser_element(extract_normative_elements(
-        "The permit expires one year after issuance."
-    )[0])
+    definition = LegalNormIR.from_parser_element(
+        extract_normative_elements(
+            'In this section, the term "food cart" means a mobile food vending unit.'
+        )[0]
+    )
+    applicability = LegalNormIR.from_parser_element(
+        extract_normative_elements("This section applies to food carts and mobile vendors.")[0]
+    )
+    exemption = LegalNormIR.from_parser_element(
+        extract_normative_elements("A permit is not required for emergency work.")[0]
+    )
+    valid_lifecycle = LegalNormIR.from_parser_element(
+        extract_normative_elements("The license is valid for 30 days.")[0]
+    )
+    expiry_lifecycle = LegalNormIR.from_parser_element(
+        extract_normative_elements("The permit expires one year after issuance.")[0]
+    )
 
-    records = build_deterministic_parser_capability_profile_records([
-        definition,
-        applicability,
-        exemption,
-        valid_lifecycle,
-        expiry_lifecycle,
-    ])
+    records = build_deterministic_parser_capability_profile_records(
+        [
+            definition,
+            applicability,
+            exemption,
+            valid_lifecycle,
+            expiry_lifecycle,
+        ]
+    )
 
     assert [record["capability_family"] for record in records] == [
         "definition",
@@ -465,7 +473,10 @@ def test_deterministic_parser_capability_profiles_cover_scope_definition_and_lif
     assert all(record["formula_proof_ready"] is True for record in records)
     assert all(record["requires_validation"] is False for record in records)
     assert all(record["repair_required"] is False for record in records)
-    assert all(record["parser_capability_profile_id"].startswith("parser-capability-profile:") for record in records)
+    assert all(
+        record["parser_capability_profile_id"].startswith("parser-capability-profile:")
+        for record in records
+    )
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
@@ -476,9 +487,11 @@ def test_deterministic_parser_capability_profiles_cover_scope_definition_and_lif
 
 
 def test_scoped_definition_ir_and_canonical_export_preserve_definition_scope():
-    element = dict(extract_normative_elements(
-        'In this section, the term "food cart" means a mobile food vending unit.'
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            'In this section, the term "food cart" means a mobile food vending unit.'
+        )[0]
+    )
     element["definition_scope"] = {
         "scope_type": "section",
         "scope_reference": "this section",
@@ -573,12 +586,14 @@ def test_ir_slot_provenance_audit_record_exports_grounding_status():
 
 
 def test_phase8_quality_summary_records_group_flat_records_by_source_id():
-    first = LegalNormIR.from_parser_element(extract_normative_elements(
-        "The tenant must pay rent monthly."
-    )[0])
-    second = LegalNormIR.from_parser_element(extract_normative_elements(
-        "The Director shall issue a permit within 10 days after application."
-    )[0])
+    first = LegalNormIR.from_parser_element(
+        extract_normative_elements("The tenant must pay rent monthly.")[0]
+    )
+    second = LegalNormIR.from_parser_element(
+        extract_normative_elements(
+            "The Director shall issue a permit within 10 days after application."
+        )[0]
+    )
     required_slots = ("actor", "modality", "action")
     required_targets = (
         "frame_logic",
@@ -624,10 +639,12 @@ def test_phase8_quality_summary_records_group_flat_records_by_source_id():
         required_targets=required_targets,
     )
 
-    assert [record["source_id"] for record in records] == sorted([
-        first.source_id,
-        second.source_id,
-    ])
+    assert [record["source_id"] for record in records] == sorted(
+        [
+            first.source_id,
+            second.source_id,
+        ]
+    )
     complete = next(record for record in records if record["source_id"] == first.source_id)
     incomplete = next(record for record in records if record["source_id"] == second.source_id)
     assert complete["phase8_quality_complete"] is True
@@ -709,12 +726,11 @@ def test_phase8_quality_summary_combines_reconstruction_prover_and_provenance():
     assert incomplete_record["requires_validation"] is True
     assert "missing_reconstruction_slot:action" in incomplete_record["coverage_blockers"]
     assert "missing_reconstruction_slot:modality" in incomplete_record["coverage_blockers"]
-    assert "missing_prover_syntax_target:deontic_temporal_fol" in incomplete_record[
-        "coverage_blockers"
-    ]
-    assert "missing_ir_slot_provenance:exceptions" in incomplete_record[
-        "coverage_blockers"
-    ]
+    assert (
+        "missing_prover_syntax_target:deontic_temporal_fol"
+        in incomplete_record["coverage_blockers"]
+    )
+    assert "missing_ir_slot_provenance:exceptions" in incomplete_record["coverage_blockers"]
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
@@ -748,12 +764,12 @@ def test_phase8_quality_summary_combines_reconstruction_prover_and_provenance():
 
 
 def test_phase8_quality_summary_uses_source_grouped_prover_corpus_coverage():
-    first = LegalNormIR.from_parser_element(extract_normative_elements(
-        "The tenant must pay rent monthly."
-    )[0])
-    second = LegalNormIR.from_parser_element(extract_normative_elements(
-        "The permittee may appeal the decision."
-    )[0])
+    first = LegalNormIR.from_parser_element(
+        extract_normative_elements("The tenant must pay rent monthly.")[0]
+    )
+    second = LegalNormIR.from_parser_element(
+        extract_normative_elements("The permittee may appeal the decision.")[0]
+    )
     required_slots = ("actor", "modality", "action")
     decoder_records = build_decoder_records_from_irs([first, second])
     provenance_records = build_ir_slot_provenance_audit_records(
@@ -776,9 +792,7 @@ def test_phase8_quality_summary_uses_source_grouped_prover_corpus_coverage():
     assert summary["prover_syntax_corpus_coverage"]["source_count"] == 2
     assert summary["prover_syntax_corpus_coverage"]["complete_source_count"] == 2
     assert summary["prover_syntax_corpus_coverage"]["all_sources_complete"] is True
-    assert summary["prover_syntax_corpus_coverage"][
-        "all_sources_required_targets_passed"
-    ] is True
+    assert summary["prover_syntax_corpus_coverage"]["all_sources_required_targets_passed"] is True
     assert summary["phase8_quality_complete"] is True
     assert summary["requires_validation"] is False
     assert not any(
@@ -880,12 +894,12 @@ def test_phase8_quality_accepts_frame_norm_semantic_modality_without_parser_prom
 
 
 def test_phase8_quality_summary_keeps_source_level_prover_failures_blocking():
-    first = LegalNormIR.from_parser_element(extract_normative_elements(
-        "The tenant must pay rent monthly."
-    )[0])
-    second = LegalNormIR.from_parser_element(extract_normative_elements(
-        "The permittee may appeal the decision."
-    )[0])
+    first = LegalNormIR.from_parser_element(
+        extract_normative_elements("The tenant must pay rent monthly.")[0]
+    )
+    second = LegalNormIR.from_parser_element(
+        extract_normative_elements("The permittee may appeal the decision.")[0]
+    )
     required_slots = ("actor", "modality", "action")
     decoder_records = build_decoder_records_from_irs([first, second])
     provenance_records = build_ir_slot_provenance_audit_records(
@@ -913,9 +927,7 @@ def test_phase8_quality_summary_keeps_source_level_prover_failures_blocking():
     ]
     assert summary["phase8_quality_complete"] is False
     assert summary["requires_validation"] is True
-    assert "missing_prover_syntax_target:deontic_temporal_fol" in summary[
-        "coverage_blockers"
-    ]
+    assert "missing_prover_syntax_target:deontic_temporal_fol" in summary["coverage_blockers"]
 
 
 def test_ir_slot_provenance_audit_records_preserve_norm_order():
@@ -1295,10 +1307,22 @@ def test_ir_prover_syntax_records_validate_required_local_targets_for_proof_read
     assert all(record["requires_validation"] is False for record in records)
     assert records[0]["exported_formula"].startswith("legal_norm(")
     assert records[1]["exported_formula"].startswith("Happens(legal_norm(")
-    assert "HoldsAt(O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))), t)" in records[1]["exported_formula"]
-    assert records[2]["exported_formula"] == "forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))"
-    assert records[3]["exported_formula"] == "O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x)))"
-    assert records[4]["exported_formula"] == "always(O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))))"
+    assert (
+        "HoldsAt(O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))), t)"
+        in records[1]["exported_formula"]
+    )
+    assert (
+        records[2]["exported_formula"]
+        == "forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))"
+    )
+    assert (
+        records[3]["exported_formula"]
+        == "O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x)))"
+    )
+    assert (
+        records[4]["exported_formula"]
+        == "always(O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))))"
+    )
     for record in records[1:]:
         assert not any(
             connective in record["exported_formula"] for connective in ("∀", "∧", "→", "¬")
@@ -1471,9 +1495,7 @@ def test_ir_decoder_record_preserves_blocked_reference_exception_without_promoti
     ]
     cross_reference_phrase = record["phrase_provenance"][-1]
     assert cross_reference_phrase["text"] == "section 552"
-    assert cross_reference_phrase["spans"] == [
-        element["cross_reference_details"][0]["span"]
-    ]
+    assert cross_reference_phrase["spans"] == [element["cross_reference_details"][0]["span"]]
     assert cross_reference_phrase["provenance_only"] is True
     assert proof_record["proof_ready"] is False
     assert proof_record["repair_required"] is True
@@ -1537,11 +1559,7 @@ def test_decoder_records_expose_cross_reference_slot_provenance_without_text_dri
 
     records = build_decoder_records_from_irs(norms)
     cross_reference_rows = [
-        [
-            phrase
-            for phrase in record["phrase_provenance"]
-            if phrase["slot"] == "cross_references"
-        ]
+        [phrase for phrase in record["phrase_provenance"] if phrase["slot"] == "cross_references"]
         for record in records
     ]
     slot_loss = summarize_reconstruction_slot_loss(records, required_slots=("cross_references",))
@@ -2013,7 +2031,10 @@ def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_nor
     assert tables["prover_syntax_summaries"][0]["requires_validation"] is False
     assert tables["prover_syntax_summaries"][1]["required_targets_passed"] is True
     assert tables["prover_syntax_summaries"][1]["requires_validation"] is True
-    assert "cross_reference_requires_resolution" in tables["prover_syntax_summaries"][1]["parser_warnings"]
+    assert (
+        "cross_reference_requires_resolution"
+        in tables["prover_syntax_summaries"][1]["parser_warnings"]
+    )
 
     validation = validate_export_tables(tables)
     assert validation == {"valid": True, "errors": []}
@@ -2046,9 +2067,18 @@ def test_document_export_tables_skip_repair_rows_for_formula_resolved_norms():
         True,
         False,
     ]
-    assert tables["proof_obligations"][0]["deterministic_resolution"]["type"] == "local_scope_applicability"
-    assert tables["proof_obligations"][1]["deterministic_resolution"]["type"] == "standard_substantive_exception"
-    assert tables["proof_obligations"][2]["deterministic_resolution"]["type"] == "pure_precedence_override"
+    assert (
+        tables["proof_obligations"][0]["deterministic_resolution"]["type"]
+        == "local_scope_applicability"
+    )
+    assert (
+        tables["proof_obligations"][1]["deterministic_resolution"]["type"]
+        == "standard_substantive_exception"
+    )
+    assert (
+        tables["proof_obligations"][2]["deterministic_resolution"]["type"]
+        == "pure_precedence_override"
+    )
     assert tables["repair_queue"][0]["source_id"] == norms[3].source_id
     assert validate_export_tables(tables)["valid"] is True
 
@@ -2113,7 +2143,9 @@ def test_parser_elements_with_ir_export_readiness_clears_formula_resolved_repair
         False,
         True,
     ]
-    assert [element["export_readiness"]["deterministic_resolution"].get("type") for element in aligned] == [
+    assert [
+        element["export_readiness"]["deterministic_resolution"].get("type") for element in aligned
+    ] == [
         "local_scope_applicability",
         "standard_substantive_exception",
         "pure_precedence_override",
@@ -2140,7 +2172,10 @@ def test_parser_element_readiness_clears_substantive_exception_repair_reason():
     assert "exception_requires_scope_review" in element["parser_warnings"]
     assert element["llm_repair"]["required"] is False
     assert element["llm_repair"]["deterministically_resolved"] is True
-    assert element["llm_repair"]["deterministic_resolution"]["type"] == "standard_substantive_exception"
+    assert (
+        element["llm_repair"]["deterministic_resolution"]["type"]
+        == "standard_substantive_exception"
+    )
     assert aligned[0]["promotable_to_theorem"] is False
     assert aligned[0]["export_readiness"]["parser_proof_ready"] is False
     assert aligned[0]["export_readiness"]["formula_proof_ready"] is True
@@ -2281,9 +2316,7 @@ def test_document_export_tables_use_canonical_text_for_same_document_reference_e
     assert tables["repair_queue"] == []
     assert tables["formal_logic"][0]["proof_ready"] is True
     assert tables["formal_logic"][0]["requires_validation"] is False
-    assert tables["formal_logic"][0]["deterministic_resolution"]["references"] == [
-        "section 552"
-    ]
+    assert tables["formal_logic"][0]["deterministic_resolution"]["references"] == ["section 552"]
     assert tables["proof_obligations"][0]["theorem_candidate"] is True
     assert tables["proof_obligations"][0]["deterministic_resolution"]["references"] == [
         "section 552"
@@ -2363,7 +2396,9 @@ def test_document_export_tables_keep_numbered_reference_exception_blocked_when_s
     reference_element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
     )[0]
-    unrelated_element = extract_normative_elements("The Bureau shall maintain the public register.")[0]
+    unrelated_element = extract_normative_elements(
+        "The Bureau shall maintain the public register."
+    )[0]
     unrelated_element = dict(unrelated_element)
     unrelated_element["canonical_citation"] = "section 553"
 
@@ -2423,7 +2458,9 @@ def test_document_export_tables_keep_reference_condition_blocked_when_section_ab
     reference_element = extract_normative_elements(
         "Subject to section 552, the Secretary shall publish the notice."
     )[0]
-    unrelated_element = extract_normative_elements("The Bureau shall maintain the public register.")[0]
+    unrelated_element = extract_normative_elements(
+        "The Bureau shall maintain the public register."
+    )[0]
     unrelated_element = dict(unrelated_element)
     unrelated_element["canonical_citation"] = "section 553"
 
@@ -2523,7 +2560,10 @@ def test_document_export_tables_skip_repair_row_for_otherwise_local_scope_except
     assert "AsOtherwiseProvidedThisSection" not in tables["formal_logic"][0]["formula"]
     assert tables["formal_logic"][0]["proof_ready"] is True
     assert tables["formal_logic"][0]["requires_validation"] is False
-    assert tables["formal_logic"][0]["deterministic_resolution"]["type"] == "local_scope_reference_exception"
+    assert (
+        tables["formal_logic"][0]["deterministic_resolution"]["type"]
+        == "local_scope_reference_exception"
+    )
     assert tables["formal_logic"][0]["deterministic_resolution"]["scopes"] == ["this section"]
     assert tables["proof_obligations"][0]["theorem_candidate"] is True
     assert validate_export_tables(tables) == {"valid": True, "errors": []}
@@ -2636,7 +2676,11 @@ def test_ir_aligned_export_tables_clear_formula_resolved_repairs_and_keep_auxili
         "proof_obligations": [{"proof_obligation_id": "legacy:stale", "source_id": "legacy:stale"}],
         "repair_queue": [{"repair_id": "legacy:stale", "source_id": "legacy:stale"}],
         "knowledge_graph_triples": [
-            {"triple_id": "triple:1", "source_id": elements[0]["source_id"], "predicate": "appliesTo"}
+            {
+                "triple_id": "triple:1",
+                "source_id": elements[0]["source_id"],
+                "predicate": "appliesTo",
+            }
         ],
         "procedure_event_records": [
             {"event_id": "event:1", "source_id": elements[1]["source_id"], "event": "review"}
@@ -2952,9 +2996,7 @@ def test_parser_element_readiness_resolves_same_document_reference_exception_fro
     cited_element["canonical_citation"] = ""
     cited_element["section_context"] = {"section": "552"}
 
-    aligned = parser_elements_with_ir_export_readiness(
-        [reference_element, cited_element]
-    )
+    aligned = parser_elements_with_ir_export_readiness([reference_element, cited_element])
 
     assert reference_element["promotable_to_theorem"] is False
     assert aligned[0]["promotable_to_theorem"] is False
@@ -2995,9 +3037,9 @@ def test_parser_element_readiness_resolves_same_document_reference_exception_fro
 
 
 def test_parser_element_readiness_projects_local_applicability_resolution():
-    element = extract_normative_elements(
-        "This section applies to food carts and mobile vendors."
-    )[0]
+    element = extract_normative_elements("This section applies to food carts and mobile vendors.")[
+        0
+    ]
 
     aligned = parser_elements_with_ir_export_readiness([element])
 
@@ -3031,9 +3073,9 @@ def test_parser_element_readiness_projects_local_applicability_resolution():
 
 
 def test_raw_parser_marks_local_applicability_repair_inactive_without_hiding_warning():
-    element = extract_normative_elements(
-        "This section applies to food carts and mobile vendors."
-    )[0]
+    element = extract_normative_elements("This section applies to food carts and mobile vendors.")[
+        0
+    ]
 
     assert element["promotable_to_theorem"] is False
     assert element["parser_warnings"] == ["cross_reference_requires_resolution"]
@@ -3174,7 +3216,10 @@ def test_raw_parser_keeps_numbered_reference_exception_active_for_repair():
 
     assert element["promotable_to_theorem"] is False
     assert "cross_reference_requires_resolution" in element["parser_warnings"]
-    assert element.get("active_repair_warnings", element["parser_warnings"]) == element["parser_warnings"]
+    assert (
+        element.get("active_repair_warnings", element["parser_warnings"])
+        == element["parser_warnings"]
+    )
     assert element["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
 
@@ -3224,9 +3269,7 @@ def test_parser_element_readiness_keeps_mismatched_section_context_reference_blo
     cited_element["canonical_citation"] = ""
     cited_element["section_context"] = {"section": "553"}
 
-    aligned = parser_elements_with_ir_export_readiness(
-        [reference_element, cited_element]
-    )
+    aligned = parser_elements_with_ir_export_readiness([reference_element, cited_element])
 
     assert aligned[0]["promotable_to_theorem"] is False
     assert aligned[0]["export_readiness"]["formula_proof_ready"] is False
@@ -3300,7 +3343,9 @@ def test_document_export_tables_resolve_complete_plural_section_list_exception()
     ]
     assert reference_formula["cross_reference_resolution_status"] == "resolved"
     assert reference_formula["unresolved_cross_references"] == []
-    assert [record["canonical_citation"] for record in reference_formula["resolved_cross_references"]] == [
+    assert [
+        record["canonical_citation"] for record in reference_formula["resolved_cross_references"]
+    ] == [
         "section 552",
         "section 553",
     ]
@@ -3314,10 +3359,21 @@ def test_document_export_tables_keep_partial_plural_section_list_exception_block
     )[0]
     reference_element = dict(reference_element)
     reference_element["exception_details"] = [
-        {"type": "exception", "clause_type": "except", "raw_text": "as provided in sections 552 and 553", "normalized_text": "as provided in sections 552 and 553", "span": [46, 82]}
+        {
+            "type": "exception",
+            "clause_type": "except",
+            "raw_text": "as provided in sections 552 and 553",
+            "normalized_text": "as provided in sections 552 and 553",
+            "span": [46, 82],
+        }
     ]
     reference_element["cross_reference_details"] = [
-        {"reference_type": "section", "raw_text": "sections 552 and 553", "normalized_text": "sections 552 and 553", "span": [61, 82]}
+        {
+            "reference_type": "section",
+            "raw_text": "sections 552 and 553",
+            "normalized_text": "sections 552 and 553",
+            "span": [61, 82],
+        }
     ]
     reference_element["resolved_cross_references"] = []
     section_552 = extract_normative_elements("The Bureau shall maintain the public register.")[0]
@@ -3325,7 +3381,10 @@ def test_document_export_tables_keep_partial_plural_section_list_exception_block
     section_552["canonical_citation"] = "section 552"
 
     tables = build_document_export_tables_from_ir(
-        [LegalNormIR.from_parser_element(reference_element), LegalNormIR.from_parser_element(section_552)]
+        [
+            LegalNormIR.from_parser_element(reference_element),
+            LegalNormIR.from_parser_element(section_552),
+        ]
     )
 
     assert len(tables["repair_queue"]) == 1
@@ -3382,8 +3441,7 @@ def test_parser_elements_for_metrics_clears_only_formula_resolved_repair_markers
 
     assert [row["promotable_to_theorem"] for row in rows] == [False, False, False, False]
     assert [
-        row["export_readiness"].get("deterministic_resolution", {}).get("type")
-        for row in rows
+        row["export_readiness"].get("deterministic_resolution", {}).get("type") for row in rows
     ] == [
         "local_scope_applicability",
         "standard_substantive_exception",
@@ -3416,8 +3474,7 @@ def test_parser_elements_for_metrics_clears_only_formula_resolved_repair_markers
     assert [row["llm_repair"].get("prompt_hash") for row in rows[:3]] == ["", "", ""]
     assert [row["llm_repair"].get("suggested_router") for row in rows[:3]] == ["", "", ""]
     assert [
-        row["llm_repair"].get("deterministic_resolution", {}).get("type")
-        for row in rows[:3]
+        row["llm_repair"].get("deterministic_resolution", {}).get("type") for row in rows[:3]
     ] == [
         "local_scope_applicability",
         "standard_substantive_exception",
@@ -3900,9 +3957,7 @@ Section 553. Notice rule
 The Secretary shall publish the notice except as provided in section 552."""
 
     elements = extract_normative_elements(text)
-    reference = next(
-        element for element in elements if element["action"] == ["publish the notice"]
-    )
+    reference = next(element for element in elements if element["action"] == ["publish the notice"])
 
     assert reference["promotable_to_theorem"] is False
     assert "exception_requires_scope_review" in reference["parser_warnings"]
@@ -3956,9 +4011,7 @@ Section 553. Notice rule
 The Secretary shall publish the notice except as provided in section 552."""
 
     elements = extract_normative_elements(text)
-    reference = next(
-        element for element in elements if element["action"] == ["publish the notice"]
-    )
+    reference = next(element for element in elements if element["action"] == ["publish the notice"])
 
     projected = parser_elements_for_metrics([reference])[0]
 
@@ -4006,7 +4059,10 @@ def test_metrics_projection_is_idempotent_for_resolved_numbered_reference_except
     assert reprojected_reference["export_readiness"]["deterministic_resolution"]["type"] == (
         "resolved_same_document_reference_exception"
     )
-    assert reprojected_reference["resolved_cross_references"] == projected_reference["resolved_cross_references"]
+    assert (
+        reprojected_reference["resolved_cross_references"]
+        == projected_reference["resolved_cross_references"]
+    )
     assert parser_element_has_active_repair(projected_reference) is False
     assert active_repair_details_from_parser_elements([projected_reference]) == []
 
@@ -4031,9 +4087,7 @@ def test_metrics_projection_is_idempotent_for_resolved_numbered_reference_except
     assert normalized["repair_required_details"] == []
     assert normalized["metrics"]["repair_required_count"] == 0
     assert normalized["metrics"]["repair_required_rate"] == 0.0
-    assert normalized["metrics"]["coverage_gaps"] == [
-        "cross_reference_resolution_rate: 0.0"
-    ]
+    assert normalized["metrics"]["coverage_gaps"] == ["cross_reference_resolution_rate: 0.0"]
 
 
 def test_normalize_repair_required_evaluation_recovers_parser_rows_from_samples():
@@ -4188,8 +4242,12 @@ def test_normalize_repair_required_evaluation_preserves_rich_prompt_context_slot
             "action": list(element["action"]),
             "conditions": list(element.get("condition_details") or element.get("conditions") or []),
             "exceptions": list(element.get("exception_details") or element.get("exceptions") or []),
-            "override_clauses": list(element.get("override_clause_details") or element.get("override_clauses") or []),
-            "cross_references": list(element.get("cross_reference_details") or element.get("cross_references") or []),
+            "override_clauses": list(
+                element.get("override_clause_details") or element.get("override_clauses") or []
+            ),
+            "cross_references": list(
+                element.get("cross_reference_details") or element.get("cross_references") or []
+            ),
             "resolved_cross_references": list(element.get("resolved_cross_references") or []),
             "parser_warnings": list(element["parser_warnings"]),
             "export_readiness": dict(element.get("export_readiness") or {}),
@@ -4269,8 +4327,12 @@ def test_normalize_repair_required_evaluation_recovers_stalled_detail_payload_sh
             "action": list(element["action"]),
             "conditions": list(element.get("condition_details") or element.get("conditions") or []),
             "exceptions": list(element.get("exception_details") or element.get("exceptions") or []),
-            "override_clauses": list(element.get("override_clause_details") or element.get("override_clauses") or []),
-            "cross_references": list(element.get("cross_reference_details") or element.get("cross_references") or []),
+            "override_clauses": list(
+                element.get("override_clause_details") or element.get("override_clauses") or []
+            ),
+            "cross_references": list(
+                element.get("cross_reference_details") or element.get("cross_references") or []
+            ),
             "resolved_cross_references": list(element.get("resolved_cross_references") or []),
             "parser_warnings": list(element["parser_warnings"]),
         }
@@ -4283,7 +4345,11 @@ def test_normalize_repair_required_evaluation_recovers_stalled_detail_payload_sh
             "subject": list(element["subject"]),
             "action": list(element["action"]),
             "parser_warnings": list(element["parser_warnings"]),
-            "llm_repair": {"required": True, "reasons": list(element["parser_warnings"]), "prompt_context": context},
+            "llm_repair": {
+                "required": True,
+                "reasons": list(element["parser_warnings"]),
+                "prompt_context": context,
+            },
         }
 
     raw_evaluation = {
@@ -4295,7 +4361,11 @@ def test_normalize_repair_required_evaluation_recovers_stalled_detail_payload_sh
             detail_for("applicability", applicability),
             detail_for("cross_reference", unresolved),
         ],
-        "metrics": {"repair_required_count": 4, "repair_required_rate": 1.0, "coverage_gaps": ["repair_required_count: 4"]},
+        "metrics": {
+            "repair_required_count": 4,
+            "repair_required_rate": 1.0,
+            "coverage_gaps": ["repair_required_count: 4"],
+        },
     }
 
     normalized = normalize_repair_required_evaluation([], raw_evaluation)
@@ -4303,8 +4373,13 @@ def test_normalize_repair_required_evaluation_recovers_stalled_detail_payload_sh
     assert normalized["repair_required_count"] == 1
     assert normalized["repair_required_rate"] == 0.25
     assert normalized["repair_required"] == [unresolved["source_id"]]
-    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == ["cross_reference"]
-    assert normalized["repair_required_details"][0]["active_repair_warnings"] == unresolved["parser_warnings"]
+    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == [
+        "cross_reference"
+    ]
+    assert (
+        normalized["repair_required_details"][0]["active_repair_warnings"]
+        == unresolved["parser_warnings"]
+    )
     assert normalized["metrics"]["repair_required_count"] == 1
     assert normalized["metrics"]["coverage_gaps"] == []
 
@@ -4339,8 +4414,12 @@ def test_normalize_repair_required_evaluation_recovers_detail_only_rows_without_
             "action": list(element["action"]),
             "conditions": list(element.get("condition_details") or element.get("conditions") or []),
             "exceptions": list(element.get("exception_details") or element.get("exceptions") or []),
-            "override_clauses": list(element.get("override_clause_details") or element.get("override_clauses") or []),
-            "cross_references": list(element.get("cross_reference_details") or element.get("cross_references") or []),
+            "override_clauses": list(
+                element.get("override_clause_details") or element.get("override_clauses") or []
+            ),
+            "cross_references": list(
+                element.get("cross_reference_details") or element.get("cross_references") or []
+            ),
             "resolved_cross_references": list(element.get("resolved_cross_references") or []),
             "parser_warnings": list(element["parser_warnings"]),
             "llm_repair": {"required": True, "reasons": list(element["parser_warnings"])},
@@ -4367,8 +4446,13 @@ def test_normalize_repair_required_evaluation_recovers_detail_only_rows_without_
     assert normalized["repair_required_count"] == 1
     assert normalized["repair_required_rate"] == 0.25
     assert normalized["repair_required"] == [unresolved["source_id"]]
-    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == ["cross_reference"]
-    assert normalized["repair_required_details"][0]["active_repair_warnings"] == unresolved["parser_warnings"]
+    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == [
+        "cross_reference"
+    ]
+    assert (
+        normalized["repair_required_details"][0]["active_repair_warnings"]
+        == unresolved["parser_warnings"]
+    )
     assert normalized["metrics"]["repair_required_count"] == 1
     assert normalized["metrics"]["coverage_gaps"] == []
 
@@ -4427,14 +4511,20 @@ def test_normalize_repair_required_evaluation_recovers_detail_only_override_from
                 "llm_repair": {"required": True, "reasons": list(unresolved["parser_warnings"])},
             },
         ],
-        "metrics": {"repair_required_count": 2, "repair_required_rate": 1.0, "coverage_gaps": ["repair_required_count: 2"]},
+        "metrics": {
+            "repair_required_count": 2,
+            "repair_required_rate": 1.0,
+            "coverage_gaps": ["repair_required_count: 2"],
+        },
     }
 
     normalized = normalize_repair_required_evaluation([], raw_evaluation)
 
     assert normalized["repair_required_count"] == 1
     assert normalized["repair_required"] == [unresolved["source_id"]]
-    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == ["cross_reference"]
+    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == [
+        "cross_reference"
+    ]
     assert normalized["metrics"]["repair_required_count"] == 1
     assert normalized["metrics"]["coverage_gaps"] == []
 
@@ -4572,14 +4662,20 @@ def test_normalize_repair_required_evaluation_recovers_prompt_context_override_w
                 "llm_repair": {"required": True, "reasons": list(unresolved["parser_warnings"])},
             },
         ],
-        "metrics": {"repair_required_count": 2, "repair_required_rate": 1.0, "coverage_gaps": ["repair_required_count: 2"]},
+        "metrics": {
+            "repair_required_count": 2,
+            "repair_required_rate": 1.0,
+            "coverage_gaps": ["repair_required_count: 2"],
+        },
     }
 
     normalized = normalize_repair_required_evaluation([], raw_evaluation)
 
     assert normalized["repair_required_count"] == 1
     assert normalized["repair_required"] == [unresolved["source_id"]]
-    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == ["cross_reference"]
+    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == [
+        "cross_reference"
+    ]
     assert normalized["active_repair_required_by_source_id"][override["source_id"]] is False
     assert normalized["active_repair_required_by_source_id"][unresolved["source_id"]] is True
     assert normalized["metrics"]["repair_required_count"] == 1
@@ -4636,14 +4732,20 @@ def test_normalize_repair_required_evaluation_recovers_detail_only_applicability
                 "llm_repair": {"required": True, "reasons": list(unresolved["parser_warnings"])},
             },
         ],
-        "metrics": {"repair_required_count": 2, "repair_required_rate": 1.0, "coverage_gaps": ["repair_required_count: 2"]},
+        "metrics": {
+            "repair_required_count": 2,
+            "repair_required_rate": 1.0,
+            "coverage_gaps": ["repair_required_count: 2"],
+        },
     }
 
     normalized = normalize_repair_required_evaluation([], raw_evaluation)
 
     assert normalized["repair_required_count"] == 1
     assert normalized["repair_required"] == [unresolved["source_id"]]
-    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == ["cross_reference"]
+    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == [
+        "cross_reference"
+    ]
     assert normalized["active_repair_required_by_source_id"][applicability["source_id"]] is False
     assert normalized["metrics"]["repair_required_count"] == 1
     assert normalized["metrics"]["coverage_gaps"] == []
@@ -5029,7 +5131,9 @@ def test_normalize_repair_required_evaluation_keeps_mismatched_text_only_section
     assert normalized["repair_required_count"] == 1
     assert normalized["repair_required_rate"] == 1.0
     assert normalized["repair_required"] == [reference["source_id"]]
-    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == ["cross_reference"]
+    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == [
+        "cross_reference"
+    ]
     assert normalized["active_repair_required_by_source_id"][reference["source_id"]] is True
     assert normalized["metrics"]["repair_required_count"] == 1
     assert normalized["metrics"]["coverage_gaps"] == []
@@ -5267,9 +5371,7 @@ def test_metrics_projection_resolves_us_code_self_numbered_reference_exception()
         "resolved_same_document_reference_exception"
     )
     assert projected[0]["resolved_cross_references"][0]["same_document"] is True
-    assert projected[0]["resolved_cross_references"][0]["resolution_scope"] == (
-        "same_document"
-    )
+    assert projected[0]["resolved_cross_references"][0]["resolution_scope"] == ("same_document")
     assert parser_element_has_active_repair(projected[0]) is False
 
 
@@ -5496,7 +5598,9 @@ def test_metrics_hydrates_prompt_context_operator_for_detail_only_stale_repair_r
                         "exceptions": list(parsed.get("exception_details") or []),
                         "override_clauses": list(parsed.get("override_clause_details") or []),
                         "cross_references": list(parsed.get("cross_reference_details") or []),
-                        "resolved_cross_references": list(parsed.get("resolved_cross_references") or []),
+                        "resolved_cross_references": list(
+                            parsed.get("resolved_cross_references") or []
+                        ),
                         "parser_warnings": list(parsed["parser_warnings"]),
                     },
                 },
@@ -5559,7 +5663,9 @@ def test_metrics_projects_formula_resolution_onto_detail_only_active_repair_flag
                         "exceptions": list(parsed.get("exception_details") or []),
                         "override_clauses": list(parsed.get("override_clause_details") or []),
                         "cross_references": list(parsed.get("cross_reference_details") or []),
-                        "resolved_cross_references": list(parsed.get("resolved_cross_references") or []),
+                        "resolved_cross_references": list(
+                            parsed.get("resolved_cross_references") or []
+                        ),
                         "parser_warnings": list(parsed["parser_warnings"]),
                     },
                 },
@@ -5577,9 +5683,9 @@ def test_metrics_projects_formula_resolution_onto_detail_only_active_repair_flag
         True,
         True,
     ]
-    assert [
-        row["export_readiness"]["deterministic_resolution"]["type"] for row in projected
-    ] == [resolution_type for _sample_id, _text, resolution_type in examples]
+    assert [row["export_readiness"]["deterministic_resolution"]["type"] for row in projected] == [
+        resolution_type for _sample_id, _text, resolution_type in examples
+    ]
     assert [parser_element_has_active_repair(row) for row in projected] == [False, False, False]
 
 
@@ -5590,7 +5696,10 @@ def test_normalize_repair_required_evaluation_clears_prompt_context_stalled_prob
         ("exception", "The applicant shall obtain a permit unless approval is denied."),
         ("override", "Notwithstanding section 5.01.020, the Director may issue a variance."),
         ("applicability", "This section applies to food carts and mobile vendors."),
-        ("cross_reference", "The Secretary shall publish the notice except as provided in section 552."),
+        (
+            "cross_reference",
+            "The Secretary shall publish the notice except as provided in section 552.",
+        ),
     ]
     details = []
     for sample_id, text in examples:
@@ -5647,10 +5756,9 @@ def test_normalize_repair_required_evaluation_clears_prompt_context_stalled_prob
     assert normalized["repair_required_count"] == 1
     assert normalized["metrics"]["repair_required_count"] == 1
     assert normalized["metrics"]["repair_required"] == [details[3]["source_id"]]
-    assert [
-        detail["sample_id"]
-        for detail in normalized["metrics"]["repair_required_details"]
-    ] == ["cross_reference"]
+    assert [detail["sample_id"] for detail in normalized["metrics"]["repair_required_details"]] == [
+        "cross_reference"
+    ]
     assert normalized["metrics"]["active_repair_required_by_source_id"] == {
         details[0]["source_id"]: False,
         details[1]["source_id"]: False,
@@ -5675,7 +5783,10 @@ def test_normalize_repair_required_evaluation_recovers_nested_metric_details():
         ("exception", "The applicant shall obtain a permit unless approval is denied."),
         ("override", "Notwithstanding section 5.01.020, the Director may issue a variance."),
         ("applicability", "This section applies to food carts and mobile vendors."),
-        ("cross_reference", "The Secretary shall publish the notice except as provided in section 552."),
+        (
+            "cross_reference",
+            "The Secretary shall publish the notice except as provided in section 552.",
+        ),
     ]
     details = []
     for sample_id, text in examples:
@@ -5707,7 +5818,9 @@ def test_normalize_repair_required_evaluation_recovers_nested_metric_details():
                         "exceptions": list(parsed.get("exception_details") or []),
                         "override_clauses": list(parsed.get("override_clause_details") or []),
                         "cross_references": list(parsed.get("cross_reference_details") or []),
-                        "resolved_cross_references": list(parsed.get("resolved_cross_references") or []),
+                        "resolved_cross_references": list(
+                            parsed.get("resolved_cross_references") or []
+                        ),
                         "parser_warnings": list(parsed["parser_warnings"]),
                     },
                 },
@@ -5733,10 +5846,9 @@ def test_normalize_repair_required_evaluation_recovers_nested_metric_details():
     ]
     assert normalized["metrics"]["repair_required_count"] == 1
     assert normalized["metrics"]["repair_required"] == [details[3]["source_id"]]
-    assert [
-        detail["sample_id"]
-        for detail in normalized["metrics"]["repair_required_details"]
-    ] == ["cross_reference"]
+    assert [detail["sample_id"] for detail in normalized["metrics"]["repair_required_details"]] == [
+        "cross_reference"
+    ]
     assert normalized["metrics"]["active_repair_required_by_source_id"] == {
         details[0]["source_id"]: False,
         details[1]["source_id"]: False,
@@ -5827,9 +5939,9 @@ def test_raw_parser_clears_repair_for_standard_substantive_exception():
 def test_raw_parser_clears_repair_for_local_applicability_without_hiding_warning():
     """Local applicability self-references are provenance, not active repair."""
 
-    element = extract_normative_elements(
-        "This section applies to food carts and mobile vendors."
-    )[0]
+    element = extract_normative_elements("This section applies to food carts and mobile vendors.")[
+        0
+    ]
 
     assert element["norm_type"] == "applicability"
     assert element["deontic_operator"] == "APP"
@@ -5889,9 +6001,7 @@ def test_raw_parser_same_document_reference_resolution_uses_canonical_reference_
 
     aligned = parser_elements_for_metrics([element, context])[0]
 
-    assert aligned["llm_repair"]["deterministic_resolution"]["references"] == [
-        "section 552"
-    ]
+    assert aligned["llm_repair"]["deterministic_resolution"]["references"] == ["section 552"]
     assert aligned["resolved_cross_references"][0]["value"] == "552"
     assert aligned["resolved_cross_references"][0]["normalized_text"] == "section 552"
 
@@ -5899,9 +6009,9 @@ def test_raw_parser_same_document_reference_resolution_uses_canonical_reference_
 def test_ir_procedure_event_records_mark_service_trigger_as_prerequisite():
     """Service of notice is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall renew a permit after service of notice."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Director shall renew a permit after service of notice.")[0]
+    )
     element["procedure"] = {
         "event_relations": [
             {
@@ -5931,9 +6041,11 @@ def test_ir_procedure_event_records_mark_service_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_adoption_trigger_as_prerequisite():
     """Adoption of rules is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall publish guidelines after adoption of rules."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall publish guidelines after adoption of rules."
+        )[0]
+    )
     element["procedure"] = {
         "event_relations": [
             {
@@ -5965,9 +6077,11 @@ def test_ir_procedure_event_records_mark_adoption_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_commencement_trigger_as_prerequisite():
     """Commencement of operations is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall inspect the premises after commencement of operations."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall inspect the premises after commencement of operations."
+        )[0]
+    )
     element["procedure"] = {
         "event_relations": [
             {
@@ -5999,9 +6113,11 @@ def test_ir_procedure_event_records_mark_commencement_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_execution_trigger_as_prerequisite():
     """Execution of an agreement is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue a certificate after execution of the agreement."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a certificate after execution of the agreement."
+        )[0]
+    )
     element["procedure"] = {
         "event_relations": [
             {
@@ -6033,9 +6149,11 @@ def test_ir_procedure_event_records_mark_execution_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_recording_trigger_as_prerequisite():
     """Recording of an instrument is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall renew a license after recording of the deed."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall renew a license after recording of the deed."
+        )[0]
+    )
     element["procedure"] = {
         "event_relations": [
             {
@@ -6067,9 +6185,11 @@ def test_ir_procedure_event_records_mark_recording_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_inspection_trigger_as_prerequisite():
     """Inspection of premises is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall renew a permit after inspection of the premises."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall renew a permit after inspection of the premises."
+        )[0]
+    )
     element["action"] = ["renew a permit after inspection premises"]
     element["procedure"] = {
         "event_relations": [
@@ -6101,9 +6221,11 @@ def test_ir_procedure_event_records_mark_inspection_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_renewal_trigger_as_prerequisite():
     """Renewal of a license is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall inspect the premises after renewal of the license."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall inspect the premises after renewal of the license."
+        )[0]
+    )
     element["action"] = ["inspect the premises after renewal license"]
     element["procedure"] = {
         "event_relations": [
@@ -6135,9 +6257,11 @@ def test_ir_procedure_event_records_mark_renewal_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_expiration_trigger_as_prerequisite():
     """Expiration of a license is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall inspect the premises after expiration of the license."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall inspect the premises after expiration of the license."
+        )[0]
+    )
     element["action"] = ["inspect the premises after expiration license"]
     element["procedure"] = {
         "event_relations": [
@@ -6169,9 +6293,11 @@ def test_ir_procedure_event_records_mark_expiration_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_termination_trigger_as_prerequisite():
     """Termination of a license is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall inspect the premises after termination of the license."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall inspect the premises after termination of the license."
+        )[0]
+    )
     element["action"] = ["inspect the premises after termination license"]
     element["procedure"] = {
         "event_relations": [
@@ -6203,9 +6329,11 @@ def test_ir_procedure_event_records_mark_termination_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_revocation_trigger_as_prerequisite():
     """Revocation of a license is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall inspect the premises after revocation of the license."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall inspect the premises after revocation of the license."
+        )[0]
+    )
     element["action"] = ["inspect the premises after revocation license"]
     element["procedure"] = {
         "event_relations": [
@@ -6237,9 +6365,11 @@ def test_ir_procedure_event_records_mark_revocation_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_denial_trigger_as_prerequisite():
     """Denial of an application is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue a notice after denial of the application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a notice after denial of the application."
+        )[0]
+    )
     element["action"] = ["issue a notice after denial application"]
     element["procedure"] = {
         "event_relations": [
@@ -6271,9 +6401,9 @@ def test_ir_procedure_event_records_mark_denial_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_payment_trigger_as_prerequisite():
     """Payment of a fee is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after payment of the fee."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Director shall issue a permit after payment of the fee.")[0]
+    )
     element["action"] = ["issue a permit after payment fee"]
     element["procedure"] = {
         "event_relations": [
@@ -6305,9 +6435,11 @@ def test_ir_procedure_event_records_mark_payment_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_assessment_trigger_as_prerequisite():
     """Assessment of a fee is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue a notice after assessment of the fee."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a notice after assessment of the fee."
+        )[0]
+    )
     element["action"] = ["issue a notice after assessment fee"]
     element["procedure"] = {
         "event_relations": [
@@ -6339,9 +6471,11 @@ def test_ir_procedure_event_records_mark_assessment_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_determination_trigger_as_prerequisite():
     """Determination of eligibility is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after determination of eligibility."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit after determination of eligibility."
+        )[0]
+    )
     element["action"] = ["issue a permit after determination eligibility"]
     element["procedure"] = {
         "event_relations": [
@@ -6373,9 +6507,11 @@ def test_ir_procedure_event_records_mark_determination_trigger_as_prerequisite()
 def test_ir_procedure_event_records_mark_verification_trigger_as_prerequisite():
     """Verification of residency is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after verification of residency."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit after verification of residency."
+        )[0]
+    )
     element["action"] = ["issue a permit after verification residency"]
     element["procedure"] = {
         "event_relations": [
@@ -6407,9 +6543,11 @@ def test_ir_procedure_event_records_mark_verification_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_validation_trigger_as_prerequisite():
     """Validation of an application is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Bureau shall approve the license after validation of the application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Bureau shall approve the license after validation of the application."
+        )[0]
+    )
     element["action"] = ["approve the license after validation application"]
     element["procedure"] = {
         "event_relations": [
@@ -6441,9 +6579,11 @@ def test_ir_procedure_event_records_mark_validation_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_review_trigger_as_prerequisite():
     """Review of an application is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after review of the application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit after review of the application."
+        )[0]
+    )
     element["action"] = ["issue a permit after review application"]
     element["procedure"] = {
         "event_relations": [
@@ -6475,9 +6615,11 @@ def test_ir_procedure_event_records_mark_review_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_reconsideration_trigger_as_prerequisite():
     """Reconsideration of an appeal is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Board shall issue a final order after reconsideration of the appeal."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Board shall issue a final order after reconsideration of the appeal."
+        )[0]
+    )
     element["action"] = ["issue a final order after reconsideration appeal"]
     element["procedure"] = {
         "event_relations": [
@@ -6509,9 +6651,11 @@ def test_ir_procedure_event_records_mark_reconsideration_trigger_as_prerequisite
 def test_ir_procedure_event_records_mark_hearing_trigger_as_prerequisite():
     """A hearing on an appeal is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Board shall issue a final order after hearing on the appeal."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Board shall issue a final order after hearing on the appeal."
+        )[0]
+    )
     element["action"] = ["issue a final order after hearing appeal"]
     element["procedure"] = {
         "event_relations": [
@@ -6543,9 +6687,11 @@ def test_ir_procedure_event_records_mark_hearing_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_final_decision_trigger_as_prerequisite():
     """A final decision on an application is a procedural prerequisite."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue a permit after final decision on the application."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue a permit after final decision on the application."
+        )[0]
+    )
     element["action"] = ["issue a permit after final decision application"]
     element["procedure"] = {
         "event_relations": [
@@ -6577,9 +6723,11 @@ def test_ir_procedure_event_records_mark_final_decision_trigger_as_prerequisite(
 def test_ir_procedure_event_records_mark_mailing_trigger_as_prerequisite():
     """Mailing of notice is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue an order after mailing of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue an order after mailing of the notice."
+        )[0]
+    )
     element["action"] = ["issue an order after mailing notice"]
     element["procedure"] = {
         "event_relations": [
@@ -6611,9 +6759,11 @@ def test_ir_procedure_event_records_mark_mailing_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_certified_mailing_trigger_as_prerequisite():
     """Certified mailing of notice is a procedural prerequisite."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue an order after certified mailing of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue an order after certified mailing of the notice."
+        )[0]
+    )
     element["action"] = ["issue an order after certified mailing notice"]
     element["procedure"] = {
         "event_relations": [
@@ -6645,9 +6795,11 @@ def test_ir_procedure_event_records_mark_certified_mailing_trigger_as_prerequisi
 def test_ir_procedure_event_records_mark_delivery_trigger_as_prerequisite():
     """Delivery of notice is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue an order after delivery of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue an order after delivery of the notice."
+        )[0]
+    )
     element["action"] = ["issue an order after delivery notice"]
     element["procedure"] = {
         "event_relations": [
@@ -6679,9 +6831,11 @@ def test_ir_procedure_event_records_mark_delivery_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_postmark_trigger_as_prerequisite():
     """A postmark date is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall accept an appeal after postmark of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall accept an appeal after postmark of the notice."
+        )[0]
+    )
     element["action"] = ["accept an appeal after postmark notice"]
     element["procedure"] = {
         "event_relations": [
@@ -6713,9 +6867,11 @@ def test_ir_procedure_event_records_mark_postmark_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_posting_trigger_as_prerequisite():
     """Posting of notice is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall issue an order after posting of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall issue an order after posting of the notice."
+        )[0]
+    )
     element["action"] = ["issue an order after posting notice"]
     element["procedure"] = {
         "event_relations": [
@@ -6748,9 +6904,11 @@ def test_ir_procedure_event_records_mark_posting_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_docketing_trigger_as_prerequisite():
     """Docketing of an appeal is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Board shall accept an appeal after docketing of the appeal."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Board shall accept an appeal after docketing of the appeal."
+        )[0]
+    )
     element["action"] = ["accept an appeal after docketing appeal"]
     element["procedure"] = {
         "event_relations": [
@@ -6782,9 +6940,11 @@ def test_ir_procedure_event_records_mark_docketing_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_entry_trigger_as_prerequisite():
     """Entry of a final order is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Board shall serve notice after entry of the final order."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Board shall serve notice after entry of the final order.")[
+            0
+        ]
+    )
     element["action"] = ["serve notice after entry final order"]
     element["procedure"] = {
         "event_relations": [
@@ -6816,9 +6976,11 @@ def test_ir_procedure_event_records_mark_entry_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_signature_trigger_as_prerequisite():
     """Signature of a final order is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Board shall serve notice after signature of the final order."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Board shall serve notice after signature of the final order."
+        )[0]
+    )
     element["action"] = ["serve notice after signature final order"]
     element["procedure"] = {
         "event_relations": [
@@ -6850,9 +7012,11 @@ def test_ir_procedure_event_records_mark_signature_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_notarization_and_countersignature_triggers_as_prerequisites():
     """Instrument notarization and countersignature can be procedural prerequisites."""
 
-    element = dict(extract_normative_elements(
-        "The Clerk shall record the deed after notarization of the deed and after countersignature of the certificate."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall record the deed after notarization of the deed and after countersignature of the certificate."
+        )[0]
+    )
     element["action"] = [
         "record the deed after notarization deed and after countersignature certificate"
     ]
@@ -6912,9 +7076,11 @@ def test_ir_procedure_event_records_mark_notarization_and_countersignature_trigg
 def test_ir_procedure_event_records_mark_opening_trigger_as_prerequisite():
     """Opening of bids is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Board shall award the contract after opening of the bids."
-    )[0])
+    element = dict(
+        extract_normative_elements("The Board shall award the contract after opening of the bids.")[
+            0
+        ]
+    )
     element["action"] = ["award the contract after opening bids"]
     element["procedure"] = {
         "event_relations": [
@@ -6946,9 +7112,11 @@ def test_ir_procedure_event_records_mark_opening_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_return_trigger_as_prerequisite():
     """Return of notice is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Board shall dismiss the appeal after return of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Board shall dismiss the appeal after return of the notice."
+        )[0]
+    )
     element["action"] = ["dismiss the appeal after return notice"]
     element["procedure"] = {
         "event_relations": [
@@ -6980,9 +7148,11 @@ def test_ir_procedure_event_records_mark_return_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_reinstatement_trigger_as_prerequisite():
     """Reinstatement of eligibility is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall reinstate the license after reinstatement of eligibility."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall reinstate the license after reinstatement of eligibility."
+        )[0]
+    )
     element["action"] = ["reinstate the license after reinstatement eligibility"]
     element["procedure"] = {
         "event_relations": [
@@ -7015,9 +7185,11 @@ def test_ir_procedure_event_records_mark_reinstatement_trigger_as_prerequisite()
 def test_ir_procedure_event_records_mark_withdrawal_trigger_as_prerequisite():
     """Withdrawal of an appeal is a procedural prerequisite, not ordering-only provenance."""
 
-    element = dict(extract_normative_elements(
-        "The Board shall close the case after withdrawal of the appeal."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Board shall close the case after withdrawal of the appeal."
+        )[0]
+    )
     element["action"] = ["close the case after withdrawal appeal"]
     element["procedure"] = {
         "event_relations": [
@@ -7050,9 +7222,11 @@ def test_ir_procedure_event_records_mark_withdrawal_trigger_as_prerequisite():
 def test_ir_procedure_event_records_mark_deposit_and_clearing_triggers_as_prerequisites():
     """Financial deposit and clearing events can be procedural prerequisites."""
 
-    element = dict(extract_normative_elements(
-        "The Treasurer shall release the bond after deposit of funds and after clearing of payment."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Treasurer shall release the bond after deposit of funds and after clearing of payment."
+        )[0]
+    )
     element["action"] = ["release the bond after deposit funds and after clearing payment"]
     element["procedure"] = {
         "event_relations": [
@@ -7110,9 +7284,11 @@ def test_ir_procedure_event_records_mark_deposit_and_clearing_triggers_as_prereq
 def test_ir_procedure_event_records_mark_transmission_and_receipt_confirmation_triggers_as_prerequisites():
     """Notice transmission and receipt-confirmation events can be procedural prerequisites."""
 
-    element = dict(extract_normative_elements(
-        "The Clerk shall docket the appeal after transmission of the notice and after receipt confirmation of the filing."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall docket the appeal after transmission of the notice and after receipt confirmation of the filing."
+        )[0]
+    )
     element["action"] = [
         "docket the appeal after transmission notice and after receipt confirmation filing"
     ]
@@ -7172,9 +7348,11 @@ def test_ir_procedure_event_records_mark_transmission_and_receipt_confirmation_t
 def test_ir_procedure_event_records_mark_registration_and_enrollment_triggers_as_prerequisites():
     """Registration and enrollment events can be procedural prerequisites."""
 
-    element = dict(extract_normative_elements(
-        "The Clerk shall activate the permit after registration of the applicant and after enrollment of the license."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall activate the permit after registration of the applicant and after enrollment of the license."
+        )[0]
+    )
     element["action"] = [
         "activate the permit after registration applicant and after enrollment license"
     ]
@@ -7234,9 +7412,11 @@ def test_ir_procedure_event_records_mark_registration_and_enrollment_triggers_as
 def test_ir_procedure_event_records_mark_acceptance_and_acknowledgment_triggers_as_prerequisites():
     """Acceptance and acknowledgment events can be procedural prerequisites."""
 
-    element = dict(extract_normative_elements(
-        "The Clerk shall docket the appeal after acceptance of the filing and after acknowledgment of the notice."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall docket the appeal after acceptance of the filing and after acknowledgment of the notice."
+        )[0]
+    )
     element["action"] = [
         "docket the appeal after acceptance filing and after acknowledgment notice"
     ]
@@ -7296,12 +7476,12 @@ def test_ir_procedure_event_records_mark_acceptance_and_acknowledgment_triggers_
 def test_ir_procedure_event_records_mark_calculation_and_audit_triggers_as_prerequisites():
     """Calculation and audit events can be procedural prerequisites."""
 
-    element = dict(extract_normative_elements(
-        "The Auditor shall certify the refund after calculation of the fee and after audit of the account."
-    )[0])
-    element["action"] = [
-        "certify the refund after calculation fee and after audit account"
-    ]
+    element = dict(
+        extract_normative_elements(
+            "The Auditor shall certify the refund after calculation of the fee and after audit of the account."
+        )[0]
+    )
+    element["action"] = ["certify the refund after calculation fee and after audit account"]
     element["procedure"] = {
         "event_relations": [
             {
@@ -7358,12 +7538,12 @@ def test_ir_procedure_event_records_mark_calculation_and_audit_triggers_as_prere
 def test_ir_procedure_event_records_mark_correction_and_adjustment_triggers_as_prerequisites():
     """Correction and adjustment events can be procedural prerequisites."""
 
-    element = dict(extract_normative_elements(
-        "The Auditor shall certify the refund after correction of the record and after adjustment of the account."
-    )[0])
-    element["action"] = [
-        "certify the refund after correction record and after adjustment account"
-    ]
+    element = dict(
+        extract_normative_elements(
+            "The Auditor shall certify the refund after correction of the record and after adjustment of the account."
+        )[0]
+    )
+    element["action"] = ["certify the refund after correction record and after adjustment account"]
     element["procedure"] = {
         "event_relations": [
             {
@@ -7420,9 +7600,11 @@ def test_ir_procedure_event_records_mark_correction_and_adjustment_triggers_as_p
 def test_ir_procedure_event_records_mark_public_comment_and_consultation_triggers_as_prerequisites():
     """Public participation triggers can be procedural prerequisites."""
 
-    element = dict(extract_normative_elements(
-        "The Director shall adopt the rule after public comment on the proposal and after consultation with the Board."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Director shall adopt the rule after public comment on the proposal and after consultation with the Board."
+        )[0]
+    )
     element["action"] = [
         "adopt the rule after public comment proposal and after consultation Board"
     ]
@@ -7484,12 +7666,12 @@ def test_ir_procedure_event_records_mark_public_comment_and_consultation_trigger
 def test_ir_procedure_event_records_mark_archiving_and_retention_triggers_as_prerequisites():
     """Recordkeeping triggers can be procedural prerequisites."""
 
-    element = dict(extract_normative_elements(
-        "The Clerk shall destroy the record after archiving of the file and after retention of the index."
-    )[0])
-    element["action"] = [
-        "destroy the record after archiving file and after retention index"
-    ]
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall destroy the record after archiving of the file and after retention of the index."
+        )[0]
+    )
+    element["action"] = ["destroy the record after archiving file and after retention index"]
     element["procedure"] = {
         "event_relations": [
             {
@@ -7548,9 +7730,11 @@ def test_ir_procedure_event_records_mark_archiving_and_retention_triggers_as_pre
 def test_ir_procedure_event_records_mark_electronic_filing_and_service_triggers_as_prerequisites():
     """Electronic procedural triggers can be proof prerequisites."""
 
-    element = dict(extract_normative_elements(
-        "The Clerk shall docket the appeal after electronic filing of the appeal and after electronic service on the respondent."
-    )[0])
+    element = dict(
+        extract_normative_elements(
+            "The Clerk shall docket the appeal after electronic filing of the appeal and after electronic service on the respondent."
+        )[0]
+    )
     element["action"] = [
         "docket the appeal after electronic filing appeal and after electronic service respondent"
     ]

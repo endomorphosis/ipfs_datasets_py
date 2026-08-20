@@ -58,17 +58,19 @@ The following pattern was established and documented for future tool refactoring
 # Step 1: Import core operations with graceful fallback
 try:
     from ipfs_datasets_py.core_operations import CoreModule
+
     CORE_OPS_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Core operations not available: {e}")
     CORE_OPS_AVAILABLE = False
     CoreModule = None
 
+
 # Step 2: Extract validation and helper functions
 def _validate_inputs(inputs: Any) -> Optional[str]:
     """
     Validate inputs and return error message if invalid.
-    
+
     Returns:
         Error message if invalid, None if valid
     """
@@ -77,23 +79,22 @@ def _validate_inputs(inputs: Any) -> Optional[str]:
         return "Inputs required"
     return None
 
+
 def _helper_function(data: Any) -> Any:
     """Helper function for specific processing."""
     # Helper logic
     return processed_data
 
+
 # Step 3: Create thin wrapper function
-async def tool_function(
-    param1: str,
-    param2: Optional[Dict] = None
-) -> Dict[str, Any]:
+async def tool_function(param1: str, param2: Optional[Dict] = None) -> Dict[str, Any]:
     """
     MCP tool function following thin wrapper pattern.
-    
+
     Args:
         param1: First parameter
         param2: Optional second parameter
-        
+
     Returns:
         Dict with status, result, and metadata
     """
@@ -102,40 +103,28 @@ async def tool_function(
         validation_error = _validate_inputs(param1)
         if validation_error:
             raise ValueError(validation_error)
-        
+
         # 2. Initialize core operations if available
         core_module = CoreModule() if CORE_OPS_AVAILABLE else None
-        
+
         # 3. Process using core operations
         if core_module:
             result = await core_module.process(param1, param2)
         else:
             # Fallback implementation
             result = _helper_function(param1)
-        
+
         # 4. Return standardized success response
-        return {
-            "status": "success",
-            "result": result,
-            "core_operations_used": CORE_OPS_AVAILABLE
-        }
-        
+        return {"status": "success", "result": result, "core_operations_used": CORE_OPS_AVAILABLE}
+
     except (ValueError, TypeError) as e:
         # Handle validation errors
         logger.error(f"Validation error: {e}")
-        return {
-            "status": "error",
-            "message": str(e),
-            "error_type": "validation"
-        }
+        return {"status": "error", "message": str(e), "error_type": "validation"}
     except Exception as e:
         # Handle processing errors
         logger.error(f"Processing error: {e}")
-        return {
-            "status": "error",
-            "message": str(e),
-            "error_type": "processing"
-        }
+        return {"status": "error", "message": str(e), "error_type": "processing"}
 ```
 
 **Pattern Benefits**:

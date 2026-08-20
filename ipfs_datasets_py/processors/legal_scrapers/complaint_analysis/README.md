@@ -42,7 +42,7 @@ The module includes built-in support for 14 complaint types:
 from complaint_analysis import ComplaintAnalyzer
 
 # Analyze a housing complaint
-analyzer = ComplaintAnalyzer(complaint_type='housing')
+analyzer = ComplaintAnalyzer(complaint_type="housing")
 result = analyzer.analyze(complaint_text)
 
 print(f"Risk: {result['risk_level']}")
@@ -58,24 +58,37 @@ print(f"Legal provisions found: {result['legal_provisions']['provision_count']}"
 from complaint_analysis import register_keywords, register_legal_terms
 
 # Register keywords
-register_keywords('complaint', [
-    'pollution', 'contamination', 'toxic waste',
-    'environmental hazard', 'clean air act',
-    'clean water act', 'epa', 'superfund',
-], complaint_type='environmental')
+register_keywords(
+    "complaint",
+    [
+        "pollution",
+        "contamination",
+        "toxic waste",
+        "environmental hazard",
+        "clean air act",
+        "clean water act",
+        "epa",
+        "superfund",
+    ],
+    complaint_type="environmental",
+)
 
 # Register legal patterns
-register_legal_terms('environmental', [
-    r'\b(clean air act)\b',
-    r'\b(clean water act)\b',
-    r'\b(cercla|superfund)\b',
-    r'\b(epa|environmental protection agency)\b',
-    r'\b(hazardous waste)\b',
-])
+register_legal_terms(
+    "environmental",
+    [
+        r"\b(clean air act)\b",
+        r"\b(clean water act)\b",
+        r"\b(cercla|superfund)\b",
+        r"\b(epa|environmental protection agency)\b",
+        r"\b(hazardous waste)\b",
+    ],
+)
 
 # Now use it
 from complaint_analysis import ComplaintAnalyzer
-analyzer = ComplaintAnalyzer(complaint_type='environmental')
+
+analyzer = ComplaintAnalyzer(complaint_type="environmental")
 result = analyzer.analyze(text)
 ```
 
@@ -84,38 +97,39 @@ result = analyzer.analyze(text)
 ```python
 from complaint_analysis import BaseRiskScorer
 
+
 class EnvironmentalRiskScorer(BaseRiskScorer):
     """Custom risk scorer for environmental complaints."""
-    
+
     def __init__(self):
-        self.risk_levels = ['low', 'medium', 'high', 'critical', 'catastrophic']
-    
+        self.risk_levels = ["low", "medium", "high", "critical", "catastrophic"]
+
     def calculate_risk(self, text, legal_provisions=None, **kwargs):
         # Custom logic for environmental risks
         score = 0
         factors = []
-        
-        if 'superfund site' in text.lower():
+
+        if "superfund site" in text.lower():
             score = 4  # Catastrophic
-            factors.append('Superfund site identified')
-        elif 'epa violation' in text.lower():
+            factors.append("Superfund site identified")
+        elif "epa violation" in text.lower():
             score = 3  # Critical
-            factors.append('EPA violation')
+            factors.append("EPA violation")
         # ... more logic
-        
+
         return {
-            'score': score,
-            'level': self.risk_levels[score],
-            'factors': factors,
-            'recommendations': self._get_recommendations(score)
+            "score": score,
+            "level": self.risk_levels[score],
+            "factors": factors,
+            "recommendations": self._get_recommendations(score),
         }
-    
+
     def get_risk_levels(self):
         return self.risk_levels
-    
+
     def is_actionable(self, text, threshold=0.5):
         result = self.calculate_risk(text)
-        normalized = result['score'] / (len(self.risk_levels) - 1)
+        normalized = result["score"] / (len(self.risk_levels) - 1)
         return normalized >= threshold
 ```
 
@@ -204,16 +218,16 @@ The module uses a registry pattern for extensibility:
 ```python
 # Global registries
 LEGAL_TERMS_REGISTRY = {}  # {category: [patterns]}
-_global_keyword_registry   # KeywordRegistry instance
+_global_keyword_registry  # KeywordRegistry instance
 
 # Register items
-register_legal_terms('category_name', patterns_list)
-register_keywords('category_name', keywords_list, complaint_type='optional')
+register_legal_terms("category_name", patterns_list)
+register_keywords("category_name", keywords_list, complaint_type="optional")
 
 # Retrieve items
-get_legal_terms('category_name')
-get_keywords('category_name', complaint_type='optional')
-get_type_specific_keywords('category_name', 'complaint_type')  # Type-specific only
+get_legal_terms("category_name")
+get_keywords("category_name", complaint_type="optional")
+get_type_specific_keywords("category_name", "complaint_type")  # Type-specific only
 ```
 
 ## API Reference
@@ -276,10 +290,12 @@ The module is backward compatible:
 ```python
 # Old way (still works - backward compatibility alias)
 from complaint_analysis import ComplaintLegalPatternExtractor
+
 extractor = ComplaintLegalPatternExtractor()
 
 # New way (recommended)
 from complaint_analysis import LegalPatternExtractor
+
 extractor = LegalPatternExtractor()
 
 # Old constants (still available)
@@ -287,7 +303,8 @@ from complaint_analysis import COMPLAINT_KEYWORDS
 
 # New way (recommended - more flexible)
 from complaint_analysis import get_keywords
-keywords = get_keywords('complaint', complaint_type='housing')
+
+keywords = get_keywords("complaint", complaint_type="housing")
 ```
 
 ## Advanced Features
@@ -300,11 +317,11 @@ To avoid false positives when tagging documents, use `get_type_specific_keywords
 from complaint_analysis import get_keywords, get_type_specific_keywords
 
 # Get all keywords (global + housing-specific)
-all_housing = get_keywords('complaint', complaint_type='housing')
+all_housing = get_keywords("complaint", complaint_type="housing")
 # Returns: ['discrimination', 'harassment', ..., 'fair housing', 'Section 8', ...]
 
 # Get only housing-specific keywords (no global)
-housing_only = get_type_specific_keywords('complaint', 'housing')
+housing_only = get_type_specific_keywords("complaint", "housing")
 # Returns: ['fair housing', 'Section 8', 'landlord', 'tenant', ...]
 
 # This is useful for applicability tagging to avoid false positives

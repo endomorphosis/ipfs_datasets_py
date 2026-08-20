@@ -45,7 +45,9 @@ def build_filing_specific_binders(
         inputs: list[Path] = []
         if include_front_and_table:
             inputs.extend([front, table])
-        inputs.extend(compiled / exhibit_packet_template.format(code=code, name=name) for code in exhibits)
+        inputs.extend(
+            compiled / exhibit_packet_template.format(code=code, name=name) for code in exhibits
+        )
         output = compiled / output_template.format(name=name)
         merge_pdfs(output, inputs)
         outputs.append(output)
@@ -58,11 +60,17 @@ def build_filing_specific_binders_from_config(path: str | Path) -> dict[str, Any
     base_dir = config_path.parent
 
     compiled_dir_value = str(payload.get("compiled_dir") or "compiled")
-    compiled_dir = (base_dir / compiled_dir_value) if not Path(compiled_dir_value).is_absolute() else Path(compiled_dir_value)
+    compiled_dir = (
+        (base_dir / compiled_dir_value)
+        if not Path(compiled_dir_value).is_absolute()
+        else Path(compiled_dir_value)
+    )
 
     sets = payload.get("sets") or {}
     if not isinstance(sets, dict) or not sets:
-        raise ValueError("config 'sets' must be a non-empty object mapping set name to exhibit-code list")
+        raise ValueError(
+            "config 'sets' must be a non-empty object mapping set name to exhibit-code list"
+        )
 
     normalized_sets: dict[str, list[str]] = {}
     for name, entries in sets.items():
@@ -75,7 +83,9 @@ def build_filing_specific_binders_from_config(path: str | Path) -> dict[str, Any
         sets=normalized_sets,
         front_name=str(payload.get("front_name") or DEFAULT_FRONT_NAME),
         table_name=str(payload.get("table_name") or DEFAULT_TABLE_NAME),
-        exhibit_packet_template=str(payload.get("exhibit_packet_template") or "Exhibit_{code}_packet.pdf"),
+        exhibit_packet_template=str(
+            payload.get("exhibit_packet_template") or "Exhibit_{code}_packet.pdf"
+        ),
         output_template=str(payload.get("output_template") or "{name}.pdf"),
         include_front_and_table=bool(payload.get("include_front_and_table", True)),
     )

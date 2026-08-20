@@ -10,6 +10,7 @@ Run with::
 
     pytest tests/performance/optimizers/test_batch_238_optimization_deltas.py -v
 """
+
 from __future__ import annotations
 
 import pytest
@@ -21,6 +22,7 @@ from tests.performance.optimizers.benchmark_harness import BenchmarkConfig, Benc
 @dataclass
 class MockExtractionResult:
     """Mock extraction result for benchmarking."""
+
     entity_count: int
     relationship_count: int
 
@@ -37,7 +39,7 @@ def mock_extraction_function(text: str) -> MockExtractionResult:
 
 class TestBenchmarkInfrastructure:
     """Test benchmark infrastructure and metrics collection."""
-    
+
     def test_benchmark_config_creation(self):
         """Test creating benchmark configurations."""
         config = BenchmarkConfig(
@@ -48,7 +50,7 @@ class TestBenchmarkInfrastructure:
         assert config.domains == ["legal", "medical"]
         assert config.complexities == ["simple", "medium"]
         assert config.runs_per_variant == 3
-    
+
     def test_benchmark_harness_creation(self):
         """Test creating benchmark harness."""
         config = BenchmarkConfig(
@@ -59,19 +61,19 @@ class TestBenchmarkInfrastructure:
         harness = BenchmarkHarness(config)
         assert harness is not None
         assert harness.config == config
-    
+
     def test_dataset_loading_all_domains(self):
         """Test loading datasets from all domains."""
         domains = ["legal", "medical", "technical", "financial"]
         complexities = ["simple", "medium", "complex"]
-        
+
         for domain in domains:
             for complexity in complexities:
                 dataset = BenchmarkDataset.load(domain, complexity)
                 assert dataset is not None
                 assert len(dataset.text) > 0
                 assert hasattr(dataset, "metadata")
-    
+
     def test_extraction_measurement(self):
         """Test measuring extraction performance."""
         config = BenchmarkConfig(
@@ -82,9 +84,9 @@ class TestBenchmarkInfrastructure:
         )
         harness = BenchmarkHarness(config)
         dataset = BenchmarkDataset.load("legal", "simple")
-        
+
         metrics = harness.measure_extraction(dataset, mock_extraction_function)
-        
+
         assert metrics.latency_ms > 0
         assert metrics.entity_count > 0
         assert metrics.memory_peak_mb > 0
@@ -92,7 +94,7 @@ class TestBenchmarkInfrastructure:
 
 class TestOptimizationDeltaMeasurement:
     """Measure optimization performance deltas."""
-    
+
     def test_legal_domain_performance(self):
         """Test legal domain extraction performance."""
         config = BenchmarkConfig(
@@ -102,13 +104,13 @@ class TestOptimizationDeltaMeasurement:
         )
         harness = BenchmarkHarness(config)
         dataset = BenchmarkDataset.load("legal", "medium")
-        
+
         metrics = harness.measure_extraction(dataset, mock_extraction_function)
-        
+
         assert metrics.latency_ms > 0
         assert metrics.entities_per_ms > 0
         assert metrics.entity_count > 0
-    
+
     def test_medical_domain_performance(self):
         """Test medical domain extraction performance."""
         config = BenchmarkConfig(
@@ -118,10 +120,10 @@ class TestOptimizationDeltaMeasurement:
         )
         harness = BenchmarkHarness(config)
         dataset = BenchmarkDataset.load("medical", "medium")
-        
+
         metrics = harness.measure_extraction(dataset, mock_extraction_function)
         assert metrics.latency_ms > 0
-    
+
     def test_technical_domain_performance(self):
         """Test technical domain extraction performance."""
         config = BenchmarkConfig(
@@ -131,10 +133,10 @@ class TestOptimizationDeltaMeasurement:
         )
         harness = BenchmarkHarness(config)
         dataset = BenchmarkDataset.load("technical", "simple")
-        
+
         metrics = harness.measure_extraction(dataset, mock_extraction_function)
         assert metrics.latency_ms > 0
-    
+
     def test_financial_domain_performance(self):
         """Test financial domain extraction performance."""
         config = BenchmarkConfig(
@@ -144,14 +146,14 @@ class TestOptimizationDeltaMeasurement:
         )
         harness = BenchmarkHarness(config)
         dataset = BenchmarkDataset.load("financial", "simple")
-        
+
         metrics = harness.measure_extraction(dataset, mock_extraction_function)
         assert metrics.latency_ms > 0
 
 
 class TestComplexityScaling:
     """Test performance scaling across complexity levels."""
-    
+
     def test_complexity_scaling_simple_to_medium(self):
         """Compare simple vs. medium complexity performance."""
         config_simple = BenchmarkConfig(
@@ -162,7 +164,7 @@ class TestComplexityScaling:
         harness_simple = BenchmarkHarness(config_simple)
         dataset_simple = BenchmarkDataset.load("legal", "simple")
         metrics_simple = harness_simple.measure_extraction(dataset_simple, mock_extraction_function)
-        
+
         config_medium = BenchmarkConfig(
             domains=["legal"],
             complexities=["medium"],
@@ -171,7 +173,7 @@ class TestComplexityScaling:
         harness_medium = BenchmarkHarness(config_medium)
         dataset_medium = BenchmarkDataset.load("legal", "medium")
         metrics_medium = harness_medium.measure_extraction(dataset_medium, mock_extraction_function)
-        
+
         # Both should be measurable
         assert metrics_simple.latency_ms > 0
         assert metrics_medium.latency_ms > 0
@@ -179,12 +181,12 @@ class TestComplexityScaling:
 
 class TestBenchmarkReporting:
     """Test benchmark reporting capabilities."""
-    
+
     def test_metrics_json_serialization(self):
         """Test that metrics can be serialized to JSON."""
         import json
         from dataclasses import asdict
-        
+
         config = BenchmarkConfig(
             domains=["legal"],
             complexities=["simple"],
@@ -192,14 +194,14 @@ class TestBenchmarkReporting:
         )
         harness = BenchmarkHarness(config)
         dataset = BenchmarkDataset.load("legal", "simple")
-        
+
         metrics = harness.measure_extraction(dataset, mock_extraction_function)
         metrics_dict = asdict(metrics)
-        
+
         # Should be JSON serializable
         json_str = json.dumps(metrics_dict)
         assert isinstance(json_str, str)
-        
+
         # Should deserialize back
         parsed = json.loads(json_str)
         assert "latency_ms" in parsed

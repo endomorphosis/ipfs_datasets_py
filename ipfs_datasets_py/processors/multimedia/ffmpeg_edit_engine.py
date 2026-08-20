@@ -246,7 +246,10 @@ async def ffmpeg_splice(
                 dur = seg.get("duration")
 
                 if source_file not in validated_inputs:
-                    return {"status": "error", "error": f"Source file not in input list: {source_file}"}
+                    return {
+                        "status": "error",
+                        "error": f"Source file not in input list: {source_file}",
+                    }
                 if not start_time:
                     return {"status": "error", "error": f"Segment {i}: start_time is required"}
 
@@ -365,9 +368,16 @@ async def ffmpeg_concat(
             n = len(validated_inputs)
             filter_in = "".join(f"[{i}:v][{i}:a]" for i in range(n))
             args += [
-                "-filter_complex", f"{filter_in}concat=n={n}:v=1:a=1[outv][outa]",
-                "-map", "[outv]", "-map", "[outa]",
-                "-c:v", video_codec, "-c:a", audio_codec,
+                "-filter_complex",
+                f"{filter_in}concat=n={n}:v=1:a=1[outv][outa]",
+                "-map",
+                "[outv]",
+                "-map",
+                "[outa]",
+                "-c:v",
+                video_codec,
+                "-c:a",
+                audio_codec,
             ]
 
         elif method == "file_list":

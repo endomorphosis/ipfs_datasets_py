@@ -21,41 +21,34 @@ geospatial analysis, relationship mapping, and deontic legal reasoning.
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.investigation_tools import (
-    ingest_news_feed, analyze_entities, build_relationship_graph
+    ingest_news_feed,
+    analyze_entities,
+    build_relationship_graph,
 )
 
 # 1. Ingest articles from an RSS feed
 articles = await ingest_news_feed(
-    url="https://feeds.reuters.com/reuters/topNews",
-    max_articles=100,
-    date_after="2024-01-01"
+    url="https://feeds.reuters.com/reuters/topNews", max_articles=100, date_after="2024-01-01"
 )
 
 # 2. Extract entities from ingested content
 entities = await analyze_entities(
-    content=articles["content"],
-    entity_types=["Person", "Organization", "Location", "Event"]
+    content=articles["content"], entity_types=["Person", "Organization", "Location", "Event"]
 )
 
 # 3. Build a relationship graph
 graph = await build_relationship_graph(
-    entities=entities["entities"],
-    source_text=articles["content"]
+    entities=entities["entities"], source_text=articles["content"]
 )
 ```
 
 ### Geospatial analysis
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.investigation_tools import (
-    extract_locations, map_events
-)
+from ipfs_datasets_py.mcp_server.tools.investigation_tools import extract_locations, map_events
 
 locations = await extract_locations(text=document_text)
-events = await map_events(
-    locations=locations["locations"],
-    include_timeline=True
-)
+events = await map_events(locations=locations["locations"], include_timeline=True)
 ```
 
 ### Deontic legal analysis
@@ -66,7 +59,7 @@ from ipfs_datasets_py.mcp_server.tools.investigation_tools import analyze_legal_
 result = await analyze_legal_obligations(
     document="/data/contract.pdf",
     jurisdiction="US-CA",
-    analysis_type="obligations"   # "obligations" | "permissions" | "prohibitions"
+    analysis_type="obligations",  # "obligations" | "permissions" | "prohibitions"
 )
 ```
 

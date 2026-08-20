@@ -1,0 +1,56 @@
+{
+  "compiler_configuration_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+  "corpus_manifest_cid": "bafkreiha35x7mcukzzb5x67hmykwsny5wipf5jb4do5gpsl24mxvix55n4",
+  "decompiler_configuration_cid": "baguqeeratlk326nodsva4rxwm65xgnpenhcovspm7crtyd4enaqhgjciqayq",
+  "excluded_populations": [
+    "blind_holdout",
+    "holdout_cases",
+    "hidden_test",
+    "canary",
+    "statute_family",
+    "jurisdiction"
+  ],
+  "experiment_id": "R1",
+  "fixture_cids": {
+    "pilot": "bafkreidngtg5cojnhkmwj4coijqpoixao25hxfwdzxjpywlusrqhk3hrm4",
+    "repair_development": "bafkreickaddpda2fuwh2p675vg6vw2jpliixhhrhanz2yk72hyqcol5zfu"
+  },
+  "fixture_paths": {
+    "pilot": "tests/fixtures/semantic_roundtrip/pilot_cases.json",
+    "repair_development": "tests/fixtures/semantic_roundtrip/repair_dev_cases.json"
+  },
+  "generator": "ipfs_datasets_py/benchmarks/semantic_roundtrip/deterministic_baseline.py",
+  "hidden_test_commitment": "sha256:6a801b51b980e666b4010da9a679ad8e11a233078f988165565481b98d4b9ded",
+  "hidden_test_selection": false,
+  "identities_cid": "baguqeeraejouoqkj2inudgumy7nygoowwvu3zi767pdofnhguoyxjuzqhpmq",
+  "interface": "IRDeterministicBaselineRecipe@1",
+  "learned_inference": false,
+  "measured_populations": [
+    "pilot",
+    "repair_development"
+  ],
+  "metric_module": "ipfs_datasets_py/benchmarks/semantic_roundtrip/e1_metrics.py",
+  "metrics": [
+    "parser_acceptance",
+    "type_acceptance",
+    "exact",
+    "canonical",
+    "ast",
+    "graph",
+    "source_span",
+    "semantic",
+    "proof",
+    "unsupported",
+    "latency"
+  ],
+  "missing_metric_as_zero": false,
+  "recipe_cid": "baguqeerazuhonzzynznbhtlfgmsbmlrl4fzs73ogo3ogek4e5xbb577unuea",
+  "roundtrip_configuration_cid": "baguqeeral25gulrpifchfnppoyodos44kvasvqxsnr3axihwta6y7zh3bona",
+  "schema": "ipfs-datasets.ir-learning.evaluations.deterministic.recipe.v1",
+  "split_manifest_digest": "047b263b85067aa3dad6760f623c2855fbaf776d565ec9c273c49425fcc14eb4",
+  "surfaces": [
+    "compiler",
+    "decompiler"
+  ],
+  "task_id": "PGIR-023"
+}

@@ -406,7 +406,16 @@ class TestJsonRoundTripRegression:
     def test_ontology_json_roundtrip_with_reference_data(self):
         """GIVEN: Reference ontology WHEN: Roundtripped via JSON THEN: Schema is preserved."""
         # Build ontology from reference data
-        entities = [Entity(id=e["id"], type=e["type"], text=e["text"], confidence=e["confidence"], properties=e["properties"]) for e in REFERENCE_ENTITIES]
+        entities = [
+            Entity(
+                id=e["id"],
+                type=e["type"],
+                text=e["text"],
+                confidence=e["confidence"],
+                properties=e["properties"],
+            )
+            for e in REFERENCE_ENTITIES
+        ]
         relationships = [
             Relationship(
                 id=r["id"],

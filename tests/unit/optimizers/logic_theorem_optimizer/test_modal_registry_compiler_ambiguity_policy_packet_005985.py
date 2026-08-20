@@ -29,10 +29,7 @@ _PACKET_005985_FAMILY_PAIRS = (
 
 
 def test_packet_005985_pairs_are_pinned_in_packet_pair_table() -> None:
-    assert (
-        tuple(COMPILER_AMBIGUITY_PACKET_005985_FAMILY_PAIRS)
-        == _PACKET_005985_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_005985_FAMILY_PAIRS) == _PACKET_005985_FAMILY_PAIRS
 
 
 def test_packet_005985_frame_targets_are_exposed_by_policy_helpers() -> None:
@@ -40,16 +37,10 @@ def test_packet_005985_frame_targets_are_exposed_by_policy_helpers() -> None:
         {("frame", target) for target in compiler_ambiguity_policy_targets("frame")}
     )
     assert set(_PACKET_005985_FAMILY_PAIRS).issubset(
-        {
-            ("frame", target)
-            for target in compiler_required_adaptive_ambiguity_targets("frame")
-        }
+        {("frame", target) for target in compiler_required_adaptive_ambiguity_targets("frame")}
     )
     assert set(_PACKET_005985_FAMILY_PAIRS).issubset(
-        {
-            ("frame", target)
-            for target in priority_signal_free_adaptive_ambiguity_targets("frame")
-        }
+        {("frame", target) for target in priority_signal_free_adaptive_ambiguity_targets("frame")}
     )
     assert set(_PACKET_005985_FAMILY_PAIRS).issubset(
         {("frame", target) for target in signal_free_adaptive_ambiguity_targets("frame")}

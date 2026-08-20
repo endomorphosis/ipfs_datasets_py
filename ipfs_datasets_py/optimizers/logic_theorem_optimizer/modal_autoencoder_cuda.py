@@ -133,9 +133,7 @@ class CudaResidencyReport:
             "gradient_norm": float(self.gradient_norm),
             "kernel_launch_count": int(self.kernel_launch_count),
             "loss_dtype": str(self.loss_dtype),
-            "losses": {
-                str(name): float(value) for name, value in sorted(self.losses.items())
-            },
+            "losses": {str(name): float(value) for name, value in sorted(self.losses.items())},
             "mixed_precision_checked": bool(self.mixed_precision_checked),
             "mixed_precision_safe": bool(self.mixed_precision_safe),
             "optimizer_state_resident": bool(self.optimizer_state_resident),
@@ -300,9 +298,7 @@ class CudaResidentBatchState:
     legal_ir_mask: Any
     prepared_at: float = field(default_factory=time.time)
     transfer_bytes: int = 0
-    training_sessions: Dict[tuple[Any, ...], _ResidentTrainingSession] = field(
-        default_factory=dict
-    )
+    training_sessions: Dict[tuple[Any, ...], _ResidentTrainingSession] = field(default_factory=dict)
 
     @property
     def packed_parameter_tensors(self) -> Dict[str, Any]:
@@ -388,16 +384,11 @@ class CudaResidentBatchState:
         )
         cache_attribute = (
             "_cuda_resident_proof_state"
-            if tuple(str(target) for target in update_targets)
-            == ("proof_auxiliary_heads",)
+            if tuple(str(target) for target in update_targets) == ("proof_auxiliary_heads",)
             else "_cuda_resident_projection_state"
         )
         cached = getattr(autoencoder, cache_attribute, None)
-        if (
-            not reference_cpu
-            and isinstance(cached, cls)
-            and cached.signature == signature
-        ):
+        if not reference_cpu and isinstance(cached, cls) and cached.signature == signature:
             report.admitted = True
             report.resident_cache_hit = True
             _count(profiler, "cuda_resident_cache_hit_count")
@@ -406,8 +397,7 @@ class CudaResidentBatchState:
         dtype = dtype or torch.float32
         try:
             embedding_values = [
-                list(getattr(sample, "embedding_vector", ()) or ())
-                for sample in sample_list
+                list(getattr(sample, "embedding_vector", ()) or ()) for sample in sample_list
             ]
             width = next(iter(dimensions), 0)
             embeddings = torch.tensor(
@@ -564,9 +554,7 @@ def _family_names(autoencoder: Any, samples: Sequence[Any]) -> tuple[str, ...]:
                 add(name)
         except Exception:
             pass
-    return tuple(
-        sorted(names, key=lambda name: stable_parameter_id(TensorKeyKind.FAMILY, name))
-    )
+    return tuple(sorted(names, key=lambda name: stable_parameter_id(TensorKeyKind.FAMILY, name)))
 
 
 def _legal_ir_view_names(autoencoder: Any, samples: Sequence[Any]) -> tuple[str, ...]:
@@ -688,9 +676,7 @@ def _activity_blueprint(
     elif kind == "matrix":
         for row in rows:
             current = mapping.get(row, {})
-            values.append(
-                tuple(_float_or_zero(current.get(column, 0.0)) for column in columns)
-            )
+            values.append(tuple(_float_or_zero(current.get(column, 0.0)) for column in columns))
     else:
         raise ValueError(f"unsupported packed block kind: {kind}")
     activity = tuple(
@@ -751,18 +737,105 @@ def _embedding_blueprints(
     dimensions: int,
 ) -> List[_BlockBlueprint]:
     specs: List[tuple[str, float, Callable[[Any], Mapping[str, float]]]] = [
-        ("compiler_quality_embedding_weights", autoencoder.compiler_quality_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_compiler_quality_slot_distribution_for", sample)),
-        ("logic_signature_embedding_weights", autoencoder.logic_signature_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_logic_signature_distribution_for", sample)),
-        ("round_trip_signal_embedding_weights", autoencoder.round_trip_signal_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_round_trip_signal_distribution_for", sample)),
-        ("decompiler_plan_embedding_weights", autoencoder.decompiler_plan_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_decompiler_plan_distribution_for", sample)),
-        ("predicate_argument_embedding_weights", autoencoder.predicate_argument_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_predicate_argument_distribution_for", sample)),
-        ("family_embedding_weights", autoencoder.family_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_family_distribution", sample, use_sample_memory=False)),
-        ("semantic_slot_embedding_weights", autoencoder.semantic_slot_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_semantic_slot_distribution_for", sample)),
-        ("family_semantic_slot_embedding_weights", autoencoder.family_semantic_slot_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_family_semantic_slot_distribution_for_embedding", sample, use_sample_memory=False)),
-        ("semantic_slot_legal_ir_view_embedding_weights", autoencoder.semantic_slot_legal_ir_view_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_semantic_slot_legal_ir_view_distribution_for_embedding", sample, use_sample_memory=False)),
-        ("family_semantic_slot_legal_ir_view_embedding_weights", autoencoder.family_semantic_slot_legal_ir_view_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_family_semantic_slot_legal_ir_view_distribution_for_embedding", sample, use_sample_memory=False)),
-        ("family_legal_ir_view_embedding_weights", autoencoder.family_legal_ir_view_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_family_legal_ir_view_distribution_for_embedding", sample, use_sample_memory=False)),
-        ("legal_ir_view_embedding_weights", autoencoder.legal_ir_view_embedding_weight_scale, lambda sample: _safe_distribution(autoencoder, "_legal_ir_view_distribution_for_embedding", sample, use_sample_memory=False)),
+        (
+            "compiler_quality_embedding_weights",
+            autoencoder.compiler_quality_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_compiler_quality_slot_distribution_for", sample
+            ),
+        ),
+        (
+            "logic_signature_embedding_weights",
+            autoencoder.logic_signature_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_logic_signature_distribution_for", sample
+            ),
+        ),
+        (
+            "round_trip_signal_embedding_weights",
+            autoencoder.round_trip_signal_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_round_trip_signal_distribution_for", sample
+            ),
+        ),
+        (
+            "decompiler_plan_embedding_weights",
+            autoencoder.decompiler_plan_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_decompiler_plan_distribution_for", sample
+            ),
+        ),
+        (
+            "predicate_argument_embedding_weights",
+            autoencoder.predicate_argument_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_predicate_argument_distribution_for", sample
+            ),
+        ),
+        (
+            "family_embedding_weights",
+            autoencoder.family_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_family_distribution", sample, use_sample_memory=False
+            ),
+        ),
+        (
+            "semantic_slot_embedding_weights",
+            autoencoder.semantic_slot_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_semantic_slot_distribution_for", sample
+            ),
+        ),
+        (
+            "family_semantic_slot_embedding_weights",
+            autoencoder.family_semantic_slot_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder,
+                "_family_semantic_slot_distribution_for_embedding",
+                sample,
+                use_sample_memory=False,
+            ),
+        ),
+        (
+            "semantic_slot_legal_ir_view_embedding_weights",
+            autoencoder.semantic_slot_legal_ir_view_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder,
+                "_semantic_slot_legal_ir_view_distribution_for_embedding",
+                sample,
+                use_sample_memory=False,
+            ),
+        ),
+        (
+            "family_semantic_slot_legal_ir_view_embedding_weights",
+            autoencoder.family_semantic_slot_legal_ir_view_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder,
+                "_family_semantic_slot_legal_ir_view_distribution_for_embedding",
+                sample,
+                use_sample_memory=False,
+            ),
+        ),
+        (
+            "family_legal_ir_view_embedding_weights",
+            autoencoder.family_legal_ir_view_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder,
+                "_family_legal_ir_view_distribution_for_embedding",
+                sample,
+                use_sample_memory=False,
+            ),
+        ),
+        (
+            "legal_ir_view_embedding_weights",
+            autoencoder.legal_ir_view_embedding_weight_scale,
+            lambda sample: _safe_distribution(
+                autoencoder,
+                "_legal_ir_view_distribution_for_embedding",
+                sample,
+                use_sample_memory=False,
+            ),
+        ),
     ]
     blueprints: List[_BlockBlueprint] = []
     columns = tuple(str(index) for index in range(dimensions))
@@ -801,14 +874,68 @@ def _family_blueprints(
     family_names: Sequence[str],
 ) -> List[_BlockBlueprint]:
     specs: List[tuple[str, float, Callable[[Any], Mapping[str, float]]]] = [
-        ("compiler_quality_family_logits", autoencoder.compiler_quality_family_logit_scale, lambda sample: _safe_distribution(autoencoder, "_compiler_quality_slot_distribution_for", sample)),
-        ("logic_signature_family_logits", autoencoder.logic_signature_family_logit_scale, lambda sample: _safe_distribution(autoencoder, "_logic_signature_distribution_for", sample)),
-        ("round_trip_signal_family_logits", autoencoder.round_trip_signal_family_logit_scale, lambda sample: _safe_distribution(autoencoder, "_round_trip_signal_distribution_for", sample)),
-        ("decompiler_plan_family_logits", autoencoder.decompiler_plan_family_logit_scale, lambda sample: _safe_distribution(autoencoder, "_decompiler_plan_distribution_for", sample)),
-        ("predicate_argument_family_logits", autoencoder.predicate_argument_family_logit_scale, lambda sample: _safe_distribution(autoencoder, "_predicate_argument_distribution_for", sample)),
-        ("semantic_slot_family_logits", autoencoder.semantic_slot_family_logit_scale, lambda sample: _safe_distribution(autoencoder, "_semantic_slot_distribution_for", sample)),
-        ("legal_ir_view_family_logits", autoencoder.legal_ir_view_family_logit_scale, lambda sample: _safe_distribution(autoencoder, "_legal_ir_view_distribution_for_embedding", sample, use_sample_memory=False)),
-        ("semantic_slot_legal_ir_view_family_logits", autoencoder.semantic_slot_legal_ir_view_family_logit_scale, lambda sample: _safe_distribution(autoencoder, "_semantic_slot_legal_ir_view_distribution_for_embedding", sample, use_sample_memory=False)),
+        (
+            "compiler_quality_family_logits",
+            autoencoder.compiler_quality_family_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_compiler_quality_slot_distribution_for", sample
+            ),
+        ),
+        (
+            "logic_signature_family_logits",
+            autoencoder.logic_signature_family_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_logic_signature_distribution_for", sample
+            ),
+        ),
+        (
+            "round_trip_signal_family_logits",
+            autoencoder.round_trip_signal_family_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_round_trip_signal_distribution_for", sample
+            ),
+        ),
+        (
+            "decompiler_plan_family_logits",
+            autoencoder.decompiler_plan_family_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_decompiler_plan_distribution_for", sample
+            ),
+        ),
+        (
+            "predicate_argument_family_logits",
+            autoencoder.predicate_argument_family_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_predicate_argument_distribution_for", sample
+            ),
+        ),
+        (
+            "semantic_slot_family_logits",
+            autoencoder.semantic_slot_family_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_semantic_slot_distribution_for", sample
+            ),
+        ),
+        (
+            "legal_ir_view_family_logits",
+            autoencoder.legal_ir_view_family_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder,
+                "_legal_ir_view_distribution_for_embedding",
+                sample,
+                use_sample_memory=False,
+            ),
+        ),
+        (
+            "semantic_slot_legal_ir_view_family_logits",
+            autoencoder.semantic_slot_legal_ir_view_family_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder,
+                "_semantic_slot_legal_ir_view_distribution_for_embedding",
+                sample,
+                use_sample_memory=False,
+            ),
+        ),
     ]
     blueprints: List[_BlockBlueprint] = []
     for component, scale, getter in specs:
@@ -854,25 +981,65 @@ def _legal_blueprints(
         for name in legal_names
     )
     global_scale = max(0.0, float(autoencoder.legal_ir_view_logit_scale))
-    blueprints = [
-        _BlockBlueprint(
-            component="legal_ir_view_logits",
-            kind="scalar_map",
-            rows=("__global__",),
-            columns=tuple(legal_names),
-            values=(global_values,),
-            activity=tuple((global_scale,) for _sample in samples),
-        )
-    ] if legal_names and global_scale > 0.0 else []
+    blueprints = (
+        [
+            _BlockBlueprint(
+                component="legal_ir_view_logits",
+                kind="scalar_map",
+                rows=("__global__",),
+                columns=tuple(legal_names),
+                values=(global_values,),
+                activity=tuple((global_scale,) for _sample in samples),
+            )
+        ]
+        if legal_names and global_scale > 0.0
+        else []
+    )
     if global_only:
         return blueprints
     specs: List[tuple[str, float, Callable[[Any], Mapping[str, float]]]] = [
-        ("semantic_slot_legal_ir_view_logits", autoencoder.semantic_slot_legal_ir_view_logit_scale, lambda sample: _safe_distribution(autoencoder, "_semantic_slot_distribution_for", sample)),
-        ("logic_signature_legal_ir_view_logits", autoencoder.logic_signature_legal_ir_view_logit_scale, lambda sample: _safe_distribution(autoencoder, "_logic_signature_distribution_for", sample)),
-        ("round_trip_signal_legal_ir_view_logits", autoencoder.round_trip_signal_legal_ir_view_logit_scale, lambda sample: _safe_distribution(autoencoder, "_round_trip_signal_distribution_for", sample)),
-        ("decompiler_plan_legal_ir_view_logits", autoencoder.decompiler_plan_legal_ir_view_logit_scale, lambda sample: _safe_distribution(autoencoder, "_decompiler_plan_distribution_for", sample)),
-        ("predicate_argument_legal_ir_view_logits", autoencoder.predicate_argument_legal_ir_view_logit_scale, lambda sample: _safe_distribution(autoencoder, "_predicate_argument_distribution_for", sample)),
-        ("family_semantic_slot_legal_ir_view_logits", autoencoder.family_semantic_slot_legal_ir_view_logit_scale, lambda sample: _safe_distribution(autoencoder, "_family_semantic_slot_distribution_for_legal_ir_view", sample)),
+        (
+            "semantic_slot_legal_ir_view_logits",
+            autoencoder.semantic_slot_legal_ir_view_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_semantic_slot_distribution_for", sample
+            ),
+        ),
+        (
+            "logic_signature_legal_ir_view_logits",
+            autoencoder.logic_signature_legal_ir_view_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_logic_signature_distribution_for", sample
+            ),
+        ),
+        (
+            "round_trip_signal_legal_ir_view_logits",
+            autoencoder.round_trip_signal_legal_ir_view_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_round_trip_signal_distribution_for", sample
+            ),
+        ),
+        (
+            "decompiler_plan_legal_ir_view_logits",
+            autoencoder.decompiler_plan_legal_ir_view_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_decompiler_plan_distribution_for", sample
+            ),
+        ),
+        (
+            "predicate_argument_legal_ir_view_logits",
+            autoencoder.predicate_argument_legal_ir_view_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_predicate_argument_distribution_for", sample
+            ),
+        ),
+        (
+            "family_semantic_slot_legal_ir_view_logits",
+            autoencoder.family_semantic_slot_legal_ir_view_logit_scale,
+            lambda sample: _safe_distribution(
+                autoencoder, "_family_semantic_slot_distribution_for_legal_ir_view", sample
+            ),
+        ),
     ]
     for component, scale, getter in specs:
         blueprint = _activity_blueprint(
@@ -971,7 +1138,9 @@ def _base_outputs(
             state.legal_ir_view_names,
             use_sample_memory=False,
         )
-        legal_rows.append([_float_or_zero(values.get(name, 0.0)) for name in state.legal_ir_view_names])
+        legal_rows.append(
+            [_float_or_zero(values.get(name, 0.0)) for name in state.legal_ir_view_names]
+        )
     legal = torch.tensor(
         legal_rows,
         dtype=torch.float32,
@@ -1067,7 +1236,10 @@ def _loss_chunk(
             else:
                 family_logits = family_logits + contribution
 
-        zero = sum((parameter.sum() * 0.0 for parameter in session.parameters), torch.zeros((), device=state.device))
+        zero = sum(
+            (parameter.sum() * 0.0 for parameter in session.parameters),
+            torch.zeros((), device=state.device),
+        )
         losses: Dict[str, Any] = {
             "cross_entropy": zero.float(),
             "legal_ir_cross_entropy": zero.float(),
@@ -1084,7 +1256,10 @@ def _loss_chunk(
             per_row = -(normalized * torch.log_softmax(family_logits.float(), dim=1)).sum(dim=1)
             losses["cross_entropy"] = per_row.masked_select(mask).sum() / denominator
             kernel_count += 3
-        if update_targets.intersection({"legal_ir_view_logits", "legal_ir_view_global_logits"}) and legal_logits.shape[1]:
+        if (
+            update_targets.intersection({"legal_ir_view_logits", "legal_ir_view_global_logits"})
+            and legal_logits.shape[1]
+        ):
             targets = state.legal_ir_targets[start:stop].float()
             mask = state.legal_ir_mask[start:stop]
             normalized = targets / targets.sum(dim=1, keepdim=True).clamp_min(1.0e-12)
@@ -1105,15 +1280,17 @@ def _loss_chunk(
             # it is zero inside the broad safe range and cannot dominate CE.
             norm_ratio = decoded_norm / target_norm.clamp_min(1.0e-8)
             auxiliary = (
-                torch.relu(norm_ratio - 4.0).square()
-                + torch.relu(0.05 - norm_ratio).square()
+                torch.relu(norm_ratio - 4.0).square() + torch.relu(0.05 - norm_ratio).square()
             ).masked_select(guard)
             losses["guarded_auxiliary"] = auxiliary.sum() / denominator
             kernel_count += 7
         if l2_regularization > 0.0:
             scalar_count = max(1, session.parameter_count)
             losses["l2"] = (
-                sum((parameter.float().square().sum() for parameter in session.parameters), zero.float())
+                sum(
+                    (parameter.float().square().sum() for parameter in session.parameters),
+                    zero.float(),
+                )
                 * float(l2_regularization)
                 / float(scalar_count)
             )
@@ -1131,7 +1308,11 @@ def _loss_chunk(
 
 def _gradient_norm(torch: Any, parameters: Sequence[Any]) -> float:
     with torch.no_grad():
-        squares = [parameter.grad.float().square().sum() for parameter in parameters if parameter.grad is not None]
+        squares = [
+            parameter.grad.float().square().sum()
+            for parameter in parameters
+            if parameter.grad is not None
+        ]
         if not squares:
             return 0.0
         return float(torch.sqrt(torch.stack(squares).sum()).detach().cpu().item())
@@ -1208,15 +1389,32 @@ def apply_packed_projection_update(
             if "family_logits" in target_set and family_logits.shape[1]:
                 targets = state.family_targets.float()
                 normalized = targets / targets.sum(dim=1, keepdim=True).clamp_min(1.0e-12)
-                total = total + (
-                    -(normalized * state.torch.log_softmax(family_logits.float(), dim=1)).sum(dim=1)
-                ).masked_select(state.family_mask).mean()
-            if target_set.intersection({"legal_ir_view_logits", "legal_ir_view_global_logits"}) and legal_logits.shape[1]:
+                total = (
+                    total
+                    + (
+                        -(normalized * state.torch.log_softmax(family_logits.float(), dim=1)).sum(
+                            dim=1
+                        )
+                    )
+                    .masked_select(state.family_mask)
+                    .mean()
+                )
+            if (
+                target_set.intersection({"legal_ir_view_logits", "legal_ir_view_global_logits"})
+                and legal_logits.shape[1]
+            ):
                 targets = state.legal_ir_targets.float()
                 normalized = targets / targets.sum(dim=1, keepdim=True).clamp_min(1.0e-12)
-                total = total + (
-                    -(normalized * state.torch.log_softmax(legal_logits.float(), dim=1)).sum(dim=1)
-                ).masked_select(state.legal_ir_mask).mean()
+                total = (
+                    total
+                    + (
+                        -(normalized * state.torch.log_softmax(legal_logits.float(), dim=1)).sum(
+                            dim=1
+                        )
+                    )
+                    .masked_select(state.legal_ir_mask)
+                    .mean()
+                )
             report.applied = True
             report.loss_dtype = str(state.torch.float32)
             report.parameter_dtype = str(state.torch.float32)
@@ -1302,7 +1500,9 @@ def apply_packed_projection_update(
             _count(profiler, "cuda_mixed_precision_check_count")
             _count(
                 profiler,
-                "cuda_mixed_precision_safe_count" if mixed_precision else "cuda_mixed_precision_rejected_count",
+                "cuda_mixed_precision_safe_count"
+                if mixed_precision
+                else "cuda_mixed_precision_rejected_count",
             )
 
         for parameter in session.parameters:
@@ -1325,8 +1525,7 @@ def apply_packed_projection_update(
             "total",
         )
         accumulated_tensors = {
-            name: torch.zeros((), dtype=torch.float32, device=state.device)
-            for name in loss_names
+            name: torch.zeros((), dtype=torch.float32, device=state.device) for name in loss_names
         }
         actual_steps = 0
         target_set = {str(target) for target in update_targets}
@@ -1348,12 +1547,10 @@ def apply_packed_projection_update(
             report.kernel_launch_count += kernels + 1
             for name, value in losses.items():
                 accumulated_tensors[name] = accumulated_tensors[name] + value.detach().float()
-            accumulated_tensors["total"] = (
-                accumulated_tensors["total"] + total.detach().float()
-            )
-        packed_loss_metrics = torch.stack(
-            [accumulated_tensors[name] for name in loss_names]
-        ).detach().cpu()
+            accumulated_tensors["total"] = accumulated_tensors["total"] + total.detach().float()
+        packed_loss_metrics = (
+            torch.stack([accumulated_tensors[name] for name in loss_names]).detach().cpu()
+        )
         _implicit_sync(profiler, report, "cuda_packed_accumulated_loss_metrics")
         _record_transfer(
             profiler,
@@ -1364,8 +1561,7 @@ def apply_packed_projection_update(
         if not bool(torch.isfinite(packed_loss_metrics).all().item()):
             raise FloatingPointError("non-finite packed training loss")
         accumulated = {
-            name: float(packed_loss_metrics[index].item())
-            for index, name in enumerate(loss_names)
+            name: float(packed_loss_metrics[index].item()) for index, name in enumerate(loss_names)
         }
         report.gradient_accumulation_steps = actual_steps
         report.gradient_norm = _gradient_norm(torch, session.parameters)
@@ -1424,9 +1620,7 @@ def apply_packed_projection_update(
             _count(profiler, "cuda_resident_family_update_count")
         if "decoded_embedding" in target_set:
             _count(profiler, "cuda_resident_slot_update_count")
-        if target_set.intersection(
-            {"legal_ir_view_logits", "legal_ir_view_global_logits"}
-        ):
+        if target_set.intersection({"legal_ir_view_logits", "legal_ir_view_global_logits"}):
             _count(profiler, "cuda_resident_legal_ir_view_update_count")
         return report
     except Exception as exc:
@@ -1551,12 +1745,16 @@ def apply_cuda_resident_proof_updates(
                 changed = True
         if changed:
             autoencoder.state.applied_proof_feedback_ids.append(record_id)
-            autoencoder.state.applied_proof_feedback_ids = autoencoder.state.applied_proof_feedback_ids[-max(1, int(max_applied_record_ids)) :]
+            autoencoder.state.applied_proof_feedback_ids = (
+                autoencoder.state.applied_proof_feedback_ids[-max(1, int(max_applied_record_ids)) :]
+            )
             applied_ids.add(record_id)
             applied_records.append(record)
     report.applied = bool(applied_records)
     report.kernel_launch_count = 1 if applied_records else 0
-    _kernel(profiler, report, "cuda_resident_proof_guarded_auxiliary", count=report.kernel_launch_count)
+    _kernel(
+        profiler, report, "cuda_resident_proof_guarded_auxiliary", count=report.kernel_launch_count
+    )
     return {
         "applied_records": applied_records,
         "duplicate_count": duplicate_count,

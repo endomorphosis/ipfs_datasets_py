@@ -17,14 +17,20 @@ from enum import Enum
 
 # Import unified extraction config from common module
 from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
-from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy, execute_with_resilience
+from ipfs_datasets_py.optimizers.common.backend_resilience import (
+    BackendCallPolicy,
+    execute_with_resilience,
+)
 from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
 from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL
 from ipfs_datasets_py.optimizers.common.extraction_contexts import (
     LogicExtractionConfig,
     ExtractionMode,
 )
-from ipfs_datasets_py.optimizers.common.exceptions import CircuitBreakerOpenError, RetryableBackendError
+from ipfs_datasets_py.optimizers.common.exceptions import (
+    CircuitBreakerOpenError,
+    RetryableBackendError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +41,19 @@ def _safe_error_text(error: Exception) -> str:
 
 
 # Re-export ExtractionMode for backward compatibility
-__all__ = ["ExtractionMode", "DataType", "LogicExtractionContext", "LogicalStatement", "ExtractionResult", "LogicExtractor"]
-
+__all__ = [
+    "ExtractionMode",
+    "DataType",
+    "LogicExtractionContext",
+    "LogicalStatement",
+    "ExtractionResult",
+    "LogicExtractor",
+]
 
 
 class DataType(Enum):
     """Type of input data."""
+
     TEXT = "text"
     JSON = "json"
     KNOWLEDGE_GRAPH = "knowledge_graph"
@@ -51,10 +64,10 @@ class DataType(Enum):
 @dataclass
 class LogicExtractionContext:
     """Context for logic extraction.
-    
+
     This now integrates with the unified LogicExtractionConfig from the common
     extraction_contexts module, supporting both typed config and legacy dict config.
-    
+
     Attributes:
         data: Input data to extract logic from
         data_type: Type of input data
@@ -65,15 +78,18 @@ class LogicExtractionContext:
         hints: Optional hints for extraction
         metadata: Additional extraction metadata
     """
+
     data: Any
-    data_type: 'DataType' = DataType.TEXT
+    data_type: "DataType" = DataType.TEXT
     domain: str = "general"
-    config: Union[LogicExtractionConfig, Dict[str, Any]] = field(default_factory=lambda: LogicExtractionConfig())
+    config: Union[LogicExtractionConfig, Dict[str, Any]] = field(
+        default_factory=lambda: LogicExtractionConfig()
+    )
     ontology: Optional[Dict[str, Any]] = None
-    previous_extractions: List['ExtractionResult'] = field(default_factory=list)
+    previous_extractions: List["ExtractionResult"] = field(default_factory=list)
     hints: Optional[List[str]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def __post_init__(self):
         """Normalise config to LogicExtractionConfig if passed as dict."""
         if isinstance(self.config, dict):
@@ -84,7 +100,7 @@ class LogicExtractionContext:
                 self.data_type = DataType(self.data_type)
             except ValueError:
                 pass  # Keep as string if invalid enum value
-    
+
     @property
     def extraction_mode(self) -> ExtractionMode:
         """Convenience accessor for config.extraction_mode."""
@@ -102,7 +118,7 @@ class LogicExtractionContext:
 @dataclass
 class LogicalStatement:
     """A single extracted logical statement.
-    
+
     Attributes:
         formula: The logical formula in target formalism
         natural_language: Natural language representation
@@ -110,6 +126,7 @@ class LogicalStatement:
         formalism: Logic formalism used
         metadata: Additional metadata about the statement
     """
+
     formula: str
     natural_language: str
     confidence: float
@@ -120,7 +137,7 @@ class LogicalStatement:
 @dataclass
 class ExtractionResult:
     """Result of logic extraction.
-    
+
     Attributes:
         statements: List of extracted logical statements
         context: The extraction context
@@ -129,6 +146,7 @@ class ExtractionResult:
         reasoning_trace: Step-by-step reasoning process
         ontology_alignment: How statements align with ontology
     """
+
     statements: List[LogicalStatement]
     context: LogicExtractionContext
     success: bool = True
@@ -140,14 +158,14 @@ class ExtractionResult:
 
 class LogicExtractor:
     """LLM-based agent for extracting logical statements from arbitrary data.
-    
+
     This agent uses AI models (via ipfs_accelerate_py) to extract formal
     logical statements from various data types. It can:
     - Parse natural language into formal logic
     - Extract logical structure from structured data
     - Maintain consistency with knowledge graph ontologies
     - Adapt extraction based on feedback
-    
+
     Example:
         >>> extractor = LogicExtractor(model="gpt-5.3-codex")
         >>> context = LogicExtractionContext(
@@ -159,7 +177,7 @@ class LogicExtractor:
         >>> print(result.statements[0].formula)
         ∀x (Employee(x) → ◇≤30 Completed(x, training))
     """
-    
+
     def __init__(
         self,
         model: Optional[str] = None,
@@ -171,7 +189,7 @@ class LogicExtractor:
         allow_mock_fallback: bool = True,
     ):
         """Initialize the logic extractor.
-        
+
         Args:
             model: Model name to use (defaults to Codex 5.3 via llm_router)
             backend: Backend for LLM inference
@@ -207,73 +225,85 @@ class LogicExtractor:
         )
         self.llm_call_count = 0
         self._init_backend()
-        
+
         # Track extraction history for improvement
         self.extraction_history: List[ExtractionResult] = []
-        
+
         # Phase 2.2: Initialize formula translator
         self.formula_translator = None
         if enable_formula_translation:
             self._init_formula_translator()
-        
+
         # Phase 2.4: Initialize KG integration
         self.kg_integration = None
         if enable_kg_integration:
             self._init_kg_integration()
-        
+
         # Phase 2.5: Initialize RAG integration
         self.rag_integration = None
         if enable_rag_integration:
             self._init_rag_integration()
-    
+
     def _init_kg_integration(self) -> None:
         """Initialize knowledge graph integration (Phase 2.4)."""
         try:
-            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.kg_integration import get_default_kg_integration
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.kg_integration import (
+                get_default_kg_integration,
+            )
+
             self.kg_integration = get_default_kg_integration()
             logger.info("Knowledge graph integration initialized")
         except (ImportError, AttributeError, TypeError, ValueError, OSError, RuntimeError) as e:
             logger.warning(f"Could not initialize KG integration: {e}")
             self.kg_integration = None
-    
+
     def _init_formula_translator(self) -> None:
         """Initialize formula translator (Phase 2.2)."""
         try:
-            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation import UnifiedFormulaTranslator
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation import (
+                UnifiedFormulaTranslator,
+            )
+
             self.formula_translator = UnifiedFormulaTranslator()
             logger.info("Formula translator initialized")
         except (ImportError, AttributeError, TypeError, ValueError, OSError, RuntimeError) as e:
             logger.warning(f"Could not initialize formula translator: {e}")
             self.formula_translator = None
-    
+
     def _init_rag_integration(self) -> None:
         """Initialize RAG integration (Phase 2.5)."""
         try:
-            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.rag_integration import RAGIntegration
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.rag_integration import (
+                RAGIntegration,
+            )
+
             self.rag_integration = RAGIntegration()
             logger.info("RAG integration initialized")
         except (ImportError, AttributeError, TypeError, ValueError, OSError, RuntimeError) as e:
             logger.warning(f"Could not initialize RAG integration: {e}")
             self.rag_integration = None
-        
+
     def _init_backend(self) -> None:
         """Initialize the LLM backend."""
         if self.backend is None and self.use_ipfs_accelerate:
             try:
                 # Phase 2.3: Use LLM backend adapter
-                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend import get_default_adapter
+                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend import (
+                    get_default_adapter,
+                )
+
                 self.backend = get_default_adapter(fallback_to_mock=self.allow_mock_fallback)
                 logger.info("Using llm_router LLM backend adapter (Phase 2.3)")
             except (ImportError, RuntimeError):
                 logger.warning("LLM backend adapter not available, using fallback")
                 self.backend = None
-    
+
     def extract(self, context: LogicExtractionContext) -> ExtractionResult:
         """Extract logical statements from data.
-        
+
         Args:
             context: Extraction context with data and configuration
-            
+
         Returns:
             ExtractionResult with extracted statements
         """
@@ -281,15 +311,13 @@ class LogicExtractor:
             # Determine the extraction mode if auto
             if context.extraction_mode == ExtractionMode.AUTO:
                 context.config.extraction_mode = self._determine_mode(context)
-            
+
             # Phase 2.5: Get RAG context for enhanced extraction
             rag_context = None
             if self.rag_integration and self.rag_integration.is_available():
                 try:
                     rag_context = self.rag_integration.get_context(
-                        query=str(context.data),
-                        num_documents=5,
-                        num_examples=3
+                        query=str(context.data), num_documents=5, num_examples=3
                     )
                     logger.info(f"RAG context retrieved (confidence: {rag_context.confidence:.2f})")
                 except (
@@ -301,7 +329,7 @@ class LogicExtractor:
                     TimeoutError,
                 ) as e:
                     logger.warning(f"Could not get RAG context: {e}")
-            
+
             # Phase 2.4: Enrich context with KG information
             if self.kg_integration:
                 kg_context = self.kg_integration.get_context_for_extraction(str(context.data))
@@ -309,38 +337,44 @@ class LogicExtractor:
                 if not context.ontology and kg_context.ontology:
                     context.ontology = kg_context.ontology
                 # Store KG context for later use
-                context.metadata = getattr(context, 'metadata', {})
-                context.metadata['kg_context'] = kg_context
+                context.metadata = getattr(context, "metadata", {})
+                context.metadata["kg_context"] = kg_context
 
             # Deterministic legal modal parser path. This keeps modal legal
             # extraction reproducible and avoids LLM calls when registry cues
             # are enough to produce IR.
-            if context.extraction_mode == ExtractionMode.MODAL and str(context.domain).lower() == "legal":
+            if (
+                context.extraction_mode == ExtractionMode.MODAL
+                and str(context.domain).lower() == "legal"
+            ):
                 deterministic_result = self._extract_with_deterministic_modal_parser(context)
                 if deterministic_result.statements:
                     self.extraction_history.append(deterministic_result)
                     return deterministic_result
-            
+
             # Phase 2.2: Use formula translation if available
-            if self.formula_translator and context.extraction_mode in [ExtractionMode.TDFOL, ExtractionMode.CEC]:
+            if self.formula_translator and context.extraction_mode in [
+                ExtractionMode.TDFOL,
+                ExtractionMode.CEC,
+            ]:
                 return self._extract_with_translation(context, rag_context)
-            
+
             # Phase 1: Legacy extraction method with RAG enhancement
             # Build the extraction prompt (with RAG context if available)
             if rag_context:
                 prompt = self._build_rag_enhanced_prompt(context, rag_context)
             else:
                 prompt = self._build_extraction_prompt(context)
-            
+
             # Get LLM response
             response = self._query_llm(prompt, context)
-            
+
             # Parse response into logical statements
             statements = self._parse_response(response, context)
-            
+
             # Check ontology alignment
             alignment = self._check_ontology_alignment(statements, context)
-            
+
             result = ExtractionResult(
                 statements=statements,
                 context=context,
@@ -351,7 +385,7 @@ class LogicExtractor:
                     "llm_call_count": 1,
                 },
             )
-            
+
             # Phase 2.5: Store successful extraction in RAG
             if self.rag_integration and statements:
                 for stmt in statements:
@@ -360,19 +394,19 @@ class LogicExtractor:
                             input_text=str(context.data),
                             output_formula=stmt.formula,
                             formalism=stmt.formalism,
-                            confidence=stmt.confidence
+                            confidence=stmt.confidence,
                         )
-            
+
             # Phase 2.4: Add statements to KG
             if self.kg_integration:
                 for stmt in statements:
                     self.kg_integration.add_statement_to_kg(stmt, proven=False)
-            
+
             # Track for improvement
             self.extraction_history.append(result)
-            
+
             return result
-            
+
         except (
             AttributeError,
             TypeError,
@@ -383,12 +417,7 @@ class LogicExtractor:
             TimeoutError,
         ) as e:
             logger.error(f"Extraction failed: {e}")
-            return ExtractionResult(
-                statements=[],
-                context=context,
-                success=False,
-            errors=[str(e)]
-        )
+            return ExtractionResult(statements=[], context=context, success=False, errors=[str(e)])
 
     def _extract_with_deterministic_modal_parser(
         self,
@@ -396,20 +425,23 @@ class LogicExtractor:
     ) -> ExtractionResult:
         """Extract legal modal statements without LLM calls."""
         modal_profile = (context.config.modal_profile or "").lower()
-        parser_backend = "spacy" if modal_profile in {
-            "spacy",
-            "spacy_modal",
-            "spacy_modal_codec_v1",
-        } else "regex"
+        parser_backend = (
+            "spacy"
+            if modal_profile
+            in {
+                "spacy",
+                "spacy_modal",
+                "spacy_modal_codec_v1",
+            }
+            else "regex"
+        )
         from ipfs_datasets_py.logic.modal import (  # noqa: PLC0415
             DeterministicModalLogicCodec,
             ModalLogicCodecConfig,
             modal_formula_to_text,
         )
 
-        codec = DeterministicModalLogicCodec(
-            ModalLogicCodecConfig(parser_backend=parser_backend)
-        )
+        codec = DeterministicModalLogicCodec(ModalLogicCodecConfig(parser_backend=parser_backend))
         codec_result = codec.encode(
             str(context.data),
             source="logic_extractor",
@@ -420,7 +452,7 @@ class LogicExtractor:
         statements: List[LogicalStatement] = []
         for formula in modal_ir.formulas:
             statement_text = modal_ir.normalized_text[
-                formula.provenance.start_char:formula.provenance.end_char
+                formula.provenance.start_char : formula.provenance.end_char
             ]
             statements.append(
                 LogicalStatement(
@@ -431,7 +463,9 @@ class LogicExtractor:
                     metadata={
                         "cue": formula.metadata.get("cue"),
                         "deterministic_parser": parser_name,
-                        "flogic_ontology_consistent": codec_result.metadata["flogic_ontology_consistent"],
+                        "flogic_ontology_consistent": codec_result.metadata[
+                            "flogic_ontology_consistent"
+                        ],
                         "frame_candidates": list(codec_result.frame_candidates),
                         "formula_id": formula.formula_id,
                         "modal_family": formula.operator.family,
@@ -443,19 +477,13 @@ class LogicExtractor:
                 )
             )
 
-        modal_families = sorted(
-            {statement.metadata["modal_family"] for statement in statements}
-        )
-        modal_systems = sorted(
-            {statement.metadata["modal_system"] for statement in statements}
-        )
+        modal_families = sorted({statement.metadata["modal_family"] for statement in statements})
+        modal_systems = sorted({statement.metadata["modal_system"] for statement in statements})
         return ExtractionResult(
             statements=statements,
             context=context,
             success=True,
-            reasoning_trace=[
-                f"Parsed legal modal statements with deterministic {parser_name}"
-            ],
+            reasoning_trace=[f"Parsed legal modal statements with deterministic {parser_name}"],
             metrics={
                 "cosine_similarity": codec_result.losses["cosine_similarity"],
                 "cross_entropy_loss": codec_result.losses["cross_entropy_loss"],
@@ -479,46 +507,44 @@ class LogicExtractor:
                 "symbolic_validity_penalty": codec_result.losses["symbolic_validity_penalty"],
             },
         )
-    
+
     def _extract_with_translation(
-        self,
-        context: LogicExtractionContext,
-        rag_context: Optional[Any] = None
+        self, context: LogicExtractionContext, rag_context: Optional[Any] = None
     ) -> ExtractionResult:
         """Extract using formula translation (Phase 2.2).
-        
+
         Args:
             context: Extraction context
             rag_context: RAG context for enhanced extraction (Phase 2.5)
-            
+
         Returns:
             ExtractionResult with translated formulas
         """
-        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation import FormulaFormalism
-        
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation import (
+            FormulaFormalism,
+        )
+
         # Map extraction mode to formalism
         formalism_map = {
             ExtractionMode.TDFOL: FormulaFormalism.TDFOL,
             ExtractionMode.CEC: FormulaFormalism.CEC,
             ExtractionMode.DEONTIC: FormulaFormalism.DEONTIC,
             ExtractionMode.MODAL: FormulaFormalism.MODAL,
-            ExtractionMode.FOL: FormulaFormalism.FOL
+            ExtractionMode.FOL: FormulaFormalism.FOL,
         }
-        
+
         formalism = formalism_map.get(context.extraction_mode, FormulaFormalism.TDFOL)
-        
+
         # Translate data to formal logic
         translation_result = self.formula_translator.translate(
-            str(context.data),
-            formalism=formalism,
-            context={'domain': context.domain}
+            str(context.data), formalism=formalism, context={"domain": context.domain}
         )
-        
+
         if not translation_result.success:
             logger.warning(f"Translation failed: {translation_result.errors}")
             # Fallback to legacy extraction
             return self._extract_legacy(context)
-        
+
         # Create logical statement from translation
         statement = LogicalStatement(
             formula=str(translation_result.formula),
@@ -526,14 +552,14 @@ class LogicExtractor:
             confidence=0.85,  # Higher confidence for formal translation
             formalism=translation_result.formalism.value,
             metadata={
-                'translation_metadata': translation_result.metadata,
-                'translator': 'formula_translation'
-            }
+                "translation_metadata": translation_result.metadata,
+                "translator": "formula_translation",
+            },
         )
-        
+
         # Check ontology alignment
         alignment = self._check_ontology_alignment([statement], context)
-        
+
         result = ExtractionResult(
             statements=[statement],
             context=context,
@@ -545,16 +571,16 @@ class LogicExtractor:
                 "llm_call_count": 0,
             },
         )
-        
+
         self.extraction_history.append(result)
         return result
-    
+
     def _extract_legacy(self, context: LogicExtractionContext) -> ExtractionResult:
         """Legacy extraction method (Phase 1).
-        
+
         Args:
             context: Extraction context
-            
+
         Returns:
             ExtractionResult
         """
@@ -562,7 +588,7 @@ class LogicExtractor:
         response = self._query_llm(prompt, context)
         statements = self._parse_response(response, context)
         alignment = self._check_ontology_alignment(statements, context)
-        
+
         return ExtractionResult(
             statements=statements,
             context=context,
@@ -573,27 +599,24 @@ class LogicExtractor:
                 "llm_call_count": 1,
             },
         )
-    
-    def extract_batch(
-        self,
-        contexts: List[LogicExtractionContext]
-    ) -> List[ExtractionResult]:
+
+    def extract_batch(self, contexts: List[LogicExtractionContext]) -> List[ExtractionResult]:
         """Extract logical statements from multiple contexts.
-        
+
         Args:
             contexts: List of extraction contexts
-            
+
         Returns:
             List of extraction results
         """
         return [self.extract(ctx) for ctx in contexts]
-    
+
     def _determine_mode(self, context: LogicExtractionContext) -> ExtractionMode:
         """Automatically determine the best extraction mode.
-        
+
         Args:
             context: Extraction context
-            
+
         Returns:
             Chosen extraction mode
         """
@@ -606,62 +629,58 @@ class LogicExtractor:
             return ExtractionMode.DEONTIC
         else:
             return ExtractionMode.FOL
-    
+
     def _build_extraction_prompt(self, context: LogicExtractionContext) -> str:
         """Build the prompt for LLM extraction.
-        
+
         Args:
             context: Extraction context
-            
+
         Returns:
             Prompt string
         """
         prompt_parts = []
-        
+
         # System context
         prompt_parts.append(f"You are an expert in {context.extraction_mode.value} formal logic.")
         prompt_parts.append(f"Domain: {context.domain}")
-        
+
         # Task description
         prompt_parts.append("\nTask: Extract formal logical statements from the following data:")
         prompt_parts.append(f"\nData: {context.data}")
-        
+
         # Ontology context if available
         if context.ontology:
             prompt_parts.append(f"\nOntology context: {context.ontology}")
-        
+
         # Previous extractions for consistency
         if context.previous_extractions:
             prompt_parts.append("\nPrevious extractions for consistency:")
             for prev in context.previous_extractions[-3:]:  # Last 3
                 for stmt in prev.statements[:2]:  # Top 2 statements
                     prompt_parts.append(f"  - {stmt.formula}")
-        
+
         # Hints
         if context.hints:
             prompt_parts.append("\nHints:")
             for hint in context.hints:
                 prompt_parts.append(f"  - {hint}")
-        
+
         # Output format
         prompt_parts.append("\nProvide:")
         prompt_parts.append("1. Formal logical formula")
         prompt_parts.append("2. Natural language explanation")
         prompt_parts.append("3. Confidence score (0.0-1.0)")
-        
+
         return "\n".join(prompt_parts)
-    
-    def _build_rag_enhanced_prompt(
-        self,
-        context: LogicExtractionContext,
-        rag_context: Any
-    ) -> str:
+
+    def _build_rag_enhanced_prompt(self, context: LogicExtractionContext, rag_context: Any) -> str:
         """Build RAG-enhanced extraction prompt (Phase 2.5).
-        
+
         Args:
             context: Extraction context
             rag_context: RAG context with examples and relevant info
-            
+
         Returns:
             Enhanced prompt string
         """
@@ -670,19 +689,19 @@ class LogicExtractor:
             return self.rag_integration.build_prompt(
                 text=str(context.data),
                 context=rag_context,
-                formalism=context.extraction_mode.value.upper()
+                formalism=context.extraction_mode.value.upper(),
             )
-        
+
         # Fallback to regular prompt
         return self._build_extraction_prompt(context)
-    
+
     def _query_llm(self, prompt: str, context: LogicExtractionContext) -> str:
         """Query the LLM with the extraction prompt.
-        
+
         Args:
             prompt: The prompt to send
             context: Extraction context
-            
+
         Returns:
             LLM response text
         """
@@ -690,26 +709,31 @@ class LogicExtractor:
         # Phase 2.3: Use LLM backend adapter
         if self.backend:
             try:
-                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend import LLMRequest
-                
+                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend import (
+                    LLMRequest,
+                )
+
                 request = LLMRequest(
                     prompt=prompt,
                     model=self.model,
                     temperature=0.7,
                     max_tokens=1024,
-                    metadata={'context': context.domain}
+                    metadata={"context": context.domain},
                 )
-                
+
                 response = execute_with_resilience(
                     lambda: self.backend.generate(request),
                     self._llm_call_policy,
                     circuit_breaker=self._llm_call_circuit_breaker,
                 )
                 logger.info(f"Generated response using {response.backend} backend")
-                if str(getattr(response, "backend", "")).lower() == "mock" and not self.allow_mock_fallback:
+                if (
+                    str(getattr(response, "backend", "")).lower() == "mock"
+                    and not self.allow_mock_fallback
+                ):
                     raise RuntimeError("Mock LLM response received while mock fallback is disabled")
                 return response.text
-                
+
             except (
                 CircuitBreakerOpenError,
                 RetryableBackendError,
@@ -724,24 +748,24 @@ class LogicExtractor:
                 logger.warning("LLM backend error: %s, using fallback", _safe_error_text(e))
                 if not self.allow_mock_fallback:
                     raise RuntimeError("LLM backend failed and mock fallback is disabled") from e
-        
+
         # Fallback mock response for testing
         if not self.allow_mock_fallback:
             raise RuntimeError("LLM backend unavailable and mock fallback is disabled")
         logger.warning("Using mock LLM response")
         return self._mock_llm_response(context)
-    
+
     def _mock_llm_response(self, context: LogicExtractionContext) -> str:
         """Generate a mock LLM response for testing.
-        
+
         Args:
             context: Extraction context
-            
+
         Returns:
             Mock response
         """
         data_str = str(context.data)
-        
+
         # Simple pattern matching for demo
         if "must" in data_str.lower():
             return """
@@ -755,109 +779,100 @@ class LogicExtractor:
             Explanation: For all x, if P holds for x, then Q holds for x
             Confidence: 0.75
             """
-    
+
     def _parse_response(
-        self,
-        response: str,
-        context: LogicExtractionContext
+        self, response: str, context: LogicExtractionContext
     ) -> List[LogicalStatement]:
         """Parse LLM response into logical statements.
-        
+
         Args:
             response: LLM response text
             context: Extraction context
-            
+
         Returns:
             List of logical statements
         """
         statements = []
-        
+
         # Simple parsing - can be made more sophisticated
-        lines = response.strip().split('\n')
+        lines = response.strip().split("\n")
         formula = None
         explanation = None
         confidence = 0.5
-        
+
         for line in lines:
             line = line.strip()
-            if line.startswith('Formula:'):
-                formula = line.split(':', 1)[1].strip()
-            elif line.startswith('Explanation:'):
-                explanation = line.split(':', 1)[1].strip()
-            elif line.startswith('Confidence:'):
+            if line.startswith("Formula:"):
+                formula = line.split(":", 1)[1].strip()
+            elif line.startswith("Explanation:"):
+                explanation = line.split(":", 1)[1].strip()
+            elif line.startswith("Confidence:"):
                 try:
-                    confidence = float(line.split(':', 1)[1].strip())
+                    confidence = float(line.split(":", 1)[1].strip())
                 except ValueError:
                     confidence = 0.5
-        
+
         if formula and explanation:
-            statements.append(LogicalStatement(
-                formula=formula,
-                natural_language=explanation,
-                confidence=confidence,
-                formalism=context.extraction_mode.value,
-                metadata={'source': 'llm_extraction'}
-            ))
-        
+            statements.append(
+                LogicalStatement(
+                    formula=formula,
+                    natural_language=explanation,
+                    confidence=confidence,
+                    formalism=context.extraction_mode.value,
+                    metadata={"source": "llm_extraction"},
+                )
+            )
+
         return statements
-    
+
     def _check_ontology_alignment(
-        self,
-        statements: List[LogicalStatement],
-        context: LogicExtractionContext
+        self, statements: List[LogicalStatement], context: LogicExtractionContext
     ) -> Dict[str, float]:
         """Check how well statements align with the ontology.
-        
+
         Args:
             statements: Extracted statements
             context: Extraction context
-            
+
         Returns:
             Alignment scores by category
         """
         if not context.ontology:
             return {}
-        
+
         # Simple alignment check - can be made more sophisticated
-        alignment = {
-            'terminology': 0.0,
-            'structure': 0.0,
-            'consistency': 0.0
-        }
-        
+        alignment = {"terminology": 0.0, "structure": 0.0, "consistency": 0.0}
+
         # Check if terms from ontology appear in statements
         if statements:
             ontology_terms = set(str(context.ontology).lower().split())
             statement_terms = set()
             for stmt in statements:
                 statement_terms.update(stmt.formula.lower().split())
-            
+
             overlap = len(ontology_terms & statement_terms)
             if ontology_terms:
-                alignment['terminology'] = overlap / len(ontology_terms)
-        
+                alignment["terminology"] = overlap / len(ontology_terms)
+
         # Default scores for structure and consistency
-        alignment['structure'] = 0.7
-        alignment['consistency'] = 0.8
-        
+        alignment["structure"] = 0.7
+        alignment["consistency"] = 0.8
+
         return alignment
-    
-    def improve_from_feedback(
-        self,
-        feedback: Dict[str, Any]
-    ) -> None:
+
+    def improve_from_feedback(self, feedback: Dict[str, Any]) -> None:
         """Improve extraction based on critic feedback.
-        
+
         This is the SGD-like update step where the extractor
         learns from critic evaluations.
-        
+
         Args:
             feedback: Feedback from the critic
         """
         # Update extraction strategy based on feedback
         # This could adjust prompts, confidence thresholds, etc.
         logger.info(f"Received feedback: {feedback}")
-        
+
         # Example: adjust confidence threshold based on accuracy feedback
-        if 'accuracy' in feedback and feedback['accuracy'] < 0.5:
+        if "accuracy" in feedback and feedback["accuracy"] < 0.5:
             logger.info("Low accuracy detected, adjusting extraction strategy")

@@ -85,14 +85,11 @@ router = OptimizerLLMRouter(
 )
 
 # Get prompt template
-prompt = router.get_prompt_template(
-    OptimizationMethod.TEST_DRIVEN,
-    task_type="code"
-).format(
+prompt = router.get_prompt_template(OptimizationMethod.TEST_DRIVEN, task_type="code").format(
     code="def slow(): ...",
     baseline_metrics={"time": "5s"},
     min_improvement=10,
-    description="Optimize performance"
+    description="Optimize performance",
 )
 
 # Generate optimization

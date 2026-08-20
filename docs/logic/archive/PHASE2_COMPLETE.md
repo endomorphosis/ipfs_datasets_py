@@ -73,7 +73,7 @@ All goals from README.md lines 203-229 have been achieved:
 from ipfs_datasets_py.logic.TDFOL import (
     TDFOLProofCache,
     get_global_proof_cache,
-    clear_global_proof_cache
+    clear_global_proof_cache,
 )
 
 # Use global cache

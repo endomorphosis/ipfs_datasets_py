@@ -231,7 +231,7 @@ Translates to IR:
         {"op": "Filter", "type": "Person", "predicate": {"age": {">": 25}}},
         {"op": "Project", "fields": ["name", "age"]},
         {"op": "OrderBy", "field": "age", "direction": "DESC"},
-        {"op": "Limit", "count": 10}
+        {"op": "Limit", "count": 10},
     ]
 }
 ```
@@ -342,28 +342,17 @@ IPLDGraph(
         Entity(
             id="QmAlice123...",  # CID
             type="Person",
-            properties={
-                "name": "Alice Smith",
-                "external_id": "https://example.com/person/alice"
-            }
+            properties={"name": "Alice Smith", "external_id": "https://example.com/person/alice"},
         ),
         Entity(
             id="QmBob456...",
             type="Person",
-            properties={
-                "name": "Bob Jones",
-                "external_id": "https://example.com/person/bob"
-            }
-        )
+            properties={"name": "Bob Jones", "external_id": "https://example.com/person/bob"},
+        ),
     ],
     relationships=[
-        Relationship(
-            type="knows",
-            source="QmAlice123...",
-            target="QmBob456...",
-            properties={}
-        )
-    ]
+        Relationship(type="knows", source="QmAlice123...", target="QmBob456...", properties={})
+    ],
 )
 ```
 
@@ -683,12 +672,15 @@ from neo4j import GraphDatabase
 driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
 
 with driver.session() as session:
-    result = session.run("""
+    result = session.run(
+        """
         MATCH (p:Person)-[:KNOWS]->(friend)
         WHERE p.name = $name
         RETURN friend.name
-    """, name="Alice")
-    
+    """,
+        name="Alice",
+    )
+
     for record in result:
         print(record["friend.name"])
 
@@ -706,12 +698,15 @@ driver = GraphDatabase.driver("ipfs://localhost:5001", auth=("user", "token"))
 driver = GraphDatabase.driver("ipfs+embedded://./graph_data")
 
 with driver.session() as session:
-    result = session.run("""
+    result = session.run(
+        """
         MATCH (p:Person)-[:KNOWS]->(friend)
         WHERE p.name = $name
         RETURN friend.name
-    """, name="Alice")
-    
+    """,
+        name="Alice",
+    )
+
     for record in result:
         print(record["friend.name"])
 
@@ -728,7 +723,7 @@ from ipfs_datasets_py.knowledge_graphs.migration import Neo4jMigrator
 migrator = Neo4jMigrator(
     neo4j_uri="bolt://localhost:7687",
     neo4j_auth=("neo4j", "password"),
-    ipfs_uri="ipfs://localhost:5001"
+    ipfs_uri="ipfs://localhost:5001",
 )
 
 # Export from Neo4j

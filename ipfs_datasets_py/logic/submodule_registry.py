@@ -278,6 +278,31 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         ),
     ),
     LogicSubmoduleSpec(
+        name="semantic",
+        module="ipfs_datasets_py.logic.semantic",
+        description=(
+            "Stable O1 semantic public API: corpus, split, example, compile, "
+            "decompile, translate, pair, evaluate, verify, and publish."
+        ),
+        roles=("semantic_api", "compatibility", "discovery", "formalization"),
+        optimizer_components=("semantic.api",),
+        target_files=(
+            "ipfs_datasets_py/logic/semantic/__init__.py",
+            "ipfs_datasets_py/logic/semantic/catalog.py",
+            "ipfs_datasets_py/logic/semantic/operations.py",
+        ),
+        ast_scope="semantic",
+        public_symbols=(
+            "SemanticAPI",
+            "discover_semantic_operations",
+            "semantic_api_manifest",
+            "compile",
+            "decompile",
+            "evaluate",
+        ),
+        notes="Lazy package root; operations delegate to one canonical owner each.",
+    ),
+    LogicSubmoduleSpec(
         name="intent_ir.invocation",
         module="ipfs_datasets_py.logic.intent_ir.invocation",
         description="Canonical invocation envelopes and non-executing SkillCenter/prompt/MCP adapters (InvocationIntentEnvelope@1).",
@@ -656,7 +681,11 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         module="ipfs_datasets_py.logic.integrations",
         description="GraphRAG, UnixFS, and phase integration adapters outside the core theorem bridge tree.",
         roles=("bridge", "graphrag", "storage", "unixfs"),
-        optimizer_components=("integrations.graphrag", "integrations.unixfs", "integrations.phase7"),
+        optimizer_components=(
+            "integrations.graphrag",
+            "integrations.unixfs",
+            "integrations.phase7",
+        ),
         target_files=("ipfs_datasets_py/logic/integrations/__init__.py",),
         ast_scope="integrations",
     ),
@@ -680,7 +709,11 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         module="ipfs_datasets_py.logic.security",
         description="Input validation, rate limiting, audit logging, and LLM circuit breaker controls.",
         roles=("security", "validation", "rate_limit", "audit", "llm_guard"),
-        optimizer_components=("security.input_validation", "security.rate_limiting", "security.llm_circuit_breaker"),
+        optimizer_components=(
+            "security.input_validation",
+            "security.rate_limiting",
+            "security.llm_circuit_breaker",
+        ),
         target_files=(
             "ipfs_datasets_py/logic/security/input_validation.py",
             "ipfs_datasets_py/logic/security/rate_limiting.py",
@@ -742,7 +775,10 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         description="Logic conversion/prover benchmarking helpers.",
         roles=("benchmark", "quality_signal"),
         optimizer_components=("benchmarks",),
-        target_files=("ipfs_datasets_py/logic/benchmarks.py", "ipfs_datasets_py/logic/phase7_4_benchmarks.py"),
+        target_files=(
+            "ipfs_datasets_py/logic/benchmarks.py",
+            "ipfs_datasets_py/logic/phase7_4_benchmarks.py",
+        ),
         ast_scope="benchmark",
         required=False,
     ),
@@ -795,6 +831,43 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         import_check=False,
         optional_dependencies=("ErgoAI/ErgoEngine",),
     ),
+    LogicSubmoduleSpec(
+        name="ui_ux_ir",
+        module="ipfs_datasets_py.logic.ui_ux_ir",
+        description=(
+            "UI/UX IR v1: schema, codecs, formalization, projection, runtime "
+            "mediation/receipts, assurance validators, and cross-language conformance."
+        ),
+        roles=(
+            "ui_ux_ir",
+            "schema",
+            "formalization",
+            "projection",
+            "runtime",
+            "mediation",
+            "assurance",
+            "conformance",
+        ),
+        optimizer_components=("ui_ux_ir.public_api",),
+        target_files=(
+            "ipfs_datasets_py/logic/ui_ux_ir/__init__.py",
+            "ipfs_datasets_py/logic/ui_ux_ir/schema.py",
+            "ipfs_datasets_py/logic/ui_ux_ir/runtime/mediator.py",
+        ),
+        ast_scope="ui_ux_ir",
+        required=False,
+        import_check=True,
+        public_symbols=(
+            "UIUXIR_PUBLIC_API_INTERFACE",
+            "UI_UX_IR_SCHEMA_ID",
+            "decode_ui_ir",
+            "canonicalize_ui_ir",
+            "ui_ir_identity",
+            "evaluate_ui_interaction",
+            "public_api_manifest",
+        ),
+        notes="Pinned from origin/agent/ui-ux-ir @ 9d558ad70. Cold import is side-effect free.",
+    ),
 )
 
 
@@ -810,11 +883,7 @@ def logic_submodule_specs() -> tuple[LogicSubmoduleSpec, ...]:
 def logic_submodule_names(*, required_only: bool = False) -> tuple[str, ...]:
     """Return all registered submodule names."""
 
-    return tuple(
-        spec.name
-        for spec in _SPECS
-        if not required_only or spec.required
-    )
+    return tuple(spec.name for spec in _SPECS if not required_only or spec.required)
 
 
 def logic_submodule_spec(name: str) -> LogicSubmoduleSpec:
@@ -838,8 +907,7 @@ def logic_integration_manifest() -> dict[str, Any]:
         "required_submodules": list(logic_submodule_names(required_only=True)),
         "roles": {role: sorted(names) for role, names in sorted(roles.items())},
         "optimizer_target_file_hints": {
-            key: list(value)
-            for key, value in sorted(logic_optimizer_target_file_hints().items())
+            key: list(value) for key, value in sorted(logic_optimizer_target_file_hints().items())
         },
     }
 

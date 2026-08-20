@@ -11,6 +11,7 @@ Tests all v21 candidates from MASTER_IMPROVEMENT_PLAN_2026_v20.md:
   DM175  ComplianceChecker.diff() + merge() combined idempotency E2E
   DN176  Dutch inline keywords + detect_all_languages() covers "nl"
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -39,11 +40,13 @@ def _tmp(name: str) -> str:
 # DG169 — PolicyAuditLog.import_jsonl() skips __metadata__ lines
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDG169ImportJsonlSkipsMetadata:
     """DG169: import_jsonl honours __metadata__ header lines."""
 
     def test_import_skips_metadata_line(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         path = _tmp("dg169_meta.jsonl")
         # Write a file with a metadata header and two real entries
@@ -58,6 +61,7 @@ class TestDG169ImportJsonlSkipsMetadata:
 
     def test_import_metadata_not_counted(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         path = _tmp("dg169_notcounted.jsonl")
         Path(path).write_text(
@@ -71,14 +75,21 @@ class TestDG169ImportJsonlSkipsMetadata:
     def test_export_then_import_round_trip_with_metadata(self):
         """Full round-trip: export with metadata, import should skip header."""
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog, AuditEntry
+
         log = PolicyAuditLog()
         log.record(
-            policy_cid="poly", intent_cid="intent", decision="allow",
-            actor="alice", tool="scan",
+            policy_cid="poly",
+            intent_cid="intent",
+            decision="allow",
+            actor="alice",
+            tool="scan",
         )
         log.record(
-            policy_cid="poly", intent_cid="intent2", decision="deny",
-            actor="bob", tool="write",
+            policy_cid="poly",
+            intent_cid="intent2",
+            decision="deny",
+            actor="bob",
+            tool="write",
         )
         path = _tmp("dg169_roundtrip.jsonl")
         exported = log.export_jsonl(path, metadata={"test": "v21"})
@@ -91,6 +102,7 @@ class TestDG169ImportJsonlSkipsMetadata:
     def test_import_multiple_metadata_lines(self):
         """Multiple __metadata__ lines should all be skipped."""
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         path = _tmp("dg169_multimeta.jsonl")
         Path(path).write_text(
@@ -104,6 +116,7 @@ class TestDG169ImportJsonlSkipsMetadata:
 
     def test_import_missing_file_returns_zero(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         count = log.import_jsonl(_tmp("dg169_nonexistent_XYZ.jsonl"))
         assert count == 0
@@ -111,6 +124,7 @@ class TestDG169ImportJsonlSkipsMetadata:
     def test_import_empty_metadata_only(self):
         """A file with only a metadata line → 0 entries imported."""
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         path = _tmp("dg169_only_meta.jsonl")
         Path(path).write_text('{"__metadata__": {}}\n', encoding="utf-8")
@@ -120,14 +134,20 @@ class TestDG169ImportJsonlSkipsMetadata:
     def test_export_without_metadata_no_header(self):
         """export_jsonl(metadata=None) produces no __metadata__ line."""
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         log.record(
-            policy_cid="p", intent_cid="i", decision="allow",
-            actor="a", tool="t",
+            policy_cid="p",
+            intent_cid="i",
+            decision="allow",
+            actor="a",
+            tool="t",
         )
         path = _tmp("dg169_no_meta.jsonl")
         log.export_jsonl(path)
-        lines = [l.strip() for l in Path(path).read_text(encoding="utf-8").splitlines() if l.strip()]
+        lines = [
+            l.strip() for l in Path(path).read_text(encoding="utf-8").splitlines() if l.strip()
+        ]
         assert all("__metadata__" not in l for l in lines)
 
 
@@ -135,13 +155,17 @@ class TestDG169ImportJsonlSkipsMetadata:
 # DH170 — ComplianceChecker.merge(include_protected_rules=False) skips non-removable
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDH170MergeCopyDisabled:
     """DH170: merge(include_protected_rules=False) skips non-removable (built-in) rules."""
 
     def _checker_with_custom_rule(self, rule_id: str, removable: bool = True):
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, ComplianceRule, ComplianceResult,
+            ComplianceChecker,
+            ComplianceRule,
+            ComplianceResult,
         )
+
         checker = ComplianceChecker()
         rule = ComplianceRule(
             rule_id=rule_id,
@@ -155,6 +179,7 @@ class TestDH170MergeCopyDisabled:
     def test_merge_default_skips_non_removable(self):
         """Default include_protected_rules=False: non-removable rules from other are skipped."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         dst = ComplianceChecker()
         src = self._checker_with_custom_rule("rule_protected", removable=False)
         added = dst.merge(src)
@@ -163,6 +188,7 @@ class TestDH170MergeCopyDisabled:
     def test_merge_include_protected_rules_true_copies_protected(self):
         """include_protected_rules=True: non-removable rules ARE copied."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         dst = ComplianceChecker()
         src = self._checker_with_custom_rule("rule_protected", removable=False)
         added = dst.merge(src, include_protected_rules=True)
@@ -171,6 +197,7 @@ class TestDH170MergeCopyDisabled:
     def test_merge_removable_still_copied_by_default(self):
         """Removable rules are copied even with include_protected_rules=False (default)."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         dst = ComplianceChecker()
         src = self._checker_with_custom_rule("rule_removable", removable=True)
         added = dst.merge(src)
@@ -179,42 +206,60 @@ class TestDH170MergeCopyDisabled:
     def test_merge_mixed_rules(self):
         """Mixed: only removable rule is added when include_protected_rules=False."""
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, ComplianceRule, ComplianceResult,
+            ComplianceChecker,
+            ComplianceRule,
+            ComplianceResult,
         )
+
         dst = ComplianceChecker()
         src = ComplianceChecker()
-        src._rules.append(ComplianceRule(
-            rule_id="r_removable", description="x",
-            check_fn=lambda i: ComplianceResult(rule_id="r_removable", passed=True, message=""),
-            removable=True,
-        ))
-        src._rules.append(ComplianceRule(
-            rule_id="r_protected", description="y",
-            check_fn=lambda i: ComplianceResult(rule_id="r_protected", passed=True, message=""),
-            removable=False,
-        ))
+        src._rules.append(
+            ComplianceRule(
+                rule_id="r_removable",
+                description="x",
+                check_fn=lambda i: ComplianceResult(rule_id="r_removable", passed=True, message=""),
+                removable=True,
+            )
+        )
+        src._rules.append(
+            ComplianceRule(
+                rule_id="r_protected",
+                description="y",
+                check_fn=lambda i: ComplianceResult(rule_id="r_protected", passed=True, message=""),
+                removable=False,
+            )
+        )
         added = dst.merge(src)
         assert added == 1
 
     def test_merge_mixed_include_protected_rules_true(self):
         """include_protected_rules=True: both rules are added."""
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, ComplianceRule, ComplianceResult,
+            ComplianceChecker,
+            ComplianceRule,
+            ComplianceResult,
         )
+
         dst = ComplianceChecker()
         src = ComplianceChecker()
         for rid, rm in [("ra", True), ("rb", False)]:
-            src._rules.append(ComplianceRule(
-                rule_id=rid, description="d",
-                check_fn=lambda i, _rid=rid: ComplianceResult(rule_id=_rid, passed=True, message=""),
-                removable=rm,
-            ))
+            src._rules.append(
+                ComplianceRule(
+                    rule_id=rid,
+                    description="d",
+                    check_fn=lambda i, _rid=rid: ComplianceResult(
+                        rule_id=_rid, passed=True, message=""
+                    ),
+                    removable=rm,
+                )
+            )
         added = dst.merge(src, include_protected_rules=True)
         assert added == 2
 
     def test_merge_idempotent_no_duplicate(self):
         """Calling merge twice does not add duplicates."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         dst = ComplianceChecker()
         src = self._checker_with_custom_rule("rule_once", removable=True)
         dst.merge(src)
@@ -226,6 +271,7 @@ class TestDH170MergeCopyDisabled:
 # DI171 — compile_explain_iter() line iterator
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDI171CompileExplainIter:
     """DI171: compile_explain_iter() yields explanation lines lazily."""
 
@@ -234,6 +280,7 @@ class TestDI171CompileExplainIter:
             NLUCANPolicyCompiler,
         )
         import types
+
         compiler = NLUCANPolicyCompiler(policy_id="test-iter")
         result = compiler.compile_explain_iter(["Alice must not read."])
         assert isinstance(result, types.GeneratorType)
@@ -242,6 +289,7 @@ class TestDI171CompileExplainIter:
         from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
             NLUCANPolicyCompiler,
         )
+
         compiler = NLUCANPolicyCompiler(policy_id="test-iter2")
         lines = list(compiler.compile_explain_iter(["Alice may read."]))
         assert all(isinstance(line, str) for line in lines)
@@ -250,6 +298,7 @@ class TestDI171CompileExplainIter:
         from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
             NLUCANPolicyCompiler,
         )
+
         compiler = NLUCANPolicyCompiler(policy_id="test-iter3")
         lines = list(compiler.compile_explain_iter(["Bob must write."]))
         assert len(lines) >= 1
@@ -259,6 +308,7 @@ class TestDI171CompileExplainIter:
         from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
             NLUCANPolicyCompiler,
         )
+
         compiler = NLUCANPolicyCompiler(policy_id="test-iter4")
         sentences = ["Carol may not delete.", "Dave must log."]
         result, explanation = compiler.compile_explain(sentences)
@@ -269,6 +319,7 @@ class TestDI171CompileExplainIter:
         from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
             NLUCANPolicyCompiler,
         )
+
         compiler = NLUCANPolicyCompiler(policy_id="test-iter5")
         # Should not raise, even with empty input
         lines = list(compiler.compile_explain_iter([]))
@@ -279,6 +330,7 @@ class TestDI171CompileExplainIter:
         from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
             NLUCANPolicyCompiler,
         )
+
         compiler = NLUCANPolicyCompiler(policy_id="test-iter6")
         gen = compiler.compile_explain_iter(["Eve may read.", "Frank must not write."])
         first = next(gen, None)
@@ -290,19 +342,23 @@ class TestDI171CompileExplainIter:
 # DJ172 — PortugueseParser + detect_all_languages() covers "pt"
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDJ172PortugueseParser:
     """DJ172: PortugueseParser detects deontic clauses in Portuguese text."""
 
     def test_parser_imports(self):
         from ipfs_datasets_py.logic.CEC.nl.portuguese_parser import (
-            PortugueseParser, get_portuguese_deontic_keywords,
+            PortugueseParser,
+            get_portuguese_deontic_keywords,
         )
+
         assert callable(get_portuguese_deontic_keywords)
 
     def test_keywords_dict_shape(self):
         from ipfs_datasets_py.logic.CEC.nl.portuguese_parser import (
             get_portuguese_deontic_keywords,
         )
+
         kw = get_portuguese_deontic_keywords()
         assert "permission" in kw
         assert "prohibition" in kw
@@ -310,24 +366,28 @@ class TestDJ172PortugueseParser:
 
     def test_parse_permission(self):
         from ipfs_datasets_py.logic.CEC.nl.portuguese_parser import PortugueseParser
+
         parser = PortugueseParser()
         clauses = parser.parse("O utilizador pode aceder ao sistema.")
         assert any(c.deontic_type == "permission" for c in clauses)
 
     def test_parse_prohibition(self):
         from ipfs_datasets_py.logic.CEC.nl.portuguese_parser import PortugueseParser
+
         parser = PortugueseParser()
         clauses = parser.parse("O utilizador não pode apagar ficheiros.")
         assert any(c.deontic_type == "prohibition" for c in clauses)
 
     def test_parse_obligation(self):
         from ipfs_datasets_py.logic.CEC.nl.portuguese_parser import PortugueseParser
+
         parser = PortugueseParser()
         clauses = parser.parse("O utilizador deve registar a acção.")
         assert any(c.deontic_type == "obligation" for c in clauses)
 
     def test_clause_to_dict(self):
         from ipfs_datasets_py.logic.CEC.nl.portuguese_parser import PortugueseClause
+
         clause = PortugueseClause(text="x", deontic_type="permission", matched_keyword="pode")
         d = clause.to_dict()
         assert d["deontic_type"] == "permission"
@@ -335,12 +395,14 @@ class TestDJ172PortugueseParser:
 
     def test_detect_all_languages_includes_pt(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("O utilizador pode aceder. The user must not delete.")
         assert "pt" in report.by_language
 
     def test_detect_all_pt_empty_neutral_text(self):
         """Neutral text (no deontic verbs) → empty conflict list for pt."""
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("The sky is blue.")
         assert isinstance(report.by_language.get("pt", []), list)
 
@@ -349,13 +411,17 @@ class TestDJ172PortugueseParser:
 # DK173 — DelegationManager.merge_and_publish_async()
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDK173MergeAndPublishAsync:
     """DK173: merge_and_publish_async() uses async pubsub when available."""
 
     def _make_manager_with_token(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, DelegationToken, Capability,
+            DelegationManager,
+            DelegationToken,
+            Capability,
         )
+
         mgr = DelegationManager()
         token = DelegationToken(
             issuer="did:key:alice",
@@ -368,9 +434,11 @@ class TestDK173MergeAndPublishAsync:
 
     def test_async_method_exists(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         assert hasattr(mgr, "merge_and_publish_async")
         import asyncio
+
         assert asyncio.iscoroutinefunction(mgr.merge_and_publish_async)
 
     def test_async_with_sync_pubsub_fallback(self):
@@ -458,23 +526,28 @@ class TestDK173MergeAndPublishAsync:
 # DL174 — Full E2E round-trip: merge + export_jsonl(metadata) + import_jsonl
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDL174FullRoundTrip:
     """DL174: Full E2E: merge → export_jsonl(metadata) → import_jsonl round-trip."""
 
     def test_merge_export_import_round_trip(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog, AuditEntry
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, DelegationToken, Capability,
+            DelegationManager,
+            DelegationToken,
+            Capability,
         )
 
         # 1. Build two delegation managers and merge
         src = DelegationManager()
-        src.add(DelegationToken(
-            issuer="did:key:alice",
-            audience="did:key:bob",
-            capabilities=[Capability(resource="*", ability="read/*")],
-            expiry=None,
-        ))
+        src.add(
+            DelegationToken(
+                issuer="did:key:alice",
+                audience="did:key:bob",
+                capabilities=[Capability(resource="*", ability="read/*")],
+                expiry=None,
+            )
+        )
         dst = DelegationManager()
         added = dst.merge(src)
         assert added == 1
@@ -559,21 +632,29 @@ class TestDL174FullRoundTrip:
 # DM175 — ComplianceChecker.diff() + merge() combined idempotency
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDM175DiffMergeIdempotency:
     """DM175: diff() and merge() are symmetric; merge is idempotent."""
 
     def _make_checker_with_rules(self, rule_ids: List[str]) -> "Any":
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, ComplianceRule, ComplianceResult,
+            ComplianceChecker,
+            ComplianceRule,
+            ComplianceResult,
         )
+
         checker = ComplianceChecker()
         for rid in rule_ids:
-            checker._rules.append(ComplianceRule(
-                rule_id=rid,
-                description=f"Rule {rid}",
-                check_fn=lambda i, _rid=rid: ComplianceResult(rule_id=_rid, passed=True, message=""),
-                removable=True,
-            ))
+            checker._rules.append(
+                ComplianceRule(
+                    rule_id=rid,
+                    description=f"Rule {rid}",
+                    check_fn=lambda i, _rid=rid: ComplianceResult(
+                        rule_id=_rid, passed=True, message=""
+                    ),
+                    removable=True,
+                )
+            )
         return checker
 
     def test_diff_added_rules_equal_merge_additions(self):
@@ -633,6 +714,7 @@ class TestDM175DiffMergeIdempotency:
 # DN176 — Dutch inline keywords + detect_all_languages() covers "nl"
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDN176DutchKeywords:
     """DN176: Inline Dutch (_NL_DEONTIC_KEYWORDS) wired into detect_all_languages()."""
 
@@ -640,6 +722,7 @@ class TestDN176DutchKeywords:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _NL_DEONTIC_KEYWORDS,
         )
+
         assert "permission" in _NL_DEONTIC_KEYWORDS
         assert "prohibition" in _NL_DEONTIC_KEYWORDS
         assert "obligation" in _NL_DEONTIC_KEYWORDS
@@ -648,6 +731,7 @@ class TestDN176DutchKeywords:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             _NL_DEONTIC_KEYWORDS,
         )
+
         assert len(_NL_DEONTIC_KEYWORDS["permission"]) > 0
         assert len(_NL_DEONTIC_KEYWORDS["prohibition"]) > 0
 
@@ -655,6 +739,7 @@ class TestDN176DutchKeywords:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             detect_i18n_conflicts,
         )
+
         result = detect_i18n_conflicts("De gebruiker mag het systeem gebruiken.", "nl")
         assert result.has_permission
 
@@ -662,6 +747,7 @@ class TestDN176DutchKeywords:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             detect_i18n_conflicts,
         )
+
         result = detect_i18n_conflicts("De gebruiker mag niet verwijderen.", "nl")
         assert result.has_prohibition
 
@@ -669,17 +755,20 @@ class TestDN176DutchKeywords:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             detect_i18n_conflicts,
         )
+
         result = detect_i18n_conflicts("De gebruiker mag lezen maar mag niet schrijven.", "nl")
         assert result.has_simultaneous_conflict
 
     def test_detect_all_languages_includes_nl(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("De gebruiker mag lezen.")
         assert "nl" in report.by_language
 
     def test_detect_all_languages_6_langs(self):
         """detect_all_languages() covers at least 6 languages (v22/DO177 adds Italian)."""
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("User may read. Utilisateur peut lire.")
         assert len(report.by_language) >= 6
         for lang in ("fr", "es", "de", "en", "pt", "nl"):
@@ -690,5 +779,6 @@ class TestDN176DutchKeywords:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
             detect_i18n_conflicts,
         )
+
         result = detect_i18n_conflicts("De lucht is blauw.", "nl")
         assert not result.has_simultaneous_conflict

@@ -7,8 +7,12 @@ from pathlib import Path
 
 def _load_module():
     repo_root = Path(__file__).resolve().parents[2]
-    script_path = repo_root / "scripts" / "ops" / "legal_data" / "supplement_procedural_rules_via_rjina.py"
-    spec = importlib.util.spec_from_file_location("supplement_procedural_rules_via_rjina", script_path)
+    script_path = (
+        repo_root / "scripts" / "ops" / "legal_data" / "supplement_procedural_rules_via_rjina.py"
+    )
+    spec = importlib.util.spec_from_file_location(
+        "supplement_procedural_rules_via_rjina", script_path
+    )
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

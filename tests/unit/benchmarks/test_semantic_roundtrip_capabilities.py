@@ -103,30 +103,20 @@ def _accepted_live_smoke_runner(*, route: str) -> capabilities.LiveSmokeRunner:
 def _injected_inventory(
     overrides: dict[str, capabilities.CapabilityRecord] | None = None,
 ) -> capabilities.CapabilityInventory:
-    records = {
-        item: _available(item)
-        for item in capabilities.CAPABILITY_IDS
-    }
+    records = {item: _available(item) for item in capabilities.CAPABILITY_IDS}
     records["leanstral_direct"] = _direct()
     records["symai_leanstral_route"] = _symai()
     records.update(overrides or {})
     return capabilities.capture_capability_inventory(
         run_id="unit-capabilities",
         captured_at_utc="2026-07-26T00:00:00Z",
-        probes={
-            item: (lambda record=record: record)
-            for item, record in records.items()
-        },
+        probes={item: (lambda record=record: record) for item, record in records.items()},
     )
 
 
 def test_frozen_requested_identities_cover_every_required_runtime() -> None:
-    assert capabilities.SCHEMA_VERSION.endswith(
-        "semantic-roundtrip-capability-inventory.v1"
-    )
-    assert capabilities.INTERFACE_VERSION == (
-        "SemanticRoundTripCapabilityInventory@1"
-    )
+    assert capabilities.SCHEMA_VERSION.endswith("semantic-roundtrip-capability-inventory.v1")
+    assert capabilities.INTERFACE_VERSION == ("SemanticRoundTripCapabilityInventory@1")
     assert capabilities.CAPABILITY_IDS == (
         "python",
         "multiformats",
@@ -187,8 +177,7 @@ def test_probe_exception_is_explicit_and_inventory_remains_complete() -> None:
         }
     )
     probes = {
-        item: (lambda record=inventory.by_id[item]: record)
-        for item in capabilities.CAPABILITY_IDS
+        item: (lambda record=inventory.by_id[item]: record) for item in capabilities.CAPABILITY_IDS
     }
     probes["hammer_cvc5"] = explode
     captured = capabilities.capture_capability_inventory(
@@ -197,9 +186,7 @@ def test_probe_exception_is_explicit_and_inventory_remains_complete() -> None:
         probes=probes,
     )
 
-    assert tuple(record.id for record in captured.capabilities) == (
-        capabilities.CAPABILITY_IDS
-    )
+    assert tuple(record.id for record in captured.capabilities) == (capabilities.CAPABILITY_IDS)
     failed = captured.by_id["hammer_cvc5"]
     assert failed.status == "unavailable"
     assert failed.reason == "capability probe raised RuntimeError"
@@ -234,9 +221,7 @@ class _FakeNlp:
 def _spacy_versions(name: str) -> str | None:
     return {
         "spacy": capabilities.SPACY_VERSION,
-        capabilities.SPACY_MODEL_DISTRIBUTION: (
-            capabilities.SPACY_MODEL_VERSION
-        ),
+        capabilities.SPACY_MODEL_DISTRIBUTION: (capabilities.SPACY_MODEL_VERSION),
     }.get(name)
 
 
@@ -261,9 +246,7 @@ def test_spacy_probe_loads_only_the_exact_full_pipeline() -> None:
 
 
 def test_spacy_probe_reports_partial_pipeline_without_blank_fallback() -> None:
-    partial = tuple(
-        item for item in capabilities.SPACY_PIPELINE if item != "parser"
-    )
+    partial = tuple(item for item in capabilities.SPACY_PIPELINE if item != "parser")
     record = capabilities.probe_spacy(
         version_getter=_spacy_versions,
         importer=lambda name: SimpleNamespace(
@@ -322,16 +305,11 @@ def _strict_route_contract_validator(
     if (
         model_name != capabilities.SYMAI_MODEL_ALIAS
         or route_binding != expected_binding
-        or not any(
-            generation_options == expected
-            for expected in contracts.values()
-        )
+        or not any(generation_options == expected for expected in contracts.values())
     ):
         raise RuntimeError("route contract drifted")
     assert isinstance(generation_options, dict)
-    return capabilities._normalized_symai_generation_options(
-        generation_options
-    )
+    return capabilities._normalized_symai_generation_options(generation_options)
 
 
 def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> None:
@@ -348,9 +326,7 @@ def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> 
     assert direct.checks["schedulable_for_scored_matrix"] is True
     assert direct.checks["health_only"] is False
     assert direct.checks["smoke_receipt"]["status"] == "accepted"
-    assert direct.checks["smoke_accept_reason"] == (
-        capabilities.LIVE_SMOKE_ACCEPT_REASON
-    )
+    assert direct.checks["smoke_accept_reason"] == (capabilities.LIVE_SMOKE_ACCEPT_REASON)
     assert capabilities.is_schedulable_for_scored_matrix(direct) is True
 
     source = tmp_path / "router.py"
@@ -366,16 +342,12 @@ def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> 
     assert symai.status == "available"
     assert symai.effective_identity
     assert symai.effective_identity["route"] == "symai_router"
-    assert symai.effective_identity["resolved_model"] == (
-        direct.effective_identity["model"]
-    )
+    assert symai.effective_identity["resolved_model"] == (direct.effective_identity["model"])
     assert symai.effective_identity["independent_model"] is False
     assert symai.checks["route_contract_validation_passed"] is True
     assert symai.checks["model_inference_performed"] is True
     assert symai.checks["schedulable_for_scored_matrix"] is True
-    assert symai.checks["smoke_receipt"]["accept_reason"] == (
-        capabilities.LIVE_SMOKE_ACCEPT_REASON
-    )
+    assert symai.checks["smoke_receipt"]["accept_reason"] == (capabilities.LIVE_SMOKE_ACCEPT_REASON)
     assert capabilities.is_schedulable_for_scored_matrix(symai) is True
 
     inventory = _injected_inventory(
@@ -387,9 +359,7 @@ def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> 
     assert inventory.bindings["same_effective_model"] is True
     assert inventory.bindings["same_effective_service"] is True
     assert inventory.bindings["shared_model_capacity"] == 1
-    assert inventory.bindings["direct_leanstral"]["route"] == (
-        "direct_openai_compatible_http"
-    )
+    assert inventory.bindings["direct_leanstral"]["route"] == ("direct_openai_compatible_http")
     assert inventory.bindings["symai_leanstral"]["route"] == "symai_router"
     assert inventory.to_dict()["probe_policy"]["model_inference_smoke"] is True
 
@@ -453,9 +423,7 @@ def test_symai_route_is_not_available_from_identity_probes_alone(
     assert record.checks["same_effective_model"] is True
     assert record.checks["route_contract_validator_present"] is False
     assert record.checks["route_contract_validation_passed"] is False
-    assert record.reason == (
-        "SyMAI side-effect-free route-contract validator is unavailable"
-    )
+    assert record.reason == ("SyMAI side-effect-free route-contract validator is unavailable")
 
 
 def test_symai_route_reports_the_exact_rejected_good_contract(
@@ -533,9 +501,7 @@ def test_health_only_probe_is_not_schedulable_for_scored_matrix() -> None:
     assert record.checks["health_only"] is True
     assert record.checks["schedulable_for_scored_matrix"] is False
     assert record.checks["smoke_receipt"]["status"] == "not_attempted"
-    assert record.checks["smoke_reject_reason"] == (
-        capabilities.HEALTH_ONLY_NOT_SCHEDULABLE_REASON
-    )
+    assert record.checks["smoke_reject_reason"] == (capabilities.HEALTH_ONLY_NOT_SCHEDULABLE_REASON)
     assert record.reason == capabilities.HEALTH_ONLY_NOT_SCHEDULABLE_REASON
     assert capabilities.is_schedulable_for_scored_matrix(record) is False
 
@@ -558,9 +524,7 @@ def test_forced_live_smoke_failure_marks_arm_non_schedulable() -> None:
     assert record.checks["health_only"] is False
     assert record.checks["smoke_receipt"]["status"] == "rejected"
     assert record.checks["smoke_receipt"]["reject_reason"]
-    assert "forced live smoke failure" in str(
-        record.checks["smoke_reject_reason"]
-    )
+    assert "forced live smoke failure" in str(record.checks["smoke_reject_reason"])
     assert capabilities.is_schedulable_for_scored_matrix(record) is False
 
 
@@ -617,26 +581,19 @@ def test_symai_forced_live_smoke_failure_persists_reject_reason(
     assert record.checks["model_inference_performed"] is True
     assert record.checks["schedulable_for_scored_matrix"] is False
     assert record.checks["smoke_receipt"]["status"] == "rejected"
-    assert "symai live smoke forced failure" in str(
-        record.checks["smoke_reject_reason"]
-    )
+    assert "symai live smoke forced failure" in str(record.checks["smoke_reject_reason"])
     assert capabilities.is_schedulable_for_scored_matrix(record) is False
 
 
 def test_frozen_autoencoder_state_is_loaded_read_only() -> None:
-    state_path = (
-        capabilities.REPO_ROOT
-        / capabilities.AUTOENCODER_STATE_RELATIVE_PATH
-    )
+    state_path = capabilities.REPO_ROOT / capabilities.AUTOENCODER_STATE_RELATIVE_PATH
     before = state_path.stat()
     seen: list[dict[str, Any]] = []
 
     def load(value: Any) -> Any:
         seen.append(dict(value))
         return SimpleNamespace(
-            architecture_version=(
-                capabilities.AUTOENCODER_EFFECTIVE_ARCHITECTURE
-            )
+            architecture_version=(capabilities.AUTOENCODER_EFFECTIVE_ARCHITECTURE)
         )
 
     record = capabilities.probe_autoencoder_state(
@@ -648,12 +605,8 @@ def test_frozen_autoencoder_state_is_loaded_read_only() -> None:
     assert record.status == "available"
     assert len(seen) == 1
     assert record.effective_identity
-    assert record.effective_identity["sha256"] == (
-        capabilities.AUTOENCODER_STATE_SHA256
-    )
-    assert record.effective_identity["cid"] == (
-        capabilities.AUTOENCODER_STATE_CID
-    )
+    assert record.effective_identity["sha256"] == (capabilities.AUTOENCODER_STATE_SHA256)
+    assert record.effective_identity["cid"] == (capabilities.AUTOENCODER_STATE_CID)
     assert record.checks["opened_read_only"] is True
     assert record.checks["write_attempted"] is False
     assert record.checks["state_unchanged_after_load"] is True
@@ -679,14 +632,8 @@ def test_bounded_cvc5_smoke_is_exercised(
         max_output: int,
     ) -> capabilities.CommandResult:
         calls.append((tuple(arguments), input_bytes, timeout, max_output))
-        output = (
-            b"This is cvc5 version 1.3.3"
-            if "--version" in arguments
-            else b"sat\n"
-        )
-        return capabilities.CommandResult(
-            tuple(arguments), 0, output, False, False
-        )
+        output = b"This is cvc5 version 1.3.3" if "--version" in arguments else b"sat\n"
+        return capabilities.CommandResult(tuple(arguments), 0, output, False, False)
 
     monkeypatch.setattr(
         capabilities.shutil,
@@ -724,14 +671,8 @@ def test_bounded_lean_kernel_smoke_is_exercised(
     ) -> capabilities.CommandResult:
         del input_bytes, timeout, max_output
         calls.append(tuple(arguments))
-        output = (
-            b"Lean (version 4.32.1, test)"
-            if "--version" in arguments
-            else b""
-        )
-        return capabilities.CommandResult(
-            tuple(arguments), 0, output, False, False
-        )
+        output = b"Lean (version 4.32.1, test)" if "--version" in arguments else b""
+        return capabilities.CommandResult(tuple(arguments), 0, output, False, False)
 
     monkeypatch.setattr(
         capabilities.shutil,
@@ -797,12 +738,14 @@ def test_captured_workspace_receipt_is_schema_valid_and_truthful() -> None:
     assert inventory.by_id["autoencoder_state"].requested_identity["cid"] == (
         capabilities.AUTOENCODER_STATE_CID
     )
-    assert inventory.by_id["leanstral_direct"].requested_identity[
-        "endpoint"
-    ] == capabilities.LEANSTRAL_ENDPOINT
-    assert inventory.by_id["symai_leanstral_route"].requested_identity[
-        "resolved_model"
-    ] == capabilities.LEANSTRAL_MODEL
+    assert (
+        inventory.by_id["leanstral_direct"].requested_identity["endpoint"]
+        == capabilities.LEANSTRAL_ENDPOINT
+    )
+    assert (
+        inventory.by_id["symai_leanstral_route"].requested_identity["resolved_model"]
+        == capabilities.LEANSTRAL_MODEL
+    )
     assert all(
         record.substitute_used is False
         and record.substitute_identity is None

@@ -177,9 +177,7 @@ class SourceSpan:
                 self.start_line,
                 self.start_column,
             ):
-                raise ProvenanceValidationError(
-                    "SourceSpan end line/column precedes its start"
-                )
+                raise ProvenanceValidationError("SourceSpan end line/column precedes its start")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -329,12 +327,8 @@ class ProvenanceBinding:
     def __post_init__(self) -> None:
         object.__setattr__(self, "source_ref_ids", _unique_tuple(self.source_ref_ids))
         object.__setattr__(self, "span_ids", _unique_tuple(self.span_ids))
-        object.__setattr__(
-            self, "evidence_ref_ids", _unique_tuple(self.evidence_ref_ids)
-        )
-        object.__setattr__(
-            self, "parent_subject_ids", _unique_tuple(self.parent_subject_ids)
-        )
+        object.__setattr__(self, "evidence_ref_ids", _unique_tuple(self.evidence_ref_ids))
+        object.__setattr__(self, "parent_subject_ids", _unique_tuple(self.parent_subject_ids))
         object.__setattr__(self, "metadata", freeze_json_mapping(self.metadata))
 
     def validate(self) -> None:
@@ -358,10 +352,7 @@ class ProvenanceBinding:
                 "nor explicitly derived"
             )
         if self.derived and not (
-            self.parent_subject_ids
-            or self.source_ref_ids
-            or self.span_ids
-            or self.evidence_ref_ids
+            self.parent_subject_ids or self.source_ref_ids or self.span_ids or self.evidence_ref_ids
         ):
             raise ProvenanceValidationError(
                 f"Derived ProvenanceBinding {self.binding_id!r} has no lineage"
@@ -417,9 +408,7 @@ class Provenance:
             self,
             "sources",
             tuple(
-                item
-                if isinstance(item, SourceRef)
-                else SourceRef.from_dict(_as_mapping(item))
+                item if isinstance(item, SourceRef) else SourceRef.from_dict(_as_mapping(item))
                 for item in self.sources
             ),
         )
@@ -427,9 +416,7 @@ class Provenance:
             self,
             "spans",
             tuple(
-                item
-                if isinstance(item, SourceSpan)
-                else SourceSpan.from_dict(_as_mapping(item))
+                item if isinstance(item, SourceSpan) else SourceSpan.from_dict(_as_mapping(item))
                 for item in self.spans
             ),
         )
@@ -471,30 +458,21 @@ class Provenance:
     def to_dict(self) -> dict[str, Any]:
         return {
             "bindings": [
-                item.to_dict()
-                for item in sorted(self.bindings, key=lambda item: item.binding_id)
+                item.to_dict() for item in sorted(self.bindings, key=lambda item: item.binding_id)
             ],
             "configs": [
-                item.to_dict()
-                for item in sorted(self.configs, key=lambda item: item.config_id)
+                item.to_dict() for item in sorted(self.configs, key=lambda item: item.config_id)
             ],
             "metadata": thaw_json(self.metadata),
             "producers": [
-                item.to_dict()
-                for item in sorted(
-                    self.producers, key=lambda item: item.producer_id
-                )
+                item.to_dict() for item in sorted(self.producers, key=lambda item: item.producer_id)
             ],
             "provenance_id": self.provenance_id,
             "schema_version": self.schema_version,
             "sources": [
-                item.to_dict()
-                for item in sorted(self.sources, key=lambda item: item.ref_id)
+                item.to_dict() for item in sorted(self.sources, key=lambda item: item.ref_id)
             ],
-            "spans": [
-                item.to_dict()
-                for item in sorted(self.spans, key=lambda item: item.span_id)
-            ],
+            "spans": [item.to_dict() for item in sorted(self.spans, key=lambda item: item.span_id)],
         }
 
     def canonical_bytes(self) -> bytes:
@@ -513,12 +491,10 @@ class Provenance:
         result = cls(
             provenance_id=str(data.get("provenance_id") or ""),
             sources=tuple(
-                SourceRef.from_dict(_as_mapping(item))
-                for item in _as_sequence(data.get("sources"))
+                SourceRef.from_dict(_as_mapping(item)) for item in _as_sequence(data.get("sources"))
             ),
             spans=tuple(
-                SourceSpan.from_dict(_as_mapping(item))
-                for item in _as_sequence(data.get("spans"))
+                SourceSpan.from_dict(_as_mapping(item)) for item in _as_sequence(data.get("spans"))
             ),
             producers=tuple(
                 ProducerBinding.from_dict(_as_mapping(item))
@@ -533,9 +509,7 @@ class Provenance:
                 for item in _as_sequence(data.get("bindings"))
             ),
             metadata=_as_mapping(data.get("metadata")),
-            schema_version=str(
-                data.get("schema_version") or IR_PROVENANCE_SCHEMA_VERSION
-            ),
+            schema_version=str(data.get("schema_version") or IR_PROVENANCE_SCHEMA_VERSION),
         )
         result.validate()
         return result
@@ -562,19 +536,11 @@ def validate_provenance(
     if not provenance.sources:
         raise ProvenanceValidationError("Provenance.sources must not be empty")
 
-    source_ids = _validated_index(
-        provenance.sources, "source", lambda item: item.ref_id
-    )
+    source_ids = _validated_index(provenance.sources, "source", lambda item: item.ref_id)
     span_ids = _validated_index(provenance.spans, "span", lambda item: item.span_id)
-    producer_ids = _validated_index(
-        provenance.producers, "producer", lambda item: item.producer_id
-    )
-    config_ids = _validated_index(
-        provenance.configs, "config", lambda item: item.config_id
-    )
-    _validated_index(
-        provenance.bindings, "binding", lambda item: item.binding_id
-    )
+    producer_ids = _validated_index(provenance.producers, "producer", lambda item: item.producer_id)
+    config_ids = _validated_index(provenance.configs, "config", lambda item: item.config_id)
+    _validated_index(provenance.bindings, "binding", lambda item: item.binding_id)
     subject_ids = _unique_ids(
         (item.subject_id for item in provenance.bindings),
         "provenance subject",
@@ -639,10 +605,7 @@ def validate_provenance(
                 f"ProvenanceBinding {binding.binding_id!r}.evidence_ref_ids",
             )
     _reject_lineage_cycles(
-        {
-            item.subject_id: item.parent_subject_ids
-            for item in provenance.bindings
-        },
+        {item.subject_id: item.parent_subject_ids for item in provenance.bindings},
         "provenance subject",
     )
     return provenance
@@ -709,13 +672,9 @@ def freeze_json(value: Any) -> Any:
                 raise ProvenanceValidationError("JSON object keys must be strings")
             result[key] = freeze_json(item)
         return MappingProxyType(result)
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(freeze_json(item) for item in value)
-    raise ProvenanceValidationError(
-        f"unsupported JSON value type {type(value).__name__}"
-    )
+    raise ProvenanceValidationError(f"unsupported JSON value type {type(value).__name__}")
 
 
 def thaw_json(value: Any) -> Any:
@@ -748,9 +707,7 @@ def _validated_index(
 def _require_known(values: Sequence[str], known: set[str], field_name: str) -> None:
     missing = sorted(set(values) - known)
     if missing:
-        raise ProvenanceValidationError(
-            f"{field_name} contains unknown ids: {missing}"
-        )
+        raise ProvenanceValidationError(f"{field_name} contains unknown ids: {missing}")
 
 
 def _unique_ids(values: Sequence[str] | Any, kind: str) -> set[str]:
@@ -773,9 +730,7 @@ def _reject_lineage_cycles(
 
     def visit(identifier: str) -> None:
         if identifier in active:
-            raise ProvenanceValidationError(
-                f"{kind} lineage contains a cycle at {identifier!r}"
-            )
+            raise ProvenanceValidationError(f"{kind} lineage contains a cycle at {identifier!r}")
         if identifier in visited:
             return
         active.add(identifier)
@@ -800,23 +755,17 @@ def _require_text(name: str, value: str) -> None:
 
 def _validate_sha256(name: str, value: str) -> None:
     if not isinstance(value, str) or not _SHA256_RE.fullmatch(value):
-        raise ProvenanceValidationError(
-            f"{name} must be a normalized lowercase SHA-256 hex digest"
-        )
+        raise ProvenanceValidationError(f"{name} must be a normalized lowercase SHA-256 hex digest")
 
 
 def _validate_enum(name: str, value: Any, enum_type: type[Enum]) -> None:
     if not isinstance(value, enum_type):
-        raise ProvenanceValidationError(
-            f"{name} must be a {enum_type.__name__} member"
-        )
+        raise ProvenanceValidationError(f"{name} must be a {enum_type.__name__} member")
 
 
 def _validate_int(name: str, value: Any, *, minimum: int) -> None:
     if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
-        raise ProvenanceValidationError(
-            f"{name} must be an integer >= {minimum}"
-        )
+        raise ProvenanceValidationError(f"{name} must be an integer >= {minimum}")
 
 
 def _validate_half_open(name: str, start: Any, end: Any) -> None:
@@ -859,9 +808,7 @@ def _as_mapping(value: Any) -> Mapping[str, Any]:
 def _as_sequence(value: Any) -> Sequence[Any]:
     if value is None:
         return ()
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return value
     raise ProvenanceValidationError("expected a JSON array")
 
@@ -891,9 +838,7 @@ def _enum_value(
     try:
         return enum_type(value)
     except (TypeError, ValueError) as exc:
-        raise ProvenanceValidationError(
-            f"{field_name} has unsupported value {value!r}"
-        ) from exc
+        raise ProvenanceValidationError(f"{field_name} has unsupported value {value!r}") from exc
 
 
 def _decode_json_object(

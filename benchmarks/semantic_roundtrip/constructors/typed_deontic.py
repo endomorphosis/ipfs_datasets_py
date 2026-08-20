@@ -30,15 +30,9 @@ from benchmarks.semantic_roundtrip.contracts import (
 )
 
 
-TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE: Final = (
-    "TypedDeonticCanonicalConstructor@1"
-)
-TYPED_DEONTIC_DIAGNOSTICS_INTERFACE: Final = (
-    "TypedDeonticConstructorDiagnostics@1"
-)
-TYPED_DEONTIC_TRIGGER_DETECTOR_INTERFACE: Final = (
-    "TypedDeonticDiagnosticTriggerDetector@1"
-)
+TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE: Final = "TypedDeonticCanonicalConstructor@1"
+TYPED_DEONTIC_DIAGNOSTICS_INTERFACE: Final = "TypedDeonticConstructorDiagnostics@1"
+TYPED_DEONTIC_TRIGGER_DETECTOR_INTERFACE: Final = "TypedDeonticDiagnosticTriggerDetector@1"
 
 # Conservative default aligned with SelectiveRepairPolicy.
 DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD: Final = 0.65
@@ -119,9 +113,7 @@ def _normalize_numeric_surface(text: str) -> str:
 
 
 def _tokens(value: object) -> tuple[str, ...]:
-    surface = _normalize_numeric_surface(
-        _clean_text(value).lower().replace("_", " ")
-    )
+    surface = _normalize_numeric_surface(_clean_text(value).lower().replace("_", " "))
     words = _TOKEN_RE.findall(surface)
     normalized: list[str] = []
     for word in words:
@@ -180,9 +172,7 @@ def _flatten_strings(value: object) -> list[str]:
             result.append(str(key))
             result.extend(_flatten_strings(item))
         return result
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         result = []
         for item in value:
             result.extend(_flatten_strings(item))
@@ -204,9 +194,7 @@ def _jaccard(left: object, right: object) -> float:
     return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
 
 
-def _atom_hit_counts(
-    text: object, candidate: str
-) -> tuple[int, int, int]:
+def _atom_hit_counts(text: object, candidate: str) -> tuple[int, int, int]:
     """Return ``(exact_hits, stem_hits, cand_token_count)``.
 
     Exact hits (candidate token present in text tokens) outrank stem-only
@@ -234,10 +222,7 @@ def _atom_hit_counts(
             stem_hits += 1
             continue
         # Text token stems to the candidate atom (resolved → resolve).
-        if any(
-            token in _token_stem_variants(text_token)
-            for text_token in text_exact
-        ):
+        if any(token in _token_stem_variants(text_token) for text_token in text_exact):
             stem_hits += 1
     return exact_hits, stem_hits, len(cand_toks)
 
@@ -326,23 +311,13 @@ def _best_atom(
 
 def _map_many(value: object, candidates: Sequence[str]) -> tuple[str, ...]:
     values: list[object]
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         values = list(value)
     elif value is None or value == "" or value == []:
         values = []
     else:
         values = [value]
-    return tuple(
-        sorted(
-            {
-                atom
-                for item in values
-                if (atom := _best_atom(item, candidates))
-            }
-        )
-    )
+    return tuple(sorted({atom for item in values if (atom := _best_atom(item, candidates))}))
 
 
 def _map_many_scored(
@@ -351,9 +326,7 @@ def _map_many_scored(
     """Map multi-valued facets and retain the minimum matched confidence."""
 
     values: list[object]
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         values = list(value)
     elif value is None or value == "" or value == []:
         values = []
@@ -451,9 +424,7 @@ def _map_structured_qualifiers_scored(
     """
 
     values: list[object]
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         values = list(value)
     elif value is None or value == "" or value == []:
         values = []
@@ -576,21 +547,21 @@ def _modality_conflict(value: object, source_text: str = "") -> bool:
             flags=re.IGNORECASE,
         )
     }
-    label_conflict = len(
-        {
-            "obligation" if item.lower() in {"obligation"} else item.lower()
-            for item in modality_labels
-        }
-        & {"obligation", "prohibition", "permission", "forbidden", "permitted"}
-    ) > 1
+    label_conflict = (
+        len(
+            {
+                "obligation" if item.lower() in {"obligation"} else item.lower()
+                for item in modality_labels
+            }
+            & {"obligation", "prohibition", "permission", "forbidden", "permitted"}
+        )
+        > 1
+    )
     return bool(
         (has_obligation and has_prohibition)
         or (has_obligation and has_permission and has_prohibition)
         or label_conflict
-        or (
-            "obligation" in text.lower()
-            and "prohibition" in text.lower()
-        )
+        or ("obligation" in text.lower() and "prohibition" in text.lower())
     )
 
 
@@ -656,9 +627,7 @@ _PASSIVE_BE_RE: Final = re.compile(
     r"\b(?:shall|must|will|may|is|are|be)\s+be\s+\w+",
     re.IGNORECASE,
 )
-_COLLECTIVE_ACTORS: Final = frozenset(
-    {"parties", "either_party", "both_parties", "party"}
-)
+_COLLECTIVE_ACTORS: Final = frozenset({"parties", "either_party", "both_parties", "party"})
 # Schema scaffolding tokens that often appear only in closed-vocabulary atom
 # names (e.g. ``transaction_amount_exceeds_10000``) while surface evidence
 # says ``transactions exceeding $10,000``.  Optional only when at least one
@@ -718,21 +687,14 @@ def _classify_qualifier_facet(atom: str, evidence: str = "") -> str:
         return "conditions"
     # Purpose/scope ``for_*`` without a duration unit is a condition, not a
     # temporal window (legal_doc_2 / dept_memo_1 repair-development residuals).
-    if atom_l.startswith("for_") and not _FOR_DURATION_UNIT_RE.search(
-        atom_l[4:]
-    ):
+    if atom_l.startswith("for_") and not _FOR_DURATION_UNIT_RE.search(atom_l[4:]):
         return "conditions"
     # Precondition gerunds: before_making_… / before_using_… → conditions.
     if _BEFORE_GERUND_CONDITION_RE.match(atom_l):
         return "conditions"
-    if _EXCEPTION_QUALIFIER_RE.search(atom_l) and not atom_l.startswith(
-        "upon_"
-    ):
+    if _EXCEPTION_QUALIFIER_RE.search(atom_l) and not atom_l.startswith("upon_"):
         # "unless emergency" style carve-outs; keep upon_* as conditions.
-        if any(
-            cue in atom_l
-            for cue in ("without", "except", "prior_written", "emergency")
-        ):
+        if any(cue in atom_l for cue in ("without", "except", "prior_written", "emergency")):
             return "exceptions"
 
     is_temporal = bool(_TEMPORAL_QUALIFIER_RE.search(atom_l))
@@ -790,15 +752,11 @@ def _exception_framed_in_evidence(evidence: str, qualifier: str) -> bool:
         if index > 0:
             window = parts[index - 1][-40:] + " " + tail
         window_exp = _expanded_token_set(window if tail else text)
-        if any(
-            bool(_token_stem_variants(token) & window_exp) for token in qual_toks
-        ):
+        if any(bool(_token_stem_variants(token) & window_exp) for token in qual_toks):
             return True
     # Fallback: co-occurrence of cue + any content token in full evidence.
     text_exp = _expanded_token_set(text)
-    return any(
-        bool(_token_stem_variants(token) & text_exp) for token in qual_toks
-    )
+    return any(bool(_token_stem_variants(token) & text_exp) for token in qual_toks)
 
 
 def _optional_grounding_tokens_for(qualifier: str) -> frozenset[str]:
@@ -836,17 +794,11 @@ def _qualifier_fully_grounded(evidence: str, qualifier: str) -> bool:
     if not text_exp:
         return False
     optional_tokens = _optional_grounding_tokens_for(qualifier)
-    required = [
-        token for token in cand_toks if token not in optional_tokens
-    ]
-    optional = [
-        token for token in cand_toks if token in optional_tokens
-    ]
+    required = [token for token in cand_toks if token not in optional_tokens]
+    optional = [token for token in cand_toks if token in optional_tokens]
     # Never allow an all-optional qualifier (would match empty content).
     check = required if required else list(cand_toks)
-    if not all(
-        bool(_token_stem_variants(token) & text_exp) for token in check
-    ):
+    if not all(bool(_token_stem_variants(token) & text_exp) for token in check):
         return False
     # Optional tokens improve confidence when present but do not block.
     _ = optional
@@ -879,9 +831,7 @@ def _harvest_qualifiers_from_evidence(
             continue
         facet = _classify_qualifier_facet(qualifier, evidence)
         buckets[facet].add(qualifier)
-    return {
-        key: tuple(sorted(values)) for key, values in buckets.items()
-    }
+    return {key: tuple(sorted(values)) for key, values in buckets.items()}
 
 
 def _recover_actor_action(
@@ -1054,9 +1004,7 @@ def _split_conjoined_action_norm(
 
     payload = dict(data)
     verb = _clean_text(payload.get("action_verb") or "")
-    obj = _clean_text(
-        payload.get("action_object") or payload.get("action") or ""
-    )
+    obj = _clean_text(payload.get("action_object") or payload.get("action") or "")
     if not obj:
         return [payload]
     parts = _COORD_ACTION_SPLIT_RE.split(obj)
@@ -1080,9 +1028,7 @@ def _split_conjoined_action_norm(
     first["action"] = f"{verb} {parts[0]}".strip()
     # Structured temporal belongs to the rightmost conjunct only.
     first["temporal_constraints"] = ()
-    first["source_text"] = _local_norm_source(
-        payload, action_verb=verb, action_object=parts[0]
-    )
+    first["source_text"] = _local_norm_source(payload, action_verb=verb, action_object=parts[0])
     expanded.append(first)
 
     last_secondary_index = secondary[-1][0]
@@ -1158,9 +1104,7 @@ def _recover_missing_permission_norms(
 
     if not _clean_text(source_text):
         return []
-    covered = " ".join(
-        _clean_text(norm.get("source_text")) for norm in existing_norm_dicts
-    )
+    covered = " ".join(_clean_text(norm.get("source_text")) for norm in existing_norm_dicts)
     covered_tokens = set(_tokens(covered))
     recovered: list[dict[str, object]] = []
     seen_keys: set[tuple[str, str, str]] = set()
@@ -1170,12 +1114,8 @@ def _recover_missing_permission_norms(
             continue
         if _permission_sentence_already_covered(sentence, covered_tokens):
             continue
-        actor, _actor_conf = _best_atom_scored(
-            sentence, vocabulary.actors, allow_empty=True
-        )
-        action, _action_conf = _best_atom_scored(
-            sentence, vocabulary.actions, allow_empty=True
-        )
+        actor, _actor_conf = _best_atom_scored(sentence, vocabulary.actors, allow_empty=True)
+        action, _action_conf = _best_atom_scored(sentence, vocabulary.actions, allow_empty=True)
         object_atom, _object_conf = _best_atom_scored(
             sentence, vocabulary.objects, allow_empty=True
         )
@@ -1201,9 +1141,7 @@ def _recover_missing_permission_norms(
         if duplicate:
             continue
         seen_keys.add(key)
-        object_surface = (
-            object_atom.replace("_", " ") if object_atom else sentence
-        )
+        object_surface = object_atom.replace("_", " ") if object_atom else sentence
         recovered.append(
             {
                 "modality": "P",
@@ -1236,9 +1174,7 @@ def _expand_norms_for_projection(
             raise ContractError("typed deontic norm must provide to_dict()")
         data = to_dict()
         if not isinstance(data, Mapping):
-            raise ContractError(
-                "typed deontic norm to_dict() must return an object"
-            )
+            raise ContractError("typed deontic norm to_dict() must return an object")
         base_dicts.append(dict(data))
 
     expanded: list[object] = []
@@ -1246,9 +1182,7 @@ def _expand_norms_for_projection(
         for segment in _split_conjoined_action_norm(data, vocabulary):
             expanded.append(_DictNormView(segment))
 
-    for recovered in _recover_missing_permission_norms(
-        source_text, base_dicts, vocabulary
-    ):
+    for recovered in _recover_missing_permission_norms(source_text, base_dicts, vocabulary):
         expanded.append(_DictNormView(recovered))
     return expanded
 
@@ -1272,14 +1206,11 @@ class TypedDeonticSlotDiagnostic:
         ):
             raise ContractError("slot diagnostic rule_index must be nonnegative")
         if self.canonical_field not in RULE_FIELDS:
-            raise ContractError(
-                f"unknown slot diagnostic field: {self.canonical_field!r}"
-            )
+            raise ContractError(f"unknown slot diagnostic field: {self.canonical_field!r}")
         kind = str(self.kind or "").strip().lower()
         if kind not in {"missing", "low_confidence", "contradictory"}:
             raise ContractError(
-                "slot diagnostic kind must be missing, low_confidence, "
-                "or contradictory"
+                "slot diagnostic kind must be missing, low_confidence, or contradictory"
             )
         object.__setattr__(self, "kind", kind)
         if self.confidence is not None:
@@ -1288,9 +1219,7 @@ class TypedDeonticSlotDiagnostic:
                 or not isinstance(self.confidence, (int, float))
                 or not 0.0 <= float(self.confidence) <= 1.0
             ):
-                raise ContractError(
-                    "slot diagnostic confidence must be from zero to one"
-                )
+                raise ContractError("slot diagnostic confidence must be from zero to one")
             object.__setattr__(self, "confidence", float(self.confidence))
         if self.evidence is not None:
             cleaned = " ".join(str(self.evidence).split())
@@ -1319,9 +1248,7 @@ class TypedDeonticConstructorDiagnostics:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "slots", tuple(self.slots))
-        if not all(
-            isinstance(item, TypedDeonticSlotDiagnostic) for item in self.slots
-        ):
+        if not all(isinstance(item, TypedDeonticSlotDiagnostic) for item in self.slots):
             raise ContractError("diagnostics slots are invalid")
         if self.detail is not None and not str(self.detail).strip():
             raise ContractError("diagnostics detail must be nonblank")
@@ -1338,9 +1265,7 @@ class TypedDeonticConstructorDiagnostics:
     def repair_triggers(
         self,
         *,
-        low_confidence_threshold: float = (
-            DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD
-        ),
+        low_confidence_threshold: float = (DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD),
     ) -> tuple[object, ...]:
         """Project slot diagnostics into selective-repair ``RepairTrigger``s.
 
@@ -1388,12 +1313,8 @@ class TypedDeonticConstruction:
     def __post_init__(self) -> None:
         if not isinstance(self.result, ConstructorResult):
             raise ContractError("result must be a ConstructorResult")
-        if not isinstance(
-            self.diagnostics, TypedDeonticConstructorDiagnostics
-        ):
-            raise ContractError(
-                "diagnostics must be TypedDeonticConstructorDiagnostics"
-            )
+        if not isinstance(self.diagnostics, TypedDeonticConstructorDiagnostics):
+            raise ContractError("diagnostics must be TypedDeonticConstructorDiagnostics")
 
 
 def derive_slot_diagnostics(
@@ -1401,9 +1322,7 @@ def derive_slot_diagnostics(
     *,
     source_text: str = "",
     field_confidences: Mapping[tuple[int, str], float | None] | None = None,
-    low_confidence_threshold: float = (
-        DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD
-    ),
+    low_confidence_threshold: float = (DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD),
     modality_raw: Mapping[int, object] | None = None,
 ) -> tuple[TypedDeonticSlotDiagnostic, ...]:
     """Derive missing / low-confidence / contradictory slot diagnostics.
@@ -1434,10 +1353,7 @@ def derive_slot_diagnostics(
                         canonical_field=field,
                         kind="missing",
                         confidence=confidence,
-                        evidence=(
-                            "source contains temporal cue but temporal "
-                            "slot is empty"
-                        ),
+                        evidence=("source contains temporal cue but temporal slot is empty"),
                         value=value,
                     )
                 )
@@ -1501,8 +1417,7 @@ def derive_slot_diagnostics(
                     kind="contradictory",
                     confidence=confidences.get((index, "modality")),
                     evidence=(
-                        "obligation and prohibition cues co-occur in "
-                        "compiler or source evidence"
+                        "obligation and prohibition cues co-occur in compiler or source evidence"
                     ),
                     value=rule.modality,
                 )
@@ -1534,9 +1449,7 @@ def project_legal_norms_with_diagnostics(
     vocabulary: AllowedAtomVocabulary,
     *,
     source_text: str = "",
-    low_confidence_threshold: float = (
-        DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD
-    ),
+    low_confidence_threshold: float = (DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD),
 ) -> tuple[CanonicalRuleIR, TypedDeonticConstructorDiagnostics]:
     """Project norms and retain field-level diagnostic evidence."""
 
@@ -1546,9 +1459,7 @@ def project_legal_norms_with_diagnostics(
     # Repair-development (PLAT2-050): expand converter norms with
     # conjoined-action splits and uncovered permission-sentence recovery
     # before closed-vocabulary projection.
-    expanded_norms = _expand_norms_for_projection(
-        norms, vocabulary, source_text=source_text
-    )
+    expanded_norms = _expand_norms_for_projection(norms, vocabulary, source_text=source_text)
 
     rules: list[CanonicalRule] = []
     confidences: dict[tuple[int, str], float | None] = {}
@@ -1560,13 +1471,9 @@ def project_legal_norms_with_diagnostics(
             raise ContractError("typed deontic norm must provide to_dict()")
         data = to_dict()
         if not isinstance(data, Mapping):
-            raise ContractError(
-                "typed deontic norm to_dict() must return an object"
-            )
+            raise ContractError("typed deontic norm to_dict() must return an object")
 
-        actor, actor_conf = _best_atom_scored(
-            data.get("actor"), vocabulary.actors
-        )
+        actor, actor_conf = _best_atom_scored(data.get("actor"), vocabulary.actors)
         action, action_conf = _best_atom_scored(
             [data.get("action"), data.get("action_verb")],
             vocabulary.actions,
@@ -1640,12 +1547,8 @@ def project_legal_norms_with_diagnostics(
             harvested_conditions: tuple[str, ...] = ()
         else:
             harvested_conditions = harvested["conditions"]
-        conditions = _merge_qualifier_facets(
-            conditions, harvested_conditions
-        )
-        exceptions = _merge_qualifier_facets(
-            exceptions, harvested["exceptions"]
-        )
+        conditions = _merge_qualifier_facets(conditions, harvested_conditions)
+        exceptions = _merge_qualifier_facets(exceptions, harvested["exceptions"])
         temporal = _merge_qualifier_facets(temporal, harvested["temporal"])
         # Promote without/except-framed condition atoms to exceptions, then
         # drop any remaining dual placement onto conditions only.
@@ -1697,12 +1600,8 @@ def project_legal_norms_with_diagnostics(
         rules = list(resolved_rules)
         # Rule indices shifted; rebuild a minimal confidence map so diagnostics
         # remain well-formed without inventing per-field scores for merges.
-        confidences = {
-            (index, "modality"): 0.95 for index in range(len(rules))
-        }
-        modality_raw = {
-            index: [rule.modality] for index, rule in enumerate(rules)
-        }
+        confidences = {(index, "modality"): 0.95 for index in range(len(rules))}
+        modality_raw = {index: [rule.modality] for index, rule in enumerate(rules)}
 
     canonical_ir = CanonicalRuleIR(tuple(rules))
     canonical_ir.validate_vocabulary(vocabulary)
@@ -1732,9 +1631,7 @@ def project_legal_norms(
     canonical boundary.
     """
 
-    canonical_ir, _diagnostics = project_legal_norms_with_diagnostics(
-        norms, vocabulary
-    )
+    canonical_ir, _diagnostics = project_legal_norms_with_diagnostics(norms, vocabulary)
     return canonical_ir
 
 
@@ -1742,9 +1639,7 @@ def derive_repair_triggers_from_ir_and_source(
     request: ConstructorRequest,
     baseline_ir: CanonicalRuleIR,
     *,
-    low_confidence_threshold: float = (
-        DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD
-    ),
+    low_confidence_threshold: float = (DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD),
     field_confidences: Mapping[tuple[int, str], float | None] | None = None,
 ) -> tuple[object, ...]:
     """Emit repair triggers from IR + source diagnostics (no IR mutation)."""
@@ -1760,9 +1655,7 @@ def derive_repair_triggers_from_ir_and_source(
         ),
         source_text=request.source_text,
     )
-    return diagnostics.repair_triggers(
-        low_confidence_threshold=low_confidence_threshold
-    )
+    return diagnostics.repair_triggers(low_confidence_threshold=low_confidence_threshold)
 
 
 def _failure(
@@ -1783,9 +1676,7 @@ class TypedDeonticCanonicalConstructor:
     def identity(self) -> str:
         return TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE
 
-    def construct_with_diagnostics(
-        self, request: ConstructorRequest
-    ) -> TypedDeonticConstruction:
+    def construct_with_diagnostics(self, request: ConstructorRequest) -> TypedDeonticConstruction:
         """Construct IR and retain trigger-ready diagnostics out of band.
 
         The scored no-repair baseline continues to use :meth:`construct`, which
@@ -1799,9 +1690,7 @@ class TypedDeonticCanonicalConstructor:
                     FailureReason.INVALID_OUTPUT,
                     "request must be ConstructorRequest",
                 ),
-                TypedDeonticConstructorDiagnostics(
-                    detail="request must be ConstructorRequest"
-                ),
+                TypedDeonticConstructorDiagnostics(detail="request must be ConstructorRequest"),
             )
 
         try:
@@ -1837,9 +1726,7 @@ class TypedDeonticCanonicalConstructor:
                     f"typed deontic conversion raised {type(exc).__name__}",
                 ),
                 TypedDeonticConstructorDiagnostics(
-                    detail=(
-                        f"typed deontic conversion raised {type(exc).__name__}"
-                    ),
+                    detail=(f"typed deontic conversion raised {type(exc).__name__}"),
                     source_text=request.source_text,
                 ),
             )
@@ -1871,10 +1758,7 @@ class TypedDeonticCanonicalConstructor:
             )
 
         try:
-            norms = [
-                LegalNormIR.from_parser_element(element)
-                for element in elements
-            ]
+            norms = [LegalNormIR.from_parser_element(element) for element in elements]
             canonical_ir, diagnostics = project_legal_norms_with_diagnostics(
                 norms,
                 request.allowed_atom_vocabulary,
@@ -1895,9 +1779,7 @@ class TypedDeonticCanonicalConstructor:
                     f"typed deontic projection raised {type(exc).__name__}",
                 ),
                 TypedDeonticConstructorDiagnostics(
-                    detail=(
-                        f"typed deontic projection raised {type(exc).__name__}"
-                    ),
+                    detail=(f"typed deontic projection raised {type(exc).__name__}"),
                     source_text=request.source_text,
                 ),
             )
@@ -1906,14 +1788,10 @@ class TypedDeonticCanonicalConstructor:
             return TypedDeonticConstruction(
                 _failure(
                     FailureReason.EMPTY_L1,
-                    "typed deontic records did not map to supported "
-                    "canonical rules",
+                    "typed deontic records did not map to supported canonical rules",
                 ),
                 TypedDeonticConstructorDiagnostics(
-                    detail=(
-                        "typed deontic records did not map to supported "
-                        "canonical rules"
-                    ),
+                    detail=("typed deontic records did not map to supported canonical rules"),
                     source_text=request.source_text,
                 ),
             )
@@ -1941,21 +1819,15 @@ class TypedDeonticDiagnosticTriggerDetector:
     def __init__(
         self,
         *,
-        low_confidence_threshold: float = (
-            DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD
-        ),
-        field_confidences: (
-            Mapping[tuple[int, str], float | None] | None
-        ) = None,
+        low_confidence_threshold: float = (DEFAULT_DIAGNOSTIC_LOW_CONFIDENCE_THRESHOLD),
+        field_confidences: (Mapping[tuple[int, str], float | None] | None) = None,
     ) -> None:
         if (
             isinstance(low_confidence_threshold, bool)
             or not isinstance(low_confidence_threshold, (int, float))
             or not 0.0 <= float(low_confidence_threshold) <= 1.0
         ):
-            raise ContractError(
-                "low_confidence_threshold must be from zero to one"
-            )
+            raise ContractError("low_confidence_threshold must be from zero to one")
         self._low_confidence_threshold = float(low_confidence_threshold)
         self._field_confidences = dict(field_confidences or {})
 

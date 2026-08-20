@@ -12,6 +12,12 @@ from typing import Any
 
 import pytest
 
+_DATASETS_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(_DATASETS_ROOT))
+for _name in list(sys.modules):
+    if _name == "scripts" or _name.startswith("scripts."):
+        sys.modules.pop(_name, None)
+
 from benchmarks.bench_legal_ir_optimizer_pipeline import (
     aggregate_pipeline_summaries,
     benchmark_document,
@@ -233,9 +239,12 @@ def test_benchmark_publishes_matched_cold_warm_baseline_and_complete_contract() 
     )
     assert document["trials"][0]["metrics"]["cold_cache_hit_rate"] == 0.0
     assert document["trials"][0]["metrics"]["warm_cache_hit_rate"] == pytest.approx(0.9)
-    assert canonical_digest(
-        {key: value for key, value in document.items() if key != "evidence_digest"}
-    ) == document["evidence_digest"]
+    assert (
+        canonical_digest(
+            {key: value for key, value in document.items() if key != "evidence_digest"}
+        )
+        == document["evidence_digest"]
+    )
 
 
 def test_dry_run_autotune_evidence_meets_projection_p95_and_resource_gates() -> None:
@@ -328,7 +337,9 @@ def test_staged_gate_blocks_promotion_when_required_final_threshold_regresses(
     result = staged_rollout_gate(snapshots)
 
     assert result.accepted is False
-    assert any(item.startswith(f"{failure_prefix}:twenty_four_hour_production") for item in result.failures)
+    assert any(
+        item.startswith(f"{failure_prefix}:twenty_four_hour_production") for item in result.failures
+    )
 
 
 def test_staged_gate_cli_persists_complete_lineage_and_threshold_metrics(tmp_path: Path) -> None:
@@ -366,9 +377,9 @@ def test_staged_gate_cli_persists_complete_lineage_and_threshold_metrics(tmp_pat
         "eight_hour_canary",
         "twenty_four_hour_production",
     }
-    assert decision["metrics"]["promotion_thresholds"][
-        "state_to_merged_patch_lag_reduction"
-    ]["observed"] == pytest.approx(0.30)
+    assert decision["metrics"]["promotion_thresholds"]["state_to_merged_patch_lag_reduction"][
+        "observed"
+    ] == pytest.approx(0.30)
 
 
 def test_staged_gate_does_not_mutate_promotion_evidence() -> None:

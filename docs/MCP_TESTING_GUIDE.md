@@ -145,12 +145,14 @@ Core modules should have comprehensive unit tests:
 # tests/test_cache_manager.py
 from ipfs_datasets_py.caching import CacheManager
 
+
 def test_cache_set_get():
     manager = CacheManager()
     manager.set("key", "value", ttl=3600, namespace="test")
     result = manager.get("key", namespace="test")
     assert result["hit"] is True
     assert result["value"] == "value"
+
 
 def test_cache_expiration():
     manager = CacheManager()
@@ -169,10 +171,12 @@ MCP tools should have integration tests that verify delegation:
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.cache_tools import cache_tools
 
+
 async def test_cache_set_via_mcp():
     result = await cache_tools.cache_set("key", "value", ttl=3600)
     assert result["success"] is True
     assert result["stored"] is True
+
 
 async def test_cache_get_via_mcp():
     await cache_tools.cache_set("key", "value")
@@ -190,19 +194,20 @@ Ensure refactoring doesn't introduce performance regression:
 import time
 from ipfs_datasets_py.caching import CacheManager
 
+
 def test_cache_performance():
     manager = CacheManager()
-    
+
     start = time.time()
     for i in range(1000):
         manager.set(f"key_{i}", f"value_{i}")
     set_time = time.time() - start
-    
+
     start = time.time()
     for i in range(1000):
         manager.get(f"key_{i}")
     get_time = time.time() - start
-    
+
     assert set_time < 1.0  # Should complete in < 1 second
     assert get_time < 0.5  # Gets should be faster
 ```

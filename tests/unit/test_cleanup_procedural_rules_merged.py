@@ -7,7 +7,9 @@ from pathlib import Path
 
 def _load_module():
     repo_root = Path(__file__).resolve().parents[2]
-    script_path = repo_root / "scripts" / "ops" / "legal_data" / "cleanup_procedural_rules_merged.py"
+    script_path = (
+        repo_root / "scripts" / "ops" / "legal_data" / "cleanup_procedural_rules_merged.py"
+    )
     spec = importlib.util.spec_from_file_location("cleanup_procedural_rules_merged", script_path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -143,12 +145,20 @@ def test_main_in_place_with_backup_and_report(tmp_path, monkeypatch) -> None:
     assert rc == 0
 
     # Input should be replaced with the cleaned output in in-place mode.
-    input_rows = [json.loads(line) for line in input_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    input_rows = [
+        json.loads(line)
+        for line in input_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     assert len(input_rows) == 2
     assert {r["procedure_family"] for r in input_rows} == {"civil_procedure", "criminal_procedure"}
 
     # Backup should preserve the original four-row input.
-    backup_rows = [json.loads(line) for line in backup_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    backup_rows = [
+        json.loads(line)
+        for line in backup_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     assert len(backup_rows) == 4
 
     report = json.loads(report_path.read_text(encoding="utf-8"))
@@ -203,7 +213,11 @@ def test_main_in_place_blocks_on_coverage_regression(tmp_path, monkeypatch) -> N
     assert rc == 2
 
     # In-place replacement should be blocked, so input stays unchanged and no backup is created.
-    input_rows = [json.loads(line) for line in input_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    input_rows = [
+        json.loads(line)
+        for line in input_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     assert len(input_rows) == 2
     assert backup_path.exists() is False
 

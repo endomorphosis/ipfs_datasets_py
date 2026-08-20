@@ -36,14 +36,14 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (  # noqa: E
 @dataclass
 class BenchmarkResult:
     """Result of a single benchmark run."""
-    
+
     case_name: str
     strategy: str
     domain: str
     text_size_tokens: int
     iterations: int
     warmups: int
-    
+
     # Performance metrics
     avg_ms: float
     median_ms: float
@@ -52,15 +52,15 @@ class BenchmarkResult:
     max_ms: float
     min_ms: float
     stddev_ms: float
-    
+
     # Quality metrics
     avg_entities: float
     avg_relationships: float
     avg_confidence: float
-    
+
     # Memory metrics (optional)
     peak_memory_mb: float = 0.0
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to JSON-serializable dict."""
         return {
@@ -103,11 +103,11 @@ def _build_text(size_tokens: int) -> str:
         "Amazon Web Services provides cloud computing infrastructure to enterprise clients. ",
         "The plaintiff alleges that the defendant violated contract terms on February 28, 2024. ",
     ]
-    
+
     # Each sentence ~20-25 tokens
     avg_tokens_per_sentence = 22
     iterations = size_tokens // avg_tokens_per_sentence
-    
+
     return "".join([sentences[i % len(sentences)] for i in range(iterations)])
 
 
@@ -121,32 +121,32 @@ def _run_benchmark(
     warmups: int = 2,
 ) -> BenchmarkResult:
     """Run a single benchmark case."""
-    
+
     # Warmup runs
     for _ in range(warmups):
         generator.extract_entities(text, context)
-    
+
     # Measurement runs
     samples_ms: List[float] = []
     entity_counts: List[int] = []
     relationship_counts: List[int] = []
     confidence_scores: List[float] = []
-    
+
     for _ in range(iterations):
         start = time.perf_counter()
         result = generator.extract_entities(text, context)
         elapsed_ms = (time.perf_counter() - start) * 1000.0
-        
+
         samples_ms.append(elapsed_ms)
         entity_counts.append(len(result.entities))
         relationship_counts.append(len(result.relationships))
         confidence_scores.append(result.confidence)
-    
+
     # Calculate percentiles
     samples_ms.sort()
     p95_idx = max(0, int(iterations * 0.95) - 1)
     p99_idx = max(0, int(iterations * 0.99) - 1)
-    
+
     return BenchmarkResult(
         case_name=case_name,
         strategy=str(context.extraction_strategy.value),
@@ -169,7 +169,7 @@ def _run_benchmark(
 
 def _generate_markdown_report(results: List[BenchmarkResult], output_path: Path) -> None:
     """Generate a markdown summary report."""
-    
+
     lines = [
         "# Ontology Extraction Baseline Benchmark",
         "",
@@ -180,7 +180,7 @@ def _generate_markdown_report(results: List[BenchmarkResult], output_path: Path)
         "| Case | Strategy | Domain | Tokens | Avg (ms) | P95 (ms) | Entities | Relationships |",
         "|------|----------|--------|--------|----------|----------|----------|---------------|",
     ]
-    
+
     for result in results:
         lines.append(
             f"| {result.case_name} "
@@ -192,75 +192,76 @@ def _generate_markdown_report(results: List[BenchmarkResult], output_path: Path)
             f"| {result.avg_entities:.1f} "
             f"| {result.avg_relationships:.1f} |"
         )
-    
-    lines.extend([
-        "",
-        "## Detailed Metrics",
-        "",
-    ])
-    
+
+    lines.extend(
+        [
+            "",
+            "## Detailed Metrics",
+            "",
+        ]
+    )
+
     for result in results:
-        lines.extend([
-            f"### {result.case_name}",
-            "",
-            f"**Configuration**:",
-            f"- Strategy: {result.strategy}",
-            f"- Domain: {result.domain}",
-            f"- Text size: {result.text_size_tokens:,} tokens",
-            f"- Iterations: {result.iterations} (warmups: {result.warmups})",
-            "",
-            f"**Performance**:",
-            f"- Average: {result.avg_ms:.2f} ms",
-            f"- Median: {result.median_ms:.2f} ms",
-            f"- P95: {result.p95_ms:.2f} ms",
-            f"- P99: {result.p99_ms:.2f} ms",
-            f"- Min/Max: {result.min_ms:.2f} / {result.max_ms:.2f} ms",
-            f"- Stddev: {result.stddev_ms:.2f} ms",
-            "",
-            f"**Quality**:",
-            f"- Entities: {result.avg_entities:.2f}",
-            f"- Relationships: {result.avg_relationships:.2f}",
-            f"- Confidence: {result.avg_confidence:.4f}",
-            "",
-        ])
-    
+        lines.extend(
+            [
+                f"### {result.case_name}",
+                "",
+                f"**Configuration**:",
+                f"- Strategy: {result.strategy}",
+                f"- Domain: {result.domain}",
+                f"- Text size: {result.text_size_tokens:,} tokens",
+                f"- Iterations: {result.iterations} (warmups: {result.warmups})",
+                "",
+                f"**Performance**:",
+                f"- Average: {result.avg_ms:.2f} ms",
+                f"- Median: {result.median_ms:.2f} ms",
+                f"- P95: {result.p95_ms:.2f} ms",
+                f"- P99: {result.p99_ms:.2f} ms",
+                f"- Min/Max: {result.min_ms:.2f} / {result.max_ms:.2f} ms",
+                f"- Stddev: {result.stddev_ms:.2f} ms",
+                "",
+                f"**Quality**:",
+                f"- Entities: {result.avg_entities:.2f}",
+                f"- Relationships: {result.avg_relationships:.2f}",
+                f"- Confidence: {result.avg_confidence:.4f}",
+                "",
+            ]
+        )
+
     output_path.write_text("\n".join(lines))
 
 
 def main() -> None:
     """Run all benchmark cases and generate reports."""
-    
+
     logging.disable(logging.CRITICAL)
-    
+
     print("=== Ontology Extraction Baseline Benchmark ===")
     print()
-    
+
     # Benchmark configurations
     cases = [
         # Small text (1k tokens)
         ("1k_general_rule", "general", ExtractionStrategy.RULE_BASED, 1000, 20, 3),
         ("1k_legal_rule", "legal", ExtractionStrategy.RULE_BASED, 1000, 20, 3),
-        
         # Medium text (5k tokens)
         ("5k_general_rule", "general", ExtractionStrategy.RULE_BASED, 5000, 15, 2),
         ("5k_legal_rule", "legal", ExtractionStrategy.RULE_BASED, 5000, 15, 2),
         ("5k_business_rule", "business", ExtractionStrategy.RULE_BASED, 5000, 15, 2),
-        
         # Large text (10k tokens)
         ("10k_general_rule", "general", ExtractionStrategy.RULE_BASED, 10000, 10, 2),
         ("10k_legal_rule", "legal", ExtractionStrategy.RULE_BASED, 10000, 10, 2),
         ("10k_medical_rule", "medical", ExtractionStrategy.RULE_BASED, 10000, 10, 2),
-        
         # Very large text (20k tokens)
         ("20k_general_rule", "general", ExtractionStrategy.RULE_BASED, 20000, 5, 1),
     ]
-    
+
     generator = OntologyGenerator(use_ipfs_accelerate=False)
     results: List[BenchmarkResult] = []
-    
+
     for case_name, domain, strategy, size_tokens, iterations, warmups in cases:
         print(f"Running: {case_name}...")
-        
+
         text = _build_text(size_tokens)
         context = OntologyGenerationContext(
             data_source="benchmark",
@@ -272,7 +273,7 @@ def main() -> None:
                 sentence_window=2,
             ),
         )
-        
+
         result = _run_benchmark(
             generator=generator,
             context=context,
@@ -282,28 +283,30 @@ def main() -> None:
             iterations=iterations,
             warmups=warmups,
         )
-        
+
         results.append(result)
-        print(f"  ✓ {result.avg_ms:.2f} ms avg, {result.avg_entities:.0f} entities, {result.avg_relationships:.0f} relationships")
-    
+        print(
+            f"  ✓ {result.avg_ms:.2f} ms avg, {result.avg_entities:.0f} entities, {result.avg_relationships:.0f} relationships"
+        )
+
     # Generate JSON report
     json_report = {
         "benchmark_name": "ontology_extraction_baseline",
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "results": [r.to_dict() for r in results],
     }
-    
+
     json_path = Path(__file__).parent / "results" / "baseline_ontology_extraction.json"
     json_path.parent.mkdir(exist_ok=True)
     json_path.write_text(json.dumps(json_report, indent=2))
     print()
     print(f"✓ JSON report: {json_path}")
-    
+
     # Generate markdown report
     md_path = Path(__file__).parent / "results" / "baseline_ontology_extraction.md"
     _generate_markdown_report(results, md_path)
     print(f"✓ Markdown report: {md_path}")
-    
+
     print()
     print("=== Benchmark Complete ===")
 

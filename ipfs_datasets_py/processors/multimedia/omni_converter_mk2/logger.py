@@ -3,18 +3,20 @@ Logging utility for the Omni-Converter.
 
 This module provides logging functionality for the Omni-Converter.
 """
+
 import logging
 from functools import cached_property
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 
-def get_logger(name: str,
-                log_file_name: str = 'app.log',
-                level: int = logging.INFO,
-                max_size: int = 5*1024*1024,
-                backup_count: int = 3
-                ) -> logging.Logger:
+def get_logger(
+    name: str,
+    log_file_name: str = "app.log",
+    level: int = logging.INFO,
+    max_size: int = 5 * 1024 * 1024,
+    backup_count: int = 3,
+) -> logging.Logger:
     """Sets up a logger with both file and console handlers.
 
     Args:
@@ -36,22 +38,26 @@ def get_logger(name: str,
 
     # Set the default log level.
     logger.setLevel(level)
-    logger.propagate = False # Prevent logs from being handled by parent loggers
+    logger.propagate = False  # Prevent logs from being handled by parent loggers
 
     # Create 'logs' directory in the current working directory if it doesn't exist
-    logs_dir = Path.cwd() / 'logs'
+    logs_dir = Path.cwd() / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     log_file_path = logs_dir / log_file_name
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
+    )
 
     if not logger.handlers:
         # Create handlers (file and console)
         console_handler = logging.StreamHandler()
-        file_handler = RotatingFileHandler(log_file_path.resolve(), maxBytes=max_size, backupCount=backup_count)
+        file_handler = RotatingFileHandler(
+            log_file_path.resolve(), maxBytes=max_size, backupCount=backup_count
+        )
 
         # Set level for handlers
-        file_handler.setLevel(logging.DEBUG) # We want to log everything to the file.
+        file_handler.setLevel(logging.DEBUG)  # We want to log everything to the file.
         console_handler.setLevel(level)
 
         # Create formatters and add it to handlers
@@ -79,9 +85,10 @@ def get_logger(name: str,
 
     return logger
 
+
 class _Logger:
     """Singleton class to manage logger instances."""
-    
+
     _instance = None
 
     def __new__(cls):
@@ -97,7 +104,8 @@ class _Logger:
     def logger(self):
         return self._instance.logger
 
-# Global logger instances
-logger = get_logger(__name__, log_file_name='app.log', level=logging.DEBUG)
 
-test_logger = get_logger('tests', log_file_name='test.log', level=logging.DEBUG)
+# Global logger instances
+logger = get_logger(__name__, log_file_name="app.log", level=logging.DEBUG)
+
+test_logger = get_logger("tests", log_file_name="test.log", level=logging.DEBUG)

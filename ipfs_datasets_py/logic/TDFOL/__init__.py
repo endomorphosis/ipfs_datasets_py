@@ -26,13 +26,11 @@ from .tdfol_core import (
     Quantifier,
     Sort,
     TemporalOperator,
-    
     # Terms
     Constant,
     FunctionApplication,
     Term,
     Variable,
-    
     # Formulas
     BinaryFormula,
     BinaryTemporalFormula,
@@ -42,20 +40,16 @@ from .tdfol_core import (
     QuantifiedFormula,
     TemporalFormula,
     UnaryFormula,
-    
     # Knowledge Base
     TDFOLKnowledgeBase,
-    
     # Proof Results (Phase 1 Task 1.2 - Unified)
     ProofStatus,
     ProofStep,
     ProofResult,
-    
     # Expansion Rules (Phase 1 Task 1.1)
     ExpansionContext,
     ExpansionResult,
     ExpansionRule,
-    
     # Utility Functions
     create_always,
     create_conjunction,
@@ -154,13 +148,11 @@ __all__ = [
     "Quantifier",
     "Sort",
     "TemporalOperator",
-    
     # Terms
     "Constant",
     "FunctionApplication",
     "Term",
     "Variable",
-    
     # Formulas
     "BinaryFormula",
     "BinaryTemporalFormula",
@@ -170,52 +162,42 @@ __all__ = [
     "QuantifiedFormula",
     "TemporalFormula",
     "UnaryFormula",
-    
     # Knowledge Base
     "TDFOLKnowledgeBase",
-    
     # Proof Results (Phase 1 Task 1.2 - Unified)
     "ProofStatus",
     "ProofStep",
     "ProofResult",
-    
     # Expansion Rules (Phase 1 Task 1.1)
     "ExpansionContext",
     "ExpansionResult",
     "ExpansionRule",
-    
     # Parser
     "TDFOLLexer",
     "TDFOLParser",
     "parse_tdfol",
     "parse_tdfol_safe",
-    
     # DCEC Parser
     "DCECStringParser",
     "parse_dcec",
     "parse_dcec_safe",
-    
     # Prover
     "ProofResult",
     "ProofStatus",
     "ProofStep",
     "TDFOLProver",
-    
     # Proof Cache
     "TDFOLProofCache",
     "get_global_proof_cache",
     "clear_global_proof_cache",
     "TDFOLProofResult",
-    
     # Inference Rules
     "TDFOLInferenceRule",
     "get_all_tdfol_rules",
-    
     # Natural Language Processing (Phase 7)
     "NLPreprocessor",
     "ProcessedDocument",
     "Entity",
-    
     # Proof Tree Visualizer (Phase 11)
     "ProofTreeVisualizer",
     "ProofTreeNode",
@@ -223,7 +205,6 @@ __all__ = [
     "TreeStyle",
     "VerbosityLevel",
     "visualize_proof",
-    
     # Formula Dependency Graph (Phase 11)
     "FormulaDependencyGraph",
     "DependencyNode",
@@ -233,13 +214,11 @@ __all__ = [
     "CircularDependencyError",
     "analyze_proof_dependencies",
     "find_proof_chain",
-    
     # Countermodel Visualizer (Phase 11)
     "CountermodelVisualizer",
     "BoxChars",
     "GraphLayout",
     "create_visualizer",
-    
     # Performance Dashboard (Phase 11 Task 11.4)
     "PerformanceDashboard",
     "ProofMetrics",
@@ -248,13 +227,11 @@ __all__ = [
     "MetricType",
     "get_global_dashboard",
     "reset_global_dashboard",
-    
     # Security Validator (Phase 12 Task 12.2)
     "SecurityValidator",
     "SecurityConfig",
     "SecurityLevel",
     "ThreatType",
-    
     # Performance Metrics (Phase 1 Task 1.4)
     "MetricsCollector",
     "TimingResult",
@@ -268,7 +245,6 @@ __all__ = [
     "create_validator",
     "validate_formula",
     "audit_proof",
-    
     # Utility Functions
     "create_always",
     "create_conjunction",

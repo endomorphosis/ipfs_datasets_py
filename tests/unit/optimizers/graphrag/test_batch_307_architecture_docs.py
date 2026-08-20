@@ -18,6 +18,7 @@ import re
 
 import pytest
 
+
 def _resolve_optimizers_path() -> Path:
     """Resolve the optimizers docs directory across supported repo layouts."""
     file_path = Path(__file__).resolve()
@@ -115,29 +116,29 @@ class TestArchitectureCoverage:
         has_critique = "critique" in content.lower() or "critic" in content.lower()
         has_optimize = "optimize" in content.lower()
         has_validate = "validate" in content.lower()
-        assert has_generate and has_critique and has_optimize and has_validate, \
+        assert has_generate and has_critique and has_optimize and has_validate, (
             "Missing generate/critique/optimize/validate loop documentation"
+        )
 
     def test_covers_graphrag_optimizer(self) -> None:
         """Should cover GraphRAG optimizer architecture."""
         path = OPTIMIZERS_PATH / "ARCHITECTURE_UNIFIED.md"
         content = path.read_text()
-        assert "GraphRAG" in content or "graphrag" in content, \
-            "Missing GraphRAG optimizer coverage"
+        assert "GraphRAG" in content or "graphrag" in content, "Missing GraphRAG optimizer coverage"
 
     def test_covers_logic_optimizer(self) -> None:
         """Should cover logic theorem optimizer architecture."""
         path = OPTIMIZERS_PATH / "ARCHITECTURE_UNIFIED.md"
         content = path.read_text()
-        assert "logic" in content.lower() and "theorem" in content.lower(), \
+        assert "logic" in content.lower() and "theorem" in content.lower(), (
             "Missing logic theorem optimizer coverage"
+        )
 
     def test_covers_agentic_optimizer(self) -> None:
         """Should cover agentic optimizer architecture."""
         path = OPTIMIZERS_PATH / "ARCHITECTURE_AGENTIC_OPTIMIZERS.md"
         content = path.read_text()
-        assert "agentic" in content.lower(), \
-            "Missing agentic optimizer coverage"
+        assert "agentic" in content.lower(), "Missing agentic optimizer coverage"
 
 
 class TestArchitectureDiagrams:
@@ -166,14 +167,11 @@ class TestArchitectureDiagrams:
         """Should have sequence diagrams."""
         path = OPTIMIZERS_PATH / "ARCHITECTURE_DIAGRAMS.md"
         content = path.read_text()
-        has_sequenced_flow = (
-            "```mermaid" in content
-            and (
-                "lifecycle" in content.lower()
-                or "loop" in content.lower()
-                or "phase" in content.lower()
-                or "iteration" in content.lower()
-            )
+        has_sequenced_flow = "```mermaid" in content and (
+            "lifecycle" in content.lower()
+            or "loop" in content.lower()
+            or "phase" in content.lower()
+            or "iteration" in content.lower()
         )
         assert has_sequenced_flow, "Missing sequence diagrams"
 
@@ -211,13 +209,12 @@ class TestArchitectureDocumentationQuality:
         paths = [
             OPTIMIZERS_PATH / "ARCHITECTURE_DIAGRAM.md",
             OPTIMIZERS_PATH / "ARCHITECTURE_UNIFIED.md",
-            OPTIMIZERS_PATH / "ARCHITECTURE_AGENTIC_OPTIMIZERS.md"
+            OPTIMIZERS_PATH / "ARCHITECTURE_AGENTIC_OPTIMIZERS.md",
         ]
         marker_re = re.compile(r"\b(?:TODO|FIXME)\b\s*[:(]", re.IGNORECASE)
         for path in paths:
             content = path.read_text()
-            assert marker_re.search(content) is None, \
-                f"Found TODO/FIXME markers in {path.name}"
+            assert marker_re.search(content) is None, f"Found TODO/FIXME markers in {path.name}"
 
     def test_has_table_of_contents(self) -> None:
         """Should have table of contents or overview."""
@@ -251,7 +248,7 @@ class TestArchitectureCompleteness:
             "ARCHITECTURE_DIAGRAM.md",
             "ARCHITECTURE_DIAGRAMS.md",
             "ARCHITECTURE_UNIFIED.md",
-            "ARCHITECTURE_AGENTIC_OPTIMIZERS.md"
+            "ARCHITECTURE_AGENTIC_OPTIMIZERS.md",
         ]
         for filename in expected_files:
             path = OPTIMIZERS_PATH / filename
@@ -263,7 +260,7 @@ class TestArchitectureCompleteness:
             "ARCHITECTURE_DIAGRAM.md",
             "ARCHITECTURE_DIAGRAMS.md",
             "ARCHITECTURE_UNIFIED.md",
-            "ARCHITECTURE_AGENTIC_OPTIMIZERS.md"
+            "ARCHITECTURE_AGENTIC_OPTIMIZERS.md",
         ]
         for filename in expected_files:
             path = OPTIMIZERS_PATH / filename

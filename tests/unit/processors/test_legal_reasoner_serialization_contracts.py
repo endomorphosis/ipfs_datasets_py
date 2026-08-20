@@ -58,7 +58,9 @@ def _minimal_ir_payload(*, ir_version: str, cnl_version: str) -> dict:
 
 
 def test_load_legal_ir_from_json_accepts_contract_v1(tmp_path):
-    payload = _minimal_ir_payload(ir_version=SUPPORTED_IR_VERSION, cnl_version=SUPPORTED_CNL_VERSION)
+    payload = _minimal_ir_payload(
+        ir_version=SUPPORTED_IR_VERSION, cnl_version=SUPPORTED_CNL_VERSION
+    )
     path = tmp_path / "ir_v1.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
 

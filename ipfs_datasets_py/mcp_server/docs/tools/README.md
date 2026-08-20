@@ -133,6 +133,7 @@ from canonical `ipfs_datasets_py.*` package modules.
 import anyio
 from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
 
+
 async def main():
     manager = HierarchicalToolManager()
     # List all categories
@@ -144,6 +145,7 @@ async def main():
     # Dispatch a tool call
     result = await manager.dispatch("graph_tools", "graph_create", {})
     print(result)
+
 
 anyio.run(main)
 ```

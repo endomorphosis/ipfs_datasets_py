@@ -3,21 +3,22 @@ from functools import cached_property, cache
 import math
 
 
-from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.types_ import Any, Callable, Logger, Configs
+from ipfs_datasets_py.mcp_server.tools.lizardperson_argparse_programs.municipal_bluebook_citation_validator.types_ import (
+    Any,
+    Callable,
+    Logger,
+    Configs,
+)
 
 
 class ExtrapolateToFullDataset:
-
     _Z_SCORE = 1.96  # Z-score for 95% confidence interval
 
-    def __init__(self, 
-                 resources: dict[str, Callable] = None, 
-                 configs: Configs = None
-                 ) -> None:
+    def __init__(self, resources: dict[str, Callable] = None, configs: Configs = None) -> None:
         self.resources = resources
         self.configs = configs
 
-        self._logger: Logger = resources['self._logger']
+        self._logger: Logger = resources["self._logger"]
 
         self._gnis_counts_by_state: dict[str, int] = None
 
@@ -37,11 +38,8 @@ class ExtrapolateToFullDataset:
 
     @staticmethod
     def _calculate_finite_population_correction(
-        sample_size: int, 
-        total_estimated_records: int, 
-        center: float, 
-        margin: float
-        ) -> tuple[float, float, float]:
+        sample_size: int, total_estimated_records: int, center: float, margin: float
+    ) -> tuple[float, float, float]:
         """
         Calculate finite population correction (fpc) and adjust confidence intervals.
 
@@ -62,7 +60,7 @@ class ExtrapolateToFullDataset:
             fpc = math.sqrt((total_estimated_records - sample_size) / (total_estimated_records - 1))
             confidence_lower = max(0.0, center - (margin * fpc))
             confidence_upper = min(1.0, center + (margin * fpc))
-            
+
         return fpc, confidence_lower, confidence_upper
 
     @staticmethod
@@ -84,22 +82,19 @@ class ExtrapolateToFullDataset:
         # Calculate coefficient of variation to assess geographic distribution bias
         state_counts = list(gnis_counts_by_state.values())
         mean_count = sum(state_counts) / len(state_counts)
-        variance = sum((count - mean_count)**2 for count in state_counts) / len(state_counts)
-        cv = math.sqrt(variance) / mean_count if mean_count > 0 else 0 # Coefficient of Variation
+        variance = sum((count - mean_count) ** 2 for count in state_counts) / len(state_counts)
+        cv = math.sqrt(variance) / mean_count if mean_count > 0 else 0  # Coefficient of Variation
         return cv
 
     def extrapolate_to_full_dataset(
-        self,
-        accuracy_stats, 
-        gnis_counts_by_state: dict[str, int], 
-        sample_size: int
+        self, accuracy_stats, gnis_counts_by_state: dict[str, int], sample_size: int
     ) -> dict[str, float]:
         """
         Extrapolate validation accuracy statistics from a sample to estimate performance on a full dataset.
 
         This function takes accuracy statistics computed on a sample of data and uses the geographic
         distribution of GNIS (Geographic Names Information System) features by state to estimate
-        what the accuracy would be across the complete dataset. This is useful for verifying the 
+        what the accuracy would be across the complete dataset. This is useful for verifying the
         accuracy of a validation process when only a sample of the data has been validated.
 
         Args:
@@ -137,7 +132,9 @@ class ExtrapolateToFullDataset:
         if sample_size <= 0:
             raise ValueError("Sample size must be positive")
 
-        if not gnis_counts_by_state: # NOTE This should reset the class attribute between runs as well.
+        if (
+            not gnis_counts_by_state
+        ):  # NOTE This should reset the class attribute between runs as well.
             raise ValueError("GNIS counts by state cannot be empty")
         else:
             self._gnis_counts_by_state = gnis_counts_by_state
@@ -156,7 +153,9 @@ class ExtrapolateToFullDataset:
 
         # Validate sample statistics
         if sample_total != sample_size:
-            self._logger.warning(f"Sample size mismatch: provided {sample_size}, matrix shows {sample_total}")
+            self._logger.warning(
+                f"Sample size mismatch: provided {sample_size}, matrix shows {sample_total}"
+            )
             sample_size = sample_total
 
         # Calculate confidence interval for accuracy using Wilson score interval
@@ -202,6 +201,7 @@ class ExtrapolateToFullDataset:
                 estimated_recall (float): The estimated recall score (0.0 to 1.0).
                 estimated_f1_score (float): The estimated F1 score, harmonic mean of precision and recall (0.0 to 1.0).
             """
+
             estimated_accuracy: float
             estimated_accuracy_percent: float
             estimated_precision: float
@@ -221,6 +221,7 @@ class ExtrapolateToFullDataset:
                 margin_of_error (float): Absolute margin of error value
                 margin_of_error_percent (float): Margin of error as a percentage
             """
+
             confidence_interval_lower: float
             confidence_interval_upper: float
             confidence_interval_lower_percent: float
@@ -239,6 +240,7 @@ class ExtrapolateToFullDataset:
                 scaling_factor (float): The multiplier used to scale sample results to full dataset estimates
                 sampling_ratio (float): The ratio of sample size to total estimated records (sample_size / total_estimated_records)
             """
+
             total_estimated_records: float
             sample_size: float
             scaling_factor: float
@@ -254,6 +256,7 @@ class ExtrapolateToFullDataset:
                 estimated_error_rate (float): Estimated error rate as a decimal (0.0 to 1.0)
                 estimated_error_rate_percent (float): Estimated error rate as a percentage (0.0 to 100.0)
             """
+
             estimated_total_errors: float
             estimated_valid_citations: float
             estimated_error_rate: float
@@ -277,6 +280,7 @@ class ExtrapolateToFullDataset:
                 number_of_states (int): The total number of states or geographic units
                     included in the analysis.
             """
+
             geographic_coefficient_variation: float
             geographic_adjustment_factor: float
             finite_population_correction: float
@@ -288,10 +292,11 @@ class ExtrapolateToFullDataset:
             A data class that holds quality metrics for dataset extrapolation analysis.
 
             Attributes:
-                extrapolation_reliability (str): A string indicating the reliability level 
+                extrapolation_reliability (str): A string indicating the reliability level
                     of extrapolating sample results to the full dataset. Typically contains
                     values like 'high', 'medium', 'low' or descriptive reliability assessments.
             """
+
             extrapolation_reliability: str
 
         @dataclass
@@ -310,6 +315,7 @@ class ExtrapolateToFullDataset:
                 geographic_metrics (GeographicMetrics): Geographic distribution and spatial analysis metrics
                 quality_metrics (QualityMetrics): Data quality assessment and validation metrics
             """
+
             core_estimates: CoreEstimates
             confidence_intervals: ConfidenceIntervals
             dataset_estimates: DatasetEstimates
@@ -323,7 +329,7 @@ class ExtrapolateToFullDataset:
                 estimated_accuracy_percent=estimated_accuracy * 100,
                 estimated_precision=estimated_precision,
                 estimated_recall=estimated_recall,
-                estimated_f1_score=accuracy_stats.f1_score
+                estimated_f1_score=accuracy_stats.f1_score,
             ),
             confidence_intervals=ConfidenceIntervals(
                 confidence_interval_lower=confidence_lower,
@@ -332,33 +338,39 @@ class ExtrapolateToFullDataset:
                 confidence_interval_upper_percent=confidence_upper * 100,
                 confidence_level=95.0,
                 margin_of_error=margin,
-                margin_of_error_percent=margin * 100
+                margin_of_error_percent=margin * 100,
             ),
             dataset_estimates=DatasetEstimates(
                 total_estimated_records=float(total_estimated_records),
                 sample_size=float(sample_size),
                 scaling_factor=scaling_factor,
-                sampling_ratio=sample_size / total_estimated_records
+                sampling_ratio=sample_size / total_estimated_records,
             ),
             error_estimates=ErrorEstimates(
                 estimated_total_errors=float(estimated_total_errors),
                 estimated_valid_citations=float(estimated_valid_citations),
                 estimated_error_rate=1 - estimated_accuracy,
-                estimated_error_rate_percent=(1 - estimated_accuracy) * 100
+                estimated_error_rate_percent=(1 - estimated_accuracy) * 100,
             ),
             geographic_metrics=GeographicMetrics(
                 geographic_coefficient_variation=cv,
                 geographic_adjustment_factor=geographic_adjustment,
                 finite_population_correction=fpc,
-                number_of_states=len(gnis_counts_by_state)
+                number_of_states=len(gnis_counts_by_state),
             ),
             quality_metrics=QualityMetrics(
-                extrapolation_reliability='high' if sample_size >= 385 else 'medium' if sample_size >= 100 else 'low'
-            )
+                extrapolation_reliability="high"
+                if sample_size >= 385
+                else "medium"
+                if sample_size >= 100
+                else "low"
+            ),
         )
 
-        self._logger.info(f"Extrapolated accuracy: {estimated_accuracy:.3f} "
-                f"(95% CI: {confidence_lower:.3f}-{confidence_upper:.3f}) "
-                f"for {total_estimated_records:,} total records")
+        self._logger.info(
+            f"Extrapolated accuracy: {estimated_accuracy:.3f} "
+            f"(95% CI: {confidence_lower:.3f}-{confidence_upper:.3f}) "
+            f"for {total_estimated_records:,} total records"
+        )
 
         return results

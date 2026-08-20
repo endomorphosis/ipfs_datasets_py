@@ -10,6 +10,7 @@ Targets:
 
 All tests follow the GIVEN-WHEN-THEN pattern.
 """
+
 import unittest
 from unittest.mock import MagicMock, patch, PropertyMock
 from typing import Dict, List, Any
@@ -39,6 +40,7 @@ from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import (
 # ===========================================================================
 # 1.  KnowledgeGraphExtractor (extraction/extractor.py)
 # ===========================================================================
+
 
 class TestKGExtractorFindBestEntityMatch(unittest.TestCase):
     """Tests for _find_best_entity_match helper."""
@@ -110,7 +112,9 @@ class TestKGExtractorExtractKnowledgeGraph(unittest.TestCase):
     def test_min_confidence_restored_after_extraction(self):
         """GIVEN an extractor, WHEN calling extract_knowledge_graph, THEN min_confidence is unchanged."""
         original_confidence = self.extractor.min_confidence
-        self.extractor.extract_knowledge_graph("Alice leads the project.", extraction_temperature=0.3)
+        self.extractor.extract_knowledge_graph(
+            "Alice leads the project.", extraction_temperature=0.3
+        )
         self.assertEqual(self.extractor.min_confidence, original_confidence)
 
     def test_srl_path_not_called_when_disabled(self):
@@ -158,7 +162,9 @@ class TestKGExtractorRuleBasedRelationship(unittest.TestCase):
                 }
             ]
         )
-        rels = extractor._rule_based_relationship_extraction("Alice and Bob work together.", self.entity_map)
+        rels = extractor._rule_based_relationship_extraction(
+            "Alice and Bob work together.", self.entity_map
+        )
         if rels:
             self.assertTrue(rels[0].bidirectional)
 
@@ -217,6 +223,7 @@ class TestKGExtractorAggressiveExtraction(unittest.TestCase):
 # ===========================================================================
 # 2.  AdvancedKnowledgeExtractor (extraction/advanced.py)
 # ===========================================================================
+
 
 class TestAdvancedExtractorDataclasses(unittest.TestCase):
     """Tests for AdvancedKnowledgeExtractor dataclass defaults."""
@@ -316,7 +323,9 @@ class TestAdvancedExtractorExtractEnhancedKG(unittest.TestCase):
     def test_multi_pass_extraction(self):
         """GIVEN multi_pass=True (default), WHEN calling, THEN return KG via multi pass."""
         extractor = AdvancedKnowledgeExtractor()
-        kg = extractor.extract_enhanced_knowledge_graph("IPFS is a distributed protocol.", multi_pass=True)
+        kg = extractor.extract_enhanced_knowledge_graph(
+            "IPFS is a distributed protocol.", multi_pass=True
+        )
         self.assertIsInstance(kg, KnowledgeGraph)
 
     def test_domain_override_takes_effect(self):
@@ -433,9 +442,11 @@ class TestAdvancedExtractorExtractRelationshipsPass(unittest.TestCase):
 # 3.  UnifiedQueryEngine (query/unified_engine.py)
 # ===========================================================================
 
+
 class TestUnifiedQueryEngineInit(unittest.TestCase):
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         backend = MagicMock()
         return UnifiedQueryEngine(backend=backend)
 
@@ -461,6 +472,7 @@ class TestUnifiedQueryEngineInit(unittest.TestCase):
 class TestUnifiedQueryEngineExecuteQuery(unittest.TestCase):
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         backend = MagicMock()
         return UnifiedQueryEngine(backend=backend)
 
@@ -489,12 +501,14 @@ class TestUnifiedQueryEngineExecuteQuery(unittest.TestCase):
 class TestUnifiedQueryEngineExecuteCypher(unittest.TestCase):
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         backend = MagicMock()
         return UnifiedQueryEngine(backend=backend)
 
     def test_parse_error_raises_query_parse_error(self):
         """GIVEN parser that raises SyntaxError, WHEN execute_cypher called, THEN QueryParseError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryParseError
+
         engine = self._make_engine()
         mock_parser = MagicMock()
         mock_parser.parse.side_effect = SyntaxError("bad syntax")
@@ -505,6 +519,7 @@ class TestUnifiedQueryEngineExecuteCypher(unittest.TestCase):
     def test_execution_error_raises_query_execution_error(self):
         """GIVEN executor that raises RuntimeError, WHEN execute_cypher called, THEN QueryExecutionError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryExecutionError
+
         engine = self._make_engine()
         mock_parser = MagicMock()
         mock_parser.parse.return_value = MagicMock()
@@ -522,6 +537,7 @@ class TestUnifiedQueryEngineExecuteCypher(unittest.TestCase):
 class TestUnifiedQueryEngineExecuteIR(unittest.TestCase):
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         backend = MagicMock()
         return UnifiedQueryEngine(backend=backend)
 
@@ -529,6 +545,7 @@ class TestUnifiedQueryEngineExecuteIR(unittest.TestCase):
         """GIVEN _ir_executor.execute raises ValueError, WHEN execute_ir called, THEN QueryParseError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryParseError
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         engine = self._make_engine()
         mock_ir = MagicMock()
         mock_ir.execute.side_effect = ValueError("bad IR")
@@ -539,6 +556,7 @@ class TestUnifiedQueryEngineExecuteIR(unittest.TestCase):
     def test_ir_unexpected_error_raises_query_execution_error(self):
         """GIVEN _ir_executor.execute raises RuntimeError, WHEN execute_ir called, THEN QueryExecutionError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryExecutionError
+
         engine = self._make_engine()
         mock_ir = MagicMock()
         mock_ir.execute.side_effect = RuntimeError("unexpected")
@@ -550,12 +568,14 @@ class TestUnifiedQueryEngineExecuteIR(unittest.TestCase):
 class TestUnifiedQueryEngineExecuteHybrid(unittest.TestCase):
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         backend = MagicMock()
         return UnifiedQueryEngine(backend=backend)
 
     def test_hybrid_value_error_raises_query_execution_error(self):
         """GIVEN hybrid_search.search that raises ValueError, THEN QueryExecutionError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryExecutionError
+
         engine = self._make_engine()
         engine.hybrid_search.search = MagicMock(side_effect=ValueError("bad weights"))
         with self.assertRaises(QueryExecutionError):
@@ -564,6 +584,7 @@ class TestUnifiedQueryEngineExecuteHybrid(unittest.TestCase):
     def test_hybrid_unexpected_error_raises_query_execution_error(self):
         """GIVEN hybrid_search.search that raises RuntimeError, THEN QueryExecutionError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryExecutionError
+
         engine = self._make_engine()
         engine.hybrid_search.search = MagicMock(side_effect=RuntimeError("fail"))
         with self.assertRaises(QueryExecutionError):
@@ -573,12 +594,14 @@ class TestUnifiedQueryEngineExecuteHybrid(unittest.TestCase):
 class TestUnifiedQueryEngineExecuteGraphRAG(unittest.TestCase):
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         backend = MagicMock()
         return UnifiedQueryEngine(backend=backend)
 
     def test_graphrag_without_llm_succeeds(self):
         """GIVEN no llm_processor, WHEN execute_graphrag called, THEN return GraphRAGResult with reasoning=None."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import GraphRAGResult
+
         engine = self._make_engine()
         engine.llm_processor = None
         # Mock hybrid search to return successful result
@@ -591,6 +614,7 @@ class TestUnifiedQueryEngineExecuteGraphRAG(unittest.TestCase):
     def test_graphrag_with_llm_calls_llm_reason(self):
         """GIVEN llm_processor, WHEN execute_graphrag called, THEN llm_processor.reason is called."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import GraphRAGResult
+
         engine = self._make_engine()
         mock_llm = MagicMock()
         mock_llm.reason.return_value = {"answer": "IPFS is ...", "confidence": 0.9, "evidence": []}
@@ -603,6 +627,7 @@ class TestUnifiedQueryEngineExecuteGraphRAG(unittest.TestCase):
     def test_graphrag_llm_attribute_error_degrades_gracefully(self):
         """GIVEN llm_processor.reason raising AttributeError, WHEN execute_graphrag, THEN still succeeds."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import GraphRAGResult
+
         engine = self._make_engine()
         mock_llm = MagicMock()
         mock_llm.reason.side_effect = AttributeError("no reason")
@@ -618,12 +643,14 @@ class TestUnifiedQueryEngineExecuteGraphRAG(unittest.TestCase):
 # 4.  ValidatedKnowledgeGraphExtractor (extraction/validator.py)
 # ===========================================================================
 
+
 class TestValidatedKGExtractorInit(unittest.TestCase):
     def test_init_without_sparql_validator(self):
         """GIVEN SPARQLValidator not importable, WHEN creating validator extractor, THEN validator_available=False."""
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         with patch(
             "ipfs_datasets_py.knowledge_graphs.extraction.validator.KnowledgeGraphExtractorWithValidation.__init__",
         ) as _:
@@ -638,6 +665,7 @@ class TestValidatedKGExtractorInit(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         vke = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         self.assertIsNone(vke.tracer)
 
@@ -647,7 +675,10 @@ class TestValidatedKGExtractorExtractKG(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
-        self.vke = KnowledgeGraphExtractorWithValidation(use_tracer=False, validate_during_extraction=False)
+
+        self.vke = KnowledgeGraphExtractorWithValidation(
+            use_tracer=False, validate_during_extraction=False
+        )
 
     def test_basic_extraction_returns_dict_with_knowledge_graph(self):
         """GIVEN simple text, WHEN calling extract_knowledge_graph, THEN return dict with 'knowledge_graph'."""
@@ -674,7 +705,10 @@ class TestValidatedKGExtractorExtractKG(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
-        vke = KnowledgeGraphExtractorWithValidation(use_tracer=False, validate_during_extraction=True)
+
+        vke = KnowledgeGraphExtractorWithValidation(
+            use_tracer=False, validate_during_extraction=True
+        )
         vke.validator = None  # Force no validator
         vke.validator_available = False
         result = vke.extract_knowledge_graph("Alice works at IPFS.")
@@ -691,6 +725,7 @@ class TestValidatedKGExtractorValidateAgainstWikidata(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         vke = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         vke.validator = None
         result = vke.validate_against_wikidata("Alice", "person")
@@ -704,7 +739,10 @@ class TestValidatedKGExtractorExtractFromDocuments(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
-        vke = KnowledgeGraphExtractorWithValidation(use_tracer=False, validate_during_extraction=False)
+
+        vke = KnowledgeGraphExtractorWithValidation(
+            use_tracer=False, validate_during_extraction=False
+        )
         docs = [{"text": "Alice published a paper on IPFS."}]
         result = vke.extract_from_documents(docs)
         self.assertIn("knowledge_graph", result)
@@ -714,7 +752,10 @@ class TestValidatedKGExtractorExtractFromDocuments(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
-        vke = KnowledgeGraphExtractorWithValidation(use_tracer=False, validate_during_extraction=False)
+
+        vke = KnowledgeGraphExtractorWithValidation(
+            use_tracer=False, validate_during_extraction=False
+        )
         vke.extractor.extract_from_documents = MagicMock(side_effect=RuntimeError("fail"))
         result = vke.extract_from_documents([{"text": "some text"}])
         self.assertIn("error", result)
@@ -725,6 +766,7 @@ class TestValidatedKGExtractorApplyValidationCorrections(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         self.vke = KnowledgeGraphExtractorWithValidation(use_tracer=False)
 
     def _make_simple_kg(self):
@@ -743,16 +785,14 @@ class TestValidatedKGExtractorApplyValidationCorrections(unittest.TestCase):
         """GIVEN property correction for existing entity, WHEN applying, THEN property updated."""
         kg = KnowledgeGraph(name="test")
         entity = kg.add_entity(entity_type="person", name="Alice", properties={"role": "student"})
-        corrections = {
-            "entities": {
-                entity.entity_id: {
-                    "suggestions": {"role": "researcher"}
-                }
-            }
-        }
+        corrections = {"entities": {entity.entity_id: {"suggestions": {"role": "researcher"}}}}
         corrected = self.vke.apply_validation_corrections(kg, corrections)
         corrected_entity = corrected.get_entity_by_id(entity.entity_id)
-        if corrected_entity and hasattr(corrected_entity, "properties") and corrected_entity.properties:
+        if (
+            corrected_entity
+            and hasattr(corrected_entity, "properties")
+            and corrected_entity.properties
+        ):
             # If property was updated successfully
             self.assertEqual(corrected_entity.properties.get("role", "student"), "researcher")
 
@@ -770,7 +810,7 @@ class TestValidatedKGExtractorApplyValidationCorrections(unittest.TestCase):
             "relationships": {
                 rel.relationship_id: {
                     "relationship_type": "knows",
-                    "suggestions": "Consider using 'acquainted_with' instead"
+                    "suggestions": "Consider using 'acquainted_with' instead",
                 }
             }
         }
@@ -782,6 +822,7 @@ class TestValidatedKGExtractorApplyValidationCorrections(unittest.TestCase):
 # ===========================================================================
 # 5.  IPLDBackend (storage/ipld_backend.py)
 # ===========================================================================
+
 
 class TestIPLDBackendMakeKey(unittest.TestCase):
     def test_make_key_adds_namespace(self):
@@ -821,12 +862,15 @@ class TestIPLDBackendWithMockRouter(unittest.TestCase):
         mock_ipfs.add_bytes.return_value = "bafytest456"
         mock_ipfs.pin.return_value = None
         mock_ipfs.block_get.return_value = b'{"key": "value"}'
-        with patch(
-            "ipfs_datasets_py.knowledge_graphs.storage.ipld_backend.get_ipfs_backend",
-            return_value=mock_ipfs,
-        ), patch(
-            "ipfs_datasets_py.knowledge_graphs.storage.ipld_backend.RouterDeps",
-            return_value=mock_deps,
+        with (
+            patch(
+                "ipfs_datasets_py.knowledge_graphs.storage.ipld_backend.get_ipfs_backend",
+                return_value=mock_ipfs,
+            ),
+            patch(
+                "ipfs_datasets_py.knowledge_graphs.storage.ipld_backend.RouterDeps",
+                return_value=mock_deps,
+            ),
         ):
             backend = IPLDBackend(deps=mock_deps, database="test", **kwargs)
             backend._backend = mock_ipfs
@@ -862,6 +906,7 @@ class TestIPLDBackendWithMockRouter(unittest.TestCase):
     def test_store_unsupported_type_raises_serialization_error(self):
         """GIVEN unsupported type (set), WHEN calling store, THEN SerializationError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import SerializationError
+
         backend, _ = self._make_backend()
         with self.assertRaises((SerializationError, TypeError)):
             backend.store({1, 2, 3})  # set is not JSON serializable
@@ -893,6 +938,7 @@ class TestIPLDBackendWithMockRouter(unittest.TestCase):
     def test_retrieve_connection_error_raises_ipld_storage_error(self):
         """GIVEN cat raises ConnectionError, WHEN retrieve called, THEN IPLDStorageError raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import IPLDStorageError
+
         backend, mock_ipfs = self._make_backend()
         mock_ipfs.block_get.side_effect = AttributeError("no block_get")
         mock_ipfs.cat.side_effect = ConnectionError("connection refused")

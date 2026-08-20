@@ -15,7 +15,13 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 def _result() -> EntityExtractionResult:
     return EntityExtractionResult(
         entities=[
-            Entity(id="e1", type="Person", text="Alice", confidence=0.9, properties={"role": "engineer"}),
+            Entity(
+                id="e1",
+                type="Person",
+                text="Alice",
+                confidence=0.9,
+                properties={"role": "engineer"},
+            ),
             Entity(id="e2", type="Person", text="Bob", confidence=0.4),
             Entity(id="e3", type="Company", text="Acme", confidence=0.7, properties={"hq": "NY"}),
         ],
@@ -28,8 +34,12 @@ def _result() -> EntityExtractionResult:
 
 
 def test_extraction_config_relaxed_and_tightened_clamp_threshold() -> None:
-    assert ExtractionConfig(confidence_threshold=0.05).relaxed(delta=0.2).confidence_threshold == 0.0
-    assert ExtractionConfig(confidence_threshold=0.95).tightened(delta=0.2).confidence_threshold == 1.0
+    assert (
+        ExtractionConfig(confidence_threshold=0.05).relaxed(delta=0.2).confidence_threshold == 0.0
+    )
+    assert (
+        ExtractionConfig(confidence_threshold=0.95).tightened(delta=0.2).confidence_threshold == 1.0
+    )
 
 
 def test_entity_result_top_confidence_properties_and_entity_ids() -> None:

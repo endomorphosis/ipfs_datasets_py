@@ -106,15 +106,15 @@ Fine-grained control over extraction behavior:
 from ipfs_datasets_py.optimizers.graphrag import ExtractionConfig
 
 config = ExtractionConfig(
-    confidence_threshold=0.7,    # Keep entities with 70%+ confidence
-    max_entities=500,            # Cap at 500 entities
-    max_relationships=1000,      # Cap at 1000 relationships
-    window_size=3,               # 3-word context window for relationships
-    sentence_window=2,           # Limit co-occurrence to +/- 2 sentences (0 disables)
-    min_entity_length=2,         # Minimum 2-character entities
+    confidence_threshold=0.7,  # Keep entities with 70%+ confidence
+    max_entities=500,  # Cap at 500 entities
+    max_relationships=1000,  # Cap at 1000 relationships
+    window_size=3,  # 3-word context window for relationships
+    sentence_window=2,  # Limit co-occurrence to +/- 2 sentences (0 disables)
+    min_entity_length=2,  # Minimum 2-character entities
     domain_vocab=["legal", "entity", "obligation"],  # Domain-specific terms
     enable_parallel_inference=True,  # Enable parallel relationship inference (4x+ speedup)
-    max_workers=4,               # Number of worker threads (default: 4)
+    max_workers=4,  # Number of worker threads (default: 4)
 )
 ```
 
@@ -127,9 +127,9 @@ config = ExtractionConfig(
 ```python
 config = ExtractionConfig(
     enable_parallel_inference=True,  # Parallel processing enabled
-    max_workers=8,                   # Use 8 worker threads
-    sentence_window=2,               # Entities must be within 2 sentences
-    confidence_threshold=0.6,        # Lower threshold to explore more patterns
+    max_workers=8,  # Use 8 worker threads
+    sentence_window=2,  # Entities must be within 2 sentences
+    confidence_threshold=0.6,  # Lower threshold to explore more patterns
 )
 ```
 
@@ -186,10 +186,10 @@ from ipfs_datasets_py.optimizers.common.profiling import ProfilingConfig, profil
 ProfilingConfig.enable = True
 ProfilingConfig.track_memory = True
 
+
 # Use @profile_method decorator on functions
 @profile_method(group="extraction")
-def extract_entities(text, context):
-    ...
+def extract_entities(text, context): ...
 ```
 
 ### Structured Logging
@@ -363,7 +363,7 @@ finance_context = OntologyGenerationContext(
     data_source="financial_report.pdf",
     data_type="pdf",
     domain="finance",
-   extraction_strategy="rule_based",
+    extraction_strategy="rule_based",
 )
 ```
 

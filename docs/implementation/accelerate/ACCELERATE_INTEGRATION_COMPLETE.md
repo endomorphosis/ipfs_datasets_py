@@ -24,10 +24,7 @@ This integration enables distributed AI compute across the entire datasets libra
 from ipfs_datasets_py.embeddings import create_embeddings
 
 # Automatically uses accelerate if available
-processor = create_embeddings(
-    resources={"use_accelerate": True},
-    metadata={}
-)
+processor = create_embeddings(resources={"use_accelerate": True}, metadata={})
 ```
 
 ### 2. Multi-Model Embeddings ✅
@@ -44,10 +41,7 @@ processor = create_embeddings(
 from ipfs_datasets_py.ipfs_embeddings_py import MultiModelEmbeddingGenerator
 
 # Uses accelerate for distributed embeddings
-generator = MultiModelEmbeddingGenerator(
-    use_accelerate=True,
-    device="auto"
-)
+generator = MultiModelEmbeddingGenerator(use_accelerate=True, device="auto")
 ```
 
 ### 3. LLM Interface ✅
@@ -123,8 +117,9 @@ try:
     from ..accelerate_integration import (
         AccelerateManager,
         is_accelerate_available,
-        get_accelerate_status
+        get_accelerate_status,
     )
+
     HAVE_ACCELERATE = True
 except ImportError:
     HAVE_ACCELERATE = False
@@ -175,10 +170,7 @@ python your_script.py
 ### Per-Module Disable
 ```python
 # Disable for specific module
-processor = create_embeddings(
-    resources={"use_accelerate": False},
-    metadata={}
-)
+processor = create_embeddings(resources={"use_accelerate": False}, metadata={})
 ```
 
 ### Import-Time Detection

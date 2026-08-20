@@ -44,10 +44,10 @@ def main() -> int:
     signal.signal(signal.SIGINT, _shutdown)
 
     try:
-      while running:
-        time.sleep(1)
+        while running:
+            time.sleep(1)
     finally:
-      dashboard.stop()
+        dashboard.stop()
 
     return 0
 

@@ -79,9 +79,7 @@ def _distribution_cosine_similarity(
     right_norm = math.sqrt(sum(value * value for value in right_values))
     if left_norm <= 0.0 or right_norm <= 0.0:
         return math.nan
-    return sum(a * b for a, b in zip(left_values, right_values)) / (
-        left_norm * right_norm
-    )
+    return sum(a * b for a, b in zip(left_values, right_values)) / (left_norm * right_norm)
 
 
 def _learned_ir_family_gap_block(losses: Mapping[str, Any]) -> dict[str, Any]:
@@ -116,9 +114,7 @@ def _learned_ir_family_gap_block(losses: Mapping[str, Any]) -> dict[str, Any]:
             ce_excess_by_family.items(),
             key=lambda item: (item[1], item[0]),
         )
-        block["family_cross_entropy_excess_by_family"] = dict(
-            sorted(ce_excess_by_family.items())
-        )
+        block["family_cross_entropy_excess_by_family"] = dict(sorted(ce_excess_by_family.items()))
         block["worst_family_cross_entropy_excess_loss"] = worst_value
         block["worst_family_cross_entropy_excess_name"] = worst_family
     if cosine_gap_by_family:
@@ -226,13 +222,9 @@ def _projection_rejection_summary(report: Mapping[str, Any]) -> dict[str, Any]:
                             attempt.get("line_search_multiplier"),
                             0.0,
                         ),
-                        "line_search_refinement": bool(
-                            attempt.get("line_search_refinement")
-                        ),
+                        "line_search_refinement": bool(attempt.get("line_search_refinement")),
                         "objective_delta": objective_delta,
-                        "pareto_regressions": dict(pareto)
-                        if isinstance(pareto, Mapping)
-                        else {},
+                        "pareto_regressions": dict(pareto) if isinstance(pareto, Mapping) else {},
                         "update": str(attempt.get("update") or ""),
                     }
     return {
@@ -400,8 +392,7 @@ def _queue_stats(path: Path) -> dict[str, Any]:
     for event in events:
         metadata = event.get("metadata") if isinstance(event.get("metadata"), dict) else {}
         if (
-            str(event.get("action") or "")
-            == "rescue_failed_program_synthesis_validation"
+            str(event.get("action") or "") == "rescue_failed_program_synthesis_validation"
             or str(metadata.get("source") or "") == "failed_validation_rescue_v1"
         ):
             rescue_todo_count += 1
@@ -426,8 +417,7 @@ def _queue_stats(path: Path) -> dict[str, Any]:
         if status == "pending":
             pending_by_scope[scope] += 1
             if (
-                str(event.get("action") or "")
-                == "rescue_failed_program_synthesis_validation"
+                str(event.get("action") or "") == "rescue_failed_program_synthesis_validation"
                 or str(metadata.get("source") or "") == "failed_validation_rescue_v1"
             ):
                 pending_rescue_by_scope[scope] += 1
@@ -477,9 +467,7 @@ def _trial_reports(log_dir: Path, run_id: str) -> list[dict[str, Any]]:
             if event.get("event") == "cycle"
         ]
         cycle_durations = [value for value in cycle_durations if math.isfinite(value)]
-        active_heartbeat_age = _iso_age_seconds(
-            summary.get("active_cycle_last_heartbeat_at")
-        )
+        active_heartbeat_age = _iso_age_seconds(summary.get("active_cycle_last_heartbeat_at"))
         reports.append(
             {
                 "run_id": summary.get("run_id") or path.stem,
@@ -491,16 +479,11 @@ def _trial_reports(log_dir: Path, run_id: str) -> list[dict[str, Any]]:
                     summary.get("active_cycle_elapsed_seconds"),
                     math.nan,
                 ),
-                "active_cycle_last_heartbeat_at": summary.get(
-                    "active_cycle_last_heartbeat_at"
-                ),
+                "active_cycle_last_heartbeat_at": summary.get("active_cycle_last_heartbeat_at"),
                 "active_cycle_phase": summary.get("active_cycle_phase"),
                 "active_cycle_stale": bool(
                     summary.get("active_cycle") is not None
-                    and (
-                        not math.isfinite(active_heartbeat_age)
-                        or active_heartbeat_age > 600.0
-                    )
+                    and (not math.isfinite(active_heartbeat_age) or active_heartbeat_age > 600.0)
                 ),
                 "age_seconds": _mtime_age_seconds(path),
                 "bridge_workers": int(summary.get("autoencoder_bridge_workers", 0) or 0),
@@ -549,9 +532,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             if isinstance(latest_cycle.get("compiler_ir_validation"), dict)
             else {}
         )
-    latest_compiler_ir_guided_validation = summary.get(
-        "latest_compiler_ir_guided_validation"
-    )
+    latest_compiler_ir_guided_validation = summary.get("latest_compiler_ir_guided_validation")
     if not isinstance(latest_compiler_ir_guided_validation, dict):
         latest_compiler_ir_guided_validation = (
             latest_cycle.get("compiler_ir_guided_validation")
@@ -572,27 +553,21 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             if isinstance(latest_cycle.get("compiler_ir_guidance_canary"), dict)
             else {}
         )
-    latest_guidance_promotion = summary.get(
-        "latest_compiler_ir_guidance_promotion"
-    )
+    latest_guidance_promotion = summary.get("latest_compiler_ir_guidance_promotion")
     if not isinstance(latest_guidance_promotion, dict):
         latest_guidance_promotion = (
             latest_cycle.get("compiler_ir_guidance_promotion")
             if isinstance(latest_cycle.get("compiler_ir_guidance_promotion"), dict)
             else {}
         )
-    latest_guidance_scope_hints = summary.get(
-        "latest_compiler_ir_guidance_scope_hints"
-    )
+    latest_guidance_scope_hints = summary.get("latest_compiler_ir_guidance_scope_hints")
     if not isinstance(latest_guidance_scope_hints, dict):
         latest_guidance_scope_hints = (
             latest_cycle.get("compiler_ir_guidance_scope_hints")
             if isinstance(latest_cycle.get("compiler_ir_guidance_scope_hints"), dict)
             else {}
         )
-    latest_guidance_distillation = summary.get(
-        "latest_compiler_ir_guidance_distillation"
-    )
+    latest_guidance_distillation = summary.get("latest_compiler_ir_guidance_distillation")
     if not isinstance(latest_guidance_distillation, dict):
         latest_guidance_distillation = (
             latest_cycle.get("compiler_ir_guidance_distillation")
@@ -618,9 +593,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
                 "program_synthesis_preinsert_deduped_count"
             ),
             "seeded_count": latest_cycle.get("program_synthesis_seeded_count"),
-            "semantic_deduped_count": latest_cycle.get(
-                "program_synthesis_semantic_deduped_count"
-            ),
+            "semantic_deduped_count": latest_cycle.get("program_synthesis_semantic_deduped_count"),
             "failed_validation_rescue_deduped_count": latest_cycle.get(
                 "failed_validation_rescue_deduped_count"
             ),
@@ -690,12 +663,9 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         _finite_float(block.get("view_cross_entropy_loss"), math.nan)
         for block in learned_ir_history
     ]
-    learned_ir_ce_history = [
-        value for value in learned_ir_ce_history if math.isfinite(value)
-    ]
+    learned_ir_ce_history = [value for value in learned_ir_ce_history if math.isfinite(value)]
     learned_ir_cosine_history = [
-        _finite_float(block.get("view_cosine_similarity"), math.nan)
-        for block in learned_ir_history
+        _finite_float(block.get("view_cosine_similarity"), math.nan) for block in learned_ir_history
     ]
     learned_ir_cosine_history = [
         value for value in learned_ir_cosine_history if math.isfinite(value)
@@ -712,18 +682,14 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         for block in learned_ir_history
     ]
     learned_ir_worst_family_ce_excess_history = [
-        value
-        for value in learned_ir_worst_family_ce_excess_history
-        if math.isfinite(value)
+        value for value in learned_ir_worst_family_ce_excess_history if math.isfinite(value)
     ]
     learned_ir_worst_family_cosine_gap_history = [
         _finite_float(block.get("worst_family_cosine_gap_loss"), math.nan)
         for block in learned_ir_history
     ]
     learned_ir_worst_family_cosine_gap_history = [
-        value
-        for value in learned_ir_worst_family_cosine_gap_history
-        if math.isfinite(value)
+        value for value in learned_ir_worst_family_cosine_gap_history if math.isfinite(value)
     ]
     cycle_durations = [
         _finite_float(event.get("duration_seconds"))
@@ -731,9 +697,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         if event.get("event") == "cycle"
     ]
     cycle_durations = [value for value in cycle_durations if math.isfinite(value)]
-    active_heartbeat_age = _iso_age_seconds(
-        summary.get("active_cycle_last_heartbeat_at")
-    )
+    active_heartbeat_age = _iso_age_seconds(summary.get("active_cycle_last_heartbeat_at"))
     return {
         "run_id": final_run_id,
         "summary_path": str(summary_path),
@@ -745,16 +709,11 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             summary.get("active_cycle_elapsed_seconds"),
             math.nan,
         ),
-        "active_cycle_last_heartbeat_at": summary.get(
-            "active_cycle_last_heartbeat_at"
-        ),
+        "active_cycle_last_heartbeat_at": summary.get("active_cycle_last_heartbeat_at"),
         "active_cycle_phase": summary.get("active_cycle_phase"),
         "active_cycle_stale": bool(
             summary.get("active_cycle") is not None
-            and (
-                not math.isfinite(active_heartbeat_age)
-                or active_heartbeat_age > 600.0
-            )
+            and (not math.isfinite(active_heartbeat_age) or active_heartbeat_age > 600.0)
         ),
         "age_seconds": _mtime_age_seconds(summary_path) if summary_path.exists() else None,
         "bridge_workers": int(summary.get("autoencoder_bridge_workers", 0) or 0),
@@ -763,12 +722,8 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "best_validation_ir_ce": summary.get("best_validation_ir_ce"),
         "best_validation_ir_cosine": summary.get("best_validation_ir_cosine"),
         "best_validation_ir_guided_ce": summary.get("best_validation_ir_guided_ce"),
-        "best_validation_ir_guided_ce_excess": summary.get(
-            "best_validation_ir_guided_ce_excess"
-        ),
-        "best_validation_ir_guided_cosine": summary.get(
-            "best_validation_ir_guided_cosine"
-        ),
+        "best_validation_ir_guided_ce_excess": summary.get("best_validation_ir_guided_ce_excess"),
+        "best_validation_ir_guided_cosine": summary.get("best_validation_ir_guided_cosine"),
         "latest_logic_bridge_cache_hits": int(
             latest_logic_bridge_validation.get("cache_hits", 0) or 0
         ),
@@ -786,23 +741,15 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             latest_logic_bridge_validation.get("evaluation_seconds_mean"),
             math.nan,
         ),
-        "best_validation_ir_source_copy_loss": summary.get(
-            "best_validation_ir_source_copy_loss"
-        ),
-        "best_validation_learned_ir_view_ce": summary.get(
-            "best_validation_learned_ir_view_ce"
-        )
+        "best_validation_ir_source_copy_loss": summary.get("best_validation_ir_source_copy_loss"),
+        "best_validation_learned_ir_view_ce": summary.get("best_validation_learned_ir_view_ce")
         if summary.get("best_validation_learned_ir_view_ce") is not None
         else (min(learned_ir_ce_history) if learned_ir_ce_history else math.nan),
         "best_validation_learned_ir_view_cosine": summary.get(
             "best_validation_learned_ir_view_cosine"
         )
         if summary.get("best_validation_learned_ir_view_cosine") is not None
-        else (
-            max(learned_ir_cosine_history)
-            if learned_ir_cosine_history
-            else math.nan
-        ),
+        else (max(learned_ir_cosine_history) if learned_ir_cosine_history else math.nan),
         "best_validation_learned_ir_family_ce_excess": summary.get(
             "best_validation_learned_ir_family_ce_excess"
         )
@@ -927,12 +874,8 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             latest_compiler_ir_guided_validation.get("cosine_similarity"),
         ),
         "latest_compiler_ir_guided_copy_hack_penalty": _first_metric(
-            summary.get(
-                "latest_compiler_ir_guided_source_copy_reward_hack_penalty"
-            ),
-            latest_compiler_ir_guided_validation.get(
-                "source_copy_reward_hack_penalty"
-            ),
+            summary.get("latest_compiler_ir_guided_source_copy_reward_hack_penalty"),
+            latest_compiler_ir_guided_validation.get("source_copy_reward_hack_penalty"),
         ),
         "latest_compiler_ir_guidance_ce_delta": _first_metric(
             summary.get("latest_compiler_ir_guidance_ce_delta"),
@@ -961,8 +904,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         ),
         "latest_compiler_ir_guidance_promotion_allowed": bool(
             summary.get("latest_compiler_ir_guidance_promotion_allowed")
-            if summary.get("latest_compiler_ir_guidance_promotion_allowed")
-            is not None
+            if summary.get("latest_compiler_ir_guidance_promotion_allowed") is not None
             else latest_guidance_promotion.get("promotion_allowed", False)
         ),
         "latest_compiler_ir_guidance_promotion_block_reason": str(
@@ -971,8 +913,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             or "n/a"
         ),
         "latest_compiler_ir_guidance_distillation_path": str(
-            summary.get("latest_compiler_ir_guidance_distillation_path")
-            or ""
+            summary.get("latest_compiler_ir_guidance_distillation_path") or ""
         ),
         "latest_compiler_ir_guidance_distillation_deduped_count": int(
             summary.get("latest_compiler_ir_guidance_distillation_deduped_count")
@@ -1016,17 +957,13 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         ),
         "compiler_ir_guidance_distillation_seeded_total": int(
             summary.get("compiler_ir_guidance_distillation_seeded_total")
-            or latest_todo_generation.get(
-                "compiler_guidance_distillation_seeded_total"
-            )
+            or latest_todo_generation.get("compiler_guidance_distillation_seeded_total")
             or latest_cycle.get("compiler_ir_guidance_distillation_seeded_total")
             or 0
         ),
         "compiler_ir_guidance_distillation_deduped_total": int(
             summary.get("compiler_ir_guidance_distillation_deduped_total")
-            or latest_todo_generation.get(
-                "compiler_guidance_distillation_deduped_total"
-            )
+            or latest_todo_generation.get("compiler_guidance_distillation_deduped_total")
             or latest_cycle.get("compiler_ir_guidance_distillation_deduped_total")
             or 0
         ),
@@ -1057,19 +994,13 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "latest_compiler_ir_guidance_distillation": latest_guidance_distillation,
         "latest_compiler_ir_guidance_scope_hints": latest_guidance_scope_hints,
         "latest_compiler_ir_guided_family_ce_excess": _first_metric(
-            latest_compiler_ir_guided_validation.get(
-                "guidance_family_cross_entropy_excess_loss"
-            ),
+            latest_compiler_ir_guided_validation.get("guidance_family_cross_entropy_excess_loss"),
         ),
         "latest_compiler_ir_guided_frame_boost_count": _first_metric(
-            latest_compiler_ir_guided_validation.get(
-                "compiler_guidance_frame_boost_count"
-            ),
+            latest_compiler_ir_guided_validation.get("compiler_guidance_frame_boost_count"),
         ),
         "latest_compiler_ir_guided_semantic_overlay_count": _first_metric(
-            latest_compiler_ir_guided_validation.get(
-                "compiler_guidance_semantic_overlay_count"
-            ),
+            latest_compiler_ir_guided_validation.get("compiler_guidance_semantic_overlay_count"),
         ),
         "latest_compiler_ir_guided_frame_changed_count": int(
             latest_compiler_ir_guided_validation.get(
@@ -1084,9 +1015,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
                 {},
             )
             if isinstance(
-                latest_compiler_ir_guided_validation.get(
-                    "compiler_guidance_feature_groups"
-                ),
+                latest_compiler_ir_guided_validation.get("compiler_guidance_feature_groups"),
                 dict,
             )
             else {}
@@ -1097,9 +1026,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
                 {},
             )
             if isinstance(
-                latest_compiler_ir_guided_validation.get(
-                    "compiler_guidance_legal_ir_view_gaps"
-                ),
+                latest_compiler_ir_guided_validation.get("compiler_guidance_legal_ir_view_gaps"),
                 dict,
             )
             else {}
@@ -1110,9 +1037,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
                 {},
             )
             if isinstance(
-                latest_compiler_ir_guided_validation.get(
-                    "compiler_guidance_surface_features"
-                ),
+                latest_compiler_ir_guided_validation.get("compiler_guidance_surface_features"),
                 dict,
             )
             else {}
@@ -1136,9 +1061,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
                 {},
             )
             if isinstance(
-                latest_compiler_ir_guided_validation.get(
-                    "compiler_guidance_todo_routes"
-                ),
+                latest_compiler_ir_guided_validation.get("compiler_guidance_todo_routes"),
                 dict,
             )
             else {}
@@ -1164,9 +1087,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         ),
         "latest_learned_ir_worst_family_ce_excess_name": (
             summary.get("latest_learned_ir_worst_family_ce_excess_name")
-            or latest_learned_ir_validation.get(
-                "worst_family_cross_entropy_excess_name"
-            )
+            or latest_learned_ir_validation.get("worst_family_cross_entropy_excess_name")
             or ""
         ),
         "latest_learned_ir_worst_family_cosine_gap": _first_metric(
@@ -1178,12 +1099,9 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
             or latest_learned_ir_validation.get("worst_family_cosine_gap_name")
             or ""
         ),
-        "learning_rate_plateau_streak": int(
-            summary.get("learning_rate_plateau_streak", 0) or 0
-        ),
+        "learning_rate_plateau_streak": int(summary.get("learning_rate_plateau_streak", 0) or 0),
         "latest_feature_projection_accepted_epochs": int(
-            latest_feature_projection_report.get("accepted_epochs", 0)
-            or 0
+            latest_feature_projection_report.get("accepted_epochs", 0) or 0
         ),
         "latest_feature_projection_rejection_summary": _projection_rejection_summary(
             latest_feature_projection_report
@@ -1225,9 +1143,7 @@ def _final_report(log_dir: Path, queue_dir: Path, run_id: str) -> dict[str, Any]
         "latest_todo_generation": latest_todo_generation,
         "latest_queue_counts": summary.get("latest_queue_counts", {}),
         "latest_role_queue_counts": summary.get("latest_role_queue_counts", {}),
-        "cycle_duration_median": (
-            statistics.median(cycle_durations) if cycle_durations else None
-        ),
+        "cycle_duration_median": (statistics.median(cycle_durations) if cycle_durations else None),
         "cycle_duration_latest": cycle_durations[-1] if cycle_durations else None,
         "queue": _queue_stats(queue_path),
     }
@@ -1249,9 +1165,7 @@ def _recommendation(
     if trials and not final.get("summary_exists"):
         active_cycles = [int(item["cycles"]) for item in trials]
         zero_cycle = sum(1 for value in active_cycles if value == 0)
-        lines.append(
-            "Current phase looks like hyperparameter sweep: Codex workers should be 0."
-        )
+        lines.append("Current phase looks like hyperparameter sweep: Codex workers should be 0.")
         if zero_cycle:
             lines.append(
                 f"{zero_cycle}/{len(trials)} trials have not finished a first cycle yet; "
@@ -1271,9 +1185,7 @@ def _recommendation(
             final.get("latest_program_synthesis_preinsert_deduped_count", 0) or 0
         )
         plateau_streak = int(final.get("learning_rate_plateau_streak", 0) or 0)
-        accepted_epochs = int(
-            final.get("latest_feature_projection_accepted_epochs", 0) or 0
-        )
+        accepted_epochs = int(final.get("latest_feature_projection_accepted_epochs", 0) or 0)
         cycle_latest = final.get("cycle_duration_latest")
         if final.get("active_cycle_stale") and not counts:
             lines.append(
@@ -1299,7 +1211,11 @@ def _recommendation(
             lines.append(
                 "Queue depth is roughly matched to Codex capacity; keep Codex workers demand-weighted."
             )
-        if latest_seeded > 0 and latest_preinsert_deduped >= latest_seeded and pending <= max(5, codex_count):
+        if (
+            latest_seeded > 0
+            and latest_preinsert_deduped >= latest_seeded
+            and pending <= max(5, codex_count)
+        ):
             lines.append(
                 "TODO producer is active, but visible backlog can stay flat because current-cycle "
                 "dedupe plus Codex consumption is matching or exceeding seeding."
@@ -1315,8 +1231,7 @@ def _recommendation(
             regression_counts = rejection_summary.get("pareto_regression_counts")
             if isinstance(regression_counts, dict) and regression_counts:
                 top_regressions = ", ".join(
-                    f"{name}={count}"
-                    for name, count in list(regression_counts.items())[:4]
+                    f"{name}={count}" for name, count in list(regression_counts.items())[:4]
                 )
                 lines.append(
                     "Projection guard rejected all feature updates; dominant "
@@ -1324,9 +1239,7 @@ def _recommendation(
                 )
             best_rejected = rejection_summary.get("best_rejected_attempt")
             if isinstance(best_rejected, dict) and best_rejected:
-                refinement_count = int(
-                    rejection_summary.get("refinement_attempt_count", 0) or 0
-                )
+                refinement_count = int(rejection_summary.get("refinement_attempt_count", 0) or 0)
                 lines.append(
                     "Best rejected projection attempt: "
                     f"update={best_rejected.get('update', 'n/a')} "
@@ -1334,18 +1247,10 @@ def _recommendation(
                     f"objective_delta={_finite_float(best_rejected.get('objective_delta'), 0.0):.6g} "
                     f"refined_attempts={refinement_count}."
                 )
-        guidance_applied = int(
-            final.get("latest_compiler_ir_guided_applied_count", 0) or 0
-        )
-        guidance_requested = int(
-            final.get("latest_compiler_ir_guided_requested_count", 0) or 0
-        )
-        guidance_produced = int(
-            final.get("latest_compiler_ir_guided_produced_count", 0) or 0
-        )
-        guidance_failures = int(
-            final.get("latest_compiler_ir_guided_failures", 0) or 0
-        )
+        guidance_applied = int(final.get("latest_compiler_ir_guided_applied_count", 0) or 0)
+        guidance_requested = int(final.get("latest_compiler_ir_guided_requested_count", 0) or 0)
+        guidance_produced = int(final.get("latest_compiler_ir_guided_produced_count", 0) or 0)
+        guidance_failures = int(final.get("latest_compiler_ir_guided_failures", 0) or 0)
         guidance_ce_delta = _finite_float(
             final.get("latest_compiler_ir_guidance_ce_delta"),
             math.nan,
@@ -1361,9 +1266,7 @@ def _recommendation(
                 "and codec guidance-summary filtering before tuning guidance metrics."
             )
         if guidance_applied > 0:
-            guidance_gate = str(
-                final.get("latest_compiler_ir_guidance_quality_gate") or ""
-            )
+            guidance_gate = str(final.get("latest_compiler_ir_guidance_quality_gate") or "")
             if guidance_gate == "fail":
                 lines.append(
                     "Autoencoder guidance quality gate is failing; keep guidance in canary "
@@ -1440,23 +1343,16 @@ def _recommendation(
                             f"{activation_seeded_total} TODOs cumulatively; a zero latest "
                             "seed count can be normal once those routes are deduped."
                         )
-            elif (
-                (math.isfinite(guidance_ce_delta) and guidance_ce_delta > 0.0)
-                or (
-                    math.isfinite(guidance_cosine_delta)
-                    and guidance_cosine_delta > 0.0
-                )
+            elif (math.isfinite(guidance_ce_delta) and guidance_ce_delta > 0.0) or (
+                math.isfinite(guidance_cosine_delta) and guidance_cosine_delta > 0.0
             ):
                 lines.append(
                     "Autoencoder guidance is improving at least one compiler metric; "
                     "promote those guided slots into deterministic parser/decompiler rules."
                 )
-            promotion_allowed = bool(
-                final.get("latest_compiler_ir_guidance_promotion_allowed")
-            )
+            promotion_allowed = bool(final.get("latest_compiler_ir_guidance_promotion_allowed"))
             promotion_reason = str(
-                final.get("latest_compiler_ir_guidance_promotion_block_reason")
-                or ""
+                final.get("latest_compiler_ir_guidance_promotion_block_reason") or ""
             )
             if promotion_allowed:
                 lines.append(
@@ -1497,8 +1393,7 @@ def _recommendation(
             scope_hints = final.get("latest_compiler_ir_guidance_scope_hints")
             if isinstance(scope_hints, dict) and scope_hints.get("scope_counts"):
                 hot_guidance = ", ".join(
-                    f"{scope}={count}"
-                    for scope, count in scope_hints["scope_counts"].items()
+                    f"{scope}={count}" for scope, count in scope_hints["scope_counts"].items()
                 )
                 lines.append(
                     f"Learned guidance is pointing at Codex scopes: {hot_guidance}. "
@@ -1516,8 +1411,7 @@ def _recommendation(
             lines.append(f"Hot pending scopes: {hot}.")
         if queue.get("pending_rescue_by_scope"):
             rescue_hot = ", ".join(
-                f"{scope}={count}"
-                for scope, count in queue["pending_rescue_by_scope"].items()
+                f"{scope}={count}" for scope, count in queue["pending_rescue_by_scope"].items()
             )
             lines.append(
                 f"Pending failed-validation rescue scopes: {rescue_hot}. Drain these "
@@ -1526,20 +1420,12 @@ def _recommendation(
         failed_count = int(queue.get("status_counts", {}).get("failed_validation", 0) or 0)
         if failed_count > 0:
             failed_scopes = queue.get("failed_by_scope", {})
-            hot_failed = ", ".join(
-                f"{scope}={count}" for scope, count in failed_scopes.items()
-            )
+            hot_failed = ", ".join(f"{scope}={count}" for scope, count in failed_scopes.items())
             suffix = f" Hot failed scopes: {hot_failed}." if hot_failed else ""
             rescued_count = int(queue.get("failed_validation_rescued_count", 0) or 0)
-            unrescued_count = int(
-                queue.get("failed_validation_unrescued_count", 0) or 0
-            )
-            rescue_seeded = int(
-                final.get("latest_failed_validation_rescue_seeded_count", 0) or 0
-            )
-            rescue_deduped = int(
-                final.get("latest_failed_validation_rescue_deduped_count", 0) or 0
-            )
+            unrescued_count = int(queue.get("failed_validation_unrescued_count", 0) or 0)
+            rescue_seeded = int(final.get("latest_failed_validation_rescue_seeded_count", 0) or 0)
+            rescue_deduped = int(final.get("latest_failed_validation_rescue_deduped_count", 0) or 0)
             if unrescued_count > 0:
                 lines.append(
                     f"{unrescued_count}/{failed_count} failed-validation TODOs still need "
@@ -1756,37 +1642,20 @@ def _print_report(report: dict[str, Any]) -> None:
                 f"{final['latest_compiler_ir_guidance_legal_ir_view_gaps']}"
             )
         if final["latest_compiler_ir_guidance_todo_routes"]:
-            print(
-                "  guidance_todo_routes="
-                f"{final['latest_compiler_ir_guidance_todo_routes']}"
-            )
+            print(f"  guidance_todo_routes={final['latest_compiler_ir_guidance_todo_routes']}")
         scope_hints = final.get("latest_compiler_ir_guidance_scope_hints")
         if isinstance(scope_hints, dict) and scope_hints.get("scope_counts"):
             print(f"  guidance_scope_hints={scope_hints['scope_counts']}")
         attribution = final.get("latest_compiler_ir_guidance_attribution")
         if isinstance(attribution, dict) and attribution.get("legal_ir_view_gaps"):
-            print(
-                "  guidance_attribution_legal_ir_view_gaps="
-                f"{attribution['legal_ir_view_gaps']}"
-            )
+            print(f"  guidance_attribution_legal_ir_view_gaps={attribution['legal_ir_view_gaps']}")
         if isinstance(attribution, dict) and attribution.get("semantic_overlay_terms"):
-            print(
-                "  guidance_attribution_overlay_terms="
-                f"{attribution['semantic_overlay_terms']}"
-            )
+            print(f"  guidance_attribution_overlay_terms={attribution['semantic_overlay_terms']}")
         if isinstance(attribution, dict) and attribution.get("todo_routes"):
-            print(
-                "  guidance_attribution_todo_routes="
-                f"{attribution['todo_routes']}"
-            )
+            print(f"  guidance_attribution_todo_routes={attribution['todo_routes']}")
         distillation = final.get("latest_compiler_ir_guidance_distillation")
-        if isinstance(distillation, dict) and distillation.get(
-            "guidance_attribution_summary"
-        ):
-            print(
-                "  guidance_attribution_summary="
-                f"{distillation['guidance_attribution_summary']}"
-            )
+        if isinstance(distillation, dict) and distillation.get("guidance_attribution_summary"):
+            print(f"  guidance_attribution_summary={distillation['guidance_attribution_summary']}")
         if isinstance(distillation, dict) and distillation.get("top_todo_routes"):
             print(
                 "  guidance_distillation_top_routes="
@@ -1794,16 +1663,12 @@ def _print_report(report: dict[str, Any]) -> None:
                 "augmented_from_features="
                 f"{bool(distillation.get('todo_routes_augmented_from_features'))}"
             )
-        if isinstance(distillation, dict) and distillation.get(
-            "top_semantic_overlay_terms"
-        ):
+        if isinstance(distillation, dict) and distillation.get("top_semantic_overlay_terms"):
             print(
                 "  guidance_distillation_overlay_terms="
                 f"{distillation['top_semantic_overlay_terms']}"
             )
-        distillation_path = final.get(
-            "latest_compiler_ir_guidance_distillation_path"
-        )
+        distillation_path = final.get("latest_compiler_ir_guidance_distillation_path")
         if distillation_path:
             print(f"  guidance_distillation_artifact={distillation_path}")
         print(
@@ -1836,9 +1701,7 @@ def _print_report(report: dict[str, Any]) -> None:
             f"plateau_streak={final['learning_rate_plateau_streak']}"
         )
         rejection_summary = final.get("latest_feature_projection_rejection_summary")
-        if isinstance(rejection_summary, dict) and rejection_summary.get(
-            "attempted_count"
-        ):
+        if isinstance(rejection_summary, dict) and rejection_summary.get("attempted_count"):
             print(
                 "  projection_rejections="
                 f"attempted={rejection_summary.get('attempted_count', 0)} "
@@ -1851,9 +1714,7 @@ def _print_report(report: dict[str, Any]) -> None:
         print(f"  queue_status={final['queue']['status_counts']}")
         print(f"  pending_by_scope={final['queue']['pending_by_scope']}")
         if final["queue"].get("pending_rescue_by_scope"):
-            print(
-                f"  pending_rescue_by_scope={final['queue']['pending_rescue_by_scope']}"
-            )
+            print(f"  pending_rescue_by_scope={final['queue']['pending_rescue_by_scope']}")
         if final["queue"].get("failed_by_scope"):
             print(f"  failed_by_scope={final['queue']['failed_by_scope']}")
             print(
@@ -1863,9 +1724,7 @@ def _print_report(report: dict[str, Any]) -> None:
                 f"rescue_todos={final['queue'].get('rescue_todo_count', 0)}"
             )
         if final["queue"].get("failed_unrescued_by_scope"):
-            print(
-                f"  failed_unrescued_by_scope={final['queue']['failed_unrescued_by_scope']}"
-            )
+            print(f"  failed_unrescued_by_scope={final['queue']['failed_unrescued_by_scope']}")
         if final["queue"].get("failed_by_action"):
             print(f"  failed_by_action={final['queue']['failed_by_action']}")
         if final["queue"].get("failed_by_reason"):

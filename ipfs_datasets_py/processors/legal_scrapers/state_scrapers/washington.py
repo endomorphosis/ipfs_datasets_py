@@ -146,34 +146,40 @@ class WashingtonScraper(BaseStateScraper):
             if self._SECTION_CITE_RE.match(section_number):
                 filtered.append(statute)
         return filtered
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Washington's legislative website."""
         return "https://app.leg.wa.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Washington."""
-        return [{
-            "name": "Revised Code of Washington",
-            "url": f"{self.get_base_url()}/RCW/default.aspx?cite=9A.32.030",
-            "type": "Code"
-        }]
-    
-    async def scrape_code(self, code_name: str, code_url: str, max_statutes: int | None = None) -> List[NormalizedStatute]:
+        return [
+            {
+                "name": "Revised Code of Washington",
+                "url": f"{self.get_base_url()}/RCW/default.aspx?cite=9A.32.030",
+                "type": "Code",
+            }
+        ]
+
+    async def scrape_code(
+        self, code_name: str, code_url: str, max_statutes: int | None = None
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Washington's legislative website.
-        
+
         Washington RCW database uses JavaScript navigation, so we use Playwright.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
         return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
         if not self._full_corpus_enabled() and max_statutes is None:
-            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=int(return_threshold))
+            direct = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=int(return_threshold)
+            )
             if direct:
                 return direct[: int(return_threshold)]
 
@@ -221,7 +227,9 @@ class WashingtonScraper(BaseStateScraper):
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "Wash. Rev. Code", max_sections=fallback_scan_limit)
+            statutes = await self._generic_scrape(
+                code_name, candidate, "Wash. Rev. Code", max_sections=fallback_scan_limit
+            )
             statutes = self._filter_section_level(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
@@ -257,7 +265,9 @@ class WashingtonScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         title_links = await self._discover_title_links()
         self.logger.info("Washington official index: discovered %s title links", len(title_links))
-        resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
+        resumed = self._load_partial_checkpoint_statutes(
+            code_name=code_name, max_statutes=max_statutes
+        )
         checkpoint_progress = self._load_partial_checkpoint_progress()
         statutes: List[NormalizedStatute] = []
         seen_keys: set[str] = set()
@@ -286,7 +296,9 @@ class WashingtonScraper(BaseStateScraper):
         resume_titles_scanned = max(0, int(checkpoint_progress.get("titles_scanned") or 0))
         resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
         resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
-        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        resume_discovered_sections = max(
+            0, int(checkpoint_progress.get("discovered_sections") or 0)
+        )
         title_rewind = max(0, int(self._env_int("STATE_SCRAPER_WA_RESUME_TITLE_REWIND", default=1)))
         resume_title_floor = max(0, resume_titles_scanned - title_rewind)
         chapters_scanned_total = int(resume_chapters_scanned)
@@ -348,7 +360,11 @@ class WashingtonScraper(BaseStateScraper):
                         if str(url or "").strip().lower() not in seen_urls
                     ]
                 sections_discovered_total += len(section_links)
-                if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_links):
+                if (
+                    chapter_index == 1
+                    or chapter_index % 10 == 0
+                    or chapter_index == len(chapter_links)
+                ):
                     self.logger.info(
                         "Washington official index: title=%s chapter=%s/%s sections=%s statutes_so_far=%s",
                         title_label or title_url,
@@ -372,6 +388,7 @@ class WashingtonScraper(BaseStateScraper):
                             "codes_total": 1,
                         },
                     )
+
                 def _progress_hook(
                     scanned_sections: int,
                     total_sections: int,
@@ -397,6 +414,7 @@ class WashingtonScraper(BaseStateScraper):
                                 "codes_total": 1,
                             },
                         )
+
                 parsed = await self._scrape_section_urls(
                     code_name,
                     section_links,
@@ -552,9 +570,15 @@ class WashingtonScraper(BaseStateScraper):
                     return None
                 for tag in content_node(["script", "style", "nav", "header", "footer"]):
                     tag.decompose()
-                citation_text = self._normalize_legal_text(citation_node.get_text(" ", strip=True) if citation_node else "")
-                caption = self._normalize_legal_text(caption_node.get_text(" ", strip=True) if caption_node else "")
-                body = self._normalize_legal_text(content_node.get_text(" ", strip=True) if content_node else "")
+                citation_text = self._normalize_legal_text(
+                    citation_node.get_text(" ", strip=True) if citation_node else ""
+                )
+                caption = self._normalize_legal_text(
+                    caption_node.get_text(" ", strip=True) if caption_node else ""
+                )
+                body = self._normalize_legal_text(
+                    content_node.get_text(" ", strip=True) if content_node else ""
+                )
                 # Washington has short-but-valid sections; keep those in the
                 # corpus instead of dropping them as false negatives.
                 if len(body) < 120:

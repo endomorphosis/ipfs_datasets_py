@@ -6,14 +6,19 @@ Test suite for confidence field range validation.
 Tests that the confidence field properly validates its range (0.0-1.0) and
 raises appropriate ValidationError for out-of-range values.
 """
+
 import pytest
 from pydantic import ValidationError
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunkMetadata
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
-    LLMChunkMetadataTestDataFactory as DataFactory
+    LLMChunkMetadataTestDataFactory as DataFactory,
 )
-from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_test_utils import all_words_are_present_in_error_msg, field_values_exactly_match_dict_values
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_test_utils import (
+    all_words_are_present_in_error_msg,
+    field_values_exactly_match_dict_values,
+)
+
 
 class TestLLMChunkMetadataConfidenceValidation:
     """Test suite for confidence field range validation."""
@@ -28,14 +33,14 @@ class TestLLMChunkMetadataConfidenceValidation:
         FIELD_NAME = "confidence"
         INVALID_VALUE = -0.1
         ERROR_WORDS = ["confidence", "greater", "0"]
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
-        
+
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS)
 
     def test_confidence_above_upper_bound(self):
@@ -48,10 +53,10 @@ class TestLLMChunkMetadataConfidenceValidation:
         FIELD_NAME = "confidence"
         INVALID_VALUE = 1.1
         ERROR_WORDS = ["confidence", "less", "1"]
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
@@ -66,12 +71,12 @@ class TestLLMChunkMetadataConfidenceValidation:
         """
         # Constants
         FIELD_NAME = "confidence"
-        INVALID_VALUE = float('inf')
+        INVALID_VALUE = float("inf")
         ERROR_WORDS = ["confidence", "inf"]
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
@@ -86,12 +91,12 @@ class TestLLMChunkMetadataConfidenceValidation:
         """
         # Constants
         FIELD_NAME = "confidence"
-        INVALID_VALUE = float('nan')
+        INVALID_VALUE = float("nan")
         ERROR_WORDS = ["confidence", "nan"]
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValueError) as exc_info:
             LLMChunkMetadata(**data)
@@ -108,7 +113,7 @@ class TestLLMChunkMetadataConfidenceValidation:
         FIELD_NAME = "confidence"
         VALID_VALUE = 0.0
         EXPECTED_FIELDS = {FIELD_NAME: VALID_VALUE}
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, VALID_VALUE)
 
@@ -128,13 +133,13 @@ class TestLLMChunkMetadataConfidenceValidation:
         FIELD_NAME = "confidence"
         VALID_VALUE = 1.0
         EXPECTED_FIELDS = {FIELD_NAME: VALID_VALUE}
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, VALID_VALUE)
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         assert field_values_exactly_match_dict_values(EXPECTED_FIELDS, metadata)
 
@@ -148,13 +153,13 @@ class TestLLMChunkMetadataConfidenceValidation:
         FIELD_NAME = "confidence"
         VALID_VALUE = 0.5
         EXPECTED_FIELDS = {FIELD_NAME: VALID_VALUE}
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, VALID_VALUE)
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         assert field_values_exactly_match_dict_values(EXPECTED_FIELDS, metadata)
 
@@ -168,13 +173,13 @@ class TestLLMChunkMetadataConfidenceValidation:
         FIELD_NAME = "confidence"
         VALID_VALUE = 0.999999
         EXPECTED_FIELDS = {FIELD_NAME: VALID_VALUE}
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, VALID_VALUE)
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         assert field_values_exactly_match_dict_values(EXPECTED_FIELDS, metadata)
 
@@ -188,7 +193,7 @@ class TestLLMChunkMetadataConfidenceValidation:
         FIELD_NAME = "confidence"
         VALID_VALUE = 0.000001
         EXPECTED_FIELDS = {FIELD_NAME: VALID_VALUE}
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, VALID_VALUE)
 
@@ -197,6 +202,7 @@ class TestLLMChunkMetadataConfidenceValidation:
 
         # Then
         assert field_values_exactly_match_dict_values(EXPECTED_FIELDS, metadata)
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

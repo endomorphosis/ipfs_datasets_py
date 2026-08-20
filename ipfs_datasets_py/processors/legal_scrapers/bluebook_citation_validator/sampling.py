@@ -63,9 +63,7 @@ class StratifiedSampler:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _count_gnis_by_state(
-        self, citations: list[Path], reference_db
-    ) -> dict[str, int]:
+    def _count_gnis_by_state(self, citations: list[Path], reference_db) -> dict[str, int]:
         """Count how many GNIS identifiers from *citations* belong to each state.
 
         Bug #16 fix: uses ``.to_dict('records')`` not ``.to_records('records')``.
@@ -99,9 +97,7 @@ class StratifiedSampler:
             {},
         )
 
-    def _calculate_sample_sizes(
-        self, counts: dict[str, int]
-    ) -> dict[str, int]:
+    def _calculate_sample_sizes(self, counts: dict[str, int]) -> dict[str, int]:
         """Allocate the target sample size proportionally across states.
 
         Guarantees at least 1 sample per state and adjusts for rounding to
@@ -160,10 +156,7 @@ class StratifiedSampler:
         gnis_to_state: dict[int, str] = {}
         for batch in itertools.batched(gnis_set, 100):
             placeholders = ", ".join("?" * len(batch))
-            query = (
-                f"SELECT gnis, state_code FROM locations "
-                f"WHERE gnis IN ({placeholders})"
-            )
+            query = f"SELECT gnis, state_code FROM locations WHERE gnis IN ({placeholders})"
             try:
                 rows = reference_db.execute(query, list(batch)).fetchall()
                 for gnis_val, state_code in rows:

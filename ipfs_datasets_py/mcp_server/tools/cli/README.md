@@ -14,11 +14,7 @@ MCP-facing command-line execution utilities.
 ```python
 from ipfs_datasets_py.mcp_server.tools.cli import execute_command
 
-result = await execute_command(
-    command=["ffmpeg", "-version"],
-    timeout=10,
-    capture_stderr=True
-)
+result = await execute_command(command=["ffmpeg", "-version"], timeout=10, capture_stderr=True)
 # Returns: {"exit_code": 0, "stdout": "ffmpeg version ...", "stderr": ""}
 ```
 

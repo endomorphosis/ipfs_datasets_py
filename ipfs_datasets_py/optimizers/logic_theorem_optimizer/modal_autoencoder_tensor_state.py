@@ -76,9 +76,7 @@ _KIND_CODE = {
     TensorKeyKind.TARGET: 5,
     TensorKeyKind.INTERACTION: 6,
 }
-_SAMPLE_KEY = re.compile(
-    r"^(?:(?:sample|example)[-_:#]|document[-_:#]?id[-_:#])", re.I
-)
+_SAMPLE_KEY = re.compile(r"^(?:(?:sample|example)[-_:#]|document[-_:#]?id[-_:#])", re.I)
 _RAW_PREFIX = re.compile(r"^(?:raw[-_: ]?(?:source|text)|source[-_: ]?(?:span|text))", re.I)
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 
@@ -187,9 +185,7 @@ class TypedParameterKey:
         return cls(TensorKeyKind.TARGET, value)
 
     @classmethod
-    def interaction(
-        cls, value: str, *components: "TypedParameterKey"
-    ) -> "TypedParameterKey":
+    def interaction(cls, value: str, *components: "TypedParameterKey") -> "TypedParameterKey":
         return cls(TensorKeyKind.INTERACTION, value, tuple(components))
 
 
@@ -222,7 +218,9 @@ class StableKeyRegistry:
     def __init__(self, keys: Sequence[TypedParameterKey] = ()) -> None:
         self._by_id: Dict[int, TypedParameterKey] = {}
         self._by_key: Dict[TypedParameterKey, int] = {}
-        for key in sorted(set(keys), key=lambda item: (item.stable_id, item.kind.value, item.value)):
+        for key in sorted(
+            set(keys), key=lambda item: (item.stable_id, item.kind.value, item.value)
+        ):
             self.register(key)
 
     @property
@@ -285,9 +283,7 @@ class StableKeyRegistry:
 
     resolve = key_for
 
-    def get_or_insert(
-        self, kind: TensorKeyKind | str, value: str
-    ) -> int:
+    def get_or_insert(self, kind: TensorKeyKind | str, value: str) -> int:
         stable_id = self.id_for(kind, value, create=True)
         assert stable_id is not None
         return stable_id
@@ -309,10 +305,7 @@ class StableKeyRegistry:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "algorithm_version_identity": self.version_identity,
-            "keys": [
-                {"stable_id": key.stable_id, **key.to_dict()}
-                for key in self.keys()
-            ],
+            "keys": [{"stable_id": key.stable_id, **key.to_dict()} for key in self.keys()],
             "schema_version": MODAL_AUTOENCODER_KEY_REGISTRY_SCHEMA_VERSION,
         }
 
@@ -320,9 +313,7 @@ class StableKeyRegistry:
     def from_dict(cls, value: Mapping[str, Any]) -> "StableKeyRegistry":
         if str(value.get("schema_version") or "") != MODAL_AUTOENCODER_KEY_REGISTRY_SCHEMA_VERSION:
             raise ValueError("unsupported stable key registry schema")
-        registry = cls(
-            [TypedParameterKey.from_dict(item) for item in value.get("keys", ())]
-        )
+        registry = cls([TypedParameterKey.from_dict(item) for item in value.get("keys", ())])
         expected = str(value.get("algorithm_version_identity") or registry.version_identity)
         if expected != registry.version_identity:
             raise ValueError("stable key registry algorithm identity mismatch")
@@ -398,9 +389,7 @@ class TensorParameterTable:
             else (len(self.row_ids), self.tensor.shape[1])
         )
         if self.tensor.shape != expected_shape:
-            raise ValueError(
-                f"table {name!r} tensor shape {self.tensor.shape} != {expected_shape}"
-            )
+            raise ValueError(f"table {name!r} tensor shape {self.tensor.shape} != {expected_shape}")
         self.present = np.ascontiguousarray(
             np.ones(self.tensor.shape, dtype=np.bool_) if present is None else present,
             dtype=np.bool_,
@@ -482,12 +471,7 @@ class TensorParameterTable:
                 if kind is self.row_kind
                 else tuple(int(item) for item in self.column_ids)
             )
-            candidate_ids += tuple(
-                item
-                for pair in self._overflow
-                for item in pair
-                if item != 0
-            )
+            candidate_ids += tuple(item for pair in self._overflow for item in pair if item != 0)
             for stable_id in candidate_ids:
                 try:
                     key = self.registry.key_for(stable_id)
@@ -592,9 +576,7 @@ class TensorParameterTable:
             raise KeyError(str(getattr(row, "value", row)))
         self._notify_mutation()
 
-    def cell_value(
-        self, row: str | TypedParameterKey, column: str | TypedParameterKey
-    ) -> float:
+    def cell_value(self, row: str | TypedParameterKey, column: str | TypedParameterKey) -> float:
         if self.layout != "matrix" or self.column_kind is None:
             raise TypeError("cell access requires a matrix table")
         row_id = self._id(row, self.row_kind, create=False)
@@ -648,16 +630,18 @@ class TensorParameterTable:
         self._store_overflow(row_id, 0, ())
         self._notify_mutation()
 
-    def delete_cell(
-        self, row: str | TypedParameterKey, column: str | TypedParameterKey
-    ) -> None:
+    def delete_cell(self, row: str | TypedParameterKey, column: str | TypedParameterKey) -> None:
         if self.layout != "matrix" or self.column_kind is None:
             raise TypeError("cell access requires a matrix table")
         row_id = self._id(row, self.row_kind, create=False)
         column_id = self._id(column, self.column_kind, create=False)
         row_index, column_index = self._row_index.get(row_id), self._column_index.get(column_id)
         existed = False
-        if row_index is not None and column_index is not None and self.present[row_index, column_index]:
+        if (
+            row_index is not None
+            and column_index is not None
+            and self.present[row_index, column_index]
+        ):
             self.present[row_index, column_index] = False
             existed = True
         if self._overflow.pop((row_id, column_id), None) is not None:
@@ -761,8 +745,7 @@ class TensorParameterTable:
             layout=layout,
             row_kind=TensorKeyKind(str(value["row_kind"])),
             row_component_kinds=[
-                TensorKeyKind(str(kind))
-                for kind in value.get("row_component_kinds", ())
+                TensorKeyKind(str(kind)) for kind in value.get("row_component_kinds", ())
             ],
             column_kind=(
                 None
@@ -911,7 +894,9 @@ class PackedParameterMap(MutableMapping[str, Any]):
 def _proof_interaction(head: str, context: str) -> TypedParameterKey:
     head_key = TypedParameterKey.target(head)
     context_key = TypedParameterKey.target(context)
-    value = json.dumps([head_key.value, context_key.value], ensure_ascii=True, separators=(",", ":"))
+    value = json.dumps(
+        [head_key.value, context_key.value], ensure_ascii=True, separators=(",", ":")
+    )
     return TypedParameterKey.interaction(value, head_key, context_key)
 
 
@@ -967,9 +952,7 @@ class _ProofContextMap(MutableMapping[str, MutableMapping[str, float]]):
         return len(self._contexts())
 
 
-class PackedProofAuxiliaryMap(
-    MutableMapping[str, MutableMapping[str, MutableMapping[str, float]]]
-):
+class PackedProofAuxiliaryMap(MutableMapping[str, MutableMapping[str, MutableMapping[str, float]]]):
     """Legacy three-level proof-head mapping backed by one matrix tensor."""
 
     def __init__(self, table: TensorParameterTable) -> None:
@@ -1017,11 +1000,7 @@ class PackedProofAuxiliaryMap(
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            head: {
-                context: dict(labels)
-                for context, labels in self[head].items()
-            }
-            for head in self
+            head: {context: dict(labels) for context, labels in self[head].items()} for head in self
         }
 
 
@@ -1048,8 +1027,7 @@ class ModalAutoencoderTensorState:
         self.non_parameter_state = json.loads(json.dumps(non_parameter_state or {}))
         self.state_metadata = json.loads(json.dumps(state_metadata or {}))
         self.table_encodings = {
-            str(name): str(encoding)
-            for name, encoding in sorted((table_encodings or {}).items())
+            str(name): str(encoding) for name, encoding in sorted((table_encodings or {}).items())
         }
         self.source_state_revision = max(0, int(source_state_revision))
         computed = self._compute_layout_identity()
@@ -1075,12 +1053,12 @@ class ModalAutoencoderTensorState:
                 "tables": {
                     name: {
                         "column_ids": table.column_ids.tolist(),
-                        "column_kind": None if table.column_kind is None else table.column_kind.value,
+                        "column_kind": None
+                        if table.column_kind is None
+                        else table.column_kind.value,
                         "layout": table.layout,
                         "row_ids": table.row_ids.tolist(),
-                        "row_component_kinds": [
-                            kind.value for kind in table.row_component_kinds
-                        ],
+                        "row_component_kinds": [kind.value for kind in table.row_component_kinds],
                         "row_kind": table.row_kind.value,
                         "shape": list(table.tensor.shape),
                     }
@@ -1117,11 +1095,7 @@ class ModalAutoencoderTensorState:
 
     @property
     def overflow_tables(self) -> Dict[str, Dict[tuple[int, int], tuple[float, ...]]]:
-        return {
-            name: table.overflow
-            for name, table in self.tables.items()
-            if table.overflow_size
-        }
+        return {name: table.overflow for name, table in self.tables.items() if table.overflow_size}
 
     @property
     def parameter_count(self) -> int:
@@ -1223,7 +1197,13 @@ class ModalAutoencoderTensorState:
         }
 
     def to_json(self) -> str:
-        return json.dumps(self.to_dict(), allow_nan=False, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+        return json.dumps(
+            self.to_dict(),
+            allow_nan=False,
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
 
     def save_json(self, path: str | os.PathLike[str]) -> None:
         destination = os.fspath(path)
@@ -1308,9 +1288,7 @@ class ModalAutoencoderTensorState:
     ) -> "ModalAutoencoderTensorState":
         from .modal_autoencoder_state_migration import pack_modal_autoencoder_state
 
-        return pack_modal_autoencoder_state(
-            state, overflow_capacity=overflow_capacity
-        )
+        return pack_modal_autoencoder_state(state, overflow_capacity=overflow_capacity)
 
     from_legacy_state = from_training_state
 

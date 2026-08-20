@@ -20,7 +20,7 @@ Features:
 Example:
     >>> from countermodels import extract_countermodel, CounterModel
     >>> from countermodel_visualizer import CountermodelVisualizer
-    >>> 
+    >>>
     >>> visualizer = CountermodelVisualizer(countermodel.kripke)
     >>> print(visualizer.render_ascii_enhanced(colors=True))
     >>> visualizer.render_html_interactive("countermodel.html")
@@ -38,22 +38,29 @@ from typing import Dict, List, Optional, Set, Tuple
 
 try:
     from colorama import Fore, Back, Style, init as colorama_init
+
     COLORAMA_AVAILABLE = True
 except ImportError:
     COLORAMA_AVAILABLE = False
+
     # Fallback stubs
     class _Fore:
         RED = GREEN = BLUE = YELLOW = CYAN = MAGENTA = WHITE = RESET = ""
+
     class _Back:
         BLACK = BLUE = RED = RESET = ""
+
     class _Style:
         BRIGHT = DIM = RESET_ALL = ""
+
     Fore = _Fore()
     Back = _Back()
     Style = _Style()
+
     def colorama_init():
         """No-op stub — colorama is unavailable; ANSI init is skipped."""
         pass
+
 
 from .countermodels import KripkeStructure
 from .modal_tableaux import ModalLogicType
@@ -64,6 +71,7 @@ logger = logging.getLogger(__name__)
 # Box-drawing characters for enhanced ASCII
 class BoxChars:
     """Unicode box-drawing characters for enhanced ASCII art."""
+
     HORIZONTAL = "─"
     VERTICAL = "│"
     TOP_LEFT = "┌"
@@ -86,12 +94,17 @@ class BoxChars:
 @dataclass
 class GraphLayout:
     """Layout information for rendering accessibility graphs."""
+
     positions: Dict[int, Tuple[float, float]]  # world_id -> (x, y)
     width: int
     height: int
-    
-    def __init__(self, positions: Optional[Dict[int, Tuple[float, float]]] = None,
-                 width: int = 800, height: int = 600):
+
+    def __init__(
+        self,
+        positions: Optional[Dict[int, Tuple[float, float]]] = None,
+        width: int = 800,
+        height: int = 600,
+    ):
         self.positions = positions or {}
         self.width = width
         self.height = height
@@ -100,15 +113,15 @@ class GraphLayout:
 class CountermodelVisualizer:
     """
     Enhanced visualizer for Kripke structures from countermodels.
-    
+
     Provides multiple visualization formats with enhanced features:
     - Enhanced ASCII art with colors and box-drawing
     - Interactive HTML with D3.js
     - Accessibility graph rendering
-    
+
     Args:
         kripke_structure: The Kripke structure to visualize
-        
+
     Example:
         >>> kripke = KripkeStructure(logic_type=ModalLogicType.K)
         >>> kripke.add_world(0)
@@ -117,24 +130,24 @@ class CountermodelVisualizer:
         >>> visualizer = CountermodelVisualizer(kripke)
         >>> print(visualizer.render_ascii_enhanced())
     """
-    
+
     def __init__(self, kripke_structure: KripkeStructure):
         """Initialize the visualizer with a Kripke structure."""
         self.kripke = kripke_structure
         if COLORAMA_AVAILABLE:
             colorama_init(autoreset=True)
-    
-    def render_ascii_enhanced(self, colors: bool = True, style: str = 'expanded') -> str:
+
+    def render_ascii_enhanced(self, colors: bool = True, style: str = "expanded") -> str:
         """
         Render enhanced ASCII art visualization with box-drawing and colors.
-        
+
         Args:
             colors: Enable terminal color output (requires colorama)
             style: Display style - 'expanded' or 'compact'
-            
+
         Returns:
             Enhanced ASCII art representation
-            
+
         Example:
             >>> visualizer.render_ascii_enhanced(colors=True, style='expanded')
             ┌─────────────────────────────────┐
@@ -146,64 +159,70 @@ class CountermodelVisualizer:
         if colors and not COLORAMA_AVAILABLE:
             logger.warning("colorama not available, rendering without colors")
             colors = False
-        
-        if style == 'expanded':
+
+        if style == "expanded":
             return self._render_ascii_expanded(colors)
-        elif style == 'compact':
+        elif style == "compact":
             return self._render_ascii_compact(colors)
         else:
             raise ValueError(f"Unknown style: {style}. Use 'expanded' or 'compact'")
-    
+
     def _render_ascii_expanded(self, colors: bool) -> str:
         """Render expanded ASCII art with detailed formatting."""
         lines = []
-        
+
         # Header box
         header_text = f"Kripke Structure (Logic: {self.kripke.logic_type.value})"
         info_text = f"Worlds: {len(self.kripke.worlds)}, Relations: {sum(len(v) for v in self.kripke.accessibility.values())}"
-        
+
         max_width = max(len(header_text), len(info_text)) + 4
-        
+
         # Top border
         lines.append(BoxChars.TOP_LEFT + BoxChars.HORIZONTAL * (max_width - 2) + BoxChars.TOP_RIGHT)
         lines.append(BoxChars.VERTICAL + f" {header_text}".ljust(max_width - 2) + BoxChars.VERTICAL)
         lines.append(BoxChars.VERTICAL + f" {info_text}".ljust(max_width - 2) + BoxChars.VERTICAL)
-        lines.append(BoxChars.BOTTOM_LEFT + BoxChars.HORIZONTAL * (max_width - 2) + BoxChars.BOTTOM_RIGHT)
+        lines.append(
+            BoxChars.BOTTOM_LEFT + BoxChars.HORIZONTAL * (max_width - 2) + BoxChars.BOTTOM_RIGHT
+        )
         lines.append("")
-        
+
         # Render each world
         for world_id in sorted(self.kripke.worlds):
             lines.extend(self._render_world_expanded(world_id, colors))
             lines.append("")
-        
+
         # Accessibility table
         lines.append(self._render_accessibility_table(colors))
-        
+
         # Logic properties
         lines.append("")
         lines.append(self._render_logic_properties(colors))
-        
-        return '\n'.join(lines)
-    
+
+        return "\n".join(lines)
+
     def _render_world_expanded(self, world_id: int, colors: bool) -> List[str]:
         """Render a single world in expanded format."""
         lines = []
         atoms = sorted(self.kripke.valuation.get(world_id, set()))
         accessible = sorted(self.kripke.get_accessible_worlds(world_id))
-        
+
         # World header
-        is_initial = (world_id == self.kripke.initial_world)
+        is_initial = world_id == self.kripke.initial_world
         if colors:
             if is_initial:
-                world_label = f"{Fore.GREEN}{Style.BRIGHT}→ World w{world_id} (initial){Style.RESET_ALL}"
+                world_label = (
+                    f"{Fore.GREEN}{Style.BRIGHT}→ World w{world_id} (initial){Style.RESET_ALL}"
+                )
             else:
                 world_label = f"{Fore.CYAN}  World w{world_id}{Style.RESET_ALL}"
         else:
-            world_label = f"{'→' if is_initial else ' '} World w{world_id}{'(initial)' if is_initial else ''}"
-        
+            world_label = (
+                f"{'→' if is_initial else ' '} World w{world_id}{'(initial)' if is_initial else ''}"
+            )
+
         lines.append(world_label)
         lines.append(BoxChars.T_RIGHT + BoxChars.HORIZONTAL * 40)
-        
+
         # Atoms (valuation)
         if atoms:
             if colors:
@@ -215,9 +234,9 @@ class CountermodelVisualizer:
                 atoms_str = f"{Fore.RED}Atoms: ∅ (none){Style.RESET_ALL}"
             else:
                 atoms_str = "Atoms: ∅ (none)"
-        
+
         lines.append(BoxChars.VERTICAL + " " + atoms_str)
-        
+
         # Accessible worlds
         if accessible:
             if colors:
@@ -225,7 +244,7 @@ class CountermodelVisualizer:
             else:
                 access_str = f"Accessible: {', '.join(f'w{w}' for w in accessible)}"
             lines.append(BoxChars.VERTICAL + " " + access_str)
-            
+
             # Draw arrows to accessible worlds
             for target in accessible:
                 if colors:
@@ -239,138 +258,202 @@ class CountermodelVisualizer:
             else:
                 access_str = "Accessible: (none)"
             lines.append(BoxChars.VERTICAL + " " + access_str)
-        
+
         lines.append(BoxChars.BOTTOM_LEFT + BoxChars.HORIZONTAL * 40)
-        
+
         return lines
-    
+
     def _render_ascii_compact(self, colors: bool) -> str:
         """Render compact ASCII art."""
         lines = []
-        
+
         # Compact header
         if colors:
-            header = f"{Style.BRIGHT}Kripke({self.kripke.logic_type.value}){Style.RESET_ALL} " + \
-                     f"W={len(self.kripke.worlds)} R={sum(len(v) for v in self.kripke.accessibility.values())}"
+            header = (
+                f"{Style.BRIGHT}Kripke({self.kripke.logic_type.value}){Style.RESET_ALL} "
+                + f"W={len(self.kripke.worlds)} R={sum(len(v) for v in self.kripke.accessibility.values())}"
+            )
         else:
-            header = f"Kripke({self.kripke.logic_type.value}) W={len(self.kripke.worlds)} " + \
-                     f"R={sum(len(v) for v in self.kripke.accessibility.values())}"
-        
+            header = (
+                f"Kripke({self.kripke.logic_type.value}) W={len(self.kripke.worlds)} "
+                + f"R={sum(len(v) for v in self.kripke.accessibility.values())}"
+            )
+
         lines.append(header)
         lines.append(BoxChars.HORIZONTAL * 50)
-        
+
         # Compact world listing
         for world_id in sorted(self.kripke.worlds):
             atoms = sorted(self.kripke.valuation.get(world_id, set()))
             accessible = sorted(self.kripke.get_accessible_worlds(world_id))
-            
-            is_initial = (world_id == self.kripke.initial_world)
+
+            is_initial = world_id == self.kripke.initial_world
             prefix = BoxChars.DOUBLE_ARROW_RIGHT if is_initial else BoxChars.BULLET
-            
-            atoms_str = ','.join(atoms) if atoms else "∅"
-            access_str = ','.join(f"w{w}" for w in accessible) if accessible else "∅"
-            
+
+            atoms_str = ",".join(atoms) if atoms else "∅"
+            access_str = ",".join(f"w{w}" for w in accessible) if accessible else "∅"
+
             if colors:
-                line = f"{Fore.GREEN if is_initial else Fore.CYAN}{prefix} w{world_id}: " + \
-                       f"{Fore.YELLOW}{{{atoms_str}}} {Fore.MAGENTA}{BoxChars.ARROW_RIGHT} {{{access_str}}}{Style.RESET_ALL}"
+                line = (
+                    f"{Fore.GREEN if is_initial else Fore.CYAN}{prefix} w{world_id}: "
+                    + f"{Fore.YELLOW}{{{atoms_str}}} {Fore.MAGENTA}{BoxChars.ARROW_RIGHT} {{{access_str}}}{Style.RESET_ALL}"
+                )
             else:
-                line = f"{prefix} w{world_id}: {{{atoms_str}}} {BoxChars.ARROW_RIGHT} {{{access_str}}}"
-            
+                line = (
+                    f"{prefix} w{world_id}: {{{atoms_str}}} {BoxChars.ARROW_RIGHT} {{{access_str}}}"
+                )
+
             lines.append(line)
-        
-        return '\n'.join(lines)
-    
+
+        return "\n".join(lines)
+
     def _render_accessibility_table(self, colors: bool) -> str:
         """Render accessibility relations as a formatted table."""
         lines = []
-        
+
         if colors:
             lines.append(f"{Style.BRIGHT}Accessibility Relations:{Style.RESET_ALL}")
         else:
             lines.append("Accessibility Relations:")
-        
-        lines.append(BoxChars.TOP_LEFT + BoxChars.HORIZONTAL * 12 + BoxChars.T_DOWN + 
-                     BoxChars.HORIZONTAL * 30 + BoxChars.TOP_RIGHT)
-        lines.append(BoxChars.VERTICAL + " From World ".ljust(13) + BoxChars.VERTICAL + 
-                     " To Worlds".ljust(31) + BoxChars.VERTICAL)
-        lines.append(BoxChars.T_RIGHT + BoxChars.HORIZONTAL * 12 + BoxChars.CROSS + 
-                     BoxChars.HORIZONTAL * 30 + BoxChars.T_LEFT)
-        
+
+        lines.append(
+            BoxChars.TOP_LEFT
+            + BoxChars.HORIZONTAL * 12
+            + BoxChars.T_DOWN
+            + BoxChars.HORIZONTAL * 30
+            + BoxChars.TOP_RIGHT
+        )
+        lines.append(
+            BoxChars.VERTICAL
+            + " From World ".ljust(13)
+            + BoxChars.VERTICAL
+            + " To Worlds".ljust(31)
+            + BoxChars.VERTICAL
+        )
+        lines.append(
+            BoxChars.T_RIGHT
+            + BoxChars.HORIZONTAL * 12
+            + BoxChars.CROSS
+            + BoxChars.HORIZONTAL * 30
+            + BoxChars.T_LEFT
+        )
+
         for world_id in sorted(self.kripke.worlds):
             accessible = sorted(self.kripke.get_accessible_worlds(world_id))
-            
+
             from_str = f"w{world_id}".ljust(12)
-            to_str = (', '.join(f"w{w}" for w in accessible) if accessible else "(none)").ljust(30)
-            
+            to_str = (", ".join(f"w{w}" for w in accessible) if accessible else "(none)").ljust(30)
+
             if colors:
                 if accessible:
-                    line = BoxChars.VERTICAL + f" {Fore.CYAN}{from_str}{Style.RESET_ALL} " + \
-                           BoxChars.VERTICAL + f" {Fore.MAGENTA}{to_str}{Style.RESET_ALL} " + BoxChars.VERTICAL
+                    line = (
+                        BoxChars.VERTICAL
+                        + f" {Fore.CYAN}{from_str}{Style.RESET_ALL} "
+                        + BoxChars.VERTICAL
+                        + f" {Fore.MAGENTA}{to_str}{Style.RESET_ALL} "
+                        + BoxChars.VERTICAL
+                    )
                 else:
-                    line = BoxChars.VERTICAL + f" {Fore.CYAN}{from_str}{Style.RESET_ALL} " + \
-                           BoxChars.VERTICAL + f" {Fore.RED}{to_str}{Style.RESET_ALL} " + BoxChars.VERTICAL
+                    line = (
+                        BoxChars.VERTICAL
+                        + f" {Fore.CYAN}{from_str}{Style.RESET_ALL} "
+                        + BoxChars.VERTICAL
+                        + f" {Fore.RED}{to_str}{Style.RESET_ALL} "
+                        + BoxChars.VERTICAL
+                    )
             else:
-                line = BoxChars.VERTICAL + f" {from_str} " + BoxChars.VERTICAL + f" {to_str} " + BoxChars.VERTICAL
-            
+                line = (
+                    BoxChars.VERTICAL
+                    + f" {from_str} "
+                    + BoxChars.VERTICAL
+                    + f" {to_str} "
+                    + BoxChars.VERTICAL
+                )
+
             lines.append(line)
-        
-        lines.append(BoxChars.BOTTOM_LEFT + BoxChars.HORIZONTAL * 12 + BoxChars.T_UP + 
-                     BoxChars.HORIZONTAL * 30 + BoxChars.BOTTOM_RIGHT)
-        
-        return '\n'.join(lines)
-    
+
+        lines.append(
+            BoxChars.BOTTOM_LEFT
+            + BoxChars.HORIZONTAL * 12
+            + BoxChars.T_UP
+            + BoxChars.HORIZONTAL * 30
+            + BoxChars.BOTTOM_RIGHT
+        )
+
+        return "\n".join(lines)
+
     def _render_logic_properties(self, colors: bool) -> str:
         """Render modal logic properties analysis."""
         lines = []
-        
+
         if colors:
-            lines.append(f"{Style.BRIGHT}Modal Logic Properties ({self.kripke.logic_type.value}):{Style.RESET_ALL}")
+            lines.append(
+                f"{Style.BRIGHT}Modal Logic Properties ({self.kripke.logic_type.value}):{Style.RESET_ALL}"
+            )
         else:
             lines.append(f"Modal Logic Properties ({self.kripke.logic_type.value}):")
-        
+
         # Check properties
         is_reflexive = self._check_reflexive()
         is_symmetric = self._check_symmetric()
         is_transitive = self._check_transitive()
         is_serial = self._check_serial()
-        
+
         check_mark = BoxChars.CHECK
         cross_mark = BoxChars.CROSS_MARK
-        
+
         if colors:
-            ref_str = f"{Fore.GREEN}{check_mark}{Style.RESET_ALL}" if is_reflexive else f"{Fore.RED}{cross_mark}{Style.RESET_ALL}"
-            sym_str = f"{Fore.GREEN}{check_mark}{Style.RESET_ALL}" if is_symmetric else f"{Fore.RED}{cross_mark}{Style.RESET_ALL}"
-            trans_str = f"{Fore.GREEN}{check_mark}{Style.RESET_ALL}" if is_transitive else f"{Fore.RED}{cross_mark}{Style.RESET_ALL}"
-            ser_str = f"{Fore.GREEN}{check_mark}{Style.RESET_ALL}" if is_serial else f"{Fore.RED}{cross_mark}{Style.RESET_ALL}"
+            ref_str = (
+                f"{Fore.GREEN}{check_mark}{Style.RESET_ALL}"
+                if is_reflexive
+                else f"{Fore.RED}{cross_mark}{Style.RESET_ALL}"
+            )
+            sym_str = (
+                f"{Fore.GREEN}{check_mark}{Style.RESET_ALL}"
+                if is_symmetric
+                else f"{Fore.RED}{cross_mark}{Style.RESET_ALL}"
+            )
+            trans_str = (
+                f"{Fore.GREEN}{check_mark}{Style.RESET_ALL}"
+                if is_transitive
+                else f"{Fore.RED}{cross_mark}{Style.RESET_ALL}"
+            )
+            ser_str = (
+                f"{Fore.GREEN}{check_mark}{Style.RESET_ALL}"
+                if is_serial
+                else f"{Fore.RED}{cross_mark}{Style.RESET_ALL}"
+            )
         else:
             ref_str = check_mark if is_reflexive else cross_mark
             sym_str = check_mark if is_symmetric else cross_mark
             trans_str = check_mark if is_transitive else cross_mark
             ser_str = check_mark if is_serial else cross_mark
-        
+
         lines.append(f"  {ref_str} Reflexive: {is_reflexive}")
         lines.append(f"  {sym_str} Symmetric: {is_symmetric}")
         lines.append(f"  {trans_str} Transitive: {is_transitive}")
         lines.append(f"  {ser_str} Serial: {is_serial}")
-        
+
         # Expected properties
         expected = self._get_expected_properties()
         if expected:
             lines.append("")
             if colors:
-                lines.append(f"{Fore.YELLOW}Expected for {self.kripke.logic_type.value}: {', '.join(expected)}{Style.RESET_ALL}")
+                lines.append(
+                    f"{Fore.YELLOW}Expected for {self.kripke.logic_type.value}: {', '.join(expected)}{Style.RESET_ALL}"
+                )
             else:
                 lines.append(f"Expected for {self.kripke.logic_type.value}: {', '.join(expected)}")
-        
-        return '\n'.join(lines)
-    
+
+        return "\n".join(lines)
+
     def _check_reflexive(self) -> bool:
         """Check if accessibility relation is reflexive."""
         for world_id in self.kripke.worlds:
             if world_id not in self.kripke.get_accessible_worlds(world_id):
                 return False
         return True
-    
+
     def _check_symmetric(self) -> bool:
         """Check if accessibility relation is symmetric."""
         for from_world in self.kripke.worlds:
@@ -378,7 +461,7 @@ class CountermodelVisualizer:
                 if from_world not in self.kripke.get_accessible_worlds(to_world):
                     return False
         return True
-    
+
     def _check_transitive(self) -> bool:
         """Check if accessibility relation is transitive."""
         for w1 in self.kripke.worlds:
@@ -387,14 +470,14 @@ class CountermodelVisualizer:
                     if w3 not in self.kripke.get_accessible_worlds(w1):
                         return False
         return True
-    
+
     def _check_serial(self) -> bool:
         """Check if accessibility relation is serial (each world accesses at least one world)."""
         for world_id in self.kripke.worlds:
             if len(self.kripke.get_accessible_worlds(world_id)) == 0:
                 return False
         return True
-    
+
     def _get_expected_properties(self) -> List[str]:
         """Get expected properties for the logic type."""
         if self.kripke.logic_type == ModalLogicType.K:
@@ -408,86 +491,90 @@ class CountermodelVisualizer:
         elif self.kripke.logic_type == ModalLogicType.S5:
             return ["Reflexive", "Symmetric", "Transitive"]
         return []
-    
+
     def render_html_interactive(self, output_path: str) -> None:
         """
         Generate interactive HTML visualization with D3.js.
-        
+
         Creates a standalone HTML file with:
         - Interactive graph visualization
         - Clickable worlds showing atom valuations
         - Hover tooltips for relations
         - Zoom and pan capabilities
         - Animated transitions
-        
+
         Args:
             output_path: Path where HTML file should be saved
-            
+
         Example:
             >>> visualizer.render_html_interactive("countermodel.html")
         """
         html_content = self.to_html_string()
-        
+
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
+
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(html_content)
-        
+
         logger.info(f"Interactive HTML saved to {output_path}")
-    
+
     def to_html_string(self) -> str:
         """
         Generate interactive HTML as a string.
-        
+
         Returns:
             Complete HTML document as string
         """
         # Prepare data for D3.js
         nodes = []
         links = []
-        
+
         for world_id in sorted(self.kripke.worlds):
             atoms = sorted(self.kripke.valuation.get(world_id, set()))
-            is_initial = (world_id == self.kripke.initial_world)
-            
-            nodes.append({
-                'id': f"w{world_id}",
-                'label': f"w{world_id}",
-                'atoms': atoms,
-                'is_initial': is_initial,
-                'world_id': world_id
-            })
-        
+            is_initial = world_id == self.kripke.initial_world
+
+            nodes.append(
+                {
+                    "id": f"w{world_id}",
+                    "label": f"w{world_id}",
+                    "atoms": atoms,
+                    "is_initial": is_initial,
+                    "world_id": world_id,
+                }
+            )
+
         for from_world in sorted(self.kripke.worlds):
             for to_world in sorted(self.kripke.get_accessible_worlds(from_world)):
-                links.append({
-                    'source': f"w{from_world}",
-                    'target': f"w{to_world}",
-                    'from': from_world,
-                    'to': to_world
-                })
-        
+                links.append(
+                    {
+                        "source": f"w{from_world}",
+                        "target": f"w{to_world}",
+                        "from": from_world,
+                        "to": to_world,
+                    }
+                )
+
         data = {
-            'nodes': nodes,
-            'links': links,
-            'logic_type': self.kripke.logic_type.value,
-            'num_worlds': len(self.kripke.worlds),
-            'num_relations': len(links)
+            "nodes": nodes,
+            "links": links,
+            "logic_type": self.kripke.logic_type.value,
+            "num_worlds": len(self.kripke.worlds),
+            "num_relations": len(links),
         }
-        
+
         return self._generate_html_template(data)
-    
+
     def _generate_html_template(self, data: dict) -> str:
         """Generate HTML template with embedded D3.js visualization."""
         json_data = json.dumps(data, indent=2)
-        
+
         html_template = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kripke Structure - {html.escape(data['logic_type'])} Logic</title>
+    <title>Kripke Structure - {html.escape(data["logic_type"])} Logic</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         body {{
@@ -944,156 +1031,163 @@ class CountermodelVisualizer:
     </script>
 </body>
 </html>"""
-        
+
         return html_template
-    
-    def render_accessibility_graph(self, output_path: str, format: str = 'svg') -> None:
+
+    def render_accessibility_graph(self, output_path: str, format: str = "svg") -> None:
         """
         Render accessibility graph with specialized layout.
-        
+
         Creates a graph visualization highlighting:
         - Reflexive relations (self-loops)
         - Symmetric relations (bidirectional arrows)
         - Transitive relations (indirect paths)
         - Color coding for different modal logics
-        
+
         Args:
             output_path: Path where graph file should be saved
             format: Output format - 'svg', 'png', 'pdf', or 'dot'
-            
+
         Example:
             >>> visualizer.render_accessibility_graph("graph.svg", format="svg")
         """
-        if format not in ['svg', 'png', 'pdf', 'dot']:
+        if format not in ["svg", "png", "pdf", "dot"]:
             raise ValueError(f"Unsupported format: {format}. Use 'svg', 'png', 'pdf', or 'dot'")
-        
+
         dot_content = self._generate_accessibility_dot()
-        
+
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        
-        if format == 'dot':
-            with open(output_file, 'w') as f:
+
+        if format == "dot":
+            with open(output_file, "w") as f:
                 f.write(dot_content)
         else:
             # Write DOT content to temp file and use graphviz if available
             try:
                 import subprocess
                 import tempfile
-                
-                with tempfile.NamedTemporaryFile(mode='w', suffix='.dot', delete=False) as f:
+
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".dot", delete=False) as f:
                     f.write(dot_content)
                     temp_dot = f.name
-                
+
                 # Run graphviz
                 result = subprocess.run(
-                    ['dot', f'-T{format}', temp_dot, '-o', str(output_file)],
+                    ["dot", f"-T{format}", temp_dot, "-o", str(output_file)],
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
-                
+
                 if result.returncode != 0:
                     logger.warning(f"Graphviz failed: {result.stderr}")
                     logger.info("Saving as DOT format instead")
-                    with open(output_file.with_suffix('.dot'), 'w') as f:
+                    with open(output_file.with_suffix(".dot"), "w") as f:
                         f.write(dot_content)
                 else:
                     logger.info(f"Accessibility graph saved to {output_path}")
-                
+
                 # Clean up temp file
                 Path(temp_dot).unlink()
-                
+
             except (ImportError, FileNotFoundError):
                 logger.warning("Graphviz not available, saving as DOT format")
-                with open(output_file.with_suffix('.dot'), 'w') as f:
+                with open(output_file.with_suffix(".dot"), "w") as f:
                     f.write(dot_content)
-    
+
     def _generate_accessibility_dot(self) -> str:
         """Generate DOT format for accessibility graph with property highlighting."""
         lines = []
-        
+
         # Header with styling
-        lines.append('digraph AccessibilityGraph {')
+        lines.append("digraph AccessibilityGraph {")
         lines.append(f'  label="Accessibility Graph ({self.kripke.logic_type.value} Logic)";')
         lines.append('  labelloc="t";')
-        lines.append('  fontsize=16;')
+        lines.append("  fontsize=16;")
         lines.append('  fontname="Arial";')
-        lines.append('  rankdir=LR;')
+        lines.append("  rankdir=LR;")
         lines.append('  node [shape=circle, style=filled, fontname="Arial"];')
-        lines.append('')
-        
+        lines.append("")
+
         # Color scheme based on logic type
         color_map = {
-            ModalLogicType.K: '#2196F3',  # Blue
-            ModalLogicType.T: '#4CAF50',  # Green
-            ModalLogicType.D: '#FF9800',  # Orange
-            ModalLogicType.S4: '#9C27B0', # Purple
-            ModalLogicType.S5: '#F44336', # Red
+            ModalLogicType.K: "#2196F3",  # Blue
+            ModalLogicType.T: "#4CAF50",  # Green
+            ModalLogicType.D: "#FF9800",  # Orange
+            ModalLogicType.S4: "#9C27B0",  # Purple
+            ModalLogicType.S5: "#F44336",  # Red
         }
-        node_color = color_map.get(self.kripke.logic_type, '#2196F3')
-        
+        node_color = color_map.get(self.kripke.logic_type, "#2196F3")
+
         # Nodes
         for world_id in sorted(self.kripke.worlds):
             if world_id == self.kripke.initial_world:
-                lines.append(f'  w{world_id} [label="w{world_id}", fillcolor="{node_color}", '
-                           f'penwidth=3, color="#FF9800"];')
+                lines.append(
+                    f'  w{world_id} [label="w{world_id}", fillcolor="{node_color}", '
+                    f'penwidth=3, color="#FF9800"];'
+                )
             else:
                 lines.append(f'  w{world_id} [label="w{world_id}", fillcolor="{node_color}"];')
-        
-        lines.append('')
-        
+
+        lines.append("")
+
         # Edges with property highlighting
         reflexive_edges = []
         symmetric_pairs = set()
         regular_edges = []
-        
+
         for from_world in sorted(self.kripke.worlds):
             for to_world in sorted(self.kripke.get_accessible_worlds(from_world)):
                 if from_world == to_world:
                     reflexive_edges.append((from_world, to_world))
-                elif to_world in self.kripke.get_accessible_worlds(from_world) and \
-                     from_world in self.kripke.get_accessible_worlds(to_world):
+                elif to_world in self.kripke.get_accessible_worlds(
+                    from_world
+                ) and from_world in self.kripke.get_accessible_worlds(to_world):
                     pair = tuple(sorted([from_world, to_world]))
                     if pair not in symmetric_pairs:
                         symmetric_pairs.add(pair)
                 else:
                     regular_edges.append((from_world, to_world))
-        
+
         # Reflexive edges (self-loops)
         if reflexive_edges:
-            lines.append('  // Reflexive relations')
+            lines.append("  // Reflexive relations")
             for from_w, to_w in reflexive_edges:
-                lines.append(f'  w{from_w} -> w{to_w} [color="#4CAF50", penwidth=2, label="reflexive"];')
-            lines.append('')
-        
+                lines.append(
+                    f'  w{from_w} -> w{to_w} [color="#4CAF50", penwidth=2, label="reflexive"];'
+                )
+            lines.append("")
+
         # Symmetric edges
         if symmetric_pairs:
-            lines.append('  // Symmetric relations')
+            lines.append("  // Symmetric relations")
             for w1, w2 in sorted(symmetric_pairs):
-                lines.append(f'  w{w1} -> w{w2} [color="#FF9800", penwidth=2, dir=both, label="symmetric"];')
-            lines.append('')
-        
+                lines.append(
+                    f'  w{w1} -> w{w2} [color="#FF9800", penwidth=2, dir=both, label="symmetric"];'
+                )
+            lines.append("")
+
         # Regular edges
         if regular_edges:
-            lines.append('  // Regular accessibility relations')
+            lines.append("  // Regular accessibility relations")
             for from_w, to_w in regular_edges:
                 lines.append(f'  w{from_w} -> w{to_w} [color="#999", penwidth=1.5];')
-        
-        lines.append('}')
-        
-        return '\n'.join(lines)
+
+        lines.append("}")
+
+        return "\n".join(lines)
 
 
 def create_visualizer(kripke_structure: KripkeStructure) -> CountermodelVisualizer:
     """
     Convenience function to create a visualizer.
-    
+
     Args:
         kripke_structure: The Kripke structure to visualize
-        
+
     Returns:
         CountermodelVisualizer instance
-        
+
     Example:
         >>> from countermodels import KripkeStructure
         >>> kripke = KripkeStructure()

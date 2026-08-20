@@ -11,17 +11,21 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(project_root))
 
+
 def test_web_archive_tool():
     """Test the extract_text_from_warc tool."""
     try:
         print("Testing extract_text_from_warc tool...")
 
         # Import the tool
-        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc import extract_text_from_warc
+        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc import (
+            extract_text_from_warc,
+        )
 
         # Create a mock WARC file
         import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.warc', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".warc", delete=False) as f:
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
@@ -48,8 +52,10 @@ def test_web_archive_tool():
     except Exception as e:
         print(f"✗ Exception occurred: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     success = test_web_archive_tool()

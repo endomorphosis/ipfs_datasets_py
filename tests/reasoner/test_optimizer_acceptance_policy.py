@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from ipfs_datasets_py.processors.legal_data.reasoner.optimizer_policy import build_optimizer_acceptance_decision
+from ipfs_datasets_py.processors.legal_data.reasoner.optimizer_policy import (
+    build_optimizer_acceptance_decision,
+)
 
 
 def _report(global_mean: float, deontic: float, fol: float) -> dict:

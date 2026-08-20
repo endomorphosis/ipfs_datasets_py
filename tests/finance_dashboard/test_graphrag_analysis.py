@@ -22,14 +22,14 @@ def test_imports():
             HypothesisTest,
             GraphRAGNewsAnalyzer,
             analyze_executive_performance,
-            extract_executive_profiles_from_archives
+            extract_executive_profiles_from_archives,
         )
-        
+
         assert ExecutiveProfile is not None
         assert CompanyPerformance is not None
         assert HypothesisTest is not None
         assert GraphRAGNewsAnalyzer is not None
-        
+
     except ImportError as e:
         pytest.fail(f"Import failed: {e}")
 
@@ -41,18 +41,18 @@ def test_executive_profile_creation():
     THEN profile should be created with correct attributes
     """
     from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
-        ExecutiveProfile
+        ExecutiveProfile,
     )
-    
+
     profile = ExecutiveProfile(
         person_id="exec_001",
         name="Jane Smith",
         gender="female",
         personality_traits=["analytical", "visionary"],
         companies=["TechCorp"],
-        positions=["CEO"]
+        positions=["CEO"],
     )
-    
+
     assert profile.person_id == "exec_001"
     assert profile.name == "Jane Smith"
     assert profile.gender == "female"
@@ -67,17 +67,17 @@ def test_company_performance_creation():
     THEN object should be created with correct metrics
     """
     from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
-        CompanyPerformance
+        CompanyPerformance,
     )
-    
+
     company = CompanyPerformance(
         company_id="comp_001",
         symbol="TECH",
         name="TechCorp",
         return_percentage=45.2,
-        volatility=12.3
+        volatility=12.3,
     )
-    
+
     assert company.symbol == "TECH"
     assert company.return_percentage == 45.2
     assert company.volatility == 12.3
@@ -90,14 +90,11 @@ def test_analyzer_initialization():
     THEN analyzer should initialize correctly
     """
     from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
-        GraphRAGNewsAnalyzer
+        GraphRAGNewsAnalyzer,
     )
-    
-    analyzer = GraphRAGNewsAnalyzer(
-        enable_graphrag=True,
-        min_confidence=0.7
-    )
-    
+
+    analyzer = GraphRAGNewsAnalyzer(enable_graphrag=True, min_confidence=0.7)
+
     assert analyzer.min_confidence == 0.7
     assert isinstance(analyzer.executives, dict)
     assert isinstance(analyzer.companies, dict)
@@ -110,28 +107,28 @@ def test_extract_executive_profiles():
     THEN profiles should be extracted
     """
     from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
-        GraphRAGNewsAnalyzer
+        GraphRAGNewsAnalyzer,
     )
-    
+
     analyzer = GraphRAGNewsAnalyzer()
-    
+
     articles = [
         {
             "title": "TechCorp CEO Jane Smith announces new product",
             "content": "CEO Jane Smith announced today that she will lead the company...",
             "source": "reuters",
-            "published_date": "2023-01-15"
+            "published_date": "2023-01-15",
         },
         {
             "title": "Chief Executive John Doe steps down",
             "content": "Chief Executive John Doe announced his resignation. He has served...",
             "source": "ap",
-            "published_date": "2023-02-01"
-        }
+            "published_date": "2023-02-01",
+        },
     ]
-    
+
     profiles = analyzer.extract_executive_profiles(articles)
-    
+
     # Should extract at least some profiles
     assert isinstance(profiles, list)
     # Note: Actual extraction depends on pattern matching, may be 0 in test environment
@@ -146,60 +143,48 @@ def test_hypothesis_test_structure():
     from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
         GraphRAGNewsAnalyzer,
         ExecutiveProfile,
-        CompanyPerformance
+        CompanyPerformance,
     )
-    
+
     analyzer = GraphRAGNewsAnalyzer()
-    
+
     # Add sample executives
     exec1 = ExecutiveProfile(
-        person_id="exec_001",
-        name="Jane Smith",
-        gender="female",
-        companies=["TECH"]
+        person_id="exec_001", name="Jane Smith", gender="female", companies=["TECH"]
     )
     exec2 = ExecutiveProfile(
-        person_id="exec_002",
-        name="John Doe",
-        gender="male",
-        companies=["CORP"]
+        person_id="exec_002", name="John Doe", gender="male", companies=["CORP"]
     )
-    
-    analyzer.executives = {
-        "exec_001": exec1,
-        "exec_002": exec2
-    }
-    
+
+    analyzer.executives = {"exec_001": exec1, "exec_002": exec2}
+
     # Add sample companies
     comp1 = CompanyPerformance(
         company_id="TECH",
         symbol="TECH",
         name="TechCorp",
         executive_id="exec_001",
-        return_percentage=50.0
+        return_percentage=50.0,
     )
     comp2 = CompanyPerformance(
         company_id="CORP",
         symbol="CORP",
         name="CorpInc",
         executive_id="exec_002",
-        return_percentage=30.0
+        return_percentage=30.0,
     )
-    
-    analyzer.companies = {
-        "TECH": comp1,
-        "CORP": comp2
-    }
-    
+
+    analyzer.companies = {"TECH": comp1, "CORP": comp2}
+
     # Test hypothesis
     result = analyzer.test_hypothesis(
         hypothesis="Female CEOs outperform male CEOs",
         attribute_name="gender",
         group_a_value="female",
         group_b_value="male",
-        metric="return_percentage"
+        metric="return_percentage",
     )
-    
+
     assert result.hypothesis_id is not None
     assert result.group_a_samples >= 0
     assert result.group_b_samples >= 0
@@ -215,25 +200,20 @@ def test_knowledge_graph_building():
     from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
         GraphRAGNewsAnalyzer,
         ExecutiveProfile,
-        CompanyPerformance
+        CompanyPerformance,
     )
-    
+
     analyzer = GraphRAGNewsAnalyzer()
-    
+
     # Add data
-    analyzer.executives["exec_001"] = ExecutiveProfile(
-        person_id="exec_001",
-        name="Test Executive"
-    )
+    analyzer.executives["exec_001"] = ExecutiveProfile(person_id="exec_001", name="Test Executive")
     analyzer.companies["comp_001"] = CompanyPerformance(
-        company_id="comp_001",
-        symbol="TEST",
-        name="Test Corp"
+        company_id="comp_001", symbol="TEST", name="Test Corp"
     )
-    
+
     # Build graph
     kg = analyzer.build_knowledge_graph()
-    
+
     assert len(kg.entities) >= 2  # At least executive and company
 
 
@@ -244,36 +224,40 @@ def test_mcp_tool_analyze_executive_performance():
     THEN should return JSON response
     """
     from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
-        analyze_executive_performance
+        analyze_executive_performance,
     )
-    
-    news_data = json.dumps([
-        {
-            "title": "CEO Jane Smith leads turnaround",
-            "content": "CEO Jane Smith announced today...",
-            "source": "reuters"
-        }
-    ])
-    
-    stock_data = json.dumps([
-        {
-            "symbol": "TECH",
-            "name": "TechCorp",
-            "company_id": "tech_001",
-            "return_percentage": 45.0,
-            "volatility": 12.0
-        }
-    ])
-    
+
+    news_data = json.dumps(
+        [
+            {
+                "title": "CEO Jane Smith leads turnaround",
+                "content": "CEO Jane Smith announced today...",
+                "source": "reuters",
+            }
+        ]
+    )
+
+    stock_data = json.dumps(
+        [
+            {
+                "symbol": "TECH",
+                "name": "TechCorp",
+                "company_id": "tech_001",
+                "return_percentage": 45.0,
+                "volatility": 12.0,
+            }
+        ]
+    )
+
     result = analyze_executive_performance(
         news_articles_json=news_data,
         stock_data_json=stock_data,
         hypothesis="Test hypothesis",
         attribute="gender",
         group_a="female",
-        group_b="male"
+        group_b="male",
     )
-    
+
     # Should return valid JSON
     data = json.loads(result)
     assert "success" in data
@@ -286,16 +270,13 @@ def test_mcp_tool_extract_profiles():
     THEN should return JSON response
     """
     from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
-        extract_executive_profiles_from_archives
+        extract_executive_profiles_from_archives,
     )
-    
+
     result = extract_executive_profiles_from_archives(
-        sources="reuters,ap",
-        start_date="2020-01-01",
-        end_date="2024-01-01",
-        min_mentions=5
+        sources="reuters,ap", start_date="2020-01-01", end_date="2024-01-01", min_mentions=5
     )
-    
+
     # Should return valid JSON
     data = json.loads(result)
     assert "success" in data
@@ -308,18 +289,15 @@ def test_executive_to_entity_conversion():
     THEN Entity should contain all profile data
     """
     from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
-        ExecutiveProfile
+        ExecutiveProfile,
     )
-    
+
     profile = ExecutiveProfile(
-        person_id="exec_001",
-        name="Jane Smith",
-        gender="female",
-        personality_traits=["analytical"]
+        person_id="exec_001", name="Jane Smith", gender="female", personality_traits=["analytical"]
     )
-    
+
     entity = profile.to_entity()
-    
+
     assert entity.entity_id == "exec_001"
     assert entity.name == "Jane Smith"
     assert entity.properties["gender"] == "female"
@@ -333,18 +311,15 @@ def test_company_to_entity_conversion():
     THEN Entity should contain all company data
     """
     from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
-        CompanyPerformance
+        CompanyPerformance,
     )
-    
+
     company = CompanyPerformance(
-        company_id="comp_001",
-        symbol="TECH",
-        name="TechCorp",
-        return_percentage=45.0
+        company_id="comp_001", symbol="TECH", name="TechCorp", return_percentage=45.0
     )
-    
+
     entity = company.to_entity()
-    
+
     assert entity.entity_id == "comp_001"
     assert entity.name == "TechCorp"
     assert entity.properties["symbol"] == "TECH"
@@ -358,9 +333,9 @@ def test_hypothesis_test_to_dict():
     THEN dict should have all required fields
     """
     from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
-        HypothesisTest
+        HypothesisTest,
     )
-    
+
     test = HypothesisTest(
         hypothesis_id="test_001",
         hypothesis="Test hypothesis",
@@ -373,11 +348,11 @@ def test_hypothesis_test_to_dict():
         difference=20.0,
         p_value=0.05,
         confidence_level=0.95,
-        conclusion="Significant difference found"
+        conclusion="Significant difference found",
     )
-    
+
     result_dict = test.to_dict()
-    
+
     assert result_dict["hypothesis_id"] == "test_001"
     assert result_dict["hypothesis"] == "Test hypothesis"
     assert result_dict["groups"]["a"]["samples"] == 10

@@ -598,24 +598,25 @@ Based on repository memories and code exploration:
 1. **Design Unified Interface** (10 hours)
    ```python
    # knowledge_graphs/query/__init__.py
-   
+
+
    class UnifiedQueryEngine:
        """Unified query engine for all GraphRAG operations."""
-       
-       def execute_cypher(self, query: str, params: Dict, 
-                         budgets: ExecutionBudgets) -> Result:
+
+       def execute_cypher(self, query: str, params: Dict, budgets: ExecutionBudgets) -> Result:
            """Execute Cypher query with budget enforcement."""
-           
-       def execute_ir(self, ir: QueryIR, 
-                     budgets: ExecutionBudgets) -> ExecutionResult:
+
+       def execute_ir(self, ir: QueryIR, budgets: ExecutionBudgets) -> ExecutionResult:
            """Execute IR-based query."""
-           
-       def execute_hybrid(self, query: str, embeddings: Dict,
-                         budgets: ExecutionBudgets) -> HybridResult:
+
+       def execute_hybrid(
+           self, query: str, embeddings: Dict, budgets: ExecutionBudgets
+       ) -> HybridResult:
            """Execute hybrid vector+graph search."""
-           
-       def execute_graphrag(self, question: str, context: Dict,
-                           budgets: ExecutionBudgets) -> GraphRAGResult:
+
+       def execute_graphrag(
+           self, question: str, context: Dict, budgets: ExecutionBudgets
+       ) -> GraphRAGResult:
            """Execute full GraphRAG pipeline with LLM reasoning."""
    ```
 

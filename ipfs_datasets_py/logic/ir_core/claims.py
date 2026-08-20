@@ -92,9 +92,7 @@ def freeze_json(value: Any) -> FrozenJSON:
         return FrozenMap(value)
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(freeze_json(item) for item in value)
-    raise ClaimValidationError(
-        f"IR data must be JSON-compatible, got {type(value).__name__}"
-    )
+    raise ClaimValidationError(f"IR data must be JSON-compatible, got {type(value).__name__}")
 
 
 def thaw_json(value: FrozenJSON) -> Any:
@@ -142,9 +140,7 @@ def _reject_unknown_fields(
 ) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ClaimValidationError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise ClaimValidationError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -162,9 +158,7 @@ class Assumption:
             self, "assumption_id", _require_text(self.assumption_id, "assumption_id")
         )
         object.__setattr__(self, "statement", _require_text(self.statement, "statement"))
-        object.__setattr__(
-            self, "source_refs", _unique_text_tuple(self.source_refs, "source_ref")
-        )
+        object.__setattr__(self, "source_refs", _unique_text_tuple(self.source_refs, "source_ref"))
         object.__setattr__(
             self,
             "metadata",
@@ -196,9 +190,7 @@ class Assumption:
         value = _require_mapping(value, "assumption")
         _reject_unknown_fields(
             value,
-            frozenset(
-                {"assumption_id", "statement", "source_refs", "metadata", "schema_version"}
-            ),
+            frozenset({"assumption_id", "statement", "source_refs", "metadata", "schema_version"}),
             "assumption",
         )
         return cls(
@@ -232,12 +224,8 @@ class ProofObligation:
             "assumption_ids",
             _unique_text_tuple(self.assumption_ids, "assumption_id"),
         )
-        object.__setattr__(
-            self, "logic_family", _require_text(self.logic_family, "logic_family")
-        )
-        object.__setattr__(
-            self, "source_refs", _unique_text_tuple(self.source_refs, "source_ref")
-        )
+        object.__setattr__(self, "logic_family", _require_text(self.logic_family, "logic_family"))
+        object.__setattr__(self, "source_refs", _unique_text_tuple(self.source_refs, "source_ref"))
         object.__setattr__(
             self,
             "metadata",
@@ -320,9 +308,7 @@ class IRClaim:
         )
         object.__setattr__(self, "assumptions", tuple(self.assumptions))
         object.__setattr__(self, "obligations", tuple(self.obligations))
-        object.__setattr__(
-            self, "source_refs", _unique_text_tuple(self.source_refs, "source_ref")
-        )
+        object.__setattr__(self, "source_refs", _unique_text_tuple(self.source_refs, "source_ref"))
         object.__setattr__(
             self,
             "metadata",

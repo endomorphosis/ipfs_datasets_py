@@ -6,6 +6,7 @@ Methods under test:
   - OntologyPipeline.best_score()
   - OntologyPipeline.worst_score()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -14,8 +15,10 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -30,6 +33,7 @@ def _push_run(pipeline, overall):
 # ---------------------------------------------------------------------------
 # OntologyPipeline.run_count_above
 # ---------------------------------------------------------------------------
+
 
 class TestRunCountAbove:
     def test_empty(self):
@@ -64,6 +68,7 @@ class TestRunCountAbove:
 # OntologyPipeline.average_score
 # ---------------------------------------------------------------------------
 
+
 class TestAverageScore:
     def test_empty_returns_zero(self):
         p = _make_pipeline()
@@ -85,6 +90,7 @@ class TestAverageScore:
 # OntologyPipeline.best_score
 # ---------------------------------------------------------------------------
 
+
 class TestBestScore:
     def test_empty_returns_zero(self):
         p = _make_pipeline()
@@ -105,6 +111,7 @@ class TestBestScore:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.worst_score
 # ---------------------------------------------------------------------------
+
 
 class TestWorstScore:
     def test_empty_returns_zero(self):

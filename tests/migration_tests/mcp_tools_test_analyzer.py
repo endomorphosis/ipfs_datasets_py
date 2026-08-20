@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
+
 class MCPToolsTestAnalyzer:
     """Analyzer for MCP tool test coverage."""
 
@@ -33,14 +34,14 @@ class MCPToolsTestAnalyzer:
             return
 
         for category_dir in self.tools_dir.iterdir():
-            if not category_dir.is_dir() or category_dir.name.startswith('__'):
+            if not category_dir.is_dir() or category_dir.name.startswith("__"):
                 continue
 
             category = category_dir.name
             self.tool_modules[category] = []
 
-            for tool_file in category_dir.glob('*.py'):
-                if tool_file.name.startswith('__'):
+            for tool_file in category_dir.glob("*.py"):
+                if tool_file.name.startswith("__"):
                     continue
 
                 tool_name = tool_file.stem
@@ -64,8 +65,8 @@ class MCPToolsTestAnalyzer:
             return
 
         # Look for test files that match the MCP tool naming pattern
-        for test_file in self.test_dir.glob('test_mcp_*.py'):
-            tool_name = test_file.stem.replace('test_mcp_', '')
+        for test_file in self.test_dir.glob("test_mcp_*.py"):
+            tool_name = test_file.stem.replace("test_mcp_", "")
             self.test_files.append((tool_name, test_file))
 
         print(f"Found {len(self.test_files)} MCP tool test files")
@@ -84,37 +85,41 @@ class MCPToolsTestAnalyzer:
         # Check each tool against the tested tools set
         for category, tools in self.tool_modules.items():
             self.test_coverage[category] = {
-                'total': len(tools),
-                'tested': 0,
-                'missing': 0,
-                'tools': {}
+                "total": len(tools),
+                "tested": 0,
+                "missing": 0,
+                "tools": {},
             }
 
             for tool in tools:
                 has_test = tool in tested_tools
-                self.test_coverage[category]['tools'][tool] = has_test
+                self.test_coverage[category]["tools"][tool] = has_test
 
                 if has_test:
-                    self.test_coverage[category]['tested'] += 1
+                    self.test_coverage[category]["tested"] += 1
                 else:
-                    self.test_coverage[category]['missing'] += 1
+                    self.test_coverage[category]["missing"] += 1
                     if category not in self.missing_tests:
                         self.missing_tests[category] = []
                     self.missing_tests[category].append(tool)
 
         # Calculate overall statistics
-        total_tools = sum(data['total'] for data in self.test_coverage.values())
-        total_tested = sum(data['tested'] for data in self.test_coverage.values())
-        total_missing = sum(data['missing'] for data in self.test_coverage.values())
+        total_tools = sum(data["total"] for data in self.test_coverage.values())
+        total_tested = sum(data["tested"] for data in self.test_coverage.values())
+        total_missing = sum(data["missing"] for data in self.test_coverage.values())
 
         if total_tools > 0:
             coverage_pct = (total_tested / total_tools) * 100
-            print(f"Overall test coverage: {total_tested}/{total_tools} tools ({coverage_pct:.1f}%)")
+            print(
+                f"Overall test coverage: {total_tested}/{total_tools} tools ({coverage_pct:.1f}%)"
+            )
 
             for category, data in self.test_coverage.items():
-                if data['total'] > 0:
-                    cat_coverage_pct = (data['tested'] / data['total']) * 100
-                    print(f"- {category}: {data['tested']}/{data['total']} tools ({cat_coverage_pct:.1f}%)")
+                if data["total"] > 0:
+                    cat_coverage_pct = (data["tested"] / data["total"]) * 100
+                    print(
+                        f"- {category}: {data['tested']}/{data['total']} tools ({cat_coverage_pct:.1f}%)"
+                    )
         else:
             print("No tools found for analysis")
 
@@ -133,7 +138,7 @@ sys.path.insert(0, '.')
 
 from ipfs_datasets_py.mcp_server.tools.{category} import {tool_name}
 
-class Test{tool_name.title().replace('_', '')}(unittest.TestCase):
+class Test{tool_name.title().replace("_", "")}(unittest.TestCase):
     \"\"\"Test case for the {tool_name} MCP tool.\"\"\"
 
     def setUp(self):
@@ -201,41 +206,43 @@ if __name__ == '__main__':
         report = "# MCP Tools Test Coverage Report\n\n"
 
         # Overall statistics
-        total_tools = sum(data['total'] for data in self.test_coverage.values())
-        total_tested = sum(data['tested'] for data in self.test_coverage.values())
-        total_missing = sum(data['missing'] for data in self.test_coverage.values())
+        total_tools = sum(data["total"] for data in self.test_coverage.values())
+        total_tested = sum(data["tested"] for data in self.test_coverage.values())
+        total_missing = sum(data["missing"] for data in self.test_coverage.values())
 
         coverage_pct = (total_tested / total_tools) * 100 if total_tools > 0 else 0
 
         report += "## Overall Statistics\n"
         report += f"- Total MCP tools: {total_tools}\n"
         report += f"- Tools with tests: {total_tested} ({coverage_pct:.1f}%)\n"
-        report += f"- Tools without tests: {total_missing} ({100-coverage_pct:.1f}%)\n\n"
+        report += f"- Tools without tests: {total_missing} ({100 - coverage_pct:.1f}%)\n\n"
 
         # Category breakdown
         report += "## Coverage by Category\n\n"
 
         for category, data in self.test_coverage.items():
-            cat_coverage_pct = (data['tested'] / data['total']) * 100 if data['total'] > 0 else 0
+            cat_coverage_pct = (data["tested"] / data["total"]) * 100 if data["total"] > 0 else 0
             report += f"### {category}\n"
-            report += f"- Coverage: {data['tested']}/{data['total']} tools ({cat_coverage_pct:.1f}%)\n"
+            report += (
+                f"- Coverage: {data['tested']}/{data['total']} tools ({cat_coverage_pct:.1f}%)\n"
+            )
 
             # List tools without tests
-            if data['missing'] > 0:
+            if data["missing"] > 0:
                 report += "- Missing tests for:\n"
-                for tool, has_test in data['tools'].items():
+                for tool, has_test in data["tools"].items():
                     if not has_test:
                         report += f"  - {tool}\n"
             report += "\n"
 
         # Save the report
-        with open('mcp_tools_test_coverage_report.md', 'w') as f:
+        with open("mcp_tools_test_coverage_report.md", "w") as f:
             f.write(report)
 
         print(f"Test coverage report saved to mcp_tools_test_coverage_report.md")
 
         # Save coverage data to JSON
-        with open('mcp_tools_test_coverage.json', 'w') as f:
+        with open("mcp_tools_test_coverage.json", "w") as f:
             json.dump(self.test_coverage, f, indent=2)
 
         print(f"Test coverage data saved to mcp_tools_test_coverage.json")
@@ -248,6 +255,7 @@ if __name__ == '__main__':
         self.generate_missing_tests()
 
         print("\nAnalysis complete!")
+
 
 if __name__ == "__main__":
     analyzer = MCPToolsTestAnalyzer()

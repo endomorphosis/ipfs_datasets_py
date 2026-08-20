@@ -1,5 +1,5 @@
-
 import unittest
+
 
 class SimpleTests(unittest.TestCase):
     def test_addition(self):
@@ -7,4 +7,3 @@ class SimpleTests(unittest.TestCase):
 
     def test_string(self):
         self.assertEqual("hello" + " world", "hello world")
-                

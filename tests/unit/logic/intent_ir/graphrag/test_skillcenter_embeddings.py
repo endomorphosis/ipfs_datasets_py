@@ -181,9 +181,7 @@ def test_embedding_job_resumes_without_copying_source_bodies(
     assert not forbidden & embedding_columns
     assert not forbidden & policy_columns
 
-    all_policy_rows = sum(
-        parquet.read_table(path).num_rows for path in policy_files
-    )
+    all_policy_rows = sum(parquet.read_table(path).num_rows for path in policy_files)
     assert all_policy_rows == 3
 
 

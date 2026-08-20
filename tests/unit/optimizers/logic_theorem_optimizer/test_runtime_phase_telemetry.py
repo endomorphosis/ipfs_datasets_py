@@ -186,9 +186,7 @@ def test_progress_callbacks_create_per_sample_compiler_view_and_bridge_spans() -
     telemetry.end_cycle()
 
     sample_phases = {
-        span["phase"]
-        for span in telemetry.to_dict()["spans"]
-        if span["sample_id"] == "sample-a"
+        span["phase"] for span in telemetry.to_dict()["spans"] if span["sample_id"] == "sample-a"
     }
     assert {
         "compilation",

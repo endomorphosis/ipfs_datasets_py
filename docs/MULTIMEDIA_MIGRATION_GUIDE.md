@@ -108,7 +108,8 @@ Run your code and check for DeprecationWarnings:
 
 ```python
 import warnings
-warnings.simplefilter('always', DeprecationWarning)
+
+warnings.simplefilter("always", DeprecationWarning)
 
 # Your code here
 from ipfs_datasets_py.processors.multimedia import FFmpegWrapper  # No warning ✅
@@ -153,9 +154,7 @@ from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
 
 processor = EmailProcessor()
 emails = processor.fetch_from_imap(
-    host="imap.gmail.com",
-    username="user@gmail.com",
-    password="password"
+    host="imap.gmail.com", username="user@gmail.com", password="password"
 )
 ```
 
@@ -166,9 +165,7 @@ from ipfs_datasets_py.processors.multimedia import EmailProcessor
 # Same code - no changes needed!
 processor = EmailProcessor()
 emails = processor.fetch_from_imap(
-    host="imap.gmail.com",
-    username="user@gmail.com",
-    password="password"
+    host="imap.gmail.com", username="user@gmail.com", password="password"
 )
 ```
 

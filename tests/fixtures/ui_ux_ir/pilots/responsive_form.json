@@ -1,0 +1,14 @@
+{
+  "pilot_id": "responsive-form-v1",
+  "fields": ["email", "name", "consent"],
+  "actions": ["submit", "cancel"],
+  "states": ["idle", "editing", "submitting", "success", "error"],
+  "web_layout": "two-column",
+  "mobile_layout": "single-column-stack",
+  "accessibility": {
+    "email": {"role": "textbox", "label": "Email"},
+    "name": {"role": "textbox", "label": "Name"},
+    "consent": {"role": "checkbox", "label": "Consent"},
+    "submit": {"role": "button", "label": "Submit"}
+  }
+}

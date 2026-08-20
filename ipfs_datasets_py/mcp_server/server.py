@@ -6,6 +6,7 @@ MCP Server for IPFS Datasets Python.
 This module provides a Model Context Protocol server implementation for IPFS Datasets,
 enabling AI models to interact with IPFS datasets through standardized tools.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,6 +39,7 @@ except ImportError as e:
 
         try:
             import mcp as _maybe_mcp
+
             _mcp_file = getattr(_maybe_mcp, "__file__", "") or ""
             _mcp_is_package = bool(getattr(_maybe_mcp, "__path__", None))
         except ImportError:
@@ -46,12 +48,16 @@ except ImportError as e:
 
         _looks_like_ipfs_kit_shadow = False
         if _mcp_file:
-            if _mcp_file.endswith("ipfs_kit_py/mcp.py") or ("ipfs_kit_py" in _mcp_file and _mcp_file.endswith("mcp.py")):
+            if _mcp_file.endswith("ipfs_kit_py/mcp.py") or (
+                "ipfs_kit_py" in _mcp_file and _mcp_file.endswith("mcp.py")
+            ):
                 _looks_like_ipfs_kit_shadow = True
             # ipfs_kit_py also ships a top-level `mcp/` package in its repo root.
             # If that repo root is on sys.path, it can shadow the real `mcp` PyPI
             # package (which provides `mcp.server`).
-            if ("ipfs_kit_py" in _mcp_file) and ("/mcp/" in _mcp_file or _mcp_file.endswith("mcp/__init__.py")):
+            if ("ipfs_kit_py" in _mcp_file) and (
+                "/mcp/" in _mcp_file or _mcp_file.endswith("mcp/__init__.py")
+            ):
                 _looks_like_ipfs_kit_shadow = True
 
         if _looks_like_ipfs_kit_shadow or not _mcp_is_package:
@@ -80,6 +86,7 @@ except ImportError as e:
         from mcp.types import CallToolResult, TextContent, Tool  # type: ignore[no-redef]
         from mcp import CallToolRequest  # type: ignore[no-redef]
     except (ImportError, ModuleNotFoundError) as e:
+
         class FastMCP:  # type: ignore[no-redef]
             def __init__(self, name: str):
                 self.name = name
@@ -118,7 +125,7 @@ from .exceptions import (
     ValidationError as MCPValidationError,
     ConfigurationError,
     ServerStartupError,
-    P2PServiceError
+    P2PServiceError,
 )
 
 from ipfs_datasets_py.utils.anyio_compat import run as run_anyio
@@ -126,14 +133,11 @@ from ipfs_datasets_py.utils.anyio_compat import run as run_anyio
 # Import error reporting
 try:
     from ..error_reporting import error_reporter, get_recent_logs
+
     ERROR_REPORTING_AVAILABLE = True
 except ImportError:
     ERROR_REPORTING_AVAILABLE = False
     logger.warning("Error reporting module not available")
-
-
-
-
 
 
 def return_text_content(input: Any, result_str: str) -> TextContent:
@@ -147,7 +151,9 @@ def return_text_content(input: Any, result_str: str) -> TextContent:
     Returns:
         TextContent: A TextContent object with 'text' type and formatted text.
     """
-    return TextContent(type="text", text=f"{result_str}: {repr(input)}") # NOTE we use repr to ensure special characters are handled correctly
+    return TextContent(
+        type="text", text=f"{result_str}: {repr(input)}"
+    )  # NOTE we use repr to ensure special characters are handled correctly
 
 
 def return_tool_call_results(content: TextContent, error: bool = False) -> CallToolResult:
@@ -183,36 +189,41 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
 
     for item in directory_path.iterdir():
         this_is_valid_file = (
-            item.is_file() and
-            item.suffix == '.py' and # Only Python files
-            not item.name.startswith('.') and # Avoid hidden and dunder files (e.g. __init__.py, __main__.py)
-            not item.name.startswith('_')
+            item.is_file()
+            and item.suffix == ".py"  # Only Python files
+            and not item.name.startswith(
+                "."
+            )  # Avoid hidden and dunder files (e.g. __init__.py, __main__.py)
+            and not item.name.startswith("_")
         )
 
         if this_is_valid_file:
             module_name = item.stem
             try:
-                module = importlib.import_module(f"ipfs_datasets_py.mcp_server.tools.{directory_path.name}.{module_name}")
+                module = importlib.import_module(
+                    f"ipfs_datasets_py.mcp_server.tools.{directory_path.name}.{module_name}"
+                )
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
                     # Only include functions defined in the module (not imported ones)
                     # and exclude built-in types and typing constructs
                     # For development tools, also include wrapped functions
                     this_is_valid_function = (
-                        callable(attr) and
-                        not attr_name.startswith('_') and
-                        hasattr(attr, '__module__') and
-                        hasattr(attr, '__doc__') and # Ensure it has a docstring, since Claude will need it to properly use a tool.
-                        not attr_name in ['Dict', 'Any', 'Optional', 'Union', 'List', 'Tuple'] and
-                        not isinstance(attr, type)  # Exclude classes/types
+                        callable(attr)
+                        and not attr_name.startswith("_")
+                        and hasattr(attr, "__module__")
+                        and hasattr(
+                            attr, "__doc__"
+                        )  # Ensure it has a docstring, since Claude will need it to properly use a tool.
+                        and not attr_name in ["Dict", "Any", "Optional", "Union", "List", "Tuple"]
+                        and not isinstance(attr, type)  # Exclude classes/types
                     )
 
                     if this_is_valid_function:
                         # For development tools, be more flexible with module checking
-                        is_from_module = (
-                            attr.__module__ == module.__name__ or
-                            (directory_path.name == 'development_tools' and
-                             attr.__module__.endswith('development_tools.base_tool'))
+                        is_from_module = attr.__module__ == module.__name__ or (
+                            directory_path.name == "development_tools"
+                            and attr.__module__.endswith("development_tools.base_tool")
                         )
 
                         if is_from_module:
@@ -290,7 +301,7 @@ class IPFSDatasetsMCPServer:
         server = IPFSDatasetsMCPServer()
         await server.register_tools()
         await server.run_server()
-        
+
         # Custom configuration with specific settings
         custom_config = Configs(
             log_level="DEBUG",
@@ -299,7 +310,7 @@ class IPFSDatasetsMCPServer:
         )
         server = IPFSDatasetsMCPServer(server_configs=custom_config)
         await server.register_tools()
-        
+
         # Development mode with enhanced debugging
         dev_server = IPFSDatasetsMCPServer()
         await dev_server.register_tools()
@@ -318,7 +329,7 @@ class IPFSDatasetsMCPServer:
         - mcp: Model Context Protocol implementation library
         - pydantic: Data validation and configuration management
         - anyio: Asynchronous programming support for concurrent operations
-        
+
         Optional:
         - Various tool-specific dependencies loaded dynamically based on usage
 
@@ -354,7 +365,7 @@ class IPFSDatasetsMCPServer:
                 configuration, and resource limits. If None, default configuration
                 will be loaded from the global configs instance. Configuration
                 includes:
-                
+
                 - log_level (str): Logging verbosity level (DEBUG, INFO, WARNING, ERROR)
                 - max_workers (int): Maximum concurrent tool execution threads
                 - timeout (int): Default timeout for tool execution in seconds
@@ -362,7 +373,7 @@ class IPFSDatasetsMCPServer:
                 - resource_limits (Dict[str, Any]): Memory and CPU usage constraints
                 - security_settings (Dict[str, Any]): Authentication and authorization
                 - performance_options (Dict[str, Any]): Optimization and caching settings
-                
+
                 Example: Configs(
                     log_level="INFO",
                     max_workers=8,
@@ -391,7 +402,7 @@ class IPFSDatasetsMCPServer:
         Examples:
             # Basic initialization with default configuration
             server = IPFSDatasetsMCPServer()
-            
+
             # Custom configuration for development environment
             dev_config = Configs(
                 log_level="DEBUG",
@@ -400,7 +411,7 @@ class IPFSDatasetsMCPServer:
                 development_mode=True
             )
             dev_server = IPFSDatasetsMCPServer(server_configs=dev_config)
-            
+
             # Production configuration with enhanced performance
             prod_config = Configs(
                 log_level="INFO",
@@ -539,6 +550,7 @@ class IPFSDatasetsMCPServer:
             return
         try:
             from .nl_ucan_policy import IPFSPolicyStore, get_policy_registry  # noqa: PLC0415
+
             registry = get_policy_registry()
             self._policy_store = IPFSPolicyStore(path, registry)
             self._policy_store.load()
@@ -566,6 +578,7 @@ class IPFSDatasetsMCPServer:
         path = os.environ.get("MCP_DELEGATION_STORE_PATH", "").strip()
         try:
             from .ucan_delegation import get_delegation_manager  # noqa: PLC0415
+
             mgr = get_delegation_manager(path or None)
             self._server_delegation_manager = mgr
             if path:
@@ -617,7 +630,8 @@ class IPFSDatasetsMCPServer:
             mgr.save()
             logger.info(
                 "revoke_delegation_chain(%s): %d CID(s) revoked and persisted",
-                root_cid, count,
+                root_cid,
+                count,
             )
             return count
         except Exception as exc:
@@ -635,7 +649,11 @@ class IPFSDatasetsMCPServer:
         """
 
         try:
-            auth_mode = str(getattr(self.configs, "p2p_auth_mode", "mcp_token") or "mcp_token").strip().lower()
+            auth_mode = (
+                str(getattr(self.configs, "p2p_auth_mode", "mcp_token") or "mcp_token")
+                .strip()
+                .lower()
+            )
         except ConfigurationError as e:
             logger.error(f"Configuration error accessing auth_mode: {e}")
             auth_mode = "mcp_token"
@@ -675,14 +693,14 @@ class IPFSDatasetsMCPServer:
         # PHASE 4: Register hierarchical tool manager (NEW)
         # Register only 4 meta-tools instead of 347 individual tools
         logger.info("Registering hierarchical tool manager (4 meta-tools)")
-        
+
         from .hierarchical_tool_manager import (
             tools_list_categories,
             tools_list_tools,
             tools_get_schema,
-            tools_dispatch
+            tools_dispatch,
         )
-        
+
         # Register the 4 meta-tools for hierarchical access
         self.mcp.add_tool(tools_list_categories, name="tools_list_categories")
         self.mcp.add_tool(tools_list_tools, name="tools_list_tools")
@@ -694,7 +712,7 @@ class IPFSDatasetsMCPServer:
         self.tools["tools_list_tools"] = tools_list_tools
         self.tools["tools_get_schema"] = tools_get_schema
         self.tools["tools_dispatch"] = tools_dispatch
-        
+
         logger.info("Hierarchical tool manager registered (4 meta-tools for 51 categories)")
 
         if getattr(self, "_enable_extended_meta_tools", False):
@@ -708,6 +726,7 @@ class IPFSDatasetsMCPServer:
                     interface_register,
                     interface_list,
                 )
+
                 for _name, _fn in [
                     ("policy_register", policy_register),
                     ("policy_list", policy_list),
@@ -731,6 +750,7 @@ class IPFSDatasetsMCPServer:
                     compliance_check_intent,
                     compliance_register_interface,
                 )
+
                 for _name, _fn in [
                     ("compliance_add_rule", compliance_add_rule),
                     ("compliance_list_rules", compliance_list_rules),
@@ -771,42 +791,47 @@ class IPFSDatasetsMCPServer:
             # Wrap tool with error reporting if available
             if ERROR_REPORTING_AVAILABLE:
                 wrapped_func = self._wrap_tool_with_error_reporting(tool_name, tool_func)
-                self.mcp.add_tool(
-                    wrapped_func, name=tool_name, description=tool_func.__doc__
-                )
+                self.mcp.add_tool(wrapped_func, name=tool_name, description=tool_func.__doc__)
                 self.tools[tool_name] = wrapped_func
             else:
-                self.mcp.add_tool(
-                    tool_func, name=tool_name, description=tool_func.__doc__
-                )
+                self.mcp.add_tool(tool_func, name=tool_name, description=tool_func.__doc__)
                 self.tools[tool_name] = tool_func
             logger.info(f"Registered tool: {tool_name}")
-    
+
     def _sanitize_error_context(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Sanitize error context to remove sensitive data before reporting.
-        
+
         Security: This prevents leaking API keys, passwords, tokens, and other
         sensitive data in error reports to external services.
-        
+
         Args:
             kwargs: Original kwargs dict that may contain sensitive data
-            
+
         Returns:
             Sanitized context dict with only non-sensitive information
         """
         # List of sensitive key patterns to filter out values
         sensitive_patterns = [
-            'key', 'token', 'password', 'secret', 'auth', 'credential',
-            'api_key', 'apikey', 'access_token', 'private', 'passwd'
+            "key",
+            "token",
+            "password",
+            "secret",
+            "auth",
+            "credential",
+            "api_key",
+            "apikey",
+            "access_token",
+            "private",
+            "passwd",
         ]
-        
+
         sanitized = {}
         for key, value in kwargs.items():
             key_lower = str(key).lower()
             # Check if key matches any sensitive pattern
             is_sensitive = any(pattern in key_lower for pattern in sensitive_patterns)
-            
+
             if is_sensitive:
                 # Replace sensitive values with placeholder
                 sanitized[key] = "<REDACTED>"
@@ -822,26 +847,26 @@ class IPFSDatasetsMCPServer:
             else:
                 # For other types, just show the type
                 sanitized[key] = f"<{type(value).__name__}>"
-        
+
         return {
             "argument_names": list(kwargs.keys()),
             "sanitized_arguments": sanitized,
-            "argument_count": len(kwargs)
+            "argument_count": len(kwargs),
         }
-    
+
     def _wrap_tool_with_error_reporting(self, tool_name: str, tool_func: Callable) -> Callable:
         """
         Wrap a tool function with error reporting.
-        
+
         Args:
             tool_name: Name of the tool
             tool_func: Tool function to wrap
-            
+
         Returns:
             Wrapped function with error reporting
         """
         import functools
-        
+
         @functools.wraps(tool_func)
         async def async_wrapper(*args, **kwargs):
             try:
@@ -866,7 +891,7 @@ class IPFSDatasetsMCPServer:
                     logger.error(f"Failed to report error: {report_err}")
                 # Re-raise the original exception
                 raise
-        
+
         @functools.wraps(tool_func)
         def sync_wrapper(*args, **kwargs):
             try:
@@ -887,7 +912,7 @@ class IPFSDatasetsMCPServer:
                     logger.error(f"Failed to report error: {report_err}")
                 # Re-raise the original exception
                 raise
-        
+
         # Return appropriate wrapper based on whether function is async
         if inspect.iscoroutinefunction(tool_func):
             return async_wrapper
@@ -914,7 +939,7 @@ class IPFSDatasetsMCPServer:
     async def _register_ipfs_kit_mcp_client(self, ipfs_kit_mcp_url: str) -> None:
         """
         Register proxy tools that connect to an ipfs_kit_py MCP server.
-        
+
         NOTE: This functionality is currently disabled because the required
         'mcp.client' library does not exist. When proper MCP client support
         is available, this can be re-enabled.
@@ -972,7 +997,7 @@ class IPFSDatasetsMCPServer:
             import ipfs_kit_py
 
             # Register core IPFS functions
-            for func_name in ['add', 'cat', 'get', 'ls', 'pin_add', 'pin_ls', 'pin_rm']:
+            for func_name in ["add", "cat", "get", "ls", "pin_add", "pin_ls", "pin_rm"]:
                 if hasattr(ipfs_kit_py, func_name):
                     func = getattr(ipfs_kit_py, func_name)
                     self.mcp.add_tool(func, name=f"ipfs_kit_{func_name}")
@@ -984,7 +1009,9 @@ class IPFSDatasetsMCPServer:
         except ToolRegistrationError as e:
             logger.error(f"Tool registration error for direct ipfs_kit functions: {e}")
         except Exception as e:
-            logger.error(f"Unexpected error registering direct ipfs_kit functions: {e}", exc_info=True)
+            logger.error(
+                f"Unexpected error registering direct ipfs_kit functions: {e}", exc_info=True
+            )
 
     async def start_stdio(self) -> None:
         """
@@ -1083,7 +1110,9 @@ class IPFSDatasetsMCPServer:
                 logger.info(f"Starting MCP HTTP server via uvicorn at {host}:{port}")
                 await server.serve()
             except ImportError:
-                logger.warning("Neither Hypercorn nor uvicorn available, falling back to stdio mode")
+                logger.warning(
+                    "Neither Hypercorn nor uvicorn available, falling back to stdio mode"
+                )
                 await self.mcp.run_stdio_async()
 
         except ServerStartupError as e:
@@ -1102,11 +1131,11 @@ class IPFSDatasetsMCPServer:
                     logger.warning(f"Unexpected error stopping P2P service: {e}", exc_info=True)
             # Phase G: persist delegation state on clean exit
             if getattr(self, "_server_delegation_manager", None) is not None:
-               try:
-                   self._server_delegation_manager.save()
-                   logger.info("DelegationManager state persisted on shutdown (start)")
-               except Exception as _exc:
-                   logger.warning("DelegationManager.save() failed on shutdown: %s", _exc)
+                try:
+                    self._server_delegation_manager.save()
+                    logger.info("DelegationManager state persisted on shutdown (start)")
+                except Exception as _exc:
+                    logger.warning("DelegationManager.save() failed on shutdown: %s", _exc)
 
 
 def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None) -> None:
@@ -1139,7 +1168,9 @@ def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None) -> None:
         traceback.print_exc()
 
 
-def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Optional[str] = None) -> None:
+def start_server(
+    host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Optional[str] = None
+) -> None:
     """
     Start the IPFS Datasets MCP server in HTTP mode (legacy).
 
@@ -1170,6 +1201,7 @@ def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Opti
         logger.error(f"Unexpected error starting server: {e}", exc_info=True)
         traceback.print_exc()
 
+
 class Args(pydantic.BaseModel):
     """
     Expected command-line arguments for the MCP server
@@ -1184,6 +1216,7 @@ class Args(pydantic.BaseModel):
         namespace (argparse.Namespace): The parsed command-line arguments namespace
             containing the configuration values to be validated and stored.
     """
+
     host: str
     port: int
     ipfs_kit_mcp_url: Optional[pydantic.AnyUrl] = None
@@ -1194,8 +1227,9 @@ class Args(pydantic.BaseModel):
             host=namespace.host,
             port=namespace.port,
             ipfs_kit_mcp_url=namespace.ipfs_kit_mcp_url,
-            config=namespace.config
+            config=namespace.config,
         )
+
 
 def main() -> None:
     """Command-line entry point."""
@@ -1210,6 +1244,7 @@ def main() -> None:
     # Load custom configuration if provided
     if args.config:
         from .configs import load_config_from_yaml
+
         custom_configs = load_config_from_yaml(args.config)
 
         # Override with command line arguments if provided

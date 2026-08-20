@@ -159,10 +159,10 @@ Updated all references from `known_good` branch to `main` branch:
 
 ```python
 # ❌ OLD
-'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@known_good'
+"ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@known_good"
 
 # ✅ NEW
-'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main'
+"ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main"
 ```
 
 **Files Updated:**
@@ -198,17 +198,12 @@ Updated all 60 example files (53 main + 7 archived) with correct imports:
 
 **Usage:**
 ```python
-from ipfs_datasets_py.accelerate_integration import (
-    AccelerateManager,
-    is_accelerate_available
-)
+from ipfs_datasets_py.accelerate_integration import AccelerateManager, is_accelerate_available
 
 if is_accelerate_available():
     manager = AccelerateManager()
     result = manager.run_inference(
-        model_name="bert-base-uncased",
-        input_data="Hello world",
-        task_type="embedding"
+        model_name="bert-base-uncased", input_data="Hello world", task_type="embedding"
     )
 ```
 

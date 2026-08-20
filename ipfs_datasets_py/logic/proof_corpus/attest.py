@@ -100,15 +100,9 @@ class AttestationVerifyResult:
 
     def __post_init__(self) -> None:
         if not isinstance(self.status, AttestationStatus):
-            object.__setattr__(
-                self, "status", AttestationStatus(str(self.status))
-            )
-        object.__setattr__(
-            self, "content_cid", require_text(self.content_cid, "content_cid")
-        )
-        object.__setattr__(
-            self, "profile", require_profile(self.profile)
-        )
+            object.__setattr__(self, "status", AttestationStatus(str(self.status)))
+        object.__setattr__(self, "content_cid", require_text(self.content_cid, "content_cid"))
+        object.__setattr__(self, "profile", require_profile(self.profile))
         if self.family not in ("", None):
             object.__setattr__(self, "family", str(self.family))
         else:
@@ -120,19 +114,13 @@ class AttestationVerifyResult:
         if not isinstance(self.is_simulated, bool):
             raise ProofCorpusAttestError("is_simulated must be a bool")
         if not isinstance(self.attestation_interface, str):
-            raise ProofCorpusAttestError(
-                "attestation_interface must be a string"
-            )
+            raise ProofCorpusAttestError("attestation_interface must be a string")
         if not isinstance(self.backend, str):
             raise ProofCorpusAttestError("backend must be a string")
         if self.schema_version != PROOF_CORPUS_ATTEST_SCHEMA_VERSION:
-            raise ProofCorpusAttestError(
-                f"unsupported attest schema: {self.schema_version!r}"
-            )
+            raise ProofCorpusAttestError(f"unsupported attest schema: {self.schema_version!r}")
         if self.interface != PROOF_CORPUS_ATTEST_INTERFACE:
-            raise ProofCorpusAttestError(
-                f"unsupported attest interface: {self.interface!r}"
-            )
+            raise ProofCorpusAttestError(f"unsupported attest interface: {self.interface!r}")
 
     @property
     def is_pass(self) -> bool:
@@ -178,18 +166,10 @@ class AttestationVerifyResult:
             reason=str(payload.get("reason", "") or ""),
             statement_digest=str(payload.get("statement_digest", "") or ""),
             is_simulated=bool(payload.get("is_simulated", False)),
-            attestation_interface=str(
-                payload.get("attestation_interface", "") or ""
-            ),
+            attestation_interface=str(payload.get("attestation_interface", "") or ""),
             backend=str(payload.get("backend", "") or ""),
-            schema_version=str(
-                payload.get(
-                    "schema_version", PROOF_CORPUS_ATTEST_SCHEMA_VERSION
-                )
-            ),
-            interface=str(
-                payload.get("interface", PROOF_CORPUS_ATTEST_INTERFACE)
-            ),
+            schema_version=str(payload.get("schema_version", PROOF_CORPUS_ATTEST_SCHEMA_VERSION)),
+            interface=str(payload.get("interface", PROOF_CORPUS_ATTEST_INTERFACE)),
         )
 
 
@@ -268,8 +248,7 @@ def build_legal_statement_for_envelope(
         resolved_profile = require_profile(profile)
         if resolved_profile != env.profile:
             raise ProofCorpusAttestError(
-                f"profile {resolved_profile!r} does not match envelope profile "
-                f"{env.profile!r}"
+                f"profile {resolved_profile!r} does not match envelope profile {env.profile!r}"
             )
     payload = constraint_payload_for_envelope(env)
     return build_statement_from_payload(
@@ -297,9 +276,7 @@ def prove_legal_envelope_attestation(
     ``require_zkp_verify``).
     """
 
-    statement, witness = build_legal_statement_for_envelope(
-        envelope, profile=profile
-    )
+    statement, witness = build_legal_statement_for_envelope(envelope, profile=profile)
     meta: dict[str, Any] = {
         "corpus_interface": PROOF_CORPUS_ATTEST_INTERFACE,
         "corpus_schema_version": PROOF_CORPUS_ATTEST_SCHEMA_VERSION,
@@ -321,13 +298,9 @@ def _normalize_attestation(
     try:
         if isinstance(value, LegalConstraintAttestation):
             return value
-        return LegalConstraintAttestation.from_dict(
-            as_mapping(value, "attestation")
-        )
+        return LegalConstraintAttestation.from_dict(as_mapping(value, "attestation"))
     except (LegalConstraintZKPError, TypeError, ValueError) as exc:
-        raise ProofCorpusAttestError(
-            f"invalid legal-constraint attestation: {exc}"
-        ) from exc
+        raise ProofCorpusAttestError(f"invalid legal-constraint attestation: {exc}") from exc
 
 
 def _attestation_dir(store: ProofCorpusStore) -> Path | None:
@@ -403,9 +376,7 @@ def put_attestation(
     return dict(payload)
 
 
-def get_attestation(
-    store: ProofCorpusStore, content_cid: str
-) -> dict[str, Any] | None:
+def get_attestation(store: ProofCorpusStore, content_cid: str) -> dict[str, Any] | None:
     """Return a stored attestation mapping for *content_cid*, or ``None``."""
 
     if not isinstance(store, ProofCorpusStore):
@@ -475,10 +446,7 @@ def _statement_binds_envelope(
         return False, "statement_source_digest_mismatch"
     if statement.artifact_cid and statement.artifact_cid != envelope.artifact_cid:
         return False, "statement_artifact_cid_mismatch"
-    if (
-        statement.jurisdiction
-        and statement.jurisdiction != envelope.jurisdiction
-    ):
+    if statement.jurisdiction and statement.jurisdiction != envelope.jurisdiction:
         return False, "statement_jurisdiction_mismatch"
     expected_payload = constraint_payload_for_envelope(envelope)
     expected_digest = compute_constraint_digest(expected_payload)
@@ -528,9 +496,7 @@ def verify_attestation(
     profile = require_profile(profile)
 
     if require_zkp_verify and accept_simulated_zkp:
-        raise ProofCorpusAttestError(
-            "require_zkp_verify=True cannot accept_simulated_zkp=True"
-        )
+        raise ProofCorpusAttestError("require_zkp_verify=True cannot accept_simulated_zkp=True")
 
     try:
         envelope = store.get(cid)
@@ -597,9 +563,7 @@ def verify_attestation(
     meta_iface = str(att.interface or "")
     stmt_digest = str(att.statement_digest or "")
 
-    binds, bind_reason = _statement_binds_envelope(
-        att.statement, envelope, profile=profile
-    )
+    binds, bind_reason = _statement_binds_envelope(att.statement, envelope, profile=profile)
     if not binds:
         return _result(
             status=AttestationStatus.FAIL,
@@ -613,9 +577,7 @@ def verify_attestation(
             backend=meta_backend,
         )
 
-    if not verify_legal_constraint_attestation(
-        att, expected_statement=att.statement
-    ):
+    if not verify_legal_constraint_attestation(att, expected_statement=att.statement):
         return _result(
             status=AttestationStatus.FAIL,
             content_cid=cid,
@@ -636,11 +598,7 @@ def verify_attestation(
             require_zkp_verify=require_zkp_verify,
             accept_simulated_zkp=accept_simulated_zkp,
         ):
-            reason = (
-                "simulated_zkp_rejected"
-                if att.is_simulated
-                else "zkp_profile_rejected"
-            )
+            reason = "simulated_zkp_rejected" if att.is_simulated else "zkp_profile_rejected"
             return _result(
                 status=AttestationStatus.FAIL,
                 content_cid=cid,
@@ -684,9 +642,7 @@ def verify_attestation_for_envelope(
         if isinstance(envelope, ArtifactEnvelope):
             env = envelope.verify_integrity()
         else:
-            env = ArtifactEnvelope.from_dict(
-                as_mapping(envelope, "envelope")
-            )
+            env = ArtifactEnvelope.from_dict(as_mapping(envelope, "envelope"))
     except Exception as exc:
         return _result(
             status=AttestationStatus.FAIL,

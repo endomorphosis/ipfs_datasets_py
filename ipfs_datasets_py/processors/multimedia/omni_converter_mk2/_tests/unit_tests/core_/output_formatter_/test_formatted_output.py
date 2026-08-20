@@ -14,25 +14,27 @@ from core.output_formatter._formatted_output import FormattedOutput
 def make_sample_formatted_output() -> FormattedOutput:
     """
     Create a sample FormattedOutput instance for testing.
-    
+
     Returns:
         FormattedOutput instance with sample data.
     """
     return FormattedOutput(
         content="Sample content for testing",
         format="txt",
-        metadata={'author': 'test_user', 'created': '2024-01-01'},
-        output_path="/tmp/test_output.txt"
+        metadata={"author": "test_user", "created": "2024-01-01"},
+        output_path="/tmp/test_output.txt",
     )
+
 
 from configs import configs, Configs
 from core.text_normalizer._normalized_content import NormalizedContent
-from types_  import Logger
+from types_ import Logger
+
 
 def make_mock_resources() -> dict[str, MagicMock]:
     """
     Factory function to create an OutputFormatter instance.
-    
+
     Returns:
         An instance of OutputFormatter configured with proper dependencies.
     """
@@ -51,7 +53,7 @@ class TestFormattedOutputInitialization(unittest.TestCase):
         """Set up test fixtures."""
         self.sample_content = "Sample content"
         self.sample_format = "txt"
-        self.sample_metadata = {'author': 'test', 'date': '2024-01-01'}
+        self.sample_metadata = {"author": "test", "date": "2024-01-01"}
         self.sample_output_path = "/path/to/output.txt"
 
     def test_init_with_all_parameters(self):
@@ -72,9 +74,9 @@ class TestFormattedOutputInitialization(unittest.TestCase):
             content=self.sample_content,
             format=self.sample_format,
             metadata=self.sample_metadata,
-            output_path=self.sample_output_path
+            output_path=self.sample_output_path,
         )
-        
+
         # Assert
         self.assertEqual(output.content, self.sample_content)
         self.assertEqual(output.format, self.sample_format)
@@ -93,11 +95,8 @@ class TestFormattedOutputInitialization(unittest.TestCase):
             - output_path is empty string (default)
         """
         # Act
-        output = FormattedOutput(
-            content=self.sample_content,
-            format=self.sample_format
-        )
-        
+        output = FormattedOutput(content=self.sample_content, format=self.sample_format)
+
         # Assert
         self.assertEqual(output.content, self.sample_content)
         self.assertEqual(output.format, self.sample_format)
@@ -116,12 +115,12 @@ class TestFormattedOutputInitialization(unittest.TestCase):
         # Act
         output1 = FormattedOutput(content="content1", format="txt")
         output2 = FormattedOutput(content="content2", format="txt")
-        
+
         # Modify one instance's metadata
-        output1.metadata['test'] = 'value'
-        
+        output1.metadata["test"] = "value"
+
         # Assert
-        self.assertEqual(output1.metadata, {'test': 'value'})
+        self.assertEqual(output1.metadata, {"test": "value"})
         self.assertEqual(output2.metadata, {})
         self.assertIsNot(output1.metadata, output2.metadata)
 
@@ -135,11 +134,7 @@ class TestFormattedOutputInitialization(unittest.TestCase):
         """
         # Act & Assert
         with self.assertRaises(TypeError):
-            FormattedOutput(
-                content=self.sample_content,
-                format=self.sample_format,
-                metadata=None
-            )
+            FormattedOutput(content=self.sample_content, format=self.sample_format, metadata=None)
 
     def test_init_immutability_considerations(self):
         """
@@ -150,20 +145,15 @@ class TestFormattedOutputInitialization(unittest.TestCase):
             - Document mutability behavior
         """
         # Act
-        output = FormattedOutput(
-            content=self.sample_content,
-            format=self.sample_format
-        )
-        
+        output = FormattedOutput(content=self.sample_content, format=self.sample_format)
+
         # Try to modify attributes
         original_content = output.content
         output.content = "Modified content"
-        
+
         # Assert - should be mutable unless frozen=True
         self.assertNotEqual(output.content, original_content)
         self.assertEqual(output.content, "Modified content")
-
-
 
 
 class TestFormattedOutputToDict(unittest.TestCase):
@@ -173,7 +163,7 @@ class TestFormattedOutputToDict(unittest.TestCase):
         """Set up test fixtures."""
         self.sample_content = "Sample content for testing"
         self.sample_format = "txt"
-        self.sample_metadata = {'author': 'test', 'date': '2024-01-01'}
+        self.sample_metadata = {"author": "test", "date": "2024-01-01"}
         self.sample_output_path = "/path/to/output.txt"
 
     def test_to_dict_with_all_attributes(self):
@@ -190,19 +180,19 @@ class TestFormattedOutputToDict(unittest.TestCase):
             content=self.sample_content,
             format=self.sample_format,
             metadata=self.sample_metadata,
-            output_path=self.sample_output_path
+            output_path=self.sample_output_path,
         )
-        
+
         # Act
         result = output.to_dict()
-        
+
         # Assert
-        expected_keys = {'content', 'format', 'metadata', 'output_path'}
+        expected_keys = {"content", "format", "metadata", "output_path"}
         self.assertEqual(set(result.keys()), expected_keys)
-        self.assertEqual(result['content'], self.sample_content)
-        self.assertEqual(result['format'], self.sample_format)
-        self.assertEqual(result['metadata'], self.sample_metadata)
-        self.assertEqual(result['output_path'], self.sample_output_path)
+        self.assertEqual(result["content"], self.sample_content)
+        self.assertEqual(result["format"], self.sample_format)
+        self.assertEqual(result["metadata"], self.sample_metadata)
+        self.assertEqual(result["output_path"], self.sample_output_path)
 
     def test_to_dict_with_empty_metadata(self):
         """
@@ -213,17 +203,14 @@ class TestFormattedOutputToDict(unittest.TestCase):
             - metadata value is empty dict {}
         """
         # Arrange
-        output = FormattedOutput(
-            content=self.sample_content,
-            format=self.sample_format
-        )
-        
+        output = FormattedOutput(content=self.sample_content, format=self.sample_format)
+
         # Act
         result = output.to_dict()
-        
+
         # Assert
-        self.assertIn('metadata', result)
-        self.assertEqual(result['metadata'], {})
+        self.assertIn("metadata", result)
+        self.assertEqual(result["metadata"], {})
 
     def test_to_dict_with_complex_metadata(self):
         """
@@ -236,27 +223,25 @@ class TestFormattedOutputToDict(unittest.TestCase):
         """
         # Arrange
         complex_metadata = {
-            'author': 'test_user',
-            'tags': ['tag1', 'tag2'],
-            'settings': {
-                'format_options': {'indent': 4, 'pretty_print': True},
-                'validation': {'strict': False}
+            "author": "test_user",
+            "tags": ["tag1", "tag2"],
+            "settings": {
+                "format_options": {"indent": 4, "pretty_print": True},
+                "validation": {"strict": False},
             },
-            'counts': {'lines': 100, 'words': 500}
+            "counts": {"lines": 100, "words": 500},
         }
         output = FormattedOutput(
-            content=self.sample_content,
-            format=self.sample_format,
-            metadata=complex_metadata
+            content=self.sample_content, format=self.sample_format, metadata=complex_metadata
         )
-        
+
         # Act
         result = output.to_dict()
-        
+
         # Assert
-        self.assertEqual(result['metadata'], complex_metadata)
-        self.assertEqual(result['metadata']['tags'], ['tag1', 'tag2'])
-        self.assertEqual(result['metadata']['settings']['format_options']['indent'], 4)
+        self.assertEqual(result["metadata"], complex_metadata)
+        self.assertEqual(result["metadata"]["tags"], ["tag1", "tag2"])
+        self.assertEqual(result["metadata"]["settings"]["format_options"]["indent"], 4)
 
     def test_to_dict_creates_new_dict(self):
         """
@@ -268,22 +253,20 @@ class TestFormattedOutputToDict(unittest.TestCase):
         """
         # Arrange
         output = FormattedOutput(
-            content=self.sample_content,
-            format=self.sample_format,
-            metadata=self.sample_metadata
+            content=self.sample_content, format=self.sample_format, metadata=self.sample_metadata
         )
-        
+
         # Act
         dict1 = output.to_dict()
         dict2 = output.to_dict()
-        dict1['content'] = "Modified content"
-        dict1['metadata']['new_key'] = 'new_value'
-        
+        dict1["content"] = "Modified content"
+        dict1["metadata"]["new_key"] = "new_value"
+
         # Assert
         self.assertIsNot(dict1, dict2)
-        self.assertNotEqual(dict1['content'], dict2['content'])
+        self.assertNotEqual(dict1["content"], dict2["content"])
         self.assertEqual(output.content, self.sample_content)  # Original unchanged
-        self.assertNotIn('new_key', output.metadata)  # Original metadata unchanged
+        self.assertNotIn("new_key", output.metadata)  # Original metadata unchanged
 
     def test_to_dict_json_serializable(self):
         """
@@ -295,34 +278,32 @@ class TestFormattedOutputToDict(unittest.TestCase):
         """
         # Arrange
         metadata_with_various_types = {
-            'string': 'test',
-            'integer': 42,
-            'float': 3.14,
-            'boolean': True,
-            'list': [1, 2, 3],
-            'dict': {'nested': 'value'},
-            'none': None
+            "string": "test",
+            "integer": 42,
+            "float": 3.14,
+            "boolean": True,
+            "list": [1, 2, 3],
+            "dict": {"nested": "value"},
+            "none": None,
         }
         output = FormattedOutput(
             content=self.sample_content,
             format=self.sample_format,
-            metadata=metadata_with_various_types
+            metadata=metadata_with_various_types,
         )
-        
+
         # Act
         result_dict = output.to_dict()
-        
+
         # Assert - should not raise any exceptions
         json_string = json.dumps(result_dict)
         self.assertIsInstance(json_string, str)
-        
+
         # Verify round-trip
         parsed_back = json.loads(json_string)
-        self.assertEqual(parsed_back['metadata']['string'], 'test')
-        self.assertEqual(parsed_back['metadata']['integer'], 42)
-        self.assertEqual(parsed_back['metadata']['boolean'], True)
-
-
+        self.assertEqual(parsed_back["metadata"]["string"], "test")
+        self.assertEqual(parsed_back["metadata"]["integer"], 42)
+        self.assertEqual(parsed_back["metadata"]["boolean"], True)
 
 
 class TestFormattedOutputWriteToFile(unittest.TestCase):
@@ -333,7 +314,7 @@ class TestFormattedOutputWriteToFile(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.sample_content = "Sample content for testing\nWith multiple lines"
         self.sample_format = "txt"
-        self.sample_metadata = {'author': 'test', 'date': '2024-01-01'}
+        self.sample_metadata = {"author": "test", "date": "2024-01-01"}
 
     def tearDown(self):
         """Clean up test fixtures."""
@@ -363,16 +344,16 @@ class TestFormattedOutputWriteToFile(unittest.TestCase):
             content=self.sample_content,
             format=self.sample_format,
             metadata=self.sample_metadata,
-            output_path=output_path
+            output_path=output_path,
         )
-        
+
         # Act
         result_path = output.write_to_file()
-        
+
         # Assert
         self.assertEqual(result_path, output_path)
         self.assertTrue(os.path.exists(output_path))
-        with open(output_path, 'r') as f:
+        with open(output_path, "r") as f:
             written_content = f.read()
         self.assertEqual(written_content, self.sample_content)
 
@@ -389,20 +370,18 @@ class TestFormattedOutputWriteToFile(unittest.TestCase):
         instance_path = os.path.join(self.temp_dir, "test1.txt")
         parameter_path = os.path.join(self.temp_dir, "test2.txt")
         output = FormattedOutput(
-            content=self.sample_content,
-            format=self.sample_format,
-            output_path=instance_path
+            content=self.sample_content, format=self.sample_format, output_path=instance_path
         )
-        
+
         # Act
         result_path = output.write_to_file(output_path=parameter_path)
-        
+
         # Assert
         self.assertEqual(result_path, parameter_path)
         self.assertEqual(output.output_path, instance_path)  # Instance unchanged
         self.assertTrue(os.path.exists(parameter_path))
         self.assertFalse(os.path.exists(instance_path))  # Instance path not used
-        with open(parameter_path, 'r') as f:
+        with open(parameter_path, "r") as f:
             written_content = f.read()
         self.assertEqual(written_content, self.sample_content)
 
@@ -416,15 +395,13 @@ class TestFormattedOutputWriteToFile(unittest.TestCase):
         """
         # Arrange
         output = FormattedOutput(
-            content=self.sample_content,
-            format=self.sample_format,
-            output_path=""
+            content=self.sample_content, format=self.sample_format, output_path=""
         )
-        
+
         # Act & Assert
         with self.assertRaises(ValueError) as context:
             output.write_to_file()
-        
+
         self.assertIn("output path", str(context.exception).lower())
 
     def test_write_to_file_creates_parent_directories(self):
@@ -439,19 +416,17 @@ class TestFormattedOutputWriteToFile(unittest.TestCase):
         # Arrange
         nested_path = os.path.join(self.temp_dir, "new", "nested", "dir", "test.txt")
         output = FormattedOutput(
-            content=self.sample_content,
-            format=self.sample_format,
-            output_path=nested_path
+            content=self.sample_content, format=self.sample_format, output_path=nested_path
         )
-        
+
         # Act
         result_path = output.write_to_file()
-        
+
         # Assert
         self.assertEqual(result_path, nested_path)
         self.assertTrue(os.path.exists(nested_path))
         self.assertTrue(os.path.isdir(os.path.dirname(nested_path)))
-        with open(nested_path, 'r') as f:
+        with open(nested_path, "r") as f:
             written_content = f.read()
         self.assertEqual(written_content, self.sample_content)
 
@@ -466,23 +441,21 @@ class TestFormattedOutputWriteToFile(unittest.TestCase):
         """
         # Arrange
         output_path = os.path.join(self.temp_dir, "existing.txt")
-        
+
         # Create existing file with different content
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write("Old content that should be replaced")
-        
+
         output = FormattedOutput(
-            content=self.sample_content,
-            format=self.sample_format,
-            output_path=output_path
+            content=self.sample_content, format=self.sample_format, output_path=output_path
         )
-        
+
         # Act
         result_path = output.write_to_file()
-        
+
         # Assert
         self.assertEqual(result_path, output_path)
-        with open(output_path, 'r') as f:
+        with open(output_path, "r") as f:
             written_content = f.read()
         self.assertEqual(written_content, self.sample_content)
 
@@ -498,14 +471,12 @@ class TestFormattedOutputWriteToFile(unittest.TestCase):
         protected_dir = os.path.join(self.temp_dir, "protected")
         os.makedirs(protected_dir)
         os.chmod(protected_dir, stat.S_IREAD)  # Read-only
-        
+
         output_path = os.path.join(protected_dir, "test.txt")
         output = FormattedOutput(
-            content=self.sample_content,
-            format=self.sample_format,
-            output_path=output_path
+            content=self.sample_content, format=self.sample_format, output_path=output_path
         )
-        
+
         # Act & Assert
         with self.assertRaises((IOError, PermissionError, OSError)):
             output.write_to_file()
@@ -521,11 +492,9 @@ class TestFormattedOutputWriteToFile(unittest.TestCase):
         # Arrange - using null character which is invalid on most filesystems
         invalid_path = os.path.join(self.temp_dir, "test\x00invalid.txt")
         output = FormattedOutput(
-            content=self.sample_content,
-            format=self.sample_format,
-            output_path=invalid_path
+            content=self.sample_content, format=self.sample_format, output_path=invalid_path
         )
-        
+
         # Act & Assert
         with self.assertRaises((ValueError, OSError)):
             output.write_to_file()
@@ -541,26 +510,22 @@ class TestFormattedOutputWriteToFile(unittest.TestCase):
         formats_and_content = [
             ("txt", "Plain text content"),
             ("json", '{"key": "value", "data": [1, 2, 3]}'),
-            ("md", "# Markdown Header\n\nSome **bold** text")
+            ("md", "# Markdown Header\n\nSome **bold** text"),
         ]
-        
+
         for fmt, content in formats_and_content:
             with self.subTest(format=fmt):
                 # Arrange
                 output_path = os.path.join(self.temp_dir, f"test.{fmt}")
-                output = FormattedOutput(
-                    content=content,
-                    format=fmt,
-                    output_path=output_path
-                )
-                
+                output = FormattedOutput(content=content, format=fmt, output_path=output_path)
+
                 # Act
                 result_path = output.write_to_file()
-                
+
                 # Assert
                 self.assertEqual(result_path, output_path)
                 self.assertTrue(os.path.exists(output_path))
-                with open(output_path, 'r') as f:
+                with open(output_path, "r") as f:
                     written_content = f.read()
                 self.assertEqual(written_content, content)
 
@@ -577,17 +542,15 @@ class TestFormattedOutputWriteToFile(unittest.TestCase):
         unicode_content = "Unicode content: 你好世界 🌍 émojis 🚀 áéíóú"
         output_path = os.path.join(self.temp_dir, "unicode.txt")
         output = FormattedOutput(
-            content=unicode_content,
-            format=self.sample_format,
-            output_path=output_path
+            content=unicode_content, format=self.sample_format, output_path=output_path
         )
-        
+
         # Act
         result_path = output.write_to_file()
-        
+
         # Assert
         self.assertEqual(result_path, output_path)
-        with open(output_path, 'r', encoding='utf-8') as f:
+        with open(output_path, "r", encoding="utf-8") as f:
             written_content = f.read()
         self.assertEqual(written_content, unicode_content)
 
@@ -604,19 +567,18 @@ class TestFormattedOutputWriteToFile(unittest.TestCase):
         large_content = "A" * (5 * 1024 * 1024)
         output_path = os.path.join(self.temp_dir, "large.txt")
         output = FormattedOutput(
-            content=large_content,
-            format=self.sample_format,
-            output_path=output_path
+            content=large_content, format=self.sample_format, output_path=output_path
         )
-        
+
         # Act
         result_path = output.write_to_file()
-        
+
         # Assert
         self.assertEqual(result_path, output_path)
         self.assertTrue(os.path.exists(output_path))
         file_size = os.path.getsize(output_path)
         self.assertEqual(file_size, len(large_content))
+
 
 import unittest
 import tempfile
@@ -636,7 +598,7 @@ class TestFormattedOutputIntegration(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.sample_content = "Integration test content"
         self.sample_format = "txt"
-        self.sample_metadata = {'test': 'integration', 'version': '1.0'}
+        self.sample_metadata = {"test": "integration", "version": "1.0"}
         self.sample_output_path = os.path.join(self.temp_dir, "integration.txt")
 
     def tearDown(self):
@@ -662,13 +624,13 @@ class TestFormattedOutputIntegration(unittest.TestCase):
             content=self.sample_content,
             format=self.sample_format,
             metadata=self.sample_metadata,
-            output_path=self.sample_output_path
+            output_path=self.sample_output_path,
         )
-        
+
         # Act
         as_dict = original.to_dict()
         reconstructed = FormattedOutput(**as_dict)
-        
+
         # Assert
         self.assertEqual(original.content, reconstructed.content)
         self.assertEqual(original.format, reconstructed.format)
@@ -689,31 +651,31 @@ class TestFormattedOutputIntegration(unittest.TestCase):
             content=self.sample_content,
             format=self.sample_format,
             metadata=self.sample_metadata,
-            output_path=self.sample_output_path
+            output_path=self.sample_output_path,
         )
-        
+
         paths = [
             os.path.join(self.temp_dir, "file1.txt"),
             os.path.join(self.temp_dir, "file2.txt"),
-            os.path.join(self.temp_dir, "subdir", "file3.txt")
+            os.path.join(self.temp_dir, "subdir", "file3.txt"),
         ]
-        
+
         # Act
         written_paths = []
         for path in paths:
             result_path = output.write_to_file(output_path=path)
             written_paths.append(result_path)
-        
+
         # Assert
         self.assertEqual(written_paths, paths)
-        
+
         # Verify all files exist and contain same content
         for path in paths:
             self.assertTrue(os.path.exists(path))
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 content = f.read()
             self.assertEqual(content, self.sample_content)
-        
+
         # Verify instance unchanged
         self.assertEqual(output.content, self.sample_content)
         self.assertEqual(output.output_path, self.sample_output_path)
@@ -731,39 +693,39 @@ class TestFormattedOutputIntegration(unittest.TestCase):
             content=self.sample_content,
             format=self.sample_format,
             metadata=self.sample_metadata,
-            output_path=self.sample_output_path
+            output_path=self.sample_output_path,
         )
-        
+
         # Act & Assert - Test asdict
         as_dict = asdict(output)
-        expected_keys = {'content', 'format', 'metadata', 'output_path'}
+        expected_keys = {"content", "format", "metadata", "output_path"}
         self.assertEqual(set(as_dict.keys()), expected_keys)
-        self.assertEqual(as_dict['content'], self.sample_content)
-        
+        self.assertEqual(as_dict["content"], self.sample_content)
+
         # Act & Assert - Test fields
         field_names = {f.name for f in fields(output)}
         self.assertEqual(field_names, expected_keys)
-        
+
         # Verify field types
         field_dict = {f.name: f.type for f in fields(output)}
-        self.assertEqual(field_dict['content'], str)
-        self.assertEqual(field_dict['format'], str)
-        
+        self.assertEqual(field_dict["content"], str)
+        self.assertEqual(field_dict["format"], str)
+
         # Act & Assert - Test equality
         output2 = FormattedOutput(
             content=self.sample_content,
             format=self.sample_format,
             metadata=self.sample_metadata,
-            output_path=self.sample_output_path
+            output_path=self.sample_output_path,
         )
         self.assertEqual(output, output2)
-        
+
         # Test inequality when content differs
         output3 = FormattedOutput(
             content="Different content",
             format=self.sample_format,
             metadata=self.sample_metadata,
-            output_path=self.sample_output_path
+            output_path=self.sample_output_path,
         )
         self.assertNotEqual(output, output3)
 
@@ -777,49 +739,49 @@ class TestFormattedOutputIntegration(unittest.TestCase):
         """
         # Arrange - Simulate creating formatted output from processing
         raw_data = {"title": "Test Document", "content": "Processed content"}
-        
+
         # Act - Create FormattedOutput
         output = FormattedOutput(
             content=f"Title: {raw_data['title']}\nContent: {raw_data['content']}",
             format="txt",
             metadata={
-                'source': 'test_processor',
-                'processed_at': '2024-01-01T12:00:00',
-                'word_count': 4
-            }
+                "source": "test_processor",
+                "processed_at": "2024-01-01T12:00:00",
+                "word_count": 4,
+            },
         )
-        
+
         # Act - Convert to dict for serialization
         output_dict = output.to_dict()
-        
+
         # Act - Write to multiple formats
         txt_path = os.path.join(self.temp_dir, "output.txt")
         json_path = os.path.join(self.temp_dir, "output.json")
-        
+
         written_txt = output.write_to_file(output_path=txt_path)
-        
+
         # Create JSON version
         json_output = FormattedOutput(
             content=json.dumps(output_dict, indent=2),
             format="json",
-            metadata=output.metadata.copy()
+            metadata=output.metadata.copy(),
         )
         written_json = json_output.write_to_file(output_path=json_path)
-        
+
         # Assert - Verify all operations succeeded
         self.assertEqual(written_txt, txt_path)
         self.assertEqual(written_json, json_path)
-        
+
         # Verify file contents
-        with open(txt_path, 'r') as f:
+        with open(txt_path, "r") as f:
             txt_content = f.read()
         self.assertIn("Title: Test Document", txt_content)
         self.assertIn("Content: Processed content", txt_content)
-        
-        with open(json_path, 'r') as f:
+
+        with open(json_path, "r") as f:
             json_content = json.load(f)
-        self.assertEqual(json_content['metadata']['source'], 'test_processor')
-        self.assertEqual(json_content['format'], 'txt')
+        self.assertEqual(json_content["metadata"]["source"], "test_processor")
+        self.assertEqual(json_content["format"], "txt")
 
     def test_metadata_mutability_and_isolation(self):
         """
@@ -830,31 +792,24 @@ class TestFormattedOutputIntegration(unittest.TestCase):
             - Deep copy behavior documented
         """
         # Arrange
-        shared_metadata = {'shared': 'value', 'nested': {'count': 1}}
-        
-        output1 = FormattedOutput(
-            content="Content 1",
-            format="txt",
-            metadata=shared_metadata
-        )
-        
-        output2 = FormattedOutput(
-            content="Content 2", 
-            format="txt",
-            metadata=shared_metadata
-        )
-        
+        shared_metadata = {"shared": "value", "nested": {"count": 1}}
+
+        output1 = FormattedOutput(content="Content 1", format="txt", metadata=shared_metadata)
+
+        output2 = FormattedOutput(content="Content 2", format="txt", metadata=shared_metadata)
+
         # Act - Modify metadata through one instance
-        output1.metadata['new_key'] = 'new_value'
-        output1.metadata['nested']['count'] = 999
-        
+        output1.metadata["new_key"] = "new_value"
+        output1.metadata["nested"]["count"] = 999
+
         # Assert - Verify isolation (this may fail if shallow copy used)
         # This test documents the expected behavior
-        self.assertEqual(output2.metadata['nested']['count'], 999)  # Shared reference
-        self.assertIn('new_key', output2.metadata)  # Shared reference
-        
+        self.assertEqual(output2.metadata["nested"]["count"], 999)  # Shared reference
+        self.assertIn("new_key", output2.metadata)  # Shared reference
+
         # Document that metadata is shared by reference unless deep copied
         self.assertIs(output1.metadata, output2.metadata)
+
 
 import unittest
 import tempfile
@@ -893,21 +848,17 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
         """
         # Arrange
         output_path = os.path.join(self.temp_dir, "empty.txt")
-        output = FormattedOutput(
-            content="",
-            format="txt",
-            output_path=output_path
-        )
-        
+        output = FormattedOutput(content="", format="txt", output_path=output_path)
+
         # Act
         result_path = output.write_to_file()
-        
+
         # Assert
         self.assertEqual(result_path, output_path)
         self.assertTrue(os.path.exists(output_path))
         self.assertEqual(os.path.getsize(output_path), 0)
-        
-        with open(output_path, 'r') as f:
+
+        with open(output_path, "r") as f:
             content = f.read()
         self.assertEqual(content, "")
 
@@ -922,13 +873,11 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
         # Arrange - Create a very long path (most systems limit around 255-4096 chars)
         long_filename = "a" * 300  # Exceeds typical filename length limit
         long_path = os.path.join(self.temp_dir, long_filename + ".txt")
-        
+
         output = FormattedOutput(
-            content="Content for long path test",
-            format="txt",
-            output_path=long_path
+            content="Content for long path test", format="txt", output_path=long_path
         )
-        
+
         # Act & Assert
         # This should raise an OSError on most systems due to filename length
         with self.assertRaises(OSError):
@@ -949,27 +898,23 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
             ("csv", "col1,col2\nval1,val2"),
             ("unknown_format", "Content with unknown format"),
             ("", "Content with empty format"),
-            ("UPPERCASE", "Content with uppercase format")
+            ("UPPERCASE", "Content with uppercase format"),
         ]
-        
+
         for fmt, content in test_cases:
             with self.subTest(format=fmt):
                 # Arrange
                 safe_fmt = fmt.lower() if fmt else "txt"
                 output_path = os.path.join(self.temp_dir, f"test_{safe_fmt}.{safe_fmt}")
-                output = FormattedOutput(
-                    content=content,
-                    format=fmt,
-                    output_path=output_path
-                )
-                
+                output = FormattedOutput(content=content, format=fmt, output_path=output_path)
+
                 # Act
                 result_path = output.write_to_file()
-                
+
                 # Assert
                 self.assertEqual(result_path, output_path)
                 self.assertTrue(os.path.exists(output_path))
-                with open(output_path, 'r') as f:
+                with open(output_path, "r") as f:
                     written_content = f.read()
                 self.assertEqual(written_content, content)
 
@@ -983,31 +928,30 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
         """
         # Arrange
         metadata_with_various_keys = {
-            'string_key': 'value1',
-            42: 'numeric_key_value',
-            (1, 2): 'tuple_key_value',
-            True: 'boolean_key_value'
+            "string_key": "value1",
+            42: "numeric_key_value",
+            (1, 2): "tuple_key_value",
+            True: "boolean_key_value",
         }
-        
+
         output = FormattedOutput(
-            content="Test content",
-            format="txt",
-            metadata=metadata_with_various_keys
+            content="Test content", format="txt", metadata=metadata_with_various_keys
         )
-        
+
         # Act
         result_dict = output.to_dict()
-        
+
         # Assert - Check that metadata is preserved as-is in to_dict
-        self.assertEqual(result_dict['metadata'], metadata_with_various_keys)
-        
+        self.assertEqual(result_dict["metadata"], metadata_with_various_keys)
+
         # JSON serialization should handle or fail gracefully
         import json
+
         try:
             json_string = json.dumps(result_dict)
             # If it succeeds, keys should be converted to strings
             parsed_back = json.loads(json_string)
-            self.assertIsInstance(list(parsed_back['metadata'].keys())[0], str)
+            self.assertIsInstance(list(parsed_back["metadata"].keys())[0], str)
         except (TypeError, ValueError):
             # JSON serialization fails with non-string keys - this is expected
             pass
@@ -1023,15 +967,15 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
         # Arrange
         output_path = os.path.join(self.temp_dir, "concurrent.txt")
         contents = ["Content from thread 1", "Content from thread 2", "Content from thread 3"]
-        
+
         outputs = [
             FormattedOutput(content=content, format="txt", output_path=output_path)
             for content in contents
         ]
-        
+
         results = []
         exceptions = []
-        
+
         def write_file(output, delay=0):
             try:
                 time.sleep(delay)  # Add slight delay to encourage race condition
@@ -1039,24 +983,24 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
                 results.append((result, output.content))
             except Exception as e:
                 exceptions.append(e)
-        
+
         # Act - Start concurrent writes
         threads = []
         for i, output in enumerate(outputs):
             thread = threading.Thread(target=write_file, args=(output, i * 0.01))
             threads.append(thread)
             thread.start()
-        
+
         # Wait for all threads to complete
         for thread in threads:
             thread.join()
-        
+
         # Assert
         self.assertEqual(len(exceptions), 0)  # No exceptions should occur
         self.assertTrue(os.path.exists(output_path))
-        
+
         # File should contain content from one of the writes
-        with open(output_path, 'r') as f:
+        with open(output_path, "r") as f:
             final_content = f.read()
         self.assertIn(final_content, contents)
 
@@ -1080,9 +1024,7 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
                 # Arrange
                 output_path = os.path.join(self.temp_dir, f"whitespace_{i}.txt")
                 output = FormattedOutput(
-                    content=whitespace_content,
-                    format="txt",
-                    output_path=output_path
+                    content=whitespace_content, format="txt", output_path=output_path
                 )
 
                 # Act
@@ -1090,7 +1032,7 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
 
                 # Assert
                 self.assertEqual(result_path, output_path)
-                with open(output_path, 'r') as f:
+                with open(output_path, "r") as f:
                     written_content = f.read()
                 self.assertEqual(written_content, whitespace_content)
                 self.assertEqual(len(written_content), len(whitespace_content))
@@ -1106,17 +1048,13 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
         # Arrange - Content that looks like binary data
         binary_like_content = "Normal text with \x00 null byte and \xff high byte"
         output_path = os.path.join(self.temp_dir, "binary_like.txt")
-        output = FormattedOutput(
-            content=binary_like_content,
-            format="txt",
-            output_path=output_path
-        )
-        
+        output = FormattedOutput(content=binary_like_content, format="txt", output_path=output_path)
+
         # Act & Assert
         try:
             result_path = output.write_to_file()
             # If successful, verify content
-            with open(output_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(output_path, "r", encoding="utf-8", errors="replace") as f:
                 written_content = f.read()
             # Content may be modified due to encoding handling
             self.assertTrue(os.path.exists(output_path))
@@ -1133,27 +1071,25 @@ class TestFormattedOutputEdgeCases(unittest.TestCase):
             - No recursion limits hit for reasonable depths
         """
         # Arrange - Create deeply nested metadata
-        nested_metadata = {'level_0': {}}
-        current_level = nested_metadata['level_0']
-        
+        nested_metadata = {"level_0": {}}
+        current_level = nested_metadata["level_0"]
+
         for i in range(1, 50):  # 50 levels deep
-            current_level[f'level_{i}'] = {}
-            current_level = current_level[f'level_{i}']
-        
-        current_level['deep_value'] = 'found_it'
-        
+            current_level[f"level_{i}"] = {}
+            current_level = current_level[f"level_{i}"]
+
+        current_level["deep_value"] = "found_it"
+
         output = FormattedOutput(
-            content="Content with deep metadata",
-            format="txt",
-            metadata=nested_metadata
+            content="Content with deep metadata", format="txt", metadata=nested_metadata
         )
-        
+
         # Act
         result_dict = output.to_dict()
-        
+
         # Assert - Navigate to deep value
-        deep_value = result_dict['metadata']
+        deep_value = result_dict["metadata"]
         for i in range(50):
-            deep_value = deep_value[f'level_{i}']
-        
-        self.assertEqual(deep_value['deep_value'], 'found_it')
+            deep_value = deep_value[f"level_{i}"]
+
+        self.assertEqual(deep_value["deep_value"], "found_it")

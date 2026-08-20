@@ -48,9 +48,7 @@ from ipfs_datasets_py.mcp_server.tools.mcplusplus.peer_engine import PeerEngine
 # Direct engine usage
 engine = TaskQueueEngine()
 task_id = await engine.submit_task(
-    task_type="embedding_generation",
-    params={"dataset": "my_corpus"},
-    target_peer="peer_abc123"
+    task_type="embedding_generation", params={"dataset": "my_corpus"}, target_peer="peer_abc123"
 )
 
 # Check task status

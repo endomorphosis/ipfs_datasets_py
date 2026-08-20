@@ -15,7 +15,7 @@ The unified cache provides:
 Migration:
     # Old (still works but deprecated)
     from ipfs_datasets_py.logic.external_provers.proof_cache import ProofCache
-    
+
     # New (recommended)
     from ipfs_datasets_py.logic.common.proof_cache import ProofCache
 """
@@ -35,11 +35,11 @@ warnings.warn(
     "Import from ipfs_datasets_py.logic.common.proof_cache instead. "
     "This shim will be removed in a future version.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 __all__ = [
-    'ProofCache',
-    'CachedProofResult',
-    'get_global_cache',
+    "ProofCache",
+    "CachedProofResult",
+    "get_global_cache",
 ]

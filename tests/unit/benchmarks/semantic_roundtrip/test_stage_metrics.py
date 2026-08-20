@@ -211,9 +211,7 @@ def test_export_from_matrix_record_falls_back_to_artifacts_and_gold() -> None:
         "diagnostics": {},
         "losses": {},
     }
-    metrics = constructor_only_metrics_from_matrix_record(
-        record, gold_ir=gold
-    )
+    metrics = constructor_only_metrics_from_matrix_record(record, gold_ir=gold)
     assert metrics.forward_loss == 0.0
     assert metrics.polarity_preserved is True
     assert metrics.modality_survival == 1.0
@@ -282,9 +280,7 @@ def test_polarity_inversion_fixture_exports_nonzero_forward_loss() -> None:
         "case_id": "polarity_inversion_fixture",
         "cell_id": "research__constructor_only",
         "losses": {"forward": comparison["semantic_loss"]},
-        "diagnostics": {
-            "semantic_comparisons": {"forward_gold_to_l1": comparison}
-        },
+        "diagnostics": {"semantic_comparisons": {"forward_gold_to_l1": comparison}},
     }
     exported = constructor_only_metrics_from_matrix_record(record).to_dict()
     assert exported["polarity_preserved"] is False

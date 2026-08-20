@@ -14,9 +14,9 @@ from .legal_text_to_deontic import legal_text_to_deontic
 
 __all__ = [
     "load_dataset",
-    "save_dataset", 
+    "save_dataset",
     "process_dataset",
     "convert_dataset_format",
     "text_to_fol",
-    "legal_text_to_deontic"
+    "legal_text_to_deontic",
 ]

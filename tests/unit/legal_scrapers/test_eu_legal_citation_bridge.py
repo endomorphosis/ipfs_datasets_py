@@ -54,7 +54,10 @@ def test_build_eu_legal_reasoning_bundle_emits_multilingual_logic_and_graph_arti
 
     assert any("canonical_uri" in fact for fact in payload["frame_logic_facts"])
     assert any(formula.startswith("O(") for formula in payload["temporal_deontic_fol"])
-    assert any(assertion.startswith("Initiates(") for assertion in payload["deontic_cognitive_event_calculus"])
+    assert any(
+        assertion.startswith("Initiates(")
+        for assertion in payload["deontic_cognitive_event_calculus"]
+    )
 
     assert payload["deontic_graph"]["summary"]["total_rules"] >= 2
     assert payload["knowledge_graph"]["summary"]["citation_count"] >= 2
@@ -82,7 +85,9 @@ def test_extract_eu_legal_citations_recognizes_member_state_specific_article_pat
     schemes = {citation.scheme for citation in citations}
     member_states = {citation.member_state for citation in citations if citation.member_state}
 
-    assert {"NL_BW_ARTICLE", "DE_GG_ARTICLE", "FR_CC_ARTICLE", "ES_CC_ARTICLE", "ECLI"}.issubset(schemes)
+    assert {"NL_BW_ARTICLE", "DE_GG_ARTICLE", "FR_CC_ARTICLE", "ES_CC_ARTICLE", "ECLI"}.issubset(
+        schemes
+    )
     assert {"NL", "DE", "FR", "ES"}.issubset(member_states)
 
 
@@ -227,7 +232,9 @@ def test_extract_eu_legal_citations_recognizes_reversed_german_artikel_absatz_ge
 
 
 def test_extract_eu_legal_citations_recognizes_reversed_german_artikel_absatz_genitive_grundgesetz_reference():
-    citations = extract_eu_legal_citations("Grundgesetz Artikel 1 Absatz 1 des Grundgesetzes", language="de")
+    citations = extract_eu_legal_citations(
+        "Grundgesetz Artikel 1 Absatz 1 des Grundgesetzes", language="de"
+    )
 
     german_citations = [citation for citation in citations if citation.scheme == "DE_GG_ARTICLE"]
 
@@ -295,7 +302,11 @@ def test_execute_eu_legal_citation_lookup_plan_uses_registered_handlers():
 
     assert payload["executed_actions"]
     assert all(action["executed"] is True for action in payload["executed_actions"])
-    assert any(hit["dataset"] == "netherlands_laws" for action in payload["executed_actions"] for hit in action["results"]["hits"])
+    assert any(
+        hit["dataset"] == "netherlands_laws"
+        for action in payload["executed_actions"]
+        for hit in action["results"]["hits"]
+    )
 
 
 def test_default_lookup_handlers_call_netherlands_backend(monkeypatch):
@@ -307,7 +318,9 @@ def test_default_lookup_handlers_call_netherlands_backend(monkeypatch):
             "query": parameters.get("query_text"),
         }
 
-    monkeypatch.setattr(legal_dataset_api, "search_netherlands_law_corpus_from_parameters", _fake_search)
+    monkeypatch.setattr(
+        legal_dataset_api, "search_netherlands_law_corpus_from_parameters", _fake_search
+    )
 
     plan = build_eu_legal_citation_lookup_plan("BWBR0001854", language="nl")
     handlers = build_default_eu_lookup_handlers()
@@ -326,7 +339,9 @@ def test_default_lookup_handlers_call_netherlands_backend(monkeypatch):
     )
 
 
-def test_default_lookup_handlers_call_canonical_corpus_backend_for_france_germany_and_spain(monkeypatch):
+def test_default_lookup_handlers_call_canonical_corpus_backend_for_france_germany_and_spain(
+    monkeypatch,
+):
     from ipfs_datasets_py.processors.legal_scrapers import justicedao_dataset_inventory
 
     def _fake_query_canonical_legal_corpus(dataset_id, *, query_text, **kwargs):
@@ -390,8 +405,7 @@ def test_default_lookup_handlers_fetch_eurlex_metadata(monkeypatch):
     payload = eu_legal_citation_lookup_result_to_dict(result)
 
     assert any(
-        action["handler_key"] == "eurlex_registry"
-        and action["results"]["title"] == "GDPR"
+        action["handler_key"] == "eurlex_registry" and action["results"]["title"] == "GDPR"
         for action in payload["executed_actions"]
     )
 
@@ -411,7 +425,9 @@ def test_default_lookup_handlers_return_structured_ecli_metadata():
         }
 
     monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setattr(eu_legal_citation_bridge, "_fetch_rechtspraak_ecli_metadata", _fake_rechtspraak)
+    monkeypatch.setattr(
+        eu_legal_citation_bridge, "_fetch_rechtspraak_ecli_metadata", _fake_rechtspraak
+    )
     plan = build_eu_legal_citation_lookup_plan("ECLI:NL:HR:2024:123", language="en")
     handlers = build_default_eu_lookup_handlers()
 
@@ -459,7 +475,16 @@ def test_custom_ecli_resolver_registry_overrides_default(monkeypatch):
 def test_register_ecli_http_resolver_uses_config(monkeypatch):
     from ipfs_datasets_py.processors.legal_scrapers import eu_legal_citation_bridge
 
-    def _fake_http_metadata(base_url, params, *, title_regexes, issued_regexes, creator_regexes, handler_label, timeout=10.0):
+    def _fake_http_metadata(
+        base_url,
+        params,
+        *,
+        title_regexes,
+        issued_regexes,
+        creator_regexes,
+        handler_label,
+        timeout=10.0,
+    ):
         return {
             "resolved": True,
             "status_code": 200,
@@ -505,11 +530,19 @@ def test_register_fr_judilibre_ecli_resolver_uses_env(monkeypatch):
     from ipfs_datasets_py.processors.legal_scrapers import eu_legal_citation_bridge
 
     def _fake_fetch(ecli, *, key_id, base_url, timeout=10.0):
-        return {"resolved": True, "ecli": ecli, "handler": "judilibre", "key_id": key_id, "base_url": base_url}
+        return {
+            "resolved": True,
+            "ecli": ecli,
+            "handler": "judilibre",
+            "key_id": key_id,
+            "base_url": base_url,
+        }
 
     monkeypatch.setattr(eu_legal_citation_bridge, "_fetch_judilibre_ecli_metadata", _fake_fetch)
     monkeypatch.setenv("JUDILIBRE_KEY_ID", "sandbox_key")
-    monkeypatch.setenv("JUDILIBRE_BASE_URL", "https://sandbox-api.piste.gouv.fr/cassation/judilibre/v1.0")
+    monkeypatch.setenv(
+        "JUDILIBRE_BASE_URL", "https://sandbox-api.piste.gouv.fr/cassation/judilibre/v1.0"
+    )
 
     register_fr_judilibre_ecli_resolver()
 

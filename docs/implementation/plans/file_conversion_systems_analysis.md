@@ -321,22 +321,23 @@ For integration with `ipfs_datasets_py` and the IPFS accelerate AI system, **con
 # Example integration pattern
 from ipfs_datasets_py.data_transformation.multimedia.convert_to_txt_based_on_mime_type import (
     file_converter,
-    FileUnit
+    FileUnit,
 )
 from ipfs_datasets_py.rag import GraphRAG
+
 
 async def process_file_for_graphrag(file_path: str):
     # Load and convert file
     file_unit = FileUnit(file_path)
     converted = await file_converter(file_unit)
-    
+
     # Extract text content
     text_content = converted.data
-    
+
     # Feed to GraphRAG
     graph = GraphRAG()
     embeddings = await graph.process_document(text_content)
-    
+
     return embeddings
 ```
 

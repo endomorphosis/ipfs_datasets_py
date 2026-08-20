@@ -3,7 +3,9 @@ import argparse
 
 def test_cmd_prove_success(monkeypatch, capsys):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.cli_wrapper import LogicOptimizerCLI
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import LogicTheoremOptimizer
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import (
+        LogicTheoremOptimizer,
+    )
 
     captured = {}
 
@@ -42,7 +44,9 @@ def test_cmd_prove_success(monkeypatch, capsys):
 
 def test_cmd_prove_failure(monkeypatch, capsys):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.cli_wrapper import LogicOptimizerCLI
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import LogicTheoremOptimizer
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import (
+        LogicTheoremOptimizer,
+    )
 
     def fake_validate_statements(self, statements, context=None, timeout=None):
         class Result:

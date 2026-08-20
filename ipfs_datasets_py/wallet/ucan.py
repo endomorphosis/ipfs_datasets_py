@@ -144,7 +144,9 @@ def _assert_caveats_preserve_grant(
 
     for key in ("not_before", "nbf"):
         exact_or_custom_keys.discard(key)
-        _assert_not_before_preserved(parent_caveats=grant_caveats, child_caveats=profile_caveats, key=key)
+        _assert_not_before_preserved(
+            parent_caveats=grant_caveats, child_caveats=profile_caveats, key=key
+        )
 
     for key in ("user_presence_required", "require_user_presence"):
         exact_or_custom_keys.discard(key)
@@ -154,8 +156,12 @@ def _assert_caveats_preserve_grant(
     exact_or_custom_keys.discard("max_delegation_depth")
     if "max_delegation_depth" in grant_caveats:
         if "max_delegation_depth" not in profile_caveats:
-            raise ValueError("UCAN profile caveats must preserve wallet_grant max_delegation_depth caveat")
-        if int(profile_caveats["max_delegation_depth"]) > int(grant_caveats["max_delegation_depth"]):
+            raise ValueError(
+                "UCAN profile caveats must preserve wallet_grant max_delegation_depth caveat"
+            )
+        if int(profile_caveats["max_delegation_depth"]) > int(
+            grant_caveats["max_delegation_depth"]
+        ):
             raise ValueError("UCAN profile caveats exceed wallet_grant max_delegation_depth caveat")
 
     for key in sorted(exact_or_custom_keys):
@@ -226,11 +232,17 @@ def assert_caveats_allow(
 
     grant_purpose = caveats.get("purpose")
     invocation_purpose = invocation_caveats.get("purpose")
-    if grant_purpose is not None and invocation_purpose is not None and invocation_purpose != grant_purpose:
+    if (
+        grant_purpose is not None
+        and invocation_purpose is not None
+        and invocation_purpose != grant_purpose
+    ):
         raise AccessDeniedError("Invocation purpose does not match grant purpose")
 
     allowed_outputs = caveats.get("output_types") or caveats.get("allowed_output_types")
-    requested_outputs = invocation_caveats.get("output_types") or invocation_caveats.get("output_type")
+    requested_outputs = invocation_caveats.get("output_types") or invocation_caveats.get(
+        "output_type"
+    )
     if allowed_outputs is not None and requested_outputs is not None:
         if not _caveat_values(requested_outputs).issubset(_caveat_values(allowed_outputs)):
             raise AccessDeniedError("Invocation output_types exceed grant caveat")
@@ -319,7 +331,9 @@ def invocation_signing_payload(invocation: WalletInvocation) -> Dict[str, Any]:
 
 
 def sign_invocation(invocation: WalletInvocation, signing_secret: bytes) -> str:
-    digest = hmac.new(signing_secret, canonical_bytes(invocation_signing_payload(invocation)), hashlib.sha256).digest()
+    digest = hmac.new(
+        signing_secret, canonical_bytes(invocation_signing_payload(invocation)), hashlib.sha256
+    ).digest()
     return base64.urlsafe_b64encode(digest).decode("ascii")
 
 
@@ -418,7 +432,9 @@ def _fallback_dag_cbor_encode(value: Any) -> bytes:
         encoded = value.encode("utf-8")
         return _cbor_length(3, len(encoded)) + encoded
     if isinstance(value, (list, tuple)):
-        return _cbor_length(4, len(value)) + b"".join(_fallback_dag_cbor_encode(item) for item in value)
+        return _cbor_length(4, len(value)) + b"".join(
+            _fallback_dag_cbor_encode(item) for item in value
+        )
     if isinstance(value, Mapping):
         encoded_items: list[tuple[bytes, bytes]] = []
         for key, item in value.items():
@@ -426,7 +442,9 @@ def _fallback_dag_cbor_encode(value: Any) -> bytes:
                 raise ValueError("DAG-CBOR map keys must be strings")
             encoded_items.append((_fallback_dag_cbor_encode(key), _fallback_dag_cbor_encode(item)))
         encoded_items.sort(key=lambda item: item[0])
-        return _cbor_length(5, len(encoded_items)) + b"".join(key + item for key, item in encoded_items)
+        return _cbor_length(5, len(encoded_items)) + b"".join(
+            key + item for key, item in encoded_items
+        )
     raise ValueError(f"Unsupported DAG-CBOR value type: {type(value).__name__}")
 
 
@@ -551,7 +569,9 @@ def _dag_cbor_cid(value: bytes) -> str:
             + digest
         )
         return "b" + base64.b32encode(cid_bytes).decode("ascii").lower().rstrip("=")
-    return str(CID("base32", 1, WALLET_UCAN_EXTERNAL_BLOCK_CODEC, multihash.digest(value, "sha2-256")))
+    return str(
+        CID("base32", 1, WALLET_UCAN_EXTERNAL_BLOCK_CODEC, multihash.digest(value, "sha2-256"))
+    )
 
 
 def wallet_ucan_profile() -> Dict[str, Any]:
@@ -892,7 +912,9 @@ def validate_wallet_ucan_external_adapter_fixture(
     if profile_payload is not None:
         expected_block = _external_ucan_block_from_profile_payload(profile_payload)
         if decoded != expected_block:
-            raise ValueError("External UCAN adapter block does not match wallet UCAN profile payload")
+            raise ValueError(
+                "External UCAN adapter block does not match wallet UCAN profile payload"
+            )
 
     normalized = validate_ucan_profile_payload(
         {
@@ -967,7 +989,9 @@ def validate_wallet_ucan_conformance_fixture(fixture: Mapping[str, Any]) -> Dict
         if actual != expected_value:
             raise ValueError(f"Conformance fixture {label} does not match profile payload")
     if dict(capability.get("nb") or {}) != normalized["caveats"]:
-        raise ValueError("Conformance fixture expected capability caveats do not match profile payload")
+        raise ValueError(
+            "Conformance fixture expected capability caveats do not match profile payload"
+        )
     if [str(item) for item in expected.get("proofs", [])] != normalized["proofs"]:
         raise ValueError("Conformance fixture expected proofs do not match profile payload")
 

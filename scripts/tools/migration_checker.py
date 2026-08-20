@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 @dataclass
 class DeprecatedImport:
     """Represents a deprecated import found in code."""
+
     file_path: str
     line_number: int
     import_type: str  # 'multimedia', 'serialization', 'graphrag'
@@ -31,21 +32,22 @@ class DeprecatedImport:
 @dataclass
 class ScanResults:
     """Results of scanning codebase for deprecated imports."""
+
     total_files_scanned: int = 0
     files_with_issues: int = 0
     deprecated_imports: List[DeprecatedImport] = field(default_factory=list)
-    
+
     @property
     def multimedia_count(self) -> int:
-        return len([d for d in self.deprecated_imports if d.import_type == 'multimedia'])
-    
+        return len([d for d in self.deprecated_imports if d.import_type == "multimedia"])
+
     @property
     def serialization_count(self) -> int:
-        return len([d for d in self.deprecated_imports if d.import_type == 'serialization'])
-    
+        return len([d for d in self.deprecated_imports if d.import_type == "serialization"])
+
     @property
     def graphrag_count(self) -> int:
-        return len([d for d in self.deprecated_imports if d.import_type == 'graphrag'])
+        return len([d for d in self.deprecated_imports if d.import_type == "graphrag"])
 
 
 print("✅ Migration checker created successfully!")

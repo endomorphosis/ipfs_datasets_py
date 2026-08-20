@@ -107,10 +107,10 @@ response = requests.get(url, timeout=45)  # Missouri needs 45s
 ### 4. **Frameset Parsing**
 ```python
 # Alabama uses framesets
-frames = soup.find_all('frame')
+frames = soup.find_all("frame")
 for frame in frames:
-    src = frame.get('src', '')
-    if 'title.htm' in src:
+    src = frame.get("src", "")
+    if "title.htm" in src:
         frame_url = urljoin(base_url, src)
 ```
 

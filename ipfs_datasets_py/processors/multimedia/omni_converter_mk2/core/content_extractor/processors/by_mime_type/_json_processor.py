@@ -1,11 +1,8 @@
 from types_ import Any, Callable, Configs, Content, Logger
 
-class TextProcessor:
 
-    def __init__(self, 
-                 resources: dict[str, Callable] = None, 
-                 configs: 'Configs' = None
-                ) -> None:
+class TextProcessor:
+    def __init__(self, resources: dict[str, Callable] = None, configs: "Configs" = None) -> None:
         """Initialize the plaintext processor."""
         self.configs = configs
         self.resources = resources

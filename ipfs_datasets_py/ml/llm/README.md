@@ -68,17 +68,11 @@ Semantic content validation and quality assessment using LLM capabilities.
 from ipfs_datasets_py.llm import LLMInterface
 
 # Initialize LLM interface
-llm = LLMInterface(
-    provider="openai",
-    model="gpt-4",
-    api_key="your_api_key"
-)
+llm = LLMInterface(provider="openai", model="gpt-4", api_key="your_api_key")
 
 # Generate response
 response = await llm.generate(
-    prompt="Explain machine learning concepts",
-    max_tokens=500,
-    temperature=0.7
+    prompt="Explain machine learning concepts", max_tokens=500, temperature=0.7
 )
 ```
 
@@ -90,9 +84,7 @@ tracer = LLMReasoningTracer()
 
 # Trace reasoning process
 trace = await tracer.trace_reasoning(
-    problem="Complex analysis task",
-    llm_responses=reasoning_steps,
-    track_decisions=True
+    problem="Complex analysis task", llm_responses=reasoning_steps, track_decisions=True
 )
 
 # Analyze reasoning quality
@@ -104,22 +96,16 @@ print(f"Reasoning score: {analysis.quality_score}")
 ```python
 from ipfs_datasets_py.llm import LLMGraphRAG
 
-graphrag = LLMGraphRAG(
-    llm_interface=llm,
-    knowledge_graph=your_graph
-)
+graphrag = LLMGraphRAG(llm_interface=llm, knowledge_graph=your_graph)
 
 # Enhanced retrieval with graph context
 enhanced_context = await graphrag.retrieve_with_graph_context(
-    query="How do neural networks learn?",
-    max_hops=3,
-    context_limit=5
+    query="How do neural networks learn?", max_hops=3, context_limit=5
 )
 
 # Generate response with graph-enhanced context
 response = await graphrag.generate_with_context(
-    query="How do neural networks learn?",
-    context=enhanced_context
+    query="How do neural networks learn?", context=enhanced_context
 )
 ```
 
@@ -131,8 +117,7 @@ validator = LLMSemanticValidation(llm_interface=llm)
 
 # Validate content quality
 validation_result = await validator.validate_content(
-    content="Content to validate",
-    validation_criteria=["accuracy", "completeness", "coherence"]
+    content="Content to validate", validation_criteria=["accuracy", "completeness", "coherence"]
 )
 
 print(f"Validation score: {validation_result.overall_score}")
@@ -149,7 +134,7 @@ llm_config = {
     "max_tokens": 4000,
     "temperature": 0.7,
     "retry_attempts": 3,
-    "timeout": 30
+    "timeout": 30,
 }
 ```
 
@@ -159,7 +144,7 @@ graphrag_config = {
     "max_context_length": 8000,
     "graph_traversal_depth": 3,
     "entity_relevance_threshold": 0.7,
-    "relationship_weight_threshold": 0.5
+    "relationship_weight_threshold": 0.5,
 }
 ```
 
@@ -170,7 +155,7 @@ tracer_config = {
     "analyze_patterns": True,
     "generate_suggestions": True,
     "save_traces": True,
-    "trace_detail_level": "comprehensive"
+    "trace_detail_level": "comprehensive",
 }
 ```
 

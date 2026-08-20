@@ -64,12 +64,16 @@ class SharedFetchCache:
         cache_dir: Optional[str] = None,
         enable_ipfs_mirroring: bool = False,
     ) -> None:
-        self.cache_dir = Path(
-            cache_dir
-            or os.environ.get("IPFS_DATASETS_LEGAL_FETCH_CACHE_DIR")
-            or os.environ.get("LEGAL_SCRAPER_FETCH_CACHE_DIR")
-            or (Path.home() / ".cache" / "ipfs_datasets_py" / "legal_fetch_cache")
-        ).expanduser().resolve()
+        self.cache_dir = (
+            Path(
+                cache_dir
+                or os.environ.get("IPFS_DATASETS_LEGAL_FETCH_CACHE_DIR")
+                or os.environ.get("LEGAL_SCRAPER_FETCH_CACHE_DIR")
+                or (Path.home() / ".cache" / "ipfs_datasets_py" / "legal_fetch_cache")
+            )
+            .expanduser()
+            .resolve()
+        )
         self.enable_ipfs_mirroring = bool(enable_ipfs_mirroring)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -247,5 +251,7 @@ class SharedFetchCache:
             cid = str(ipfs_router.add_bytes(data, pin=True) or "").strip()
             return cid or None
         except Exception as exc:
-            logger.warning("Shared fetch cache IPFS mirror failed for %s/%s: %s", namespace, key, exc)
+            logger.warning(
+                "Shared fetch cache IPFS mirror failed for %s/%s: %s", namespace, key, exc
+            )
         return None

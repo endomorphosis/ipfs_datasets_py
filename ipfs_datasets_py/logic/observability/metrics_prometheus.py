@@ -27,6 +27,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 class CircuitBreakerState(str, Enum):
     """Valid circuit breaker states for metrics."""
+
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
@@ -35,6 +36,7 @@ class CircuitBreakerState(str, Enum):
 @dataclass
 class CallMetrics:
     """Aggregated metrics for a single circuit breaker or component."""
+
     total_calls: int = 0
     successful_calls: int = 0
     failed_calls: int = 0
@@ -57,21 +59,19 @@ class PrometheusMetricsCollector:
         """
         self._lock = RLock()
         self._metrics: Dict[str, CallMetrics] = defaultdict(CallMetrics)
-        self._log_metrics: Dict[str, Dict[str, int]] = defaultdict(lambda: {
-            "total_entries": 0,
-            "error_entries": 0,
-            "warning_entries": 0,
-            "info_entries": 0,
-            "debug_entries": 0,
-        })
+        self._log_metrics: Dict[str, Dict[str, int]] = defaultdict(
+            lambda: {
+                "total_entries": 0,
+                "error_entries": 0,
+                "warning_entries": 0,
+                "info_entries": 0,
+                "debug_entries": 0,
+            }
+        )
         self._max_latency_samples = max_latency_samples
 
     def record_circuit_breaker_call(
-        self,
-        component: str,
-        latency: float,
-        success: bool,
-        timestamp: Optional[float] = None
+        self, component: str, latency: float, success: bool, timestamp: Optional[float] = None
     ) -> None:
         """
         Record a single circuit breaker call.
@@ -97,10 +97,7 @@ class PrometheusMetricsCollector:
             metrics.latencies.append(latency)
 
     def record_circuit_breaker_state(
-        self,
-        component: str,
-        state: str,
-        timestamp: Optional[float] = None
+        self, component: str, state: str, timestamp: Optional[float] = None
     ) -> None:
         """
         Record a circuit breaker state transition.
@@ -120,11 +117,7 @@ class PrometheusMetricsCollector:
             if len(metrics.state_transitions) > 100:
                 metrics.state_transitions.pop(0)
 
-    def record_log_entry(
-        self,
-        component: str,
-        level: str = "info"
-    ) -> None:
+    def record_log_entry(self, component: str, level: str = "info") -> None:
         """
         Record a structured log entry.
 
@@ -140,9 +133,7 @@ class PrometheusMetricsCollector:
                 metrics[level_key] += 1
 
     def get_latency_percentiles(
-        self,
-        component: str,
-        percentiles: Optional[List[int]] = None
+        self, component: str, percentiles: Optional[List[int]] = None
     ) -> Dict[str, float]:
         """
         Get latency percentiles for a component.
@@ -172,7 +163,11 @@ class PrometheusMetricsCollector:
                 quantile_values = quantiles(sorted_latencies, n=100)
                 result = {}
                 for p in percentiles:
-                    idx = min(p - 1, len(quantile_values) - 1) if p <= 100 else len(quantile_values) - 1
+                    idx = (
+                        min(p - 1, len(quantile_values) - 1)
+                        if p <= 100
+                        else len(quantile_values) - 1
+                    )
                     result[f"p{p}"] = quantile_values[idx] if idx >= 0 else sorted_latencies[0]
                 return result
             except (StatisticsError, ValueError):
@@ -220,8 +215,7 @@ class PrometheusMetricsCollector:
         with self._lock:
             metrics = self._metrics[component]
             avg_latency = (
-                sum(metrics.latencies) / len(metrics.latencies)
-                if metrics.latencies else 0.0
+                sum(metrics.latencies) / len(metrics.latencies) if metrics.latencies else 0.0
             )
             return {
                 "component": component,
@@ -366,6 +360,8 @@ def get_prometheus_collector() -> PrometheusMetricsCollector:
 try:
     from statistics import StatisticsError
 except ImportError:
+
     class StatisticsError(ValueError):
         """Fallback for statistics errors."""
+
         pass

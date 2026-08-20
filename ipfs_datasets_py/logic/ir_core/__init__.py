@@ -172,6 +172,28 @@ _EXPORTS: Final[dict[str, tuple[str, ...]]] = {
         "provenance_sha256",
         "validate_provenance",
     ),
+    "source_lineage": (
+        "CORPUS_MANIFEST_SCHEMA",
+        "DERIVED_ARTIFACT_SCHEMA",
+        "LINEAGE_GRAPH_SCHEMA",
+        "SOURCE_RECORD_SCHEMA",
+        "SOURCE_RECORD_SCHEMA_V1_1",
+        "SOURCE_RELEASE_SCHEMA",
+        "CorpusManifest",
+        "DerivedArtifactRecord",
+        "LineageEdge",
+        "LineageGraph",
+        "LineageRelation",
+        "RecordKind",
+        "RightsDisposition",
+        "RightsRecord",
+        "SourceLineageError",
+        "SourceRecord",
+        "SourceRelease",
+        "TemporalCoverage",
+        "source_lineage_schema_ids",
+        "source_lineage_schema_registry",
+    ),
     "schema_registry": (
         "MIGRATION_RECEIPT_SCHEMA_ID",
         "CompatibilityDeclaration",
@@ -203,9 +225,7 @@ _EXPORTS: Final[dict[str, tuple[str, ...]]] = {
 }
 
 _EXPORT_MODULE: Final[dict[str, str]] = {
-    name: module_name
-    for module_name, names in _EXPORTS.items()
-    for name in names
+    name: module_name for module_name, names in _EXPORTS.items() for name in names
 }
 
 __all__ = sorted(_EXPORT_MODULE)

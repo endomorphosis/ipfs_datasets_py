@@ -4,11 +4,13 @@ Test stubs for complete_advanced_graphrag module.
 Feature: Complete Advanced GraphRAG
   Complete advanced GraphRAG system implementation
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_knowledge_graph_and_query():
@@ -83,6 +85,7 @@ def the_complete_system():
 
 
 # Test scenarios
+
 
 def test_initialize_complete_graphrag_system():
     """
@@ -173,6 +176,7 @@ def test_handle_complex_queries():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a knowledge graph and query")
@@ -343,4 +347,3 @@ def overall_system_performance_is_improved():
     """Step: Then overall system performance is improved"""
     # TODO: Implement step
     pass
-

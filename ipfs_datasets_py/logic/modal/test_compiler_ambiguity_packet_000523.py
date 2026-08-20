@@ -178,9 +178,7 @@ def test_compiler_preserves_packet_000523_explicit_ambiguity_policy_pairs() -> N
         expected_priority,
         expected_severity,
     ) in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_ranking(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -207,16 +205,9 @@ def test_compiler_preserves_packet_000523_explicit_ambiguity_policy_pairs() -> N
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
         assert ambiguity.severity == expected_severity
         assert (
-            abs(
-                float(ambiguity.metadata.get("family_margin_raw", 0.0))
-                - expected_margin
-            )
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
             abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12
@@ -263,8 +254,7 @@ def test_compiler_uses_duplicate_self_family_entries_to_compute_self_pair_margin
     explicit = next(
         ambiguity
         for ambiguity in result.ambiguities
-        if ambiguity.ambiguity_type
-        == "adaptive_deontic_deontic_contested_margin_low"
+        if ambiguity.ambiguity_type == "adaptive_deontic_deontic_contested_margin_low"
         and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.DEONTIC.value
         and ambiguity.metadata.get("target_family") == ModalLogicFamily.DEONTIC.value
     )

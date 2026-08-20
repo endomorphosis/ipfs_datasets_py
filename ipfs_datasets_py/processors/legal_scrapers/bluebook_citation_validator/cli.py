@@ -59,9 +59,7 @@ def _parse_args(argv=None) -> argparse.Namespace:
         default=8,
         help="Thread-pool size for parallel validation.",
     )
-    parser.add_argument(
-        "--mysql-host", default="localhost", help="MySQL hostname."
-    )
+    parser.add_argument("--mysql-host", default="localhost", help="MySQL hostname.")
     parser.add_argument("--mysql-port", type=int, default=3306, help="MySQL port.")
     parser.add_argument("--mysql-user", default="", help="MySQL username.")
     parser.add_argument("--mysql-password", default="", help="MySQL password.")

@@ -32,6 +32,7 @@ _numpy_available = bool(importlib.util.find_spec("numpy"))
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_wal_entry():
     """Return a minimal WriteAheadLog entry."""
     from ipfs_datasets_py.knowledge_graphs.transactions.wal import WALEntry
@@ -43,6 +44,7 @@ def _make_wal_entry():
 # 1. transactions/wal.py – asyncio.CancelledError re-raises (lines 130, 197,
 #    259, 329, 371, 439)
 # ===========================================================================
+
 
 class TestWriteAheadLogCancelledError:
     """GIVEN a WriteAheadLog whose storage raises asyncio.CancelledError,
@@ -104,6 +106,7 @@ class TestWriteAheadLogCancelledError:
 # 2. jsonld/translator.py – missed lines 64, 111, 159-161, 200, 208, 225,
 #    341, 345
 # ===========================================================================
+
 
 class TestJSONLDTranslatorMissedPaths:
     """GIVEN various JSON-LD structures, WHEN translated to IPLD or back,
@@ -217,12 +220,18 @@ class TestJSONLDTranslatorMissedPaths:
 
         graph = IPLDGraph(
             entities=[
-                {"id": "e1", "type": "Person", "properties": {"_jsonld_id": "http://example.org/alice"}},
-                {"id": "e2", "type": "Person", "properties": {"_jsonld_id": "http://example.org/bob"}},
+                {
+                    "id": "e1",
+                    "type": "Person",
+                    "properties": {"_jsonld_id": "http://example.org/alice"},
+                },
+                {
+                    "id": "e2",
+                    "type": "Person",
+                    "properties": {"_jsonld_id": "http://example.org/bob"},
+                },
             ],
-            relationships=[
-                {"type": "knows", "source": "e1", "target": "e2", "properties": {}}
-            ],
+            relationships=[{"type": "knows", "source": "e1", "target": "e2", "properties": {}}],
         )
         t = self._translator()
         result = t.ipld_to_jsonld(graph)
@@ -244,7 +253,11 @@ class TestJSONLDTranslatorMissedPaths:
 
         graph = IPLDGraph(
             entities=[
-                {"id": "e1", "type": "Person", "properties": {"_jsonld_id": "http://example.org/alice"}},
+                {
+                    "id": "e1",
+                    "type": "Person",
+                    "properties": {"_jsonld_id": "http://example.org/alice"},
+                },
             ],
             relationships=[
                 {"type": "knows", "source": "e1", "target": "e_missing", "properties": {}}
@@ -269,12 +282,14 @@ class TestJSONLDTranslatorMissedPaths:
 
         graph = IPLDGraph(
             entities=[
-                {"id": "e1", "type": "Person", "properties": {"_jsonld_id": "http://example.org/alice"}},
+                {
+                    "id": "e1",
+                    "type": "Person",
+                    "properties": {"_jsonld_id": "http://example.org/alice"},
+                },
                 {"id": "e2", "type": "Person", "properties": {"name": "Bob"}},  # no _jsonld_id
             ],
-            relationships=[
-                {"type": "knows", "source": "e1", "target": "e2", "properties": {}}
-            ],
+            relationships=[{"type": "knows", "source": "e1", "target": "e2", "properties": {}}],
         )
         t = self._translator()
         result = t.ipld_to_jsonld(graph)
@@ -290,6 +305,7 @@ class TestJSONLDTranslatorMissedPaths:
 # 3. ontology/reasoning.py – lines 435-436, 495, 503, 622, 746, 828, 979,
 #    1012, 1018
 # ===========================================================================
+
 
 class TestOntologyReasoningMissedPaths:
     """GIVEN an OntologySchema or OntologyReasoner,
@@ -417,8 +433,9 @@ class TestOntologyReasoningMissedPaths:
             kg.add_entity(e)
         for src, tgt in [(a, b), (a, c), (b, d), (c, d)]:
             kg.add_relationship(
-                Relationship(source_entity=src, target_entity=tgt,
-                             relationship_type="partOf", confidence=0.9)
+                Relationship(
+                    source_entity=src, target_entity=tgt, relationship_type="partOf", confidence=0.9
+                )
             )
         reasoner = OntologyReasoner(schema, max_iterations=3)
         result = reasoner.materialize(kg)
@@ -443,7 +460,7 @@ class TestOntologyReasoningMissedPaths:
 
         schema = OntologySchema()
         schema.property_chains = [
-            (["parentOf"], "ancestorOf"),           # len=1 → line 979 skip
+            (["parentOf"], "ancestorOf"),  # len=1 → line 979 skip
             (["parentOf", "parentOf"], "grandparentOf"),  # valid
         ]
         kg, entities = self._kg_with_chain(["Alice", "Bob", "Carol"], "parentOf")
@@ -471,21 +488,19 @@ class TestOntologyReasoningMissedPaths:
         )
 
         schema = OntologySchema()
-        schema.property_chains = [
-            (["parentOf", "parentOf"], "grandparentOf")
-        ]
+        schema.property_chains = [(["parentOf", "parentOf"], "grandparentOf")]
         kg = KnowledgeGraph()
         a = Entity(name="Alpha", entity_type="Thing")
         kg.add_entity(a)
         kg.add_relationship(
-            Relationship(source_entity=a, target_entity=a,
-                         relationship_type="parentOf", confidence=0.9)
+            Relationship(
+                source_entity=a, target_entity=a, relationship_type="parentOf", confidence=0.9
+            )
         )
         reasoner = OntologyReasoner(schema, max_iterations=2)
         result = reasoner.materialize(kg)
         gp_rels = [
-            r for r in result.relationships.values()
-            if r.relationship_type == "grandparentOf"
+            r for r in result.relationships.values() if r.relationship_type == "grandparentOf"
         ]
         assert len(gp_rels) == 0
 
@@ -506,9 +521,7 @@ class TestOntologyReasoningMissedPaths:
         )
 
         schema = OntologySchema()
-        schema.property_chains = [
-            (["parentOf", "parentOf"], "grandparentOf")
-        ]
+        schema.property_chains = [(["parentOf", "parentOf"], "grandparentOf")]
         kg = KnowledgeGraph()
         e1 = Entity(name="Alice", entity_type="Person")
         e2 = Entity(name="Bob", entity_type="Person")
@@ -516,24 +529,29 @@ class TestOntologyReasoningMissedPaths:
         for e in [e1, e2, e3]:
             kg.add_entity(e)
         kg.add_relationship(
-            Relationship(source_entity=e1, target_entity=e2,
-                         relationship_type="parentOf", confidence=0.9)
+            Relationship(
+                source_entity=e1, target_entity=e2, relationship_type="parentOf", confidence=0.9
+            )
         )
         kg.add_relationship(
-            Relationship(source_entity=e2, target_entity=e3,
-                         relationship_type="parentOf", confidence=0.9)
+            Relationship(
+                source_entity=e2, target_entity=e3, relationship_type="parentOf", confidence=0.9
+            )
         )
         # Pre-add the grandparentOf relationship
         kg.add_relationship(
-            Relationship(source_entity=e1, target_entity=e3,
-                         relationship_type="grandparentOf", confidence=0.9)
+            Relationship(
+                source_entity=e1,
+                target_entity=e3,
+                relationship_type="grandparentOf",
+                confidence=0.9,
+            )
         )
         pre_count = len(kg.relationships)
         reasoner = OntologyReasoner(schema, max_iterations=2)
         result = reasoner.materialize(kg)
         gp_rels = [
-            r for r in result.relationships.values()
-            if r.relationship_type == "grandparentOf"
+            r for r in result.relationships.values() if r.relationship_type == "grandparentOf"
         ]
         assert len(gp_rels) == 1  # no duplicate added
 
@@ -541,6 +559,7 @@ class TestOntologyReasoningMissedPaths:
 # ===========================================================================
 # 4. extraction/advanced.py – lines 506, 508, 646
 # ===========================================================================
+
 
 class TestAdvancedExtractorMissedPaths:
     """GIVEN an AdvancedKnowledgeExtractor,
@@ -586,6 +605,7 @@ class TestAdvancedExtractorMissedPaths:
 # ===========================================================================
 # 5. extraction/graph.py – lines 237, 376, 629, 661
 # ===========================================================================
+
 
 class TestExtractionGraphMissedPaths:
     """GIVEN a KnowledgeGraph with edge-case data,
@@ -642,12 +662,14 @@ class TestExtractionGraphMissedPaths:
 
         kg, (a, b, c) = self._kg_entities("A", "B", "C")
         kg.add_relationship(
-            Relationship(source_entity=a, target_entity=b,
-                         relationship_type="knows", confidence=0.9)
+            Relationship(
+                source_entity=a, target_entity=b, relationship_type="knows", confidence=0.9
+            )
         )
         kg.add_relationship(
-            Relationship(source_entity=b, target_entity=c,
-                         relationship_type="knows", confidence=0.9)
+            Relationship(
+                source_entity=b, target_entity=c, relationship_type="knows", confidence=0.9
+            )
         )
         paths = kg.find_paths(a, c, max_depth=1)
         assert len(paths) == 0  # depth-limited, cannot reach C in 1 hop
@@ -706,6 +728,7 @@ class TestExtractionGraphMissedPaths:
 # ===========================================================================
 # 6. migration/ipfs_importer.py – lines 138, 179, 350-351, 361-362
 # ===========================================================================
+
 
 class TestIPFSImporterMissedPaths:
     """GIVEN an IPFSImporter whose dependencies are mocked,
@@ -827,6 +850,7 @@ class TestIPFSImporterMissedPaths:
 # 7. reasoning/cross_document.py – lines 133, 199 (dead code), 870-876
 # ===========================================================================
 
+
 class TestCrossDocumentReasonerMissedPaths:
     """GIVEN a CrossDocumentReasoner,
     WHEN the default-optimizer constructor path and _example_usage are exercised,
@@ -894,6 +918,7 @@ class TestCrossDocumentReasonerMissedPaths:
         mock_class = MagicMock(return_value=mock_instance)
 
         import types
+
         fake_llm = types.ModuleType("fake_llm_tracer")
         fake_llm.LLMReasoningTracer = MagicMock
         fake_opt = types.ModuleType("fake_optimizer")

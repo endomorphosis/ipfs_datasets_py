@@ -15,6 +15,7 @@ from typing import Any, Optional
 
 try:
     import duckdb
+
     _DUCKDB_AVAILABLE = True
 except ImportError:
     _DUCKDB_AVAILABLE = False
@@ -93,9 +94,7 @@ def setup_reference_database(config) -> Any:
         conn = duckdb.connect()
         conn.execute("INSTALL mysql;")
         conn.execute("LOAD mysql;")
-        conn.execute(
-            f"ATTACH '{connection_string}' AS mysql_db (TYPE MYSQL, READ_ONLY);"
-        )
+        conn.execute(f"ATTACH '{connection_string}' AS mysql_db (TYPE MYSQL, READ_ONLY);")
         logger.info("Reference database attached successfully.")
         return conn  # caller owns the connection
     except Exception as exc:

@@ -219,7 +219,9 @@ def test_v2_query_matrix_prover_envelopes_are_normalized_and_backend_specific() 
 
 
 def test_v2_query_api_schema_snapshot_lockfile() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "hybrid_v2_api_schema_snapshot.json"
+    fixture_path = (
+        Path(__file__).resolve().parent / "fixtures" / "hybrid_v2_api_schema_snapshot.json"
+    )
     expected = json.loads(fixture_path.read_text(encoding="utf-8"))
     actual = _build_query_api_schema_snapshot()
     assert actual == expected, (

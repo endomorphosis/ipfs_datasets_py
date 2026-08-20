@@ -3,6 +3,7 @@
 A policy pack is a bundle of policies applied to legal reasoning.
 Schema version: 1.0
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

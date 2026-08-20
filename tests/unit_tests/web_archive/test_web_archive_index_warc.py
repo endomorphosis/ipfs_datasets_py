@@ -34,7 +34,9 @@ class TestWebArchiveProcessorIndexWarc:
         Then index file is created at warc path plus idx.
         """
         result = processor.index_warc(temp_warc)
-        assert result == f"{temp_warc}{IDX_EXTENSION}", f"Expected {temp_warc}{IDX_EXTENSION}, got {result}"
+        assert result == f"{temp_warc}{IDX_EXTENSION}", (
+            f"Expected {temp_warc}{IDX_EXTENSION}, got {result}"
+        )
 
     @pytest.mark.parametrize(
         "kwargs, description",
@@ -44,7 +46,9 @@ class TestWebArchiveProcessorIndexWarc:
             ({"encryption_key": ENCRYPTION_KEY}, "encryption enabled"),
         ],
     )
-    def test_when_various_options_then_returns_string(self, processor, temp_warc, tmp_path, kwargs, description):
+    def test_when_various_options_then_returns_string(
+        self, processor, temp_warc, tmp_path, kwargs, description
+    ):
         """
         Given a valid WARC file.
         When index_warc is called with various options.
@@ -81,7 +85,7 @@ class TestWebArchiveProcessorIndexWarc:
         When index_warc is called.
         Then FileNotFoundError is raised.
         """
-        with pytest.raises(FileNotFoundError, match=r'nonexistent.warc') as exc_info:
+        with pytest.raises(FileNotFoundError, match=r"nonexistent.warc") as exc_info:
             processor.index_warc("nonexistent.warc")
 
     def test_when_valid_file_then_contains_filesystem_path(self, processor, temp_warc):

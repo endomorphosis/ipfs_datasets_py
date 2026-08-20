@@ -79,13 +79,13 @@ def context():
         (ExtractionStrategy.RULE_BASED, LEGAL_DOCUMENT_EXCERPT, "legal"),
         (ExtractionStrategy.RULE_BASED, FINANCIAL_DOCUMENT_EXCERPT, "finance"),
         (ExtractionStrategy.RULE_BASED, TECHNICAL_DOCUMENT_EXCERPT, "technical"),
-    ]
+    ],
 )
 @pytest.mark.benchmark(group="extraction_strategy_performance")
 def test_extraction_strategy_rule_based(benchmark, generator, strategy, text_excerpt, domain):
     """
     Benchmark rule-based extraction across different document types.
-    
+
     Rule-based extraction uses predefined patterns and heuristics.
     Expected: Fast, consistent performance across all document types.
     """
@@ -95,12 +95,12 @@ def test_extraction_strategy_rule_based(benchmark, generator, strategy, text_exc
         domain=domain,
         extraction_strategy=strategy,
     )
-    
+
     result = benchmark(lambda: generator.extract_entities(text_excerpt, ctx))
-    
+
     assert result is not None
-    assert hasattr(result, 'entities')
-    assert hasattr(result, 'relationships')
+    assert hasattr(result, "entities")
+    assert hasattr(result, "relationships")
     assert len(result.entities) > 0
 
 
@@ -109,13 +109,13 @@ def test_extraction_strategy_rule_based(benchmark, generator, strategy, text_exc
 def test_extraction_strategy_comparison_single_pass(benchmark, generator, domain):
     """
     Single-pass benchmark comparing all strategies on one document.
-    
+
     Creates a fair comparison by testing on the same data.
     """
     text = [LEGAL_DOCUMENT_EXCERPT, FINANCIAL_DOCUMENT_EXCERPT, TECHNICAL_DOCUMENT_EXCERPT][
         {"legal": 0, "finance": 1, "technical": 2}[domain]
     ]
-    
+
     def extract_all():
         results = {}
         for strategy in [ExtractionStrategy.RULE_BASED]:
@@ -127,7 +127,7 @@ def test_extraction_strategy_comparison_single_pass(benchmark, generator, domain
             )
             results[strategy.value] = generator.extract_entities(text, ctx)
         return results
-    
+
     benchmark(extract_all)
 
 
@@ -135,7 +135,7 @@ def test_extraction_strategy_comparison_single_pass(benchmark, generator, domain
 def test_extraction_strategy_consistency(benchmark, generator, context):
     """
     Test consistency of extraction across multiple identical runs.
-    
+
     Rule-based extraction should be deterministic.
     """
     ctx = OntologyGenerationContext(
@@ -144,16 +144,17 @@ def test_extraction_strategy_consistency(benchmark, generator, context):
         domain="general",
         extraction_strategy=ExtractionStrategy.RULE_BASED,
     )
-    
+
     results = []
+
     def extract_multiple():
         for _ in range(5):
             result = generator.extract_entities(LEGAL_DOCUMENT_EXCERPT, ctx)
             results.append((len(result.entities), len(result.relationships)))
         return results
-    
+
     benchmark(extract_multiple)
-    
+
     # Verify consistency: all runs should produce same entity/relationship counts
     counts = set(results)
     assert len(counts) == 1, "Extraction results are not deterministic"
@@ -163,7 +164,7 @@ def test_extraction_strategy_consistency(benchmark, generator, context):
 def test_extraction_strategy_varied_text_length(benchmark, generator):
     """
     Benchmark extraction performance across different document lengths.
-    
+
     Tests how performance scales with input text size.
     """
     texts = {
@@ -171,7 +172,7 @@ def test_extraction_strategy_varied_text_length(benchmark, generator):
         "medium": LEGAL_DOCUMENT_EXCERPT,
         "long": LEGAL_DOCUMENT_EXCERPT * 3,
     }
-    
+
     def extract_varied():
         results = {}
         ctx = OntologyGenerationContext(
@@ -184,5 +185,5 @@ def test_extraction_strategy_varied_text_length(benchmark, generator):
             result = generator.extract_entities(text, ctx)
             results[size] = (len(result.entities), len(result.relationships))
         return results
-    
+
     benchmark(extract_varied)

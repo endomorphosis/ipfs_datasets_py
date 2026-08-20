@@ -162,26 +162,21 @@ config = LogicConfig(
     max_input_size=10000,
     max_formula_depth=100,
     max_quantifiers=20,
-    
     # Performance
     max_proof_time=30,
     enable_cache=True,
     cache_max_size=1000,
     cache_ttl_seconds=3600,
-    
     # Rate limiting
     rate_limit_enabled=True,
     rate_limit_calls=100,
     rate_limit_period=60,
-    
     # Security
     suspicious_pattern_check=True,
-    
     # IPFS
     ipfs_enabled=False,
     ipfs_host="localhost",
     ipfs_port=5001,
-    
     # External provers
     z3_enabled=True,
     lean_enabled=False,
@@ -497,35 +492,32 @@ from ipfs_datasets_py.logic.fol import FOLConverter
 # Initialize once (reused across invocations)
 converter = FOLConverter(use_fallback=True)
 
+
 def lambda_handler(event, context):
     try:
-        body = json.loads(event['body'])
-        text = body['text']
-        
+        body = json.loads(event["body"])
+        text = body["text"]
+
         # Validate input
         if len(text) > 10000:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({'error': 'Input too large'})
-            }
-        
+            return {"statusCode": 400, "body": json.dumps({"error": "Input too large"})}
+
         # Convert
         result = converter.convert(text)
-        
+
         return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'success': result.success,
-                'fol': result.fol,
-                'confidence': result.confidence,
-            })
+            "statusCode": 200,
+            "body": json.dumps(
+                {
+                    "success": result.success,
+                    "fol": result.fol,
+                    "confidence": result.confidence,
+                }
+            ),
         }
-    
+
     except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': str(e)})
-        }
+        return {"statusCode": 500, "body": json.dumps({"error": str(e)})}
 ```
 
 **serverless.yml:**
@@ -570,34 +562,27 @@ serverless deploy
 from prometheus_client import Counter, Histogram, Gauge, start_http_server
 
 # Define metrics
-conversion_counter = Counter(
-    'logic_conversions_total',
-    'Total number of conversions'
-)
-conversion_duration = Histogram(
-    'logic_conversion_duration_seconds',
-    'Conversion duration'
-)
-cache_hit_rate = Gauge(
-    'logic_cache_hit_rate',
-    'Cache hit rate'
-)
+conversion_counter = Counter("logic_conversions_total", "Total number of conversions")
+conversion_duration = Histogram("logic_conversion_duration_seconds", "Conversion duration")
+cache_hit_rate = Gauge("logic_cache_hit_rate", "Cache hit rate")
 
 # Instrument code
 from ipfs_datasets_py.logic.fol import FOLConverter
 import time
 
+
 class MonitoredConverter(FOLConverter):
     def convert(self, text):
         conversion_counter.inc()
-        
+
         start = time.time()
         result = super().convert(text)
         duration = time.time() - start
-        
+
         conversion_duration.observe(duration)
-        
+
         return result
+
 
 # Start metrics server
 start_http_server(9090)
@@ -609,20 +594,22 @@ start_http_server(9090)
 import logging
 import json
 
+
 # JSON logging for production
 class JSONFormatter(logging.Formatter):
     def format(self, record):
         log_data = {
-            'timestamp': self.formatTime(record),
-            'level': record.levelname,
-            'message': record.getMessage(),
-            'module': record.module,
-            'function': record.funcName,
+            "timestamp": self.formatTime(record),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "module": record.module,
+            "function": record.funcName,
         }
         return json.dumps(log_data)
 
+
 # Configure logging
-logger = logging.getLogger('ipfs_datasets_py.logic')
+logger = logging.getLogger("ipfs_datasets_py.logic")
 handler = logging.StreamHandler()
 handler.setFormatter(JSONFormatter())
 logger.addHandler(handler)
@@ -636,31 +623,35 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-@app.route('/health')
+
+@app.route("/health")
 def health():
     """Liveness probe - is service running?"""
     return jsonify({"status": "healthy"}), 200
 
-@app.route('/ready')
+
+@app.route("/ready")
 def ready():
     """Readiness probe - can service handle requests?"""
     try:
         # Check dependencies
         converter = FOLConverter()
         converter.convert("test")
-        
+
         # Check cache
         from ipfs_datasets_py.logic.integration.caching import get_global_cache
+
         cache = get_global_cache()
         cache.stats()
-        
+
         return jsonify({"status": "ready"}), 200
-    
+
     except Exception as e:
         return jsonify({"status": "not ready", "error": str(e)}), 503
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
 ```
 
 ### Grafana Dashboard
@@ -845,25 +836,26 @@ l2_cache = RedisProofCache(redis_url="redis://localhost:6379/0")
 # L3: IPFS cache (persistent)
 l3_cache = IPFSProofCache(ipfs_host="localhost", ipfs_port=5001)
 
+
 # Use cascading cache
 def get_proof(formula):
     # Check L1
     if formula in l1_cache:
         return l1_cache.get(formula)
-    
+
     # Check L2
     if formula in l2_cache:
         result = l2_cache.get(formula)
         l1_cache.set(formula, result)
         return result
-    
+
     # Check L3
     if formula in l3_cache:
         result = l3_cache.get(formula)
         l2_cache.set(formula, result)
         l1_cache.set(formula, result)
         return result
-    
+
     # Compute and cache
     result = prove_formula(formula)
     l3_cache.set(formula, result)

@@ -21,7 +21,11 @@ async def test_direct_agentic_all_states_env_skips_base_scrape(
 
     monkeypatch.setenv("LEGAL_ADMIN_RULES_DIRECT_AGENTIC_ALL_STATES", "1")
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(
+        scraper_module,
+        "_agentic_discover_admin_state_blocks",
+        _fake_agentic_discover_admin_state_blocks,
+    )
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scraper_module.scrape_state_admin_rules(
@@ -55,7 +59,11 @@ async def test_direct_agentic_all_states_env_skips_zero_rule_fallback_scrape(
 
     monkeypatch.setenv("LEGAL_ADMIN_RULES_DIRECT_AGENTIC_ALL_STATES", "1")
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(
+        scraper_module,
+        "_agentic_discover_admin_state_blocks",
+        _fake_agentic_discover_admin_state_blocks,
+    )
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scraper_module.scrape_state_admin_rules(
@@ -90,7 +98,9 @@ def test_extract_seed_urls_for_state_uses_only_admin_labeled_code_list_urls(
             return "administrative" if "rules" in name.lower() else "statutory"
 
     monkeypatch.setitem(scraper_module._STATE_ADMIN_SOURCE_MAP, "ZZ", [])
-    monkeypatch.setattr(state_scrapers_module, "get_scraper_for_state", lambda *args, **kwargs: _FakeScraper())
+    monkeypatch.setattr(
+        state_scrapers_module, "get_scraper_for_state", lambda *args, **kwargs: _FakeScraper()
+    )
     monkeypatch.setattr(state_scrapers_module, "GenericStateScraper", _FakeScraper)
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
 

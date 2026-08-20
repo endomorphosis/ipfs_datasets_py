@@ -13,29 +13,34 @@ import pytest
 import tempfile
 import os
 from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-    GraphData, NodeData, RelationshipData, MigrationFormat
+    GraphData,
+    NodeData,
+    RelationshipData,
+    MigrationFormat,
 )
 
 
 class TestGraphMLFormat:
     """Test suite for GraphML format support."""
-    
+
     @pytest.fixture
     def sample_graph(self):
         """Create a sample graph for testing."""
         nodes = [
-            NodeData(id='1', labels=['Person'], properties={'name': 'Alice', 'age': 30}),
-            NodeData(id='2', labels=['Person'], properties={'name': 'Bob', 'age': 25}),
-            NodeData(id='3', labels=['Person'], properties={'name': 'Charlie', 'age': 35})
+            NodeData(id="1", labels=["Person"], properties={"name": "Alice", "age": 30}),
+            NodeData(id="2", labels=["Person"], properties={"name": "Bob", "age": 25}),
+            NodeData(id="3", labels=["Person"], properties={"name": "Charlie", "age": 35}),
         ]
         relationships = [
-            RelationshipData(id='r1', type='KNOWS', start_node='1', end_node='2',
-                           properties={'since': 2020}),
-            RelationshipData(id='r2', type='KNOWS', start_node='2', end_node='3',
-                           properties={'since': 2021})
+            RelationshipData(
+                id="r1", type="KNOWS", start_node="1", end_node="2", properties={"since": 2020}
+            ),
+            RelationshipData(
+                id="r2", type="KNOWS", start_node="2", end_node="3", properties={"since": 2021}
+            ),
         ]
         return GraphData(nodes=nodes, relationships=relationships)
-    
+
     def test_save_graphml(self, sample_graph):
         """
         GIVEN: A graph with nodes and relationships
@@ -43,25 +48,25 @@ class TestGraphMLFormat:
         THEN: File is created with valid GraphML XML
         """
         # GIVEN
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.graphml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".graphml", delete=False) as f:
             filepath = f.name
-        
+
         try:
             # WHEN
             sample_graph.save_to_file(filepath, format=MigrationFormat.GRAPHML)
-            
+
             # THEN
             assert os.path.exists(filepath)
-            with open(filepath, 'r') as f:
+            with open(filepath, "r") as f:
                 content = f.read()
-                assert '<?xml' in content
-                assert '<graphml' in content
-                assert '<node' in content
-                assert '<edge' in content
+                assert "<?xml" in content
+                assert "<graphml" in content
+                assert "<node" in content
+                assert "<edge" in content
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)
-    
+
     def test_load_graphml(self, sample_graph):
         """
         GIVEN: A saved GraphML file
@@ -69,19 +74,19 @@ class TestGraphMLFormat:
         THEN: Graph is reconstructed correctly
         """
         # GIVEN
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.graphml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".graphml", delete=False) as f:
             filepath = f.name
-        
+
         try:
             sample_graph.save_to_file(filepath, format=MigrationFormat.GRAPHML)
-            
+
             # WHEN
             loaded_graph = GraphData.load_from_file(filepath, format=MigrationFormat.GRAPHML)
-            
+
             # THEN
             assert loaded_graph.node_count == sample_graph.node_count
             assert loaded_graph.relationship_count == sample_graph.relationship_count
-            
+
             # Check node IDs are preserved
             loaded_ids = {node.id for node in loaded_graph.nodes}
             original_ids = {node.id for node in sample_graph.nodes}
@@ -89,7 +94,7 @@ class TestGraphMLFormat:
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)
-    
+
     def test_graphml_roundtrip(self, sample_graph):
         """
         GIVEN: A graph with various properties
@@ -97,18 +102,18 @@ class TestGraphMLFormat:
         THEN: All data is preserved (roundtrip test)
         """
         # GIVEN
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.graphml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".graphml", delete=False) as f:
             filepath = f.name
-        
+
         try:
             # WHEN
             sample_graph.save_to_file(filepath, format=MigrationFormat.GRAPHML)
             loaded_graph = GraphData.load_from_file(filepath, format=MigrationFormat.GRAPHML)
-            
+
             # THEN
             assert len(loaded_graph.nodes) == len(sample_graph.nodes)
             assert len(loaded_graph.relationships) == len(sample_graph.relationships)
-            
+
             # Verify node properties are preserved
             for orig_node in sample_graph.nodes:
                 loaded_node = next((n for n in loaded_graph.nodes if n.id == orig_node.id), None)
@@ -121,20 +126,21 @@ class TestGraphMLFormat:
 
 class TestGEXFFormat:
     """Test suite for GEXF format support."""
-    
+
     @pytest.fixture
     def sample_graph(self):
         """Create a sample graph for testing."""
         nodes = [
-            NodeData(id='1', labels=['Person'], properties={'name': 'Alice'}),
-            NodeData(id='2', labels=['Person'], properties={'name': 'Bob'})
+            NodeData(id="1", labels=["Person"], properties={"name": "Alice"}),
+            NodeData(id="2", labels=["Person"], properties={"name": "Bob"}),
         ]
         relationships = [
-            RelationshipData(id='r1', type='KNOWS', start_node='1', end_node='2',
-                           properties={'weight': 0.8})
+            RelationshipData(
+                id="r1", type="KNOWS", start_node="1", end_node="2", properties={"weight": 0.8}
+            )
         ]
         return GraphData(nodes=nodes, relationships=relationships)
-    
+
     def test_save_gexf(self, sample_graph):
         """
         GIVEN: A graph with nodes and relationships
@@ -142,25 +148,25 @@ class TestGEXFFormat:
         THEN: File is created with valid GEXF XML
         """
         # GIVEN
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.gexf', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".gexf", delete=False) as f:
             filepath = f.name
-        
+
         try:
             # WHEN
             sample_graph.save_to_file(filepath, format=MigrationFormat.GEXF)
-            
+
             # THEN
             assert os.path.exists(filepath)
-            with open(filepath, 'r') as f:
+            with open(filepath, "r") as f:
                 content = f.read()
-                assert '<?xml' in content
-                assert '<gexf' in content
-                assert '<nodes>' in content
-                assert '<edges>' in content
+                assert "<?xml" in content
+                assert "<gexf" in content
+                assert "<nodes>" in content
+                assert "<edges>" in content
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)
-    
+
     def test_load_gexf(self, sample_graph):
         """
         GIVEN: A saved GEXF file
@@ -168,22 +174,22 @@ class TestGEXFFormat:
         THEN: Graph is reconstructed correctly
         """
         # GIVEN
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.gexf', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".gexf", delete=False) as f:
             filepath = f.name
-        
+
         try:
             sample_graph.save_to_file(filepath, format=MigrationFormat.GEXF)
-            
+
             # WHEN
             loaded_graph = GraphData.load_from_file(filepath, format=MigrationFormat.GEXF)
-            
+
             # THEN
             assert loaded_graph.node_count == sample_graph.node_count
             assert loaded_graph.relationship_count == sample_graph.relationship_count
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)
-    
+
     def test_gexf_roundtrip(self, sample_graph):
         """
         GIVEN: A graph with properties
@@ -191,14 +197,14 @@ class TestGEXFFormat:
         THEN: All data is preserved
         """
         # GIVEN
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.gexf', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".gexf", delete=False) as f:
             filepath = f.name
-        
+
         try:
             # WHEN
             sample_graph.save_to_file(filepath, format=MigrationFormat.GEXF)
             loaded_graph = GraphData.load_from_file(filepath, format=MigrationFormat.GEXF)
-            
+
             # THEN
             assert len(loaded_graph.nodes) == len(sample_graph.nodes)
             assert len(loaded_graph.relationships) == len(sample_graph.relationships)
@@ -209,23 +215,33 @@ class TestGEXFFormat:
 
 class TestPajekFormat:
     """Test suite for Pajek format support."""
-    
+
     @pytest.fixture
     def sample_graph(self):
         """Create a sample graph for testing."""
         nodes = [
-            NodeData(id='1', labels=['Node'], properties={'name': 'Node1'}),
-            NodeData(id='2', labels=['Node'], properties={'name': 'Node2'}),
-            NodeData(id='3', labels=['Node'], properties={'name': 'Node3'})
+            NodeData(id="1", labels=["Node"], properties={"name": "Node1"}),
+            NodeData(id="2", labels=["Node"], properties={"name": "Node2"}),
+            NodeData(id="3", labels=["Node"], properties={"name": "Node3"}),
         ]
         relationships = [
-            RelationshipData(id='r1', type='CONNECTED_TO', start_node='1', end_node='2',
-                           properties={'weight': 1.5}),
-            RelationshipData(id='r2', type='CONNECTED_TO', start_node='2', end_node='3',
-                           properties={'weight': 2.0})
+            RelationshipData(
+                id="r1",
+                type="CONNECTED_TO",
+                start_node="1",
+                end_node="2",
+                properties={"weight": 1.5},
+            ),
+            RelationshipData(
+                id="r2",
+                type="CONNECTED_TO",
+                start_node="2",
+                end_node="3",
+                properties={"weight": 2.0},
+            ),
         ]
         return GraphData(nodes=nodes, relationships=relationships)
-    
+
     def test_save_pajek(self, sample_graph):
         """
         GIVEN: A graph with nodes and relationships
@@ -233,23 +249,23 @@ class TestPajekFormat:
         THEN: File is created with valid Pajek format
         """
         # GIVEN
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.net', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".net", delete=False) as f:
             filepath = f.name
-        
+
         try:
             # WHEN
             sample_graph.save_to_file(filepath, format=MigrationFormat.PAJEK)
-            
+
             # THEN
             assert os.path.exists(filepath)
-            with open(filepath, 'r') as f:
+            with open(filepath, "r") as f:
                 content = f.read()
-                assert '*Vertices' in content
-                assert '*Arcs' in content
+                assert "*Vertices" in content
+                assert "*Arcs" in content
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)
-    
+
     def test_load_pajek(self, sample_graph):
         """
         GIVEN: A saved Pajek file
@@ -257,22 +273,22 @@ class TestPajekFormat:
         THEN: Graph is reconstructed correctly
         """
         # GIVEN
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.net', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".net", delete=False) as f:
             filepath = f.name
-        
+
         try:
             sample_graph.save_to_file(filepath, format=MigrationFormat.PAJEK)
-            
+
             # WHEN
             loaded_graph = GraphData.load_from_file(filepath, format=MigrationFormat.PAJEK)
-            
+
             # THEN
             assert loaded_graph.node_count == sample_graph.node_count
             assert loaded_graph.relationship_count == sample_graph.relationship_count
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)
-    
+
     def test_pajek_roundtrip(self, sample_graph):
         """
         GIVEN: A graph with weighted edges
@@ -280,14 +296,14 @@ class TestPajekFormat:
         THEN: Graph structure is preserved
         """
         # GIVEN
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.net', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".net", delete=False) as f:
             filepath = f.name
-        
+
         try:
             # WHEN
             sample_graph.save_to_file(filepath, format=MigrationFormat.PAJEK)
             loaded_graph = GraphData.load_from_file(filepath, format=MigrationFormat.PAJEK)
-            
+
             # THEN
             assert len(loaded_graph.nodes) == len(sample_graph.nodes)
             assert len(loaded_graph.relationships) == len(sample_graph.relationships)
@@ -309,7 +325,7 @@ class TestCARFormat:
         # GIVEN
         graph = GraphData(nodes=[NodeData(id="1", labels=["Test"])], relationships=[])
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.car') as f:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".car") as f:
             filepath = f.name
 
         try:
@@ -341,7 +357,7 @@ class TestCARFormat:
             ],
         )
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.car') as f:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".car") as f:
             filepath = f.name
 
         try:
@@ -357,5 +373,5 @@ class TestCARFormat:
                 os.unlink(filepath)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -19,15 +19,12 @@ Total: 40 tests
 """
 
 import pytest
-from ipfs_datasets_py.logic.CEC.nl.language_detector import (
-    Language,
-    LanguageDetector
-)
+from ipfs_datasets_py.logic.CEC.nl.language_detector import Language, LanguageDetector
 
 
 class TestLanguageEnum:
     """Test Language enumeration."""
-    
+
     def test_language_values(self):
         """
         GIVEN Language enum
@@ -39,7 +36,7 @@ class TestLanguageEnum:
         assert Language.FRENCH.value == "fr"
         assert Language.GERMAN.value == "de"
         assert Language.UNKNOWN.value == "unknown"
-    
+
     def test_from_code_valid(self):
         """
         GIVEN valid language code
@@ -51,7 +48,7 @@ class TestLanguageEnum:
         assert Language.from_code("fr") == Language.FRENCH
         assert Language.from_code("de") == Language.GERMAN
         assert Language.from_code("EN") == Language.ENGLISH  # Case insensitive
-    
+
     def test_from_code_invalid(self):
         """
         GIVEN invalid language code
@@ -64,7 +61,7 @@ class TestLanguageEnum:
 
 class TestLanguageDetectorInitialization:
     """Test LanguageDetector initialization."""
-    
+
     def test_default_initialization(self):
         """
         GIVEN LanguageDetector with default parameters
@@ -76,7 +73,7 @@ class TestLanguageDetectorInitialization:
         assert len(detector._language_keywords) == 4
         assert len(detector._language_patterns) == 4
         assert len(detector._trigram_profiles) == 4
-    
+
     def test_custom_confidence_threshold(self):
         """
         GIVEN custom confidence threshold
@@ -89,7 +86,7 @@ class TestLanguageDetectorInitialization:
 
 class TestEnglishDetection:
     """Test English language detection."""
-    
+
     def test_detect_simple_english(self):
         """
         GIVEN simple English sentence
@@ -100,7 +97,7 @@ class TestEnglishDetection:
         text = "The agent must perform the action"
         language = detector.detect(text)
         assert language == Language.ENGLISH
-    
+
     def test_detect_english_with_operators(self):
         """
         GIVEN English text with logical operators
@@ -112,7 +109,7 @@ class TestEnglishDetection:
         language, confidence = detector.detect_with_confidence(text)
         assert language == Language.ENGLISH
         assert confidence > 0.5  # Reasonable confidence for complex text
-    
+
     def test_detect_english_modal_logic(self):
         """
         GIVEN English modal logic statement
@@ -123,7 +120,7 @@ class TestEnglishDetection:
         text = "The agent believes that the action is permitted"
         language = detector.detect(text)
         assert language == Language.ENGLISH
-    
+
     def test_detect_english_obligation(self):
         """
         GIVEN English obligation statement
@@ -134,7 +131,7 @@ class TestEnglishDetection:
         text = "It is required that all agents shall comply with the regulations"
         language = detector.detect(text)
         assert language == Language.ENGLISH
-    
+
     def test_detect_english_permission(self):
         """
         GIVEN English permission statement
@@ -149,7 +146,7 @@ class TestEnglishDetection:
 
 class TestSpanishDetection:
     """Test Spanish language detection."""
-    
+
     def test_detect_simple_spanish(self):
         """
         GIVEN simple Spanish sentence
@@ -160,7 +157,7 @@ class TestSpanishDetection:
         text = "El agente debe realizar la acción"
         language = detector.detect(text)
         assert language == Language.SPANISH
-    
+
     def test_detect_spanish_with_accents(self):
         """
         GIVEN Spanish text with accents
@@ -172,7 +169,7 @@ class TestSpanishDetection:
         language, confidence = detector.detect_with_confidence(text)
         assert language == Language.SPANISH
         assert confidence > 0.5  # Reasonable confidence
-    
+
     def test_detect_spanish_modal(self):
         """
         GIVEN Spanish modal statement
@@ -183,7 +180,7 @@ class TestSpanishDetection:
         text = "El agente cree que la acción es permitida"
         language = detector.detect(text)
         assert language == Language.SPANISH
-    
+
     def test_detect_spanish_obligation(self):
         """
         GIVEN Spanish obligation statement
@@ -195,7 +192,7 @@ class TestSpanishDetection:
         language = detector.detect(text)
         # Complex formal text may have lower confidence
         assert language in [Language.SPANISH, Language.UNKNOWN]
-    
+
     def test_detect_spanish_permission(self):
         """
         GIVEN Spanish permission statement
@@ -210,7 +207,7 @@ class TestSpanishDetection:
 
 class TestFrenchDetection:
     """Test French language detection."""
-    
+
     def test_detect_simple_french(self):
         """
         GIVEN simple French sentence with clear indicators
@@ -222,7 +219,7 @@ class TestFrenchDetection:
         language = detector.detect(text)
         # Short text with apostrophes may be ambiguous
         assert language in [Language.FRENCH, Language.UNKNOWN]
-    
+
     def test_detect_french_with_accents(self):
         """
         GIVEN French text with accents
@@ -234,7 +231,7 @@ class TestFrenchDetection:
         language, confidence = detector.detect_with_confidence(text)
         assert language == Language.FRENCH
         assert confidence > 0.45  # Reasonable confidence for French with accents
-    
+
     def test_detect_french_modal(self):
         """
         GIVEN French modal statement
@@ -245,7 +242,7 @@ class TestFrenchDetection:
         text = "L'agent croit que l'action est permise"
         language = detector.detect(text)
         assert language == Language.FRENCH
-    
+
     def test_detect_french_obligation(self):
         """
         GIVEN French obligation statement
@@ -257,7 +254,7 @@ class TestFrenchDetection:
         language = detector.detect(text)
         # Complex formal text may be ambiguous
         assert language in [Language.FRENCH, Language.UNKNOWN]
-    
+
     def test_detect_french_cest(self):
         """
         GIVEN French text with c'est construction
@@ -272,7 +269,7 @@ class TestFrenchDetection:
 
 class TestGermanDetection:
     """Test German language detection."""
-    
+
     def test_detect_simple_german(self):
         """
         GIVEN simple German sentence
@@ -283,7 +280,7 @@ class TestGermanDetection:
         text = "Der Agent muss die Aktion ausführen"
         language = detector.detect(text)
         assert language == Language.GERMAN
-    
+
     def test_detect_german_with_umlauts(self):
         """
         GIVEN German text with umlauts
@@ -295,7 +292,7 @@ class TestGermanDetection:
         language, confidence = detector.detect_with_confidence(text)
         assert language == Language.GERMAN
         assert confidence > 0.45  # Reasonable confidence for German with umlauts
-    
+
     def test_detect_german_modal(self):
         """
         GIVEN German modal statement
@@ -307,7 +304,7 @@ class TestGermanDetection:
         language = detector.detect(text)
         # Complex text may be ambiguous
         assert language in [Language.GERMAN, Language.UNKNOWN]
-    
+
     def test_detect_german_obligation(self):
         """
         GIVEN German obligation statement
@@ -319,7 +316,7 @@ class TestGermanDetection:
         language = detector.detect(text)
         # Complex formal text may be ambiguous
         assert language in [Language.GERMAN, Language.UNKNOWN]
-    
+
     def test_detect_german_capitalized_nouns(self):
         """
         GIVEN German text with capitalized nouns
@@ -335,7 +332,7 @@ class TestGermanDetection:
 
 class TestMixedLanguageDetection:
     """Test detection with mixed or ambiguous text."""
-    
+
     def test_detect_short_ambiguous_text(self):
         """
         GIVEN very short ambiguous text
@@ -347,7 +344,7 @@ class TestMixedLanguageDetection:
         language, confidence = detector.detect_with_confidence(text)
         # Short text may not meet high confidence threshold
         assert confidence <= 1.0
-    
+
     def test_detect_numbers_only(self):
         """
         GIVEN text with only numbers
@@ -358,7 +355,7 @@ class TestMixedLanguageDetection:
         text = "123 456 789"
         language = detector.detect(text)
         assert language == Language.UNKNOWN
-    
+
     def test_detect_mixed_language_prefer_dominant(self):
         """
         GIVEN text with mixed languages but one dominant
@@ -370,7 +367,7 @@ class TestMixedLanguageDetection:
         language = detector.detect(text)
         # Should detect English as it's more prevalent
         assert language in [Language.ENGLISH, Language.SPANISH]
-    
+
     def test_detect_technical_terms(self):
         """
         GIVEN text with technical/formal terms common across languages
@@ -386,7 +383,7 @@ class TestMixedLanguageDetection:
 
 class TestConfidenceScoring:
     """Test confidence score calculations."""
-    
+
     def test_high_confidence_english(self):
         """
         GIVEN clear English text with many keywords
@@ -398,7 +395,7 @@ class TestConfidenceScoring:
         language, confidence = detector.detect_with_confidence(text)
         assert language == Language.ENGLISH
         assert confidence > 0.5  # Reasonable confidence for keyword-rich text
-    
+
     def test_medium_confidence(self):
         """
         GIVEN somewhat ambiguous text
@@ -410,7 +407,7 @@ class TestConfidenceScoring:
         language, confidence = detector.detect_with_confidence(text)
         # Confidence should be reasonable but not very high
         assert 0.0 <= confidence <= 1.0
-    
+
     def test_confidence_threshold_filtering(self):
         """
         GIVEN high confidence threshold
@@ -423,7 +420,7 @@ class TestConfidenceScoring:
         # If confidence below threshold, returns UNKNOWN
         if confidence < 0.95:
             assert language == Language.UNKNOWN
-    
+
     def test_all_languages_scored(self):
         """
         GIVEN valid text
@@ -439,7 +436,7 @@ class TestConfidenceScoring:
 
 class TestEdgeCasesAndErrorHandling:
     """Test edge cases and error handling."""
-    
+
     def test_detect_empty_string(self):
         """
         GIVEN empty string
@@ -449,7 +446,7 @@ class TestEdgeCasesAndErrorHandling:
         detector = LanguageDetector()
         language = detector.detect("")
         assert language == Language.UNKNOWN
-    
+
     def test_detect_whitespace_only(self):
         """
         GIVEN whitespace-only string
@@ -459,7 +456,7 @@ class TestEdgeCasesAndErrorHandling:
         detector = LanguageDetector()
         language = detector.detect("   \t\n  ")
         assert language == Language.UNKNOWN
-    
+
     def test_detect_very_long_text(self):
         """
         GIVEN very long text
@@ -471,7 +468,7 @@ class TestEdgeCasesAndErrorHandling:
         text = "The agent must comply. " * 100
         language = detector.detect(text)
         assert language == Language.ENGLISH
-    
+
     def test_get_all_languages(self):
         """
         GIVEN LanguageDetector
@@ -486,7 +483,7 @@ class TestEdgeCasesAndErrorHandling:
         assert Language.FRENCH in languages
         assert Language.GERMAN in languages
         assert Language.UNKNOWN not in languages
-    
+
     def test_is_supported(self):
         """
         GIVEN Language enum values
@@ -499,7 +496,7 @@ class TestEdgeCasesAndErrorHandling:
         assert detector.is_supported(Language.FRENCH) == True
         assert detector.is_supported(Language.GERMAN) == True
         assert detector.is_supported(Language.UNKNOWN) == False
-    
+
     def test_detect_unicode_characters(self):
         """
         GIVEN text with various Unicode characters
@@ -511,7 +508,7 @@ class TestEdgeCasesAndErrorHandling:
         language = detector.detect(text)
         # Should still detect Spanish despite emojis
         assert language in [Language.SPANISH, Language.UNKNOWN]
-    
+
     def test_detect_special_characters(self):
         """
         GIVEN text with special characters

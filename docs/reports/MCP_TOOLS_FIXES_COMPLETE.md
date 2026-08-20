@@ -128,6 +128,7 @@ from ipfs_datasets_py.mcp_server.logger import logger
 **After:**
 ```python
 import logging
+
 logger = logging.getLogger(__name__)
 ```
 
@@ -186,6 +187,7 @@ from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProc
 **Before:**
 ```python
 from ipfs_datasets_py.mcp_server.configs import configs
+
 if configs.ipfs_kit_integration == "direct":
     ...
 client = MCPClient(configs.ipfs_kit_mcp_url)
@@ -193,10 +195,10 @@ client = MCPClient(configs.ipfs_kit_mcp_url)
 
 **After:**
 ```python
-ipfs_kit_integration = os.environ.get('IPFS_KIT_INTEGRATION', 'direct')
+ipfs_kit_integration = os.environ.get("IPFS_KIT_INTEGRATION", "direct")
 if ipfs_kit_integration == "direct":
     ...
-ipfs_kit_mcp_url = os.environ.get('IPFS_KIT_MCP_URL', 'http://localhost:5001')
+ipfs_kit_mcp_url = os.environ.get("IPFS_KIT_MCP_URL", "http://localhost:5001")
 client = MCPClient(ipfs_kit_mcp_url)
 ```
 
@@ -215,7 +217,7 @@ client = MCPClient(ipfs_kit_mcp_url)
 from ....logic_integration.medical_theorem_framework import (
     MedicalTheoremGenerator,
     FuzzyLogicValidator,
-    TimeSeriesTheoremValidator
+    TimeSeriesTheoremValidator,
 )
 ```
 
@@ -224,7 +226,7 @@ from ....logic_integration.medical_theorem_framework import (
 from ipfs_datasets_py.logic_integration.medical_theorem_framework import (
     MedicalTheoremGenerator,
     FuzzyLogicValidator,
-    TimeSeriesTheoremValidator
+    TimeSeriesTheoremValidator,
 )
 ```
 
@@ -282,13 +284,13 @@ from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers import medical_
 import os
 
 # Tools respect environment variables
-os.environ['IPFS_KIT_INTEGRATION'] = 'direct'
-result = await pin_to_ipfs('/path/to/file')
+os.environ["IPFS_KIT_INTEGRATION"] = "direct"
+result = await pin_to_ipfs("/path/to/file")
 # Works without MCP server config ✅
 
 # Tools work with defaults
-del os.environ['IPFS_KIT_INTEGRATION']
-result = await get_from_ipfs('QmXXX')
+del os.environ["IPFS_KIT_INTEGRATION"]
+result = await get_from_ipfs("QmXXX")
 # Uses sensible defaults ✅
 ```
 

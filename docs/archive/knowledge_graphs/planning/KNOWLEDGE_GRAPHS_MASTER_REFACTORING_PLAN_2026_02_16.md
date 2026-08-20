@@ -830,7 +830,7 @@ warnings.warn(
     "This module will be removed in version 2.0 (6 months). "
     "See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for migration instructions.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 ```
 
@@ -881,31 +881,39 @@ from dataclasses import dataclass
 from typing import List, Dict, Optional, Set
 from enum import Enum
 
+
 class EntityType(Enum):
     """Entity type enumeration."""
+
     PERSON = "PERSON"
     ORGANIZATION = "ORG"
     LOCATION = "LOC"
     # ... more types
 
+
 @dataclass
 class Entity:
     """Represents an entity in a knowledge graph."""
+
     id: str
     text: str
     type: EntityType
     metadata: Dict[str, Any]
-    
+
+
 @dataclass
 class Relationship:
     """Represents a relationship between entities."""
+
     source: Entity
     target: Entity
     type: str
     confidence: float
-    
+
+
 class KnowledgeGraph:
     """Container for entities and relationships."""
+
     def __init__(self):
         self.entities: Dict[str, Entity] = {}
         self.relationships: List[Relationship] = []
@@ -1259,14 +1267,15 @@ OLD_IMPORTS = [
 
 NEW_IMPORT = "from ipfs_datasets_py.knowledge_graphs.lineage import"
 
+
 def migrate_file(file_path: Path, dry_run: bool = True):
     """Migrate imports in a single file."""
     content = file_path.read_text()
     modified = content
-    
+
     for old_pattern in OLD_IMPORTS:
         modified = re.sub(old_pattern, NEW_IMPORT, modified)
-    
+
     if modified != content:
         if dry_run:
             print(f"Would modify: {file_path}")
@@ -1276,9 +1285,11 @@ def migrate_file(file_path: Path, dry_run: bool = True):
         return True
     return False
 
+
 def main():
     # Implementation...
     pass
+
 
 if __name__ == "__main__":
     main()
@@ -1317,14 +1328,10 @@ docs/archive/knowledge_graphs/
 
 ```python
 # OLD: Using legacy extraction
-from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
-    KnowledgeGraphExtractor
-)
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraphExtractor
 
 # NEW: Using extraction package
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractor
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor
 
 # Usage remains the same
 extractor = KnowledgeGraphExtractor()
@@ -1335,14 +1342,10 @@ kg = extractor.extract(text)
 
 ```python
 # OLD: Legacy lineage tracking
-from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
-    CrossDocumentLineageTracker
-)
+from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import CrossDocumentLineageTracker
 
 # NEW: Modern lineage API
-from ipfs_datasets_py.knowledge_graphs.lineage import (
-    LineageTracker
-)
+from ipfs_datasets_py.knowledge_graphs.lineage import LineageTracker
 
 # Usage
 tracker = LineageTracker()

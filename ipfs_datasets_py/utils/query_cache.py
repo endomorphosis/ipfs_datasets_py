@@ -15,7 +15,7 @@ Migration Guide:
     Old code:
     >>> from ipfs_datasets_py.utils.query_cache import QueryCache
     >>> cache = QueryCache()
-    
+
     New code:
     >>> from ipfs_datasets_py.utils.cache import LocalCache
     >>> cache = LocalCache()
@@ -31,7 +31,7 @@ warnings.warn(
     "Use ipfs_datasets_py.utils.cache.LocalCache instead. "
     "This module will be removed in a future version.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Re-export from new unified cache module
@@ -95,7 +95,11 @@ def cached_query(
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            key = key_func(*args, **kwargs) if key_func else cache.make_key(func.__name__, args, kwargs)
+            key = (
+                key_func(*args, **kwargs)
+                if key_func
+                else cache.make_key(func.__name__, args, kwargs)
+            )
             cached = cache.get(key)
             if cached is not None:
                 return cached
@@ -109,10 +113,11 @@ def cached_query(
 
     return decorator
 
+
 __all__ = [
-    'QueryCache',
-    'cached_query',
-    'CacheBackend',
-    'CacheEntry',
-    'CacheStats',
+    "QueryCache",
+    "cached_query",
+    "CacheBackend",
+    "CacheEntry",
+    "CacheStats",
 ]

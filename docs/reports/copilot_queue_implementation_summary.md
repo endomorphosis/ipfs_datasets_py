@@ -73,9 +73,9 @@ All three dashboards now include sidebar links to each other:
 ### Shared Infrastructure
 All three dashboards use the same backend:
 ```python
-TemporalDeonticRAGStore          # RAG-based rule storage
-DocumentConsistencyChecker       # Document analysis engine
-DeonticLogic                     # Core reasoning system
+TemporalDeonticRAGStore  # RAG-based rule storage
+DocumentConsistencyChecker  # Document analysis engine
+DeonticLogic  # Core reasoning system
 ```
 
 ### Differentiation Strategy

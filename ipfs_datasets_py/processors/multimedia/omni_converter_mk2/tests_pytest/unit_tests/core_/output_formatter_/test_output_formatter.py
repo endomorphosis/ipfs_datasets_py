@@ -1,6 +1,7 @@
 """
 Test suite for core/output_formatter/_output_formatter.py converted from unittest to pytest.
 """
+
 import pytest
 import json
 import threading
@@ -22,7 +23,7 @@ from core.content_extractor._content import Content
 def make_mock_resources() -> dict[str, MagicMock]:
     """
     Create mock resources for OutputFormatter testing.
-    
+
     Returns:
         Dictionary containing mocked dependencies.
     """
@@ -39,20 +40,20 @@ def make_mock_resources() -> dict[str, MagicMock]:
 def make_mock_configs() -> MagicMock:
     """
     Create mock configuration object for OutputFormatter testing.
-    
+
     Returns:
         Mocked Configs object with necessary attributes.
     """
     mock_configs = MagicMock()
     mock_configs.output = MagicMock()
-    mock_configs.output.default_format = 'txt'
+    mock_configs.output.default_format = "txt"
     return mock_configs
 
 
 def make_mock_content() -> MagicMock:
     """
     Create mock Content object for testing.
-    
+
     Returns:
         Mocked Content object with sample data.
     """
@@ -60,14 +61,14 @@ def make_mock_content() -> MagicMock:
     mock_content.text = "Sample content text for testing"
     mock_content.metadata = {
         "title": "Test Document",
-        "author": "Test Author", 
+        "author": "Test Author",
         "created_at": "2023-01-01T12:00:00",
         "tags": ["test", "sample"],
-        "word_count": 6
+        "word_count": 6,
     }
     mock_content.sections = [
         {"title": "Introduction", "content": "Intro content"},
-        {"title": "Body", "content": "Main body content"}
+        {"title": "Body", "content": "Main body content"},
     ]
     mock_content.source_path = "test_document.txt"
     mock_content.source_format = "text/plain"
@@ -79,7 +80,7 @@ def make_mock_content() -> MagicMock:
         "source_path": mock_content.source_path,
         "source_format": mock_content.source_format,
         "sections": mock_content.sections,
-        "extraction_time": mock_content.extraction_time
+        "extraction_time": mock_content.extraction_time,
     }
     return mock_content
 
@@ -110,6 +111,7 @@ def temp_dir():
     temp_dir = tempfile.mkdtemp()
     yield temp_dir
     import shutil
+
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
@@ -127,7 +129,7 @@ class TestOutputFormatterInitialization:
         """
         # WHEN
         formatter = OutputFormatter(resources=mock_resources, configs=mock_configs)
-        
+
         # THEN
         assert isinstance(formatter, OutputFormatter)
         assert formatter.configs == mock_configs
@@ -142,7 +144,7 @@ class TestOutputFormatterInitialization:
         """
         # WHEN
         formatter = OutputFormatter(resources=mock_resources, configs=mock_configs)
-        
+
         # THEN
         assert formatter.configs == mock_configs
 
@@ -155,7 +157,7 @@ class TestOutputFormatterInitialization:
         """
         # WHEN
         formatter = OutputFormatter(resources=mock_resources, configs=mock_configs)
-        
+
         # THEN
         assert formatter.resources == mock_resources
 
@@ -168,7 +170,7 @@ class TestOutputFormatterInitialization:
         """
         # WHEN
         formatter = OutputFormatter(resources=mock_resources, configs=mock_configs)
-        
+
         # THEN
         assert formatter._logger == mock_resources["logger"]
 
@@ -181,7 +183,7 @@ class TestOutputFormatterInitialization:
         """
         # WHEN
         formatter = OutputFormatter(resources=mock_resources, configs=mock_configs)
-        
+
         # THEN
         assert formatter._normalized_content == mock_resources["normalized_content"]
 
@@ -194,6 +196,6 @@ class TestOutputFormatterInitialization:
         """
         # WHEN
         formatter = OutputFormatter(resources=mock_resources, configs=mock_configs)
-        
+
         # THEN
         assert formatter._formatted_output == mock_resources["formatted_output"]

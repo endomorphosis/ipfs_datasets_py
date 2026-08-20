@@ -8,14 +8,18 @@ random.seed(_RANDOM_SEED)
 
 try:
     from pydantic import (
-        BaseModel, 
-        ValidationError, 
-        Field, 
-        DirectoryPath, 
-        FilePath, PositiveInt, SecretStr
+        BaseModel,
+        ValidationError,
+        Field,
+        DirectoryPath,
+        FilePath,
+        PositiveInt,
+        SecretStr,
     )
 except ImportError:
-    raise ImportError("pydantic is required for this module. Please install it using 'pip install pydantic'.")
+    raise ImportError(
+        "pydantic is required for this module. Please install it using 'pip install pydantic'."
+    )
 
 
 from .utils.parse_arguments import parse_arguments
@@ -33,11 +37,13 @@ class _MySqlConfig(BaseModel):
         password (SecretStr): The password for database authentication (stored securely).
         database (SecretStr): The name of the database to connect to (stored securely).
     """
+
     host: str
     port: int
     user: SecretStr
     password: SecretStr
     database: SecretStr
+
 
 class _Configs(BaseModel):
     error_db_path: FilePath = Field(default_factory=lambda: Path("bluebook_error_database.db"))
@@ -58,7 +64,7 @@ class _Configs(BaseModel):
             "port": self.mysql_configs_internal.port,
             "user": self.mysql_configs_internal.user.get_secret_value(),
             "password": self.mysql_configs_internal.password.get_secret_value(),
-            "database": self.mysql_configs_internal.database.get_secret_value()
+            "database": self.mysql_configs_internal.database.get_secret_value(),
         }
 
     @mysql_configs.setter
@@ -73,7 +79,7 @@ class _Configs(BaseModel):
     def ROOT_DIR(self) -> Path:
         """Return the root directory of the project."""
         return Path(__file__).parent
-    
+
     def to_dict(self) -> dict:
         """Convert the configuration to a dictionary."""
         return self.model_dump(mode="python", exclude_none=True)
@@ -83,6 +89,7 @@ class _Configs(BaseModel):
             return getattr(self, key)
         except AttributeError:
             raise KeyError(f"Configuration key '{key}' not found.")
+
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -98,5 +105,4 @@ if __name__ == "__main__":
         sample_size=args.sample_size,
     )
 
-    mysql_configs=load_mysql_config(args.mysql_config)
-
+    mysql_configs = load_mysql_config(args.mysql_config)

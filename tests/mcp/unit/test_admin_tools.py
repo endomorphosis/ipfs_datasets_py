@@ -8,6 +8,7 @@ Tests cover:
 - system_health (component health check)
 - system_status (overall status)
 """
+
 import pytest
 from unittest.mock import patch, MagicMock
 

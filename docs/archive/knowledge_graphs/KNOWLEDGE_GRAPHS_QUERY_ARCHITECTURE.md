@@ -294,9 +294,7 @@ Built-in monitoring and debugging:
 ### With Extraction Package
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraph, Entity, Relationship
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph, Entity, Relationship
 from ipfs_datasets_py.knowledge_graphs.query import UnifiedEngine
 
 # Query uses extraction classes
@@ -315,8 +313,7 @@ from ipfs_datasets_py.knowledge_graphs.query import HybridSearch
 
 # Configure with external vector store
 search = HybridSearch(
-    vector_store="faiss",
-    embedding_model="sentence-transformers/all-MiniLM-L6-v2"
+    vector_store="faiss", embedding_model="sentence-transformers/all-MiniLM-L6-v2"
 )
 ```
 
@@ -350,8 +347,8 @@ engine_config = {
     "search_engines": {
         "semantic": semantic_search_config,
         "keyword": keyword_search_config,
-        "hybrid": hybrid_search_config
-    }
+        "hybrid": hybrid_search_config,
+    },
 }
 ```
 
@@ -365,7 +362,7 @@ search_config = {
     "top_k_semantic": 50,
     "top_k_keyword": 50,
     "min_score": 0.5,
-    "enable_query_expansion": True
+    "enable_query_expansion": True,
 }
 ```
 
@@ -378,14 +375,10 @@ budget_config = {
         "api_call": 0.01,
         "embedding_generation": 0.001,
         "vector_search": 0.005,
-        "result_processing": 0.0001
+        "result_processing": 0.0001,
     },
-    "quotas": {
-        "daily": 100.0,
-        "hourly": 10.0,
-        "per_query": 1.0
-    },
-    "alert_thresholds": [0.5, 0.8, 0.95]
+    "quotas": {"daily": 100.0, "hourly": 10.0, "per_query": 1.0},
+    "alert_thresholds": [0.5, 0.8, 0.95],
 }
 ```
 
@@ -422,7 +415,7 @@ from ipfs_datasets_py.knowledge_graphs.query import (
     UnifiedEngine,
     QueryError,
     BudgetExceededError,
-    InvalidQueryError
+    InvalidQueryError,
 )
 
 engine = UnifiedEngine()

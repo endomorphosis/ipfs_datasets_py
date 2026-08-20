@@ -245,9 +245,13 @@ def _render_formula(node: Term, registry: _NameRegistry) -> str:
     if isinstance(node, Or):
         return f"({_render_formula(node.left, registry)} | {_render_formula(node.right, registry)})"
     if isinstance(node, Implies):
-        return f"({_render_formula(node.left, registry)} => {_render_formula(node.right, registry)})"
+        return (
+            f"({_render_formula(node.left, registry)} => {_render_formula(node.right, registry)})"
+        )
     if isinstance(node, Iff):
-        return f"({_render_formula(node.left, registry)} <=> {_render_formula(node.right, registry)})"
+        return (
+            f"({_render_formula(node.left, registry)} <=> {_render_formula(node.right, registry)})"
+        )
     if isinstance(node, Eq):
         return f"({_render_term(node.left, registry)} = {_render_term(node.right, registry)})"
     if isinstance(node, (Forall, Exists)):
@@ -349,7 +353,7 @@ def _split_clauses(text: str) -> List[str]:
             i += 1
             continue
         if text[i : i + 4] != "tff(":
-            raise TPTPParseError(f"expected 'tff(' at position {i}, got {text[i:i+20]!r}")
+            raise TPTPParseError(f"expected 'tff(' at position {i}, got {text[i : i + 20]!r}")
         depth = 0
         j = i + 3
         start_inner = i + 4

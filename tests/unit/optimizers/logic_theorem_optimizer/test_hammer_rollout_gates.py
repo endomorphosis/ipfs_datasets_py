@@ -10,6 +10,12 @@ from pathlib import Path
 
 import pytest
 
+_DATASETS_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(_DATASETS_ROOT))
+for _name in list(sys.modules):
+    if _name == "scripts" or _name.startswith("scripts."):
+        sys.modules.pop(_name, None)
+
 from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import (
     RolloutGateConfig,
     hard_guardrail_metrics_csv,
@@ -129,8 +135,7 @@ def test_rollout_gate_reports_unavailable_backends_without_default_failure() -> 
     assert "all_hammer_backends_unavailable" in default_result.warnings
     assert strict_result.accepted is False
     assert any(
-        failure.startswith("hammer_backend_unavailable_ratio")
-        for failure in strict_result.failures
+        failure.startswith("hammer_backend_unavailable_ratio") for failure in strict_result.failures
     )
 
 
@@ -217,10 +222,7 @@ def test_rollout_scripts_dry_run_include_hammer_leanstral_gates() -> None:
     assert "representation_gate_required=true" in hparam.stdout
     assert "representation_gate_require_successful=true" in hparam.stdout
     assert "representation_gate_require_complete_evidence=true" in hparam.stdout
-    assert (
-        "summary_gate_module=scripts.ops.legal_ir.hammer_leanstral_rollout_gate"
-        in hparam.stdout
-    )
+    assert "summary_gate_module=scripts.ops.legal_ir.hammer_leanstral_rollout_gate" in hparam.stdout
 
     pipeline = HPARAM_PIPELINE.read_text(encoding="utf-8")
     assert 'run_summary_gate "${summary_path}" "hparam_trial"' in pipeline

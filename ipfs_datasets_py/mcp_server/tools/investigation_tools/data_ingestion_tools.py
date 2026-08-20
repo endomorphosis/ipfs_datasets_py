@@ -5,6 +5,7 @@ Data Ingestion MCP Tools (thin wrapper)
 
 Business logic lives in data_ingestion_engine.DataIngestionEngine.
 """
+
 from __future__ import annotations
 
 import json
@@ -22,13 +23,13 @@ _engine = DataIngestionEngine()
 @wrap_function_as_tool(
     name="ingest_news_article",
     description="Ingest a single news article for analysis",
-    category="investigation"
+    category="investigation",
 )
 async def ingest_news_article(
     url: str,
     source_type: str = "news",
     analysis_type: str = "comprehensive",
-    metadata: Optional[str] = None
+    metadata: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Ingest a single news article for analysis."""
     meta = json.loads(metadata) if metadata else {}
@@ -38,13 +39,13 @@ async def ingest_news_article(
 @wrap_function_as_tool(
     name="ingest_news_feed",
     description="Ingest multiple articles from a news feed or RSS",
-    category="investigation"
+    category="investigation",
 )
 async def ingest_news_feed(
     feed_url: str,
     max_articles: int = 50,
     filters: Optional[str] = None,
-    processing_mode: str = "parallel"
+    processing_mode: str = "parallel",
 ) -> Dict[str, Any]:
     """Ingest multiple articles from a news feed."""
     filter_criteria = json.loads(filters) if filters else {}
@@ -54,14 +55,14 @@ async def ingest_news_feed(
 @wrap_function_as_tool(
     name="ingest_website",
     description="Crawl and ingest content from an entire website",
-    category="investigation"
+    category="investigation",
 )
 async def ingest_website(
     base_url: str,
     max_pages: int = 100,
     max_depth: int = 3,
     url_patterns: Optional[str] = None,
-    content_types: Optional[str] = None
+    content_types: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Crawl and ingest content from a website."""
     patterns = json.loads(url_patterns) if url_patterns else {}
@@ -72,13 +73,13 @@ async def ingest_website(
 @wrap_function_as_tool(
     name="ingest_document_collection",
     description="Ingest a collection of documents (PDFs, text files, etc.)",
-    category="investigation"
+    category="investigation",
 )
 async def ingest_document_collection(
     document_paths: str,
     collection_name: str = "document_collection",
     processing_options: Optional[str] = None,
-    metadata_extraction: bool = True
+    metadata_extraction: bool = True,
 ) -> Dict[str, Any]:
     """Ingest a collection of documents for investigation."""
     paths = json.loads(document_paths) if isinstance(document_paths, str) else document_paths

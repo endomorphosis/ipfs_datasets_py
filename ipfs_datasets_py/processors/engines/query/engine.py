@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 from ipfs_datasets_py.processors.query_engine import QueryEngine
 
 __all__ = [
-    'QueryEngine',
+    "QueryEngine",
 ]
 
 # Type annotations for static analysis

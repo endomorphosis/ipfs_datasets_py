@@ -31,9 +31,7 @@ from .contracts import ComponentStatus, ContractError
 from .matrix import MatrixCoordinateRecord
 
 
-ROUND_TRIP_PAIRED_STATISTICS_INTERFACE: Final = (
-    "RoundTripPairedStatistics@1"
-)
+ROUND_TRIP_PAIRED_STATISTICS_INTERFACE: Final = "RoundTripPairedStatistics@1"
 MIN_UNCACHED_MODEL_REPEATS: Final = 5
 DEFAULT_BOOTSTRAP_SAMPLES: Final = 10_000
 DEFAULT_CONFIDENCE_LEVEL: Final = 0.95
@@ -88,9 +86,7 @@ def _nonnegative_integer(value: object, field_name: str) -> int:
     return value
 
 
-def _optional_nonnegative_number(
-    value: object, field_name: str
-) -> float | None:
+def _optional_nonnegative_number(value: object, field_name: str) -> float | None:
     if value is None:
         return None
     if (
@@ -99,9 +95,7 @@ def _optional_nonnegative_number(
         or not math.isfinite(float(value))
         or float(value) < 0.0
     ):
-        raise ContractError(
-            f"{field_name} must be a finite nonnegative number or None"
-        )
+        raise ContractError(f"{field_name} must be a finite nonnegative number or None")
     return float(value)
 
 
@@ -117,9 +111,7 @@ def _rounded(value: float | None) -> float | None:
 
 def _freeze(value: object) -> object:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _freeze(item) for key, item in value.items()}
-        )
+        return MappingProxyType({str(key): _freeze(item) for key, item in value.items()})
     if isinstance(value, (tuple, list)):
         return tuple(_freeze(item) for item in value)
     return value
@@ -147,10 +139,7 @@ def _quantile(values: Sequence[float], probability: float) -> float:
     if lower == upper:
         return ordered[lower]
     fraction = position - lower
-    return (
-        ordered[lower]
-        + (ordered[upper] - ordered[lower]) * fraction
-    )
+    return ordered[lower] + (ordered[upper] - ordered[lower]) * fraction
 
 
 def _derived_seed(seed: int, *parts: str) -> int:
@@ -190,10 +179,7 @@ class CostMetrics:
             )
 
     def to_dict(self) -> dict[str, int | float | None]:
-        return {
-            name: getattr(self, name)
-            for name in _COST_METRICS
-        }
+        return {name: getattr(self, name) for name in _COST_METRICS}
 
 
 @dataclass(frozen=True, slots=True)
@@ -208,16 +194,12 @@ class ScheduledBlock:
     def __post_init__(self) -> None:
         _identifier(self.case_id, "case_id")
         _nonnegative_integer(self.repeat_index, "repeat_index")
-        if not self.arm_order or len(set(self.arm_order)) != len(
-            self.arm_order
-        ):
+        if not self.arm_order or len(set(self.arm_order)) != len(self.arm_order):
             raise ContractError("arm_order must contain unique arm ids")
         for arm_id in self.arm_order:
             _identifier(arm_id, "arm_order[]")
         if len(self.cache_namespaces) != len(self.arm_order):
-            raise ContractError(
-                "cache_namespaces must align one-to-one with arm_order"
-            )
+            raise ContractError("cache_namespaces must align one-to-one with arm_order")
         if len(set(self.cache_namespaces)) != len(self.cache_namespaces):
             raise ContractError("cache namespaces must be unique within a block")
         for namespace in self.cache_namespaces:
@@ -279,19 +261,11 @@ class RepeatSchedule:
         _nonnegative_integer(self.repeat_count, "repeat_count")
         if self.repeat_count < 1:
             raise ContractError("repeat_count must be positive")
-        if (
-            self.model_arm_ids
-            and self.repeat_count < MIN_UNCACHED_MODEL_REPEATS
-        ):
+        if self.model_arm_ids and self.repeat_count < MIN_UNCACHED_MODEL_REPEATS:
             raise ContractError(
-                "model-backed arms require at least "
-                f"{MIN_UNCACHED_MODEL_REPEATS} uncached repeats"
+                f"model-backed arms require at least {MIN_UNCACHED_MODEL_REPEATS} uncached repeats"
             )
-        if (
-            isinstance(self.seed, bool)
-            or not isinstance(self.seed, int)
-            or self.seed < 0
-        ):
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int) or self.seed < 0:
             raise ContractError("seed must be a nonnegative integer")
         expected = len(self.case_ids) * self.repeat_count
         if len(self.blocks) != expected:
@@ -301,13 +275,9 @@ class RepeatSchedule:
             for case_id in self.case_ids
             for repeat_index in range(self.repeat_count)
         }
-        actual_keys = {
-            (block.case_id, block.repeat_index) for block in self.blocks
-        }
+        actual_keys = {(block.case_id, block.repeat_index) for block in self.blocks}
         if actual_keys != expected_keys or len(actual_keys) != len(self.blocks):
-            raise ContractError(
-                "schedule blocks must cover each case/repeat exactly once"
-            )
+            raise ContractError("schedule blocks must cover each case/repeat exactly once")
         expected_arms = set(self.arm_ids)
         namespaces: list[str] = []
         for block in self.blocks:
@@ -315,41 +285,26 @@ class RepeatSchedule:
                 raise ContractError("every block must schedule every arm")
             namespaces.extend(block.cache_namespaces)
         if len(namespaces) != len(set(namespaces)):
-            raise ContractError(
-                "every scheduled coordinate needs a unique cache namespace"
-            )
+            raise ContractError("every scheduled coordinate needs a unique cache namespace")
         counts = self.position_counts
         for position in range(len(self.arm_ids)):
-            position_values = [
-                counts[arm_id][position] for arm_id in self.arm_ids
-            ]
+            position_values = [counts[arm_id][position] for arm_id in self.arm_ids]
             if max(position_values) - min(position_values) > 1:
-                raise ContractError(
-                    "arm order is not counterbalanced by ordinal position"
-                )
+                raise ContractError("arm order is not counterbalanced by ordinal position")
 
     @property
     def position_counts(self) -> Mapping[str, tuple[int, ...]]:
-        counts = {
-            arm_id: [0] * len(self.arm_ids) for arm_id in self.arm_ids
-        }
+        counts = {arm_id: [0] * len(self.arm_ids) for arm_id in self.arm_ids}
         for block in self.blocks:
             for position, arm_id in enumerate(block.arm_order):
                 counts[arm_id][position] += 1
-        return MappingProxyType(
-            {arm_id: tuple(values) for arm_id, values in counts.items()}
-        )
+        return MappingProxyType({arm_id: tuple(values) for arm_id, values in counts.items()})
 
     def block(self, case_id: str, repeat_index: int) -> ScheduledBlock:
         for item in self.blocks:
-            if (
-                item.case_id == case_id
-                and item.repeat_index == repeat_index
-            ):
+            if item.case_id == case_id and item.repeat_index == repeat_index:
                 return item
-        raise ContractError(
-            f"no scheduled block for {(case_id, repeat_index)!r}"
-        )
+        raise ContractError(f"no scheduled block for {(case_id, repeat_index)!r}")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -360,16 +315,11 @@ class RepeatSchedule:
             "case_ids": list(self.case_ids),
             "arm_ids": list(self.arm_ids),
             "model_arm_ids": list(self.model_arm_ids),
-            "cache_policy": (
-                "unique_uncached_namespace_per_scheduled_coordinate"
-            ),
-            "ordering_policy": (
-                "seeded_outcome_independent_counterbalanced_blocks"
-            ),
+            "cache_policy": ("unique_uncached_namespace_per_scheduled_coordinate"),
+            "ordering_policy": ("seeded_outcome_independent_counterbalanced_blocks"),
             "maximum_ordinal_position_count_imbalance": 1,
             "position_counts": {
-                arm_id: list(values)
-                for arm_id, values in self.position_counts.items()
+                arm_id: list(values) for arm_id, values in self.position_counts.items()
             },
             "blocks": [block.to_dict() for block in self.blocks],
         }
@@ -396,19 +346,13 @@ def make_repeat_schedule(
     if isinstance(arm_ids, (str, bytes, bytearray)):
         raise ContractError("arm_ids must be a sequence of identifiers")
     if isinstance(model_arm_ids, (str, bytes, bytearray)):
-        raise ContractError(
-            "model_arm_ids must be an iterable of identifiers"
-        )
+        raise ContractError("model_arm_ids must be an iterable of identifiers")
     try:
         cases = tuple(case_ids)
         arms = tuple(arm_ids)
-        model_arms = tuple(
-            arms if model_arm_ids is None else model_arm_ids
-        )
+        model_arms = tuple(arms if model_arm_ids is None else model_arm_ids)
     except TypeError as exc:
-        raise ContractError(
-            "case_ids, arm_ids, and model_arm_ids must be iterable"
-        ) from exc
+        raise ContractError("case_ids, arm_ids, and model_arm_ids must be iterable") from exc
     if not cases or not arms:
         # Let RepeatSchedule provide the stable public error messages.
         return RepeatSchedule(
@@ -419,19 +363,11 @@ def make_repeat_schedule(
             seed,
             (),
         )
-    if (
-        isinstance(repeat_count, bool)
-        or not isinstance(repeat_count, int)
-        or repeat_count < 1
-    ):
+    if isinstance(repeat_count, bool) or not isinstance(repeat_count, int) or repeat_count < 1:
         raise ContractError("repeat_count must be positive")
-    if (
-        model_arms
-        and repeat_count < MIN_UNCACHED_MODEL_REPEATS
-    ):
+    if model_arms and repeat_count < MIN_UNCACHED_MODEL_REPEATS:
         raise ContractError(
-            "model-backed arms require at least "
-            f"{MIN_UNCACHED_MODEL_REPEATS} uncached repeats"
+            f"model-backed arms require at least {MIN_UNCACHED_MODEL_REPEATS} uncached repeats"
         )
     if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
         raise ContractError("seed must be a nonnegative integer")
@@ -505,14 +441,10 @@ class RoundTripObservation:
 
     def __post_init__(self) -> None:
         if not isinstance(self.coordinate, MatrixCoordinateRecord):
-            raise ContractError(
-                "coordinate must be an immutable MatrixCoordinateRecord"
-            )
+            raise ContractError("coordinate must be an immutable MatrixCoordinateRecord")
         _nonnegative_integer(self.repeat_index, "repeat_index")
         if self.cache_mode not in {"uncached", "not_applicable"}:
-            raise ContractError(
-                "cache_mode must be 'uncached' or 'not_applicable'"
-            )
+            raise ContractError("cache_mode must be 'uncached' or 'not_applicable'")
         _identifier(self.cache_namespace, "cache_namespace")
         if not isinstance(self.cost, CostMetrics):
             raise ContractError("cost must be CostMetrics")
@@ -539,9 +471,7 @@ class RoundTripObservation:
             coordinate=coordinate,
             repeat_index=repeat_index,
             cache_mode=(
-                "uncached"
-                if coordinate.cell_id in schedule.model_arm_ids
-                else "not_applicable"
+                "uncached" if coordinate.cell_id in schedule.model_arm_ids else "not_applicable"
             ),
             cache_namespace=block.cache_namespace_for(coordinate.cell_id),
             cost=cost or CostMetrics(),
@@ -565,9 +495,7 @@ class PairedStatisticsReport:
         if self.interface != ROUND_TRIP_PAIRED_STATISTICS_INTERFACE:
             raise ContractError("unsupported paired-statistics interface")
         object.__setattr__(self, "arm_summaries", _freeze(self.arm_summaries))
-        object.__setattr__(
-            self, "paired_comparisons", _freeze(self.paired_comparisons)
-        )
+        object.__setattr__(self, "paired_comparisons", _freeze(self.paired_comparisons))
         object.__setattr__(
             self,
             "model_repeat_validation",
@@ -593,9 +521,7 @@ class PairedStatisticsReport:
             "confidence_level": self.confidence_level,
             "input_coordinate_count": len(self.observation_manifest),
             "observation_manifest": _thaw(self.observation_manifest),
-            "model_repeat_validation": _thaw(
-                self.model_repeat_validation
-            ),
+            "model_repeat_validation": _thaw(self.model_repeat_validation),
             "arm_summaries": _thaw(self.arm_summaries),
             "paired_comparisons": _thaw(self.paired_comparisons),
         }
@@ -618,13 +544,9 @@ def _record_metrics(
     record = observation.coordinate
     failed = record.status is ComponentStatus.FAILED
     losses = {
-        "forward": (
-            1.0 if failed else float(record.result.forward_loss)
-        ),
+        "forward": (1.0 if failed else float(record.result.forward_loss)),
         "cycle": 1.0 if failed else float(record.result.cycle_loss),
-        "end_to_end": (
-            1.0 if failed else float(record.result.end_to_end_loss)
-        ),
+        "end_to_end": (1.0 if failed else float(record.result.end_to_end_loss)),
     }
     # A failed coordinate is scored fail-closed even if a malformed external
     # record attempted to retain an optimistic numeric loss.
@@ -635,46 +557,28 @@ def _record_metrics(
     gates_value = diagnostics.get("gates")
     gates = gates_value if isinstance(gates_value, Mapping) else {}
     comparisons_value = diagnostics.get("semantic_comparisons")
-    comparisons = (
-        comparisons_value
-        if isinstance(comparisons_value, Mapping)
-        else {}
-    )
+    comparisons = comparisons_value if isinstance(comparisons_value, Mapping) else {}
     end_value = comparisons.get("end_to_end_gold_to_l2")
     end_comparison = end_value if isinstance(end_value, Mapping) else {}
     facets_value = end_comparison.get("facet_survival")
     facets = facets_value if isinstance(facets_value, Mapping) else {}
 
     exact_rule = {
-        "exact_rule_f1": (
-            0.0
-            if failed
-            else float(end_comparison.get("exact_rule_f1", 0.0))
-        ),
-        "exact_ir_rate": (
-            0.0 if failed else float(bool(end_comparison.get("exact_ir")))
-        ),
+        "exact_rule_f1": (0.0 if failed else float(end_comparison.get("exact_rule_f1", 0.0))),
+        "exact_ir_rate": (0.0 if failed else float(bool(end_comparison.get("exact_ir")))),
         "exact_ir_nonvacuous_rate": (
-            0.0
-            if failed
-            else float(bool(end_comparison.get("exact_ir_nonvacuous")))
+            0.0 if failed else float(bool(end_comparison.get("exact_ir_nonvacuous")))
         ),
     }
     facet_metrics = {
-        f"{name}_survival": (
-            0.0 if failed else float(facets.get(name, 0.0))
-        )
+        f"{name}_survival": (0.0 if failed else float(facets.get(name, 0.0)))
         for name in ("modality", "conditions", "exceptions", "temporal")
     }
     coverage = {
         "success_rate": float(not failed),
         "failure_rate": float(failed),
-        "full_coverage_rate": float(
-            bool(gates.get("full_coverage", False))
-        ),
-        "selection_eligible_rate": float(
-            bool(gates.get("selection_eligible", False))
-        ),
+        "full_coverage_rate": float(bool(gates.get("full_coverage", False))),
+        "selection_eligible_rate": float(bool(gates.get("selection_eligible", False))),
     }
     return {
         "losses": losses,
@@ -701,40 +605,28 @@ def _case_means(
 
     result: dict[str, dict[str, dict[str, float | None]]] = {}
     for case_id in sorted(by_case):
-        repeats = sorted(
-            by_case[case_id], key=lambda item: item.repeat_index
-        )
+        repeats = sorted(by_case[case_id], key=lambda item: item.repeat_index)
         extracted = [_record_metrics(item) for item in repeats]
         groups: dict[str, dict[str, float | None]] = {}
         for group, metric_names in _METRIC_GROUPS.items():
             groups[group] = {}
             for metric_name in metric_names:
-                values = [
-                    item[group][metric_name] for item in extracted
-                ]
+                values = [item[group][metric_name] for item in extracted]
                 # Cost evidence must cover every scheduled repeat.  Semantic,
                 # exact-rule, facet, and coverage values are always fail-closed
                 # numeric measurements.
                 groups[group][metric_name] = (
                     None
                     if any(value is None for value in values)
-                    else _mean(
-                        [float(value) for value in values if value is not None]
-                    )
+                    else _mean([float(value) for value in values if value is not None])
                 )
         groups["counts"] = {
             "scheduled_repeats": float(len(repeats)),
             "successful_repeats": float(
-                sum(
-                    item.coordinate.status is ComponentStatus.SUCCESS
-                    for item in repeats
-                )
+                sum(item.coordinate.status is ComponentStatus.SUCCESS for item in repeats)
             ),
             "failed_repeats": float(
-                sum(
-                    item.coordinate.status is ComponentStatus.FAILED
-                    for item in repeats
-                )
+                sum(item.coordinate.status is ComponentStatus.FAILED for item in repeats)
             ),
         }
         result[case_id] = groups
@@ -746,21 +638,13 @@ def _metric_summary(
     group: str,
     metric_name: str,
 ) -> dict[str, object]:
-    values = [
-        groups[group][metric_name] for groups in case_metrics.values()
-    ]
+    values = [groups[group][metric_name] for groups in case_metrics.values()]
     measured = [float(value) for value in values if value is not None]
     missing_case_ids = [
-        case_id
-        for case_id, groups in case_metrics.items()
-        if groups[group][metric_name] is None
+        case_id for case_id, groups in case_metrics.items() if groups[group][metric_name] is None
     ]
     return {
-        "mean": (
-            _rounded(_mean(measured))
-            if len(measured) == len(values) and measured
-            else None
-        ),
+        "mean": (_rounded(_mean(measured)) if len(measured) == len(values) and measured else None),
         "scheduled_case_count": len(values),
         "measured_case_count": len(measured),
         "missing_case_count": len(missing_case_ids),
@@ -775,26 +659,16 @@ def _arm_summary(
     cases = _case_means(observations)
     metrics = {
         group: {
-            metric_name: _metric_summary(
-                cases, group, metric_name
-            )
-            for metric_name in metric_names
+            metric_name: _metric_summary(cases, group, metric_name) for metric_name in metric_names
         }
         for group, metric_names in _METRIC_GROUPS.items()
     }
     cost_totals: dict[str, object] = {}
     for metric_name in _COST_METRICS:
-        values = [
-            getattr(observation.cost, metric_name)
-            for observation in observations
-        ]
+        values = [getattr(observation.cost, metric_name) for observation in observations]
         measured = [float(value) for value in values if value is not None]
         cost_totals[metric_name] = {
-            "total": (
-                _rounded(math.fsum(measured))
-                if len(measured) == len(values)
-                else None
-            ),
+            "total": (_rounded(math.fsum(measured)) if len(measured) == len(values) else None),
             "measured_coordinate_count": len(measured),
             "missing_coordinate_count": len(values) - len(measured),
         }
@@ -803,23 +677,16 @@ def _arm_summary(
         "scheduled_case_count": len(cases),
         "scheduled_coordinate_count": len(observations),
         "success_count": sum(
-            item.coordinate.status is ComponentStatus.SUCCESS
-            for item in observations
+            item.coordinate.status is ComponentStatus.SUCCESS for item in observations
         ),
         "failure_count": sum(
-            item.coordinate.status is ComponentStatus.FAILED
-            for item in observations
+            item.coordinate.status is ComponentStatus.FAILED for item in observations
         ),
-        "denominator_policy": (
-            "all_scheduled_repeats_including_failures"
-        ),
+        "denominator_policy": ("all_scheduled_repeats_including_failures"),
         "aggregation_order": "repeats_within_case_then_macro_cases",
         "per_case": {
             case_id: {
-                group: {
-                    name: _rounded(value)
-                    for name, value in values.items()
-                }
+                group: {name: _rounded(value) for name, value in values.items()}
                 for group, values in groups.items()
             }
             for case_id, groups in cases.items()
@@ -849,12 +716,8 @@ def _bootstrap_delta(
 
 
 def _paired_metric(
-    baseline_cases: Mapping[
-        str, Mapping[str, Mapping[str, float | None]]
-    ],
-    candidate_cases: Mapping[
-        str, Mapping[str, Mapping[str, float | None]]
-    ],
+    baseline_cases: Mapping[str, Mapping[str, Mapping[str, float | None]]],
+    candidate_cases: Mapping[str, Mapping[str, Mapping[str, float | None]]],
     *,
     baseline_arm_id: str,
     candidate_arm_id: str,
@@ -910,8 +773,7 @@ def _paired_metric(
             "resampling_unit": "case_after_within_case_repeat_aggregation",
         },
         "case_deltas": {
-            case_id: _rounded(candidate - baseline)
-            for case_id, baseline, candidate in measured
+            case_id: _rounded(candidate - baseline) for case_id, baseline, candidate in measured
         },
     }
 
@@ -936,8 +798,7 @@ class RoundTripPairedStatistics:
             or not 1 <= bootstrap_samples <= MAX_BOOTSTRAP_SAMPLES
         ):
             raise ContractError(
-                "bootstrap_samples must be an integer from 1 to "
-                f"{MAX_BOOTSTRAP_SAMPLES}"
+                f"bootstrap_samples must be an integer from 1 to {MAX_BOOTSTRAP_SAMPLES}"
             )
         if (
             isinstance(confidence_level, bool)
@@ -945,9 +806,7 @@ class RoundTripPairedStatistics:
             or not math.isfinite(float(confidence_level))
             or not 0.0 < float(confidence_level) < 1.0
         ):
-            raise ContractError(
-                "confidence_level must be a finite number between zero and one"
-            )
+            raise ContractError("confidence_level must be a finite number between zero and one")
         self.seed = seed
         self.bootstrap_samples = bootstrap_samples
         self.confidence_level = float(confidence_level)
@@ -967,36 +826,22 @@ class RoundTripPairedStatistics:
         """Return per-case-first summaries and paired case-bootstrap deltas."""
 
         if isinstance(observations, (str, bytes, bytearray)):
-            raise ContractError(
-                "observations must contain RoundTripObservation values"
-            )
+            raise ContractError("observations must contain RoundTripObservation values")
         if isinstance(candidate_arm_ids, (str, bytes, bytearray)):
-            raise ContractError(
-                "candidate_arm_ids must be an iterable of arm ids"
-            )
+            raise ContractError("candidate_arm_ids must be an iterable of arm ids")
         if isinstance(model_arm_ids, (str, bytes, bytearray)):
-            raise ContractError(
-                "model_arm_ids must be an iterable of arm ids"
-            )
+            raise ContractError("model_arm_ids must be an iterable of arm ids")
         rows = tuple(observations)
         if not rows:
             raise ContractError("observations must be nonempty")
         if any(not isinstance(row, RoundTripObservation) for row in rows):
-            raise ContractError(
-                "observations must contain RoundTripObservation values"
-            )
-        keys = [
-            (row.case_id, row.repeat_index, row.arm_id) for row in rows
-        ]
+            raise ContractError("observations must contain RoundTripObservation values")
+        keys = [(row.case_id, row.repeat_index, row.arm_id) for row in rows]
         if len(keys) != len(set(keys)):
-            raise ContractError(
-                "case/repeat/arm observations must be unique"
-            )
+            raise ContractError("case/repeat/arm observations must be unique")
         cache_namespaces = [row.cache_namespace for row in rows]
         if len(cache_namespaces) != len(set(cache_namespaces)):
-            raise ContractError(
-                "cache namespaces must be unique across scheduled coordinates"
-            )
+            raise ContractError("cache namespaces must be unique across scheduled coordinates")
 
         by_arm: dict[str, list[RoundTripObservation]] = {}
         for row in rows:
@@ -1013,34 +858,26 @@ class RoundTripPairedStatistics:
             raise ContractError("candidate_arm_ids must be unique")
         for arm_id in selected_candidates:
             if arm_id == baseline_arm_id or arm_id not in by_arm:
-                raise ContractError(
-                    f"candidate arm {arm_id!r} is unavailable or is baseline"
-                )
+                raise ContractError(f"candidate arm {arm_id!r} is unavailable or is baseline")
 
         baseline_cases = {row.case_id for row in by_arm[baseline_arm_id]}
         for arm_id in selected_candidates:
             candidate_cases = {row.case_id for row in by_arm[arm_id]}
             if candidate_cases != baseline_cases:
-                raise ContractError(
-                    "paired arms must contain exactly the same case ids"
-                )
+                raise ContractError("paired arms must contain exactly the same case ids")
 
         model_arms = tuple(model_arm_ids)
         if len(set(model_arms)) != len(model_arms):
             raise ContractError("model_arm_ids must be unique")
         unknown_model_arms = set(model_arms) - set(by_arm)
         if unknown_model_arms:
-            raise ContractError(
-                f"model arms have no observations: {sorted(unknown_model_arms)!r}"
-            )
+            raise ContractError(f"model arms have no observations: {sorted(unknown_model_arms)!r}")
         repeat_details: dict[str, object] = {}
         for arm_id in model_arms:
             arm_rows = by_arm[arm_id]
             per_case: dict[str, int] = {}
             for case_id in sorted({row.case_id for row in arm_rows}):
-                case_rows = [
-                    row for row in arm_rows if row.case_id == case_id
-                ]
+                case_rows = [row for row in arm_rows if row.case_id == case_id]
                 count = len(case_rows)
                 if count < MIN_UNCACHED_MODEL_REPEATS:
                     raise ContractError(
@@ -1048,9 +885,7 @@ class RoundTripPairedStatistics:
                         f"least {MIN_UNCACHED_MODEL_REPEATS} repeats"
                     )
                 if any(row.cache_mode != "uncached" for row in case_rows):
-                    raise ContractError(
-                        "every model-backed repeat must be marked uncached"
-                    )
+                    raise ContractError("every model-backed repeat must be marked uncached")
                 per_case[case_id] = count
             repeat_details[arm_id] = {
                 "minimum_required": MIN_UNCACHED_MODEL_REPEATS,
@@ -1058,14 +893,8 @@ class RoundTripPairedStatistics:
                 "repeat_count_by_case": per_case,
             }
 
-        case_means_by_arm = {
-            arm_id: _case_means(arm_rows)
-            for arm_id, arm_rows in by_arm.items()
-        }
-        summaries = {
-            arm_id: _arm_summary(arm_id, by_arm[arm_id])
-            for arm_id in sorted(by_arm)
-        }
+        case_means_by_arm = {arm_id: _case_means(arm_rows) for arm_id, arm_rows in by_arm.items()}
+        summaries = {arm_id: _arm_summary(arm_id, by_arm[arm_id]) for arm_id in sorted(by_arm)}
         comparisons: dict[str, object] = {}
         for candidate_arm_id in selected_candidates:
             comparison_id = f"{candidate_arm_id}__vs__{baseline_arm_id}"
@@ -1100,9 +929,7 @@ class RoundTripPairedStatistics:
             arm_summaries=summaries,
             paired_comparisons=comparisons,
             model_repeat_validation={
-                "minimum_uncached_model_repeats": (
-                    MIN_UNCACHED_MODEL_REPEATS
-                ),
+                "minimum_uncached_model_repeats": (MIN_UNCACHED_MODEL_REPEATS),
                 "validated_model_arm_ids": list(model_arms),
                 "arms": repeat_details,
             },

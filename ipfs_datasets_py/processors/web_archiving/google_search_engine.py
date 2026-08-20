@@ -9,6 +9,7 @@ Reusable by:
     - CLI commands
     - Direct Python imports
 """
+
 import logging
 import os
 from datetime import datetime
@@ -157,7 +158,9 @@ async def search_google_images(
     search_engine_id: Optional[str] = None,
     num: int = 10,
     start: int = 1,
-    img_size: Optional[Literal["huge", "icon", "large", "medium", "small", "xlarge", "xxlarge"]] = None,
+    img_size: Optional[
+        Literal["huge", "icon", "large", "medium", "small", "xlarge", "xxlarge"]
+    ] = None,
     img_type: Optional[Literal["clipart", "face", "lineart", "stock", "photo", "animated"]] = None,
     img_color_type: Optional[Literal["color", "gray", "mono", "trans"]] = None,
     img_dominant_color: Optional[str] = None,

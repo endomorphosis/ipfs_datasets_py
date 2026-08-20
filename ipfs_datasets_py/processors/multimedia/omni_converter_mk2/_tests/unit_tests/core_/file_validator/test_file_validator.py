@@ -13,6 +13,7 @@ from core.file_validator._file_validator import FileValidator
 from core.file_validator._validation_result import ValidationResult
 from file_format_detector._file_format_detector import FileFormatDetector
 
+
 # Make factory functions for mocks
 def make_mock_validation_result() -> Mock:
     """Create a mock ValidationResult instance."""
@@ -26,22 +27,22 @@ def make_mock_validation_result() -> Mock:
     mock_result.add_context = Mock()
     return mock_result
 
+
 def make_mock_configs() -> Mock:
     """Create a mock Configs instance with security settings."""
     mock_configs = Mock(spec=Configs)
     mock_configs.security = Mock(
-        return_value={
-            "max_file_size_mb": 100,
-            "allowed_formats": ['pdf', 'txt', 'docx']
-        }
+        return_value={"max_file_size_mb": 100, "allowed_formats": ["pdf", "txt", "docx"]}
     )
     return mock_configs
+
 
 def make_mock_file_exists() -> Mock:
     """Create a mock file_exists function."""
     mock_file_exists = Mock()
     mock_file_exists.return_value = True  # Assume file exists for tests
     return mock_file_exists
+
 
 def make_mock_get_file_info() -> Mock:
     """Create a mock get_file_info function."""
@@ -50,8 +51,8 @@ def make_mock_get_file_info() -> Mock:
         "size": 1024,  # 1KB file
         "is_readable": True,
         "last_modified": datetime.now(),
-        "extension": 'txt',
-        "mime_type": 'text/plain'
+        "extension": "txt",
+        "mime_type": "text/plain",
     }
     return mock_get_file_info
 
@@ -67,13 +68,11 @@ def make_mock_resources() -> dict:
     """Create a dictionary of mock resources for FileValidator."""
     return {
         "file_format_detector": Mock(spec=FileFormatDetector),
-        "logger":  Mock(spec=logging.Logger),
+        "logger": Mock(spec=logging.Logger),
         "validation_result": make_mock_validation_result(),
         "file_exists": make_mock_file_exists(),
-        "get_file_info": make_mock_get_file_info()
+        "get_file_info": make_mock_get_file_info(),
     }
-
-
 
 
 class TestFileValidatorInitialization(unittest.TestCase):
@@ -251,7 +250,6 @@ class TestFileValidatorInitialization(unittest.TestCase):
         with self.assertRaises(AttributeError):
             _ = FileValidator(resources=self.valid_resources, configs=configs)
 
-
     def test_init_with_empty_resources_dict(self):
         """
         GIVEN empty resources dict {}
@@ -261,7 +259,7 @@ class TestFileValidatorInitialization(unittest.TestCase):
         """
         # GIVEN
         empty_resources = {}
-        
+
         # WHEN/THEN
         with self.assertRaises(KeyError):
             _ = FileValidator(resources=empty_resources, configs=self.mock_configs)
@@ -279,7 +277,7 @@ class TestFileValidatorInitialization(unittest.TestCase):
 
         # When
         del configs_missing_attributes.validation.max_file_size_mb  # Remove required attribute
-        
+
         # THEN
         with self.assertRaises(AttributeError):
             _ = FileValidator(resources=self.valid_resources, configs=configs_missing_attributes)
@@ -292,7 +290,7 @@ class TestGetValidationErrors(unittest.TestCase):
         """Set up test fixtures."""
         self.temp_dir = tempfile.TemporaryDirectory()
         self.temp_path = Path(self.temp_dir.name)
-        
+
         # Create test files
         self.valid_file = self.temp_path / "valid_file.txt"
         self.valid_file.write_text("This is a valid test file.")
@@ -300,24 +298,26 @@ class TestGetValidationErrors(unittest.TestCase):
         self.large_file.write_text("A" * 1024 * 1024)  # 1MB file
         self.empty_file = self.temp_path / "empty_file.txt"
         self.empty_file.touch()
-        
+
         # Mock dependencies
         self.mock_configs = make_mock_configs()
         self.mock_file_format_detector = Mock(spec=FileFormatDetector)
         self.mock_logger = Mock(spec=logging.Logger)
-        
+
         # Mock ValidationResult
         self.mock_validation_result_instance = make_mock_validation_result()
-        self.mock_validation_result_class = Mock(spec=ValidationResult, return_value=self.mock_validation_result_instance)
-        
+        self.mock_validation_result_class = Mock(
+            spec=ValidationResult, return_value=self.mock_validation_result_instance
+        )
+
         self.mock_resources = {
             "file_format_detector": self.mock_file_format_detector,
             "logger": self.mock_logger,
             "validation_result": self.mock_validation_result_class,
             "file_exists": Mock(return_value=True),
-            "get_file_info": Mock(return_value=Mock(size=1024, is_readable=True))
+            "get_file_info": Mock(return_value=Mock(size=1024, is_readable=True)),
         }
-        
+
         self.validator = FileValidator(resources=self.mock_resources, configs=self.mock_configs)
 
     def tearDown(self):
@@ -336,17 +336,17 @@ class TestGetValidationErrors(unittest.TestCase):
         # GIVEN
         self.mock_resources["get_file_info"].return_value = Mock(
             size=1024,  # Small file within limits
-            is_readable=True
+            is_readable=True,
         )
-        self.mock_file_format_detector.get_format_category.return_value = 'document'
-        
+        self.mock_file_format_detector.get_format_category.return_value = "document"
+
         # Set up the validation result to indicate success
         self.mock_validation_result_instance.is_valid = True
         self.mock_validation_result_instance.errors = []
-        
+
         # WHEN
-        errors = self.validator.get_validation_errors(str(self.valid_file), 'txt')
-        
+        errors = self.validator.get_validation_errors(str(self.valid_file), "txt")
+
         # THEN
         self.assertEqual(errors, [])
 
@@ -362,13 +362,15 @@ class TestGetValidationErrors(unittest.TestCase):
         # GIVEN
         nonexistent_file = self.temp_path / "does_not_exist.txt"
         self.mock_resources["file_exists"].return_value = False
-        
+
         # Set up validation result to have an error
-        self.mock_validation_result_instance.errors = ["File does not exist: " + str(nonexistent_file)]
-        
+        self.mock_validation_result_instance.errors = [
+            "File does not exist: " + str(nonexistent_file)
+        ]
+
         # WHEN
-        errors = self.validator.get_validation_errors(str(nonexistent_file), 'txt')
-        
+        errors = self.validator.get_validation_errors(str(nonexistent_file), "txt")
+
         # THEN
         self.assertGreater(len(errors), 0)
         self.assertTrue(any("does not exist" in error.lower() for error in errors))
@@ -383,21 +385,23 @@ class TestGetValidationErrors(unittest.TestCase):
             - Returns list containing file size error
         """
         # GIVEN
-        
+
         self.mock_resources["get_file_info"].return_value = Mock(
             size=1024 * 1024,  # 1MB file, exceeds 0.5MB limit
-            is_readable=True
+            is_readable=True,
         )
-        
+
         # Set up validation result to have size error
         self.mock_validation_result_instance.errors = ["File size exceeds maximum allowed"]
-        
+
         # WHEN
-        errors = self.validator.get_validation_errors(str(self.large_file), 'txt')
-        
+        errors = self.validator.get_validation_errors(str(self.large_file), "txt")
+
         # THEN
         self.assertGreater(len(errors), 0)
-        self.assertTrue(any("size" in error.lower() or "exceeds" in error.lower() for error in errors))
+        self.assertTrue(
+            any("size" in error.lower() or "exceeds" in error.lower() for error in errors)
+        )
 
     def test_get_errors_unsupported_format_returns_error_list(self):
         """
@@ -410,18 +414,17 @@ class TestGetValidationErrors(unittest.TestCase):
         """
         # GIVEN
         ZERO = 0
-        self.mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True
-        )
+        self.mock_resources["get_file_info"].return_value = Mock(size=1024, is_readable=True)
         self.mock_file_format_detector.get_format_category.return_value = None  # Unsupported format
-        
+
         # Set up validation result to have format error
         self.mock_validation_result_instance.errors = ["Format 'xyz' is not supported"]
-        
+
         # WHEN
-        errors = self.validator.get_validation_errors(str(self.valid_file), 'xyz')  # Unsupported format
-        
+        errors = self.validator.get_validation_errors(
+            str(self.valid_file), "xyz"
+        )  # Unsupported format
+
         # THEN
         self.assertGreater(len(errors), ZERO)
 
@@ -435,20 +438,21 @@ class TestGetValidationErrors(unittest.TestCase):
             - Returns list containing unsupported format error message
         """
         # GIVEN
-        self.mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True
-        )
+        self.mock_resources["get_file_info"].return_value = Mock(size=1024, is_readable=True)
         self.mock_file_format_detector.get_format_category.return_value = None  # Unsupported format
-        
+
         # Set up validation result to have format error
         self.mock_validation_result_instance.errors = ["Format 'xyz' is not supported"]
-        
+
         # WHEN
-        errors = self.validator.get_validation_errors(str(self.valid_file), 'xyz')  # Unsupported format
-        
+        errors = self.validator.get_validation_errors(
+            str(self.valid_file), "xyz"
+        )  # Unsupported format
+
         # THEN
-        self.assertTrue(any("not supported" in error.lower() or "format" in error.lower() for error in errors))
+        self.assertTrue(
+            any("not supported" in error.lower() or "format" in error.lower() for error in errors)
+        )
 
     def test_get_errors_no_read_permission_returns_error_list(self):
         """
@@ -463,15 +467,15 @@ class TestGetValidationErrors(unittest.TestCase):
         ZERO = 0
         self.mock_resources["get_file_info"].return_value = Mock(
             size=1024,
-            is_readable=False  # No read permission
+            is_readable=False,  # No read permission
         )
-        
+
         # Set up validation result to have permission error
         self.mock_validation_result_instance.errors = ["File is not readable"]
-        
+
         # WHEN
-        errors = self.validator.get_validation_errors(str(self.valid_file), 'txt')
-        
+        errors = self.validator.get_validation_errors(str(self.valid_file), "txt")
+
         # THEN
         self.assertGreater(len(errors), ZERO)
 
@@ -487,18 +491,20 @@ class TestGetValidationErrors(unittest.TestCase):
         # GIVEN
         self.mock_resources["get_file_info"].return_value = Mock(
             size=1024,
-            is_readable=False  # No read permission
+            is_readable=False,  # No read permission
         )
-        
+
         # Set up validation result to have permission error
         self.mock_validation_result_instance.errors = ["File is not readable"]
-        
+
         # WHEN
-        errors = self.validator.get_validation_errors(str(self.valid_file), 'txt')
-        
+        errors = self.validator.get_validation_errors(str(self.valid_file), "txt")
+
         # THEN
         self.assertTrue(
-            any("not readable" in error.lower() or "permission" in error.lower() for error in errors)
+            any(
+                "not readable" in error.lower() or "permission" in error.lower() for error in errors
+            )
         )
 
     def test_get_errors_empty_file_returns_error_list(self):
@@ -514,15 +520,15 @@ class TestGetValidationErrors(unittest.TestCase):
         ZERO = 0
         self.mock_resources["get_file_info"].return_value = Mock(
             size=0,  # Empty file
-            is_readable=True
+            is_readable=True,
         )
-        
+
         # Set up validation result to have empty file error
         self.mock_validation_result_instance.errors = ["File is empty"]
-        
+
         # WHEN
-        errors = self.validator.get_validation_errors(str(self.empty_file), 'txt')
-        
+        errors = self.validator.get_validation_errors(str(self.empty_file), "txt")
+
         # THEN
         self.assertGreater(len(errors), ZERO)
 
@@ -538,15 +544,15 @@ class TestGetValidationErrors(unittest.TestCase):
         # GIVEN
         self.mock_resources["get_file_info"].return_value = Mock(
             size=0,  # Empty file
-            is_readable=True
+            is_readable=True,
         )
-        
+
         # Set up validation result to have empty file error
         self.mock_validation_result_instance.errors = ["File is empty"]
-        
+
         # WHEN
-        errors = self.validator.get_validation_errors(str(self.empty_file), 'txt')
-        
+        errors = self.validator.get_validation_errors(str(self.empty_file), "txt")
+
         # THEN
         self.assertTrue(any("empty" in error.lower() for error in errors))
 
@@ -558,33 +564,32 @@ class TestIsValidForProcessing(unittest.TestCase):
         """Set up test fixtures."""
         self.temp_dir = tempfile.TemporaryDirectory()
         self.temp_path = Path(self.temp_dir.name)
-        
+
         # Create test files
         self.valid_file = self.temp_path / "valid_file.txt"
         self.valid_file.write_text("This is a valid test file.")
         self.invalid_file = self.temp_path / "invalid_file.txt"
         self.invalid_file.write_text("This file will be treated as invalid.")
-        
+
         # Mock dependencies
         self.mock_configs = make_mock_configs()
         self.mock_validation_result_instance = make_mock_validation_result()
         self.mock_validation_result_class = Mock(return_value=self.mock_validation_result_instance)
         self.mock_file_format_detector = Mock(spec=FileFormatDetector)
-        
+
         self.mock_resources = {
             "file_format_detector": Mock(spec=FileFormatDetector),
             "logger": Mock(spec=logging.Logger),
             "validation_result": self.mock_validation_result_class,
             "file_exists": Mock(return_value=True),
-            "get_file_info": Mock(return_value=Mock(size=1024, is_readable=True))
+            "get_file_info": Mock(return_value=Mock(size=1024, is_readable=True)),
         }
-        
+
         self.validator = FileValidator(resources=self.mock_resources, configs=self.mock_configs)
 
     def tearDown(self):
         """Clean up test fixtures."""
         self.temp_dir.cleanup()
-
 
     def test_is_valid_for_processing_calls_validate_file(self):
         """
@@ -596,14 +601,11 @@ class TestIsValidForProcessing(unittest.TestCase):
         """
         # GIVEN
         self.mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True,
-            mime_type='text/plain',
-            extension='txt'
+            size=1024, is_readable=True, mime_type="text/plain", extension="txt"
         )
-        
+
         # WHEN
-        _ = self.validator.is_valid_for_processing(str(self.valid_file), 'txt')
+        _ = self.validator.is_valid_for_processing(str(self.valid_file), "txt")
 
         # Verify validate_file was called with no parameters
         self.mock_validation_result_class.assert_called_once()
@@ -619,14 +621,14 @@ class TestIsValidForProcessing(unittest.TestCase):
             - Returns True
         """
         # GIVEN
-        self.mock_file_format_detector.get_format_category.return_value = 'document'
-        
+        self.mock_file_format_detector.get_format_category.return_value = "document"
+
         # Set up validation result to indicate success
         self.mock_validation_result_instance.is_valid = True
-        
+
         # WHEN
-        is_valid = self.validator.is_valid_for_processing(str(self.valid_file), 'txt')
-        
+        is_valid = self.validator.is_valid_for_processing(str(self.valid_file), "txt")
+
         # THEN
         self.assertTrue(is_valid)
 
@@ -643,19 +645,16 @@ class TestIsValidForProcessing(unittest.TestCase):
         """
         # GIVEN
         self.mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True,
-            mime_type='text/plain',
-            extension='txt'
+            size=1024, is_readable=True, mime_type="text/plain", extension="txt"
         )
-        self.mock_file_format_detector.detect_format.return_value = ('txt', 'document')
-        
+        self.mock_file_format_detector.detect_format.return_value = ("txt", "document")
+
         # Set up validation result to indicate success
         self.mock_validation_result_instance.is_valid = True
-        
+
         # WHEN
         is_valid = self.validator.is_valid_for_processing(str(self.valid_file), None)
-        
+
         # THEN
         self.assertTrue(is_valid)
 
@@ -670,13 +669,13 @@ class TestIsValidForProcessing(unittest.TestCase):
         # GIVEN
         nonexistent_file = self.temp_path / "does_not_exist.txt"
         self.mock_resources["file_exists"].return_value = False
-        
+
         # Set up validation result to indicate failure
         self.mock_validation_result_instance.is_valid = False
-        
+
         # WHEN
-        is_valid = self.validator.is_valid_for_processing(str(nonexistent_file), 'txt')
-        
+        is_valid = self.validator.is_valid_for_processing(str(nonexistent_file), "txt")
+
         # THEN
         self.assertFalse(is_valid)
 
@@ -689,18 +688,18 @@ class TestIsValidForProcessing(unittest.TestCase):
             - Returns False
         """
         # GIVEN
-        
+
         self.mock_resources["get_file_info"].return_value = Mock(
             size=1024 * 1024 * 20,  # 20MB, exceeds 10MB limit
-            is_readable=True
+            is_readable=True,
         )
-        
+
         # Set up validation result to indicate failure
         self.mock_validation_result_instance.is_valid = False
-        
+
         # WHEN
-        is_valid = self.validator.is_valid_for_processing(str(self.invalid_file), 'txt')
-        
+        is_valid = self.validator.is_valid_for_processing(str(self.invalid_file), "txt")
+
         # THEN
         self.assertFalse(is_valid)
 
@@ -714,19 +713,16 @@ class TestIsValidForProcessing(unittest.TestCase):
             - Returns False
         """
         # GIVEN
-        
-        self.mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True
-        )
+
+        self.mock_resources["get_file_info"].return_value = Mock(size=1024, is_readable=True)
         self.mock_file_format_detector.get_format_category.return_value = None  # Unsupported
-        
+
         # Set up validation result to indicate failure
         self.mock_validation_result_instance.is_valid = False
-        
+
         # WHEN
-        is_valid = self.validator.is_valid_for_processing(str(self.valid_file), 'xyz')
-        
+        is_valid = self.validator.is_valid_for_processing(str(self.valid_file), "xyz")
+
         # THEN
         self.assertFalse(is_valid)
 
@@ -739,17 +735,14 @@ class TestIsValidForProcessing(unittest.TestCase):
             - Returns False
         """
         # GIVEN
-        self.mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True
-        )
-        
+        self.mock_resources["get_file_info"].return_value = Mock(size=1024, is_readable=True)
+
         # Set up validation result to indicate failure due to corruption
         self.mock_validation_result_instance.is_valid = False
-        
+
         # WHEN
-        is_valid = self.validator.is_valid_for_processing(str(self.invalid_file), 'txt')
-        
+        is_valid = self.validator.is_valid_for_processing(str(self.invalid_file), "txt")
+
         # THEN
         self.assertFalse(is_valid)
 
@@ -762,18 +755,18 @@ class TestIsValidForProcessing(unittest.TestCase):
             - Returns False
         """
         # GIVEN
-        
+
         self.mock_resources["get_file_info"].return_value = Mock(
             size=1024,
-            is_readable=False  # No read permission
+            is_readable=False,  # No read permission
         )
-        
+
         # Set up validation result to indicate failure
         self.mock_validation_result_instance.is_valid = False
-        
+
         # WHEN
-        is_valid = self.validator.is_valid_for_processing(str(self.invalid_file), 'txt')
-        
+        is_valid = self.validator.is_valid_for_processing(str(self.invalid_file), "txt")
+
         # THEN
         self.assertFalse(is_valid)
 
@@ -788,17 +781,14 @@ class TestIsValidForProcessing(unittest.TestCase):
         """
         # GIVEN
         self.mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True,
-            mime_type='text/plain',
-            extension='txt'
+            size=1024, is_readable=True, mime_type="text/plain", extension="txt"
         )
-        self.mock_file_format_detector.get_format_category.return_value = 'document'
+        self.mock_file_format_detector.get_format_category.return_value = "document"
         self.mock_validation_result_instance.is_valid = True
-        
+
         # WHEN
-        is_valid = self.validator.is_valid_for_processing(str(self.valid_file), 'txt')
-        
+        is_valid = self.validator.is_valid_for_processing(str(self.valid_file), "txt")
+
         # THEN
         self.assertTrue(is_valid)
 
@@ -813,17 +803,14 @@ class TestIsValidForProcessing(unittest.TestCase):
         """
         # GIVEN
         self.mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True,
-            mime_type='text/plain',
-            extension='txt'
+            size=1024, is_readable=True, mime_type="text/plain", extension="txt"
         )
-        self.mock_file_format_detector.get_format_category.return_value = 'document'
+        self.mock_file_format_detector.get_format_category.return_value = "document"
         self.mock_validation_result_instance.is_valid = False
-        
+
         # WHEN
-        is_valid = self.validator.is_valid_for_processing(str(self.invalid_file), 'txt')
-        
+        is_valid = self.validator.is_valid_for_processing(str(self.invalid_file), "txt")
+
         # THEN
         self.assertFalse(is_valid)
 
@@ -837,17 +824,14 @@ class TestIsValidForProcessing(unittest.TestCase):
         """
         # GIVEN
         self.mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True,
-            mime_type='text/plain',
-            extension='txt'
+            size=1024, is_readable=True, mime_type="text/plain", extension="txt"
         )
-        self.mock_file_format_detector.get_format_category.return_value = 'document'
+        self.mock_file_format_detector.get_format_category.return_value = "document"
         self.mock_validation_result_instance.is_valid = True
-        
+
         # WHEN
-        self.validator.is_valid_for_processing(str(self.valid_file), 'txt')
-        
+        self.validator.is_valid_for_processing(str(self.valid_file), "txt")
+
         # THEN
         self.assertGreaterEqual(self.mock_validation_result_class.call_count, 1)
 
