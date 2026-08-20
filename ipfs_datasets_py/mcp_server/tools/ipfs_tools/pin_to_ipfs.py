@@ -5,6 +5,7 @@ MCP tool for pinning content to IPFS.
 This is a thin wrapper around the core IPFSPinner class.
 Core implementation: ipfs_datasets_py.core_operations.ipfs_pinner.IPFSPinner
 """
+
 import json
 import os
 from typing import Dict, Any, Union
@@ -36,11 +37,12 @@ try:
 except (ImportError, ModuleNotFoundError):
     from ipfs_datasets_py.ipfs_datasets_py.core_operations import IPFSPinner  # type: ignore
 
+
 async def pin_to_ipfs(
     content_source: Union[str, Dict[str, Any]],
     recursive: bool = True,
     wrap_with_directory: bool = False,
-    hash_algo: str = "sha2-256"
+    hash_algo: str = "sha2-256",
 ) -> Dict[str, Any]:
     """
     Pin a file, directory, or data to IPFS.
@@ -75,7 +77,9 @@ async def pin_to_ipfs(
             return error
 
         if "content_source" not in data:
-            return mcp_error_response("Missing required field: content_source", error_type="validation")
+            return mcp_error_response(
+                "Missing required field: content_source", error_type="validation"
+            )
 
         # Use legacy ipfs_datasets backend if available
         if ipfs_datasets is not None:
@@ -101,13 +105,9 @@ async def pin_to_ipfs(
             content_source,
             recursive=recursive,
             wrap_with_directory=wrap_with_directory,
-            hash_algo=hash_algo
+            hash_algo=hash_algo,
         )
         return result
     except Exception as e:
         logger.error(f"Error in pin_to_ipfs MCP tool: {e}")
-        return {
-            "status": "error",
-            "message": str(e),
-            "content_path": str(content_source)
-        }
+        return {"status": "error", "message": str(e), "content_path": str(content_source)}

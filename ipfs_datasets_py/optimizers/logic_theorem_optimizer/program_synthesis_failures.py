@@ -145,39 +145,66 @@ DEFAULT_FAILURE_POLICIES: Final[Mapping[FailureCategory, FailurePolicy]] = Mappi
             RecoveryAction.RETRY, 3, True, retry_delays_seconds=(1.0, 5.0, 15.0)
         ),
         FailureCategory.PROVIDER_TIMEOUT: FailurePolicy(
-            RecoveryAction.RETRY, 2, True, preserve_worktree=True,
+            RecoveryAction.RETRY,
+            2,
+            True,
+            preserve_worktree=True,
             retry_delays_seconds=(5.0, 20.0),
         ),
         FailureCategory.MALFORMED_RESPONSE: FailurePolicy(
             RecoveryAction.RETRY, 1, True, retry_delays_seconds=(1.0,)
         ),
         FailureCategory.EMPTY_PATCH: FailurePolicy(
-            RecoveryAction.RETRY, 1, True, preserve_worktree=True,
+            RecoveryAction.RETRY,
+            1,
+            True,
+            preserve_worktree=True,
         ),
         FailureCategory.APPLY_CONFLICT: FailurePolicy(
-            RecoveryAction.RESCUE, 1, True, preserve_worktree=True,
+            RecoveryAction.RESCUE,
+            1,
+            True,
+            preserve_worktree=True,
         ),
         FailureCategory.STALE_BASE: FailurePolicy(
-            RecoveryAction.REBASE, 1, True, preserve_worktree=True,
+            RecoveryAction.REBASE,
+            1,
+            True,
+            preserve_worktree=True,
             fallback_action=RecoveryAction.RESCUE,
         ),
         FailureCategory.SCOPE_VIOLATION: FailurePolicy(
-            RecoveryAction.TERMINAL, 0, False, preserve_worktree=True,
+            RecoveryAction.TERMINAL,
+            0,
+            False,
+            preserve_worktree=True,
         ),
         FailureCategory.DETERMINISTIC_TEST_FAILURE: FailurePolicy(
-            RecoveryAction.TERMINAL, 0, False, preserve_worktree=True,
+            RecoveryAction.TERMINAL,
+            0,
+            False,
+            preserve_worktree=True,
         ),
         FailureCategory.METRIC_REGRESSION: FailurePolicy(
-            RecoveryAction.TERMINAL, 0, False, preserve_worktree=True,
+            RecoveryAction.TERMINAL,
+            0,
+            False,
+            preserve_worktree=True,
         ),
         FailureCategory.RESOURCE_EXHAUSTION: FailurePolicy(
-            RecoveryAction.RETRY, 1, True, preserve_worktree=True,
+            RecoveryAction.RETRY,
+            1,
+            True,
+            preserve_worktree=True,
             retry_delays_seconds=(30.0,),
         ),
         # An interrupted worker is resumable by its supervisor, but this
         # component must never restart work while shutdown is in progress.
         FailureCategory.SUPERVISOR_INTERRUPTION: FailurePolicy(
-            RecoveryAction.PRESERVE, 0, True, preserve_worktree=True,
+            RecoveryAction.PRESERVE,
+            0,
+            True,
+            preserve_worktree=True,
         ),
     }
 )
@@ -241,8 +268,11 @@ def _safe_json(value: Any, *, depth: int = 0) -> Any:
 
 def _digest(value: Any) -> str:
     payload = json.dumps(
-        _safe_json(value), allow_nan=False, ensure_ascii=True,
-        separators=(",", ":"), sort_keys=True,
+        _safe_json(value),
+        allow_nan=False,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
     ).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
@@ -331,7 +361,10 @@ class FailureObservation:
         first_metadata = first_metadata if isinstance(first_metadata, Mapping) else {}
         scopes = _string_sequence(packet.get("program_synthesis_scopes"))
         artifact_keys = (
-            "packet_path", "patch_path", "task_path", "todo_list_path",
+            "packet_path",
+            "patch_path",
+            "task_path",
+            "todo_list_path",
             "todo_markdown_path",
         )
         artifacts = tuple(packet[key] for key in artifact_keys if packet.get(key)) + tuple(
@@ -340,10 +373,14 @@ class FailureObservation:
             if exec_result.get(key)
         )
         message_parts = [
-            packet.get("patch_error"), packet.get("main_apply_error"),
-            packet.get("error"), packet.get("reason"),
-            exec_result.get("error"), exec_result.get("reason"),
-            exec_result.get("stderr_tail"), exec_result.get("stdout_tail"),
+            packet.get("patch_error"),
+            packet.get("main_apply_error"),
+            packet.get("error"),
+            packet.get("reason"),
+            exec_result.get("error"),
+            exec_result.get("reason"),
+            exec_result.get("stderr_tail"),
+            exec_result.get("stdout_tail"),
             _artifact_tail(exec_result.get("stderr_path")),
             _artifact_tail(exec_result.get("last_message_path")),
         ]
@@ -354,14 +391,18 @@ class FailureObservation:
             except ValueError:
                 raw_category = None
         return cls(
-            task_id=task_id or str(
+            task_id=task_id
+            or str(
                 packet.get("task_id")
                 or first_todo.get("todo_id")
                 or packet.get("packet_id")
                 or "unbound-packet"
             ),
-            scope=scope or str(packet.get("scope") or "") or (
-                scopes[0] if len(scopes) == 1
+            scope=scope
+            or str(packet.get("scope") or "")
+            or (
+                scopes[0]
+                if len(scopes) == 1
                 else str(first_metadata.get("program_synthesis_scope") or "unknown")
             ),
             attempt=attempt or int(exec_result.get("attempt_count") or 1),
@@ -370,10 +411,7 @@ class FailureObservation:
             exception=exception,
             category_hint=raw_category,
             exec_status=str(
-                exec_result.get("status")
-                or packet.get("exec_status")
-                or packet.get("status")
-                or ""
+                exec_result.get("status") or packet.get("exec_status") or packet.get("status") or ""
             ),
             patch_status=str(packet.get("patch_status") or ""),
             apply_status=str(packet.get("main_apply_status") or ""),
@@ -443,52 +481,111 @@ class FailureClassification:
 
 
 _SUPERVISOR_PATTERNS: Final = (
-    "supervisor interrupt", "shutdown requested", "received sigterm",
-    "worker cancelled", "worker canceled", "graceful shutdown",
+    "supervisor interrupt",
+    "shutdown requested",
+    "received sigterm",
+    "worker cancelled",
+    "worker canceled",
+    "graceful shutdown",
 )
 _RESOURCE_PATTERNS: Final = (
-    "out of memory", "cannot allocate memory", "memoryerror", "cuda out of memory",
-    "resource temporarily unavailable", "no space left on device", "disk quota exceeded",
-    "too many open files", "killed by oom", "exit code 137", "signal 9",
-    "main_apply_lock_timeout", "apply lock timeout", "lock acquisition timeout",
+    "out of memory",
+    "cannot allocate memory",
+    "memoryerror",
+    "cuda out of memory",
+    "resource temporarily unavailable",
+    "no space left on device",
+    "disk quota exceeded",
+    "too many open files",
+    "killed by oom",
+    "exit code 137",
+    "signal 9",
+    "main_apply_lock_timeout",
+    "apply lock timeout",
+    "lock acquisition timeout",
 )
 _TIMEOUT_PATTERNS: Final = (
-    "provider timeout", "request timeout", "request timed out", "deadline exceeded",
-    "context deadline", "gateway timeout", "timed out waiting for model",
+    "provider timeout",
+    "request timeout",
+    "request timed out",
+    "deadline exceeded",
+    "context deadline",
+    "gateway timeout",
+    "timed out waiting for model",
 )
 _TRANSPORT_PATTERNS: Final = (
-    "connection reset", "connection refused", "connection aborted", "broken pipe",
-    "network is unreachable", "temporary failure in name resolution", "dns failure",
-    "tls handshake", "service unavailable", "bad gateway", "rate limit",
-    "too many requests", "temporarily unavailable", "model is at capacity",
+    "connection reset",
+    "connection refused",
+    "connection aborted",
+    "broken pipe",
+    "network is unreachable",
+    "temporary failure in name resolution",
+    "dns failure",
+    "tls handshake",
+    "service unavailable",
+    "bad gateway",
+    "rate limit",
+    "too many requests",
+    "temporarily unavailable",
+    "model is at capacity",
 )
 _MALFORMED_PATTERNS: Final = (
-    "malformed response", "invalid response", "invalid json", "jsondecodeerror",
-    "schema validation", "missing response", "unexpected response format",
+    "malformed response",
+    "invalid response",
+    "invalid json",
+    "jsondecodeerror",
+    "schema validation",
+    "missing response",
+    "unexpected response format",
 )
 _EMPTY_PATCH_PATTERNS: Final = (
-    "no changes found", "empty patch", "empty diff", "awaiting_codex_changes",
-    "no_merged_delta", "no merged delta",
+    "no changes found",
+    "empty patch",
+    "empty diff",
+    "awaiting_codex_changes",
+    "no_merged_delta",
+    "no merged delta",
 )
 _STALE_PATTERNS: Final = (
-    "stale base", "base revision changed", "base commit changed", "not up to date",
-    "behind current main", "does not match index",
+    "stale base",
+    "base revision changed",
+    "base commit changed",
+    "not up to date",
+    "behind current main",
+    "does not match index",
 )
 _CONFLICT_PATTERNS: Final = (
-    "apply conflict", "merge conflict", "patch does not apply", "git apply",
-    "apply-check-failed", "apply check failed", "dirty target", "patch failed",
+    "apply conflict",
+    "merge conflict",
+    "patch does not apply",
+    "git apply",
+    "apply-check-failed",
+    "apply check failed",
+    "dirty target",
+    "patch failed",
 )
 _SCOPE_PATTERNS: Final = (
-    "scope violation", "outside assigned scope", "out of scope", "write-set violation",
+    "scope violation",
+    "outside assigned scope",
+    "out of scope",
+    "write-set violation",
     "unauthorized path",
 )
 _METRIC_PATTERNS: Final = (
-    "metric regression", "target metric regression", "objective regression",
-    "quality regression", "holdout regression",
+    "metric regression",
+    "target metric regression",
+    "objective regression",
+    "quality regression",
+    "holdout regression",
 )
 _TEST_PATTERNS: Final = (
-    "deterministic test failure", "validation failed", "tests failed", "pytest failed",
-    "assertionerror", "syntaxerror", "typecheck failed",
+    "deterministic test failure",
+    "validation failed",
+    "tests failed",
+    "pytest failed",
+    "assertionerror",
+    "syntaxerror",
+    "typecheck failed",
 )
 
 
@@ -547,13 +644,18 @@ class ProgramSynthesisFailureClassifier:
             )
 
         out_of_scope = tuple(
-            path for path in observation.changed_files
+            path
+            for path in observation.changed_files
             if observation.allowed_paths and not _path_allowed(path, observation.allowed_paths)
         )
         text = "\n".join(
-            str(item or "") for item in (
-                observation.message, observation.exec_status, observation.patch_status,
-                observation.apply_status, observation.validation_status,
+            str(item or "")
+            for item in (
+                observation.message,
+                observation.exec_status,
+                observation.patch_status,
+                observation.apply_status,
+                observation.validation_status,
                 observation.metric_status,
                 type(observation.exception).__name__ if observation.exception else "",
                 str(observation.exception or ""),
@@ -588,27 +690,39 @@ class ProgramSynthesisFailureClassifier:
         ) or _contains(text, _STALE_PATTERNS):
             category, reason = FailureCategory.STALE_BASE, "base_revision_is_stale"
         elif _contains(text, _CONFLICT_PATTERNS) or observation.apply_status.lower() in {
-            "conflict", "check_failed", "failed"
+            "conflict",
+            "check_failed",
+            "failed",
         }:
             category, reason = FailureCategory.APPLY_CONFLICT, "patch_could_not_apply"
-        elif not str(observation.patch or "").strip() and observation.patch_status.lower() in {
-            "awaiting_codex_changes", "empty", "no_changes", "main_apply_no_merged_delta"
-        } or _contains(text, _EMPTY_PATCH_PATTERNS):
+        elif (
+            not str(observation.patch or "").strip()
+            and observation.patch_status.lower()
+            in {"awaiting_codex_changes", "empty", "no_changes", "main_apply_no_merged_delta"}
+            or _contains(text, _EMPTY_PATCH_PATTERNS)
+        ):
             category, reason = FailureCategory.EMPTY_PATCH, "patch_has_no_delta"
-        elif isinstance(observation.exception, TimeoutError) or observation.exec_status.lower() in {
-            "timeout", "timed_out"
-        } or _contains(text, _TIMEOUT_PATTERNS):
+        elif (
+            isinstance(observation.exception, TimeoutError)
+            or observation.exec_status.lower() in {"timeout", "timed_out"}
+            or _contains(text, _TIMEOUT_PATTERNS)
+        ):
             category, reason = FailureCategory.PROVIDER_TIMEOUT, "provider_deadline_exceeded"
         elif isinstance(observation.exception, ConnectionError) or _contains(
             text, _TRANSPORT_PATTERNS
         ):
             category, reason = FailureCategory.TRANSPORT, "transport_unavailable"
-        elif observation.response is not None and not isinstance(
-            observation.response, (str, bytes, Mapping, Sequence)
-        ) or _contains(text, _MALFORMED_PATTERNS):
+        elif (
+            observation.response is not None
+            and not isinstance(observation.response, (str, bytes, Mapping, Sequence))
+            or _contains(text, _MALFORMED_PATTERNS)
+        ):
             category, reason = FailureCategory.MALFORMED_RESPONSE, "response_contract_invalid"
         elif observation.validation_status.lower() in {
-            "failed", "failure", "error", "timed_out"
+            "failed",
+            "failure",
+            "error",
+            "timed_out",
         } or _contains(text, _TEST_PATTERNS):
             category = FailureCategory.DETERMINISTIC_TEST_FAILURE
             reason = "validation_reproducibly_failed"
@@ -716,9 +830,7 @@ class FailureEvidenceStore:
         sequence: int,
     ) -> Path:
         task_dir = (
-            self.root
-            / self._safe_name(observation.scope)
-            / self._safe_name(observation.task_id)
+            self.root / self._safe_name(observation.scope) / self._safe_name(observation.task_id)
         )
         task_dir.mkdir(parents=True, exist_ok=True)
         stem = f"{int(sequence):06d}-{classification.category.value}-{classification.fingerprint}"
@@ -758,8 +870,7 @@ class FailureEvidenceStore:
                     "current_revision": observation.current_revision,
                     "exception_message": str(observation.exception or ""),
                     "exception_type": (
-                        type(observation.exception).__name__
-                        if observation.exception else ""
+                        type(observation.exception).__name__ if observation.exception else ""
                     ),
                     "exec_status": observation.exec_status,
                     "message": observation.message,
@@ -895,7 +1006,13 @@ def _normalize_action_result(value: Any) -> tuple[bool, dict[str, Any]]:
         succeeded = bool(result.get("succeeded", result.get("accepted", result.get("ok", False))))
         if "status" in result and not any(key in result for key in ("succeeded", "accepted", "ok")):
             succeeded = str(result["status"]).strip().lower() in {
-                "ok", "passed", "succeeded", "scheduled", "rebased", "rescued", "recovered",
+                "ok",
+                "passed",
+                "succeeded",
+                "scheduled",
+                "rebased",
+                "rescued",
+                "recovered",
             }
         return succeeded, _safe_json(result)
     return False, {"error": f"invalid_action_result:{type(value).__name__}"}
@@ -924,7 +1041,8 @@ class FailureRateReporter:
             counts[f"category.{classification.category.value}"] += 1
             counter = (
                 "transient_failure_count"
-                if classification.transient else "nontransient_failure_count"
+                if classification.transient
+                else "nontransient_failure_count"
             )
             counts[counter] += 1
             counts["terminal_failure_count"] += int(terminal)
@@ -965,7 +1083,8 @@ class FailureRateReporter:
             "attempt_count": attempts,
             "category_counts": {
                 key.removeprefix("category."): int(value)
-                for key, value in sorted(counts.items()) if key.startswith("category.")
+                for key, value in sorted(counts.items())
+                if key.startswith("category.")
             },
             "failure_count": failures,
             "nontransient_failure_count": int(counts["nontransient_failure_count"]),
@@ -998,7 +1117,8 @@ class ProgramSynthesisFailureRecovery:
         if ledger is not None and ledger_path is not None:
             raise ValueError("pass either ledger or ledger_path, not both")
         self.evidence_store = (
-            evidence_store if isinstance(evidence_store, FailureEvidenceStore)
+            evidence_store
+            if isinstance(evidence_store, FailureEvidenceStore)
             else FailureEvidenceStore(evidence_store)
         )
         self.classifier = classifier or ProgramSynthesisFailureClassifier()
@@ -1022,39 +1142,48 @@ class ProgramSynthesisFailureRecovery:
         sequence, category_attempt, fingerprint_count, task_failures = self.ledger.record(
             observation.task_id, classification.category, classification.fingerprint
         )
-        evidence_path = self.evidence_store.preserve(
-            observation, classification, sequence=sequence
-        )
+        evidence_path = self.evidence_store.preserve(observation, classification, sequence=sequence)
         retry_number = category_attempt
         policy = classification.policy
         poison_blocked = (
-            fingerprint_count > self.max_same_fingerprint
-            or task_failures > self.max_task_failures
+            fingerprint_count > self.max_same_fingerprint or task_failures > self.max_task_failures
         )
         budget_exhausted = category_attempt > policy.max_retries
 
         if policy.action is RecoveryAction.PRESERVE:
             outcome = RecoveryOutcome(
-                task_id=observation.task_id, scope=observation.scope,
-                classification=classification, status=RecoveryStatus.INTERRUPTED,
-                terminal=False, retry_number=0, retry_after_seconds=0.0,
-                evidence_path=str(evidence_path), reason="supervisor_owns_resume",
+                task_id=observation.task_id,
+                scope=observation.scope,
+                classification=classification,
+                status=RecoveryStatus.INTERRUPTED,
+                terminal=False,
+                retry_number=0,
+                retry_after_seconds=0.0,
+                evidence_path=str(evidence_path),
+                reason="supervisor_owns_resume",
             )
             self.reporter.record(observation.scope, classification, terminal=False)
             return outcome
 
         if policy.action is RecoveryAction.TERMINAL or poison_blocked or budget_exhausted:
             reason = (
-                "non_retryable_category" if policy.action is RecoveryAction.TERMINAL
-                else "poison_task_loop_blocked" if poison_blocked
+                "non_retryable_category"
+                if policy.action is RecoveryAction.TERMINAL
+                else "poison_task_loop_blocked"
+                if poison_blocked
                 else "category_retry_budget_exhausted"
             )
             outcome = RecoveryOutcome(
-                task_id=observation.task_id, scope=observation.scope,
-                classification=classification, status=RecoveryStatus.TERMINAL,
-                terminal=True, retry_number=max(0, min(category_attempt, policy.max_retries)),
-                retry_after_seconds=0.0, evidence_path=str(evidence_path),
-                reason=reason, poison_blocked=poison_blocked,
+                task_id=observation.task_id,
+                scope=observation.scope,
+                classification=classification,
+                status=RecoveryStatus.TERMINAL,
+                terminal=True,
+                retry_number=max(0, min(category_attempt, policy.max_retries)),
+                retry_after_seconds=0.0,
+                evidence_path=str(evidence_path),
+                reason=reason,
+                poison_blocked=poison_blocked,
             )
             self.reporter.record(observation.scope, classification, terminal=True)
             return outcome
@@ -1062,8 +1191,10 @@ class ProgramSynthesisFailureRecovery:
         selected_operations = operations or self.operations
         delay = policy.delay_for_retry(retry_number)
         context = RecoveryContext(
-            observation=observation, classification=classification,
-            retry_number=retry_number, retry_after_seconds=delay,
+            observation=observation,
+            classification=classification,
+            retry_number=retry_number,
+            retry_after_seconds=delay,
             evidence_path=evidence_path,
         )
         action, callback = self._select_action(policy.action, selected_operations)
@@ -1091,10 +1222,15 @@ class ProgramSynthesisFailureRecovery:
         if terminal:
             status = RecoveryStatus.ACTION_FAILED
         outcome = RecoveryOutcome(
-            task_id=observation.task_id, scope=observation.scope,
-            classification=classification, status=status, terminal=terminal,
-            retry_number=retry_number, retry_after_seconds=delay,
-            evidence_path=str(evidence_path), action_result=result,
+            task_id=observation.task_id,
+            scope=observation.scope,
+            classification=classification,
+            status=status,
+            terminal=terminal,
+            retry_number=retry_number,
+            retry_after_seconds=delay,
+            evidence_path=str(evidence_path),
+            action_result=result,
             reason="recovery_action_applied" if succeeded else "recovery_action_failed",
         )
         self.reporter.record(
@@ -1196,8 +1332,7 @@ def _validation_rescue_state(value: Any) -> tuple[bool, bool, bool, dict[str, An
     if "merge_allowed" in data:
         accepted = accepted and bool(data["merge_allowed"])
     transient_ids = _rescue_string_tuple(
-        data.get("transient_unresolved_check_ids")
-        or data.get("unresolved_transient_check_ids")
+        data.get("transient_unresolved_check_ids") or data.get("unresolved_transient_check_ids")
     )
     transient = bool(
         not accepted
@@ -1214,9 +1349,7 @@ def _validation_rescue_state(value: Any) -> tuple[bool, bool, bool, dict[str, An
         if isinstance(delta, Mapping) and "update_allowed" in delta:
             semantic_allowed_value = delta.get("update_allowed")
     semantic_allowed = bool(
-        semantic_allowed_value
-        if semantic_allowed_value is not None
-        else not transient
+        semantic_allowed_value if semantic_allowed_value is not None else not transient
     )
     return accepted, transient, semantic_allowed, data
 
@@ -1247,7 +1380,9 @@ class ValidationWorktreeRescueRequest:
         object.__setattr__(self, "task_id", str(self.task_id).strip())
         object.__setattr__(self, "scope", _atom(self.scope))
         object.__setattr__(self, "worktree_path", str(Path(self.worktree_path)))
-        object.__setattr__(self, "validation_report", MappingProxyType(_rescue_mapping(self.validation_report)))
+        object.__setattr__(
+            self, "validation_report", MappingProxyType(_rescue_mapping(self.validation_report))
+        )
         object.__setattr__(self, "patch", str(self.patch or ""))
         object.__setattr__(self, "artifacts", tuple(self.artifacts or ()))
         object.__setattr__(self, "evidence", MappingProxyType(dict(self.evidence or {})))
@@ -1256,15 +1391,18 @@ class ValidationWorktreeRescueRequest:
 
     @property
     def rescue_id(self) -> str:
-        return "validation-rescue-" + _digest(
-            {
-                "task_id": self.task_id,
-                "scope": self.scope,
-                "worktree_path": self.worktree_path,
-                "validation_report": self.validation_report,
-                "patch_sha256": hashlib.sha256(self.patch.encode("utf-8")).hexdigest(),
-            }
-        )[:20]
+        return (
+            "validation-rescue-"
+            + _digest(
+                {
+                    "task_id": self.task_id,
+                    "scope": self.scope,
+                    "worktree_path": self.worktree_path,
+                    "validation_report": self.validation_report,
+                    "patch_sha256": hashlib.sha256(self.patch.encode("utf-8")).hexdigest(),
+                }
+            )[:20]
+        )
 
     def to_dict(self, *, include_patch: bool = True) -> dict[str, Any]:
         result = {
@@ -1328,18 +1466,23 @@ class ValidationWorktreeRescueRequest:
             exec_result.get("last_message_path"),
         ]
         return cls(
-            task_id=task_id or str(
+            task_id=task_id
+            or str(
                 packet.get("task_id")
                 or first_todo.get("todo_id")
                 or packet.get("packet_id")
                 or "unbound-packet"
             ),
-            scope=scope or str(packet.get("scope") or "") or (
+            scope=scope
+            or str(packet.get("scope") or "")
+            or (
                 scopes[0]
                 if len(scopes) == 1
                 else str(metadata.get("program_synthesis_scope") or "unknown")
             ),
-            worktree_path=str(packet.get("worktree_path") or packet.get("failed_worktree_path") or ""),
+            worktree_path=str(
+                packet.get("worktree_path") or packet.get("failed_worktree_path") or ""
+            ),
             validation_report=validation,
             patch=patch,
             artifacts=tuple(value for value in artifact_values if value),
@@ -1379,7 +1522,9 @@ class ValidationRescueContext:
         object.__setattr__(self, "attempt", int(self.attempt))
         object.__setattr__(self, "diagnosis", MappingProxyType(dict(self.diagnosis or {})))
         object.__setattr__(self, "repair_result", MappingProxyType(dict(self.repair_result or {})))
-        object.__setattr__(self, "validation_report", MappingProxyType(dict(self.validation_report or {})))
+        object.__setattr__(
+            self, "validation_report", MappingProxyType(dict(self.validation_report or {}))
+        )
         object.__setattr__(self, "current_patch", str(self.current_patch or ""))
 
     def to_dict(self) -> dict[str, Any]:
@@ -1461,7 +1606,8 @@ class ValidationWorktreeRescueOutcome:
         object.__setattr__(self, "attempts", tuple(self.attempts or ()))
         object.__setattr__(self, "evidence_paths", tuple(self.evidence_paths or ()))
         object.__setattr__(
-            self, "final_validation_report",
+            self,
+            "final_validation_report",
             MappingProxyType(dict(self.final_validation_report or {})),
         )
 
@@ -1649,9 +1795,7 @@ class ValidationWorktreeRescueCoordinator:
             succeeded = value
         elif value is None:
             succeeded = True
-        elif mapping_is_success and not any(
-            key in data for key in explicit_result_keys
-        ):
+        elif mapping_is_success and not any(key in data for key in explicit_result_keys):
             succeeded = True
         else:
             status = str(data.get("status") or data.get("outcome") or "").strip().lower()
@@ -1661,7 +1805,12 @@ class ValidationWorktreeRescueCoordinator:
                     data.get("passed", data.get("succeeded", data.get("ok", False))),
                 )
             ) or status in {
-                "ok", "passed", "succeeded", "diagnosed", "repaired", "requeued",
+                "ok",
+                "passed",
+                "succeeded",
+                "diagnosed",
+                "repaired",
+                "requeued",
             }
         transient = bool(data.get("transient") is True or data.get("transient_failure") is True)
         error = str(data.get("error", data.get("reason", "")) or "")
@@ -1735,14 +1884,21 @@ class ValidationWorktreeRescueCoordinator:
         )
         attempts.append(
             ValidationRescueAttempt(
-                "requeue", context.attempt, succeeded, True, str(context.evidence_path), result, error
+                "requeue",
+                context.attempt,
+                succeeded,
+                True,
+                str(context.evidence_path),
+                result,
+                error,
             )
         )
         return ValidationWorktreeRescueOutcome(
             request=request,
             status=(
                 ValidationRescueStatus.REQUEUED_TRANSIENT
-                if succeeded else ValidationRescueStatus.ACTION_FAILED
+                if succeeded
+                else ValidationRescueStatus.ACTION_FAILED
             ),
             attempts=tuple(attempts),
             evidence_paths=tuple(evidence_paths),
@@ -1825,8 +1981,13 @@ class ValidationWorktreeRescueCoordinator:
                 )
                 attempts.append(
                     ValidationRescueAttempt(
-                        "diagnosis", number, succeeded, diagnosis_transient,
-                        str(context.evidence_path), result, error,
+                        "diagnosis",
+                        number,
+                        succeeded,
+                        diagnosis_transient,
+                        str(context.evidence_path),
+                        result,
+                        error,
                     )
                 )
                 if succeeded:
@@ -1862,8 +2023,11 @@ class ValidationWorktreeRescueCoordinator:
                     operations=selected_operations,
                 )
                 return ValidationWorktreeRescueOutcome(
-                    request, ValidationRescueStatus.DIAGNOSIS_FAILED, tuple(attempts),
-                    tuple(evidence_paths), current_validation,
+                    request,
+                    ValidationRescueStatus.DIAGNOSIS_FAILED,
+                    tuple(attempts),
+                    tuple(evidence_paths),
+                    current_validation,
                     semantic_statistics_update_allowed=semantic_allowed,
                     reason="diagnosis_budget_exhausted",
                 )
@@ -1907,8 +2071,13 @@ class ValidationWorktreeRescueCoordinator:
                 )
                 attempts.append(
                     ValidationRescueAttempt(
-                        "repair", number, repaired, repair_transient,
-                        str(post_context.evidence_path), repair_result, repair_error,
+                        "repair",
+                        number,
+                        repaired,
+                        repair_transient,
+                        str(post_context.evidence_path),
+                        repair_result,
+                        repair_error,
                     )
                 )
                 if repair_transient:
@@ -1957,8 +2126,12 @@ class ValidationWorktreeRescueCoordinator:
                 )
                 attempts.append(
                     ValidationRescueAttempt(
-                        "revalidation", number, accepted, validate_transient,
-                        str(validation_context.evidence_path), current_validation,
+                        "revalidation",
+                        number,
+                        accepted,
+                        validate_transient,
+                        str(validation_context.evidence_path),
+                        current_validation,
                         validate_error,
                     )
                 )

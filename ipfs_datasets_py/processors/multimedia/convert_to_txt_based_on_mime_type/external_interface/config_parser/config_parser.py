@@ -8,28 +8,30 @@ from argparse import Namespace
 from pathlib import Path
 
 
-#from pydantic_models.configs import Configs
+# from pydantic_models.configs import Configs
 from pydantic import (
-    BaseModel, 
-    Field, 
+    BaseModel,
+    Field,
     field_serializer,
-    HttpUrl, 
+    HttpUrl,
     model_validator,
     PrivateAttr,
     field_validator,
-    ValidationError
+    ValidationError,
 )
 import yaml
 
 
 from configs.configs import Configs
-from external_interface.config_parser.resources._print_configs_on_startup import _print_configs_on_startup
+from external_interface.config_parser.resources._print_configs_on_startup import (
+    _print_configs_on_startup,
+)
 
 
 class ConfigParser:
     """
     Load, save, and parse external commands, from a config file, command line, or both.
-    NOTE: The configuration file is hard-coded to be named 'config.yaml'. 
+    NOTE: The configuration file is hard-coded to be named 'config.yaml'.
         If renamed or deleted, the program will attempt to create another using hard-coded default values.
         This includes mock-values for API keys and URLs.
 
@@ -66,7 +68,7 @@ class ConfigParser:
             Defaults to 60 seconds.
         pool_health_check_rate (int): Health check rate in seconds for checking resources in the Pools.
             Defaults to 30 seconds.
-        print_configs_on_startup (bool): Print the program configs to console on start-up. Sensitive values like API keys will be [REDACTED]. 
+        print_configs_on_startup (bool): Print the program configs to console on start-up. Sensitive values like API keys will be [REDACTED].
             Defaults to False.
 
     Attributes:
@@ -105,16 +107,14 @@ class ConfigParser:
                 Cannot find configs.yaml in root directory. Would you like to create a new config file from the program defaults? (Y/n): 
                 """)
             if make_config_file.lower() == "y":
-                
                 self.save_current_config_settings_to_configs_file(default_config)
             else:
                 raise FileNotFoundError(f"Config file not found at {self.configs_file_path}")
 
-
     def load_and_parse_configs_file(self) -> Configs:
         """
         Load in a config file and parse it into an exportable Configs object.
-        
+
         Args:
             None.
 
@@ -141,11 +141,13 @@ class ConfigParser:
             raise FileNotFoundError(f"Config file not found at {self.configs_file_path}")
 
         try:
-            with open(self.configs_file_path, 'r', encoding='utf-8') as file:
+            with open(self.configs_file_path, "r", encoding="utf-8") as file:
                 configs_dict = yaml.safe_load(file)
 
         except PermissionError:
-            raise PermissionError(f"Permission denied when accessing config file at {self.configs_file_path}")
+            raise PermissionError(
+                f"Permission denied when accessing config file at {self.configs_file_path}"
+            )
         except IOError as e:
             raise PermissionError(f"Unable to read config file at {self.configs_file_path}: {e}")
         except yaml.YAMLError:
@@ -154,7 +156,7 @@ class ConfigParser:
         if configs_dict is None or not configs_dict:
             raise ValueError(f"Config file at {self.configs_file_path} is empty or invalid YAML")
 
-        try: 
+        try:
             configs = Configs(**configs_dict)
             configs.model_validate()
         except TypeError as e:
@@ -163,11 +165,10 @@ class ConfigParser:
         _print_configs_on_startup(configs)
         return configs
 
-
     def parse_command_line(self, args: Namespace) -> Configs:
         """
         Parse command line arguments into an exportable Configs object.
-        
+
         Args:
             None.
 
@@ -207,11 +208,10 @@ class ConfigParser:
             use_docintel=args.use_docintel,
             docintel_endpoint=args.docintel_endpoint,
             pool_refresh_rate=args.pool_refresh_rate,
-            pool_health_check_rate=args.pool_health_check_rate
+            pool_health_check_rate=args.pool_health_check_rate,
         )
         _print_configs_on_startup(configs)
         return configs
-
 
     def _save_to_yaml(self, configs: Configs) -> None:
         """
@@ -233,17 +233,12 @@ class ConfigParser:
             yaml.YAMLError: If there's an error dumping the config to YAML format.
         """
         try:
-            with open(self.configs_file_path, "w", encoding='utf-8') as file:
-                yaml.safe_dump(
-                    configs.model_dump(), 
-                    file, 
-                    default_flow_style=False
-                )
+            with open(self.configs_file_path, "w", encoding="utf-8") as file:
+                yaml.safe_dump(configs.model_dump(), file, default_flow_style=False)
         except IOError as e:
             print(f"Error writing to config file: {e}")
         except yaml.YAMLError as e:
             print(f"Error dumping config to YAML: {e}")
-
 
     def save_current_config_settings_to_configs_file(self, configs: Configs) -> None:
         """
@@ -280,4 +275,3 @@ class ConfigParser:
                 self._save_to_yaml(configs)
         else:
             self._save_to_yaml(configs)
-

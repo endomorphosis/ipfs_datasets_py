@@ -4,11 +4,13 @@ Test stubs for simple_crawler module.
 Feature: Simple Web Crawler
   Basic web crawling functionality
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_url_that_returns_an_error():
@@ -83,6 +85,7 @@ def rate_limit_settings():
 
 
 # Test scenarios
+
 
 def test_crawl_single_web_page():
     """
@@ -174,6 +177,7 @@ def test_handle_crawl_errors():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a URL that returns an error")

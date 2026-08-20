@@ -10,11 +10,13 @@ Methods under test:
   - OntologyLearningAdapter.feedback_best_k_mean(k)
   - OntologyMediator.action_max_consecutive()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -27,11 +29,13 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_entity(eid, text=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=text or eid)
 
 
@@ -44,6 +48,7 @@ def _make_rel_mock(source_id, target_id):
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -53,16 +58,19 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -73,21 +81,27 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 # ── OntologyOptimizer.score_trailing_mean ────────────────────────────────────
+
 
 class TestScoreTrailingMean:
     def test_empty_returns_zero(self):
@@ -111,6 +125,7 @@ class TestScoreTrailingMean:
 
 # ── OntologyOptimizer.history_mean_last_n ────────────────────────────────────
 
+
 class TestHistoryMeanLastN:
     def test_returns_same_as_trailing_mean(self):
         o = _make_optimizer()
@@ -125,6 +140,7 @@ class TestHistoryMeanLastN:
 
 # ── OntologyGenerator.entity_text_word_count_avg ─────────────────────────────
 
+
 class TestEntityTextWordCountAvg:
     def test_empty_returns_zero(self):
         g = _make_generator()
@@ -138,15 +154,18 @@ class TestEntityTextWordCountAvg:
 
     def test_multiple_words(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("a", text="hello world"),
-            _make_entity("b", text="foo"),
-        ])
+        r = _make_result(
+            [
+                _make_entity("a", text="hello world"),
+                _make_entity("b", text="foo"),
+            ]
+        )
         # avg of 2 and 1 = 1.5
         assert g.entity_text_word_count_avg(r) == pytest.approx(1.5)
 
 
 # ── OntologyGenerator.relationship_symmetry_ratio ────────────────────────────
+
 
 class TestRelationshipSymmetryRatio:
     def test_empty_returns_zero(self):
@@ -169,7 +188,8 @@ class TestRelationshipSymmetryRatio:
     def test_partially_symmetric(self):
         g = _make_generator()
         rels = [
-            _make_rel_mock("a", "b"), _make_rel_mock("b", "a"),
+            _make_rel_mock("a", "b"),
+            _make_rel_mock("b", "a"),
             _make_rel_mock("c", "d"),
         ]
         r = _make_result(relationships=rels)
@@ -178,6 +198,7 @@ class TestRelationshipSymmetryRatio:
 
 
 # ── LogicValidator.leaf_nodes ─────────────────────────────────────────────────
+
 
 class TestLeafNodes:
     def test_empty_returns_empty(self):
@@ -192,24 +213,29 @@ class TestLeafNodes:
 
     def test_bridge_node_not_leaf(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "a", "target": "b"},
-            {"source": "b", "target": "c"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "a", "target": "b"},
+                {"source": "b", "target": "c"},
+            ]
+        }
         # b is both source and target → not leaf; c is leaf
         assert v.leaf_nodes(onto) == ["c"]
 
     def test_returns_sorted(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "a", "target": "z"},
-            {"source": "a", "target": "m"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "a", "target": "z"},
+                {"source": "a", "target": "m"},
+            ]
+        }
         result = v.leaf_nodes(onto)
         assert result == sorted(result)
 
 
 # ── OntologyPipeline.run_score_trend_slope ───────────────────────────────────
+
 
 class TestRunScoreTrendSlope:
     def test_empty_returns_zero(self):
@@ -244,6 +270,7 @@ class TestRunScoreTrendSlope:
 
 # ── OntologyLearningAdapter.feedback_best_k_mean ─────────────────────────────
 
+
 class TestFeedbackBestKMean:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -263,6 +290,7 @@ class TestFeedbackBestKMean:
 
 
 # ── OntologyMediator.action_max_consecutive ──────────────────────────────────
+
 
 class TestActionMaxConsecutive:
     def test_empty_returns_zero(self):

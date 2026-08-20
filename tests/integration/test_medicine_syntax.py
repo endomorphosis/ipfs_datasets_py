@@ -28,9 +28,9 @@ def main():
     print("=" * 60)
     print("Medicine Dashboard Syntax Tests")
     print("=" * 60)
-    
+
     base_path = "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/ipfs_datasets_py"
-    
+
     test_files = [
         "mcp_server/tools/medical_research_scrapers/__init__.py",
         "mcp_server/tools/medical_research_scrapers/pubmed_scraper.py",
@@ -38,30 +38,30 @@ def main():
         "mcp_server/tools/medical_research_scrapers/medical_research_mcp_tools.py",
         "logic_integration/medical_theorem_framework.py",
     ]
-    
+
     passed = 0
     failed = 0
-    
+
     for test_file in test_files:
         filepath = os.path.join(base_path, test_file)
         print(f"\nTesting: {test_file}")
-        
+
         if not os.path.exists(filepath):
             print(f"  ❌ File not found: {filepath}")
             failed += 1
             continue
-        
+
         if check_syntax(filepath):
             print(f"  ✅ Syntax valid")
             passed += 1
         else:
             print(f"  ❌ Syntax error")
             failed += 1
-    
+
     print("\n" + "=" * 60)
     print(f"Test Results: {passed}/{len(test_files)} passed")
     print("=" * 60)
-    
+
     if failed == 0:
         print("\n🎉 All syntax tests passed!")
         print("\nImplementation Summary:")

@@ -95,7 +95,7 @@ def test_symai_ipfs_engine_cache_key_separates_json_vs_text(
         calls["n"] += 1
         # Return different bodies to make collisions obvious.
         if "json" in prompt.lower():
-            return ("{\"status\": \"ok\"}", {"backend": "fake"})
+            return ('{"status": "ok"}', {"backend": "fake"})
         return ("ok", {"backend": "fake"})
 
     monkeypatch.setattr(symai_ipfs_engine, "_generate_text", fake_generate_text)

@@ -97,8 +97,7 @@ result = await save_dataset(dataset_data={"data": []}, destination="output.json"
 ```python
 # This should FAIL
 result = await process_dataset(
-    dataset_source={"data": []}, 
-    operations=[{"type": "exec", "code": "import os"}]
+    dataset_source={"data": []}, operations=[{"type": "exec", "code": "import os"}]
 )
 # Expected: {"status": "error", "message": "Operation type 'exec' is not allowed..."}
 ```

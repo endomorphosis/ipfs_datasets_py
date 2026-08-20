@@ -98,9 +98,7 @@ def test_primary_throughput_counts_next_cycle_confirmed_patches_not_claims_or_di
     ledger = CodexPatchThroughputLedger()
     ledger.record(claimed_tasks=100, generated_diffs=80, validation_accepted=10, merged_patches=7)
 
-    assert ledger.accepted_next_cycle_confirmed_patches_per_hour(
-        wall_clock_seconds=1800.0
-    ) == 0.0
+    assert ledger.accepted_next_cycle_confirmed_patches_per_hour(wall_clock_seconds=1800.0) == 0.0
 
     ledger.record(next_cycle_confirmed_patches=3)
     snapshot = ledger.to_dict(wall_clock_seconds=3600.0)

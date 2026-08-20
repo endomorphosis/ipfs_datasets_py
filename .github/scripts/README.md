@@ -352,7 +352,7 @@ pip install PyYAML requests
 ```python
 import re
 
-pattern = r'your regex here'
+pattern = r"your regex here"
 test_log = "ERROR: your error message"
 
 match = re.search(pattern, test_log, re.IGNORECASE)
@@ -369,6 +369,7 @@ Add debug prints:
 
 ```python
 import sys
+
 print(f"DEBUG: Processing {file}", file=sys.stderr)
 ```
 
@@ -378,7 +379,7 @@ print(f"DEBUG: Processing {file}", file=sys.stderr)
 import json
 
 # Save for inspection
-with open('/tmp/debug_data.json', 'w') as f:
+with open("/tmp/debug_data.json", "w") as f:
     json.dump(data, f, indent=2)
 ```
 

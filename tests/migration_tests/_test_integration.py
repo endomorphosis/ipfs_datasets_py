@@ -9,17 +9,15 @@ from collections import defaultdict
 from typing import Dict, List, Any, Optional
 
 # Configure direct imports to bypass the init issue
-sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath("."))
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Direct imports from the specific modules we need
-from ipfs_datasets_py.rag.rag_query_optimizer import (
-    QueryRewriter,
-    UnifiedGraphRAGQueryOptimizer
-)
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryRewriter, UnifiedGraphRAGQueryOptimizer
+
 
 def test_traversal_stats_sharing():
     """Test that traversal stats are properly shared between optimizer and rewriter."""
@@ -33,7 +31,9 @@ def test_traversal_stats_sharing():
 
         # Modify stats in optimizer and check if rewriter sees the changes
         optimizer._traversal_stats["relation_usefulness"]["test_relation"] = 0.75
-        rewriter_sees_value = optimizer.rewriter.traversal_stats["relation_usefulness"]["test_relation"] == 0.75
+        rewriter_sees_value = (
+            optimizer.rewriter.traversal_stats["relation_usefulness"]["test_relation"] == 0.75
+        )
         logger.info(f"Rewriter sees changes from optimizer: {rewriter_sees_value}")
 
         # Modify stats via rewriter and check if optimizer sees the changes
@@ -46,6 +46,7 @@ def test_traversal_stats_sharing():
     except Exception as e:
         logger.error(f"Test failed with error: {str(e)}")
         return False
+
 
 if __name__ == "__main__":
     logger.info("Testing QueryRewriter and UnifiedGraphRAGQueryOptimizer integration")

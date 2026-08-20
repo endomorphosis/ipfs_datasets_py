@@ -3,6 +3,7 @@
 Covers deterministic proof ID stability and cross-jurisdiction compliance
 checking across US-FEDERAL, US-CA, and US-NY policy profiles.
 """
+
 from __future__ import annotations
 
 import json
@@ -100,9 +101,7 @@ class TestMultiJurisdictionReplayMatrix:
     def test_drift_detected_when_events_changed(self):
         """Passing wrong events changes the outcome (drift detection)."""
         # Find a non_compliant case (no events satisfying the obligation)
-        non_compliant_case = next(
-            c for c in CASES if c["expected_status"] == "non_compliant"
-        )
+        non_compliant_case = next(c for c in CASES if c["expected_status"] == "non_compliant")
         ir = parse_cnl_to_ir(
             non_compliant_case["sentence"],
             jurisdiction=non_compliant_case["jurisdiction"],

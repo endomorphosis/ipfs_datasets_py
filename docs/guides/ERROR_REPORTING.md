@@ -126,6 +126,7 @@ except Exception as e:
 ```python
 from ipfs_datasets_py.error_reporting import error_reporter
 
+
 @error_reporter.wrap_function("Data Processing")
 def process_data(data):
     # Any errors will be automatically reported

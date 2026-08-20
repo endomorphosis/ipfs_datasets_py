@@ -2,6 +2,7 @@
 
 Covers issue #1171 (KG Enrichment Policy).
 """
+
 from __future__ import annotations
 
 import copy
@@ -11,14 +12,18 @@ import pytest
 # Path is set up by the layered conftest.py files (root, tests/, and this directory)
 from reasoner.hybrid_v2_blueprint import parse_cnl_to_ir
 from reasoner.kg_enrichment import (
-    build_entity_link_adapter, apply_kg_enrichment, rollback_kg_enrichment,
-    build_relation_enrichment_adapter, build_kg_drift_assessment,
+    build_entity_link_adapter,
+    apply_kg_enrichment,
+    rollback_kg_enrichment,
+    build_relation_enrichment_adapter,
+    build_kg_drift_assessment,
 )
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def simple_ir():
@@ -36,6 +41,7 @@ def enriched(simple_ir):
 # ---------------------------------------------------------------------------
 # TestKGEnrichmentAdditive
 # ---------------------------------------------------------------------------
+
 
 class TestKGEnrichmentAdditive:
     def test_enrichment_preserves_canonical_ids(self, enriched):
@@ -67,14 +73,13 @@ class TestKGEnrichmentAdditive:
             assert orig_attrs <= enriched_attrs
             # New kg attributes are additive
             new_attrs = enriched_attrs - orig_attrs
-            assert all("kg" in k for k in new_attrs), (
-                f"Non-KG attributes added: {new_attrs}"
-            )
+            assert all("kg" in k for k in new_attrs), f"Non-KG attributes added: {new_attrs}"
 
 
 # ---------------------------------------------------------------------------
 # TestKGEnrichmentCounters
 # ---------------------------------------------------------------------------
+
 
 class TestKGEnrichmentCounters:
     def test_entity_link_adapter_summary_fields(self, simple_ir):
@@ -87,16 +92,24 @@ class TestKGEnrichmentCounters:
 
     def test_relation_adapter_summary_fields(self, simple_ir):
         # GIVEN relation enrichment adapter
-        entity_adapter = build_entity_link_adapter(simple_ir, kg_namespace="kg", confidence_floor=0.0)
-        rel_adapter = build_relation_enrichment_adapter(simple_ir, entity_adapter, confidence_floor=0.0)
+        entity_adapter = build_entity_link_adapter(
+            simple_ir, kg_namespace="kg", confidence_floor=0.0
+        )
+        rel_adapter = build_relation_enrichment_adapter(
+            simple_ir, entity_adapter, confidence_floor=0.0
+        )
         summary = rel_adapter["summary"]
         # THEN adapter has required summary fields
         assert "enriched" in summary or "relations" in rel_adapter
 
     def test_apply_enrichment_write_summary(self, simple_ir):
         # GIVEN enrichment applied with writes enabled
-        entity_adapter = build_entity_link_adapter(simple_ir, kg_namespace="kg", confidence_floor=0.0)
-        rel_adapter = build_relation_enrichment_adapter(simple_ir, entity_adapter, confidence_floor=0.0)
+        entity_adapter = build_entity_link_adapter(
+            simple_ir, kg_namespace="kg", confidence_floor=0.0
+        )
+        rel_adapter = build_relation_enrichment_adapter(
+            simple_ir, entity_adapter, confidence_floor=0.0
+        )
         result = apply_kg_enrichment(simple_ir, entity_adapter, rel_adapter, enable_writes=True)
         summary = result["summary"]
         # THEN summary has entity_writes and frame_writes
@@ -123,6 +136,7 @@ class TestKGEnrichmentCounters:
 # TestKGEnrichmentRollback
 # ---------------------------------------------------------------------------
 
+
 class TestKGEnrichmentRollback:
     def test_rollback_removes_only_kg_attrs(self, enriched):
         # GIVEN an enriched IR
@@ -133,9 +147,7 @@ class TestKGEnrichmentRollback:
         rolled_back = rollback_kg_enrichment(enriched_ir, rollback_plan)
         # THEN kg_link attrs are removed
         for ent in rolled_back.entities.values():
-            assert "kg_link" not in ent.attrs, (
-                "kg_link should be removed after rollback"
-            )
+            assert "kg_link" not in ent.attrs, "kg_link should be removed after rollback"
 
     def test_rollback_is_idempotent(self, enriched):
         # GIVEN an enriched IR
@@ -149,9 +161,7 @@ class TestKGEnrichmentRollback:
         for ent_id in rb1.entities:
             attrs1 = set(rb1.entities[ent_id].attrs.keys())
             attrs2 = set(rb2.entities[ent_id].attrs.keys())
-            assert attrs1 == attrs2, (
-                f"Entity {ent_id}: rollback not idempotent"
-            )
+            assert attrs1 == attrs2, f"Entity {ent_id}: rollback not idempotent"
 
     def test_rollback_restores_previous_values(self, enriched):
         # GIVEN an enriched IR and the original
@@ -165,20 +175,23 @@ class TestKGEnrichmentRollback:
             rb_ent = rolled_back.entities[ent_id]
             orig_label = orig_ent.attrs.get("label")
             rb_label = rb_ent.attrs.get("label")
-            assert orig_label == rb_label, (
-                f"Entity {ent_id}: label changed after rollback"
-            )
+            assert orig_label == rb_label, f"Entity {ent_id}: label changed after rollback"
 
     def test_full_cycle_enrich_then_rollback(self, simple_ir):
         # GIVEN a fresh IR
         original_entity_attr_keys = {
-            ent_id: set(ent.attrs.keys())
-            for ent_id, ent in simple_ir.entities.items()
+            ent_id: set(ent.attrs.keys()) for ent_id, ent in simple_ir.entities.items()
         }
         # WHEN enriched then rolled back
-        entity_adapter = build_entity_link_adapter(simple_ir, kg_namespace="kg", confidence_floor=0.0)
-        rel_adapter = build_relation_enrichment_adapter(simple_ir, entity_adapter, confidence_floor=0.0)
-        enrich_result = apply_kg_enrichment(simple_ir, entity_adapter, rel_adapter, enable_writes=True)
+        entity_adapter = build_entity_link_adapter(
+            simple_ir, kg_namespace="kg", confidence_floor=0.0
+        )
+        rel_adapter = build_relation_enrichment_adapter(
+            simple_ir, entity_adapter, confidence_floor=0.0
+        )
+        enrich_result = apply_kg_enrichment(
+            simple_ir, entity_adapter, rel_adapter, enable_writes=True
+        )
         enriched_ir = enrich_result["ir"]
         rollback_plan = enrich_result["rollback"]
         rolled_back_ir = rollback_kg_enrichment(enriched_ir, rollback_plan)

@@ -34,7 +34,7 @@ protocol).
 
 ```python
 result = dst.merge(src)
-assert result >= 1      # new: rich comparison against int
+assert result >= 1  # new: rich comparison against int
 assert result > MergeResult(added_count=0)  # new: against MergeResult
 ```
 

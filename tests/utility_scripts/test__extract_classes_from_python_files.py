@@ -53,7 +53,7 @@
 #         """
 #         # When
 #         extractor = ClassExtractor(self.test_file)
-        
+
 #         # Then
 #         assert extractor.input_file == self.test_file
 #         assert extractor.output_dir == os.path.dirname(self.test_file)
@@ -71,10 +71,10 @@
 #         """
 #         # Given
 #         custom_output_dir = os.path.join(self.temp_dir, "custom_output")
-        
+
 #         # When
 #         extractor = ClassExtractor(self.test_file, custom_output_dir)
-        
+
 #         # Then
 #         assert extractor.input_file == self.test_file
 #         assert extractor.output_dir == custom_output_dir
@@ -88,7 +88,7 @@
 #         """
 #         # Given
 #         nonexistent_file = "/path/that/does/not/exist.py"
-        
+
 #         # When/Then
 #         with pytest.raises(FileNotFoundError):
 #             ClassExtractor(nonexistent_file)
@@ -104,7 +104,7 @@
 #         non_python_file = os.path.join(self.temp_dir, "test.txt")
 #         with open(non_python_file, 'w') as f:
 #             f.write("some content")
-        
+
 #         # When/Then
 #         with pytest.raises(ValueError, match="not a Python file"):
 #             ClassExtractor(non_python_file)
@@ -145,11 +145,11 @@
 #         relative_file = "test_relative.py"
 #         with open(relative_file, 'w') as f:
 #             f.write("class TestClass:\n    pass\n")
-        
+
 #         try:
 #             # When
 #             extractor = ClassExtractor(relative_file)
-            
+
 #             # Then
 #             assert os.path.exists(extractor.input_file)
 #             assert extractor.input_file.endswith(relative_file)
@@ -169,10 +169,10 @@
 #         """
 #         # Given
 #         absolute_path = os.path.abspath(self.test_file)
-        
+
 #         # When
 #         extractor = ClassExtractor(absolute_path)
-        
+
 #         # Then
 #         assert extractor.input_file == absolute_path
 #         assert os.path.isabs(extractor.input_file)
@@ -207,24 +207,24 @@
 # class SingleClass:
 #     def __init__(self):
 #         self.value = 42
-    
+
 #     def get_value(self):
 #         return self.value
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(single_class_content)
-        
+
 #         # When
 #         extractor = ClassExtractor(self.test_file)
 #         result = extractor.extract_classes()
-        
+
 #         # Then
 #         assert isinstance(result, dict)
 #         assert len(result) == 1
 #         assert "SingleClass" in result
 #         assert isinstance(result["SingleClass"], Path)
 #         assert result["SingleClass"].exists()
-        
+
 #         # Verify file content
 #         with open(result["SingleClass"], 'r') as f:
 #             content = f.read()
@@ -259,23 +259,23 @@
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(multiple_classes_content)
-        
+
 #         # When
 #         extractor = ClassExtractor(self.test_file)
 #         result = extractor.extract_classes()
-        
+
 #         # Then
 #         assert isinstance(result, dict)
 #         assert len(result) == 3
 #         assert "FirstClass" in result
 #         assert "SecondClass" in result
 #         assert "ThirdClass" in result
-        
+
 #         # Verify each file exists and contains correct class
 #         for class_name, file_path in result.items():
 #             assert isinstance(file_path, Path)
 #             assert file_path.exists()
-            
+
 #             with open(file_path, 'r') as f:
 #                 content = f.read()
 #                 assert f"class {class_name}:" in content
@@ -299,7 +299,7 @@
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(no_classes_content)
-        
+
 #         # When/Then
 #         extractor = ClassExtractor(self.test_file)
 #         with pytest.raises(ValueError, match="no classes found"):
@@ -319,14 +319,14 @@
 # class OuterClass:
 #     def __init__(self):
 #         self.value = 1
-    
+
 #     class InnerClass:
 #         def __init__(self):
 #             self.inner_value = 2
-        
+
 #         def get_inner(self):
 #             return self.inner_value
-    
+
 #     def get_outer(self):
 #         return self.value
 
@@ -335,15 +335,15 @@
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(nested_classes_content)
-        
+
 #         # When
 #         extractor = ClassExtractor(self.test_file)
 #         result = extractor.extract_classes()
-        
+
 #         # Then
 #         assert "OuterClass" in result
 #         assert "AnotherClass" in result
-        
+
 #         # Verify nested class is included in outer class file
 #         with open(result["OuterClass"], 'r') as f:
 #             content = f.read()
@@ -375,23 +375,23 @@
 # class DependentClass:
 #     def __init__(self):
 #         self.value = GLOBAL_CONSTANT
-    
+
 #     def process(self, data: List[int]):
 #         return [helper_function(x) for x in data]
-    
+
 #     def get_path(self):
 #         return os.getcwd()
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(dependencies_content)
-        
+
 #         # When
 #         extractor = ClassExtractor(self.test_file)
 #         result = extractor.extract_classes()
-        
+
 #         # Then
 #         assert "DependentClass" in result
-        
+
 #         with open(result["DependentClass"], 'r') as f:
 #             content = f.read()
 #             assert "import os" in content
@@ -415,7 +415,7 @@
 # class BaseClass:
 #     def __init__(self, name):
 #         self.name = name
-    
+
 #     def get_name(self):
 #         return self.name
 
@@ -423,7 +423,7 @@
 #     def __init__(self, name, value):
 #         super().__init__(name)
 #         self.value = value
-    
+
 #     def get_value(self):
 #         return self.value
 
@@ -433,16 +433,16 @@
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(inheritance_content)
-        
+
 #         # When
 #         extractor = ClassExtractor(self.test_file)
 #         result = extractor.extract_classes()
-        
+
 #         # Then
 #         assert "BaseClass" in result
 #         assert "DerivedClass" in result
 #         assert "AnotherDerived" in result
-        
+
 #         # Verify base class is included in derived class files
 #         with open(result["DerivedClass"], 'r') as f:
 #             content = f.read()
@@ -480,21 +480,21 @@
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(decorators_content)
-        
+
 #         # When
 #         extractor = ClassExtractor(self.test_file)
 #         result = extractor.extract_classes()
-        
+
 #         # Then
 #         assert "DataClass" in result
 #         assert "DecoratedClass" in result
-        
+
 #         # Verify decorators are preserved
 #         with open(result["DataClass"], 'r') as f:
 #             content = f.read()
 #             assert "@dataclass" in content
 #             assert "from dataclasses import dataclass" in content
-        
+
 #         with open(result["DecoratedClass"], 'r') as f:
 #             content = f.read()
 #             assert "@custom_decorator" in content
@@ -514,33 +514,33 @@
 # class MethodClass:
 #     def __init__(self, value):
 #         self._value = value
-    
+
 #     @staticmethod
 #     def static_method():
 #         return "static"
-    
+
 #     @classmethod
 #     def class_method(cls):
 #         return "class"
-    
+
 #     @property
 #     def value(self):
 #         return self._value
-    
+
 #     @value.setter
 #     def value(self, new_value):
 #         self._value = new_value
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(methods_content)
-        
+
 #         # When
 #         extractor = ClassExtractor(self.test_file)
 #         result = extractor.extract_classes()
-        
+
 #         # Then
 #         assert "MethodClass" in result
-        
+
 #         with open(result["MethodClass"], 'r') as f:
 #             content = f.read()
 #             assert "@staticmethod" in content
@@ -568,11 +568,11 @@
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(naming_content)
-        
+
 #         # When
 #         extractor = ClassExtractor(self.test_file)
 #         result = extractor.extract_classes()
-        
+
 #         # Then
 #         for class_name, file_path in result.items():
 #             assert file_path.name == f"{class_name}.py"
@@ -591,13 +591,13 @@
 # class BrokenClass:
 #     def method(self)
 #         return "missing colon"
-    
+
 #     def another_method(self):
 #         invalid syntax here!!!
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(invalid_syntax_content)
-        
+
 #         # When/Then
 #         extractor = ClassExtractor(self.test_file)
 #         with pytest.raises(SyntaxError):
@@ -619,16 +619,16 @@
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(class_content)
-        
+
 #         # Create existing file
 #         existing_file = os.path.join(self.temp_dir, "ExistingClass.py")
 #         with open(existing_file, 'w') as f:
 #             f.write("# old content")
-        
+
 #         # When
 #         extractor = ClassExtractor(self.test_file)
 #         result = extractor.extract_classes()
-        
+
 #         # Then
 #         assert "ExistingClass" in result
 #         with open(result["ExistingClass"], 'r') as f:
@@ -650,11 +650,11 @@
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(class_content)
-        
+
 #         readonly_dir = os.path.join(self.temp_dir, "readonly")
 #         os.makedirs(readonly_dir)
 #         os.chmod(readonly_dir, 0o444)  # Read-only
-        
+
 #         try:
 #             # When/Then
 #             extractor = ClassExtractor(self.test_file, readonly_dir)
@@ -684,20 +684,19 @@
 # '''
 #         with open(self.test_file, 'w') as f:
 #             f.write(class_content)
-        
+
 #         # When
 #         extractor = ClassExtractor(self.test_file)
 #         result = extractor.extract_classes()
-        
+
 #         # Then
 #         assert isinstance(result, dict)
-        
+
 #         for class_name, file_path in result.items():
 #             assert isinstance(class_name, str)
 #             assert isinstance(file_path, Path)
 #             assert file_path.exists()
 #             assert file_path.is_file()
-
 
 
 # class TestMainFunction:
@@ -735,7 +734,7 @@
 #         """
 #         # Given
 #         test_args = ["script_name", self.test_file]
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('_extract_classes_from_python_files_stubs.ClassExtractor') as mock_extractor_class:
@@ -743,10 +742,10 @@
 #                 mock_extractor_class.return_value = mock_extractor
 #                 mock_extractor.extract_classes.return_value = {"TestClass1": Path("TestClass1.py")}
 #                 mock_extractor.output_dir = self.temp_dir
-                
+
 #                 with patch('builtins.print') as mock_print:
 #                     main()
-        
+
 #         # Then
 #         mock_extractor_class.assert_called_once_with(self.test_file, None)
 #         mock_extractor.extract_classes.assert_called_once()
@@ -765,7 +764,7 @@
 #         # Given
 #         output_dir = os.path.join(self.temp_dir, "output")
 #         test_args = ["script_name", self.test_file, "-o", output_dir]
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('_extract_classes_from_python_files_stubs.ClassExtractor') as mock_extractor_class:
@@ -773,10 +772,10 @@
 #                 mock_extractor_class.return_value = mock_extractor
 #                 mock_extractor.extract_classes.return_value = {"TestClass1": Path("TestClass1.py")}
 #                 mock_extractor.output_dir = output_dir
-                
+
 #                 with patch('builtins.print') as mock_print:
 #                     main()
-        
+
 #         # Then
 #         mock_extractor_class.assert_called_once_with(self.test_file, output_dir)
 #         mock_extractor.extract_classes.assert_called_once()
@@ -797,17 +796,17 @@
 #             "TestClass1": Path("TestClass1.py"),
 #             "TestClass2": Path("TestClass2.py")
 #         }
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('_extract_classes_from_python_files_stubs.ClassExtractor') as mock_extractor_class:
 #                 mock_extractor = MagicMock()
 #                 mock_extractor_class.return_value = mock_extractor
 #                 mock_extractor.extract_classes.return_value = created_files
-                
+
 #                 with patch('builtins.print') as mock_print:
 #                     main()
-        
+
 #         # Then
 #         print_calls = [call[0][0] for call in mock_print.call_args_list]
 #         assert any("Successfully extracted 2 classes" in call for call in print_calls)
@@ -826,7 +825,7 @@
 #         # Given
 #         test_args = ["script_name", self.test_file]
 #         created_files = {"TestClass1": Path("TestClass1.py")}
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('_extract_classes_from_python_files_stubs.ClassExtractor') as mock_extractor_class:
@@ -834,10 +833,10 @@
 #                 mock_extractor_class.return_value = mock_extractor
 #                 mock_extractor.extract_classes.return_value = created_files
 #                 mock_extractor.output_dir = self.temp_dir
-                
+
 #                 with patch('builtins.print') as mock_print:
 #                     main()
-        
+
 #         # Then
 #         print_calls = [call[0][0] for call in mock_print.call_args_list]
 #         assert any("Extracted 1 classes to" in call for call in print_calls)
@@ -854,13 +853,13 @@
 #         """
 #         # Given
 #         test_args = ["script_name", "--help"]
-        
+
 #         # When/Then
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('_extract_classes_from_python_files_stubs.ClassExtractor') as mock_extractor_class:
 #                 with pytest.raises(SystemExit) as excinfo:
 #                     main()
-                
+
 #                 assert excinfo.value.code == 0
 #                 mock_extractor_class.assert_not_called()
 
@@ -875,12 +874,12 @@
 #         """
 #         # Given
 #         test_args = ["script_name"]
-        
+
 #         # When/Then
 #         with patch.object(sys, 'argv', test_args):
 #             with pytest.raises(SystemExit) as excinfo:
 #                 main()
-            
+
 #             assert excinfo.value.code != 0
 
 #     def test_main_with_invalid_input_file(self):
@@ -895,13 +894,13 @@
 #         # Given
 #         invalid_file = "/path/that/does/not/exist.py"
 #         test_args = ["script_name", invalid_file]
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
 #                 with pytest.raises(SystemExit) as excinfo:
 #                     main()
-        
+
 #         # Then
 #         assert excinfo.value.code == 1
 #         stderr_output = mock_stderr.getvalue()
@@ -918,16 +917,16 @@
 #         """
 #         # Given
 #         test_args = ["script_name", self.test_file]
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('_extract_classes_from_python_files_stubs.ClassExtractor') as mock_extractor_class:
 #                 mock_extractor_class.side_effect = PermissionError("Permission denied")
-                
+
 #                 with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
 #                     with pytest.raises(SystemExit) as excinfo:
 #                         main()
-        
+
 #         # Then
 #         assert excinfo.value.code == 1
 #         stderr_output = mock_stderr.getvalue()
@@ -946,16 +945,16 @@
 #         # Given
 #         nonexistent_file = "/nonexistent/file.py"
 #         test_args = ["script_name", nonexistent_file]
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('_extract_classes_from_python_files_stubs.ClassExtractor') as mock_extractor_class:
 #                 mock_extractor_class.side_effect = FileNotFoundError(f"File not found: {nonexistent_file}")
-                
+
 #                 with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
 #                     with pytest.raises(SystemExit) as excinfo:
 #                         main()
-        
+
 #         # Then
 #         assert excinfo.value.code == 1
 #         stderr_output = mock_stderr.getvalue()
@@ -973,18 +972,18 @@
 #         """
 #         # Given
 #         test_args = ["script_name", self.test_file]
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('_extract_classes_from_python_files_stubs.ClassExtractor') as mock_extractor_class:
 #                 mock_extractor = MagicMock()
 #                 mock_extractor_class.return_value = mock_extractor
 #                 mock_extractor.extract_classes.side_effect = ValueError("No classes found")
-                
+
 #                 with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
 #                     with pytest.raises(SystemExit) as excinfo:
 #                         main()
-        
+
 #         # Then
 #         assert excinfo.value.code == 1
 #         stderr_output = mock_stderr.getvalue()
@@ -1006,25 +1005,25 @@
 #             "TestClass1": Path("/output/TestClass1.py"),
 #             "TestClass2": Path("/output/TestClass2.py")
 #         }
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('_extract_classes_from_python_files_stubs.ClassExtractor') as mock_extractor_class:
 #                 mock_extractor = MagicMock()
 #                 mock_extractor_class.return_value = mock_extractor
 #                 mock_extractor.extract_classes.return_value = created_files
-                
+
 #                 with patch('builtins.print') as mock_print:
 #                     main()
-        
+
 #         # Then
 #         print_calls = [call[0][0] for call in mock_print.call_args_list]
-        
+
 #         # Check for success message
 #         success_msg = next((call for call in print_calls if "Successfully extracted 2 classes" in call), None)
 #         assert success_msg is not None
 #         assert self.test_file in success_msg
-        
+
 #         # Check for class listings
 #         assert any("TestClass1 -> /output/TestClass1.py" in call for call in print_calls)
 #         assert any("TestClass2 -> /output/TestClass2.py" in call for call in print_calls)
@@ -1041,7 +1040,7 @@
 #         # Given
 #         test_args = ["script_name", self.test_file]
 #         created_files = {"TestClass1": Path("TestClass1.py")}
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('_extract_classes_from_python_files_stubs.ClassExtractor') as mock_extractor_class:
@@ -1049,10 +1048,10 @@
 #                 mock_extractor_class.return_value = mock_extractor
 #                 mock_extractor.extract_classes.return_value = created_files
 #                 mock_extractor.output_dir = self.temp_dir
-                
+
 #                 with patch('builtins.print') as mock_print:
 #                     main()
-        
+
 #         # Then
 #         print_calls = [call[0][0] for call in mock_print.call_args_list]
 #         assert len(print_calls) == 1
@@ -1070,13 +1069,13 @@
 #             - Proper argument types and validation
 #         """
 #         # This test verifies the parser configuration by testing argument parsing
-        
+
 #         # Test required input_file argument
 #         test_args = ["script_name"]
 #         with patch.object(sys, 'argv', test_args):
 #             with pytest.raises(SystemExit):
 #                 main()
-        
+
 #         # Test optional arguments work
 #         test_args = ["script_name", self.test_file, "-o", "/tmp", "-v"]
 #         with patch.object(sys, 'argv', test_args):
@@ -1084,10 +1083,10 @@
 #                 mock_extractor = MagicMock()
 #                 mock_extractor_class.return_value = mock_extractor
 #                 mock_extractor.extract_classes.return_value = {}
-                
+
 #                 with patch('builtins.print'):
 #                     main()
-                
+
 #                 mock_extractor_class.assert_called_once_with(self.test_file, "/tmp")
 
 #     def test_main_when_called_as_script(self):
@@ -1101,7 +1100,7 @@
 #         # This test verifies the if __name__ == "__main__" block
 #         # We test this by importing the module and checking the structure
 #         import _extract_classes_from_python_files_stubs as module
-        
+
 #         # Verify main function exists and is callable
 #         assert hasattr(module, 'main')
 #         assert callable(module.main)
@@ -1123,29 +1122,29 @@
 #                 mock_extractor_class.return_value = mock_extractor
 #                 mock_extractor.extract_classes.return_value = {"TestClass": Path("TestClass.py")}
 #                 mock_extractor.output_dir = self.temp_dir
-                
+
 #                 with patch('builtins.print'):
 #                     # Should complete without raising SystemExit
 #                     main()
-        
+
 #         # Test error scenario
 #         test_args = ["script_name", "/nonexistent.py"]
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('_extract_classes_from_python_files_stubs.ClassExtractor') as mock_extractor_class:
 #                 mock_extractor_class.side_effect = FileNotFoundError()
-                
+
 #                 with patch('sys.stderr', new_callable=StringIO):
 #                     with pytest.raises(SystemExit) as excinfo:
 #                         main()
-                    
+
 #                     assert excinfo.value.code == 1
-        
+
 #         # Test help scenario
 #         test_args = ["script_name", "--help"]
 #         with patch.object(sys, 'argv', test_args):
 #             with pytest.raises(SystemExit) as excinfo:
 #                 main()
-            
+
 #             assert excinfo.value.code == 0
 
 
@@ -1165,20 +1164,20 @@
 
 # class BaseClass:
 #     """Base class for inheritance testing."""
-    
+
 #     def __init__(self, name: str):
 #         self.name = name
-    
+
 #     def get_name(self) -> str:
 #         return self.name
 
 # class DerivedClass(BaseClass):
 #     """Derived class for inheritance testing."""
-    
+
 #     def __init__(self, name: str, value: int):
 #         super().__init__(name)
 #         self.value = value
-    
+
 #     def get_value(self) -> int:
 #         return self.value
 
@@ -1190,15 +1189,15 @@
 
 # class UtilityClass:
 #     """Utility class with static and class methods."""
-    
+
 #     @staticmethod
 #     def static_method() -> str:
 #         return "static"
-    
+
 #     @classmethod
 #     def class_method(cls) -> str:
 #         return "class"
-    
+
 #     @property
 #     def instance_property(self) -> str:
 #         return "property"
@@ -1224,44 +1223,44 @@
 #         """
 #         # Given
 #         test_args = ["script_name", self.test_file, "--verbose"]
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('builtins.print') as mock_print:
 #                 main()
-        
+
 #         # Then
 #         # Verify output files were created
 #         expected_files = ["BaseClass.py", "DerivedClass.py", "DataClass.py", "UtilityClass.py"]
 #         for expected_file in expected_files:
 #             file_path = os.path.join(self.temp_dir, expected_file)
 #             assert os.path.exists(file_path), f"Expected file {expected_file} was not created"
-        
+
 #         # Verify verbose output
 #         print_calls = [call[0][0] for call in mock_print.call_args_list]
 #         assert any("Successfully extracted 4 classes" in call for call in print_calls)
-        
+
 #         # Verify each file contains the correct class
 #         base_class_file = os.path.join(self.temp_dir, "BaseClass.py")
 #         with open(base_class_file, 'r') as f:
 #             content = f.read()
 #             assert "class BaseClass:" in content
 #             assert "def get_name(self)" in content
-        
+
 #         derived_class_file = os.path.join(self.temp_dir, "DerivedClass.py")
 #         with open(derived_class_file, 'r') as f:
 #             content = f.read()
 #             assert "class DerivedClass(BaseClass):" in content
 #             assert "class BaseClass:" in content  # Should include base class
 #             assert "super().__init__(name)" in content
-        
+
 #         data_class_file = os.path.join(self.temp_dir, "DataClass.py")
 #         with open(data_class_file, 'r') as f:
 #             content = f.read()
 #             assert "@dataclass" in content
 #             assert "class DataClass:" in content
 #             assert "from dataclasses import dataclass" in content
-        
+
 #         utility_class_file = os.path.join(self.temp_dir, "UtilityClass.py")
 #         with open(utility_class_file, 'r') as f:
 #             content = f.read()
@@ -1269,7 +1268,7 @@
 #             assert "@staticmethod" in content
 #             assert "@classmethod" in content
 #             assert "@property" in content
-        
+
 #         # Verify syntax validity by attempting to compile each file
 #         for expected_file in expected_files:
 #             file_path = os.path.join(self.temp_dir, expected_file)
@@ -1293,31 +1292,31 @@
 #         # Given
 #         custom_output_dir = os.path.join(self.temp_dir, "custom_output", "nested")
 #         test_args = ["script_name", self.test_file, "-o", custom_output_dir]
-        
+
 #         # Verify directory doesn't exist yet
 #         assert not os.path.exists(custom_output_dir)
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('builtins.print') as mock_print:
 #                 main()
-        
+
 #         # Then
 #         # Verify output directory was created
 #         assert os.path.exists(custom_output_dir)
 #         assert os.path.isdir(custom_output_dir)
-        
+
 #         # Verify all files were created in the custom directory
 #         expected_files = ["BaseClass.py", "DerivedClass.py", "DataClass.py", "UtilityClass.py"]
 #         for expected_file in expected_files:
 #             file_path = os.path.join(custom_output_dir, expected_file)
 #             assert os.path.exists(file_path), f"Expected file {expected_file} was not created in custom directory"
 #             assert os.path.isfile(file_path)
-        
+
 #         # Verify brief output format
 #         print_calls = [call[0][0] for call in mock_print.call_args_list]
 #         assert any(f"Extracted 4 classes to {custom_output_dir}" in call for call in print_calls)
-        
+
 #         # Verify file permissions are readable
 #         for expected_file in expected_files:
 #             file_path = os.path.join(custom_output_dir, expected_file)
@@ -1337,33 +1336,33 @@
 #         simple_content = '''
 # class SimpleClass:
 #     """A simple test class."""
-    
+
 #     def __init__(self, value):
 #         self.value = value
-    
+
 #     def get_value(self):
 #         return self.value
 # '''
 #         with open(simple_file, 'w') as f:
 #             f.write(simple_content)
-        
+
 #         test_args = ["script_name", simple_file]
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('builtins.print') as mock_print:
 #                 main()
-        
+
 #         # Then
 #         output_file = os.path.join(self.temp_dir, "SimpleClass.py")
 #         assert os.path.exists(output_file)
-        
+
 #         with open(output_file, 'r') as f:
 #             content = f.read()
 #             assert "class SimpleClass:" in content
 #             assert "def __init__(self, value):" in content
 #             assert "def get_value(self):" in content
-        
+
 #         # Verify output message
 #         print_calls = [call[0][0] for call in mock_print.call_args_list]
 #         assert any("Extracted 1 classes to" in call for call in print_calls)
@@ -1381,16 +1380,16 @@
 #         no_classes_file = os.path.join(self.temp_dir, "no_classes.py")
 #         with open(no_classes_file, 'w') as f:
 #             f.write("def some_function():\n    return 42\n")
-        
+
 #         test_args = ["script_name", no_classes_file]
-        
+
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('sys.stderr') as mock_stderr:
 #                 with pytest.raises(SystemExit) as excinfo:
 #                     main()
-                
+
 #                 assert excinfo.value.code == 1
-        
+
 #         # Verify no output files were created
 #         py_files = [f for f in os.listdir(self.temp_dir) if f.endswith('.py')]
 #         expected_files = ["integration_test.py", "no_classes.py"]  # Only input files
@@ -1410,14 +1409,14 @@
 #         existing_file = os.path.join(self.temp_dir, "BaseClass.py")
 #         with open(existing_file, 'w') as f:
 #             f.write("# This is old content that should be overwritten\n")
-        
+
 #         test_args = ["script_name", self.test_file]
-        
+
 #         # When
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('builtins.print'):
 #                 main()
-        
+
 #         # Then
 #         # Verify old content was overwritten
 #         with open(existing_file, 'r') as f:
@@ -1436,22 +1435,21 @@
 #         """
 #         # Test normal case - verify created files have correct permissions
 #         test_args = ["script_name", self.test_file]
-        
+
 #         with patch.object(sys, 'argv', test_args):
 #             with patch('builtins.print'):
 #                 main()
-        
+
 #         # Verify created files are readable and writable by owner
 #         created_files = [f for f in os.listdir(self.temp_dir) if f.endswith('.py') and f != 'integration_test.py']
-        
+
 #         for filename in created_files:
 #             filepath = os.path.join(self.temp_dir, filename)
 #             stat_info = os.stat(filepath)
-            
+
 #             # Check that file is readable and writable by owner
 #             assert stat_info.st_mode & 0o400  # Owner read
 #             assert stat_info.st_mode & 0o200  # Owner write
-
 
 
 # if __name__ == "__main__":

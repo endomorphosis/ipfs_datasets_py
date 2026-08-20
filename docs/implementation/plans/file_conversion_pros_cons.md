@@ -220,13 +220,17 @@ Need 96+ formats? → convert_to_txt_based_on_mime_type
 
 **Code Example:**
 ```python
-from ipfs_datasets_py.data_transformation.multimedia.convert_to_txt_based_on_mime_type import FileUnit, file_converter
+from ipfs_datasets_py.data_transformation.multimedia.convert_to_txt_based_on_mime_type import (
+    FileUnit,
+    file_converter,
+)
 from ipfs_datasets_py.rag import GraphRAG
+
 
 async def convert_for_graphrag(file_path: str):
     file_unit = FileUnit(file_path=file_path)
     converted = await file_converter(file_unit)
-    
+
     graph = GraphRAG()
     return await graph.process_document(converted.data)
 ```
@@ -322,6 +326,7 @@ Use convert_to_txt with custom metadata extractor.
 ```python
 import asyncio
 from pathlib import Path
+
 
 async def batch_convert_directory(directory: Path):
     files = list(directory.rglob("*.*"))

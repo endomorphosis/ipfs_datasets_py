@@ -68,10 +68,7 @@ def _matching_explicit_ambiguity(
             continue
         if metadata.get("target_family") != target_family:
             continue
-        if (
-            abs(float(metadata.get("family_margin_raw", 0.0)) - expected_margin)
-            > 1e-12
-        ):
+        if abs(float(metadata.get("family_margin_raw", 0.0)) - expected_margin) > 1e-12:
             continue
         return ambiguity
     return None
@@ -93,9 +90,7 @@ def test_modal_registry_packet_000618_family_pairs_are_supported() -> None:
             target_family,
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
@@ -127,9 +122,7 @@ def test_compiler_emits_packet_000618_explicit_family_ambiguities() -> None:
         },
     )
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         family_margin = float(case["family_margin"])
@@ -143,10 +136,7 @@ def test_compiler_emits_packet_000618_explicit_family_ambiguities() -> None:
         )
 
         result = compiler.compile(
-            (
-                "The Secretary shall issue rules and provide proof of "
-                "authority under this section."
-            ),
+            ("The Secretary shall issue rules and provide proof of authority under this section."),
             document_id=f"compiler-ambiguity-packet-000618-{case['sample_id']}",
         )
         ambiguity = _matching_explicit_ambiguity(
@@ -170,7 +160,4 @@ def test_compiler_emits_packet_000618_explicit_family_ambiguities() -> None:
         assert ambiguity.metadata.get("is_priority_policy_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
-        assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12

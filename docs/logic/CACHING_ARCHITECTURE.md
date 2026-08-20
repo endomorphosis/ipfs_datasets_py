@@ -29,11 +29,7 @@ Caches complete proof execution results including:
 ```python
 from ipfs_datasets_py.logic.integration.caching import ProofCache
 
-cache = ProofCache(
-    max_entries=1000,
-    ttl_seconds=3600,
-    use_ipfs=True
-)
+cache = ProofCache(max_entries=1000, ttl_seconds=3600, use_ipfs=True)
 
 # Check cache
 result = cache.get(goal, axioms)
@@ -64,11 +60,7 @@ Caches text → formula conversions with:
 ```python
 from ipfs_datasets_py.logic.common import BoundedCache
 
-cache = BoundedCache(
-    max_size=500,
-    ttl_seconds=3600,
-    eviction_policy="lru"
-)
+cache = BoundedCache(max_size=500, ttl_seconds=3600, eviction_policy="lru")
 
 # Check cache
 formula = cache.get(text)
@@ -99,11 +91,7 @@ Caches complete conversion results:
 ```python
 from ipfs_datasets_py.logic.fol import FOLConverter
 
-converter = FOLConverter(
-    use_cache=True,
-    cache_max_size=1000,
-    use_ml=True
-)
+converter = FOLConverter(use_cache=True, cache_max_size=1000, use_ml=True)
 
 # Automatic caching
 result = converter.convert("All humans are mortal")
@@ -136,7 +124,7 @@ value = cache.get("key")
 # With TTL
 cache = BoundedCache(
     max_size=1000,
-    ttl_seconds=3600  # 1 hour
+    ttl_seconds=3600,  # 1 hour
 )
 
 # Clear
@@ -166,7 +154,7 @@ from ipfs_datasets_py.logic.integration.caching import ProofCache
 cache = ProofCache(
     max_entries=1000,
     ttl_seconds=86400,  # 24 hours
-    use_ipfs=True
+    use_ipfs=True,
 )
 
 # Store proof result
@@ -241,12 +229,9 @@ def initialize_cache(common_texts):
         formula = _convert_uncached(text)
         cache.set(text, formula)
 
+
 # Preload
-initialize_cache([
-    "All humans are mortal",
-    "P -> Q",
-    "forall x. P(x)"
-])
+initialize_cache(["All humans are mortal", "P -> Q", "forall x. P(x)"])
 ```
 
 **When to use:**
@@ -276,11 +261,11 @@ Target cache hit rates by operation:
 
 # Cache size in entries
 formula_cache_size = available_memory_mb * 1000 / 0.05  # 50 bytes avg
-proof_cache_size = available_memory_mb * 1000 / 0.75    # 750 bytes avg
+proof_cache_size = available_memory_mb * 1000 / 0.75  # 750 bytes avg
 
 # Example: 100MB available memory
-formula_cache = 100 * 1000 / 0.05      # 2M entries
-proof_cache = 100 * 1000 / 0.75        # 133K entries
+formula_cache = 100 * 1000 / 0.05  # 2M entries
+proof_cache = 100 * 1000 / 0.75  # 133K entries
 ```
 
 ### TTL Strategies
@@ -326,11 +311,7 @@ Store cache in IPFS for distributed access and persistence.
 from ipfs_datasets_py.logic.integration.caching import ProofCache
 
 # IPFS-backed cache
-cache = ProofCache(
-    max_entries=1000,
-    use_ipfs=True,
-    ipfs_gateway="http://localhost:5001"
-)
+cache = ProofCache(max_entries=1000, use_ipfs=True, ipfs_gateway="http://localhost:5001")
 
 # Store in IPFS
 proof = generate_proof(goal, axioms)
@@ -385,9 +366,11 @@ print(f"Age: {stats['age_seconds']}s")
 ```python
 from ipfs_datasets_py.logic.common import track_performance
 
+
 @track_performance
 def expensive_operation(data):
     return process(data)
+
 
 # Metrics recorded automatically
 result = expensive_operation(data)
@@ -400,12 +383,12 @@ result = expensive_operation(data)
 import logging
 
 # Enable debug logging
-logging.getLogger('ipfs_datasets_py.logic.common').setLevel(logging.DEBUG)
+logging.getLogger("ipfs_datasets_py.logic.common").setLevel(logging.DEBUG)
 
 # See cache operations
 cache.debug = True
 cache.set(k, v)  # Logs: "Cache SET k (size: 1/100)"
-cache.get(k)     # Logs: "Cache HIT k"
+cache.get(k)  # Logs: "Cache HIT k"
 ```
 
 ## Best Practices
@@ -438,13 +421,12 @@ else:
 ```python
 import time
 
+
 def monitor_cache(cache, interval_seconds=60):
     while True:
         stats = cache.get_stats()
-        if stats['hit_rate'] < 0.5:
-            logging.warning(
-                f"Low cache hit rate: {stats['hit_rate']:.1%}"
-            )
+        if stats["hit_rate"] < 0.5:
+            logging.warning(f"Low cache hit rate: {stats['hit_rate']:.1%}")
         time.sleep(interval_seconds)
 ```
 
@@ -465,7 +447,8 @@ cache.set_batch(zip(texts, results))
 ```python
 def clear_expired():
     cache.clear()  # Clear all
-    
+
+
 def clear_pattern(pattern):
     for key in cache.keys():
         if pattern in key:
@@ -493,7 +476,7 @@ stats = cache.get_stats()
 print(f"Hit rate: {stats['hit_rate']:.1%}")
 print(f"Size used: {stats['size']}/{stats['max_size']}")
 
-if stats['hit_rate'] < 0.5 and stats['size'] < stats['max_size']:
+if stats["hit_rate"] < 0.5 and stats["size"] < stats["max_size"]:
     # Cache has room but low hits - TTL too short
     logging.warning("TTL might be too short")
 ```
@@ -515,13 +498,14 @@ if stats['hit_rate'] < 0.5 and stats['size'] < stats['max_size']:
 # Reduce memory imprint
 cache = BoundedCache(
     max_size=100,  # Smaller
-    ttl_seconds=300  # Shorter
+    ttl_seconds=300,  # Shorter
 )
+
 
 # Periodic cleanup
 def cleanup_cache():
     stats = cache.get_stats()
-    if stats['size'] > stats['max_size'] * 0.9:
+    if stats["size"] > stats["max_size"] * 0.9:
         cache.clear()
 ```
 
@@ -543,6 +527,7 @@ def update_formula(text, new_formula):
     formula_cache.delete(text)
     store_formula(text, new_formula)
 
+
 # Version-aware caching
 cache.set(f"formula:v1:{text}", formula)
 cache.get(f"formula:v{version}:{text}")
@@ -557,8 +542,8 @@ from ipfs_datasets_py.logic.fol import FOLConverter
 
 converter = FOLConverter(
     use_cache=True,
-    cache_max_size=100,      # Small for quick testing
-    use_ml=False             # Skip ML for speed
+    cache_max_size=100,  # Small for quick testing
+    use_ml=False,  # Skip ML for speed
 )
 ```
 
@@ -569,18 +554,10 @@ from ipfs_datasets_py.logic.fol import FOLConverter
 from ipfs_datasets_py.logic.integration.caching import ProofCache
 
 # Formula converter with caching
-fol_converter = FOLConverter(
-    use_cache=True,
-    cache_max_size=10000,
-    use_ml=True
-)
+fol_converter = FOLConverter(use_cache=True, cache_max_size=10000, use_ml=True)
 
 # Proof cache with IPFS
-proof_cache = ProofCache(
-    max_entries=5000,
-    ttl_seconds=86400,
-    use_ipfs=True
-)
+proof_cache = ProofCache(max_entries=5000, ttl_seconds=86400, use_ipfs=True)
 ```
 
 ### High-Performance Setup
@@ -606,12 +583,15 @@ If migrating from old caching system:
 ```python
 # Old style
 old_cache = {}
+
+
 def convert(text):
     if text in old_cache:
         return old_cache[text]
     result = _convert(text)
     old_cache[text] = result
     return result
+
 
 # New style
 from ipfs_datasets_py.logic.fol import FOLConverter

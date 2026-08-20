@@ -4,11 +4,13 @@ Test stubs for web_archive module.
 Feature: Web Archive Processing
   Web content archiving and retrieval functionality
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_url_and_asset_capture_enabled():
@@ -110,6 +112,7 @@ def an_archived_web_page():
 
 
 # Test scenarios
+
 
 def test_archive_web_page():
     """
@@ -233,6 +236,7 @@ def test_handle_redirect_during_archiving():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a URL and asset capture enabled")
@@ -431,4 +435,3 @@ def the_text_content_is_returned():
     """Step: Then the text content is returned"""
     # TODO: Implement step
     pass
-

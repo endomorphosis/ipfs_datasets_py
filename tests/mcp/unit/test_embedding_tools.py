@@ -156,6 +156,7 @@ class TestEmbeddingFromFile:
             from ipfs_datasets_py.mcp_server.tools.embedding_tools.embedding_generation import (
                 generate_embeddings_from_file,
             )
+
             assert callable(generate_embeddings_from_file)
         except ImportError:
             pytest.skip("generate_embeddings_from_file not available")
@@ -170,6 +171,7 @@ class TestEmbeddingFromFile:
             from ipfs_datasets_py.mcp_server.tools.embedding_tools.embedding_generation import (
                 generate_embeddings_from_file,
             )
+
             result = await generate_embeddings_from_file(file_path="/tmp/nonexistent_file_xyz.txt")
             assert result is not None
             assert isinstance(result, dict)
@@ -205,6 +207,7 @@ class TestEmbeddingToolsIntegration:
         from ipfs_datasets_py.mcp_server.tools.embedding_tools.embedding_generation import (
             get_available_tools,
         )
+
         tools = get_available_tools()
         assert tools is not None
         assert isinstance(tools, list)

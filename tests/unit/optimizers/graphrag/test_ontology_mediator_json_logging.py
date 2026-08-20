@@ -63,9 +63,7 @@ class TestOntologyMediatorJsonLogging:
             refined = mediator.refine_ontology(sample_ontology, sample_feedback, None)
 
         # Check that at least one log entry contains JSON
-        json_logs = [
-            record for record in caplog.records if "REFINEMENT_ROUND:" in record.message
-        ]
+        json_logs = [record for record in caplog.records if "REFINEMENT_ROUND:" in record.message]
         assert len(json_logs) > 0, "Expected at least one REFINEMENT_ROUND log entry"
 
         # Parse the JSON from the log message
@@ -117,9 +115,7 @@ class TestOntologyMediatorJsonLogging:
         with caplog.at_level(logging.INFO):
             refined = mediator.refine_ontology(sample_ontology, sample_feedback, None)
 
-        json_logs = [
-            record for record in caplog.records if "REFINEMENT_ROUND:" in record.message
-        ]
+        json_logs = [record for record in caplog.records if "REFINEMENT_ROUND:" in record.message]
         assert len(json_logs) > 0
 
         log_msg = json_logs[0].message
@@ -139,9 +135,7 @@ class TestOntologyMediatorJsonLogging:
         with caplog.at_level(logging.INFO):
             refined = mediator.refine_ontology(sample_ontology, sample_feedback, None)
 
-        json_logs = [
-            record for record in caplog.records if "REFINEMENT_ROUND:" in record.message
-        ]
+        json_logs = [record for record in caplog.records if "REFINEMENT_ROUND:" in record.message]
         assert len(json_logs) > 0
 
         log_msg = json_logs[0].message
@@ -150,9 +144,7 @@ class TestOntologyMediatorJsonLogging:
 
         # final_entity_count should be close to initial (might have changed due to actions)
         assert isinstance(metrics["final_entity_count"], int)
-        assert metrics["entity_delta"] == (
-            metrics["final_entity_count"] - initial_entity_count
-        )
+        assert metrics["entity_delta"] == (metrics["final_entity_count"] - initial_entity_count)
 
     def test_json_logging_includes_feedback_scores(
         self, mediator, sample_ontology, sample_feedback, caplog
@@ -161,9 +153,7 @@ class TestOntologyMediatorJsonLogging:
         with caplog.at_level(logging.INFO):
             refined = mediator.refine_ontology(sample_ontology, sample_feedback, None)
 
-        json_logs = [
-            record for record in caplog.records if "REFINEMENT_ROUND:" in record.message
-        ]
+        json_logs = [record for record in caplog.records if "REFINEMENT_ROUND:" in record.message]
         assert len(json_logs) > 0
 
         log_msg = json_logs[0].message
@@ -187,9 +177,7 @@ class TestOntologyMediatorJsonLogging:
         with caplog.at_level(logging.INFO):
             refined = mediator.refine_ontology(sample_ontology, sample_feedback, None)
 
-        json_logs = [
-            record for record in caplog.records if "REFINEMENT_ROUND:" in record.message
-        ]
+        json_logs = [record for record in caplog.records if "REFINEMENT_ROUND:" in record.message]
         assert len(json_logs) > 0
 
         log_msg = json_logs[0].message
@@ -199,9 +187,7 @@ class TestOntologyMediatorJsonLogging:
         # Should match the recommendations in sample_feedback
         assert metrics["recommendations_count"] == 2
 
-    def test_json_logging_resilient_to_missing_attributes(
-        self, mediator, sample_ontology, caplog
-    ):
+    def test_json_logging_resilient_to_missing_attributes(self, mediator, sample_ontology, caplog):
         """Verify JSON logging handles missing feedback attributes gracefully."""
         # Use more complete feedback to ensure actions are applied
         feedback = Mock()
@@ -218,14 +204,10 @@ class TestOntologyMediatorJsonLogging:
             refined = mediator.refine_ontology(sample_ontology, feedback, None)
 
         # Debug: show all captured records
-        all_messages = [
-            (r.name, r.levelname, r.message) for r in caplog.records
-        ]
-        
-        json_logs = [
-            record for record in caplog.records if "REFINEMENT_ROUND:" in record.message
-        ]
-        
+        all_messages = [(r.name, r.levelname, r.message) for r in caplog.records]
+
+        json_logs = [record for record in caplog.records if "REFINEMENT_ROUND:" in record.message]
+
         if not json_logs:
             # If no JSON logs found, check if the action was actually applied
             # Sometimes the action might not match any condition, so no JSON logging needed
@@ -248,20 +230,12 @@ class TestOntologyMediatorJsonLogging:
         """Verify that multiple refinement rounds produce multiple log entries."""
         with caplog.at_level(logging.INFO):
             # First refinement
-            ontology1 = mediator.refine_ontology(
-                sample_ontology, sample_feedback, None
-            )
+            ontology1 = mediator.refine_ontology(sample_ontology, sample_feedback, None)
             # Second refinement
-            ontology2 = mediator.refine_ontology(
-                ontology1, sample_feedback, None
-            )
+            ontology2 = mediator.refine_ontology(ontology1, sample_feedback, None)
 
-        json_logs = [
-            record for record in caplog.records if "REFINEMENT_ROUND:" in record.message
-        ]
-        assert (
-            len(json_logs) >= 2
-        ), "Expected at least 2 log entries for 2 refinement rounds"
+        json_logs = [record for record in caplog.records if "REFINEMENT_ROUND:" in record.message]
+        assert len(json_logs) >= 2, "Expected at least 2 log entries for 2 refinement rounds"
 
         # Parse both to verify they have different round numbers
         metrics1 = json.loads(json_logs[0].message.replace("REFINEMENT_ROUND: ", ""))
@@ -278,9 +252,7 @@ class TestOntologyMediatorJsonLogging:
         with caplog.at_level(logging.INFO):
             refined = mediator.refine_ontology(sample_ontology, sample_feedback, None)
 
-        json_logs = [
-            record for record in caplog.records if "REFINEMENT_ROUND:" in record.message
-        ]
+        json_logs = [record for record in caplog.records if "REFINEMENT_ROUND:" in record.message]
         assert len(json_logs) > 0
 
         log_msg = json_logs[0].message

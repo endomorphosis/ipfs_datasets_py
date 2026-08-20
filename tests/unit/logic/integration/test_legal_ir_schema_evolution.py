@@ -128,9 +128,16 @@ def test_known_artifact_families_are_reusable(payload: dict[str, object], family
 @pytest.mark.parametrize(
     ("payload", "family", "code"),
     [
-        ({"export_id": "no-schema"}, LegalIRArtifactFamily.LEARNED_EXPORT, "schema_version_missing"),
         (
-            {"schema_version": "legal-ir-stable-autoencoder-feature-export-v999", "export_id": "unknown"},
+            {"export_id": "no-schema"},
+            LegalIRArtifactFamily.LEARNED_EXPORT,
+            "schema_version_missing",
+        ),
+        (
+            {
+                "schema_version": "legal-ir-stable-autoencoder-feature-export-v999",
+                "export_id": "unknown",
+            },
             LegalIRArtifactFamily.LEARNED_EXPORT,
             "unknown_schema_version",
         ),
@@ -248,15 +255,16 @@ def test_metric_lineage_binding_rejects_unchecked_or_unbound_artifacts() -> None
         ),
     )
     assert binding.reusable, binding.to_dict()
-    assert binding.artifact_bindings["learned_export"] == (
-        "lir-export-schema-evolution",
-    )
+    assert binding.artifact_bindings["learned_export"] == ("lir-export-schema-evolution",)
 
     rejected = bind_legal_ir_metric_lineage(
         metric,
         [
             _learned_export(),
-            {"receipt_id": "unbound-receipt", "schema_version": "legal-ir-hammer-reconstruction-receipt-v999"},
+            {
+                "receipt_id": "unbound-receipt",
+                "schema_version": "legal-ir-hammer-reconstruction-receipt-v999",
+            },
         ],
         required_artifact_families=(LegalIRArtifactFamily.HAMMER_RECEIPT,),
     )

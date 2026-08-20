@@ -78,6 +78,7 @@ _TEST_WITNESS = {
 # Category 1 — Binary detection
 # ---------------------------------------------------------------------------
 
+
 class TestBinaryDetection:
     """Groth16 binary detection and availability checks."""
 
@@ -100,6 +101,7 @@ class TestBinaryDetection:
         dummy_bin = tmp_path / "fake_groth16"
         dummy_bin.touch(mode=0o755)
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as FFI
+
         with patch.dict(os.environ, {"IPFS_DATASETS_GROTH16_BINARY": str(dummy_bin)}):
             backend = FFI.__new__(FFI)
             found = backend._find_groth16_binary()
@@ -109,11 +111,15 @@ class TestBinaryDetection:
         """IPFS_DATASETS_GROTH16_BINARY pointing to absent file falls through to auto-detect."""
         absent = str(tmp_path / "nonexistent_groth16_binary")
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as FFI
+
         # Patch away GROTH16_BINARY as well so no override is accepted
-        with patch.dict(os.environ, {
-            "IPFS_DATASETS_GROTH16_BINARY": absent,
-            "GROTH16_BINARY": "",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "IPFS_DATASETS_GROTH16_BINARY": absent,
+                "GROTH16_BINARY": "",
+            },
+        ):
             backend = FFI.__new__(FFI)
             backend.timeout_seconds = 30
             backend.binary_path = None
@@ -132,7 +138,8 @@ class TestBinaryDetection:
         """groth16 --help exits 0."""
         result = subprocess.run(
             [str(_BINARY_PATH), "--help"],
-            capture_output=True, timeout=10,
+            capture_output=True,
+            timeout=10,
         )
         assert result.returncode == 0
         assert b"prove" in result.stdout or b"prove" in result.stderr
@@ -142,7 +149,8 @@ class TestBinaryDetection:
         """Binary exposes prove, verify, and setup subcommands."""
         result = subprocess.run(
             [str(_BINARY_PATH), "--help"],
-            capture_output=True, timeout=10,
+            capture_output=True,
+            timeout=10,
         )
         output = (result.stdout + result.stderr).decode()
         assert "prove" in output
@@ -153,6 +161,7 @@ class TestBinaryDetection:
 # ---------------------------------------------------------------------------
 # Category 2 — Trusted setup artifacts
 # ---------------------------------------------------------------------------
+
 
 class TestTrustedSetupArtifacts:
     """Trusted setup key files committed to the repository."""
@@ -186,6 +195,7 @@ class TestTrustedSetupArtifacts:
     def test_ffi_artifacts_exist_v1(self):
         """FFI backend.artifacts_exist(1) returns True with committed keys."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as FFI
+
         backend = FFI(binary_path=str(_BINARY_PATH))
         assert backend.artifacts_exist(1) is True
 
@@ -193,6 +203,7 @@ class TestTrustedSetupArtifacts:
     def test_ffi_artifacts_exist_v2(self):
         """FFI backend.artifacts_exist(2) returns True with committed keys."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as FFI
+
         backend = FFI(binary_path=str(_BINARY_PATH))
         assert backend.artifacts_exist(2) is True
 
@@ -200,6 +211,7 @@ class TestTrustedSetupArtifacts:
     def test_ffi_artifacts_exist_missing(self):
         """FFI backend.artifacts_exist(99) returns False for non-existent version."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as FFI
+
         backend = FFI(binary_path=str(_BINARY_PATH))
         assert backend.artifacts_exist(99) is False
 
@@ -208,31 +220,37 @@ class TestTrustedSetupArtifacts:
 # Category 3 — Python→Rust wire format contract
 # ---------------------------------------------------------------------------
 
+
 class TestWireFormat:
     """Python-Rust JSON wire format contract (schema validation)."""
 
     def test_error_envelope_schema_loads(self):
         """_error_envelope_v1_schema() returns a non-empty dict."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import _error_envelope_v1_schema
+
         schema = _error_envelope_v1_schema()
         assert isinstance(schema, dict) and schema
 
     def test_parse_valid_error_envelope(self):
         """_parse_validated_error_envelope parses a conforming error payload."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import _parse_validated_error_envelope
-        payload = json.dumps({
-            "error": {
-                "schema_version": 1,
-                "code": "INTERNAL",
-                "message": "test error",
+
+        payload = json.dumps(
+            {
+                "error": {
+                    "schema_version": 1,
+                    "code": "INTERNAL",
+                    "message": "test error",
+                }
             }
-        })
+        )
         result = _parse_validated_error_envelope(payload)
         assert result == ("INTERNAL", "test error")
 
     def test_parse_invalid_error_envelope_returns_none(self):
         """_parse_validated_error_envelope returns None for non-conforming payload."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import _parse_validated_error_envelope
+
         assert _parse_validated_error_envelope("") is None
         assert _parse_validated_error_envelope("not json") is None
         assert _parse_validated_error_envelope('{"no_error_key": 1}') is None
@@ -240,12 +258,14 @@ class TestWireFormat:
     def test_witness_validation_accepts_valid(self):
         """Groth16Backend._validate_witness accepts a valid witness."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as FFI
+
         backend = FFI.__new__(FFI)
         backend._validate_witness(_TEST_WITNESS)  # Should not raise
 
     def test_witness_validation_rejects_missing_field(self):
         """_validate_witness raises ValueError for missing required fields."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as FFI
+
         backend = FFI.__new__(FFI)
         bad = {k: v for k, v in _TEST_WITNESS.items() if k != "theorem"}
         with pytest.raises(ValueError, match="Missing witness fields"):
@@ -254,6 +274,7 @@ class TestWireFormat:
     def test_witness_validation_rejects_empty_axioms(self):
         """_validate_witness raises ValueError for empty private_axioms."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as FFI
+
         backend = FFI.__new__(FFI)
         bad = {**_TEST_WITNESS, "private_axioms": []}
         with pytest.raises(ValueError, match="private_axioms"):
@@ -262,6 +283,7 @@ class TestWireFormat:
     def test_witness_validation_rejects_invalid_security_level(self):
         """_validate_witness raises ValueError for negative security_level."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as FFI
+
         backend = FFI.__new__(FFI)
         bad = {**_TEST_WITNESS, "security_level": -1}
         with pytest.raises(ValueError, match="security_level"):
@@ -271,6 +293,7 @@ class TestWireFormat:
 # ---------------------------------------------------------------------------
 # Category 4 — Real proof generation + verification (requires binary + env)
 # ---------------------------------------------------------------------------
+
 
 class TestRealGroth16ProveVerify:
     """Real Groth16 prove/verify with the Rust binary (requires ENABLE_GROTH16=1)."""
@@ -282,9 +305,19 @@ class TestRealGroth16ProveVerify:
         """groth16 prove produces valid JSON output."""
         witness_json = json.dumps(_TEST_WITNESS)
         result = subprocess.run(
-            [str(_BINARY_PATH), "prove", "--input", "/dev/stdin", "--output", "/dev/stdout", "--seed", "42"],
+            [
+                str(_BINARY_PATH),
+                "prove",
+                "--input",
+                "/dev/stdin",
+                "--output",
+                "/dev/stdout",
+                "--seed",
+                "42",
+            ],
             input=witness_json.encode(),
-            capture_output=True, timeout=30,
+            capture_output=True,
+            timeout=30,
         )
         assert result.returncode == 0, result.stderr.decode()
         proof = json.loads(result.stdout)
@@ -301,15 +334,26 @@ class TestRealGroth16ProveVerify:
         """Prove then verify: groth16 verify exits 0 for a valid proof."""
         witness_json = json.dumps(_TEST_WITNESS)
         prove_result = subprocess.run(
-            [str(_BINARY_PATH), "prove", "--input", "/dev/stdin", "--output", "/dev/stdout", "--seed", "42"],
+            [
+                str(_BINARY_PATH),
+                "prove",
+                "--input",
+                "/dev/stdin",
+                "--output",
+                "/dev/stdout",
+                "--seed",
+                "42",
+            ],
             input=witness_json.encode(),
-            capture_output=True, timeout=30,
+            capture_output=True,
+            timeout=30,
         )
         assert prove_result.returncode == 0
         verify_result = subprocess.run(
             [str(_BINARY_PATH), "verify", "--proof", "/dev/stdin"],
             input=prove_result.stdout,
-            capture_output=True, timeout=30,
+            capture_output=True,
+            timeout=30,
         )
         assert verify_result.returncode == 0, verify_result.stderr.decode()
 
@@ -322,9 +366,19 @@ class TestRealGroth16ProveVerify:
         proofs = []
         for _ in range(2):
             r = subprocess.run(
-                [str(_BINARY_PATH), "prove", "--input", "/dev/stdin", "--output", "/dev/stdout", "--seed", "99"],
+                [
+                    str(_BINARY_PATH),
+                    "prove",
+                    "--input",
+                    "/dev/stdin",
+                    "--output",
+                    "/dev/stdout",
+                    "--seed",
+                    "99",
+                ],
                 input=witness_json.encode(),
-                capture_output=True, timeout=30,
+                capture_output=True,
+                timeout=30,
             )
             assert r.returncode == 0
             proofs.append(r.stdout)
@@ -336,9 +390,19 @@ class TestRealGroth16ProveVerify:
     def test_public_inputs_ordering(self):
         """public_inputs must be [theorem_hash, axioms_commitment, version, ruleset_id]."""
         r = subprocess.run(
-            [str(_BINARY_PATH), "prove", "--input", "/dev/stdin", "--output", "/dev/stdout", "--seed", "1"],
+            [
+                str(_BINARY_PATH),
+                "prove",
+                "--input",
+                "/dev/stdin",
+                "--output",
+                "/dev/stdout",
+                "--seed",
+                "1",
+            ],
             input=json.dumps(_TEST_WITNESS).encode(),
-            capture_output=True, timeout=30,
+            capture_output=True,
+            timeout=30,
         )
         assert r.returncode == 0
         proof = json.loads(r.stdout)
@@ -355,7 +419,8 @@ class TestRealGroth16ProveVerify:
         r = subprocess.run(
             [str(_BINARY_PATH), "prove", "--input", "/dev/stdin", "--output", "/dev/stdout"],
             input=json.dumps(bad).encode(),
-            capture_output=True, timeout=15,
+            capture_output=True,
+            timeout=15,
         )
         assert r.returncode == 2
         # Rust emits error envelope on stdout
@@ -369,6 +434,7 @@ class TestRealGroth16ProveVerify:
     def test_python_groth16_backend_generate_proof(self):
         """Groth16Backend.generate_proof() returns a Groth16Proof with real data."""
         from ipfs_datasets_py.logic.zkp.backends.groth16 import Groth16Backend
+
         backend = Groth16Backend(binary_path=str(_BINARY_PATH))
         proof = backend.generate_proof(
             theorem="Socrates is mortal",
@@ -385,6 +451,7 @@ class TestRealGroth16ProveVerify:
     def test_python_groth16_backend_verify_proof(self):
         """Groth16Backend.verify_proof() returns True for a proof it generated."""
         from ipfs_datasets_py.logic.zkp.backends.groth16 import Groth16Backend
+
         backend = Groth16Backend(binary_path=str(_BINARY_PATH))
         proof = backend.generate_proof(
             theorem="P is true",
@@ -398,6 +465,7 @@ class TestRealGroth16ProveVerify:
 # Category 5 — Fallback behavior
 # ---------------------------------------------------------------------------
 
+
 class TestFallbackBehavior:
     """ZKP stack falls back gracefully when Groth16 is not enabled."""
 
@@ -405,6 +473,7 @@ class TestFallbackBehavior:
         """generate_proof raises ZKPError when IPFS_DATASETS_ENABLE_GROTH16 is not set."""
         from ipfs_datasets_py.logic.zkp.backends.groth16 import Groth16Backend
         from ipfs_datasets_py.logic.zkp import ZKPError
+
         with patch.dict(os.environ, {"IPFS_DATASETS_ENABLE_GROTH16": ""}):
             backend = Groth16Backend()
             with pytest.raises(ZKPError, match="disabled by default"):
@@ -414,6 +483,7 @@ class TestFallbackBehavior:
         """verify_proof raises ZKPError when backend is disabled."""
         from ipfs_datasets_py.logic.zkp.backends.groth16 import Groth16Backend
         from ipfs_datasets_py.logic.zkp import ZKPError, ZKPProof
+
         stub = ZKPProof(proof_data=b"{}", public_inputs={}, metadata={}, timestamp=0, size_bytes=2)
         with patch.dict(os.environ, {"IPFS_DATASETS_ENABLE_GROTH16": ""}):
             backend = Groth16Backend()
@@ -423,6 +493,7 @@ class TestFallbackBehavior:
     def test_simulated_backend_works_without_binary(self):
         """Simulated backend works without Rust binary or env var."""
         from ipfs_datasets_py.logic.zkp.backends import get_backend
+
         backend = get_backend("simulated")
         proof = backend.generate_proof("P", ["P"], {})
         assert proof is not None
@@ -432,6 +503,7 @@ class TestFallbackBehavior:
     def test_simulated_backend_verify_own_proof(self):
         """Simulated backend verifies its own proofs."""
         from ipfs_datasets_py.logic.zkp.backends import get_backend
+
         backend = get_backend("simulated")
         proof = backend.generate_proof("Q", ["P", "P→Q"], {})
         assert backend.verify_proof(proof) is True
@@ -439,6 +511,7 @@ class TestFallbackBehavior:
     def test_ffi_backend_no_binary_raises_runtime_error(self, tmp_path):
         """FFI backend raises RuntimeError when binary_path points to nonexistent file."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as FFI
+
         # Use a path that clearly does not exist so _find_groth16_binary won't find it
         fake_path = str(tmp_path / "nonexistent_groth16")
         backend = FFI.__new__(FFI)
@@ -450,6 +523,7 @@ class TestFallbackBehavior:
     def test_ffi_backend_seed_validation(self):
         """FFI backend raises ValueError for out-of-range seed."""
         from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as FFI
+
         if not _BINARY_AVAILABLE:
             pytest.skip("binary not available")
         backend = FFI(binary_path=str(_BINARY_PATH))
@@ -461,6 +535,7 @@ class TestFallbackBehavior:
 # Category 6 — ZKPToUCANBridge with Groth16
 # ---------------------------------------------------------------------------
 
+
 class TestZKPToUCANBridgeGroth16:
     """ZKPToUCANBridge upgrade paths and Groth16 integration."""
 
@@ -468,6 +543,7 @@ class TestZKPToUCANBridgeGroth16:
         """Bridge emits UserWarning in simulated mode."""
         with patch.dict(os.environ, {"IPFS_DATASETS_ENABLE_GROTH16": ""}):
             from ipfs_datasets_py.logic.zkp.ucan_zkp_bridge import ZKPToUCANBridge, _default_bridge
+
             bridge = ZKPToUCANBridge.__new__(ZKPToUCANBridge)
             bridge._groth16_enabled = False
             bridge._verifier_id = ZKPToUCANBridge.SIMULATED_VERIFIER_ID
@@ -478,36 +554,43 @@ class TestZKPToUCANBridgeGroth16:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 result = bridge.prove_and_delegate(
-                    theorem="P", actor="did:key:alice",
-                    resource="res", ability="read",
+                    theorem="P",
+                    actor="did:key:alice",
+                    resource="res",
+                    ability="read",
                     private_axioms=["P"],
                 )
             assert result.success or result.error  # either outcome
             user_warns = [x for x in w if issubclass(x.category, UserWarning)]
-            assert any("SIMULATED" in str(x.message) for x in user_warns), \
+            assert any("SIMULATED" in str(x.message) for x in user_warns), (
                 "Expected UserWarning containing 'SIMULATED'"
+            )
 
     def test_bridge_groth16_verifier_id_constant(self):
         """GROTH16_VERIFIER_ID constant is defined and distinct from simulated."""
         from ipfs_datasets_py.logic.zkp.ucan_zkp_bridge import ZKPToUCANBridge
+
         assert ZKPToUCANBridge.GROTH16_VERIFIER_ID != ZKPToUCANBridge.SIMULATED_VERIFIER_ID
         assert "groth16" in ZKPToUCANBridge.GROTH16_VERIFIER_ID
 
     def test_bridge_check_groth16_enabled_false_by_default(self):
         """_check_groth16_enabled() returns False when env not set."""
         from ipfs_datasets_py.logic.zkp.ucan_zkp_bridge import ZKPToUCANBridge
+
         with patch.dict(os.environ, {"IPFS_DATASETS_ENABLE_GROTH16": ""}):
             assert ZKPToUCANBridge._check_groth16_enabled() is False
 
     def test_bridge_check_groth16_enabled_true(self):
         """_check_groth16_enabled() returns True when env=1."""
         from ipfs_datasets_py.logic.zkp.ucan_zkp_bridge import ZKPToUCANBridge
+
         with patch.dict(os.environ, {"IPFS_DATASETS_ENABLE_GROTH16": "1"}):
             assert ZKPToUCANBridge._check_groth16_enabled() is True
 
     def test_bridge_get_singleton_reset(self):
         """get_zkp_ucan_bridge(reset=True) creates a fresh singleton."""
         from ipfs_datasets_py.logic.zkp import ucan_zkp_bridge as _mod
+
         _mod._default_bridge = None
         b1 = _mod.get_zkp_ucan_bridge()
         b2 = _mod.get_zkp_ucan_bridge()
@@ -519,6 +602,7 @@ class TestZKPToUCANBridgeGroth16:
     def test_bridge_proof_to_caveat(self):
         """proof_to_caveat returns a ZKPCapabilityEvidence with correct fields."""
         from ipfs_datasets_py.logic.zkp.ucan_zkp_bridge import ZKPToUCANBridge
+
         bridge = ZKPToUCANBridge.__new__(ZKPToUCANBridge)
         bridge._verifier_id = "test-verifier"
         bridge._groth16_enabled = False
@@ -529,6 +613,7 @@ class TestZKPToUCANBridgeGroth16:
         class _FakeProof:
             proof_data = b"fake-proof-data"
             public_inputs = {"theorem": "P → Q"}
+
         caveat = bridge.proof_to_caveat(_FakeProof())
         assert caveat.verifier_id == "test-verifier"
         assert len(caveat.proof_hash) == 64  # SHA-256 hex
@@ -540,6 +625,7 @@ class TestZKPToUCANBridgeGroth16:
     def test_bridge_groth16_prove_and_delegate_no_sim_warning(self):
         """No UserWarning when Groth16 is enabled and proof succeeds."""
         from ipfs_datasets_py.logic.zkp import ucan_zkp_bridge as _mod
+
         _mod._default_bridge = None
         with patch.dict(os.environ, {"IPFS_DATASETS_ENABLE_GROTH16": "1"}):
             bridge = _mod.get_zkp_ucan_bridge(reset=True)
@@ -562,6 +648,7 @@ class TestZKPToUCANBridgeGroth16:
 # Category 7 — ensure_setup() idempotency
 # ---------------------------------------------------------------------------
 
+
 class TestEnsureSetupIdempotency:
     """Groth16Backend.ensure_setup() is idempotent when artifacts exist."""
 
@@ -570,6 +657,7 @@ class TestEnsureSetupIdempotency:
     def test_ensure_setup_returns_already_exists(self):
         """ensure_setup(1) returns {status: 'already_exists'} when keys are present."""
         from ipfs_datasets_py.logic.zkp.backends.groth16 import Groth16Backend
+
         with patch.dict(os.environ, {"IPFS_DATASETS_ENABLE_GROTH16": "1"}):
             backend = Groth16Backend(binary_path=str(_BINARY_PATH))
             result = backend.ensure_setup(version=1)
@@ -581,6 +669,7 @@ class TestEnsureSetupIdempotency:
         """ensure_setup raises ZKPError when backend is disabled."""
         from ipfs_datasets_py.logic.zkp.backends.groth16 import Groth16Backend
         from ipfs_datasets_py.logic.zkp import ZKPError
+
         with patch.dict(os.environ, {"IPFS_DATASETS_ENABLE_GROTH16": ""}):
             backend = Groth16Backend()
             with pytest.raises(ZKPError, match="disabled"):
@@ -591,6 +680,7 @@ class TestEnsureSetupIdempotency:
     def test_binary_available_returns_true(self):
         """binary_available() returns True when binary exists."""
         from ipfs_datasets_py.logic.zkp.backends.groth16 import Groth16Backend
+
         with patch.dict(os.environ, {"IPFS_DATASETS_ENABLE_GROTH16": "1"}):
             backend = Groth16Backend(binary_path=str(_BINARY_PATH))
             assert backend.binary_available() is True
@@ -600,17 +690,26 @@ class TestEnsureSetupIdempotency:
     def test_get_backend_info_keys(self):
         """get_backend_info() returns expected keys."""
         from ipfs_datasets_py.logic.zkp.backends.groth16 import Groth16Backend
+
         with patch.dict(os.environ, {"IPFS_DATASETS_ENABLE_GROTH16": "1"}):
             backend = Groth16Backend(binary_path=str(_BINARY_PATH))
             info = backend.get_backend_info()
-        for k in ("backend_id", "curve_id", "enabled", "binary_path", "binary_available",
-                   "artifacts_v1_exist", "artifacts_v2_exist"):
+        for k in (
+            "backend_id",
+            "curve_id",
+            "enabled",
+            "binary_path",
+            "binary_available",
+            "artifacts_v1_exist",
+            "artifacts_v2_exist",
+        ):
             assert k in info, f"Missing key: {k}"
 
 
 # ---------------------------------------------------------------------------
 # Category 8 — Schema validation
 # ---------------------------------------------------------------------------
+
 
 class TestSchemaFiles:
     """Schema JSON files are present and parseable."""

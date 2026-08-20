@@ -145,14 +145,10 @@ def _active_checkout_snapshot(checkout: Path) -> dict[str, object]:
     return {
         "head": _git(checkout, "rev-parse", "HEAD").stdout,
         "branch": _git(checkout, "symbolic-ref", "HEAD").stdout,
-        "status": _git(
-            checkout, "status", "--porcelain=v1", "--untracked-files=all"
-        ).stdout,
+        "status": _git(checkout, "status", "--porcelain=v1", "--untracked-files=all").stdout,
         "tracked": (checkout / "tracked.txt").read_bytes(),
         "untracked": (checkout / "operator-notes.txt").read_bytes(),
-        "merge_head": _git(
-            checkout, "rev-parse", "--verify", "MERGE_HEAD", check=False
-        ).returncode,
+        "merge_head": _git(checkout, "rev-parse", "--verify", "MERGE_HEAD", check=False).returncode,
     }
 
 
@@ -199,9 +195,7 @@ def test_pinned_detached_worktree_preserves_dirty_active_checkout(
         ).returncode
         != 0
     )
-    assert (receipt.worktree_root / "tracked.txt").read_text(
-        encoding="utf-8"
-    ) == "pinned base\n"
+    assert (receipt.worktree_root / "tracked.txt").read_text(encoding="utf-8") == "pinned base\n"
     assert _git(checkout, "rev-parse", "HEAD").stdout.strip() == active_head
     assert _active_checkout_snapshot(checkout) == before
 
@@ -301,8 +295,7 @@ def test_worktree_prevalidation_ignores_caller_path_git_wrapper(
         marker,
     )
     wrapper.write_text(
-        wrapper.read_text(encoding="utf-8")
-        + f"exec {shutil.which('git', path=os.defpath)} \"$@\"\n",
+        wrapper.read_text(encoding="utf-8") + f'exec {shutil.which("git", path=os.defpath)} "$@"\n',
         encoding="utf-8",
     )
     monkeypatch.setenv(
@@ -596,12 +589,8 @@ def test_receipt_captures_pinned_submodule_gitlink_and_is_json_ready(
         sort_keys=True,
     )
 
-    assert receipt.submodule_commits == {
-        "vendor/example dependency": dependency_commit
-    }
-    assert payload["submodule_commits"] == {
-        "vendor/example dependency": dependency_commit
-    }
+    assert receipt.submodule_commits == {"vendor/example dependency": dependency_commit}
+    assert payload["submodule_commits"] == {"vendor/example dependency": dependency_commit}
     assert payload["base_commit"] == pinned_base
     assert payload["detached"] is True
     assert payload["auto_merge"] is False
@@ -611,9 +600,7 @@ def test_receipt_captures_pinned_submodule_gitlink_and_is_json_ready(
     assert receipt_path.read_text(encoding="utf-8") == (
         canonical_worktree_safety_json(receipt) + "\n"
     )
-    restored = WorktreeSafetyReceipt.from_dict(
-        json.loads(receipt_path.read_text(encoding="utf-8"))
-    )
+    restored = WorktreeSafetyReceipt.from_dict(json.loads(receipt_path.read_text(encoding="utf-8")))
     assert restored == receipt
     assert worktree_safety_sha256(restored) == receipt.sha256
     with pytest.raises(FrozenInstanceError):

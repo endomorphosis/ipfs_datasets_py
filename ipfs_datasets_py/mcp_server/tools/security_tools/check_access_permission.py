@@ -4,6 +4,7 @@ MCP tool for checking access permissions.
 
 This tool handles checking if a user has permission to access a resource.
 """
+
 import anyio
 import json
 from typing import Dict, Any, Optional, Union, List
@@ -28,7 +29,7 @@ async def check_access_permission(
     resource_id: str,
     user_id: Optional[str] = None,
     permission_type: str = "read",
-    resource_type: Optional[str] = None
+    resource_type: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Check if a user has permission to access a resource.
@@ -43,11 +44,15 @@ async def check_access_permission(
         Dict containing permission information
     """
     # MCP JSON-string entrypoint (used by unit tests)
-    if isinstance(resource_id, str) and user_id is None and (
-        not resource_id.strip()
-        or resource_id.lstrip().startswith("{")
-        or resource_id.lstrip().startswith("[")
-        or any(ch.isspace() for ch in resource_id)
+    if (
+        isinstance(resource_id, str)
+        and user_id is None
+        and (
+            not resource_id.strip()
+            or resource_id.lstrip().startswith("{")
+            or resource_id.lstrip().startswith("[")
+            or any(ch.isspace() for ch in resource_id)
+        )
     ):
         data, error = parse_json_object(resource_id)
         if error is not None:
@@ -55,7 +60,9 @@ async def check_access_permission(
 
         for field in ("resource_id", "user_id"):
             if not data.get(field):
-                return mcp_error_response(f"Missing required field: {field}", error_type="validation")
+                return mcp_error_response(
+                    f"Missing required field: {field}", error_type="validation"
+                )
 
         if ipfs_datasets is None:
             return mcp_error_response("ipfs_datasets backend is not available")
@@ -80,7 +87,9 @@ async def check_access_permission(
         if user_id is None:
             raise ValueError("user_id must be provided")
 
-        logger.info(f"Checking {permission_type} permission for user {user_id} on resource {resource_id}")
+        logger.info(
+            f"Checking {permission_type} permission for user {user_id} on resource {resource_id}"
+        )
 
         # Import the security manager
         from ipfs_datasets_py.security import SecurityManager
@@ -90,8 +99,7 @@ async def check_access_permission(
 
         # Check permission
         has_permission = security_manager.check_access(
-            resource_id=resource_id,
-            access_type=permission_type
+            resource_id=resource_id, access_type=permission_type
         )
 
         # Return permission information
@@ -101,7 +109,7 @@ async def check_access_permission(
             "user_id": user_id,
             "resource_id": resource_id,
             "permission_type": permission_type,
-            "resource_type": resource_type
+            "resource_type": resource_type,
         }
     except Exception as e:
         logger.error(f"Error checking access permission: {e}")
@@ -110,5 +118,5 @@ async def check_access_permission(
             "error": str(e),
             "user_id": user_id,
             "resource_id": resource_id,
-            "permission_type": permission_type
+            "permission_type": permission_type,
         }

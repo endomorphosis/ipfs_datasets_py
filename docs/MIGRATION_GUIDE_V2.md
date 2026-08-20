@@ -73,7 +73,7 @@ from ipfs_datasets_py.data_transformation.multimedia import (
     MediaProcessor,
     MediaUtils,
     EmailProcessor,
-    DiscordWrapper
+    DiscordWrapper,
 )
 
 # NEW (v2.0)
@@ -83,7 +83,7 @@ from ipfs_datasets_py.processors.multimedia import (
     MediaProcessor,
     MediaUtils,
     EmailProcessor,
-    DiscordWrapper
+    DiscordWrapper,
 )
 
 # Or use main package exports
@@ -166,7 +166,9 @@ from ipfs_datasets_py.data_transformation.ipfs_parquet_to_car import parquet_to_
 # NEW (v2.0)
 from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils
 from ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet import jsonl_to_parquet
-from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import DatasetSerializer
+from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import (
+    DatasetSerializer,
+)
 from ipfs_datasets_py.data_transformation.serialization.ipfs_parquet_to_car import parquet_to_car
 ```
 
@@ -207,7 +209,9 @@ car_data = utils.arrow_to_car(arrow_table)
 **After (v2.0):**
 ```python
 from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils
-from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import DatasetSerializer
+from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import (
+    DatasetSerializer,
+)
 
 # Convert dataset to CAR format (SAME API)
 serializer = DatasetSerializer()
@@ -256,21 +260,19 @@ car_data = utils.arrow_to_car(arrow_table)
 # OLD (v1.x - deprecated)
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
 from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor
-from ipfs_datasets_py.processors.advanced_graphrag_website_processor import AdvancedGraphRAGWebsiteProcessor
+from ipfs_datasets_py.processors.advanced_graphrag_website_processor import (
+    AdvancedGraphRAGWebsiteProcessor,
+)
 
 # NEW (v2.0)
 from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
     UnifiedGraphRAGProcessor,
     GraphRAGConfiguration,
-    GraphRAGResult
+    GraphRAGResult,
 )
 
 # Or from main package
-from ipfs_datasets_py import (
-    UnifiedGraphRAGProcessor,
-    GraphRAGConfiguration,
-    GraphRAGResult
-)
+from ipfs_datasets_py import UnifiedGraphRAGProcessor, GraphRAGConfiguration, GraphRAGResult
 ```
 
 **Step 2: Update Configuration**
@@ -285,7 +287,7 @@ config = GraphRAGConfiguration(
     archive_services=["internet_archive", "archive_is"],
     enable_multi_pass_extraction=True,
     content_quality_threshold=0.6,
-    max_depth=2  # Crawl depth
+    max_depth=2,  # Crawl depth
 )
 
 # Initialize processor
@@ -303,6 +305,7 @@ query_results = await processor.process_query("What is this about?", context=res
 **If not in async context:**
 ```python
 import anyio
+
 result = anyio.run(processor.process_website, "https://example.com")
 ```
 
@@ -315,7 +318,7 @@ from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
 processor = GraphRAGProcessor(
     vector_store=my_vector_store,
     knowledge_graph=my_kg,
-    embedding_model="sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model="sentence-transformers/all-MiniLM-L6-v2",
 )
 
 # Query
@@ -326,14 +329,10 @@ results = processor.query("What is machine learning?", top_k=10)
 ```python
 from ipfs_datasets_py.processors.website_graphrag_processor import (
     WebsiteGraphRAGProcessor,
-    WebsiteProcessingConfig
+    WebsiteProcessingConfig,
 )
 
-config = WebsiteProcessingConfig(
-    archive_services=['ia', 'is'],
-    crawl_depth=2,
-    enable_graphrag=True
-)
+config = WebsiteProcessingConfig(archive_services=["ia", "is"], crawl_depth=2, enable_graphrag=True)
 
 processor = WebsiteGraphRAGProcessor(config=config)
 system = await processor.process_website("https://example.com")
@@ -349,7 +348,7 @@ config = GraphRAGConfiguration(
     enable_web_archiving=True,
     archive_services=["internet_archive", "archive_is"],
     max_depth=2,
-    enable_comprehensive_search=True
+    enable_comprehensive_search=True,
 )
 
 # Single processor for all use cases
@@ -559,7 +558,7 @@ start = time.time()
 # ... new code ...
 new_time = time.time() - start
 
-print(f"Old: {old_time}s, New: {new_time}s, Speedup: {old_time/new_time:.2f}x")
+print(f"Old: {old_time}s, New: {new_time}s, Speedup: {old_time / new_time:.2f}x")
 ```
 
 ### Phase 4: Production Deployment (Week 4)
@@ -669,21 +668,28 @@ Test each migrated component:
 import pytest
 from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
 
+
 def test_multimedia_migration():
     """Test multimedia imports work after migration."""
     ffmpeg = FFmpegWrapper()
     assert ffmpeg is not None
     # Add more specific tests
 
+
 def test_serialization_migration():
     """Test serialization imports work after migration."""
-    from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils
+    from ipfs_datasets_py.data_transformation.serialization.car_conversion import (
+        DataInterchangeUtils,
+    )
+
     utils = DataInterchangeUtils()
     assert utils is not None
+
 
 def test_graphrag_migration():
     """Test GraphRAG unified processor works."""
     from ipfs_datasets_py import UnifiedGraphRAGProcessor, GraphRAGConfiguration
+
     config = GraphRAGConfiguration(processing_mode="fast")
     processor = UnifiedGraphRAGProcessor(config=config)
     assert processor is not None
@@ -698,21 +704,23 @@ async def test_full_pipeline():
     """Test complete pipeline with migrated components."""
     from ipfs_datasets_py.processors.multimedia import YtDlpWrapper
     from ipfs_datasets_py import UnifiedGraphRAGProcessor, GraphRAGConfiguration
-    from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import DatasetSerializer
-    
+    from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import (
+        DatasetSerializer,
+    )
+
     # Download video
     ytdlp = YtDlpWrapper()
     video = ytdlp.download("https://example.com/video")
-    
+
     # Process with GraphRAG
     config = GraphRAGConfiguration(processing_mode="fast")
     processor = UnifiedGraphRAGProcessor(config=config)
     result = await processor.process_website("https://example.com")
-    
+
     # Serialize result
     serializer = DatasetSerializer()
     cid = serializer.result_to_car(result, "output.car")
-    
+
     assert cid is not None
 ```
 
@@ -723,19 +731,20 @@ Ensure old code still works (in v1.x):
 ```python
 import warnings
 
+
 def test_backward_compatibility():
     """Test that old imports still work with warnings."""
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        
+
         # Old import
         from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
-        
+
         # Should have deprecation warning
         assert len(w) == 1
         assert issubclass(w[0].category, DeprecationWarning)
         assert "deprecated" in str(w[0].message).lower()
-        
+
         # But should still work
         ffmpeg = FFmpegWrapper()
         assert ffmpeg is not None
@@ -776,6 +785,7 @@ result = await processor.process_website(url)
 
 # Or use anyio.run if not in async context
 import anyio
+
 result = anyio.run(processor.process_website, url)
 ```
 
@@ -808,7 +818,8 @@ See [GRAPHRAG_CONSOLIDATION_GUIDE.md](./GRAPHRAG_CONSOLIDATION_GUIDE.md) for com
 **Solution:**
 ```python
 import warnings
-warnings.simplefilter('always', DeprecationWarning)
+
+warnings.simplefilter("always", DeprecationWarning)
 ```
 
 ### Issue 5: Performance Regression
@@ -886,6 +897,7 @@ But you'll miss bug fixes and new features in v2.0+.
 # ========================================
 # OLD
 from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
+
 # NEW
 from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
 
@@ -894,6 +906,7 @@ from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
 # ========================================
 # OLD
 from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
+
 # NEW
 from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils
 
@@ -902,6 +915,7 @@ from ipfs_datasets_py.data_transformation.serialization.car_conversion import Da
 # ========================================
 # OLD
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
+
 # NEW
 from ipfs_datasets_py import UnifiedGraphRAGProcessor, GraphRAGConfiguration
 ```

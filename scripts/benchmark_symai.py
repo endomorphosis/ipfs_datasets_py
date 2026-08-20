@@ -50,7 +50,9 @@ def _open_log_file(workspace: Path) -> Optional[Path]:
 def main(argv: Optional[List[str]] = None) -> int:
     _disable_ipfs_kit_stack_if_needed()
 
-    parser = argparse.ArgumentParser(description="Benchmark SyMAI routing via ipfs_datasets_py.llm_router")
+    parser = argparse.ArgumentParser(
+        description="Benchmark SyMAI routing via ipfs_datasets_py.llm_router"
+    )
     parser.add_argument(
         "--model",
         required=True,
@@ -94,7 +96,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         os.environ["IPFS_DATASETS_PY_REMOTE_CACHE_NETWORK"] = "1"
 
     workspace = Path(__file__).resolve().parents[1]
-    output_path = Path(args.output) if args.output else (workspace / "outputs" / "symai_benchmark.json")
+    output_path = (
+        Path(args.output) if args.output else (workspace / "outputs" / "symai_benchmark.json")
+    )
     log_path = _open_log_file(workspace)
 
     try:

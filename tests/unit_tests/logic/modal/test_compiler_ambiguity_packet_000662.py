@@ -162,9 +162,7 @@ def test_packet_000662_pairs_are_registered_across_ambiguity_policies() -> None:
     assert COMPILER_AMBIGUITY_PACKET_000662_FAMILY_PAIRS == _PACKET_000662_FAMILY_PAIRS
     for predicted_family, target_family in _PACKET_000662_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -211,8 +209,7 @@ def test_compiler_exposes_packet_000662_explicit_adaptive_ambiguities() -> None:
             family_margin=family_margin,
         )
         family_shares = {
-            str(candidate["family"]): float(candidate["share_raw"])
-            for candidate in ranking
+            str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
         }
         encoding = _encoding_for_family(
             predicted_family=predicted_family,

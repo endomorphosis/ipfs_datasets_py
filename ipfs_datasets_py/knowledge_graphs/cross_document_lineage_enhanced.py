@@ -5,7 +5,9 @@
     ``ipfs_datasets_py.knowledge_graphs.lineage.cross_document_enhanced``.
     Update your imports accordingly.
 """
+
 import warnings
+
 warnings.warn(
     "ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced is deprecated. "
     "Use ipfs_datasets_py.knowledge_graphs.lineage.cross_document_enhanced instead.",

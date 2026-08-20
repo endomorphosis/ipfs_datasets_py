@@ -31,7 +31,7 @@ class TestNLPPredicateExtraction:
         """
         text = "Dogs are animals"
         result = extract_predicates_nlp(text)
-        
+
         assert isinstance(result, dict)
         assert "nouns" in result
         assert "verbs" in result
@@ -45,7 +45,7 @@ class TestNLPPredicateExtraction:
         """
         text = "All humans are mortal beings who think rationally"
         result = extract_predicates_nlp(text)
-        
+
         assert isinstance(result, dict)
         assert len(result["nouns"]) > 0 or len(result["verbs"]) > 0
 
@@ -57,7 +57,7 @@ class TestNLPPredicateExtraction:
         """
         text = "The cat is black"
         result = extract_predicates_nlp(text, use_spacy=False)
-        
+
         assert isinstance(result, dict)
         assert "nouns" in result
         assert "verbs" in result
@@ -71,7 +71,7 @@ class TestNLPPredicateExtraction:
         """
         text = "The quick brown fox jumps over the lazy dog"
         result = extract_predicates_nlp(text, use_spacy=True)
-        
+
         assert isinstance(result, dict)
         # spaCy should extract entities if available
         if "entities" in result:
@@ -85,7 +85,7 @@ class TestNLPPredicateExtraction:
         """
         text = "Machine learning algorithms process natural language"
         result = extract_predicates_nlp(text)
-        
+
         assert isinstance(result, dict)
         # Should extract some nouns
         assert len(result.get("nouns", [])) > 0
@@ -98,7 +98,7 @@ class TestNLPPredicateExtraction:
         """
         text = "Socrates is a philosopher from Athens"
         result = extract_predicates_nlp(text)
-        
+
         assert isinstance(result, dict)
         # Should extract Socrates and Athens as nouns/entities
         nouns_and_entities = result.get("nouns", []) + result.get("entities", [])
@@ -112,7 +112,7 @@ class TestNLPPredicateExtraction:
         """
         text = "Birds fly and sing in the morning"
         result = extract_predicates_nlp(text)
-        
+
         assert isinstance(result, dict)
         # Should extract some verbs
         assert isinstance(result.get("verbs", []), list)
@@ -125,7 +125,7 @@ class TestNLPPredicateExtraction:
         """
         text = "The beautiful sunset was magnificent"
         result = extract_predicates_nlp(text)
-        
+
         assert isinstance(result, dict)
         assert isinstance(result.get("adjectives", []), list)
 
@@ -136,7 +136,7 @@ class TestNLPPredicateExtraction:
         THEN: Should handle gracefully
         """
         result = extract_predicates_nlp("")
-        
+
         assert isinstance(result, dict)
         assert all(isinstance(v, list) for v in result.values())
 
@@ -148,7 +148,7 @@ class TestNLPPredicateExtraction:
         """
         text = "Test @#$% special *&^ characters!"
         result = extract_predicates_nlp(text)
-        
+
         assert isinstance(result, dict)
 
 
@@ -163,7 +163,7 @@ class TestSemanticRoleLabeling:
         """
         text = "The cat chases the mouse"
         result = extract_semantic_roles(text)
-        
+
         assert isinstance(result, list)
 
     @pytest.mark.skipif(not SPACY_AVAILABLE, reason="spaCy not installed")
@@ -175,7 +175,7 @@ class TestSemanticRoleLabeling:
         """
         text = "John gives Mary a book"
         result = extract_semantic_roles(text, use_spacy=True)
-        
+
         assert isinstance(result, list)
         # If spaCy works, should have some roles
         if result:
@@ -189,7 +189,7 @@ class TestSemanticRoleLabeling:
         """
         text = "Test sentence"
         result = extract_semantic_roles(text, use_spacy=False)
-        
+
         assert isinstance(result, list)
         # Without spaCy, SRL returns empty
         assert len(result) == 0
@@ -202,7 +202,7 @@ class TestSemanticRoleLabeling:
         """
         text = "The teacher explains the concept to students in the classroom"
         result = extract_semantic_roles(text)
-        
+
         assert isinstance(result, list)
 
     def test_passive_voice(self):
@@ -213,7 +213,7 @@ class TestSemanticRoleLabeling:
         """
         text = "The book was written by the author"
         result = extract_semantic_roles(text)
-        
+
         assert isinstance(result, list)
 
 
@@ -228,7 +228,7 @@ class TestLogicalRelationsNLP:
         """
         text = "If it rains, then the ground gets wet"
         result = extract_logical_relations_nlp(text)
-        
+
         assert isinstance(result, list)
         # Should find conditional relation
         if result:
@@ -242,7 +242,7 @@ class TestLogicalRelationsNLP:
         """
         text = "All humans are mortal"
         result = extract_logical_relations_nlp(text)
-        
+
         assert isinstance(result, list)
 
     def test_existential_quantification(self):
@@ -253,7 +253,7 @@ class TestLogicalRelationsNLP:
         """
         text = "Some birds can swim"
         result = extract_logical_relations_nlp(text)
-        
+
         assert isinstance(result, list)
 
     def test_multiple_relations(self):
@@ -264,7 +264,7 @@ class TestLogicalRelationsNLP:
         """
         text = "All dogs are animals. Some dogs are friendly. If a dog is friendly, then it wags its tail."
         result = extract_logical_relations_nlp(text)
-        
+
         assert isinstance(result, list)
         # Should find multiple relations
         assert len(result) >= 0
@@ -277,7 +277,7 @@ class TestLogicalRelationsNLP:
         """
         text = "If P then Q"
         result = extract_logical_relations_nlp(text, use_spacy=False)
-        
+
         assert isinstance(result, list)
 
 
@@ -291,7 +291,7 @@ class TestExtractionStats:
         THEN: Should return status info
         """
         stats = get_extraction_stats()
-        
+
         assert isinstance(stats, dict)
         assert "spacy_available" in stats
         assert "fallback_mode" in stats
@@ -304,7 +304,7 @@ class TestExtractionStats:
         THEN: Should have required fields
         """
         stats = get_extraction_stats()
-        
+
         assert "spacy_available" in stats
         assert "model_loaded" in stats
         assert "fallback_mode" in stats
@@ -319,7 +319,7 @@ class TestExtractionStats:
         # Try to load model
         get_spacy_model()
         stats = get_extraction_stats()
-        
+
         if stats["model_loaded"]:
             assert "model_name" in stats
             assert "model_lang" in stats
@@ -335,22 +335,22 @@ class TestPerformanceComparison:
         THEN: Should complete in reasonable time
         """
         text = "The cat is black"
-        
+
         import time
-        
+
         # Test regex (fallback)
         start = time.time()
         result_regex = extract_predicates_nlp(text, use_spacy=False)
         time_regex = time.time() - start
-        
+
         # Test NLP (if available)
         start = time.time()
         result_nlp = extract_predicates_nlp(text, use_spacy=True)
         time_nlp = time.time() - start
-        
+
         assert isinstance(result_regex, dict)
         assert isinstance(result_nlp, dict)
-        
+
         # Both should be fast (<100ms)
         assert time_regex < 0.1
         assert time_nlp < 0.5  # NLP may be slightly slower
@@ -366,14 +366,14 @@ class TestPerformanceComparison:
             "Cats are mammals",
             "Birds can fly",
             "Fish live in water",
-            "Trees produce oxygen"
+            "Trees produce oxygen",
         ]
-        
+
         results = []
         for sent in sentences:
             result = extract_predicates_nlp(sent)
             results.append(result)
-        
+
         assert len(results) == 5
         assert all(isinstance(r, dict) for r in results)
 
@@ -389,7 +389,7 @@ class TestEdgeCases:
         """
         text = "This is a test " * 100  # 1500+ chars
         result = extract_predicates_nlp(text)
-        
+
         assert isinstance(result, dict)
 
     def test_unicode_text(self):
@@ -400,7 +400,7 @@ class TestEdgeCases:
         """
         text = "Café résumé naïve"
         result = extract_predicates_nlp(text)
-        
+
         assert isinstance(result, dict)
 
     def test_numbers_in_text(self):
@@ -411,7 +411,7 @@ class TestEdgeCases:
         """
         text = "There are 5 cats and 3 dogs"
         result = extract_predicates_nlp(text)
-        
+
         assert isinstance(result, dict)
 
     def test_punctuation_heavy_text(self):
@@ -422,7 +422,7 @@ class TestEdgeCases:
         """
         text = "Wait! What? Really... Okay, fine."
         result = extract_predicates_nlp(text)
-        
+
         assert isinstance(result, dict)
 
 

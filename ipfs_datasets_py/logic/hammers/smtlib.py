@@ -202,11 +202,17 @@ def _render_formula(node: Term, registry: _NameRegistry) -> str:
     if isinstance(node, Not):
         return f"(not {_render_formula(node.term, registry)})"
     if isinstance(node, And):
-        return f"(and {_render_formula(node.left, registry)} {_render_formula(node.right, registry)})"
+        return (
+            f"(and {_render_formula(node.left, registry)} {_render_formula(node.right, registry)})"
+        )
     if isinstance(node, Or):
-        return f"(or {_render_formula(node.left, registry)} {_render_formula(node.right, registry)})"
+        return (
+            f"(or {_render_formula(node.left, registry)} {_render_formula(node.right, registry)})"
+        )
     if isinstance(node, Implies):
-        return f"(=> {_render_formula(node.left, registry)} {_render_formula(node.right, registry)})"
+        return (
+            f"(=> {_render_formula(node.left, registry)} {_render_formula(node.right, registry)})"
+        )
     if isinstance(node, Iff):
         return f"(= {_render_formula(node.left, registry)} {_render_formula(node.right, registry)})"
     if isinstance(node, Eq):
@@ -349,8 +355,10 @@ class _Parser:
         name = form[1]
         arg_forms = form[2]
         result_tok = form[3]
-        if not isinstance(name, str) or not isinstance(arg_forms, list) or not isinstance(
-            result_tok, str
+        if (
+            not isinstance(name, str)
+            or not isinstance(arg_forms, list)
+            or not isinstance(result_tok, str)
         ):
             raise SMTLIBParseError(f"malformed declare-fun: {form!r}")
         params = [self.resolve_sort_token(a) for a in arg_forms if isinstance(a, str)]

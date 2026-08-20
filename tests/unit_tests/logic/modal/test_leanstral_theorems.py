@@ -47,9 +47,7 @@ def _guidance():
         "feature_groups": {"compiler_contract": ["modal:deontic"]},
         "legal_ir_view_gap_distribution": {"deontic_norms": 0.1},
         "legal_ir_view_metrics": {"cross_entropy_loss": 0.2},
-        "ranked_guidance_features": [
-            {"feature": "modal:deontic", "score": 1.0}
-        ],
+        "ranked_guidance_features": [{"feature": "modal:deontic", "score": 1.0}],
         "synthesis_focus": ["legal_ir_multiview"],
     }
 
@@ -99,15 +97,17 @@ def test_theorem_evidence_binds_semantic_facts_without_statement_authorship() ->
     temporal_theorems = [
         theorem for theorem in registry.theorems if theorem.category == "temporal_bounds"
     ]
-    role_theorems = [
-        theorem for theorem in registry.theorems if theorem.category == "source_roles"
-    ]
+    role_theorems = [theorem for theorem in registry.theorems if theorem.category == "source_roles"]
     graph_theorem = next(
         theorem for theorem in registry.theorems if theorem.category == "graph_endpoint_integrity"
     )
 
-    assert any(theorem.evidence["facts"]["permissionExpected"] is True for theorem in permission_theorems)
-    assert any(theorem.evidence["facts"]["prohibitionExpected"] is True for theorem in prohibition_theorems)
+    assert any(
+        theorem.evidence["facts"]["permissionExpected"] is True for theorem in permission_theorems
+    )
+    assert any(
+        theorem.evidence["facts"]["prohibitionExpected"] is True for theorem in prohibition_theorems
+    )
     assert any(theorem.evidence["facts"]["exceptionCount"] > 0 for theorem in exception_theorems)
     assert any(theorem.evidence["facts"]["temporalCount"] > 0 for theorem in temporal_theorems)
     assert any(
@@ -148,7 +148,9 @@ def test_registry_is_deterministic_and_changes_with_canonical_ir() -> None:
     )
 
     assert baseline.to_dict() == again.to_dict()
-    assert baseline.registry_hash != generate_legal_semantics_theorem_registry(changed).registry_hash
+    assert (
+        baseline.registry_hash != generate_legal_semantics_theorem_registry(changed).registry_hash
+    )
 
 
 def test_leanstral_task_carries_registry_and_accepts_only_theorem_proof_bodies() -> None:

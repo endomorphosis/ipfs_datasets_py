@@ -63,14 +63,31 @@
 ```python
 # Comprehensive exclusion filter (50+ standard library functions)
 excluded_names = {
-    'dataclass', 'asdict', 'field', 'abstractmethod', 
-    'wraps', 'partial', 'reduce', 'filter', 'map', ...
+    "dataclass",
+    "asdict",
+    "field",
+    "abstractmethod",
+    "wraps",
+    "partial",
+    "reduce",
+    "filter",
+    "map",
+    ...,
 }
 
-# MCP tool pattern validation  
+# MCP tool pattern validation
 mcp_tool_patterns = [
-    'load_', 'save_', 'create_', 'generate_', 'process_',
-    'record_', 'search_', 'get_', 'pin_', 'extract_', ...
+    "load_",
+    "save_",
+    "create_",
+    "generate_",
+    "process_",
+    "record_",
+    "search_",
+    "get_",
+    "pin_",
+    "extract_",
+    ...,
 ]
 ```
 

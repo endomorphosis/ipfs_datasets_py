@@ -24,27 +24,29 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_native
 
 
 def _load_json(path: Path) -> dict[str, object]:
-    payload = json.loads(path.read_text(encoding='utf-8'))
+    payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f'expected JSON object: {path}')
+        raise ValueError(f"expected JSON object: {path}")
     return payload
 
 
 def _write(path: Path, value: str | dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if isinstance(value, str):
-        path.write_text(value, encoding='utf-8')
+        path.write_text(value, encoding="utf-8")
     else:
-        path.write_text(json.dumps(value, indent=2, sort_keys=True, ensure_ascii=True) + '\n', encoding='utf-8')
+        path.write_text(
+            json.dumps(value, indent=2, sort_keys=True, ensure_ascii=True) + "\n", encoding="utf-8"
+        )
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root.')
-    parser.add_argument('--source-root', required=True, help='Pinned Xaman public-source checkout.')
-    parser.add_argument('--out', default=REPORT_PATH, help='Assessment report path.')
-    parser.add_argument('--smt-out', default=SMTLIB_PATH, help='SMT-LIB model path.')
-    parser.add_argument('--timeout-seconds', type=int, default=15, help='Per-solver timeout.')
+    parser.add_argument("--repo-root", default=str(ROOT_DIR), help="Repository root.")
+    parser.add_argument("--source-root", required=True, help="Pinned Xaman public-source checkout.")
+    parser.add_argument("--out", default=REPORT_PATH, help="Assessment report path.")
+    parser.add_argument("--smt-out", default=SMTLIB_PATH, help="SMT-LIB model path.")
+    parser.add_argument("--timeout-seconds", type=int, default=15, help="Per-solver timeout.")
     args = parser.parse_args(argv)
 
     root = Path(args.repo_root).resolve()
@@ -67,17 +69,21 @@ def main(argv: list[str] | None = None) -> int:
     print(
         json.dumps(
             {
-                'report_path': str(report_path.relative_to(root)) if report_path.is_relative_to(root) else str(report_path),
-                'smt_path': str(smt_path.relative_to(root)) if smt_path.is_relative_to(root) else str(smt_path),
-                'overall_status': report['overall_status'],
-                'security_decision': report['security_decision'],
-                'solver_statuses': {name: result['status'] for name, result in solver_lane.items()},
+                "report_path": str(report_path.relative_to(root))
+                if report_path.is_relative_to(root)
+                else str(report_path),
+                "smt_path": str(smt_path.relative_to(root))
+                if smt_path.is_relative_to(root)
+                else str(smt_path),
+                "overall_status": report["overall_status"],
+                "security_decision": report["security_decision"],
+                "solver_statuses": {name: result["status"] for name, result in solver_lane.items()},
             },
             sort_keys=True,
         )
     )
-    return 0 if report['overall_status'] == 'checked_source_bounded_with_runtime_boundaries' else 1
+    return 0 if report["overall_status"] == "checked_source_bounded_with_runtime_boundaries" else 1
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

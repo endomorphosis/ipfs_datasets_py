@@ -21,7 +21,6 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "ContentAnalysisReport": ("content_classification", "ContentAnalysisReport"),
     "ContentAnalysis": ("content_classification", "ContentAnalysis"),
     "analyze_website_content": ("content_classification", "analyze_website_content"),
-
     # Production Models
     "ProductionMLModelServer": ("quality_models", "ProductionMLModelServer"),
     "ProductionQualityModel": ("quality_models", "ProductionQualityModel"),
@@ -35,24 +34,23 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
 
 __all__ = [
     # Content Classification
-    'ContentClassificationPipeline',
-    'QualityClassifier', 
-    'TopicClassifier',
-    'SentimentAnalyzer',
-    'ContentAnomalyDetector',
-    'ContentAnalysisReport',
-    'ContentAnalysis',
-    'analyze_website_content',
-    
+    "ContentClassificationPipeline",
+    "QualityClassifier",
+    "TopicClassifier",
+    "SentimentAnalyzer",
+    "ContentAnomalyDetector",
+    "ContentAnalysisReport",
+    "ContentAnalysis",
+    "analyze_website_content",
     # Production Models
-    'ProductionMLModelServer',
-    'ProductionQualityModel',
-    'ProductionTopicModel',
-    'ModelMetadata',
-    'ModelPrediction',
-    'BatchPredictionResult',
-    'quick_quality_assessment',
-    'quick_topic_classification'
+    "ProductionMLModelServer",
+    "ProductionQualityModel",
+    "ProductionTopicModel",
+    "ModelMetadata",
+    "ModelPrediction",
+    "BatchPredictionResult",
+    "quick_quality_assessment",
+    "quick_topic_classification",
 ]
 
 

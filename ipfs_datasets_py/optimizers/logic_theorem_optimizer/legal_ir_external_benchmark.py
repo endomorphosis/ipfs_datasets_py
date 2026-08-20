@@ -37,23 +37,15 @@ from .legal_ir_semantic_metrics import (
 )
 
 
-LEGAL_IR_EXTERNAL_BENCHMARK_SCHEMA_VERSION: Final = (
-    "legal-ir-external-expert-benchmark-v1"
-)
-LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION: Final = (
-    "legal-ir-external-benchmark-report-v1"
-)
-EXTERNAL_BENCHMARK_HARD_GUARDRAIL: Final = (
-    "external_benchmark_never_training_data"
-)
+LEGAL_IR_EXTERNAL_BENCHMARK_SCHEMA_VERSION: Final = "legal-ir-external-expert-benchmark-v1"
+LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION: Final = "legal-ir-external-benchmark-report-v1"
+EXTERNAL_BENCHMARK_HARD_GUARDRAIL: Final = "external_benchmark_never_training_data"
 EXTERNAL_EVALUATION_OPERATION: Final = "external_evaluation"
 
 _ADJUDICATION_STATUSES: Final = frozenset(
     {"accepted", "adjudicated", "expert_authored", "reviewed"}
 )
-_TRAINING_BLOCKED_OPERATIONS: Final = frozenset(
-    {TRAINING_OPERATION, HPARAM_SELECTION_OPERATION}
-)
+_TRAINING_BLOCKED_OPERATIONS: Final = frozenset({TRAINING_OPERATION, HPARAM_SELECTION_OPERATION})
 
 
 class LegalIRExternalBenchmarkError(ValueError):
@@ -340,7 +332,9 @@ class ExternalLegalExpertBenchmarkPacket:
         if not self.source_text:
             raise LegalIRExternalBenchmarkError("source_text must be non-empty")
         if self.split != EXTERNAL_TEST_SPLIT:
-            raise LegalIRExternalBenchmarkError("external benchmark packets must use external_test split")
+            raise LegalIRExternalBenchmarkError(
+                "external benchmark packets must use external_test split"
+            )
         if self.training_eligible or self.hparam_selection_eligible:
             raise LegalIRExternalBenchmarkError(
                 "external benchmark packets must not be training or hparam-selection eligible"
@@ -359,7 +353,9 @@ class ExternalLegalExpertBenchmarkPacket:
             "acceptable_ambiguity",
             _normalize_ambiguity(self.acceptable_ambiguity),
         )
-        object.__setattr__(self, "adjudication_metadata", _normalize_adjudication(self.adjudication_metadata))
+        object.__setattr__(
+            self, "adjudication_metadata", _normalize_adjudication(self.adjudication_metadata)
+        )
         object.__setattr__(self, "reference_ir", _json_value(self.reference_ir))
         object.__setattr__(self, "tags", tuple(dict.fromkeys(self.tags)))
 
@@ -381,9 +377,7 @@ class ExternalLegalExpertBenchmarkPacket:
     @property
     def required_proof_obligation_ids(self) -> tuple[str, ...]:
         return tuple(
-            obligation.obligation_id
-            for obligation in self.proof_obligations
-            if obligation.required
+            obligation.obligation_id for obligation in self.proof_obligations if obligation.required
         )
 
     @property
@@ -420,9 +414,7 @@ class ExternalLegalExpertBenchmarkPacket:
             "expected_ir_families": list(self.expected_ir_families),
             "hparam_selection_eligible": False,
             "packet_id": self.packet_id,
-            "proof_obligations": [
-                obligation.to_dict() for obligation in self.proof_obligations
-            ],
+            "proof_obligations": [obligation.to_dict() for obligation in self.proof_obligations],
             "reference_ir": _json_value(self.reference_ir),
             "schema_version": self.schema_version,
             "source_document_id": self.source_document_id,
@@ -495,7 +487,9 @@ class ExternalBenchmarkReport:
     def external_validity_score(self) -> float:
         if not self.packet_results:
             return 0.0
-        return sum(1.0 for result in self.packet_results if result.accepted) / len(self.packet_results)
+        return sum(1.0 for result in self.packet_results if result.accepted) / len(
+            self.packet_results
+        )
 
     @property
     def failed_packet_ids(self) -> tuple[str, ...]:
@@ -548,9 +542,7 @@ def external_benchmark_split_manifest(
     """Return a manifest that pins every external packet to ``external_test``."""
 
     resolved = tuple(packets)
-    examples = tuple(
-        LegalIRSplitExample.from_sample(packet.split_sample()) for packet in resolved
-    )
+    examples = tuple(LegalIRSplitExample.from_sample(packet.split_sample()) for packet in resolved)
     assignments = {packet.packet_id: EXTERNAL_TEST_SPLIT for packet in resolved}
     return LegalIRSplitManifest(
         examples=examples,
@@ -608,8 +600,7 @@ def evaluate_external_legal_expert_benchmark(
     )
     by_packet = _prediction_mapping(predictions)
     results = tuple(
-        _evaluate_packet(packet, _mapping(by_packet.get(packet.packet_id)))
-        for packet in resolved
+        _evaluate_packet(packet, _mapping(by_packet.get(packet.packet_id))) for packet in resolved
     )
     return ExternalBenchmarkReport(
         packet_results=results,
@@ -740,7 +731,11 @@ def _family_score(
             covered.append(family)
             continue
         alt_hit = next(
-            (alternative for alternative in _strings(alternatives.get(family)) if alternative in predicted),
+            (
+                alternative
+                for alternative in _strings(alternatives.get(family))
+                if alternative in predicted
+            ),
             "",
         )
         if alt_hit:
@@ -772,9 +767,7 @@ def _predicted_families(prediction: Mapping[str, Any]) -> tuple[str, ...]:
     ):
         raw = prediction.get(key)
         if raw:
-            return tuple(
-                dict.fromkeys(_canonical_family(item) for item in _strings(raw))
-            )
+            return tuple(dict.fromkeys(_canonical_family(item) for item in _strings(raw)))
     return ()
 
 
@@ -807,7 +800,9 @@ def _citation_clusters(prediction: Mapping[str, Any]) -> tuple[str, ...]:
                 values.extend(_strings(item))
     else:
         values.extend(_strings(raw))
-    return tuple(dict.fromkeys(_citation_cluster(item) for item in values if _citation_cluster(item)))
+    return tuple(
+        dict.fromkeys(_citation_cluster(item) for item in values if _citation_cluster(item))
+    )
 
 
 def _proof_score(
@@ -913,9 +908,7 @@ def _semantic_score(
         family=packet.expected_ir_families[0],
     )
     failures = tuple(
-        metric
-        for metric in SEMANTIC_EQUIVALENCE_METRICS
-        if result.scores.get(metric, 0.0) < 1.0
+        metric for metric in SEMANTIC_EQUIVALENCE_METRICS if result.scores.get(metric, 0.0) < 1.0
     )
     return (
         result.minimum_score,

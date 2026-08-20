@@ -8,11 +8,12 @@ import anyio
 import time
 from pathlib import Path
 
+
 # Create HTML preview of the enhanced dashboard
 def create_dashboard_preview():
     """Create a standalone HTML preview of the Maps dashboard."""
-    
-    html_content = '''<!DOCTYPE html>
+
+    html_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -446,24 +447,26 @@ def create_dashboard_preview():
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
-</html>'''
-    
+</html>"""
+
     # Save the HTML file
-    output_dir = Path("/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/maps_dashboard_screenshots")
+    output_dir = Path(
+        "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/maps_dashboard_screenshots"
+    )
     output_dir.mkdir(exist_ok=True)
-    
+
     html_file = output_dir / "enhanced_maps_dashboard.html"
-    with open(html_file, 'w', encoding='utf-8') as f:
+    with open(html_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-    
+
     print(f"✅ Enhanced Maps Dashboard preview created: {html_file}")
     return html_file
 
 
 def create_documentation():
     """Create comprehensive documentation for the Maps feature."""
-    
-    documentation = '''# Enhanced Investigation Dashboard - Maps Feature
+
+    documentation = """# Enhanced Investigation Dashboard - Maps Feature
 
 ## 🗺️ Overview
 
@@ -653,16 +656,18 @@ The Maps feature is built using three new MCP (Model Context Protocol) tools:
 
 ---
 
-*This Maps feature represents a significant enhancement to the Investigation Dashboard, providing powerful geospatial analysis capabilities that integrate seamlessly with existing GraphRAG and entity analysis tools.*'''
-    
+*This Maps feature represents a significant enhancement to the Investigation Dashboard, providing powerful geospatial analysis capabilities that integrate seamlessly with existing GraphRAG and entity analysis tools.*"""
+
     # Save documentation
-    output_dir = Path("/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/maps_dashboard_screenshots")
+    output_dir = Path(
+        "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/maps_dashboard_screenshots"
+    )
     output_dir.mkdir(exist_ok=True)
-    
+
     doc_file = output_dir / "MAPS_FEATURE_DOCUMENTATION.md"
-    with open(doc_file, 'w', encoding='utf-8') as f:
+    with open(doc_file, "w", encoding="utf-8") as f:
         f.write(documentation)
-    
+
     print(f"✅ Maps feature documentation created: {doc_file}")
     return doc_file
 
@@ -670,13 +675,13 @@ The Maps feature is built using three new MCP (Model Context Protocol) tools:
 async def main():
     """Create dashboard preview and documentation."""
     print("🗺️ Creating Enhanced Investigation Dashboard with Maps Feature...")
-    
+
     # Create HTML preview
     html_file = create_dashboard_preview()
-    
+
     # Create documentation
     doc_file = create_documentation()
-    
+
     # Create summary
     summary = f"""
 🎉 Enhanced Investigation Dashboard with Maps Feature Created!
@@ -713,19 +718,22 @@ async def main():
    - Dashboard integration: ✅ Fully functional
    - Query processing: ✅ Natural language support
 """
-    
+
     print(summary)
-    
+
     # Save summary
-    summary_file = Path("/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/maps_dashboard_screenshots") / "IMPLEMENTATION_SUMMARY.md"
-    with open(summary_file, 'w') as f:
+    summary_file = (
+        Path("/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/maps_dashboard_screenshots")
+        / "IMPLEMENTATION_SUMMARY.md"
+    )
+    with open(summary_file, "w") as f:
         f.write(summary)
-    
+
     return {
-        'html_file': str(html_file),
-        'documentation': str(doc_file),
-        'summary': str(summary_file),
-        'status': 'completed'
+        "html_file": str(html_file),
+        "documentation": str(doc_file),
+        "summary": str(summary_file),
+        "status": "completed",
     }
 
 

@@ -19,16 +19,23 @@ def an_auditlogger_instance_is_initialized():
     """
     try:
         logger = AuditLogger()
-        
+
         if logger is None:
-            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None") from None
-        
-        if not hasattr(logger, '_thread_local'):
-            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing '_thread_local' attribute") from None
-        
+            raise FixtureError(
+                "Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None"
+            ) from None
+
+        if not hasattr(logger, "_thread_local"):
+            raise FixtureError(
+                "Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing '_thread_local' attribute"
+            ) from None
+
         return logger
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_threadlocal_context_is_empty(an_auditlogger_instance_is_initialized):
@@ -37,21 +44,25 @@ def the_threadlocal_context_is_empty(an_auditlogger_instance_is_initialized):
     """
     try:
         logger = an_auditlogger_instance_is_initialized
-        
+
         # Clear any existing context
-        if hasattr(logger._thread_local, 'context'):
-            delattr(logger._thread_local, 'context')
-        
+        if hasattr(logger._thread_local, "context"):
+            delattr(logger._thread_local, "context")
+
         # Verify context is empty
-        if hasattr(logger._thread_local, 'context'):
-            raise FixtureError("Failed to create fixture the_threadlocal_context_is_empty: Context still exists after clearing") from None
-        
+        if hasattr(logger._thread_local, "context"):
+            raise FixtureError(
+                "Failed to create fixture the_threadlocal_context_is_empty: Context still exists after clearing"
+            ) from None
+
         return logger
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_threadlocal_context_is_empty: {e}") from e
 
 
-def test_set_context_with_user_parameter(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_with_user_parameter(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context with user parameter
 
@@ -65,7 +76,9 @@ def test_set_context_with_user_parameter(an_auditlogger_instance_is_initialized,
     pass
 
 
-def test_set_context_with_session_id_parameter(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_with_session_id_parameter(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context with session_id parameter
 
@@ -79,7 +92,9 @@ def test_set_context_with_session_id_parameter(an_auditlogger_instance_is_initia
     pass
 
 
-def test_set_context_with_client_ip_parameter(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_with_client_ip_parameter(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context with client_ip parameter
 
@@ -93,7 +108,9 @@ def test_set_context_with_client_ip_parameter(an_auditlogger_instance_is_initial
     pass
 
 
-def test_set_context_with_application_parameter(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_with_application_parameter(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context with application parameter
 
@@ -107,7 +124,9 @@ def test_set_context_with_application_parameter(an_auditlogger_instance_is_initi
     pass
 
 
-def test_set_context_with_multiple_parameters_includes_user(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_with_multiple_parameters_includes_user(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context with multiple parameters includes user
 
@@ -121,7 +140,9 @@ def test_set_context_with_multiple_parameters_includes_user(an_auditlogger_insta
     pass
 
 
-def test_set_context_with_multiple_parameters_includes_session_id(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_with_multiple_parameters_includes_session_id(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context with multiple parameters includes session_id
 
@@ -135,7 +156,9 @@ def test_set_context_with_multiple_parameters_includes_session_id(an_auditlogger
     pass
 
 
-def test_set_context_with_multiple_parameters_includes_client_ip(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_with_multiple_parameters_includes_client_ip(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context with multiple parameters includes client_ip
 
@@ -149,7 +172,9 @@ def test_set_context_with_multiple_parameters_includes_client_ip(an_auditlogger_
     pass
 
 
-def test_set_context_applies_to_subsequent_log_calls(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_applies_to_subsequent_log_calls(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context applies to subsequent log calls
 
@@ -163,7 +188,9 @@ def test_set_context_applies_to_subsequent_log_calls(an_auditlogger_instance_is_
     pass
 
 
-def test_set_context_does_not_affect_previous_events(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_does_not_affect_previous_events(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context does not affect previous events
 
@@ -180,7 +207,9 @@ def test_set_context_does_not_affect_previous_events(an_auditlogger_instance_is_
     pass
 
 
-def test_set_context_overwrites_previous_user_value(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_overwrites_previous_user_value(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context overwrites previous user value
 
@@ -197,7 +226,9 @@ def test_set_context_overwrites_previous_user_value(an_auditlogger_instance_is_i
     pass
 
 
-def test_set_context_removes_previous_user_value_when_overwritten(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_removes_previous_user_value_when_overwritten(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context removes previous user value when overwritten
 
@@ -214,7 +245,9 @@ def test_set_context_removes_previous_user_value_when_overwritten(an_auditlogger
     pass
 
 
-def test_set_context_is_thread_local_in_thread_1(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_is_thread_local_in_thread_1(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context is thread-local in thread 1
 
@@ -231,7 +264,9 @@ def test_set_context_is_thread_local_in_thread_1(an_auditlogger_instance_is_init
     pass
 
 
-def test_set_context_is_thread_local_in_thread_2(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_is_thread_local_in_thread_2(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context is thread-local in thread 2
 
@@ -248,7 +283,9 @@ def test_set_context_is_thread_local_in_thread_2(an_auditlogger_instance_is_init
     pass
 
 
-def test_set_context_with_none_values_does_not_update(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_with_none_values_does_not_update(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context with None values does not update
 
@@ -265,7 +302,9 @@ def test_set_context_with_none_values_does_not_update(an_auditlogger_instance_is
     pass
 
 
-def test_set_context_updates_only_provided_parameters_preserves_user(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_updates_only_provided_parameters_preserves_user(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context updates only provided parameters preserves user
 
@@ -282,7 +321,9 @@ def test_set_context_updates_only_provided_parameters_preserves_user(an_auditlog
     pass
 
 
-def test_set_context_updates_only_provided_parameters_preserves_session_id(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_updates_only_provided_parameters_preserves_session_id(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context updates only provided parameters preserves session_id
 
@@ -299,7 +340,9 @@ def test_set_context_updates_only_provided_parameters_preserves_session_id(an_au
     pass
 
 
-def test_set_context_initializes_context_dictionary_if_not_exists(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_initializes_context_dictionary_if_not_exists(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context initializes context dictionary if not exists
 
@@ -316,7 +359,9 @@ def test_set_context_initializes_context_dictionary_if_not_exists(an_auditlogger
     pass
 
 
-def test_set_context_populates_user_when_initializing_context_dictionary(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):
+def test_set_context_populates_user_when_initializing_context_dictionary(
+    an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty
+):
     """
     Scenario: Set context populates user when initializing context dictionary
 
@@ -331,4 +376,3 @@ def test_set_context_populates_user_when_initializing_context_dictionary(an_audi
     """
     # TODO: Implement test
     pass
-

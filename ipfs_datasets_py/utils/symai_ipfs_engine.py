@@ -68,7 +68,9 @@ def _dry_run_enabled() -> bool:
 
 def _dry_run_json_object(prompt: str) -> str:
     lowered = str(prompt or "").lower()
-    fol_formula = "∀x (Student(x) → Studies(x))" if "student" in lowered else "∀x (Cat(x) → Animal(x))"
+    fol_formula = (
+        "∀x (Student(x) → Studies(x))" if "student" in lowered else "∀x (Cat(x) → Animal(x))"
+    )
     payload: Dict[str, Any] = {
         "fol_formula": fol_formula,
         "confidence": 0.9,
@@ -123,9 +125,15 @@ def _backend_capabilities_fingerprint() -> Dict[str, Any]:
     return {
         "ipfs_accelerate_py": importlib.util.find_spec("ipfs_accelerate_py") is not None,
         "copilot_sdk": importlib.util.find_spec("copilot") is not None,
-        "gemini_cli": _cli_available(os.environ.get("IPFS_DATASETS_PY_GEMINI_CLI_CMD", "npx @google/gemini-cli")),
-        "claude_code": _cli_available(os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude")),
-        "copilot_cli": _cli_available(os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "copilot")),
+        "gemini_cli": _cli_available(
+            os.environ.get("IPFS_DATASETS_PY_GEMINI_CLI_CMD", "npx @google/gemini-cli")
+        ),
+        "claude_code": _cli_available(
+            os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude")
+        ),
+        "copilot_cli": _cli_available(
+            os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "copilot")
+        ),
         "transformers": importlib.util.find_spec("transformers") is not None,
         "torch": importlib.util.find_spec("torch") is not None,
     }
@@ -232,14 +240,22 @@ def _wants_json_response(argument, prompt: str) -> bool:
         if isinstance(payload, dict):
             response_format = payload.get("response_format")
 
-    if (
-        isinstance(response_format, dict)
-        and response_format.get("type") in {"json_object", "json_schema"}
-    ):
+    if isinstance(response_format, dict) and response_format.get("type") in {
+        "json_object",
+        "json_schema",
+    }:
         return True
 
     lowered = str(prompt or "").lower()
-    return any(token in lowered for token in ["return a json object", "valid json object", "<output_data_model>", "[[schema]]"])
+    return any(
+        token in lowered
+        for token in [
+            "return a json object",
+            "valid json object",
+            "<output_data_model>",
+            "[[schema]]",
+        ]
+    )
 
 
 def _router_enabled() -> bool:
@@ -325,7 +341,7 @@ def _hf_generate(prompt: str, model_name: str) -> str:
         output = model.generate(**inputs, max_new_tokens=max_new_tokens)
     decoded = tokenizer.decode(output[0], skip_special_tokens=True)
     if decoded.startswith(prompt):
-        return decoded[len(prompt):].lstrip()
+        return decoded[len(prompt) :].lstrip()
     return decoded
 
 
@@ -365,7 +381,9 @@ def _local_bin_paths() -> List[str]:
         os.getenv("IPFS_DATASETS_PROJECT_ROOT", str(Path(__file__).resolve().parents[1]))
     ).resolve()
     bin_dir = Path(os.getenv("IPFS_DATASETS_LOCAL_BIN", str(project_root / "bin"))).resolve()
-    npm_prefix = Path(os.getenv("IPFS_DATASETS_NPM_PREFIX", str(bin_dir / ".deps" / "npm"))).resolve()
+    npm_prefix = Path(
+        os.getenv("IPFS_DATASETS_NPM_PREFIX", str(bin_dir / ".deps" / "npm"))
+    ).resolve()
     npm_bin = npm_prefix / "bin"
     return [str(bin_dir), str(npm_bin)]
 
@@ -521,16 +539,10 @@ def _generate_text(
         selected_provider = provider
         if selected_provider is None:
             if detect_provider_from_environment and canonicalize_provider:
-                selected_provider = detect_provider_from_environment(
-                    prefer_accelerate=False
-                )
-                selected_provider = canonicalize_provider(
-                    selected_provider, default=None
-                )
+                selected_provider = detect_provider_from_environment(prefer_accelerate=False)
+                selected_provider = canonicalize_provider(selected_provider, default=None)
             else:
-                selected_provider = (
-                    os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER") or None
-                )
+                selected_provider = os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER") or None
         generation_kwargs: Dict[str, Any] = {}
         if response_format is not None:
             generation_kwargs["response_format"] = response_format
@@ -560,10 +572,7 @@ def _generate_text(
             "PinnedSymaiCompletionError",
             None,
         )
-        if (
-            isinstance(completion_error, type)
-            and isinstance(exc, completion_error)
-        ):
+        if isinstance(completion_error, type) and isinstance(exc, completion_error):
             # Preserve the router's typed, allow-listed completion outcome so
             # the benchmark can classify model truncation as a contract
             # failure rather than misreporting it as configuration drift.
@@ -605,17 +614,12 @@ class IPFSSyMAIEngine(Engine):
             not isinstance(route_binding, Mapping)
             or not route_binding
             or not all(
-                isinstance(key, str)
-                and isinstance(value, str)
-                and key
-                and value
+                isinstance(key, str) and isinstance(value, str) and key and value
                 for key, value in route_binding.items()
             )
         ):
             raise ValueError("route_binding must be a nonempty string mapping")
-        self.route_binding = (
-            None if route_binding is None else dict(route_binding)
-        )
+        self.route_binding = None if route_binding is None else dict(route_binding)
         if self.id() != engine_id:
             return
         self.model = (
@@ -651,11 +655,13 @@ class IPFSSyMAIEngine(Engine):
         if processed:
             parts.append(str(processed))
 
-        if (
-            isinstance(response_format, dict)
-            and response_format.get("type") in {"json_object", "json_schema"}
-        ):
-            parts.append("\n\nIMPORTANT: Return only a valid JSON object. Do not include extra text.")
+        if isinstance(response_format, dict) and response_format.get("type") in {
+            "json_object",
+            "json_schema",
+        }:
+            parts.append(
+                "\n\nIMPORTANT: Return only a valid JSON object. Do not include extra text."
+            )
         else:
             parts.append(
                 "\n\nIMPORTANT: Return only the final answer text. Do not run commands. Do not describe steps."
@@ -680,9 +686,7 @@ class IPFSSyMAIEngine(Engine):
         cache_key: str | None = None
         deps = None
         cache_is_enabled = (
-            _symai_cache_enabled()
-            if self.cache_enabled is None
-            else self.cache_enabled
+            _symai_cache_enabled() if self.cache_enabled is None else self.cache_enabled
         )
         if self.mode != "embedding" and cache_is_enabled:
             cache_key = _symai_request_cache_key(
@@ -710,9 +714,7 @@ class IPFSSyMAIEngine(Engine):
                 metadata["cache_key"] = cache_key
                 return [str(cached.get("text") or "")], metadata
 
-        if self.dry_run is True or (
-            self.dry_run is None and _dry_run_enabled()
-        ):
+        if self.dry_run is True or (self.dry_run is None and _dry_run_enabled()):
             if self.mode == "embedding":
                 return [json.dumps([0.0, 0.0, 0.0])], {"backend": "dry_run"}
             if _wants_json_response(argument, str(prompt)):
@@ -725,19 +727,13 @@ class IPFSSyMAIEngine(Engine):
             embeddings = embed_texts([prompt])
             return [json.dumps(embeddings[0])], {"backend": "embedding_adapter"}
 
-        if (
-            self.provider is None
-            and self.deps is None
-            and self.allow_local_fallback
-        ):
+        if self.provider is None and self.deps is None and self.allow_local_fallback:
             # Preserve the historic two-argument call for external wrappers
             # and tests that patch this internal seam.
             text, metadata = _generate_text(
                 prompt,
                 self.model,
-                response_format=(
-                    response_format if isinstance(response_format, dict) else None
-                ),
+                response_format=(response_format if isinstance(response_format, dict) else None),
                 route_binding=self.route_binding,
             )
         else:
@@ -748,9 +744,7 @@ class IPFSSyMAIEngine(Engine):
                 deps=self.deps,
                 allow_local_fallback=self.allow_local_fallback,
                 dry_run=self.dry_run,
-                response_format=(
-                    response_format if isinstance(response_format, dict) else None
-                ),
+                response_format=(response_format if isinstance(response_format, dict) else None),
                 route_binding=self.route_binding,
             )
         if cache_key and deps is not None:
@@ -786,6 +780,7 @@ class IPFSSyMAISymbolicEngine(IPFSSyMAIEngine):
 
 class IPFSSyMAINeurosymbolicEngine(IPFSSyMAIEngine):
     """SyMAI neurosymbolic engine router (NEUROSYMBOLIC_ENGINE_MODEL)."""
+
     def __init__(
         self,
         engine_id: str,

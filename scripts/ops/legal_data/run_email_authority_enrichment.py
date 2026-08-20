@@ -103,7 +103,9 @@ def main(args: list[str] | None = None) -> int:
         print(f"Catalog path: {payload.get('catalog_path') or '(default)'}")
         print(f"Query count: {((payload.get('summary') or {}).get('query_count'))}")
         print(f"Queries with hits: {((payload.get('summary') or {}).get('queries_with_hits'))}")
-        print(f"Seed authority count: {((payload.get('summary') or {}).get('seed_authority_count'))}")
+        print(
+            f"Seed authority count: {((payload.get('summary') or {}).get('seed_authority_count'))}"
+        )
         print(f"JSON output: {payload.get('output_path')}")
         print(f"Markdown output: {payload.get('markdown_output_path')}")
     return 0 if payload.get("status") == "success" else 1

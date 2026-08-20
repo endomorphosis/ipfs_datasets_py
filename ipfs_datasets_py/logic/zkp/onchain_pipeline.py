@@ -23,7 +23,9 @@ from .evm_public_inputs import pack_public_inputs_for_evm
 class OnchainClient(Protocol):
     """Minimal interface required to submit and confirm an on-chain verify call."""
 
-    def verify_proof_rpc_call(self, proof_hex: str, public_inputs_hex: list[str]) -> bool:  # pragma: no cover
+    def verify_proof_rpc_call(
+        self, proof_hex: str, public_inputs_hex: list[str]
+    ) -> bool:  # pragma: no cover
         ...
 
     def submit_proof_transaction(
@@ -36,7 +38,9 @@ class OnchainClient(Protocol):
     ) -> Any:  # pragma: no cover
         ...
 
-    def wait_for_confirmation(self, tx_hash: Any, timeout_seconds: int = 300) -> Mapping[str, Any]:  # pragma: no cover
+    def wait_for_confirmation(
+        self, tx_hash: Any, timeout_seconds: int = 300
+    ) -> Mapping[str, Any]:  # pragma: no cover
         ...
 
 
@@ -110,7 +114,9 @@ def run_offchain_to_onchain_pipeline(
 
     precheck_ok = bool(client.verify_proof_rpc_call(proof_hex, public_inputs_hex))
     if dry_run or not precheck_ok:
-        return OnchainPipelineResult(precheck_ok=precheck_ok, submitted=False, tx_hash=None, receipt=None)
+        return OnchainPipelineResult(
+            precheck_ok=precheck_ok, submitted=False, tx_hash=None, receipt=None
+        )
 
     tx_hash = client.submit_proof_transaction(
         proof_hex,

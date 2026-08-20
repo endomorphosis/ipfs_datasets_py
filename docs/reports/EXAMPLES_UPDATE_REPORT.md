@@ -259,10 +259,12 @@ from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard
 from ipfs_datasets_py.analytics.data_provenance import ProvenanceManager
 from ipfs_datasets_py.p2p_networking.libp2p_kit import LibP2PKit
 
+
 def main():
     """Run example."""
     # Your code here
     pass
+
 
 if __name__ == "__main__":
     main()

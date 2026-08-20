@@ -8,7 +8,9 @@ from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
 from ._helpers import default_blob_dir, default_wallet_dir, load, save
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Revoke a wallet grant and dependent access.")
+@tool_metadata(
+    category="wallet_tools", mcp_description="Revoke a wallet grant and dependent access."
+)
 async def wallet_revoke_grant(
     wallet_id: str,
     grant_id: str,

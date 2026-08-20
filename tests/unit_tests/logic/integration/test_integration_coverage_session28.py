@@ -38,6 +38,7 @@ try:
         create_permission,
         create_prohibition,
     )
+
     TDFOL_AVAILABLE = True
 except ImportError:
     TDFOL_AVAILABLE = False
@@ -55,6 +56,7 @@ try:
     from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
         TDFOLShadowProverBridge,
     )
+
     BRIDGES_AVAILABLE = True
 except ImportError:
     BRIDGES_AVAILABLE = False
@@ -71,6 +73,7 @@ try:
         DeonticLogicConverter,
         ConversionContext,
     )
+
     CONVERTERS_AVAILABLE = True
 except ImportError:
     CONVERTERS_AVAILABLE = False
@@ -81,6 +84,7 @@ try:
         LeanTranslator,
         CoqTranslator,
     )
+
     TRANSLATORS_AVAILABLE = True
 except ImportError:
     TRANSLATORS_AVAILABLE = False
@@ -90,6 +94,7 @@ try:
         NeurosymbolicReasoner,
         get_reasoner,
     )
+
     NEUROSYMBOLIC_AVAILABLE = True
 except ImportError:
     NEUROSYMBOLIC_AVAILABLE = False
@@ -100,12 +105,14 @@ try:
         ChunkedBatchProcessor,
         BatchResult,
     )
+
     BATCH_PROCESSING_AVAILABLE = True
 except ImportError:
     BATCH_PROCESSING_AVAILABLE = False
 
 try:
     import ipfs_datasets_py.logic.integration as logic_integration
+
     INTEGRATION_PKG_AVAILABLE = True
 except ImportError:
     INTEGRATION_PKG_AVAILABLE = False
@@ -114,6 +121,7 @@ except ImportError:
 # ──────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 def _make_simple_formula():
     """Return a simple TDFOL obligation formula: O(pay_tax(citizen))."""
@@ -139,6 +147,7 @@ def _make_temporal_formula():
 # ──────────────────────────────────────────────────────────────────────────────
 # Test Class 1: TDFOL core formula construction
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.skipif(not TDFOL_AVAILABLE, reason="TDFOL not available")
 class TestTDFOLFormulasSession28:
@@ -203,7 +212,10 @@ class TestTDFOLFormulasSession28:
 # Test Class 2: TDFOL↔CEC bridge cross-module interactions
 # ──────────────────────────────────────────────────────────────────────────────
 
-@pytest.mark.skipif(not (TDFOL_AVAILABLE and BRIDGES_AVAILABLE), reason="TDFOL or bridges unavailable")
+
+@pytest.mark.skipif(
+    not (TDFOL_AVAILABLE and BRIDGES_AVAILABLE), reason="TDFOL or bridges unavailable"
+)
 class TestTDFOLCECBridgeSession28:
     """Cross-module tests for TDFOL↔CEC bridge."""
 
@@ -241,6 +253,7 @@ class TestTDFOLCECBridgeSession28:
     def test_from_cec_format_returns_proof_result(self):
         """GIVEN CEC string WHEN calling from_target_format THEN ProofResult returned."""
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         bridge = TDFOLCECBridge()
         result = bridge.from_target_format("(O_agent pay(agent))")
         # Should return a ProofResult or similar
@@ -308,6 +321,7 @@ class TestTDFOLCECBridgeSession28:
 # ──────────────────────────────────────────────────────────────────────────────
 # Test Class 3: TDFOL Grammar Bridge NL tests
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.skipif(not BRIDGES_AVAILABLE, reason="Bridges not available")
 class TestTDFOLGrammarBridgeNLSession28:
@@ -382,6 +396,7 @@ class TestTDFOLGrammarBridgeNLSession28:
 # ──────────────────────────────────────────────────────────────────────────────
 # Test Class 4: Integration converter cross-module interactions
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.skipif(not CONVERTERS_AVAILABLE, reason="Converters not available")
 class TestIntegrationConvertersSession28:
@@ -470,6 +485,7 @@ class TestIntegrationConvertersSession28:
 # ──────────────────────────────────────────────────────────────────────────────
 # Test Class 5: E2E pipeline — NL → TDFOL → CEC bridge → report
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.skipif(
     not (TDFOL_AVAILABLE and BRIDGES_AVAILABLE and CONVERTERS_AVAILABLE),
@@ -585,6 +601,7 @@ class TestE2ELegalPipelineSession28:
 # Test Class 6: E2E async pipeline (document consistency via temporal_deontic_api)
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestE2EAsyncDocumentConsistencySession28:
     """E2E tests using the temporal_deontic_api MCP wrapper functions."""
 
@@ -659,9 +676,7 @@ class TestE2EAsyncDocumentConsistencySession28:
 
         loop = asyncio.new_event_loop()
         try:
-            result = loop.run_until_complete(
-                query_theorems_from_parameters(parameters={})
-            )
+            result = loop.run_until_complete(query_theorems_from_parameters(parameters={}))
         finally:
             loop.close()
 
@@ -682,15 +697,13 @@ class TestE2EAsyncDocumentConsistencySession28:
 
         params = {
             "proposition": "Citizens must pay taxes",
-            "operator": "OBLIGATION",   # DeonticOperator enum member name (uppercase)
+            "operator": "OBLIGATION",  # DeonticOperator enum member name (uppercase)
             "agent_name": "Citizen",
             "jurisdiction": "Federal",
         }
         loop = asyncio.new_event_loop()
         try:
-            result = loop.run_until_complete(
-                add_theorem_from_parameters(parameters=params)
-            )
+            result = loop.run_until_complete(add_theorem_from_parameters(parameters=params))
         finally:
             loop.close()
 
@@ -700,6 +713,7 @@ class TestE2EAsyncDocumentConsistencySession28:
 # ──────────────────────────────────────────────────────────────────────────────
 # Test Class 7: Batch processing regression tests (bug fix: *tasks vs tasks)
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.skipif(not BATCH_PROCESSING_AVAILABLE, reason="Batch processing not available")
 class TestBatchProcessingRegressionSession28:
@@ -783,6 +797,7 @@ class TestBatchProcessingRegressionSession28:
 # Test Class 8: Integration module __init__ exports
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.skipif(not INTEGRATION_PKG_AVAILABLE, reason="logic.integration not available")
 class TestIntegrationPackageExportsSession28:
     """GIVEN the logic.integration package WHEN importing THEN key symbols are accessible."""
@@ -790,31 +805,37 @@ class TestIntegrationPackageExportsSession28:
     def test_neurosymbolic_reasoner_accessible(self):
         """GIVEN integration package WHEN accessing NeurosymbolicReasoner THEN importable."""
         from ipfs_datasets_py.logic.integration import NeurosymbolicReasoner
+
         assert NeurosymbolicReasoner is not None
 
     def test_get_reasoner_accessible(self):
         """GIVEN integration package WHEN accessing get_reasoner THEN callable."""
         from ipfs_datasets_py.logic.integration import get_reasoner
+
         assert callable(get_reasoner)
 
     def test_deontic_reasoner_accessible(self):
         """GIVEN integration package WHEN accessing DeontologicalReasoningEngine THEN importable."""
         from ipfs_datasets_py.logic.integration import DeontologicalReasoningEngine
+
         assert DeontologicalReasoningEngine is not None
 
     def test_logic_verifier_accessible(self):
         """GIVEN integration package WHEN accessing LogicVerifier THEN importable."""
         from ipfs_datasets_py.logic.integration import LogicVerifier
+
         assert LogicVerifier is not None
 
     def test_deontic_logic_converter_accessible(self):
         """GIVEN integration package WHEN accessing DeonticLogicConverter THEN importable."""
         from ipfs_datasets_py.logic.integration import DeonticLogicConverter
+
         assert DeonticLogicConverter is not None
 
     def test_availability_flags_are_bool(self):
         """GIVEN integration package WHEN checking availability flags THEN they are bool."""
         import ipfs_datasets_py.logic.integration as pkg
+
         for attr_name in dir(pkg):
             if attr_name.startswith("HAVE_") or attr_name.endswith("_AVAILABLE"):
                 val = getattr(pkg, attr_name)
@@ -824,6 +845,7 @@ class TestIntegrationPackageExportsSession28:
 # ──────────────────────────────────────────────────────────────────────────────
 # Test Class 9: TDFOL↔CEC bridge integration with mocked CEC prover
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.skipif(
     not (TDFOL_AVAILABLE and BRIDGES_AVAILABLE),
@@ -875,6 +897,7 @@ class TestTDFOLCECBridgeWithMockedProverSession28:
 # Test Class 10: Logic translation cross-module (TDFOL→Lean/Coq)
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.skipif(not TRANSLATORS_AVAILABLE, reason="Translators not available")
 class TestLogicTranslationCrossModuleSession28:
     """Tests for logic translation used in the E2E proof pipeline."""
@@ -899,6 +922,7 @@ class TestLogicTranslationCrossModuleSession28:
             DeonticFormula as CoreDeonticFormula,
             DeonticOperator as CoreDeonticOperator,
         )
+
         translator = LeanTranslator()
         formula = CoreDeonticFormula(
             operator=CoreDeonticOperator.OBLIGATION,
@@ -920,6 +944,7 @@ class TestLogicTranslationCrossModuleSession28:
             DeonticFormula as CoreDeonticFormula,
             DeonticOperator as CoreDeonticOperator,
         )
+
         translator = CoqTranslator()
         formula = CoreDeonticFormula(
             operator=CoreDeonticOperator.OBLIGATION,

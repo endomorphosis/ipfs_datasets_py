@@ -8,6 +8,7 @@ These tests confirm:
 4. ``AnyioQueue`` and ``AnyioPriorityQueue`` wrappers behave like asyncio.Queue.
 5. anyio_compat.run() works as a sync-from-async bridge.
 """
+
 from __future__ import annotations
 
 import ast
@@ -26,8 +27,14 @@ SRC_ROOT = Path(__file__).parents[3] / "ipfs_datasets_py"
 # Files that intentionally retain an ``import asyncio`` because they wrap
 # asyncio-specific primitives (e.g. asyncio.Future) for the asyncio backend.
 _ASYNCIO_ALLOWED = {
-    SRC_ROOT / "processors" / "multimedia" / "convert_to_txt_based_on_mime_type"
-    / "utils" / "converter_system" / "monads" / "async_.py",
+    SRC_ROOT
+    / "processors"
+    / "multimedia"
+    / "convert_to_txt_based_on_mime_type"
+    / "utils"
+    / "converter_system"
+    / "monads"
+    / "async_.py",
 }
 
 # Pattern that matches ``import asyncio`` as a whole token on non-comment lines.
@@ -53,6 +60,7 @@ def _collect_asyncio_import_files() -> List[Path]:
 # ---------------------------------------------------------------------------
 # Static analysis
 # ---------------------------------------------------------------------------
+
 
 def test_no_asyncio_imports_outside_multimedia():
     """No production source file (except the async monad shim) should import asyncio."""
@@ -97,7 +105,10 @@ def test_migrated_files_have_valid_syntax():
         multimedia_root / "utils" / "common" / "stopwatch.py",
         multimedia_root / "utils" / "common" / "anyio_queues.py",
         multimedia_root / "utils" / "converter_system" / "monads" / "async_.py",
-        multimedia_root / "utils" / "converter_system" / "run_in_parallel_with_concurrency_limiter.py",
+        multimedia_root
+        / "utils"
+        / "converter_system"
+        / "run_in_parallel_with_concurrency_limiter.py",
         multimedia_root / "utils" / "converter_system" / "run_in_thread_pool.py",
         multimedia_root / "converter_system" / "conversion_pipeline" / "functions" / "core.py",
         multimedia_root / "converter_system" / "conversion_pipeline" / "functions" / "optimize.py",
@@ -105,11 +116,23 @@ def test_migrated_files_have_valid_syntax():
         multimedia_root / "converter_system" / "file_path_queue" / "file_path_queue.py",
         multimedia_root / "external_interface" / "file_paths_manager" / "file_paths_manager.py",
         multimedia_root / "main.py",
-        multimedia_root / "pools" / "non_system_resources" / "core_functions_pool" / "core_functions_pool.py",
+        multimedia_root
+        / "pools"
+        / "non_system_resources"
+        / "core_functions_pool"
+        / "core_functions_pool.py",
         multimedia_root / "pools" / "non_system_resources" / "file_path_pool" / "file_path_pool.py",
         multimedia_root / "pools" / "system_resources" / "system_resources_pool_template.py",
         SRC_ROOT / "processors" / "multimedia" / "media_processor.py",
-        SRC_ROOT / "processors" / "multimedia" / "omni_converter_mk2" / "core" / "content_extractor" / "processors" / "by_ability" / "_llm_processor.py",
+        SRC_ROOT
+        / "processors"
+        / "multimedia"
+        / "omni_converter_mk2"
+        / "core"
+        / "content_extractor"
+        / "processors"
+        / "by_ability"
+        / "_llm_processor.py",
     ]
     errors = []
     for p in migrated:
@@ -127,24 +150,28 @@ def test_migrated_files_have_valid_syntax():
 # Module import tests
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("module_path", [
-    "ipfs_datasets_py.core_operations.dataset_loader",
-    "ipfs_datasets_py.core_operations.dataset_converter",
-    "ipfs_datasets_py.core_operations.dataset_saver",
-    "ipfs_datasets_py.core_operations.ipfs_getter",
-    "ipfs_datasets_py.core_operations.ipfs_pinner",
-    "ipfs_datasets_py.logic.batch_processing",
-    "ipfs_datasets_py.logic.benchmarks",
-    "ipfs_datasets_py.knowledge_graphs.transactions.wal",
-    "ipfs_datasets_py.knowledge_graphs.transactions.manager",
-    "ipfs_datasets_py.mcp_server.mcplusplus.executor",
-    "ipfs_datasets_py.mcp_server.mcplusplus.priority_queue",
-    "ipfs_datasets_py.mcp_server.mcplusplus.workflow_dag",
-    "ipfs_datasets_py.mcp_server.mcplusplus.workflow_engine",
-    "ipfs_datasets_py.mcp_server.mcplusplus.result_cache",
-    "ipfs_datasets_py.mcp_server.mcplusplus.peer_discovery",
-    "ipfs_datasets_py.utils.anyio_compat",
-])
+
+@pytest.mark.parametrize(
+    "module_path",
+    [
+        "ipfs_datasets_py.core_operations.dataset_loader",
+        "ipfs_datasets_py.core_operations.dataset_converter",
+        "ipfs_datasets_py.core_operations.dataset_saver",
+        "ipfs_datasets_py.core_operations.ipfs_getter",
+        "ipfs_datasets_py.core_operations.ipfs_pinner",
+        "ipfs_datasets_py.logic.batch_processing",
+        "ipfs_datasets_py.logic.benchmarks",
+        "ipfs_datasets_py.knowledge_graphs.transactions.wal",
+        "ipfs_datasets_py.knowledge_graphs.transactions.manager",
+        "ipfs_datasets_py.mcp_server.mcplusplus.executor",
+        "ipfs_datasets_py.mcp_server.mcplusplus.priority_queue",
+        "ipfs_datasets_py.mcp_server.mcplusplus.workflow_dag",
+        "ipfs_datasets_py.mcp_server.mcplusplus.workflow_engine",
+        "ipfs_datasets_py.mcp_server.mcplusplus.result_cache",
+        "ipfs_datasets_py.mcp_server.mcplusplus.peer_discovery",
+        "ipfs_datasets_py.utils.anyio_compat",
+    ],
+)
 def test_migrated_module_imports(module_path: str):
     """Migrated modules must import without errors."""
     try:
@@ -157,6 +184,7 @@ def test_migrated_module_imports(module_path: str):
 # ---------------------------------------------------------------------------
 # anyio pattern runtime tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.anyio
 async def test_anyio_semaphore_works():
@@ -193,6 +221,7 @@ async def test_anyio_to_thread_run_sync():
 @pytest.mark.anyio
 async def test_anyio_task_group_replaces_gather():
     """anyio task group with result collection replaces asyncio.gather."""
+
     async def compute(n: int) -> int:
         await anyio.sleep(0)
         return n * n
@@ -241,6 +270,7 @@ async def test_anyio_move_on_after():
 # anyio_compat bridge tests
 # ---------------------------------------------------------------------------
 
+
 def test_anyio_compat_run_from_sync():
     """anyio_compat.run() executes a coroutine from synchronous context."""
     from ipfs_datasets_py.utils.anyio_compat import run as anyio_run
@@ -272,6 +302,7 @@ async def test_anyio_compat_in_async_context_true_inside_loop():
 # setup.py dependency check
 # ---------------------------------------------------------------------------
 
+
 def test_anyio_in_install_requires():
     """setup.py must list anyio in install_requires."""
     setup_py = Path(__file__).parents[3] / "setup.py"
@@ -287,15 +318,19 @@ def test_anyio_in_install_requires():
 
 _ANYIO_QUEUES_PATH = (
     SRC_ROOT
-    / "processors" / "multimedia"
+    / "processors"
+    / "multimedia"
     / "convert_to_txt_based_on_mime_type"
-    / "utils" / "common" / "anyio_queues.py"
+    / "utils"
+    / "common"
+    / "anyio_queues.py"
 )
 
 
 def _import_anyio_queues():
     """Import AnyioQueue and AnyioPriorityQueue from the multimedia package."""
     import importlib.util
+
     spec = importlib.util.spec_from_file_location("anyio_queues", _ANYIO_QUEUES_PATH)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -417,16 +452,18 @@ async def test_anyio_priority_queue_empty_and_qsize():
 # No asyncio in multimedia source (except the allowed monad shim)
 # ---------------------------------------------------------------------------
 
+
 def test_multimedia_source_files_use_anyio():
     """Key multimedia source files must not import asyncio (except monad shim)."""
-    multimedia_root = (
-        SRC_ROOT / "processors" / "multimedia" / "convert_to_txt_based_on_mime_type"
-    )
+    multimedia_root = SRC_ROOT / "processors" / "multimedia" / "convert_to_txt_based_on_mime_type"
     # Files that were migrated and must NOT have bare `import asyncio`
     to_check = [
         multimedia_root / "utils" / "common" / "asyncio_coroutine.py",
         multimedia_root / "utils" / "common" / "stopwatch.py",
-        multimedia_root / "utils" / "converter_system" / "run_in_parallel_with_concurrency_limiter.py",
+        multimedia_root
+        / "utils"
+        / "converter_system"
+        / "run_in_parallel_with_concurrency_limiter.py",
         multimedia_root / "utils" / "converter_system" / "run_in_thread_pool.py",
         multimedia_root / "converter_system" / "conversion_pipeline" / "functions" / "core.py",
         multimedia_root / "converter_system" / "conversion_pipeline" / "functions" / "optimize.py",
@@ -447,6 +484,5 @@ def test_multimedia_source_files_use_anyio():
             violations.append(str(p.relative_to(SRC_ROOT)))
     if violations:
         pytest.fail(
-            "These multimedia files still contain `import asyncio`:\n"
-            + "\n  ".join(violations)
+            "These multimedia files still contain `import asyncio`:\n" + "\n  ".join(violations)
         )

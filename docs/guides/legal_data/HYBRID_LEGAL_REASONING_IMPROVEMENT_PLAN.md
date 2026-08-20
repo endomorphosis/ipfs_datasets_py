@@ -146,15 +146,18 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+
 class DeonticOp(str, Enum):
     O = "O"  # obligation
     P = "P"  # permission
     F = "F"  # prohibition
 
+
 class FrameKind(str, Enum):
     ACTION = "action"
     EVENT = "event"
     STATE = "state"
+
 
 class TemporalRelation(str, Enum):
     BEFORE = "before"
@@ -162,6 +165,7 @@ class TemporalRelation(str, Enum):
     DURING = "during"
     WITHIN = "within"
     BY = "by"
+
 
 @dataclass(frozen=True)
 class CanonicalId:
@@ -171,11 +175,13 @@ class CanonicalId:
     def ref(self) -> str:
         return f"{self.namespace}:{self.value}"
 
+
 @dataclass
 class Entity:
     id: CanonicalId
     type_name: str
     attrs: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class TemporalExpr:
@@ -184,6 +190,7 @@ class TemporalExpr:
     end: Optional[str] = None
     duration: Optional[str] = None
 
+
 @dataclass
 class TemporalConstraint:
     id: CanonicalId
@@ -191,6 +198,7 @@ class TemporalConstraint:
     expr: TemporalExpr
     anchor_ref: Optional[str] = None
     attrs: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class BaseFrame:
@@ -201,22 +209,27 @@ class BaseFrame:
     source_span: Optional[str] = None
     attrs: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class ActionFrame(BaseFrame):
     verb: str = ""
+
 
 @dataclass
 class EventFrame(BaseFrame):
     event_type: str = ""
 
+
 @dataclass
 class StateFrame(BaseFrame):
     state_type: str = ""
+
 
 @dataclass
 class Atom:
     pred: str
     args: List[str] = field(default_factory=list)
+
 
 @dataclass
 class Condition:
@@ -225,6 +238,7 @@ class Condition:
     children: List["Condition"] = field(default_factory=list)
     var: Optional[str] = None
     var_type: Optional[str] = None
+
 
 @dataclass
 class Norm:
@@ -238,6 +252,7 @@ class Norm:
     jurisdiction: Optional[str] = None
     attrs: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class Rule:
     id: CanonicalId
@@ -245,11 +260,13 @@ class Rule:
     consequent: Atom
     mode: str = "strict"
 
+
 @dataclass
 class Query:
     id: CanonicalId
     goal: Condition
     at: Optional[str] = None
+
 
 @dataclass
 class LegalIR:

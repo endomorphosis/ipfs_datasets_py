@@ -29,11 +29,15 @@ def repair_common_typescript_text_damage(content: str) -> str:
         repaired = re.sub(rf"\b{name}\s*>(?!>)", replacement, repaired)
         repaired = re.sub(rf"\b{name}\b(?!\s*<)(?=\s*(?:[;=,){{}}]|$))", replacement, repaired)
     repaired = re.sub(r"\bOmit\s*>(?!>)", "Omit<Record<string, unknown>, string>", repaired)
-    repaired = re.sub(r"\bOmit\b(?!\s*<)(?=\s*(?:[;=,){}]|$))", "Omit<Record<string, unknown>, string>", repaired)
+    repaired = re.sub(
+        r"\bOmit\b(?!\s*<)(?=\s*(?:[;=,){}]|$))", "Omit<Record<string, unknown>, string>", repaired
+    )
 
     repaired = re.sub(r"\|\|\s*position\s+left\s*-\s*right\);", "|| position < 0) {", repaired)
     repaired = re.sub(r"\|\|\s*position\s+\{", "|| position < 0) {", repaired)
-    repaired = re.sub(r"\|\|\s*Number\(([^)]+)\)\s+typeof\b", r"|| Number(\1) < 0 || typeof", repaired)
+    repaired = re.sub(
+        r"\|\|\s*Number\(([^)]+)\)\s+typeof\b", r"|| Number(\1) < 0 || typeof", repaired
+    )
     repaired = re.sub(r"\|\|\s*Number\(([^)]+)\)\s+\{", r"|| Number(\1) < 0) {", repaired)
     repaired = re.sub(r"\|\|\s*weight\s+\)", "|| weight < 0)", repaired)
     repaired = re.sub(
@@ -112,7 +116,9 @@ def repair_common_typescript_text_damage(content: str) -> str:
         "for (let index = 1; index < utterances.length; index += 1) {",
         repaired,
     )
-    repaired = re.sub(r"for \(let index = 0; index >> 0\)\.toString", "return (hash >>> 0).toString", repaired)
+    repaired = re.sub(
+        r"for \(let index = 0; index >> 0\)\.toString", "return (hash >>> 0).toString", repaired
+    )
     repaired = re.sub(
         r"(?P<prefix>\b(?:const|let)\s+"
         r"(?:parts|tokens|lines|symbols|orderedSymbols|sortedSymbols|errors|warnings|commands|logics)"
@@ -161,7 +167,9 @@ def repair_common_typescript_file_edits(edits: Sequence[Dict[str, str]]) -> List
     return repaired
 
 
-def typescript_format_pathspecs(paths: Sequence[str | Path], *, root: Optional[Path] = None) -> List[str]:
+def typescript_format_pathspecs(
+    paths: Sequence[str | Path], *, root: Optional[Path] = None
+) -> List[str]:
     """Return unique TS/TSX pathspecs suitable for formatting commands."""
 
     pathspecs: List[str] = []
@@ -210,11 +218,15 @@ def obvious_typescript_text_damage(content: str) -> List[str]:
     patterns = (
         (
             "missing comparison operator before .length",
-            re.compile(r"\b(?:index|offset|position|cursor|start|end|count|arity)\s{2,}[A-Za-z_$][\w$.]*\.length\b"),
+            re.compile(
+                r"\b(?:index|offset|position|cursor|start|end|count|arity)\s{2,}[A-Za-z_$][\w$.]*\.length\b"
+            ),
         ),
         (
             "missing comparison operator before a numeric bound",
-            re.compile(r"\b(?:index|offset|position|cursor|start|end|count|arity|weight|score)\s{2,}\d+\b"),
+            re.compile(
+                r"\b(?:index|offset|position|cursor|start|end|count|arity|weight|score)\s{2,}\d+\b"
+            ),
         ),
         (
             "missing comparison operator before a dotted bound",
@@ -229,7 +241,9 @@ def obvious_typescript_text_damage(content: str) -> List[str]:
         ),
         (
             "bare TypeScript generic alias",
-            re.compile(r"\b(?:Record|Array|ReadonlyArray|Promise|Omit|Pick|Map|Set|ReadonlySet)\s*(?=[=;,){}]|$)"),
+            re.compile(
+                r"\b(?:Record|Array|ReadonlyArray|Promise|Omit|Pick|Map|Set|ReadonlySet)\s*(?=[=;,){}]|$)"
+            ),
         ),
         (
             "missing comparison operator before an uppercase bound",

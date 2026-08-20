@@ -130,6 +130,7 @@ All 10 new tools follow the established pattern:
 # MCP Tool (thin wrapper, ~40 lines)
 async def tool_name(**params):
     from ipfs_datasets_py.core_operations import KnowledgeGraphManager
+
     manager = KnowledgeGraphManager()
     return await manager.method(**params)
 ```
@@ -144,11 +145,13 @@ result = await tools_dispatch("graph_tools", "graph_add_entity", {...})
 
 # CLI Command
 from ipfs_datasets_py.core_operations import KnowledgeGraphManager
+
 manager = KnowledgeGraphManager()
 result = await manager.add_entity(...)
 
 # Python Script
 from ipfs_datasets_py.core_operations import KnowledgeGraphManager
+
 kg = KnowledgeGraphManager()
 await kg.add_entity(id="1", type="Person", properties={...})
 ```

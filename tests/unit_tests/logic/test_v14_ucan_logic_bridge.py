@@ -8,6 +8,7 @@ Tests for v14 logic + UCAN improvements:
 All tests are sync-only and require no external deps beyond what is
 already installed in the test environment.
 """
+
 from __future__ import annotations
 
 import json
@@ -31,18 +32,26 @@ try:
         get_delegation_evaluator,
         get_delegation_store,
     )
+
     _UCAN_DEL_OK = True
 except ImportError:
     _UCAN_DEL_OK = False
 
 try:
     from ipfs_datasets_py.mcp_server.temporal_policy import (
-        PolicyClause, PolicyClauseType, PolicyObject, PolicyEvaluator,
+        PolicyClause,
+        PolicyClauseType,
+        PolicyObject,
+        PolicyEvaluator,
         make_simple_permission_policy,
     )
     from ipfs_datasets_py.mcp_server.cid_artifacts import (
-        IntentObject, ALLOW, DENY, ALLOW_WITH_OBLIGATIONS,
+        IntentObject,
+        ALLOW,
+        DENY,
+        ALLOW_WITH_OBLIGATIONS,
     )
+
     _TEMPORAL_OK = True
 except ImportError:
     _TEMPORAL_OK = False
@@ -55,6 +64,7 @@ try:
         get_ucan_policy_bridge,
         compile_and_evaluate,
     )
+
     _BRIDGE_OK = True
 except ImportError:
     _BRIDGE_OK = False
@@ -67,6 +77,7 @@ _skip_no_bridge = pytest.mark.skipif(not _BRIDGE_OK, reason="ucan_policy_bridge 
 # ===========================================================================
 # AN98 — RevocationList
 # ===========================================================================
+
 
 @_skip_no_ucan
 class TestRevocationList:
@@ -150,6 +161,7 @@ class TestRevocationList:
 # ===========================================================================
 # AN98 — DelegationStore
 # ===========================================================================
+
 
 @_skip_no_ucan
 class TestDelegationStore:
@@ -274,6 +286,7 @@ class TestDelegationStore:
 # AN98 — DelegationEvaluator with revocation
 # ===========================================================================
 
+
 @_skip_no_ucan
 class TestDelegationEvaluatorWithRevocation:
     """Tests for can_invoke_with_revocation on DelegationEvaluator."""
@@ -295,8 +308,11 @@ class TestDelegationEvaluatorWithRevocation:
         ev, tok, cid, audience, rl = self._setup()
         rl.revoke(cid)
         allowed, reason = ev.can_invoke_with_revocation(
-            audience, "logic/read", "read/invoke",
-            leaf_cid=cid, revocation_list=rl,
+            audience,
+            "logic/read",
+            "read/invoke",
+            leaf_cid=cid,
+            revocation_list=rl,
         )
         assert not allowed
         assert "revoked" in reason.lower()
@@ -304,27 +320,39 @@ class TestDelegationEvaluatorWithRevocation:
     def test_not_revoked_allowed(self) -> None:
         ev, tok, cid, audience, rl = self._setup()
         allowed, reason = ev.can_invoke_with_revocation(
-            audience, "logic/read", "read/invoke",
-            leaf_cid=cid, revocation_list=rl,
+            audience,
+            "logic/read",
+            "read/invoke",
+            leaf_cid=cid,
+            revocation_list=rl,
         )
         assert allowed
 
     def test_no_revocation_list_behaves_as_can_invoke(self) -> None:
         ev, tok, cid, audience, rl = self._setup()
         allowed1, _ = ev.can_invoke(
-            audience, "logic/read", "read/invoke", leaf_cid=cid,
+            audience,
+            "logic/read",
+            "read/invoke",
+            leaf_cid=cid,
         )
         allowed2, _ = ev.can_invoke_with_revocation(
-            audience, "logic/read", "read/invoke",
-            leaf_cid=cid, revocation_list=None,
+            audience,
+            "logic/read",
+            "read/invoke",
+            leaf_cid=cid,
+            revocation_list=None,
         )
         assert allowed1 == allowed2
 
     def test_wrong_principal_still_denied_regardless_of_revocation(self) -> None:
         ev, tok, cid, audience, rl = self._setup()
         allowed, reason = ev.can_invoke_with_revocation(
-            "did:example:carol", "logic/read", "read/invoke",
-            leaf_cid=cid, revocation_list=rl,
+            "did:example:carol",
+            "logic/read",
+            "read/invoke",
+            leaf_cid=cid,
+            revocation_list=rl,
         )
         assert not allowed
 
@@ -332,6 +360,7 @@ class TestDelegationEvaluatorWithRevocation:
 # ===========================================================================
 # AP100 — PolicyEvaluator temporal window edge cases
 # ===========================================================================
+
 
 @_skip_no_temporal
 class TestPolicyTemporalWindowEdgeCases:
@@ -516,6 +545,7 @@ class TestPolicyTemporalWindowEdgeCases:
 # UCANPolicyBridge tests
 # ===========================================================================
 
+
 @_skip_no_bridge
 class TestUCANPolicyBridgeInit:
     """Basic construction tests."""
@@ -526,6 +556,7 @@ class TestUCANPolicyBridgeInit:
 
     def test_singleton_returns_same_object(self) -> None:
         import ipfs_datasets_py.logic.integration.ucan_policy_bridge as mod
+
         old = mod._global_bridge
         mod._global_bridge = None
         try:

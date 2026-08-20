@@ -12,7 +12,8 @@ from pathlib import Path
 import json
 
 # Add the project root to the Python path
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 def discover_mcp_tools():
     """Discover all MCP tools and check their implementation status."""
@@ -26,8 +27,9 @@ def discover_mcp_tools():
 
     # Find all tool categories (subdirectories)
     if tools_base_path.exists():
-        tool_categories = [d.name for d in tools_base_path.iterdir()
-                          if d.is_dir() and not d.name.startswith('__')]
+        tool_categories = [
+            d.name for d in tools_base_path.iterdir() if d.is_dir() and not d.name.startswith("__")
+        ]
     else:
         print(f"Error: Tools directory {tools_base_path} not found")
         return {}
@@ -37,8 +39,11 @@ def discover_mcp_tools():
     # Check each category for tool implementation files
     for category in tool_categories:
         category_path = tools_base_path / category
-        tool_files = [f.name for f in category_path.glob("*.py")
-                     if f.is_file() and not f.name.startswith('__')]
+        tool_files = [
+            f.name
+            for f in category_path.glob("*.py")
+            if f.is_file() and not f.name.startswith("__")
+        ]
 
         tool_names = [os.path.splitext(f)[0] for f in tool_files]
         discovered_tools[category] = tool_names
@@ -51,17 +56,14 @@ def discover_mcp_tools():
     print(f"\nTotal discovered tools: {tool_count}")
 
     # Save results to a JSON file
-    results = {
-        'total_tools': tool_count,
-        'categories': tool_categories,
-        'tools': discovered_tools
-    }
+    results = {"total_tools": tool_count, "categories": tool_categories, "tools": discovered_tools}
 
-    with open('mcp_tools_inventory.json', 'w') as f:
+    with open("mcp_tools_inventory.json", "w") as f:
         json.dump(results, f, indent=2)
 
     print(f"Tool inventory saved to mcp_tools_inventory.json")
     return results
+
 
 def discover_existing_tests():
     """Check for existing test files."""
@@ -79,13 +81,14 @@ def discover_existing_tests():
 
     return test_files
 
+
 def check_implementation_files(tools_info):
     """Check that each tool has an implementation file."""
     missing_implementations = []
 
     print("\n=== Implementation Check ===")
 
-    for category, tools in tools_info['tools'].items():
+    for category, tools in tools_info["tools"].items():
         for tool in tools:
             tool_file = Path(f"ipfs_datasets_py/mcp_server/tools/{category}/{tool}.py")
             if not tool_file.exists():
@@ -98,6 +101,7 @@ def check_implementation_files(tools_info):
         print(f"{len(missing_implementations)} tools are missing implementation files.")
 
     return missing_implementations
+
 
 def generate_simple_test_summary():
     """Generate a simple summary of available tests."""
@@ -114,15 +118,16 @@ def generate_simple_test_summary():
     report += f"- Missing implementation files: {len(missing_implementations)}\n\n"
 
     report += "## Tools by Category\n"
-    for category, tools in tools_info['tools'].items():
+    for category, tools in tools_info["tools"].items():
         report += f"\n### {category}\n"
         for tool in tools:
             report += f"- {tool}\n"
 
-    with open('mcp_tools_test_summary.md', 'w') as f:
+    with open("mcp_tools_test_summary.md", "w") as f:
         f.write(report)
 
     print(f"\nTest summary report saved to mcp_tools_test_summary.md")
+
 
 if __name__ == "__main__":
     generate_simple_test_summary()

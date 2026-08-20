@@ -343,7 +343,15 @@ from .registry import (
     load_daemon_main,
     resolve_daemon_module,
 )
-from .specs import env_flag, env_float, env_int, env_path, env_path_in_dir, env_value, repo_root_from_env
+from .specs import (
+    env_flag,
+    env_float,
+    env_int,
+    env_path,
+    env_path_in_dir,
+    env_value,
+    repo_root_from_env,
+)
 from .task_board import (
     count_unmanaged_generated_status_sections,
     focused_task_board_excerpt,

@@ -16,9 +16,7 @@ def _zero_quality() -> dict[str, dict[str, object]]:
             "complete": True,
             "validator_receipt_set_sha256": "a" * 64,
         }
-        for variant_id, representative in (
-            pilot_reassessment._FRONTEND_REPRESENTATIVE.items()
-        )
+        for variant_id, representative in (pilot_reassessment._FRONTEND_REPRESENTATIVE.items())
     }
 
 
@@ -27,9 +25,7 @@ def _published_observations() -> list[dict[str, object]]:
         repository_root=pilot_reassessment.REPOSITORY_ROOT,
         run_id=pilot_reassessment.PILOT_REASSESSMENT_RUN_ID,
         output_root=pilot_reassessment._PUBLISHED_LAYOUT.matrix_root,
-        snapshot_path=(
-            pilot_reassessment._PUBLISHED_LAYOUT.matrix_snapshot
-        ),
+        snapshot_path=(pilot_reassessment._PUBLISHED_LAYOUT.matrix_snapshot),
     )
     return pilot_reassessment._result_observations(
         pilot_reassessment.REPOSITORY_ROOT,
@@ -47,16 +43,10 @@ def test_complete_all_zero_semantic_quality_is_hard_ineligible() -> None:
 
     assert all(candidate["eligible"] is False for candidate in candidates)
     assert all(
-        "no independently validated semantic-quality success"
-        in candidate["ineligibility_reasons"]
+        "no independently validated semantic-quality success" in candidate["ineligibility_reasons"]
         for candidate in candidates
     )
-    assert (
-        pilot_reassessment._pareto(candidates)[
-            "eligible_nondominated_candidate_ids"
-        ]
-        == []
-    )
+    assert pilot_reassessment._pareto(candidates)["eligible_nondominated_candidate_ids"] == []
 
 
 def test_builder_keeps_holdout_sealed_for_complete_all_zero_quality(

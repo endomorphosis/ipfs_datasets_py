@@ -2,6 +2,7 @@
 
 Tests for describe_result, relationship_confidence_bounds, is_result_empty, result_summary_dict.
 """
+
 import pytest
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     OntologyGenerator,
@@ -148,7 +149,9 @@ class TestRelationshipConfidenceBounds:
                 Entity(id="e1", text="A", type="Thing", confidence=0.9, properties={}),
                 Entity(id="e2", text="B", type="Thing", confidence=0.9, properties={}),
             ],
-            relationships=[Relationship(id="r1", source_id="e1", target_id="e2", type="rel", confidence=0.7)],
+            relationships=[
+                Relationship(id="r1", source_id="e1", target_id="e2", type="rel", confidence=0.7)
+            ],
             confidence=0.8,
             metadata={},
             errors=[],
@@ -197,7 +200,9 @@ class TestIsResultEmpty:
         """Should return False when relationships exist but no entities."""
         result = EntityExtractionResult(
             entities=[],
-            relationships=[Relationship(id="r1", source_id="e1", target_id="e2", type="rel", confidence=0.7)],
+            relationships=[
+                Relationship(id="r1", source_id="e1", target_id="e2", type="rel", confidence=0.7)
+            ],
             confidence=0.7,
             metadata={},
             errors=[],

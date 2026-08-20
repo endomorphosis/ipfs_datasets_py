@@ -24,13 +24,9 @@ from ipfs_datasets_py.logic.ir_core.protocols import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-ARCHITECTURE_PATH = (
-    REPO_ROOT / "docs/architecture/IR_FAMILY_REFACTOR_AND_INTENT_IR_PLAN.md"
-)
+ARCHITECTURE_PATH = REPO_ROOT / "docs/architecture/IR_FAMILY_REFACTOR_AND_INTENT_IR_PLAN.md"
 OPERATIONS_PATH = REPO_ROOT / "docs/guides/IR_FAMILY_OPERATIONS.md"
-MIGRATION_PATH = (
-    REPO_ROOT / "docs/security_verification/SECURITY_IR_MIGRATION.md"
-)
+MIGRATION_PATH = REPO_ROOT / "docs/security_verification/SECURITY_IR_MIGRATION.md"
 
 EXPECTED_STAGES = ("off", "shadow", "assist", "canary")
 EXPECTED_ARMS = (
@@ -100,19 +96,13 @@ def test_rollout_stage_contract_is_ordered_fail_closed_and_candidate_only() -> N
     architecture = _read(ARCHITECTURE_PATH)
     operations = _read(OPERATIONS_PATH)
 
-    architecture_rows = _table_rows(
-        _section(architecture, "Rollout gates")
-    )
+    architecture_rows = _table_rows(_section(architecture, "Rollout gates"))
     operations_rows = _table_rows(_section(operations, "Stage contract"))
     architecture_stages = tuple(
-        _unquote(row[0])
-        for row in architecture_rows[1:]
-        if _unquote(row[0]) in EXPECTED_STAGES
+        _unquote(row[0]) for row in architecture_rows[1:] if _unquote(row[0]) in EXPECTED_STAGES
     )
     operations_stages = tuple(
-        _unquote(row[0])
-        for row in operations_rows[1:]
-        if _unquote(row[0]) in EXPECTED_STAGES
+        _unquote(row[0]) for row in operations_rows[1:] if _unquote(row[0]) in EXPECTED_STAGES
     )
 
     assert architecture_stages == EXPECTED_STAGES
@@ -132,12 +122,8 @@ def test_rollout_stage_contract_is_ordered_fail_closed_and_candidate_only() -> N
 def test_license_snapshot_solver_and_source_group_gates_fail_closed() -> None:
     operations = _read(OPERATIONS_PATH)
 
-    license_gate = _squash(
-        _section(operations, "License and hostile-input gate")
-    )
-    documented_decisions = {
-        decision.value for decision in AllowedUseDecision
-    }
+    license_gate = _squash(_section(operations, "License and hostile-input gate"))
+    documented_decisions = {decision.value for decision in AllowedUseDecision}
     assert documented_decisions <= set(re.findall(r"`([^`]+)`", license_gate))
     assert "human-approved allowlist" in license_gate
     assert "Unknown, absent, contradictory" in license_gate
@@ -195,17 +181,12 @@ def test_benchmark_thresholds_are_numeric_paired_and_hard_zero() -> None:
 
     assert INTENT_FORMALIZATION_BENCHMARK_REPORT_SCHEMA_VERSION in benchmark
     documented_arms = tuple(
-        value
-        for value in re.findall(r"`([^`]+)`", benchmark)
-        if value in EXPECTED_ARMS
+        value for value in re.findall(r"`([^`]+)`", benchmark) if value in EXPECTED_ARMS
     )
     assert documented_arms[:3] == EXPECTED_ARMS
     assert tuple(arm.value for arm in IntentBenchmarkArm) == EXPECTED_ARMS
 
-    threshold_rows = {
-        _unquote(row[0]): row[1]
-        for row in _table_rows(benchmark)[1:]
-    }
+    threshold_rows = {_unquote(row[0]): row[1] for row in _table_rows(benchmark)[1:]}
     assert "`+0.02` absolute" in threshold_rows["material improvement"]
     assert "`0.01` absolute" in threshold_rows["bounded regression"]
     assert "`0.95`" in threshold_rows["bounded regression"]
@@ -318,9 +299,7 @@ def test_human_approval_decisions_are_complete_and_cannot_waive_safety() -> None
     operations = _read(OPERATIONS_PATH)
     migration = _read(MIGRATION_PATH)
 
-    architecture_decisions = _section(
-        architecture, "Decisions to approve before the pilot expands"
-    )
+    architecture_decisions = _section(architecture, "Decisions to approve before the pilot expands")
     operations_decisions = _section(operations, "Decisions requiring human approval")
     joined = "\n".join(
         (architecture_decisions, operations_decisions, _section(migration, "Human approvals"))

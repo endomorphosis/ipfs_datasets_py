@@ -33,15 +33,9 @@ from ..source_adapters.skillcenter import (
 )
 
 
-SKILLCENTER_EMBEDDING_CORPUS_SCHEMA_VERSION: Final = (
-    "skillcenter-embedding-corpus/v1"
-)
-SKILLCENTER_EMBEDDING_BATCH_SCHEMA_VERSION: Final = (
-    "skillcenter-embedding-batch/v1"
-)
-SKILLCENTER_EMBEDDING_TEXT_SCHEMA_VERSION: Final = (
-    "skillcenter-title-domain-body-chunk/v1"
-)
+SKILLCENTER_EMBEDDING_CORPUS_SCHEMA_VERSION: Final = "skillcenter-embedding-corpus/v1"
+SKILLCENTER_EMBEDDING_BATCH_SCHEMA_VERSION: Final = "skillcenter-embedding-batch/v1"
+SKILLCENTER_EMBEDDING_TEXT_SCHEMA_VERSION: Final = "skillcenter-title-domain-body-chunk/v1"
 DEFAULT_EMBEDDING_MODEL: Final = "thenlper/gte-small"
 DEFAULT_EMBEDDING_PROVIDER: Final = "huggingface"
 DEFAULT_EMBEDDING_DEVICE: Final = "cpu"
@@ -90,18 +84,14 @@ class SkillCenterEmbeddingConfig:
         for field_name in ("model_name", "provider", "device"):
             value = str(getattr(self, field_name) or "").strip()
             if not value or "\x00" in value:
-                raise SkillCenterEmbeddingError(
-                    f"{field_name} must be non-empty normalized text"
-                )
+                raise SkillCenterEmbeddingError(f"{field_name} must be non-empty normalized text")
             object.__setattr__(self, field_name, value)
         if (
             isinstance(self.source_batch_size, bool)
             or not isinstance(self.source_batch_size, int)
             or not 1 <= self.source_batch_size <= 1_000
         ):
-            raise SkillCenterEmbeddingError(
-                "source_batch_size must be between 1 and 1000"
-            )
+            raise SkillCenterEmbeddingError("source_batch_size must be between 1 and 1000")
         if (
             isinstance(self.chunk_chars, bool)
             or not isinstance(self.chunk_chars, int)
@@ -117,9 +107,7 @@ class SkillCenterEmbeddingConfig:
                 "chunk_overlap_chars must be non-negative and less than chunk_chars"
             )
         if not isinstance(self.internal_retrieval_all_records, bool):
-            raise SkillCenterEmbeddingError(
-                "internal_retrieval_all_records must be boolean"
-            )
+            raise SkillCenterEmbeddingError("internal_retrieval_all_records must be boolean")
         if self.max_chunks_per_record is not None and (
             isinstance(self.max_chunks_per_record, bool)
             or not isinstance(self.max_chunks_per_record, int)
@@ -131,10 +119,7 @@ class SkillCenterEmbeddingConfig:
         try:
             allowed_uses = tuple(
                 sorted(
-                    {
-                        AllowedUseDecision(value)
-                        for value in self.included_allowed_uses
-                    },
+                    {AllowedUseDecision(value) for value in self.included_allowed_uses},
                     key=lambda item: item.value,
                 )
             )
@@ -157,9 +142,7 @@ class SkillCenterEmbeddingConfig:
             "chunk_chars": self.chunk_chars,
             "chunk_overlap_chars": self.chunk_overlap_chars,
             "device": self.device,
-            "included_allowed_uses": [
-                item.value for item in self.included_allowed_uses
-            ],
+            "included_allowed_uses": [item.value for item in self.included_allowed_uses],
             "model_name": self.model_name,
             "policy_version": self.policy_version,
             "provider": self.provider,
@@ -248,9 +231,7 @@ def build_skillcenter_embedding_chunks(
     chunks: list[_EmbeddingChunk] = []
     for index, (start, end) in enumerate(ranges):
         text = (
-            f"Title: {record.title.strip()}\n"
-            f"Domain: {record.domain.strip()}\n\n"
-            f"{body[start:end]}"
+            f"Title: {record.title.strip()}\nDomain: {record.domain.strip()}\n\n{body[start:end]}"
         ).strip()
         text_sha256 = hashlib.sha256(text.encode("utf-8")).hexdigest()
         identity = {
@@ -299,21 +280,15 @@ def run_skillcenter_embedding_job(
     if not _PROFILE_RE.fullmatch(profile):
         raise SkillCenterEmbeddingError("profile is not a normalized identifier")
     if max_records is not None and (
-        isinstance(max_records, bool)
-        or not isinstance(max_records, int)
-        or max_records < 0
+        isinstance(max_records, bool) or not isinstance(max_records, int) or max_records < 0
     ):
-        raise SkillCenterEmbeddingError(
-            "max_records must be a non-negative integer or None"
-        )
+        raise SkillCenterEmbeddingError("max_records must be a non-negative integer or None")
     active_policy = policy or SkillSourcePolicy()
     manifest = reader.inspect()
     root = Path(output_dir).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
     if root.is_symlink() or not root.is_dir():
-        raise SkillCenterEmbeddingError(
-            "output_dir must be a real directory, not a symlink"
-        )
+        raise SkillCenterEmbeddingError("output_dir must be a real directory, not a symlink")
 
     identity = {
         "bundle_sha256": manifest.local_sha256,
@@ -326,9 +301,7 @@ def run_skillcenter_embedding_job(
 
     with _output_lock(root):
         receipts = _load_receipts(root, identity=identity)
-        last_skill_id = (
-            str(receipts[-1]["source_last_skill_id"]) if receipts else ""
-        )
+        last_skill_id = str(receipts[-1]["source_last_skill_id"]) if receipts else ""
         processed_now = 0
         pending: list[SkillCenterSkillRecord] = []
         iterator = reader.iter_records(
@@ -395,9 +368,7 @@ def run_skillcenter_embedding_job(
         output_dir=str(root),
         status=str(manifest_payload["status"]),
         source_records_total=int(manifest_payload["source_records_total"]),
-        source_records_processed=int(
-            manifest_payload["source_records_processed"]
-        ),
+        source_records_processed=int(manifest_payload["source_records_processed"]),
         embedded_records=int(manifest_payload["embedded_records"]),
         vector_count=int(manifest_payload["vector_count"]),
         dimension=int(manifest_payload["dimension"]),
@@ -434,31 +405,21 @@ def load_skillcenter_embedding_corpus(
     try:
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise SkillCenterEmbeddingError(
-            "embedding corpus manifest is malformed"
-        ) from exc
+        raise SkillCenterEmbeddingError("embedding corpus manifest is malformed") from exc
     if not isinstance(payload, dict):
-        raise SkillCenterEmbeddingError(
-            "embedding corpus manifest must be an object"
-        )
+        raise SkillCenterEmbeddingError("embedding corpus manifest must be an object")
     if payload.get("schema_version") != SKILLCENTER_EMBEDDING_CORPUS_SCHEMA_VERSION:
-        raise SkillCenterEmbeddingError(
-            "unsupported embedding corpus manifest schema"
-        )
+        raise SkillCenterEmbeddingError("unsupported embedding corpus manifest schema")
     config_payload = payload.get("config")
     bundle_manifest = payload.get("bundle_manifest")
-    if not isinstance(config_payload, Mapping) or not isinstance(
-        bundle_manifest, Mapping
-    ):
+    if not isinstance(config_payload, Mapping) or not isinstance(bundle_manifest, Mapping):
         raise SkillCenterEmbeddingError(
             "embedding corpus manifest config and bundle_manifest are required"
         )
     try:
         config = SkillCenterEmbeddingConfig(**dict(config_payload))
     except (TypeError, ValueError) as exc:
-        raise SkillCenterEmbeddingError(
-            "embedding corpus manifest config is invalid"
-        ) from exc
+        raise SkillCenterEmbeddingError("embedding corpus manifest config is invalid") from exc
     identity = {
         key: str(payload.get(key) or "")
         for key in (
@@ -471,13 +432,9 @@ def load_skillcenter_embedding_corpus(
         )
     }
     if any(not value for value in identity.values()):
-        raise SkillCenterEmbeddingError(
-            "embedding corpus manifest identity is incomplete"
-        )
+        raise SkillCenterEmbeddingError("embedding corpus manifest identity is incomplete")
     if identity["config_sha256"] != config.digest:
-        raise SkillCenterEmbeddingError(
-            "embedding corpus config_sha256 does not match config"
-        )
+        raise SkillCenterEmbeddingError("embedding corpus config_sha256 does not match config")
     receipts = _load_receipts(corpus_root, identity=identity)
     expected = _manifest_payload(
         bundle_manifest=bundle_manifest,
@@ -524,20 +481,14 @@ def iter_skillcenter_embedding_rows(
     if columns is not None:
         requested_columns = tuple(str(item) for item in columns)
         if not requested_columns or any(not item for item in requested_columns):
-            raise SkillCenterEmbeddingError(
-                "columns must contain non-empty column names"
-            )
+            raise SkillCenterEmbeddingError("columns must contain non-empty column names")
     _, parquet = _pyarrow()
     receipts = _load_receipts(corpus_root, identity=identity)
     for receipt in receipts:
         descriptor = receipt.get("embeddings_file")
         if descriptor is None:
             continue
-        batch_dir = (
-            corpus_root
-            / "batches"
-            / f"batch-{int(receipt['batch_index']):06d}"
-        )
+        batch_dir = corpus_root / "batches" / f"batch-{int(receipt['batch_index']):06d}"
         embedding_path = _verify_file_descriptor(batch_dir, descriptor)
         try:
             batches = parquet.ParquetFile(embedding_path).iter_batches(
@@ -546,9 +497,7 @@ def iter_skillcenter_embedding_rows(
             for batch in batches:
                 yield from batch.to_pylist()
         except (KeyError, ValueError) as exc:
-            raise SkillCenterEmbeddingError(
-                "requested embedding columns are not present"
-            ) from exc
+            raise SkillCenterEmbeddingError("requested embedding columns are not present") from exc
 
 
 def _write_record_batch(
@@ -571,8 +520,7 @@ def _write_record_batch(
         decision = policy.evaluate(record)
         allowed_use = decision.allowed_use
         should_embed = (
-            allowed_use in config.included_allowed_uses
-            or config.internal_retrieval_all_records
+            allowed_use in config.included_allowed_uses or config.internal_retrieval_all_records
         )
         decision_counts[allowed_use.value] += 1
         source_ref = record.to_source_ref(review_status=decision.review_status)
@@ -657,9 +605,7 @@ def _write_record_batch(
                 "embedding_device": config.device,
                 "embedding_dimension": dimension,
                 "embedding_model": config.model_name,
-                "embedding_norm": math.sqrt(
-                    sum(item * item for item in vector)
-                ),
+                "embedding_norm": math.sqrt(sum(item * item for item in vector)),
                 "embedding_provider": config.provider,
             }
         )
@@ -668,12 +614,8 @@ def _write_record_batch(
     batches_root.mkdir(parents=True, exist_ok=True)
     final_dir = batches_root / f"batch-{batch_index:06d}"
     if final_dir.exists() or final_dir.is_symlink():
-        raise SkillCenterEmbeddingError(
-            f"batch checkpoint already exists: {final_dir.name}"
-        )
-    temporary_dir = Path(
-        tempfile.mkdtemp(prefix=".batch-", suffix=".partial", dir=batches_root)
-    )
+        raise SkillCenterEmbeddingError(f"batch checkpoint already exists: {final_dir.name}")
+    temporary_dir = Path(tempfile.mkdtemp(prefix=".batch-", suffix=".partial", dir=batches_root))
     try:
         policy_path = temporary_dir / "policy.parquet"
         _write_policy_parquet(policy_path, policy_rows)
@@ -692,9 +634,7 @@ def _write_record_batch(
             "dimension": dimension,
             "embedded_records": len(embedded_skill_ids),
             "embeddings_file": (
-                _file_descriptor(embedding_path)
-                if embedding_path is not None
-                else None
+                _file_descriptor(embedding_path) if embedding_path is not None else None
             ),
             "policy_file": _file_descriptor(policy_path),
             "schema_version": SKILLCENTER_EMBEDDING_BATCH_SCHEMA_VERSION,
@@ -703,9 +643,7 @@ def _write_record_batch(
             "source_record_count": len(records),
             "vector_count": len(embedding_rows),
         }
-        (temporary_dir / "receipt.json").write_bytes(
-            _canonical_json_bytes(receipt)
-        )
+        (temporary_dir / "receipt.json").write_bytes(_canonical_json_bytes(receipt))
         os.replace(temporary_dir, final_dir)
         return receipt
     except Exception:
@@ -805,9 +743,7 @@ def _load_receipts(
         raise SkillCenterEmbeddingError("batches path must be a real directory")
 
     batch_dirs = sorted(
-        path
-        for path in batches_root.iterdir()
-        if _BATCH_DIR_RE.fullmatch(path.name)
+        path for path in batches_root.iterdir() if _BATCH_DIR_RE.fullmatch(path.name)
     )
     receipts: list[dict[str, Any]] = []
     prior_last = ""
@@ -825,15 +761,11 @@ def _load_receipts(
             or not receipt_path.is_file()
             or receipt_path.stat().st_size > _MAX_RECEIPT_BYTES
         ):
-            raise SkillCenterEmbeddingError(
-                f"invalid batch checkpoint: {batch_dir.name}"
-            )
+            raise SkillCenterEmbeddingError(f"invalid batch checkpoint: {batch_dir.name}")
         try:
             receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-            raise SkillCenterEmbeddingError(
-                f"malformed batch receipt: {batch_dir.name}"
-            ) from exc
+            raise SkillCenterEmbeddingError(f"malformed batch receipt: {batch_dir.name}") from exc
         if not isinstance(receipt, dict):
             raise SkillCenterEmbeddingError("batch receipt must be an object")
         if receipt.get("schema_version") != SKILLCENTER_EMBEDDING_BATCH_SCHEMA_VERSION:
@@ -842,15 +774,11 @@ def _load_receipts(
             raise SkillCenterEmbeddingError("batch receipt index mismatch")
         for key, value in identity.items():
             if receipt.get(key) != value:
-                raise SkillCenterEmbeddingError(
-                    f"checkpoint identity mismatch for {key}"
-                )
+                raise SkillCenterEmbeddingError(f"checkpoint identity mismatch for {key}")
         first = str(receipt.get("source_first_skill_id") or "")
         last = str(receipt.get("source_last_skill_id") or "")
         if not first or not last or first > last or (prior_last and first <= prior_last):
-            raise SkillCenterEmbeddingError(
-                "batch source key ranges overlap or are unordered"
-            )
+            raise SkillCenterEmbeddingError("batch source key ranges overlap or are unordered")
         prior_last = last
         source_record_count = _receipt_int(
             receipt,
@@ -864,9 +792,7 @@ def _load_receipts(
             minimum=0,
         )
         if embedded_records > source_record_count:
-            raise SkillCenterEmbeddingError(
-                "embedded_records exceeds the source batch size"
-            )
+            raise SkillCenterEmbeddingError("embedded_records exceeds the source batch size")
         decisions = receipt.get("decision_counts")
         if not isinstance(decisions, Mapping) or any(
             not isinstance(key, str)
@@ -877,15 +803,11 @@ def _load_receipts(
         ):
             raise SkillCenterEmbeddingError("decision_counts is invalid")
         if sum(int(value) for value in decisions.values()) != source_record_count:
-            raise SkillCenterEmbeddingError(
-                "decision_counts does not match source_record_count"
-            )
+            raise SkillCenterEmbeddingError("decision_counts does not match source_record_count")
         receipt_dimension = _receipt_int(receipt, "dimension", minimum=0)
         if receipt_dimension:
             if dimension and receipt_dimension != dimension:
-                raise SkillCenterEmbeddingError(
-                    "embedding dimension changed between batches"
-                )
+                raise SkillCenterEmbeddingError("embedding dimension changed between batches")
             dimension = receipt_dimension
         policy_path = _verify_file_descriptor(
             batch_dir,
@@ -894,9 +816,7 @@ def _load_receipts(
         _, parquet = _pyarrow()
         policy_metadata = parquet.ParquetFile(policy_path).metadata
         if policy_metadata.num_rows != source_record_count:
-            raise SkillCenterEmbeddingError(
-                "policy parquet row count does not match its receipt"
-            )
+            raise SkillCenterEmbeddingError("policy parquet row count does not match its receipt")
         embeddings_file = receipt.get("embeddings_file")
         if embeddings_file is not None:
             embedding_path = _verify_file_descriptor(
@@ -914,8 +834,7 @@ def _load_receipts(
                 vector_count < 1
                 or receipt_dimension < 1
                 or field_index < 0
-                or getattr(schema.field(field_index).type, "list_size", None)
-                != receipt_dimension
+                or getattr(schema.field(field_index).type, "list_size", None) != receipt_dimension
             ):
                 raise SkillCenterEmbeddingError(
                     "embedding parquet dimension does not match its receipt"
@@ -935,24 +854,17 @@ def _manifest_payload(
     identity: Mapping[str, str],
     receipts: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
-    source_records_processed = sum(
-        int(receipt["source_record_count"]) for receipt in receipts
-    )
+    source_records_processed = sum(int(receipt["source_record_count"]) for receipt in receipts)
     source_records_total = int(bundle_manifest["total_skills"])
     dimensions = {
-        int(receipt["dimension"])
-        for receipt in receipts
-        if int(receipt.get("dimension") or 0)
+        int(receipt["dimension"]) for receipt in receipts if int(receipt.get("dimension") or 0)
     }
     if len(dimensions) > 1:
         raise SkillCenterEmbeddingError("embedding dimensions are inconsistent")
     decision_counts: Counter[str] = Counter()
     for receipt in receipts:
         decision_counts.update(
-            {
-                str(key): int(value)
-                for key, value in dict(receipt["decision_counts"]).items()
-            }
+            {str(key): int(value) for key, value in dict(receipt["decision_counts"]).items()}
         )
     return {
         **identity,
@@ -960,9 +872,7 @@ def _manifest_payload(
         "batches": [
             {
                 "batch_index": int(receipt["batch_index"]),
-                "receipt_sha256": hashlib.sha256(
-                    _canonical_json_bytes(receipt)
-                ).hexdigest(),
+                "receipt_sha256": hashlib.sha256(_canonical_json_bytes(receipt)).hexdigest(),
             }
             for receipt in receipts
         ],
@@ -970,23 +880,13 @@ def _manifest_payload(
         "config": config.to_dict(),
         "decision_counts": dict(sorted(decision_counts.items())),
         "dimension": next(iter(dimensions), 0),
-        "embedded_records": sum(
-            int(receipt["embedded_records"]) for receipt in receipts
-        ),
-        "last_skill_id": (
-            str(receipts[-1]["source_last_skill_id"]) if receipts else ""
-        ),
+        "embedded_records": sum(int(receipt["embedded_records"]) for receipt in receipts),
+        "last_skill_id": (str(receipts[-1]["source_last_skill_id"]) if receipts else ""),
         "schema_version": SKILLCENTER_EMBEDDING_CORPUS_SCHEMA_VERSION,
         "source_records_processed": source_records_processed,
         "source_records_total": source_records_total,
-        "status": (
-            "complete"
-            if source_records_processed == source_records_total
-            else "partial"
-        ),
-        "vector_count": sum(
-            int(receipt["vector_count"]) for receipt in receipts
-        ),
+        "status": ("complete" if source_records_processed == source_records_total else "partial"),
+        "vector_count": sum(int(receipt["vector_count"]) for receipt in receipts),
     }
 
 
@@ -1012,34 +912,24 @@ def _normalize_vectors(value: object, expected_count: int) -> list[list[float]]:
     if hasattr(value, "tolist") and callable(getattr(value, "tolist")):
         value = value.tolist()
     if not isinstance(value, (list, tuple)) or len(value) != expected_count:
-        raise SkillCenterEmbeddingError(
-            "embedder output count does not match embedding inputs"
-        )
+        raise SkillCenterEmbeddingError("embedder output count does not match embedding inputs")
     vectors: list[list[float]] = []
     dimension = 0
     for row in value:
         if hasattr(row, "tolist") and callable(getattr(row, "tolist")):
             row = row.tolist()
         if not isinstance(row, (list, tuple)) or not row:
-            raise SkillCenterEmbeddingError(
-                "embedder returned an empty or malformed vector"
-            )
+            raise SkillCenterEmbeddingError("embedder returned an empty or malformed vector")
         try:
             vector = [float(item) for item in row]
         except (TypeError, ValueError) as exc:
-            raise SkillCenterEmbeddingError(
-                "embedder returned a non-numeric vector"
-            ) from exc
+            raise SkillCenterEmbeddingError("embedder returned a non-numeric vector") from exc
         if not all(math.isfinite(item) for item in vector):
-            raise SkillCenterEmbeddingError(
-                "embedder returned a non-finite vector"
-            )
+            raise SkillCenterEmbeddingError("embedder returned a non-finite vector")
         if not dimension:
             dimension = len(vector)
         elif len(vector) != dimension:
-            raise SkillCenterEmbeddingError(
-                "embedder returned inconsistent dimensions"
-            )
+            raise SkillCenterEmbeddingError("embedder returned inconsistent dimensions")
         vectors.append(vector)
     return vectors
 

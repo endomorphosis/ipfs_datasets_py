@@ -64,10 +64,7 @@ def _p2p_evidence(lock: provision.LeanstralRuntimeLock) -> dict[str, object]:
     peer_id = "12D3KooWLeanstralServicePeer"
     client_peer_id = "12D3KooWIndependentClientPeer"
     addresses = ["172.30.4.2", "10.8.0.99", "10.10.0.14"]
-    advertised = [
-        f"/ip4/{address}/tcp/19001/p2p/{peer_id}"
-        for address in addresses
-    ]
+    advertised = [f"/ip4/{address}/tcp/19001/p2p/{peer_id}" for address in addresses]
     return {
         "p2p_requested": True,
         "p2p_enabled": True,
@@ -115,7 +112,8 @@ def _p2p_evidence(lock: provision.LeanstralRuntimeLock) -> dict[str, object]:
                 "details": {},
             }
             for target in lock.p2p["bootstrap_peers"]
-        ] + [
+        ]
+        + [
             {
                 "mechanism": "bootstrap",
                 "target": advertised[0],
@@ -333,10 +331,12 @@ def test_lock_digest_is_canonical_and_endpoint_sanitization_drops_secrets() -> N
     # Frozen G112 compatibility only; v2 validation is authoritative on CID.
     assert lock.lock_sha256 == provision.semantic_sha256(document)
     assert len(lock.lock_sha256) == 64
-    assert provision.sanitize_endpoint(
-        "http://operator:password@127.0.0.1:8080/v1"
-        "?api_key=secret&token=also-secret"
-    ) == "http://127.0.0.1:8080/v1"
+    assert (
+        provision.sanitize_endpoint(
+            "http://operator:password@127.0.0.1:8080/v1?api_key=secret&token=also-secret"
+        )
+        == "http://127.0.0.1:8080/v1"
+    )
 
 
 def test_proof_draft_stays_untrusted_until_independent_kernel_validation() -> None:
@@ -424,16 +424,10 @@ def test_attach_only_probe_binds_every_discovery_surface_and_safe_receipt(
     assert receipt["p2p"]["provider"] == lock.identity["provider"]
     assert receipt["p2p"]["custom_port"] == provision.PINNED_P2P_PORT
     assert (
-        receipt["p2p"]["topology_receipt"]["receipt_cid"]
-        == receipt["p2p"]["topology_receipt_cid"]
+        receipt["p2p"]["topology_receipt"]["receipt_cid"] == receipt["p2p"]["topology_receipt_cid"]
     )
-    assert (
-        receipt["p2p"]["topology_receipt"]["observation"]["inference_attempted"]
-        is False
-    )
-    assert receipt["proof_draft"]["draft_sha256"] == hashlib.sha256(
-        b"by exact rfl"
-    ).hexdigest()
+    assert receipt["p2p"]["topology_receipt"]["observation"]["inference_attempted"] is False
+    assert receipt["proof_draft"]["draft_sha256"] == hashlib.sha256(b"by exact rfl").hexdigest()
     assert "draft_text" not in receipt["proof_draft"]
     assert receipt["proof_draft"]["verified"] is False
     assert receipt["proof_draft"]["authoritative"] is False
@@ -536,6 +530,7 @@ def test_all_discovery_surfaces_fail_closed_on_identity_substitution(
     wrong["provider"] = "silently-substituted-provider"
 
     if surface == "http":
+
         class WrongHTTP(_RuntimeTransport):
             def __call__(
                 self,
@@ -598,9 +593,7 @@ def test_probe_requires_exactly_one_model_and_enforces_response_bound() -> None:
     class OversizeResponse(_JSONResponse):
         def __init__(self) -> None:
             super().__init__({"status": "ok"})
-            self.headers = {
-                "Content-Length": str(int(lock.http["max_response_bytes"]) + 1)
-            }
+            self.headers = {"Content-Length": str(int(lock.http["max_response_bytes"]) + 1)}
 
     with pytest.raises(provision.LeanstralProvisioningError, match="byte bound"):
         provision.provision_shared_leanstral(
@@ -643,9 +636,7 @@ def test_configured_p2p_requires_complete_cid_bound_non_inference_topology() -> 
     failed_dial = json.loads(json.dumps(valid))
     failed_dial["independent_dial"]["success"] = False
     self_rendezvous = json.loads(json.dumps(valid))
-    self_rendezvous["rendezvous_exercises"][0]["observer_peer_id"] = (
-        self_rendezvous["peer_id"]
-    )
+    self_rendezvous["rendezvous_exercises"][0]["observer_peer_id"] = self_rendezvous["peer_id"]
     pubsub_overclaim = json.loads(json.dumps(valid))
     pubsub_overclaim["capabilities"]["pubsub"]["advertised"] = True
     inferred = json.loads(json.dumps(valid))
@@ -718,9 +709,7 @@ def test_p2p_receipt_rejects_tampering_and_unpinned_bootstrap_peers() -> None:
 
     unsafe_public_failure = json.loads(json.dumps(valid))
     unsafe_public_failure["bootstrap_exercises"][0]["success"] = False
-    unsafe_public_failure["bootstrap_exercises"][0]["error"] = (
-        "arbitrary/internal path"
-    )
+    unsafe_public_failure["bootstrap_exercises"][0]["error"] = "arbitrary/internal path"
     with pytest.raises(
         provision.LeanstralProvisioningError,
         match="inconsistent with its error",
@@ -733,9 +722,7 @@ def test_p2p_receipt_strictly_binds_the_independent_service_bootstrap() -> None:
     valid = _p2p_evidence(lock)
 
     wrong_target = json.loads(json.dumps(valid))
-    wrong_target["bootstrap_exercises"][-1]["target"] = (
-        wrong_target["advertised_multiaddrs"][1]
-    )
+    wrong_target["bootstrap_exercises"][-1]["target"] = wrong_target["advertised_multiaddrs"][1]
     with pytest.raises(
         provision.LeanstralProvisioningError,
         match="direct-dial target",
@@ -753,9 +740,7 @@ def test_p2p_receipt_strictly_binds_the_independent_service_bootstrap() -> None:
         provision.verify_p2p_evidence(lock, duplicate)
 
     wrong_client = json.loads(json.dumps(valid))
-    wrong_client["bootstrap_exercises"][-1]["observer_peer_id"] = (
-        wrong_client["peer_id"]
-    )
+    wrong_client["bootstrap_exercises"][-1]["observer_peer_id"] = wrong_client["peer_id"]
     with pytest.raises(
         provision.LeanstralProvisioningError,
         match="independent client",
@@ -763,9 +748,7 @@ def test_p2p_receipt_strictly_binds_the_independent_service_bootstrap() -> None:
         provision.verify_p2p_evidence(lock, wrong_client)
 
     successful_local_error = json.loads(json.dumps(valid))
-    successful_local_error["bootstrap_exercises"][-1]["error"] = (
-        "connect_failed"
-    )
+    successful_local_error["bootstrap_exercises"][-1]["error"] = "connect_failed"
     with pytest.raises(
         provision.LeanstralProvisioningError,
         match="independent client",
@@ -865,8 +848,7 @@ def test_default_manager_and_mcp_probes_preserve_source_provenance(
         return {
             name: module
             for name, module in tuple(sys.modules.items())
-            if name == "ipfs_datasets_py"
-            or name.startswith("ipfs_datasets_py.")
+            if name == "ipfs_datasets_py" or name.startswith("ipfs_datasets_py.")
         }
 
     with provision._preserve_import_path():
@@ -998,9 +980,7 @@ def test_receipt_validation_detects_tampering_and_secret_fields() -> None:
         provision.validate_receipt(lock, missing_draft)
 
     topology_tampered = json.loads(json.dumps(receipt))
-    topology_tampered["p2p"]["topology_receipt"]["contract"]["p2p_port"] = (
-        19002
-    )
+    topology_tampered["p2p"]["topology_receipt"]["contract"]["p2p_port"] = 19002
     unsigned = dict(topology_tampered)
     unsigned.pop("receipt_cid")
     unsigned.pop("receipt_sha256")

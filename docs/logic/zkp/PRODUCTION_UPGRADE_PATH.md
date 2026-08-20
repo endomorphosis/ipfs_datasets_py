@@ -159,14 +159,14 @@ class ZKPCircuit:
 def compile_to_r1cs(circuit: ZKPCircuit) -> R1CS:
     """
     Convert high-level circuit to R1CS constraints.
-    
+
     AND gate: a * b = c
     OR gate: a + b - a*b = c (requires multiple constraints)
     NOT gate: 1 - a = c
     IMPLIES gate: (1-a) + b - (1-a)*b = c
     """
     constraints = []
-    
+
     for gate in circuit._gates:
         if gate.gate_type == "AND":
             # a * b = c
@@ -174,18 +174,16 @@ def compile_to_r1cs(circuit: ZKPCircuit) -> R1CS:
             B = sparse_vector({gate.inputs[1]: 1})
             C = sparse_vector({gate.output: 1})
             constraints.append((A, B, C))
-        
+
         elif gate.gate_type == "OR":
             # OR(a,b) = a + b - a*b
             # Split into multiple constraints
             # Constraint 1: a * b = temp
             # Constraint 2: a + b - temp = c
             ...
-    
+
     return R1CS(
-        num_variables=circuit._next_wire,
-        num_constraints=len(constraints),
-        constraints=constraints
+        num_variables=circuit._next_wire, num_constraints=len(constraints), constraints=constraints
     )
 ```
 
@@ -317,16 +315,16 @@ class ZKPProver:
 class Groth16Prover:
     def __init__(self, proving_key: ProvingKey):
         self.pk = proving_key
-    
+
     def generate_proof(
         self,
         r1cs: R1CS,
         witness: List[int],  # Private inputs
-        public_inputs: List[int]
+        public_inputs: List[int],
     ) -> Groth16Proof:
         """
         Generate real Groth16 zkSNARK proof.
-        
+
         Steps:
         1. Compute witness satisfying R1CS
         2. Sample random r, s
@@ -335,63 +333,59 @@ class Groth16Prover:
         """
         # 1. Verify witness satisfies constraints
         assert r1cs.is_satisfied(witness), "Invalid witness"
-        
+
         # 2. Sample randomness
         r = field.random()
         s = field.random()
-        
+
         # 3. Compute proof elements
         # A = α + Σ aᵢ·uᵢ(x) + r·δ
         A = self._compute_A(witness, r)
-        
+
         # B = β + Σ aᵢ·vᵢ(x) + s·δ
         B = self._compute_B(witness, s)
-        
+
         # C = Σ aᵢ·wᵢ(x) + h(x)·δ + s·A + r·B - r·s·δ
         C = self._compute_C(witness, r, s, A, B)
-        
+
         return Groth16Proof(A=A, B=B, C=C)
-    
+
     def _compute_A(self, witness, r):
         """Compute A element."""
         A = self.pk.alpha_g1
-        
+
         # Add witness contributions
         for i, w_i in enumerate(witness):
             A = add(A, multiply(self.pk.u_g1[i], w_i))
-        
+
         # Add randomness
         A = add(A, multiply(self.pk.delta_g1, r))
-        
+
         return A
 ```
 
 ### Step 4.2: Compute Witness
 
 ```python
-def compute_witness(
-    r1cs: R1CS,
-    private_axioms: List[str],
-    theorem: str
-) -> List[int]:
+def compute_witness(r1cs: R1CS, private_axioms: List[str], theorem: str) -> List[int]:
     """
     Compute witness values for R1CS.
-    
+
     Witness = [1, public_inputs..., private_inputs..., intermediate_wires...]
     """
     witness = [1]  # First element is always 1
-    
+
     # Add public inputs (theorem)
     witness.extend(encode_theorem(theorem))
-    
+
     # Add private inputs (axioms)
     witness.extend(encode_axioms(private_axioms))
-    
+
     # Compute intermediate wire values
     for constraint in r1cs.constraints:
         # Solve for intermediate values
         ...
-    
+
     return witness
 ```
 
@@ -414,39 +408,35 @@ class ZKPVerifier:
 class Groth16Verifier:
     def __init__(self, verification_key: VerificationKey):
         self.vk = verification_key
-    
-    def verify_proof(
-        self,
-        proof: Groth16Proof,
-        public_inputs: List[int]
-    ) -> bool:
+
+    def verify_proof(self, proof: Groth16Proof, public_inputs: List[int]) -> bool:
         """
         Verify Groth16 proof using pairing equation.
-        
+
         Verification equation:
         e(A, B) = e(α, β) · e(pub, γ) · e(C, δ)
-        
+
         Where:
         - e = bilinear pairing
         - α, β, γ, δ = verification key elements
         - pub = public input combination
         """
         from py_ecc.bn128 import pairing, multiply, add, G1, G2
-        
+
         # 1. Compute public input combination
         pub_g1 = G1  # Identity element
         for i, pub_i in enumerate([1] + public_inputs):
             pub_g1 = add(pub_g1, multiply(self.vk.ic[i], pub_i))
-        
+
         # 2. Verify pairing equation
         lhs = pairing(proof.A, proof.B)
-        
+
         rhs = (
-            pairing(self.vk.alpha_g1, self.vk.beta_g2) *
-            pairing(pub_g1, self.vk.gamma_g2) *
-            pairing(proof.C, self.vk.delta_g2)
+            pairing(self.vk.alpha_g1, self.vk.beta_g2)
+            * pairing(pub_g1, self.vk.gamma_g2)
+            * pairing(proof.C, self.vk.delta_g2)
         )
-        
+
         # 3. Check equality
         return lhs == rhs
 ```
@@ -455,21 +445,19 @@ class Groth16Verifier:
 
 ```python
 def verify_proof_optimized(
-    proof: Groth16Proof,
-    public_inputs: List[int],
-    vk: VerificationKey
+    proof: Groth16Proof, public_inputs: List[int], vk: VerificationKey
 ) -> bool:
     """
     Optimized verification using precomputed pairings.
-    
+
     Typical verification time: 5-10ms
     """
     # Precompute common pairings
-    if not hasattr(vk, '_precomputed_pairings'):
+    if not hasattr(vk, "_precomputed_pairings"):
         vk._precomputed_pairings = {
-            'alpha_beta': pairing(vk.alpha_g1, vk.beta_g2),
+            "alpha_beta": pairing(vk.alpha_g1, vk.beta_g2),
         }
-    
+
     # Use cached pairings
     ...
 ```
@@ -517,26 +505,27 @@ def test_proof_forgery():
     fake_proof = Groth16Proof(
         A=G1,  # Invalid point
         B=G2,
-        C=G1
+        C=G1,
     )
-    
+
     verifier = Groth16Verifier(vk)
     assert not verifier.verify_proof(fake_proof, public_inputs=[1])
-    
+
     print("✓ Proof forgery rejected")
+
 
 def test_zero_knowledge():
     """Verify no information leakage."""
     # Generate two proofs with same public input, different private
     proof1 = prover.generate_proof(..., private=[secret1])
     proof2 = prover.generate_proof(..., private=[secret2])
-    
+
     # Proofs should be indistinguishable
     assert proof1 != proof2  # Different randomness
     # But both verify
     assert verifier.verify_proof(proof1, ...)
     assert verifier.verify_proof(proof2, ...)
-    
+
     print("✓ Zero-knowledge property verified")
 ```
 
@@ -546,21 +535,21 @@ def test_zero_knowledge():
 def benchmark_groth16():
     """Measure proof generation and verification time."""
     import time
-    
+
     # Proving time
     start = time.time()
     proof = prover.generate_proof(r1cs, witness, public_inputs)
     proving_time = time.time() - start
-    
+
     # Verification time
     start = time.time()
     result = verifier.verify_proof(proof, public_inputs)
     verification_time = time.time() - start
-    
-    print(f"Proving time: {proving_time*1000:.2f}ms")
-    print(f"Verification time: {verification_time*1000:.2f}ms")
+
+    print(f"Proving time: {proving_time * 1000:.2f}ms")
+    print(f"Verification time: {verification_time * 1000:.2f}ms")
     print(f"Proof size: {len(serialize_proof(proof))} bytes")
-    
+
     # Expected: <1s proving, <10ms verification, ~256 bytes
 ```
 
@@ -573,19 +562,19 @@ def benchmark_groth16():
 ```python
 class KeyManager:
     """Secure key storage and management."""
-    
+
     def store_proving_key(self, pk: ProvingKey, path: str):
         """Store proving key securely."""
         # Encrypt before storing
-        encrypted = encrypt_key(pk, password=os.getenv('KEY_PASSWORD'))
-        with open(path, 'wb') as f:
+        encrypted = encrypt_key(pk, password=os.getenv("KEY_PASSWORD"))
+        with open(path, "wb") as f:
             f.write(encrypted)
-    
+
     def load_proving_key(self, path: str) -> ProvingKey:
         """Load proving key securely."""
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             encrypted = f.read()
-        return decrypt_key(encrypted, password=os.getenv('KEY_PASSWORD'))
+        return decrypt_key(encrypted, password=os.getenv("KEY_PASSWORD"))
 ```
 
 ### Step 7.2: API Compatibility Layer
@@ -594,48 +583,43 @@ class KeyManager:
 class ProductionZKPProver:
     """
     Drop-in replacement for simulated ZKPProver.
-    
+
     Maintains API compatibility while using real Groth16.
     """
-    
+
     def __init__(self, security_level: int = 128, enable_caching: bool = True):
         # Load proving key
-        self.pk = KeyManager().load_proving_key('proving_key.bin')
+        self.pk = KeyManager().load_proving_key("proving_key.bin")
         self.enable_caching = enable_caching
         self._proof_cache = {}
-    
+
     def generate_proof(
-        self,
-        theorem: str,
-        private_axioms: List[str],
-        metadata: Optional[Dict] = None
+        self, theorem: str, private_axioms: List[str], metadata: Optional[Dict] = None
     ) -> ZKPProof:  # Same return type!
         """Generate real Groth16 proof with same API."""
         # 1. Convert to circuit
         circuit = self._axioms_to_circuit(theorem, private_axioms)
-        
+
         # 2. Compile to R1CS
         r1cs = compile_to_r1cs(circuit)
-        
+
         # 3. Compute witness
         witness = compute_witness(r1cs, private_axioms, theorem)
-        
+
         # 4. Generate Groth16 proof
-        groth16_proof = self._groth16_prover.generate_proof(
-            r1cs, witness, encode_theorem(theorem)
-        )
-        
+        groth16_proof = self._groth16_prover.generate_proof(r1cs, witness, encode_theorem(theorem))
+
         # 5. Wrap in ZKPProof for compatibility
         return ZKPProof(
             proof_data=serialize_groth16(groth16_proof),
-            public_inputs={'theorem': theorem},
+            public_inputs={"theorem": theorem},
             metadata={
                 **(metadata or {}),
-                'proof_system': 'Groth16',
-                'security_level': 128,
+                "proof_system": "Groth16",
+                "security_level": 128,
             },
             timestamp=time.time(),
-            size_bytes=256
+            size_bytes=256,
         )
 ```
 

@@ -12,6 +12,7 @@ Methods under test:
   - OntologyLearningAdapter.feedback_longest_positive_streak()
   - OntologyLearningAdapter.feedback_score_range()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -27,14 +28,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -42,16 +49,19 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
 def _make_result(entities, rels=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=rels or [], confidence=1.0, metadata={}, errors=[]
     )
@@ -59,11 +69,13 @@ def _make_result(entities, rels=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -74,16 +86,21 @@ def _push_run(p, score):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(adapter, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     adapter._feedback.append(FeedbackRecord(final_score=score))
 
 
 # ── OntologyOptimizer.history_std_ratio ──────────────────────────────────────
+
 
 class TestHistoryStdRatio:
     def test_empty_returns_zero(self):
@@ -111,6 +128,7 @@ class TestHistoryStdRatio:
 
 # ── OntologyOptimizer.score_turning_points ────────────────────────────────────
 
+
 class TestScoreTurningPoints:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -137,6 +155,7 @@ class TestScoreTurningPoints:
 
 # ── OntologyCritic.dimension_balance_score ────────────────────────────────────
 
+
 class TestDimensionBalanceScore:
     def test_all_same_returns_one(self):
         c = _make_critic()
@@ -161,6 +180,7 @@ class TestDimensionBalanceScore:
 
 # ── OntologyCritic.score_percentile_rank ─────────────────────────────────────
 
+
 class TestScorePercentileRank:
     def test_empty_history_returns_zero(self):
         c = _make_critic()
@@ -168,15 +188,37 @@ class TestScorePercentileRank:
 
     def test_best_in_history_returns_100(self):
         c = _make_critic()
-        top = _make_score(**{d: 1.0 for d in ["completeness", "consistency", "clarity",
-                                                "granularity", "relationship_coherence", "domain_alignment"]})
+        top = _make_score(
+            **{
+                d: 1.0
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         history = [_make_score() for _ in range(5)]
         assert c.score_percentile_rank(top, history) == pytest.approx(100.0)
 
     def test_worst_returns_zero(self):
         c = _make_critic()
-        bottom = _make_score(**{d: 0.0 for d in ["completeness", "consistency", "clarity",
-                                                    "granularity", "relationship_coherence", "domain_alignment"]})
+        bottom = _make_score(
+            **{
+                d: 0.0
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         history = [_make_score() for _ in range(5)]
         assert c.score_percentile_rank(bottom, history) == pytest.approx(0.0)
 
@@ -186,6 +228,7 @@ class TestScorePercentileRank:
 
 
 # ── OntologyGenerator.entity_confidence_iqr ──────────────────────────────────
+
 
 class TestEntityConfidenceIQR:
     def test_too_few_returns_zero(self):
@@ -206,6 +249,7 @@ class TestEntityConfidenceIQR:
 
 # ── OntologyGenerator.avg_entity_confidence ──────────────────────────────────
 
+
 class TestAvgEntityConfidence:
     def test_empty_returns_zero(self):
         gen = _make_generator()
@@ -213,7 +257,9 @@ class TestAvgEntityConfidence:
 
     def test_single_entity(self):
         gen = _make_generator()
-        assert gen.avg_entity_confidence(_make_result([_make_entity("e1", 0.7)])) == pytest.approx(0.7)
+        assert gen.avg_entity_confidence(_make_result([_make_entity("e1", 0.7)])) == pytest.approx(
+            0.7
+        )
 
     def test_average(self):
         gen = _make_generator()
@@ -222,6 +268,7 @@ class TestAvgEntityConfidence:
 
 
 # ── OntologyPipeline.run_score_harmonic_mean ──────────────────────────────────
+
 
 class TestRunScoreHarmonicMean:
     def test_no_runs_returns_zero(self):
@@ -244,6 +291,7 @@ class TestRunScoreHarmonicMean:
 
 # ── OntologyPipeline.worst_run_index ─────────────────────────────────────────
 
+
 class TestWorstRunIndex:
     def test_no_runs_returns_minus_one(self):
         p = _make_pipeline()
@@ -263,6 +311,7 @@ class TestWorstRunIndex:
 
 
 # ── OntologyLearningAdapter.feedback_longest_positive_streak ─────────────────
+
 
 class TestFeedbackLongestPositiveStreak:
     def test_empty_returns_zero(self):
@@ -289,6 +338,7 @@ class TestFeedbackLongestPositiveStreak:
 
 
 # ── OntologyLearningAdapter.feedback_score_range ─────────────────────────────
+
 
 class TestFeedbackScoreRange:
     def test_empty_returns_zero_tuple(self):

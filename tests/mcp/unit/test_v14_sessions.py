@@ -9,6 +9,7 @@ Covers:
   AY109 — did_key_manager.py    (rotate_key + reload + info)
   AZ110 — secrets_vault.py      (list/iter/delete + encrypted round-trip)
 """
+
 from __future__ import annotations
 
 import io
@@ -37,15 +38,21 @@ if str(_REPO) not in sys.path:
 # AT104 — DispatchPipeline + PipelineMetricsRecorder
 # ===========================================================================
 
+
 class TestDispatchPipelineBasics:
     def test_import(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            DispatchPipeline, PipelineStage, PipelineResult, PipelineMetricsRecorder,
+            DispatchPipeline,
+            PipelineStage,
+            PipelineResult,
+            PipelineMetricsRecorder,
         )
+
         assert DispatchPipeline is not None
 
     def test_make_default_pipeline_runs(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import make_default_pipeline
+
         p = make_default_pipeline()
         result = p.run({"tool": "read", "actor": "alice", "params": {}})
         assert result.allowed is True
@@ -53,6 +60,7 @@ class TestDispatchPipelineBasics:
 
     def test_missing_tool_denied(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import make_default_pipeline
+
         p = make_default_pipeline()
         result = p.run({"actor": "alice", "params": {}})
         # tool_name_check stage returns allowed=False when tool is missing/empty
@@ -61,8 +69,10 @@ class TestDispatchPipelineBasics:
 
     def test_short_circuit_skips_remaining(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            DispatchPipeline, PipelineStage,
+            DispatchPipeline,
+            PipelineStage,
         )
+
         ran = []
 
         def deny_all(intent):
@@ -72,10 +82,13 @@ class TestDispatchPipelineBasics:
             ran.append("stage2")
             return {"allowed": True}
 
-        p = DispatchPipeline(stages=[
-            PipelineStage(name="deny", handler=deny_all),
-            PipelineStage(name="after", handler=should_not_run),
-        ], short_circuit=True)
+        p = DispatchPipeline(
+            stages=[
+                PipelineStage(name="deny", handler=deny_all),
+                PipelineStage(name="after", handler=should_not_run),
+            ],
+            short_circuit=True,
+        )
         result = p.run({"tool": "read"})
         assert result.allowed is False
         assert "after" in result.stages_skipped
@@ -83,8 +96,10 @@ class TestDispatchPipelineBasics:
 
     def test_no_short_circuit_runs_all(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            DispatchPipeline, PipelineStage,
+            DispatchPipeline,
+            PipelineStage,
         )
+
         ran = []
 
         def deny_first(intent):
@@ -94,17 +109,22 @@ class TestDispatchPipelineBasics:
             ran.append("second")
             return {"allowed": True}
 
-        p = DispatchPipeline(stages=[
-            PipelineStage(name="s1", handler=deny_first),
-            PipelineStage(name="s2", handler=record_second),
-        ], short_circuit=False)
+        p = DispatchPipeline(
+            stages=[
+                PipelineStage(name="s1", handler=deny_first),
+                PipelineStage(name="s2", handler=record_second),
+            ],
+            short_circuit=False,
+        )
         p.run({"tool": "read"})
         assert "second" in ran
 
     def test_skip_stage_disables(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            DispatchPipeline, PipelineStage,
+            DispatchPipeline,
+            PipelineStage,
         )
+
         ran = []
 
         def recorder(intent):
@@ -120,8 +140,10 @@ class TestDispatchPipelineBasics:
 
     def test_enable_stage_re_enables(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            DispatchPipeline, PipelineStage,
+            DispatchPipeline,
+            PipelineStage,
         )
+
         ran = []
 
         def recorder(intent):
@@ -136,6 +158,7 @@ class TestDispatchPipelineBasics:
 
     def test_stage_names_property(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import make_full_pipeline
+
         p = make_full_pipeline()
         names = p.stage_names
         assert "compliance" in names
@@ -144,7 +167,8 @@ class TestDispatchPipelineBasics:
 
     def test_handler_exception_fail_open(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            DispatchPipeline, PipelineStage,
+            DispatchPipeline,
+            PipelineStage,
         )
 
         def raise_fn(intent):
@@ -157,7 +181,8 @@ class TestDispatchPipelineBasics:
 
     def test_handler_exception_fail_closed(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            DispatchPipeline, PipelineStage,
+            DispatchPipeline,
+            PipelineStage,
         )
 
         def raise_fn(intent):
@@ -171,6 +196,7 @@ class TestDispatchPipelineBasics:
 class TestPipelineMetricsRecorder:
     def test_initial_state(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         r = PipelineMetricsRecorder()
         m = r.get_metrics()
         assert m["total_runs"] == 0
@@ -178,6 +204,7 @@ class TestPipelineMetricsRecorder:
 
     def test_record_run_increments(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         r = PipelineMetricsRecorder()
         r.record_run(allowed=True)
         r.record_run(allowed=False)
@@ -188,6 +215,7 @@ class TestPipelineMetricsRecorder:
 
     def test_record_stage_execution(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         r = PipelineMetricsRecorder()
         r.record_stage("s1", skipped=False, duration_ms=5.0)
         m = r.get_metrics()
@@ -196,6 +224,7 @@ class TestPipelineMetricsRecorder:
 
     def test_record_stage_skipped(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         r = PipelineMetricsRecorder()
         r.record_stage("s1", skipped=True)
         m = r.get_metrics()
@@ -204,6 +233,7 @@ class TestPipelineMetricsRecorder:
 
     def test_reset_clears_all(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         r = PipelineMetricsRecorder()
         r.record_run(allowed=True)
         r.record_stage("s1", skipped=False, duration_ms=1.0)
@@ -214,13 +244,16 @@ class TestPipelineMetricsRecorder:
 
     def test_namespace_in_metrics(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import PipelineMetricsRecorder
+
         r = PipelineMetricsRecorder(namespace="my_ns")
         assert r.get_metrics()["namespace"] == "my_ns"
 
     def test_pipeline_get_metrics_delegates(self):
         from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-            make_default_pipeline, PipelineMetricsRecorder,
+            make_default_pipeline,
+            PipelineMetricsRecorder,
         )
+
         rec = PipelineMetricsRecorder()
         p = make_default_pipeline(metrics_recorder=rec)
         p.run({"tool": "read", "actor": "alice"})
@@ -232,14 +265,17 @@ class TestPipelineMetricsRecorder:
 # AU105 — TokenBucketRateLimiter + LengthPrefixFramer + MCPMessage
 # ===========================================================================
 
+
 class TestTokenBucketRateLimiter:
     def test_consume_succeeds_when_available(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import TokenBucketRateLimiter
+
         lim = TokenBucketRateLimiter(rate=10.0, capacity=10.0)
         assert lim.consume(1.0) is True
 
     def test_consume_fails_when_empty(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import TokenBucketRateLimiter
+
         lim = TokenBucketRateLimiter(rate=1.0, capacity=5.0)
         # Drain the bucket
         for _ in range(5):
@@ -248,11 +284,13 @@ class TestTokenBucketRateLimiter:
 
     def test_available_starts_at_capacity(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import TokenBucketRateLimiter
+
         lim = TokenBucketRateLimiter(rate=10.0, capacity=20.0)
         assert abs(lim.available() - 20.0) < 0.1
 
     def test_reset_refills_to_capacity(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import TokenBucketRateLimiter
+
         lim = TokenBucketRateLimiter(rate=10.0, capacity=10.0)
         lim.consume(10.0)
         lim.reset()
@@ -260,16 +298,19 @@ class TestTokenBucketRateLimiter:
 
     def test_invalid_rate_raises(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import TokenBucketRateLimiter
+
         with pytest.raises(ValueError):
             TokenBucketRateLimiter(rate=0.0, capacity=10.0)
 
     def test_invalid_capacity_raises(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import TokenBucketRateLimiter
+
         with pytest.raises(ValueError):
             TokenBucketRateLimiter(rate=1.0, capacity=0.0)
 
     def test_get_info_has_required_keys(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import TokenBucketRateLimiter
+
         lim = TokenBucketRateLimiter(rate=5.0, capacity=10.0)
         info = lim.get_info()
         assert "rate" in info
@@ -278,6 +319,7 @@ class TestTokenBucketRateLimiter:
 
     def test_thread_safe_concurrent_consume(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import TokenBucketRateLimiter
+
         lim = TokenBucketRateLimiter(rate=1000.0, capacity=100.0)
         results = []
 
@@ -294,6 +336,7 @@ class TestTokenBucketRateLimiter:
 
     def test_p2p_session_config_makes_limiter(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import P2PSessionConfig
+
         cfg = P2PSessionConfig(rate_limit=50.0, capacity=100.0)
         lim = cfg.make_rate_limiter()
         assert lim.rate == 50.0
@@ -303,6 +346,7 @@ class TestTokenBucketRateLimiter:
 class TestLengthPrefixFramer:
     def test_encode_decode_roundtrip(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import LengthPrefixFramer
+
         framer = LengthPrefixFramer()
         data = b"hello world"
         encoded = framer.encode(data)
@@ -312,6 +356,7 @@ class TestLengthPrefixFramer:
 
     def test_decode_with_remainder(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import LengthPrefixFramer
+
         framer = LengthPrefixFramer()
         msg1 = framer.encode(b"first")
         msg2 = framer.encode(b"second")
@@ -323,6 +368,7 @@ class TestLengthPrefixFramer:
 
     def test_empty_payload(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import LengthPrefixFramer
+
         framer = LengthPrefixFramer()
         encoded = framer.encode(b"")
         payload, _ = framer.decode(encoded)
@@ -330,8 +376,10 @@ class TestLengthPrefixFramer:
 
     def test_incomplete_frame_raises(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import LengthPrefixFramer
+
         framer = LengthPrefixFramer()
         import struct
+
         # Claim 100 bytes but provide only 5
         header = struct.pack(">I", 100)
         with pytest.raises(ValueError, match="Incomplete"):
@@ -341,11 +389,13 @@ class TestLengthPrefixFramer:
 class TestMCPMessage:
     def test_default_id_generated(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import MCPMessage
+
         m = MCPMessage(method="tools/call")
         assert len(m.id) == 32  # uuid4().hex
 
     def test_to_dict_has_required_fields(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import MCPMessage
+
         m = MCPMessage(method="tools/list", params={"a": 1})
         d = m.to_dict()
         assert d["method"] == "tools/list"
@@ -354,6 +404,7 @@ class TestMCPMessage:
 
     def test_roundtrip_via_bytes(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import MCPMessage
+
         m = MCPMessage(method="tools/call", params={"name": "echo"}, id="req-1")
         m2 = MCPMessage.from_bytes(m.to_bytes())
         assert m2.method == m.method
@@ -362,13 +413,16 @@ class TestMCPMessage:
 
     def test_from_bytes_missing_method_raises(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import MCPMessage
+
         with pytest.raises(ValueError, match="missing 'method'"):
             MCPMessage.from_bytes(json.dumps({"jsonrpc": "2.0"}).encode())
 
     def test_constants(self):
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import (
-            MCP_P2P_PROTOCOL_ID, MCP_P2P_PUBSUB_TOPICS,
+            MCP_P2P_PROTOCOL_ID,
+            MCP_P2P_PUBSUB_TOPICS,
         )
+
         assert MCP_P2P_PROTOCOL_ID == "/mcp+p2p/1.0.0"
         assert "interface_announce" in MCP_P2P_PUBSUB_TOPICS
 
@@ -377,9 +431,11 @@ class TestMCPMessage:
 # AV106 — ComplianceChecker + custom rule add/remove
 # ===========================================================================
 
+
 class TestComplianceCheckerBuiltIn:
     def _checker(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_checker
+
         return make_default_checker()
 
     def test_valid_intent_passes(self):
@@ -405,19 +461,24 @@ class TestComplianceCheckerBuiltIn:
 
     def test_non_serializable_params_fails(self):
         checker = self._checker()
-        report = checker.check({
-            "tool": "read_file",
-            "actor": "alice",
-            "params": {"fn": lambda: None},  # not JSON-serialisable
-        })
+        report = checker.check(
+            {
+                "tool": "read_file",
+                "actor": "alice",
+                "params": {"fn": lambda: None},  # not JSON-serialisable
+            }
+        )
         assert "params_are_serializable" in report.failed_rules
 
 
 class TestComplianceCheckerCustomRules:
     def test_add_custom_rule(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, ComplianceRule, ComplianceResult,
+            ComplianceChecker,
+            ComplianceRule,
+            ComplianceResult,
         )
+
         checker = ComplianceChecker()
         rule = ComplianceRule(
             rule_id="custom_check",
@@ -435,8 +496,11 @@ class TestComplianceCheckerCustomRules:
 
     def test_duplicate_rule_id_raises(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, ComplianceRule, ComplianceResult,
+            ComplianceChecker,
+            ComplianceRule,
+            ComplianceResult,
         )
+
         checker = ComplianceChecker()
         rule = ComplianceRule(
             rule_id="dup",
@@ -449,6 +513,7 @@ class TestComplianceCheckerCustomRules:
 
     def test_remove_rule(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_checker
+
         checker = make_default_checker()
         initial_count = len(checker)
         removed = checker.remove_rule("intent_has_actor")
@@ -457,17 +522,20 @@ class TestComplianceCheckerCustomRules:
 
     def test_remove_nonexistent_returns_false(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_checker
+
         checker = make_default_checker()
         assert checker.remove_rule("no_such_rule") is False
 
     def test_remove_non_removable_raises(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_checker
+
         checker = make_default_checker()
         with pytest.raises(ValueError, match="not removable"):
             checker.remove_rule("tool_name_convention")
 
     def test_list_rules_structure(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_checker
+
         checker = make_default_checker()
         rules = checker.list_rules()
         assert isinstance(rules, list)
@@ -475,6 +543,7 @@ class TestComplianceCheckerCustomRules:
 
     def test_fail_fast_stops_early(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_checker
+
         checker = make_default_checker(fail_fast=True)
         # Invalid tool → fail at first rule, other rules not evaluated
         report = checker.check({"tool": "INVALID!", "actor": "alice", "params": {}})
@@ -484,6 +553,7 @@ class TestComplianceCheckerCustomRules:
 
     def test_compliance_result_to_dict(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceResult
+
         cr = ComplianceResult(rule_id="test", passed=True, message="OK")
         d = cr.to_dict()
         assert d == {"rule_id": "test", "passed": True, "message": "OK"}
@@ -493,27 +563,33 @@ class TestComplianceCheckerCustomRules:
 # AW107 — RiskScorer + score_and_gate
 # ===========================================================================
 
+
 class TestRiskLevelFromScore:
     def test_negligible(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskLevel
+
         assert RiskLevel.from_score(0.0) == RiskLevel.NEGLIGIBLE
         assert RiskLevel.from_score(0.19) == RiskLevel.NEGLIGIBLE
 
     def test_low(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskLevel
+
         assert RiskLevel.from_score(0.2) == RiskLevel.LOW
         assert RiskLevel.from_score(0.39) == RiskLevel.LOW
 
     def test_medium(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskLevel
+
         assert RiskLevel.from_score(0.4) == RiskLevel.MEDIUM
 
     def test_high(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskLevel
+
         assert RiskLevel.from_score(0.6) == RiskLevel.HIGH
 
     def test_critical(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskLevel
+
         assert RiskLevel.from_score(0.8) == RiskLevel.CRITICAL
         assert RiskLevel.from_score(1.0) == RiskLevel.CRITICAL
 
@@ -521,6 +597,7 @@ class TestRiskLevelFromScore:
 class TestRiskScorer:
     def test_default_score_is_below_max(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer
+
         scorer = RiskScorer()
         a = scorer.score_intent(tool="read", actor="alice")
         assert 0.0 <= a.score <= 1.0
@@ -528,6 +605,7 @@ class TestRiskScorer:
 
     def test_high_base_risk_tool(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer, RiskScoringPolicy
+
         policy = RiskScoringPolicy(tool_risk_overrides={"delete": 0.9})
         scorer = RiskScorer(policy=policy)
         a = scorer.score_intent(tool="delete", actor="")
@@ -536,6 +614,7 @@ class TestRiskScorer:
 
     def test_trust_reduces_score(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer, RiskScoringPolicy
+
         policy = RiskScoringPolicy(
             default_risk=0.6,
             actor_trust_levels={"admin": 0.5},
@@ -547,24 +626,30 @@ class TestRiskScorer:
 
     def test_complexity_penalty(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer
+
         scorer = RiskScorer()
         no_params = scorer.score_intent(tool="write", actor="alice", params={})
         many_params = scorer.score_intent(
-            tool="write", actor="alice",
+            tool="write",
+            actor="alice",
             params={f"k{i}": i for i in range(10)},
         )
         assert many_params.score > no_params.score
 
     def test_score_and_gate_allows_low_risk(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer
+
         scorer = RiskScorer()
         a = scorer.score_and_gate(tool="read", actor="alice")
         assert a.is_acceptable is True
 
     def test_score_and_gate_raises_on_high_risk(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import (
-            RiskScorer, RiskScoringPolicy, RiskGateError,
+            RiskScorer,
+            RiskScoringPolicy,
+            RiskGateError,
         )
+
         policy = RiskScoringPolicy(
             tool_risk_overrides={"danger": 0.99},
             max_acceptable_risk=0.75,
@@ -576,12 +661,14 @@ class TestRiskScorer:
 
     def test_get_info_has_keys(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer
+
         info = RiskScorer().get_info()
         assert "default_risk" in info
         assert "max_acceptable_risk" in info
 
     def test_assessment_to_dict(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer
+
         a = RiskScorer().score_intent("read", "alice")
         d = a.to_dict()
         assert "score" in d
@@ -593,9 +680,11 @@ class TestRiskScorer:
 # AX108 — policy_audit_log: sink + JSONL + stats
 # ===========================================================================
 
+
 class TestPolicyAuditLogSink:
     def test_sink_called_on_record(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         received = []
         log = PolicyAuditLog(sink=received.append)
         log.record(
@@ -610,6 +699,7 @@ class TestPolicyAuditLogSink:
 
     def test_sink_not_called_when_disabled(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         received = []
         log = PolicyAuditLog(enabled=False, sink=received.append)
         log.record(
@@ -640,6 +730,7 @@ class TestPolicyAuditLogSink:
 class TestPolicyAuditLogJSONL:
     def test_jsonl_file_written(self, tmp_path):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log_file = tmp_path / "audit.jsonl"
         log = PolicyAuditLog(log_path=str(log_file))
         log.record(
@@ -658,6 +749,7 @@ class TestPolicyAuditLogJSONL:
 
     def test_jsonl_appends(self, tmp_path):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log_file = tmp_path / "audit.jsonl"
         for i in range(3):
             log = PolicyAuditLog(log_path=str(log_file))
@@ -669,6 +761,7 @@ class TestPolicyAuditLogJSONL:
 class TestPolicyAuditLogStats:
     def test_stats_has_required_keys(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         log.record(policy_cid="p", intent_cid="i", actor="alice", decision="allow", tool="read")
         log.record(policy_cid="p", intent_cid="i2", actor="bob", decision="deny", tool="delete")
@@ -681,6 +774,7 @@ class TestPolicyAuditLogStats:
 
     def test_clear_removes_buffer_entries(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog()
         log.record(policy_cid="p", intent_cid="i", decision="allow")
         entries_before = len(log.all_entries())
@@ -691,6 +785,7 @@ class TestPolicyAuditLogStats:
 
     def test_ring_buffer_max_entries(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog(max_entries=5)
         for i in range(10):
             log.record(policy_cid="p", intent_cid=f"i{i}", decision="allow")
@@ -702,9 +797,11 @@ class TestPolicyAuditLogStats:
 # AY109 — did_key_manager: rotate_key + reload + info
 # ===========================================================================
 
+
 def _ucan_available() -> bool:
     try:
         import ucan  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -720,6 +817,7 @@ class TestDIDKeyManagerExtra:
     @_skip_no_ucan
     def test_rotate_key_returns_new_did(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         mgr = DIDKeyManager(key_file=tmp_path / "did_key.json")
         old_did = mgr.did
         new_did = mgr.rotate_key()
@@ -728,6 +826,7 @@ class TestDIDKeyManagerExtra:
     @_skip_no_ucan
     def test_rotate_key_persists(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         key_file = tmp_path / "did_key.json"
         mgr = DIDKeyManager(key_file=key_file)
         new_did = mgr.rotate_key()
@@ -737,6 +836,7 @@ class TestDIDKeyManagerExtra:
 
     def test_info_dict_has_required_keys(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         mgr = DIDKeyManager(key_file=tmp_path / "did_key.json")
         info = mgr.info()
         assert "did" in info
@@ -746,6 +846,7 @@ class TestDIDKeyManagerExtra:
     @_skip_no_ucan
     def test_export_secret_b64_stable(self, tmp_path):
         from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
+
         mgr = DIDKeyManager(key_file=tmp_path / "did_key.json")
         s1 = mgr.export_secret_b64()
         s2 = mgr.export_secret_b64()
@@ -757,10 +858,12 @@ class TestDIDKeyManagerExtra:
 # AZ110 — secrets_vault: list/iter/delete + encrypted round-trip
 # ===========================================================================
 
+
 class TestSecretsVaultExtra:
     @_skip_no_ucan
     def test_list_names_returns_names(self, tmp_path):
         from ipfs_datasets_py.mcp_server.secrets_vault import SecretsVault
+
         v = SecretsVault(vault_file=tmp_path / "vault.json")
         v.set("OPENAI_API_KEY", "sk-test")
         v.set("PINECONE_KEY", "pc-test")
@@ -771,6 +874,7 @@ class TestSecretsVaultExtra:
     @_skip_no_ucan
     def test_iter_over_names(self, tmp_path):
         from ipfs_datasets_py.mcp_server.secrets_vault import SecretsVault
+
         v = SecretsVault(vault_file=tmp_path / "vault.json")
         v.set("K1", "v1")
         v.set("K2", "v2")
@@ -781,6 +885,7 @@ class TestSecretsVaultExtra:
     @_skip_no_ucan
     def test_delete_removes_secret(self, tmp_path):
         from ipfs_datasets_py.mcp_server.secrets_vault import SecretsVault
+
         v = SecretsVault(vault_file=tmp_path / "vault.json")
         v.set("K1", "v1")
         v.delete("K1")
@@ -790,6 +895,7 @@ class TestSecretsVaultExtra:
     @_skip_no_ucan
     def test_len_after_operations(self, tmp_path):
         from ipfs_datasets_py.mcp_server.secrets_vault import SecretsVault
+
         v = SecretsVault(vault_file=tmp_path / "vault.json")
         assert len(v) == 0
         v.set("A", "1")
@@ -801,6 +907,7 @@ class TestSecretsVaultExtra:
     @_skip_no_ucan
     def test_encrypted_roundtrip(self, tmp_path):
         from ipfs_datasets_py.mcp_server.secrets_vault import SecretsVault
+
         v = SecretsVault(vault_file=tmp_path / "vault.json")
         v.set("SECRET", "super-secret-value")
         # On-disk the value must NOT appear as plaintext
@@ -812,6 +919,7 @@ class TestSecretsVaultExtra:
 
     def test_info_has_required_keys(self, tmp_path):
         from ipfs_datasets_py.mcp_server.secrets_vault import SecretsVault
+
         v = SecretsVault(vault_file=tmp_path / "vault.json")
         info = v.info()
         assert "vault_file" in info

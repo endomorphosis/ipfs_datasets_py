@@ -4,6 +4,7 @@ PDF LLM Optimization Tool - thin MCP wrapper.
 Business logic is in:
     ipfs_datasets_py.processors.specialized.pdf.llm_optimize_engine
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Optional, Union
@@ -12,6 +13,7 @@ try:
     from ipfs_datasets_py.processors.specialized.pdf.llm_optimize_engine import (
         pdf_optimize_for_llm as _engine_fn,
     )
+
     _ENGINE_AVAILABLE = True
 except ImportError:
     _engine_fn = None

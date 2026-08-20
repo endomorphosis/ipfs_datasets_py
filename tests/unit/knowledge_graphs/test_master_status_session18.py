@@ -48,8 +48,12 @@ def _make_wal_entry(
 ):
     """Return a WALEntry with safe defaults."""
     from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-        WALEntry, TransactionState, Operation, OperationType,
+        WALEntry,
+        TransactionState,
+        Operation,
+        OperationType,
     )
+
     if state is None:
         state = TransactionState.COMMITTED
     if ops is None:
@@ -66,6 +70,7 @@ def _make_wal_entry(
 def _make_tx_manager():
     """Return a TransactionManager with mock engine + storage."""
     from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
     engine = MagicMock()
     engine._nodes = {
         "n1": {"labels": ["Person"], "properties": {"name": "Alice"}},
@@ -79,12 +84,13 @@ def _make_tx_manager():
 def _make_kg_with_entities(entity_defs):
     """Build a KnowledgeGraph with the given (entity_id, name, entity_type) tuples."""
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
-        KnowledgeGraph, Entity,
+        KnowledgeGraph,
+        Entity,
     )
+
     kg = KnowledgeGraph()
     for eid, name, etype, props in entity_defs:
-        e = Entity(entity_id=eid, name=name, entity_type=etype,
-                   properties=props or {})
+        e = Entity(entity_id=eid, name=name, entity_type=etype, properties=props or {})
         kg.add_entity(e)
     return kg
 
@@ -98,6 +104,7 @@ class TestConsistencyViolationToDict:
     def test_to_dict_keys_present(self):
         """GIVEN a ConsistencyViolation WHEN to_dict() is called THEN all 4 keys exist."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import ConsistencyViolation
+
         cv = ConsistencyViolation(
             violation_type="disjoint_class",
             message="test violation",
@@ -113,6 +120,7 @@ class TestConsistencyViolationToDict:
     def test_to_dict_empty_ids(self):
         """GIVEN empty ID lists WHEN to_dict() is called THEN lists are empty."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import ConsistencyViolation
+
         cv = ConsistencyViolation(violation_type="x", message="y")
         d = cv.to_dict()
         assert d["entity_ids"] == []
@@ -125,6 +133,7 @@ class TestOntologySchemaMerge:
     def test_merge_subclasses_combined(self):
         """GIVEN two schemas WHEN merged THEN subclass_map contains entries from both."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema
+
         s1 = OntologySchema()
         s1.add_subclass("Dog", "Animal")
         s2 = OntologySchema()
@@ -136,6 +145,7 @@ class TestOntologySchemaMerge:
     def test_merge_transitive_union(self):
         """GIVEN two schemas with disjoint transitive sets WHEN merged THEN union."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema
+
         s1 = OntologySchema()
         s1.add_transitive("ancestor")
         s2 = OntologySchema()
@@ -147,6 +157,7 @@ class TestOntologySchemaMerge:
     def test_merge_symmetric_union(self):
         """GIVEN two schemas with symmetric sets WHEN merged THEN union."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema
+
         s1 = OntologySchema()
         s1.add_symmetric("sibling")
         s2 = OntologySchema()
@@ -158,6 +169,7 @@ class TestOntologySchemaMerge:
     def test_merge_equivalent_classes_combined(self):
         """GIVEN equivalent class pairs in both schemas WHEN merged THEN both preserved."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema
+
         s1 = OntologySchema()
         s1.add_equivalent_class("Person", "Human")
         s2 = OntologySchema()
@@ -170,6 +182,7 @@ class TestOntologySchemaMerge:
     def test_merge_property_chains_deduped(self):
         """GIVEN same chain in both schemas WHEN merged THEN deduplicated."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema
+
         s1 = OntologySchema()
         s1.add_property_chain(["p1", "p2"], "result")
         s2 = OntologySchema()
@@ -180,6 +193,7 @@ class TestOntologySchemaMerge:
     def test_merge_subproperty_maps_combined(self):
         """GIVEN subproperty entries in both WHEN merged THEN both present."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema
+
         s1 = OntologySchema()
         s1.add_subproperty("friend", "knows")
         s2 = OntologySchema()
@@ -191,6 +205,7 @@ class TestOntologySchemaMerge:
     def test_merge_disjoint_maps_combined(self):
         """GIVEN disjoint entries in both WHEN merged THEN both present."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema
+
         s1 = OntologySchema()
         s1.add_disjoint("Animal", "Machine")
         s2 = OntologySchema()
@@ -206,6 +221,7 @@ class TestOntologySchemaGetAllSuperproperties:
     def test_transitive_superproperties(self):
         """GIVEN chain is_friend_of → knows → relatedTo WHEN get_all THEN both returned."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema
+
         s = OntologySchema()
         s.add_subproperty("is_friend_of", "knows")
         s.add_subproperty("knows", "relatedTo")
@@ -216,6 +232,7 @@ class TestOntologySchemaGetAllSuperproperties:
     def test_unknown_property_returns_empty(self):
         """GIVEN no subproperty entries WHEN get_all_superproperties THEN empty set."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema
+
         s = OntologySchema()
         assert s.get_all_superproperties("unknown") == set()
 
@@ -226,6 +243,7 @@ class TestOntologySchemaAddSubproperty:
     def test_add_subproperty_returns_self(self):
         """GIVEN schema WHEN add_subproperty() THEN returns self for chaining."""
         from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema
+
         s = OntologySchema()
         assert s.add_subproperty("a", "b") is s
         assert "a" in s.subproperty_map
@@ -236,8 +254,16 @@ class TestOntologyReasonerSubproperty:
 
     def test_subproperty_inference_adds_supertype_rel(self):
         """GIVEN is_friend_of subPropertyOf knows WHEN materialize THEN 'knows' rel added."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
-        from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
+        from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+            KnowledgeGraph,
+            Entity,
+            Relationship,
+        )
+
         s = OntologySchema()
         s.add_subproperty("is_friend_of", "knows")
         r = OntologyReasoner(s)
@@ -260,8 +286,16 @@ class TestOntologyReasonerSubproperty:
 
     def test_subproperty_not_duplicated(self):
         """GIVEN subproperty rel already exists WHEN materialize THEN not duplicated."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
-        from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
+        from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+            KnowledgeGraph,
+            Entity,
+            Relationship,
+        )
+
         s = OntologySchema()
         s.add_subproperty("sub_rel", "super_rel")
         r = OntologyReasoner(s)
@@ -271,11 +305,15 @@ class TestOntologyReasonerSubproperty:
         kg.add_entity(e1)
         kg.add_entity(e2)
         for _ in range(2):  # Add same super-rel twice would be wrong
-            rel = Relationship(relationship_type="sub_rel", source_entity=e1, target_entity=e2, confidence=1.0)
+            rel = Relationship(
+                relationship_type="sub_rel", source_entity=e1, target_entity=e2, confidence=1.0
+            )
             kg.add_relationship(rel)
         # Materialize should only add 1 super_rel, not 2
         result = r.materialize(kg)
-        super_rels = [rel for rel in result.relationships.values() if rel.relationship_type == "super_rel"]
+        super_rels = [
+            rel for rel in result.relationships.values() if rel.relationship_type == "super_rel"
+        ]
         assert len(super_rels) == 1
 
 
@@ -284,8 +322,16 @@ class TestOntologyReasonerDomainRange:
 
     def test_domain_inference_adds_inferred_type(self):
         """GIVEN domain declaration WHEN materialize THEN source entity gets inferred type."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
-        from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
+        from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+            KnowledgeGraph,
+            Entity,
+            Relationship,
+        )
+
         s = OntologySchema()
         s.add_domain("employs", "Company")
         r = OntologyReasoner(s)
@@ -294,7 +340,9 @@ class TestOntologyReasonerDomainRange:
         e2 = Entity(entity_id="p1", name="Alice", entity_type="Person")
         kg.add_entity(e1)
         kg.add_entity(e2)
-        rel = Relationship(relationship_type="employs", source_entity=e1, target_entity=e2, confidence=1.0)
+        rel = Relationship(
+            relationship_type="employs", source_entity=e1, target_entity=e2, confidence=1.0
+        )
         kg.add_relationship(rel)
         result = r.materialize(kg)
         inferred = result.entities["c1"].properties.get("inferred_types", [])
@@ -302,8 +350,16 @@ class TestOntologyReasonerDomainRange:
 
     def test_range_inference_adds_inferred_type(self):
         """GIVEN range declaration WHEN materialize THEN target entity gets inferred type."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
-        from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
+        from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+            KnowledgeGraph,
+            Entity,
+            Relationship,
+        )
+
         s = OntologySchema()
         s.add_range("employs", "Employee")
         r = OntologyReasoner(s)
@@ -312,7 +368,9 @@ class TestOntologyReasonerDomainRange:
         e2 = Entity(entity_id="p1", name="Bob", entity_type="Person")
         kg.add_entity(e1)
         kg.add_entity(e2)
-        rel = Relationship(relationship_type="employs", source_entity=e1, target_entity=e2, confidence=1.0)
+        rel = Relationship(
+            relationship_type="employs", source_entity=e1, target_entity=e2, confidence=1.0
+        )
         kg.add_relationship(rel)
         result = r.materialize(kg)
         inferred = result.entities["p1"].properties.get("inferred_types", [])
@@ -320,8 +378,16 @@ class TestOntologyReasonerDomainRange:
 
     def test_domain_already_correct_type_no_duplicate(self):
         """GIVEN entity already has domain type WHEN materialize THEN no duplicate inferred type."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
-        from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
+        from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+            KnowledgeGraph,
+            Entity,
+            Relationship,
+        )
+
         s = OntologySchema()
         s.add_domain("employs", "Company")
         r = OntologyReasoner(s)
@@ -330,7 +396,9 @@ class TestOntologyReasonerDomainRange:
         e2 = Entity(entity_id="p1", name="Bob", entity_type="Person")
         kg.add_entity(e1)
         kg.add_entity(e2)
-        rel = Relationship(relationship_type="employs", source_entity=e1, target_entity=e2, confidence=1.0)
+        rel = Relationship(
+            relationship_type="employs", source_entity=e1, target_entity=e2, confidence=1.0
+        )
         kg.add_relationship(rel)
         result = r.materialize(kg)
         # Already Company → no inferred_types key or empty
@@ -343,8 +411,13 @@ class TestOntologyReasonerExplainInferences:
 
     def test_explain_returns_inference_traces(self):
         """GIVEN subclass schema WHEN explain_inferences THEN traces have correct fields."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner, InferenceTrace
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+            InferenceTrace,
+        )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity
+
         s = OntologySchema()
         s.add_subclass("Dog", "Animal")
         r = OntologyReasoner(s)
@@ -360,8 +433,12 @@ class TestOntologyReasonerExplainInferences:
 
     def test_explain_empty_kg_returns_no_traces(self):
         """GIVEN empty KG WHEN explain_inferences THEN empty list."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         s = OntologySchema()
         r = OntologyReasoner(s)
         kg = KnowledgeGraph()
@@ -374,8 +451,12 @@ class TestOntologyReasonerCheckConsistency:
 
     def test_disjoint_class_violation_detected(self):
         """GIVEN entity with two disjoint types WHEN check_consistency THEN violation found."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity
+
         s = OntologySchema()
         s.add_disjoint("Animal", "Machine")
         r = OntologyReasoner(s)
@@ -392,8 +473,16 @@ class TestOntologyReasonerCheckConsistency:
 
     def test_negative_assertion_violation_detected(self):
         """GIVEN NOT_likes and likes between same pair WHEN check_consistency THEN violation."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
-        from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
+        from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+            KnowledgeGraph,
+            Entity,
+            Relationship,
+        )
+
         s = OntologySchema()
         r = OntologyReasoner(s)
         kg = KnowledgeGraph()
@@ -401,15 +490,27 @@ class TestOntologyReasonerCheckConsistency:
         e2 = Entity(entity_id="b", name="Bob", entity_type="Person")
         kg.add_entity(e1)
         kg.add_entity(e2)
-        kg.add_relationship(Relationship(relationship_type="likes", source_entity=e1, target_entity=e2, confidence=1.0))
-        kg.add_relationship(Relationship(relationship_type="NOT_likes", source_entity=e1, target_entity=e2, confidence=1.0))
+        kg.add_relationship(
+            Relationship(
+                relationship_type="likes", source_entity=e1, target_entity=e2, confidence=1.0
+            )
+        )
+        kg.add_relationship(
+            Relationship(
+                relationship_type="NOT_likes", source_entity=e1, target_entity=e2, confidence=1.0
+            )
+        )
         violations = r.check_consistency(kg)
         assert any(v.violation_type == "negative_assertion" for v in violations)
 
     def test_no_violations_clean_kg(self):
         """GIVEN clean KG with no conflicts WHEN check_consistency THEN empty list."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity
+
         s = OntologySchema()
         r = OntologyReasoner(s)
         kg = KnowledgeGraph()
@@ -422,8 +523,12 @@ class TestOntologyReasonerMaterialize:
 
     def test_materialize_subclass_infers_super_type(self):
         """GIVEN Dog subClassOf Animal WHEN materialize THEN Dog entity gains Animal inferred type."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity
+
         s = OntologySchema()
         s.add_subclass("Dog", "Animal")
         r = OntologyReasoner(s)
@@ -435,8 +540,16 @@ class TestOntologyReasonerMaterialize:
 
     def test_materialize_transitive_chain_two_hops(self):
         """GIVEN transitive ancestor rel A→B and B→C WHEN materialize THEN A→C inferred."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
-        from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
+        from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+            KnowledgeGraph,
+            Entity,
+            Relationship,
+        )
+
         s = OntologySchema()
         s.add_transitive("ancestor")
         r = OntologyReasoner(s)
@@ -447,16 +560,32 @@ class TestOntologyReasonerMaterialize:
         kg.add_entity(e_a)
         kg.add_entity(e_b)
         kg.add_entity(e_c)
-        kg.add_relationship(Relationship(relationship_type="ancestor", source_entity=e_a, target_entity=e_b, confidence=1.0))
-        kg.add_relationship(Relationship(relationship_type="ancestor", source_entity=e_b, target_entity=e_c, confidence=1.0))
+        kg.add_relationship(
+            Relationship(
+                relationship_type="ancestor", source_entity=e_a, target_entity=e_b, confidence=1.0
+            )
+        )
+        kg.add_relationship(
+            Relationship(
+                relationship_type="ancestor", source_entity=e_b, target_entity=e_c, confidence=1.0
+            )
+        )
         result = r.materialize(kg)
-        pairs = {(rel.source_id, rel.target_id) for rel in result.relationships.values() if rel.relationship_type == "ancestor"}
+        pairs = {
+            (rel.source_id, rel.target_id)
+            for rel in result.relationships.values()
+            if rel.relationship_type == "ancestor"
+        }
         assert ("a", "c") in pairs  # transitivity inferred
 
     def test_materialize_empty_kg_returns_empty(self):
         """GIVEN empty KG WHEN materialize THEN empty KG returned."""
-        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import OntologySchema, OntologyReasoner
+        from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+            OntologySchema,
+            OntologyReasoner,
+        )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         s = OntologySchema()
         r = OntologyReasoner(s)
         kg = KnowledgeGraph()
@@ -473,8 +602,12 @@ class TestTransactionManagerConflictError:
     def test_serializable_conflict_raises_conflict_error(self):
         """GIVEN two SERIALIZABLE txns write same node WHEN second commits THEN ConflictError."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            IsolationLevel, OperationType, ConflictError, Operation,
+            IsolationLevel,
+            OperationType,
+            ConflictError,
+            Operation,
         )
+
         mgr, engine, _ = _make_tx_manager()
         # First txn writes n1 and commits
         txn1 = mgr.begin(IsolationLevel.SERIALIZABLE)
@@ -489,8 +622,11 @@ class TestTransactionManagerConflictError:
     def test_read_committed_no_conflict_raised(self):
         """GIVEN READ_COMMITTED txns WHEN same node written THEN no conflict raised."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            IsolationLevel, OperationType, Operation,
+            IsolationLevel,
+            OperationType,
+            Operation,
         )
+
         mgr, engine, _ = _make_tx_manager()
         txn1 = mgr.begin(IsolationLevel.READ_COMMITTED)
         mgr.add_operation(txn1, Operation(type=OperationType.WRITE_NODE, node_id="n1", data={}))
@@ -507,6 +643,7 @@ class TestTransactionManagerTimeoutAndError:
         """GIVEN _apply_operations raises TimeoutError WHEN commit THEN TransactionTimeoutError."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import IsolationLevel
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionTimeoutError
+
         mgr, engine, _ = _make_tx_manager()
         txn = mgr.begin(IsolationLevel.READ_COMMITTED)
         with patch.object(mgr, "_apply_operations", side_effect=TimeoutError("timed out")):
@@ -517,6 +654,7 @@ class TestTransactionManagerTimeoutAndError:
         """GIVEN _apply_operations raises RuntimeError WHEN commit THEN TransactionError."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import IsolationLevel
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionError
+
         mgr, engine, _ = _make_tx_manager()
         txn = mgr.begin(IsolationLevel.READ_COMMITTED)
         with patch.object(mgr, "_apply_operations", side_effect=RuntimeError("unexpected")):
@@ -530,8 +668,11 @@ class TestTransactionManagerApplyOperations:
     def test_delete_node_removes_from_nodes(self):
         """GIVEN DELETE_NODE operation WHEN committed THEN node removed from engine._nodes."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            IsolationLevel, OperationType, Operation,
+            IsolationLevel,
+            OperationType,
+            Operation,
         )
+
         mgr, engine, _ = _make_tx_manager()
         assert "n1" in engine._nodes
         txn = mgr.begin(IsolationLevel.READ_COMMITTED)
@@ -542,41 +683,58 @@ class TestTransactionManagerApplyOperations:
     def test_set_property_updates_node_property(self):
         """GIVEN SET_PROPERTY operation WHEN committed THEN node property updated."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            IsolationLevel, OperationType, Operation,
+            IsolationLevel,
+            OperationType,
+            Operation,
         )
+
         mgr, engine, _ = _make_tx_manager()
         txn = mgr.begin(IsolationLevel.READ_COMMITTED)
-        mgr.add_operation(txn, Operation(
-            type=OperationType.SET_PROPERTY,
-            node_id="n2",
-            data={"property": "name", "value": "NewACME"},
-        ))
+        mgr.add_operation(
+            txn,
+            Operation(
+                type=OperationType.SET_PROPERTY,
+                node_id="n2",
+                data={"property": "name", "value": "NewACME"},
+            ),
+        )
         mgr.commit(txn)
         assert engine._nodes["n2"]["properties"]["name"] == "NewACME"
 
     def test_delete_unknown_node_noop(self):
         """GIVEN DELETE_NODE for unknown node WHEN committed THEN no error and no change."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            IsolationLevel, OperationType, Operation,
+            IsolationLevel,
+            OperationType,
+            Operation,
         )
+
         mgr, engine, _ = _make_tx_manager()
         txn = mgr.begin()
-        mgr.add_operation(txn, Operation(type=OperationType.DELETE_NODE, node_id="not_exist", data={}))
+        mgr.add_operation(
+            txn, Operation(type=OperationType.DELETE_NODE, node_id="not_exist", data={})
+        )
         mgr.commit(txn)  # Should not raise
         assert "n1" in engine._nodes  # Others unaffected
 
     def test_set_property_unknown_node_noop(self):
         """GIVEN SET_PROPERTY for missing node WHEN committed THEN no error."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            IsolationLevel, OperationType, Operation,
+            IsolationLevel,
+            OperationType,
+            Operation,
         )
+
         mgr, engine, _ = _make_tx_manager()
         txn = mgr.begin()
-        mgr.add_operation(txn, Operation(
-            type=OperationType.SET_PROPERTY,
-            node_id="not_exist",
-            data={"property": "x", "value": 99},
-        ))
+        mgr.add_operation(
+            txn,
+            Operation(
+                type=OperationType.SET_PROPERTY,
+                node_id="not_exist",
+                data={"property": "x", "value": 99},
+            ),
+        )
         mgr.commit(txn)  # Should not raise
 
 
@@ -591,6 +749,7 @@ class TestWALAppendErrors:
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionError
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import StorageError
+
         storage = MagicMock()
         storage.store_json.side_effect = StorageError("disk full")
         wal = WriteAheadLog(storage)
@@ -601,6 +760,7 @@ class TestWALAppendErrors:
         """GIVEN store_json raises RuntimeError WHEN append THEN TransactionError."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionError
+
         storage = MagicMock()
         storage.store_json.side_effect = RuntimeError("unexpected")
         wal = WriteAheadLog(storage)
@@ -615,6 +775,7 @@ class TestWALReadErrors:
         """GIVEN self-referencing WAL entry WHEN read THEN yields entry once and stops."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         import time as time_module
+
         storage = MagicMock()
         storage.retrieve_json.return_value = {
             "txn_id": "t1",
@@ -633,6 +794,7 @@ class TestWALReadErrors:
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.exceptions import DeserializationError
         from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import StorageError
+
         storage = MagicMock()
         storage.retrieve_json.side_effect = StorageError("db down")
         wal = WriteAheadLog(storage)
@@ -644,6 +806,7 @@ class TestWALReadErrors:
         """GIVEN retrieve_json raises RuntimeError WHEN read THEN TransactionError."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionError
+
         storage = MagicMock()
         storage.retrieve_json.side_effect = RuntimeError("io error")
         wal = WriteAheadLog(storage)
@@ -654,6 +817,7 @@ class TestWALReadErrors:
     def test_malformed_json_breaks_read_silently(self):
         """GIVEN malformed entry dict WHEN read THEN breaks without exception (log only)."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = MagicMock()
         # Missing required fields → WALEntry construction fails → KeyError/TypeError caught
         storage.retrieve_json.return_value = {"bad": "data"}
@@ -670,6 +834,7 @@ class TestWALCompactErrors:
         """GIVEN append raises RuntimeError WHEN compact THEN TransactionError raised."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionError
+
         storage = MagicMock()
         wal = WriteAheadLog(storage)
         with patch.object(wal, "append", side_effect=RuntimeError("storage failure")):
@@ -684,6 +849,7 @@ class TestWALRecoverErrors:
         """GIVEN read raises RuntimeError WHEN recover THEN TransactionError."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionError
+
         storage = MagicMock()
         wal = WriteAheadLog(storage)
         wal.wal_head_cid = "fakecid"
@@ -699,6 +865,7 @@ class TestWALVerifyIntegrityErrors:
         """GIVEN read raises DeserializationError WHEN verify_integrity THEN returns False."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.exceptions import DeserializationError
+
         storage = MagicMock()
         wal = WriteAheadLog(storage)
         wal.wal_head_cid = "fakecid"
@@ -708,6 +875,7 @@ class TestWALVerifyIntegrityErrors:
     def test_generic_exception_returns_false(self):
         """GIVEN read raises RuntimeError WHEN verify_integrity THEN returns False."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = MagicMock()
         wal = WriteAheadLog(storage)
         wal.wal_head_cid = "fakecid"
@@ -721,6 +889,7 @@ class TestWALVerifyIntegrityErrors:
 def _make_ue():
     """Build UnifiedQueryEngine with mock backend."""
     from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
     backend = MagicMock()
     engine = UnifiedQueryEngine(backend=backend)
     engine._cypher_parser = MagicMock()
@@ -736,6 +905,7 @@ class TestUnifiedEngineTimeoutPaths:
     def test_cypher_timeout_raises_query_timeout_error(self):
         """GIVEN parse raises TimeoutError WHEN execute_cypher THEN QueryTimeoutError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryTimeoutError
+
         engine = _make_ue()
         engine._cypher_parser.parse.side_effect = TimeoutError("timed out")
         with pytest.raises(QueryTimeoutError):
@@ -744,6 +914,7 @@ class TestUnifiedEngineTimeoutPaths:
     def test_ir_timeout_raises_query_timeout_error(self):
         """GIVEN executor raises TimeoutError WHEN execute_ir THEN QueryTimeoutError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryTimeoutError
+
         engine = _make_ue()
         engine._ir_executor.execute.side_effect = TimeoutError("ir timed out")
         with pytest.raises(QueryTimeoutError):
@@ -752,6 +923,7 @@ class TestUnifiedEngineTimeoutPaths:
     def test_graphrag_timeout_raises_query_timeout_error(self):
         """GIVEN execute_hybrid raises TimeoutError WHEN execute_graphrag THEN QueryTimeoutError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryTimeoutError
+
         engine = _make_ue()
         engine.execute_hybrid = MagicMock(side_effect=TimeoutError("graphrag timed out"))
         with pytest.raises(QueryTimeoutError):
@@ -764,6 +936,7 @@ class TestUnifiedEngineGraphRAGErrors:
     def test_llm_unexpected_error_raises_query_execution_error(self):
         """GIVEN LLM.reason raises RuntimeError WHEN execute_graphrag THEN QueryExecutionError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryExecutionError
+
         engine = _make_ue()
         engine.execute_hybrid = MagicMock(return_value=MagicMock(success=True, items=["item"]))
         engine.llm_processor = MagicMock()
@@ -774,6 +947,7 @@ class TestUnifiedEngineGraphRAGErrors:
     def test_query_execution_error_reraises(self):
         """GIVEN execute_hybrid raises QueryExecutionError WHEN execute_graphrag THEN re-raised."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryExecutionError
+
         engine = _make_ue()
         engine.llm_processor = None
         engine.execute_hybrid = MagicMock(side_effect=QueryExecutionError("hybrid failed"))
@@ -783,6 +957,7 @@ class TestUnifiedEngineGraphRAGErrors:
     def test_generic_exception_raises_query_execution_error(self):
         """GIVEN execute_hybrid raises RuntimeError WHEN execute_graphrag THEN QueryExecutionError."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryExecutionError
+
         engine = _make_ue()
         engine.llm_processor = None
         engine.execute_hybrid = MagicMock(side_effect=RuntimeError("unknown crash"))
@@ -799,6 +974,7 @@ class TestASTNodeAccept:
     def test_accept_calls_generic_visit_for_node_pattern(self):
         """GIVEN a NodePattern (has node_type) WHEN accept() THEN generic_visit called."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import NodePattern, ASTVisitor
+
         visited = []
 
         class MyVisitor(ASTVisitor):
@@ -824,6 +1000,7 @@ class TestASTNodeAccept:
     def test_accept_uses_visit_method_if_defined(self):
         """GIVEN visitor with visit_match method WHEN accept on MatchClause THEN custom method called."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import MatchClause, ASTVisitor
+
         result = []
 
         class MyV(ASTVisitor):
@@ -841,6 +1018,7 @@ class TestASTNodePostInit:
     def test_delete_clause_post_init_sets_node_type(self):
         """GIVEN DeleteClause() WHEN post_init THEN node_type=DELETE."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import DeleteClause, ASTNodeType
+
         d = DeleteClause(detach=True)
         assert d.node_type == ASTNodeType.DELETE
         assert d.detach is True
@@ -848,18 +1026,21 @@ class TestASTNodePostInit:
     def test_set_clause_post_init_sets_node_type(self):
         """GIVEN SetClause() WHEN post_init THEN node_type=SET."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import SetClause, ASTNodeType
+
         sc = SetClause()
         assert sc.node_type == ASTNodeType.SET
 
     def test_case_expression_node_post_init_sets_node_type(self):
         """GIVEN CaseExpressionNode() WHEN post_init THEN node_type=CASE_EXPRESSION."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import CaseExpressionNode, ASTNodeType
+
         ce = CaseExpressionNode()
         assert ce.node_type == ASTNodeType.CASE_EXPRESSION
 
     def test_map_node_post_init_sets_node_type(self):
         """GIVEN MapNode() WHEN post_init THEN node_type=MAP."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import MapNode, LiteralNode, ASTNodeType
+
         m = MapNode(properties={"k": LiteralNode(value="v")})
         assert m.node_type == ASTNodeType.MAP
 
@@ -870,6 +1051,7 @@ class TestASTNodeRepr:
     def test_case_expression_with_test_repr(self):
         """GIVEN CaseExpressionNode with test_expression WHEN repr THEN contains 'test='."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import CaseExpressionNode, VariableNode
+
         ce = CaseExpressionNode(test_expression=VariableNode(name="x"))
         r = repr(ce)
         assert "test=" in r
@@ -877,6 +1059,7 @@ class TestASTNodeRepr:
     def test_case_expression_without_test_repr(self):
         """GIVEN CaseExpressionNode without test WHEN repr THEN contains 'whens='."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import CaseExpressionNode
+
         ce = CaseExpressionNode()
         r = repr(ce)
         assert "whens=" in r
@@ -884,7 +1067,12 @@ class TestASTNodeRepr:
 
     def test_when_clause_repr(self):
         """GIVEN WhenClause WHEN repr THEN contains '->'."""
-        from ipfs_datasets_py.knowledge_graphs.cypher.ast import WhenClause, VariableNode, LiteralNode
+        from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
+            WhenClause,
+            VariableNode,
+            LiteralNode,
+        )
+
         w = WhenClause(condition=VariableNode(name="c"), result=LiteralNode(value="result"))
         r = repr(w)
         assert "->" in r
@@ -896,8 +1084,12 @@ class TestASTPrettyPrinter:
     def test_print_simple_query(self):
         """GIVEN QueryNode with MatchClause WHEN print() THEN multi-line string returned."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
-            ASTPrettyPrinter, QueryNode, MatchClause, NodePattern,
+            ASTPrettyPrinter,
+            QueryNode,
+            MatchClause,
+            NodePattern,
         )
+
         printer = ASTPrettyPrinter()
         qn = QueryNode()
         qn.clauses = [MatchClause(patterns=[NodePattern(variable="n")])]
@@ -909,8 +1101,12 @@ class TestASTPrettyPrinter:
     def test_print_multiple_patterns_in_list(self):
         """GIVEN MatchClause with multiple NodePatterns WHEN print THEN all nodes printed."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
-            ASTPrettyPrinter, QueryNode, MatchClause, NodePattern,
+            ASTPrettyPrinter,
+            QueryNode,
+            MatchClause,
+            NodePattern,
         )
+
         printer = ASTPrettyPrinter()
         qn = QueryNode()
         qn.clauses = [MatchClause(patterns=[NodePattern(variable="a"), NodePattern(variable="b")])]
@@ -920,8 +1116,12 @@ class TestASTPrettyPrinter:
     def test_indent_increases_then_decreases(self):
         """GIVEN nested AST WHEN print THEN indentation applied at each level."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
-            ASTPrettyPrinter, QueryNode, MatchClause, NodePattern,
+            ASTPrettyPrinter,
+            QueryNode,
+            MatchClause,
+            NodePattern,
         )
+
         printer = ASTPrettyPrinter()
         qn = QueryNode()
         qn.clauses = [MatchClause(patterns=[NodePattern()])]
@@ -929,7 +1129,7 @@ class TestASTPrettyPrinter:
         lines = output.split("\n")
         # Root line has 0 spaces; children have 2 spaces; grandchildren have 4
         assert lines[0].startswith("QueryNode")  # No leading spaces
-        assert lines[1].startswith("  ")         # 2-space indent
+        assert lines[1].startswith("  ")  # 2-space indent
 
 
 # ─── migration/formats.py ─────────────────────────────────────────────────────
@@ -941,8 +1141,11 @@ class TestGraphDataToJson:
     def test_to_json_and_from_json_round_trip(self):
         """GIVEN GraphData WHEN to_json() then from_json() THEN identical structure."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            GraphData, NodeData, RelationshipData,
+            GraphData,
+            NodeData,
+            RelationshipData,
         )
+
         gd = GraphData(
             nodes=[NodeData(id="n1", labels=["Person"], properties={"name": "Alice"})],
             relationships=[],
@@ -956,6 +1159,7 @@ class TestGraphDataToJson:
     def test_to_json_produces_valid_json(self):
         """GIVEN GraphData WHEN to_json() THEN result parseable by json.loads."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, NodeData
+
         gd = GraphData(nodes=[NodeData(id="x", labels=[], properties={})], relationships=[])
         d = json.loads(gd.to_json())
         assert "nodes" in d
@@ -967,6 +1171,7 @@ class TestGraphDataGraphMLLoad:
     def test_graphml_loads_nodes_and_relationships(self):
         """GIVEN GraphML file with key defs WHEN load_from_file THEN nodes+rels parsed."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, MigrationFormat
+
         graphml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             '<graphml xmlns="http://graphml.graphdrawing.org/xmlns">'
@@ -976,8 +1181,8 @@ class TestGraphDataGraphMLLoad:
             '    <node id="n1"><data key="d0">Person</data></node>'
             '    <node id="n2"><data key="d0">Company</data></node>'
             '    <edge id="e1" source="n1" target="n2"><data key="d1">WORKS_AT</data></edge>'
-            '  </graph>'
-            '</graphml>'
+            "  </graph>"
+            "</graphml>"
         )
         with tempfile.NamedTemporaryFile(mode="w", suffix=".graphml", delete=False) as f:
             f.write(graphml)
@@ -994,13 +1199,14 @@ class TestGraphDataGraphMLLoad:
     def test_graphml_property_not_in_keymap_stored_by_key(self):
         """GIVEN data element with key not in key_map WHEN load THEN stored by key."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, MigrationFormat
+
         graphml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             '<graphml xmlns="http://graphml.graphdrawing.org/xmlns">'
             '  <graph id="G" edgedefault="directed">'
             '    <node id="n1"><data key="d99">hello</data></node>'
-            '  </graph>'
-            '</graphml>'
+            "  </graph>"
+            "</graphml>"
         )
         with tempfile.NamedTemporaryFile(mode="w", suffix=".graphml", delete=False) as f:
             f.write(graphml)
@@ -1014,6 +1220,7 @@ class TestGraphDataGraphMLLoad:
     def test_graphml_edge_property_not_in_keymap_stored_by_key(self):
         """GIVEN edge data element with key not in key_map WHEN load THEN stored by key."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, MigrationFormat
+
         graphml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             '<graphml xmlns="http://graphml.graphdrawing.org/xmlns">'
@@ -1021,8 +1228,8 @@ class TestGraphDataGraphMLLoad:
             '    <node id="n1"/>'
             '    <node id="n2"/>'
             '    <edge id="e1" source="n1" target="n2"><data key="weight">0.5</data></edge>'
-            '  </graph>'
-            '</graphml>'
+            "  </graph>"
+            "</graphml>"
         )
         with tempfile.NamedTemporaryFile(mode="w", suffix=".graphml", delete=False) as f:
             f.write(graphml)
@@ -1040,27 +1247,28 @@ class TestGraphDataGEXFLoad:
     def test_gexf_loads_nodes_and_relationships(self):
         """GIVEN GEXF file with attvalues WHEN load_from_file THEN nodes+rels parsed."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, MigrationFormat
+
         gexf = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             '<gexf xmlns="http://www.gexf.net/1.2draft">'
             '  <graph defaultedgetype="directed">'
             '    <attributes class="node">'
             '      <attribute id="0" title="labels" type="string"/>'
-            '    </attributes>'
+            "    </attributes>"
             '    <attributes class="edge">'
             '      <attribute id="0" title="type" type="string"/>'
-            '    </attributes>'
-            '    <nodes>'
+            "    </attributes>"
+            "    <nodes>"
             '      <node id="n1"><attvalues><attvalue for="0" value="Person"/></attvalues></node>'
             '      <node id="n2"><attvalues><attvalue for="0" value="Company"/></attvalues></node>'
-            '    </nodes>'
-            '    <edges>'
+            "    </nodes>"
+            "    <edges>"
             '      <edge id="e1" source="n1" target="n2">'
             '        <attvalues><attvalue for="0" value="WORKS_AT"/></attvalues>'
-            '      </edge>'
-            '    </edges>'
-            '  </graph>'
-            '</gexf>'
+            "      </edge>"
+            "    </edges>"
+            "  </graph>"
+            "</gexf>"
         )
         with tempfile.NamedTemporaryFile(mode="w", suffix=".gexf", delete=False) as f:
             f.write(gexf)
@@ -1078,15 +1286,21 @@ class TestGraphDataGEXFLoad:
     def test_gexf_round_trip_save_load(self):
         """GIVEN GraphData WHEN save to GEXF then reload THEN structure preserved."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-            GraphData, NodeData, RelationshipData, MigrationFormat,
+            GraphData,
+            NodeData,
+            RelationshipData,
+            MigrationFormat,
         )
+
         gd = GraphData(
             nodes=[
                 NodeData(id="n1", labels=["Person"], properties={"name": "Alice"}),
                 NodeData(id="n2", labels=["Company"], properties={"name": "ACME"}),
             ],
             relationships=[
-                RelationshipData(id="r1", type="WORKS_AT", start_node="n1", end_node="n2", properties={}),
+                RelationshipData(
+                    id="r1", type="WORKS_AT", start_node="n1", end_node="n2", properties={}
+                ),
             ],
         )
         with tempfile.NamedTemporaryFile(suffix=".gexf", delete=False) as f:
@@ -1103,21 +1317,22 @@ class TestGraphDataGEXFLoad:
     def test_gexf_edge_property_not_in_attr_map_stored_by_id(self):
         """GIVEN edge attvalue with for-id not in edge_attrs WHEN load THEN property by id stored."""
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, MigrationFormat
+
         gexf = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             '<gexf xmlns="http://www.gexf.net/1.2draft">'
             '  <graph defaultedgetype="directed">'
-            '    <nodes>'
+            "    <nodes>"
             '      <node id="n1"/>'
             '      <node id="n2"/>'
-            '    </nodes>'
-            '    <edges>'
+            "    </nodes>"
+            "    <edges>"
             '      <edge id="e1" source="n1" target="n2">'
             '        <attvalues><attvalue for="999" value="0.9"/></attvalues>'
-            '      </edge>'
-            '    </edges>'
-            '  </graph>'
-            '</gexf>'
+            "      </edge>"
+            "    </edges>"
+            "  </graph>"
+            "</gexf>"
         )
         with tempfile.NamedTemporaryFile(mode="w", suffix=".gexf", delete=False) as f:
             f.write(gexf)

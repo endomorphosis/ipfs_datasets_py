@@ -7,75 +7,87 @@ import sys
 
 import pytest
 
-from ipfs_datasets_py.logic.security_models.crypto_exchange.extractors import TypeScriptSchemaEmitter
-from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
+from ipfs_datasets_py.logic.security_models.crypto_exchange.extractors import (
+    TypeScriptSchemaEmitter,
+)
+from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import (
+    example_minimal_exchange_model,
+)
 
 
 def _repo_root() -> Path:
     for candidate in Path(__file__).resolve().parents:
-        if (candidate / 'pytest.ini').exists():
+        if (candidate / "pytest.ini").exists():
             return candidate
-    raise RuntimeError('repository root not found')
+    raise RuntimeError("repository root not found")
 
 
 REPO_ROOT = _repo_root()
-TEST_VECTOR_DIR = REPO_ROOT / 'docs' / 'security_verification' / 'test_vectors'
-EMITTER_SCRIPT = REPO_ROOT / 'scripts' / 'ops' / 'security_verification' / 'emit_security_typescript_schema.py'
+TEST_VECTOR_DIR = REPO_ROOT / "docs" / "security_verification" / "test_vectors"
+EMITTER_SCRIPT = (
+    REPO_ROOT / "scripts" / "ops" / "security_verification" / "emit_security_typescript_schema.py"
+)
 MIN_SCHEMA_NEWLINE_COUNT = 2
 
 
 def _hermetic_env() -> dict[str, str]:
     """Return an isolated env that disables auto-installs and keeps imports pinned to this repo."""
     env = os.environ.copy()
-    existing_pythonpath = env.get('PYTHONPATH')
-    env['PYTHONPATH'] = str(REPO_ROOT) if not existing_pythonpath else f'{REPO_ROOT}:{existing_pythonpath}'
-    env['IPFS_DATASETS_PY_MINIMAL_IMPORTS'] = '1'
-    env['IPFS_DATASETS_AUTO_INSTALL'] = '0'
-    env['IPFS_KIT_AUTO_INSTALL_DEPS'] = '0'
+    existing_pythonpath = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = (
+        str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}:{existing_pythonpath}"
+    )
+    env["IPFS_DATASETS_PY_MINIMAL_IMPORTS"] = "1"
+    env["IPFS_DATASETS_AUTO_INSTALL"] = "0"
+    env["IPFS_KIT_AUTO_INSTALL_DEPS"] = "0"
     return env
 
 
 def _normalize_schema_text(rendered: str) -> str:
     """Match the CLI contract that writes a trailing newline when persisting schema files."""
-    return rendered if rendered.endswith('\n') else rendered + '\n'
+    return rendered if rendered.endswith("\n") else rendered + "\n"
 
 
 def _expected_schema_text() -> str:
     """Return the newline-normalized example schema text expected from the CLI emitter."""
-    return _normalize_schema_text(TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()))
+    return _normalize_schema_text(
+        TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model())
+    )
 
 
 def _typescript_compiler_command() -> list[str] | None:
-    tsc = shutil.which('tsc')
+    tsc = shutil.which("tsc")
     if tsc:
-        result = subprocess.run([tsc, '--version'], capture_output=True, text=True)
-        if result.returncode == 0 and 'Version' in result.stdout:
+        result = subprocess.run([tsc, "--version"], capture_output=True, text=True)
+        if result.returncode == 0 and "Version" in result.stdout:
             return [tsc]
-    npx = shutil.which('npx')
+    npx = shutil.which("npx")
     if npx:
-        result = subprocess.run([npx, '--no-install', 'tsc', '--version'], capture_output=True, text=True)
-        if result.returncode == 0 and 'Version' in result.stdout:
-            return [npx, '--no-install', 'tsc']
+        result = subprocess.run(
+            [npx, "--no-install", "tsc", "--version"], capture_output=True, text=True
+        )
+        if result.returncode == 0 and "Version" in result.stdout:
+            return [npx, "--no-install", "tsc"]
     return None
 
 
 def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tuple[str, str, Path]:
-    node = shutil.which('node')
+    node = shutil.which("node")
     compiler_command = _typescript_compiler_command()
-    require_toolchain = os.environ.get('IPFS_SECURITY_REQUIRE_NODE_TOOLCHAIN') == '1'
+    require_toolchain = os.environ.get("IPFS_SECURITY_REQUIRE_NODE_TOOLCHAIN") == "1"
     if not node or not compiler_command:
         if require_toolchain:
             pytest.fail(
-                'node and the real TypeScript compiler are required for this test; '
-                'CI installs the toolchain via actions/setup-node'
+                "node and the real TypeScript compiler are required for this test; "
+                "CI installs the toolchain via actions/setup-node"
             )
-        pytest.skip('node and the real TypeScript compiler are required for this test')
+        pytest.skip("node and the real TypeScript compiler are required for this test")
     if via_cli:
         assert EMITTER_SCRIPT.is_file()
-    schema_path = tmp_path / 'security_schema.ts'
+    schema_path = tmp_path / "security_schema.ts"
     if via_cli:
         subprocess.run(
-            [sys.executable, str(EMITTER_SCRIPT), '--example', '--out', str(schema_path)],
+            [sys.executable, str(EMITTER_SCRIPT), "--example", "--out", str(schema_path)],
             cwd=REPO_ROOT,
             env=_hermetic_env(),
             check=True,
@@ -83,30 +95,33 @@ def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tupl
             text=True,
         )
     else:
-        schema_path.write_text(TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()), encoding='utf-8')
-    schema_text = _normalize_schema_text(schema_path.read_text(encoding='utf-8'))
-    assert schema_text.count('\n') >= MIN_SCHEMA_NEWLINE_COUNT
-    assert 'export interface SecurityModelIR {' in schema_text
-    assert 'export function verifyProofReceipt(' in schema_text
+        schema_path.write_text(
+            TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()),
+            encoding="utf-8",
+        )
+    schema_text = _normalize_schema_text(schema_path.read_text(encoding="utf-8"))
+    assert schema_text.count("\n") >= MIN_SCHEMA_NEWLINE_COUNT
+    assert "export interface SecurityModelIR {" in schema_text
+    assert "export function verifyProofReceipt(" in schema_text
     if via_cli:
         assert schema_text == _expected_schema_text()
-    (tmp_path / 'tsconfig.json').write_text(
+    (tmp_path / "tsconfig.json").write_text(
         json.dumps(
             {
-                'compilerOptions': {
-                    'strict': True,
-                    'target': 'ES2020',
-                    'module': 'CommonJS',
-                    'outDir': 'dist',
+                "compilerOptions": {
+                    "strict": True,
+                    "target": "ES2020",
+                    "module": "CommonJS",
+                    "outDir": "dist",
                 },
-                'files': ['security_schema.ts'],
+                "files": ["security_schema.ts"],
             }
         ),
-        encoding='utf-8',
+        encoding="utf-8",
     )
-    command = [*compiler_command, '--project', str(tmp_path / 'tsconfig.json')]
+    command = [*compiler_command, "--project", str(tmp_path / "tsconfig.json")]
     subprocess.run(command, cwd=tmp_path, check=True, capture_output=True, text=True)
-    return node, compiler_command[0], tmp_path / 'dist' / 'security_schema.js'
+    return node, compiler_command[0], tmp_path / "dist" / "security_schema.js"
 
 
 def test_typescript_schema_compiles_when_tsc_is_available(tmp_path: Path) -> None:
@@ -119,22 +134,26 @@ def test_typescript_schema_cli_emitter_outputs_strict_compilable_module(tmp_path
     assert compiled.exists()
 
 
-def test_typescript_runtime_verifier_rejects_bad_receipts_and_accepts_valid_fixture(tmp_path: Path) -> None:
+def test_typescript_runtime_verifier_rejects_bad_receipts_and_accepts_valid_fixture(
+    tmp_path: Path,
+) -> None:
     node, _, compiled = _compile_typescript_schema(tmp_path)
-    report_payload = json.loads((TEST_VECTOR_DIR / 'proof_report_minimal.json').read_text(encoding='utf-8'))
+    report_payload = json.loads(
+        (TEST_VECTOR_DIR / "proof_report_minimal.json").read_text(encoding="utf-8")
+    )
     receipt_payload = {
-        'schema_version': 'proof-receipt/v1',
-        'report_schema_version': report_payload['schema_version'],
-        'claim_id': report_payload['claim_id'],
-        'model_cid': report_payload['model_cid'],
-        'proof_report_cid': report_payload['nondeterministic_report_cid'],
-        'accepted_assumptions': list(report_payload['assumptions']),
-        'verifier': 'ts-wasm-kernel',
-        'verifier_version': '0.1.0',
-        'valid': True,
-        'metadata': {},
+        "schema_version": "proof-receipt/v1",
+        "report_schema_version": report_payload["schema_version"],
+        "claim_id": report_payload["claim_id"],
+        "model_cid": report_payload["model_cid"],
+        "proof_report_cid": report_payload["nondeterministic_report_cid"],
+        "accepted_assumptions": list(report_payload["assumptions"]),
+        "verifier": "ts-wasm-kernel",
+        "verifier_version": "0.1.0",
+        "valid": True,
+        "metadata": {},
     }
-    script_path = tmp_path / 'verify.js'
+    script_path = tmp_path / "verify.js"
     script_path.write_text(
         f"""
 const schema = require({json.dumps(str(compiled))});
@@ -181,6 +200,8 @@ if (schema.verifyProofReceipt(validReceipt, report, {{ mode: "proof_critical" }}
   throw new Error("expected proof critical verification to fail closed");
 }}
 """,
-        encoding='utf-8',
+        encoding="utf-8",
     )
-    subprocess.run([node, str(script_path)], cwd=tmp_path, check=True, capture_output=True, text=True)
+    subprocess.run(
+        [node, str(script_path)], cwd=tmp_path, check=True, capture_output=True, text=True
+    )

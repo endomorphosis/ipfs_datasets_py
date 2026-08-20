@@ -1,4 +1,3 @@
-
 from multiprocessing import Manager, Lock
 from multiprocessing.managers import SyncManager
 
@@ -9,7 +8,7 @@ from types_ import Configs
 
 class ProcessSafeCounter(object):
     def __init__(self, manager: SyncManager, init_val: int = 0):
-        self.val = manager.Value('i', init_val)
+        self.val = manager.Value("i", init_val)
         self.lock = manager.Lock()
 
     def increment(self):
@@ -43,7 +42,6 @@ class ProcessSafeDict(object):
         return self.get(key)
 
 
-
 class ExternalProgramDict(ProcessSafeDict):
     """A dictionary to manage external programs with process-safe access."""
 
@@ -53,11 +51,11 @@ class ExternalProgramDict(ProcessSafeDict):
         for program in self._EXTERNAL_PROGRAMS:
             self.set(program, self._EXTERNAL_PROGRAMS[program])
 
+
 try:
     from pydantic import BaseModel, UrlConstraints
 except ImportError:
     raise ImportError("pydantic is not installed. Please install it using 'pip install pydantic'.")
-
 
 
 class ExternalService:
@@ -71,17 +69,19 @@ class ExternalService:
         """Useful for things like Runpod, AWS, or other cloud providers."""
         self._service_a.send_something_to_somewhere(name)
         data = {
-            'name': name,
-            'free_resources': self._service_b.get_free_resources(),
-            'current_price': self._service_c.get_price(name),
+            "name": name,
+            "free_resources": self._service_b.get_free_resources(),
+            "current_price": self._service_c.get_price(name),
         }
 
-        return ' ,'.join([
-            ': '.join(['Service name', name]),
-            ': '.join(['CPU', str(data['free_resources']['cpu'])]),
-            ': '.join(['RAM', str(data['free_resources']['ram'])]),
-            ': '.join(['Price', '{} $'.format(round(data['current_price']['usd'], 2))]),
-        ])
+        return " ,".join(
+            [
+                ": ".join(["Service name", name]),
+                ": ".join(["CPU", str(data["free_resources"]["cpu"])]),
+                ": ".join(["RAM", str(data["free_resources"]["ram"])]),
+                ": ".join(["Price", "{} $".format(round(data["current_price"]["usd"], 2))]),
+            ]
+        )
 
 
 # class TestClusterService(TestCase):
@@ -98,10 +98,7 @@ class ExternalService:
 #         )
 
 
-
-
 class ResourcePool:
-
     def __init__(self, configs: Configs):
         self._system_resources = {}
         self._api_resources = {}
@@ -119,6 +116,3 @@ class ResourcePool:
         """Remove a resource from the pool."""
         if name in self._resources:
             del self._resources[name]
-
-
-

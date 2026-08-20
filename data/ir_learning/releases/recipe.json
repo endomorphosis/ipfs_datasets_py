@@ -1,0 +1,15 @@
+{
+  "derived_count": 38690,
+  "evidence_cid": "bafkreia35e5pexkbnq7x2lqtoomcwx34hceroyzsltkb4rqirjjvlqkdle",
+  "generator": "ipfs_datasets_py.huggingface.ir_release.package_from_official_recipe",
+  "inputs": "qualified_inputs.json",
+  "policy": "publication_policy.json",
+  "rebuild": "byte-identical for the same qualified inputs and policy",
+  "release_cid": "bafkreigwdei25h3eg2k2l6gp6ak5tbkbcfabi6vsoqzrzv6k6mpm73lhge",
+  "release_id": "sha256-b8b062360926fa1fb09c22f44740982f9401f435b524cc41db08e093a206c425",
+  "release_sha256": "d61911ae9f643695a5f8cff015d985411140147ab274331cd7caf31ecfed6731",
+  "schema": "IRReleaseRecipe@1",
+  "sealed_dir": "sealed",
+  "source_count": 7173,
+  "task_id": "PGIR-090"
+}

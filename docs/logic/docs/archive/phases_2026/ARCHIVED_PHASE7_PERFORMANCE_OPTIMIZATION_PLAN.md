@@ -85,14 +85,12 @@ def find_proofs(formula, max_depth=10):
 ```python
 import re
 
+
 class OptimizedFallback:
     # Compile patterns once at class level
-    QUANTIFIER_PATTERN = re.compile(
-        r'\b(all|every|each|some|exists?)\b',
-        re.IGNORECASE
-    )
+    QUANTIFIER_PATTERN = re.compile(r"\b(all|every|each|some|exists?)\b", re.IGNORECASE)
     PREDICATE_PATTERN = re.compile(...)
-    
+
     def extract_quantifiers_fast(self, text):
         # Single pass with compiled pattern
         return self.QUANTIFIER_PATTERN.findall(text)
@@ -113,8 +111,8 @@ class OptimizedFallback:
 ```python
 # Use __slots__ to reduce memory
 class Formula:
-    __slots__ = ['_type', '_args', '_hash']
-    
+    __slots__ = ["_type", "_args", "_hash"]
+
     def __init__(self, type, *args):
         self._type = type
         self._args = args
@@ -135,13 +133,11 @@ class Formula:
 ```python
 from concurrent.futures import ProcessPoolExecutor
 
+
 def parallel_prove(formulas, timeout=30):
     """Prove multiple formulas in parallel."""
     with ProcessPoolExecutor() as executor:
-        futures = [
-            executor.submit(prove_formula, f, timeout)
-            for f in formulas
-        ]
+        futures = [executor.submit(prove_formula, f, timeout) for f in formulas]
         return [f.result() for f in futures]
 ```
 
@@ -170,6 +166,7 @@ snakeviz profile.stats
 ```python
 # Before/after benchmarks
 import time
+
 
 def benchmark(func, *args, iterations=100):
     start = time.perf_counter()
@@ -240,24 +237,20 @@ def benchmark(func, *args, iterations=100):
 class PerformanceMonitor:
     def __init__(self):
         self.metrics = {
-            'conversion_time': [],
-            'proving_time': [],
-            'cache_hits': 0,
-            'cache_misses': 0,
+            "conversion_time": [],
+            "proving_time": [],
+            "cache_hits": 0,
+            "cache_misses": 0,
         }
-    
+
     def log_conversion(self, duration_ms):
-        self.metrics['conversion_time'].append(duration_ms)
-    
+        self.metrics["conversion_time"].append(duration_ms)
+
     def get_stats(self):
         return {
-            'avg_conversion': statistics.mean(
-                self.metrics['conversion_time']
-            ),
-            'cache_hit_rate': self.metrics['cache_hits'] / (
-                self.metrics['cache_hits'] + 
-                self.metrics['cache_misses']
-            )
+            "avg_conversion": statistics.mean(self.metrics["conversion_time"]),
+            "cache_hit_rate": self.metrics["cache_hits"]
+            / (self.metrics["cache_hits"] + self.metrics["cache_misses"]),
         }
 ```
 

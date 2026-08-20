@@ -171,9 +171,7 @@ def test_compiler_emits_packet_000158_explicit_ambiguities() -> None:
 
     threshold = 0.15
     for sample_id, predicted_family, target_family, expected_margin in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_ranking(
             predicted_family=predicted_family,
             target_family=target_family,

@@ -72,12 +72,12 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_context_creation()
-- test_generator_initialization()
-- test_extract_entities_basic()
-- test_parametrized_extraction_strategies()
-- test_handle_empty_data()
-- test_domain_specific_extraction()
+-test_context_creation()
+-test_generator_initialization()
+-test_extract_entities_basic()
+-test_parametrized_extraction_strategies()
+-test_handle_empty_data()
+-test_domain_specific_extraction()
 ```
 
 #### 2. test_ontology_critic.py (25 tests)
@@ -94,11 +94,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_critique_result_creation()
-- test_evaluate_quality()
-- test_multi_dimensional_scoring()
-- test_generate_feedback()
-- test_domain_specific_evaluation()
+-test_critique_result_creation()
+-test_evaluate_quality()
+-test_multi_dimensional_scoring()
+-test_generate_feedback()
+-test_domain_specific_evaluation()
 ```
 
 #### 3. test_logic_validator.py (25 tests)
@@ -116,11 +116,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_validator_initialization()
-- test_ontology_to_tdfol_conversion()
-- test_validate_with_prover()
-- test_parametrized_proving_strategies()
-- test_detect_contradictions()
+-test_validator_initialization()
+-test_ontology_to_tdfol_conversion()
+-test_validate_with_prover()
+-test_parametrized_proving_strategies()
+-test_detect_contradictions()
 ```
 
 #### 4. test_ontology_mediator.py (20 tests)
@@ -137,11 +137,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_mediator_initialization()
-- test_orchestrate_refinement()
-- test_convergence_detection()
-- test_prompt_adaptation()
-- test_handle_no_convergence()
+-test_mediator_initialization()
+-test_orchestrate_refinement()
+-test_convergence_detection()
+-test_prompt_adaptation()
+-test_handle_no_convergence()
 ```
 
 #### 5. test_ontology_optimizer.py (20 tests)
@@ -158,11 +158,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_optimizer_initialization()
-- test_identify_patterns()
-- test_analyze_trends()
-- test_optimize_batch()
-- test_generate_recommendations()
+-test_optimizer_initialization()
+-test_identify_patterns()
+-test_analyze_trends()
+-test_optimize_batch()
+-test_generate_recommendations()
 ```
 
 ---
@@ -189,11 +189,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_session_result_creation()
-- test_session_initialization_default()
-- test_run_session_basic_workflow()
-- test_validation_retry_on_failure()
-- test_session_with_none_context()
+-test_session_result_creation()
+-test_session_initialization_default()
+-test_run_session_basic_workflow()
+-test_validation_retry_on_failure()
+-test_session_with_none_context()
 ```
 
 #### 7. test_ontology_harness.py (25 tests)
@@ -212,11 +212,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_harness_initialization()
-- test_run_sessions_parallel()
-- test_sgd_cycle_execution()
-- test_worker_pool_configuration()
-- test_automatic_retry()
+-test_harness_initialization()
+-test_run_sessions_parallel()
+-test_sgd_cycle_execution()
+-test_worker_pool_configuration()
+-test_automatic_retry()
 ```
 
 #### 8. test_prompt_generator.py (20 tests)
@@ -233,11 +233,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_template_creation()
-- test_generator_initialization()
-- test_domain_specific_templates()
-- test_generate_prompt_with_feedback()
-- test_few_shot_examples()
+-test_template_creation()
+-test_generator_initialization()
+-test_domain_specific_templates()
+-test_generate_prompt_with_feedback()
+-test_few_shot_examples()
 ```
 
 #### 9. test_ontology_templates.py (20 tests)
@@ -254,11 +254,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_template_creation()
-- test_library_initialization()
-- test_get_template_by_domain()
-- test_instantiate_template()
-- test_merge_templates()
+-test_template_creation()
+-test_library_initialization()
+-test_get_template_by_domain()
+-test_instantiate_template()
+-test_merge_templates()
 ```
 
 #### 10. test_metrics_collector.py (20 tests)
@@ -276,11 +276,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_metrics_initialization()
-- test_record_session()
-- test_get_statistics()
-- test_export_json()
-- test_analyze_trends()
+-test_metrics_initialization()
+-test_record_session()
+-test_get_statistics()
+-test_export_json()
+-test_analyze_trends()
 ```
 
 #### 11. test_visualization.py (20 tests)
@@ -298,11 +298,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_graph_visualization_creation()
-- test_visualize_ontology()
-- test_create_dashboard()
-- test_plot_quality_trend()
-- test_export_to_json()
+-test_graph_visualization_creation()
+-test_visualize_ontology()
+-test_create_dashboard()
+-test_plot_quality_trend()
+-test_export_to_json()
 ```
 
 #### 12. test_ontology_integration.py (30 tests)
@@ -322,11 +322,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_generator_critic_integration()
-- test_critic_validator_integration()
-- test_mediator_full_workflow()
-- test_session_harness_integration()
-- test_multi_domain_workflow()
+-test_generator_critic_integration()
+-test_critic_validator_integration()
+-test_mediator_full_workflow()
+-test_session_harness_integration()
+-test_multi_domain_workflow()
 ```
 
 ---
@@ -348,11 +348,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_complete_workflow_basic()
-- test_multi_round_refinement_e2e()
-- test_legal_domain_e2e()
-- test_batch_processing_e2e()
-- test_sgd_optimization_e2e()
+-test_complete_workflow_basic()
+-test_multi_round_refinement_e2e()
+-test_legal_domain_e2e()
+-test_batch_processing_e2e()
+-test_sgd_optimization_e2e()
 ```
 
 #### 14. test_performance_benchmarks.py (10 tests)
@@ -369,11 +369,11 @@ tests/unit_tests/optimizers/graphrag/
 
 **Key Tests:**
 ```python
-- test_generator_performance()
-- test_critic_performance()
-- test_validator_performance()
-- test_session_throughput()
-- test_harness_scalability()
+-test_generator_performance()
+-test_critic_performance()
+-test_validator_performance()
+-test_session_throughput()
+-test_harness_scalability()
 ```
 
 ---
@@ -413,15 +413,16 @@ def test_example():
 ```python
 from unittest.mock import Mock, patch
 
+
 def test_with_mocking():
     # GIVEN
     session = OntologySession()
     session.generator = Mock()
     session.generator.extract_ontology = Mock(return_value=expected_result)
-    
+
     # WHEN
     result = session.run(data, context)
-    
+
     # THEN
     session.generator.extract_ontology.assert_called_once()
 ```
@@ -430,12 +431,15 @@ def test_with_mocking():
 
 **Multiple Scenarios:**
 ```python
-@pytest.mark.parametrize("strategy,expected", [
-    ("RULE_BASED", high_precision),
-    ("PATTERN_MATCHING", medium_precision),
-    ("LLM_BASED", high_recall),
-    ("HYBRID", balanced)
-])
+@pytest.mark.parametrize(
+    "strategy,expected",
+    [
+        ("RULE_BASED", high_precision),
+        ("PATTERN_MATCHING", medium_precision),
+        ("LLM_BASED", high_recall),
+        ("HYBRID", balanced),
+    ],
+)
 def test_extraction_strategies(strategy, expected):
     # Test all strategies with single test function
     pass

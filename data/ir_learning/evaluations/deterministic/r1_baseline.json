@@ -1,0 +1,1190 @@
+{
+  "case_count": 13,
+  "cases": [
+    {
+      "case_cid": "baguqeerajknbq7ik2yudjwujema675szxxtfcqjfpwsopkggb5s4ctxlc3sq",
+      "case_family": "pilot_control",
+      "case_id": "exception_with_window",
+      "compiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "ir_cid": "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua",
+        "latency_seconds": 2.8662063279771246,
+        "request_cid": "baguqeerawcyhatcs3r4zqvnizafrpvufpdi6p3rjx566d46l7ygpyzv24vpa",
+        "result_cid": "baguqeera3itjlriqmelcwhaici466c67hyl3uhl77n6odp6nilod5bttqlxq",
+        "semantic_score": 1.0,
+        "source_span_receipt_cid": "baguqeerautai7midogruvgirx2o4uhggvgtzvho35wjnftyuj4adycd2pbda",
+        "status": "success",
+        "trace_cids": [
+          "baguqeera43lavhvbx7pcbx5cgzkrcymbzom45soz6e6kjy74x6keojjhdpnq"
+        ],
+        "unsupported_count": 0
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua",
+        "latency_seconds": 0.0021933779935352504,
+        "recompile_result_cid": "baguqeeratycbwaawywr4m6wmvgcqnmobh4vvfyxmqmposmc6lbp3b47c6puq",
+        "request_cid": "baguqeeratn4nicafrniqw7fhx4prepuxhx5o26qiee7pizvjun5i2vn4ve3a",
+        "result_cid": "baguqeerapru23xrzbvyf3hwmdcn2almiimsmf56uxgyrb42shrzwgh43epbq",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreieglf6o6c6re7xr6v746dihuv3mvznd6vrqm24itcezsvndz5foa4",
+        "trace_cids": [
+          "baguqeeravhgd7u356abbsx7pt4aeuj26mb5vemznsamv37j7z2aoj4mthr5q"
+        ]
+      },
+      "domain": "complexity_tier_1",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeera43lavhvbx7pcbx5cgzkrcymbzom45soz6e6kjy74x6keojjhdpnq"
+        ],
+        "decompiler": [
+          "baguqeeravhgd7u356abbsx7pt4aeuj26mb5vemznsamv37j7z2aoj4mthr5q"
+        ]
+      },
+      "population": "pilot",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeera3itjlriqmelcwhaici466c67hyl3uhl77n6odp6nilod5bttqlxq",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeerapru23xrzbvyf3hwmdcn2almiimsmf56uxgyrb42shrzwgh43epbq",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreicewpyce7vx4qni4deear4orqvuchbd7peacytqunt7elnyesdccm"
+    },
+    {
+      "case_cid": "baguqeeranppu267pehurjlvd4rehiqgjev35nkhxwvhbzjvmxmeiabkvrvha",
+      "case_family": "pilot_control",
+      "case_id": "legal_doc_1",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeerau4435xy2x4m42eg6sjdren7zbwtpe3dbukdw7whptridqgls53uq",
+        "latency_seconds": 2.8174585399683565,
+        "request_cid": "baguqeeran4rw2fliz7c5hzbmdc75cfk7rvwv6r7yqelytnmppks56nep6t2q",
+        "result_cid": "baguqeeranzkafy3g3a7sysktktchq7ertvntmarpbuippnp3kh35fkljo6ha",
+        "semantic_score": 0.866666667,
+        "source_span_receipt_cid": "baguqeeravxld2qtvm647hk2ybmjaszck6jesokcxezqbdqnuj3hxsb6mm33q",
+        "status": "success",
+        "trace_cids": [
+          "baguqeera53fje2vn752zftsu773xy6lqgdzvilbb4ilu5lnr3ephg456h7aq"
+        ],
+        "unsupported_count": 4
+      },
+      "decompiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "l2_ir_cid": "baguqeera4kdykpbmyjfw5wsbxf4dh3a44ubheihkvv455qchuw4azv4vcinq",
+        "latency_seconds": 0.002171715022996068,
+        "recompile_result_cid": "baguqeeraqxquleab2ugbo46g235ni3wchf6thi42nj3dub536spmb4k2l7fa",
+        "request_cid": "baguqeeraachjw57uytqu2jqo42lfj4s5cqwe33b63hfbtxmzohtdm57nonxq",
+        "result_cid": "baguqeeraf3czdt52nokeallp2o4rh6wm6l7h2xlwdce7n7flpvy55pwa5uuq",
+        "semantic_score": 0.983333333,
+        "status": "success",
+        "text_cid": "bafkreie447kekm5k3zk4jql2pw2iesbhqpmo4ofdwbxh6fpkhbzjhyug6a",
+        "trace_cids": [
+          "baguqeera3ight5dqw5icumpkspblvfntbjgfpuv3thk2ayexwvdjsh26vfjq"
+        ]
+      },
+      "domain": "complexity_tier_2",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeerajuys3u7u5jzbekoe4ndqjqhqh5ttej3iibg4jxeojnw77ioaulsa",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeera53fje2vn752zftsu773xy6lqgdzvilbb4ilu5lnr3ephg456h7aq"
+        ],
+        "decompiler": [
+          "baguqeera3ight5dqw5icumpkspblvfntbjgfpuv3thk2ayexwvdjsh26vfjq"
+        ]
+      },
+      "population": "pilot",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeeranzkafy3g3a7sysktktchq7ertvntmarpbuippnp3kh35fkljo6ha",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeeraf3czdt52nokeallp2o4rh6wm6l7h2xlwdce7n7flpvy55pwa5uuq",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreiaqlb6tdl4sgsviajzi62fq7tfy2mlf2gqs5el5euwlhli5ueyeae"
+    },
+    {
+      "case_cid": "baguqeeraqjb7stvpozbbryat3a7tmf2c2ufdgxwj53mgvcd3dsqbghszwhka",
+      "case_family": "pilot_control",
+      "case_id": "exec_order_1",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeerax3dul4t2m35wsmxajfkirpymmoy2pkcukflr3prknlmyadstc5sa",
+        "latency_seconds": 3.8448417609906755,
+        "request_cid": "baguqeera5tdd4h5hmw7k2e5stlir2qhcqqtudbszzrnytkdhtp4kmox6hcbq",
+        "result_cid": "baguqeeram5q27jwzc7g7jjmmgcvohztd3g55qdo2hokj3cn3mr64colzdaka",
+        "semantic_score": 0.95,
+        "source_span_receipt_cid": "baguqeerafdjnha5uyyuxkpocspzvabrinvjytt7qfuhhdtlmhc3dhtm6qqma",
+        "status": "success",
+        "trace_cids": [
+          "baguqeeragxrtt7barixif4i653n3mxrkdzyrrolhpl5jrobaj3vz76rwmu7a"
+        ],
+        "unsupported_count": 2
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeerax3dul4t2m35wsmxajfkirpymmoy2pkcukflr3prknlmyadstc5sa",
+        "latency_seconds": 0.0021637299796566367,
+        "recompile_result_cid": "baguqeera3usnn5syhahvbnj2qrg7kbbil6fw7lpwqs43i7avqplnu3xo7yoa",
+        "request_cid": "baguqeeraewl7v4ah6u6rdeepwoqmsbj2ggzeng6u7wutmtj6dudny2phpo5q",
+        "result_cid": "baguqeera4khfiuobkt56imqvdiq2slpvrtxejdxqgc2nblglyabl2yqbb62a",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreigxntqmgr7gjdfw3qp7ot6uvz6nz6wmucg566qjufdkdcf6bj6c3a",
+        "trace_cids": [
+          "baguqeeraplehwrsb5krxkgpk4ghtvbgzfede3ngwso5cwpa25dl4jviif5ba"
+        ]
+      },
+      "domain": "complexity_tier_2",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeeralxq4dqszwj2sw5repfuj4d65d3cvplhxkbz57xbq4ajsnsqffayq",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeeragxrtt7barixif4i653n3mxrkdzyrrolhpl5jrobaj3vz76rwmu7a"
+        ],
+        "decompiler": [
+          "baguqeeraplehwrsb5krxkgpk4ghtvbgzfede3ngwso5cwpa25dl4jviif5ba"
+        ]
+      },
+      "population": "pilot",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeeram5q27jwzc7g7jjmmgcvohztd3g55qdo2hokj3cn3mr64colzdaka",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeera4khfiuobkt56imqvdiq2slpvrtxejdxqgc2nblglyabl2yqbb62a",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreib2ihjhzdj7brdb6snfc5f5dlsbpthzjjf4dgutqp7awbpvdbljg4"
+    },
+    {
+      "case_cid": "baguqeera4bkkjfgtv5z2lz67se2wl6urfayf7x7nnluckyanudkybmpzqhpa",
+      "case_family": "pilot_control",
+      "case_id": "corp_policy_1",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeerazf6btpk732u3ztok3ecxmq3r7hg4p3xu7bmx5nalpj2sw62ydk4q",
+        "latency_seconds": 3.9689595609670505,
+        "request_cid": "baguqeera56qrrhd73swisvbnkbglvmwj5yvxv5zierrolvtys7a4xex72u6a",
+        "result_cid": "baguqeerag6k42d5e7ym6ms5i6eeriwzlsc2irgtczy2isydopfepgoxtkl7a",
+        "semantic_score": 0.9,
+        "source_span_receipt_cid": "baguqeerajsp4azefwft4aphp43ccfgit77avy3uk6mkx5rma7mzr74aa6f6a",
+        "status": "success",
+        "trace_cids": [
+          "baguqeeran6wylq33xqbmw2uyji33ngfzh752g3zzmd34caic3sfbhlfxe55a"
+        ],
+        "unsupported_count": 2
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeerazf6btpk732u3ztok3ecxmq3r7hg4p3xu7bmx5nalpj2sw62ydk4q",
+        "latency_seconds": 0.0021709140273742378,
+        "recompile_result_cid": "baguqeerais4ccn32zbjcwxf4t4incqlvfmeccb4lw24cvvyogqui4xotu45a",
+        "request_cid": "baguqeera6fre3jtxmzjolmtyudbko4zzmzw6eeno6jewnfyggs6t6oik26lq",
+        "result_cid": "baguqeerajylx4i7hf5q3a7wrlu4rkatq4xud6btd3pcld3jqhsc6ead7rxbq",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreienij47kflm7amvmlfhvhik4k4jfsq6mvnelym6korwwwizrlbiny",
+        "trace_cids": [
+          "baguqeerahrtaw4sgtzdq264k4jcqm7wazdamv6cf5ypnuzbeuqborbl2p3va"
+        ]
+      },
+      "domain": "complexity_tier_2",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeeraf62qb5acqqxggdcdsh2252rbv65a5qm3aedrfded25fxbyuluh3q",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeeran6wylq33xqbmw2uyji33ngfzh752g3zzmd34caic3sfbhlfxe55a"
+        ],
+        "decompiler": [
+          "baguqeerahrtaw4sgtzdq264k4jcqm7wazdamv6cf5ypnuzbeuqborbl2p3va"
+        ]
+      },
+      "population": "pilot",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeerag6k42d5e7ym6ms5i6eeriwzlsc2irgtczy2isydopfepgoxtkl7a",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeerajylx4i7hf5q3a7wrlu4rkatq4xud6btd3pcld3jqhsc6ead7rxbq",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreigjmftzih6fued7u5qkyix6yfiwc7svueovfe47rle73yptzqgv2q"
+    },
+    {
+      "case_cid": "baguqeeraxdipxvkvhygz5ikmj6jpf3ritwrgxsrxtakvf4c5n2pgtlkzf5za",
+      "case_family": "pilot_control",
+      "case_id": "construction_contract",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeera73vfa6chn3tskb4k2jqk4pha3xi5vyr4nsmjgytomezidjfrs5va",
+        "latency_seconds": 10.96357723796973,
+        "request_cid": "baguqeeraqpiuphn54vhp635vladdhqwhjx4eo3ed2x6vvomlssisshihx5ea",
+        "result_cid": "baguqeeragx3ixezazmgrfzcecyopumj7dfcnbswgjjcjb34b5mkh3467grhq",
+        "semantic_score": 0.858333333,
+        "source_span_receipt_cid": "baguqeerazw3ad76dkgxl7oou2twogn6rjdc7a6j56xjwakudf3guznmjk53q",
+        "status": "success",
+        "trace_cids": [
+          "baguqeeratojrh5tjef5tgt2ymgjz657f3qsyafgkd32v4ewxzlinqlfbpo7q"
+        ],
+        "unsupported_count": 5
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeera73vfa6chn3tskb4k2jqk4pha3xi5vyr4nsmjgytomezidjfrs5va",
+        "latency_seconds": 0.0022659720270894468,
+        "recompile_result_cid": "baguqeerarnmw3xe5ev7elq23pr4l7m3ceh4z2nsbiq4gka3efujkjxgqhg5q",
+        "request_cid": "baguqeera3jzwzanefzyzewpwvbslbidpzlrgywca7ebucjpmbdhb2ertcohq",
+        "result_cid": "baguqeeracnrxtdkg7gtpvzvouwynqkxevjkgpozkclll7bnqtagqa3var4hq",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreielmhokw2gnhbt3oxyqaoeifhcmklmnfa75a7unyri2ejnnzzpqie",
+        "trace_cids": [
+          "baguqeera6njleijxs347gl4fjlckixlvrrhgnwxswixgnwwylcsy5vry3tya"
+        ]
+      },
+      "domain": "complexity_tier_3",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeerasycrkgi7m2adablxgkvljdx4kbyjzpnfa363pm5cmsepnxkq5fnq",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeeratojrh5tjef5tgt2ymgjz657f3qsyafgkd32v4ewxzlinqlfbpo7q"
+        ],
+        "decompiler": [
+          "baguqeera6njleijxs347gl4fjlckixlvrrhgnwxswixgnwwylcsy5vry3tya"
+        ]
+      },
+      "population": "pilot",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeeragx3ixezazmgrfzcecyopumj7dfcnbswgjjcjb34b5mkh3467grhq",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeeracnrxtdkg7gtpvzvouwynqkxevjkgpozkclll7bnqtagqa3var4hq",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreiai6uze574epm6bu7qdcgkffg7z2datpi2plimvdb7tzpcsfzpfz4"
+    },
+    {
+      "case_cid": "baguqeerammwsvjiat7ak6f4affngc4fa4xu7u3uhuzczi27hrw7bqslqfdza",
+      "case_family": "selective_repair_activation",
+      "case_id": "missing_temporal",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeera57l3x4jpq5juwa4me4ualqvjhtosvsvoayiiglz3vovej6357stq",
+        "latency_seconds": 1.0222906860290095,
+        "request_cid": "baguqeerakjo5scentg4e2rpaok3zeyldjaxcjpmi5ltg6kfdbhdd3j73ynba",
+        "result_cid": "baguqeerauo3mcgals6jsqpwvzuqkt5nuk3zrtpm5zax7445ixjser3rgddiq",
+        "semantic_score": 0.9,
+        "source_span_receipt_cid": "baguqeerahnqoa5cjli72i6w4rcevcr7du6zr7kkx7iilgjg3gfkrpaa5axsa",
+        "status": "success",
+        "trace_cids": [
+          "baguqeerapjhv3uzt6z3inoeqjnhde7dom4uyldlega43ri7gzgx3rm4hvhvq"
+        ],
+        "unsupported_count": 0
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeera57l3x4jpq5juwa4me4ualqvjhtosvsvoayiiglz3vovej6357stq",
+        "latency_seconds": 0.002179810020606965,
+        "recompile_result_cid": "baguqeera3dwbo2eqrxk4rphu2wr3iq5vtfdlf5ia6spzphn72pmkeliaxw6q",
+        "request_cid": "baguqeeraxh64hpsrz74lurby7vi6747cyp23d5sjgmhxmojrq36vanhxbaka",
+        "result_cid": "baguqeera4gha35fryrtcwk4ooddml72s7ceoalmvsq2rccjx26ve3ty33tla",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreihp4pscnpbmlla2mrb7lzclspagfqztobawvsn65gyzfgx6iexqxe",
+        "trace_cids": [
+          "baguqeeraxui3lbjhhtelggheoibd6h3auuo2dceymcvhv6t7eq4dgirnylla"
+        ]
+      },
+      "domain": "complexity_tier_1",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeerarzjnbz4cilrcimevj2zuv6vmznsqtkq6eita2nlocnfdce7k67da",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeerapjhv3uzt6z3inoeqjnhde7dom4uyldlega43ri7gzgx3rm4hvhvq"
+        ],
+        "decompiler": [
+          "baguqeeraxui3lbjhhtelggheoibd6h3auuo2dceymcvhv6t7eq4dgirnylla"
+        ]
+      },
+      "population": "repair_development",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeerauo3mcgals6jsqpwvzuqkt5nuk3zrtpm5zax7445ixjser3rgddiq",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeera4gha35fryrtcwk4ooddml72s7ceoalmvsq2rccjx26ve3ty33tla",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreiaahpfqfwiobuqs5oqo53noruw35qnqiencd2qu5mjq4kdn6t5x7a"
+    },
+    {
+      "case_cid": "baguqeera63mvsjj6zprb7rw7xtxan6iwdnuf7yodjqkxy5jrolqpsda3msmq",
+      "case_family": "selective_repair_activation",
+      "case_id": "low_confidence_object",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeerabmg6asxxvpro2px6ozpfvnbdnuesasuoelhg2bftpa4o3dvvuqua",
+        "latency_seconds": 0.8551041929749772,
+        "request_cid": "baguqeera7cpieg6majdoow6ajwp7ad4jlhzrccmb3mauhlqsucchnybticfq",
+        "result_cid": "baguqeeraw6g4rkwfwkbhnkuz4ajpfbrwjvz6rqak3givbnyifh2xr2e54ckq",
+        "semantic_score": 0.9,
+        "source_span_receipt_cid": "baguqeeras5uiuwddc4ns3obanwg3jotrlsu3l6dm2pwf3qduyv5wfllus4ma",
+        "status": "success",
+        "trace_cids": [
+          "baguqeerajy3lk7k5qaiiejkz62jcpd5ccmd4igup653u4eflrlo4ircmkbca"
+        ],
+        "unsupported_count": 0
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeerabmg6asxxvpro2px6ozpfvnbdnuesasuoelhg2bftpa4o3dvvuqua",
+        "latency_seconds": 0.0021510900114662945,
+        "recompile_result_cid": "baguqeeraryfx4z5pi63j7zghydu3d6fhgc42jvn5mm5eqxb7euef6tvseuva",
+        "request_cid": "baguqeerafqsnqn4wr3e4bgwlpbczgtxkr72vehvcr555wl5twnnudtxsjqeq",
+        "result_cid": "baguqeeratxjh7qt22ylrsvami4fg2ul75gyz6l3zl7364gdpxwu4ugtsuk7q",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreihh3t6wkunra5u7fwv2p37mdoipu4mvbsqk7kfvga7zfmyb64hovi",
+        "trace_cids": [
+          "baguqeerawi244zea4xf6etuxfvvln4rg4prvdu6unjjfyihiqmfupmggktha"
+        ]
+      },
+      "domain": "complexity_tier_1",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeeravksx4cz6lvmq5ye6cudb5623up4sdgxmwzoceglkurgr33u7u6ma",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeerajy3lk7k5qaiiejkz62jcpd5ccmd4igup653u4eflrlo4ircmkbca"
+        ],
+        "decompiler": [
+          "baguqeerawi244zea4xf6etuxfvvln4rg4prvdu6unjjfyihiqmfupmggktha"
+        ]
+      },
+      "population": "repair_development",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeeraw6g4rkwfwkbhnkuz4ajpfbrwjvz6rqak3givbnyifh2xr2e54ckq",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeeratxjh7qt22ylrsvami4fg2ul75gyz6l3zl7364gdpxwu4ugtsuk7q",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreidftqjkmkzudqmhc4dpqdchymkn47jbyg4dcqksmfmqehv2oqwxau"
+    },
+    {
+      "case_cid": "baguqeeralsetrr6dgmk325hsjrz5ihcap2zqsiwbrojpw6karzntvj3kjftq",
+      "case_family": "selective_repair_activation",
+      "case_id": "contradictory_modality",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeeramypegwfic5fm3kete3n2e5gx7g6pnvge23y3ibbfa4f2upqczocq",
+        "latency_seconds": 1.7911560270003974,
+        "request_cid": "baguqeera5sqfkjgzyso64os2k2ulmvtigfqesr4kcoolnzad74qoaeguy67a",
+        "result_cid": "baguqeeraqzol6cro6myp4ytkau6t77wt3nxxfxzy6c6fybtg2ruidpg37w4a",
+        "semantic_score": 0.5,
+        "source_span_receipt_cid": "baguqeeraq3vfpj7ixtz74eafy2deviozloymxcjks6s7kmfmwg7ysr4penwa",
+        "status": "success",
+        "trace_cids": [
+          "baguqeerap2rp5z7efmzuhxewsqmpqt54nlexikmqyvxlwrigjsyatekz2kbq"
+        ],
+        "unsupported_count": 0
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeeramypegwfic5fm3kete3n2e5gx7g6pnvge23y3ibbfa4f2upqczocq",
+        "latency_seconds": 0.002173585002310574,
+        "recompile_result_cid": "baguqeerax6fewkjxqe4bhumgghfsfzlpl4lk4v7nkc7fmdd3b7nllsbqulpq",
+        "request_cid": "baguqeeraq4hnisvuqxns5qfizqppoi4fyddfhof5fe4dlxjpz6stmuesssma",
+        "result_cid": "baguqeerasnrp32uo236kyyneko5s5pujktwrf5duhmnddexnaoeaqrv4zi4a",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreigy7iquiv4fflnnub2lej3brifcn7oqviugvpsduxysypfaolh3cu",
+        "trace_cids": [
+          "baguqeera7olq2mmkfryvzxelgw7svx25qmxq53aie5u6bidfffz7anikobqq"
+        ]
+      },
+      "domain": "complexity_tier_1",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeerawnmliribikhekysmwppx7idkdwyddvtj2nwti6sj32vocm2cl5fa",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeerap2rp5z7efmzuhxewsqmpqt54nlexikmqyvxlwrigjsyatekz2kbq"
+        ],
+        "decompiler": [
+          "baguqeera7olq2mmkfryvzxelgw7svx25qmxq53aie5u6bidfffz7anikobqq"
+        ]
+      },
+      "population": "repair_development",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeeraqzol6cro6myp4ytkau6t77wt3nxxfxzy6c6fybtg2ruidpg37w4a",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeerasnrp32uo236kyyneko5s5pujktwrf5duhmnddexnaoeaqrv4zi4a",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreibkxn2eoayvigj4froyf64t6arawnguhklvei7mqxsgfkvxcn2xue"
+    },
+    {
+      "case_cid": "baguqeerafzhepffelzoxidjwy3ps2cvincjwrlw4xlsjhootyxkrywivwcza",
+      "case_family": "legal_corpus",
+      "case_id": "legal_doc_2",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeerafpnp5ysag27p3l5fzdeesus3niiyvrjjxpea4gklxvlqanisxbsq",
+        "latency_seconds": 2.8856954019865952,
+        "request_cid": "baguqeerar37jhias6mrefntgwbz5pxjg26mw3xzs7kxltymehk37np7jn5sa",
+        "result_cid": "baguqeeraf4r27rnsjy2l45jhuywagk27kpjvallhvcvuh6mersgsymxaz3nq",
+        "semantic_score": 0.7,
+        "source_span_receipt_cid": "baguqeeraklazxzjrit4k53ewwt7jb5krz3qgn6yogirzba6bhfwsqwxau7aa",
+        "status": "success",
+        "trace_cids": [
+          "baguqeera7rk4ufyqwwxj6ftmf2iopkcdln4jktsww7vutu6764tqse3p44rq"
+        ],
+        "unsupported_count": 2
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeerafpnp5ysag27p3l5fzdeesus3niiyvrjjxpea4gklxvlqanisxbsq",
+        "latency_seconds": 0.0021578739979304373,
+        "recompile_result_cid": "baguqeerarji5ffjxysfhr2xkxmdrzodirtcunma5hevfy7hz6focfuuyis2a",
+        "request_cid": "baguqeerayk55ic5yzyjvfbta74o6bzhhsapkdttpi3po5etnr5bfswdcz4ma",
+        "result_cid": "baguqeeraoskw6aympyevmoxnbszuhxpwfl3ucyqmxo2zdyrlq3spute5ly6a",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreibkiozejvjtaeaszphu2ufpkfngopvyqh6nry22fbyjqe4fsmzwbu",
+        "trace_cids": [
+          "baguqeerafgngfr22b52s5fly45gewiksustvxq2vt2uqjizehz6yg3ll5ccq"
+        ]
+      },
+      "domain": "complexity_tier_2",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeeravkmv3rr5tcd73nnzm7vlgxjdjmx2s27pfqarfcrdkpthe4jqseiq",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeera7rk4ufyqwwxj6ftmf2iopkcdln4jktsww7vutu6764tqse3p44rq"
+        ],
+        "decompiler": [
+          "baguqeerafgngfr22b52s5fly45gewiksustvxq2vt2uqjizehz6yg3ll5ccq"
+        ]
+      },
+      "population": "repair_development",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeeraf4r27rnsjy2l45jhuywagk27kpjvallhvcvuh6mersgsymxaz3nq",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeeraoskw6aympyevmoxnbszuhxpwfl3ucyqmxo2zdyrlq3spute5ly6a",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreidmecoos2d6nghirgiu24aomomnia2vyxp4jaexu2w4h5jhrxhkvm"
+    },
+    {
+      "case_cid": "baguqeeram2xzjr6smksszeit6ipel5bqa6kyivya3pkgniosuozxjrimybcq",
+      "case_family": "legal_corpus",
+      "case_id": "privacy_act_amendment",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeeraq2uwm55bdd2ncnukd74uvvn3bfyymvduofjxoyt2d7wlrdvcvkra",
+        "latency_seconds": 1.7920878220465966,
+        "request_cid": "baguqeeradgzbto2koqkfqow32kf3e52leizqnepz4kyslgeqff23sqrkpj6a",
+        "result_cid": "baguqeera2ryr2sji5slciy3lncrnojpn3f5bmevxeynjrkqeufilaof4xoka",
+        "semantic_score": 0.95,
+        "source_span_receipt_cid": "baguqeerak3e4huditqkbgy2bjqg4mlgkytebo5mpdqk2ove2yuadreeifqkq",
+        "status": "success",
+        "trace_cids": [
+          "baguqeerabij3pqcvpa7d2hkn36smnyp6g4q6zaw7pzl6h2qoensvtwv22pia"
+        ],
+        "unsupported_count": 0
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeeraq2uwm55bdd2ncnukd74uvvn3bfyymvduofjxoyt2d7wlrdvcvkra",
+        "latency_seconds": 0.002128161024302244,
+        "recompile_result_cid": "baguqeera3b7ert3gyapcgkwss4qnk4dm3afx5y4xdeewekgoeaokequqa2ga",
+        "request_cid": "baguqeera4h2k6lxsg3zfshnwnjijlaniqurqli6gcc73hczgnjt6f7goaf6q",
+        "result_cid": "baguqeerauv6gwh4nos5l445hu3oxdoaxc4zf3nmcpfg3nrt5fqnydkufu7ga",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreifuvq4dwtyobr2kmdgsritobvtl742egfzl7q25ulkcs5kcvrg2lm",
+        "trace_cids": [
+          "baguqeerahrcxs5bez5q7wkmsn6n33w5a4xviafcuur3by3odzisc7vpktb6q"
+        ]
+      },
+      "domain": "complexity_tier_2",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeeraoeqjcapcjzvoiqkvxsxldvvuiehkdw3wu7lgllpbhd7lwrh5ibfa",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeerabij3pqcvpa7d2hkn36smnyp6g4q6zaw7pzl6h2qoensvtwv22pia"
+        ],
+        "decompiler": [
+          "baguqeerahrcxs5bez5q7wkmsn6n33w5a4xviafcuur3by3odzisc7vpktb6q"
+        ]
+      },
+      "population": "repair_development",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeera2ryr2sji5slciy3lncrnojpn3f5bmevxeynjrkqeufilaof4xoka",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeerauv6gwh4nos5l445hu3oxdoaxc4zf3nmcpfg3nrt5fqnydkufu7ga",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreib53zdmn2vyktasi2ldxphobyslaifsj5uynuryvt7o2q4ozjfuxe"
+    },
+    {
+      "case_cid": "baguqeeraoist6assmpg2k5zl4anhs5jble5rmtofvcnjuc36dxndlnsdfl4a",
+      "case_family": "legal_corpus",
+      "case_id": "fed_reg_1",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeeraerdrjytzuhvepihmglwavtnxjzmlunzbh2greu3v2pexqnsj7otq",
+        "latency_seconds": 3.834404483961407,
+        "request_cid": "baguqeeragnka7xcgicbpjbzegbb4twjvj3c2oamky5z5nypeyoxl3twnbvtq",
+        "result_cid": "baguqeerafwqjp4rjvnanyynnvcixbrg7ud6dqhkx5wir34fbtp4j6frj4jsa",
+        "semantic_score": 0.74,
+        "source_span_receipt_cid": "baguqeerabdyrebj3s4qrcly5t6ioibxahmkcf2aistnjydhabc3v6vya23oa",
+        "status": "success",
+        "trace_cids": [
+          "baguqeeraovedwpyxrttadiosg4qypcnvv7g2mduu4syfbohn4mmvhtrfp5jq"
+        ],
+        "unsupported_count": 0
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeeraerdrjytzuhvepihmglwavtnxjzmlunzbh2greu3v2pexqnsj7otq",
+        "latency_seconds": 0.002162850054446608,
+        "recompile_result_cid": "baguqeeranrso2vgeoxs2uoxr2tmlu27kmzmtyiyoeiis7bfa3gs5wc4c6n4q",
+        "request_cid": "baguqeera63sxcubzjqb2lv7sbfqtoq64mz4gcehx43dbhf7n7wqw2mocrpiq",
+        "result_cid": "baguqeera3h6qooeyvxzp7asiseptcl7at7cay5kftfutau3u342qxub4oroa",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreigavecsh3sfunwlwefknb6xhyhnw5y62tfif7cjxeldgqftcdroyi",
+        "trace_cids": [
+          "baguqeera7zffdsx2mxmrqyayfm37zojuaxp23st5h2hpkwgo65h6fnvipmoa"
+        ]
+      },
+      "domain": "complexity_tier_2",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeeraxadtk2qw6ut5dvsxjymzjcurwnlt3r2z5qbiqpehtzbysblhrn4a",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeeraovedwpyxrttadiosg4qypcnvv7g2mduu4syfbohn4mmvhtrfp5jq"
+        ],
+        "decompiler": [
+          "baguqeera7zffdsx2mxmrqyayfm37zojuaxp23st5h2hpkwgo65h6fnvipmoa"
+        ]
+      },
+      "population": "repair_development",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeerafwqjp4rjvnanyynnvcixbrg7ud6dqhkx5wir34fbtp4j6frj4jsa",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeera3h6qooeyvxzp7asiseptcl7at7cay5kftfutau3u342qxub4oroa",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreialrs5qfn5pdt3hgi36wdbkz7zqkg4gi2khwg4yorw3jfjrjqefrm"
+    },
+    {
+      "case_cid": "baguqeerajkylucikrti6kxannxneqkex5vpzzdatu3mnbu3jzjbieiwqzdma",
+      "case_family": "legal_corpus",
+      "case_id": "dept_memo_1",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeeramt33uwhkz6i4uw2nblvvr3ncb6bz5p2x43nqd7w46payujew6yuq",
+        "latency_seconds": 2.722931459953543,
+        "request_cid": "baguqeerawx7fcqnojblvmyukpvj4dio4j3loiwpyx44emhwtzbybmriv6vcq",
+        "result_cid": "baguqeeraqw27utdwonxzsiwcrspjxuf6vfgnildd2uof3g5nxj62kbilsnwq",
+        "semantic_score": 0.7,
+        "source_span_receipt_cid": "baguqeeraz5hshnjy7uuaxlmtb4c5myhphjybuyqnun2ulwuvp3owzva7eojq",
+        "status": "success",
+        "trace_cids": [
+          "baguqeera7zqb3xzztg7v3drbb27prl5oatnyp4pzmwwkagibfcdk2l7iyauq"
+        ],
+        "unsupported_count": 1
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeeramt33uwhkz6i4uw2nblvvr3ncb6bz5p2x43nqd7w46payujew6yuq",
+        "latency_seconds": 0.0022637310321442783,
+        "recompile_result_cid": "baguqeera4sez4aoq6hy6atbkdwct77esrzzn36shk2ol27avogsa3arogdiq",
+        "request_cid": "baguqeeraobqqg2eakqxbm2k7idioew34bjvlxkobixpvbfdtns4mqln6zxba",
+        "result_cid": "baguqeerabs4qbc4vb66nf6wupnqruawhzoumootarbkufd5j2kjbkgd3b3bq",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreievscana4zk46xhoi6sqa2gewcslejnvz7iz6yzgf3xrjhhdlmjie",
+        "trace_cids": [
+          "baguqeerajlxaia5ktrkaca5zdmf4zlhol4657kdt7tuzrivlahhu5li2snma"
+        ]
+      },
+      "domain": "complexity_tier_2",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeeraamv2jpv5hmdrqbugtgaxnjr4n5f6vy3tsiw7bxsaoh7ssszuy7pa",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeera7zqb3xzztg7v3drbb27prl5oatnyp4pzmwwkagibfcdk2l7iyauq"
+        ],
+        "decompiler": [
+          "baguqeerajlxaia5ktrkaca5zdmf4zlhol4657kdt7tuzrivlahhu5li2snma"
+        ]
+      },
+      "population": "repair_development",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeeraqw27utdwonxzsiwcrspjxuf6vfgnildd2uof3g5nxj62kbilsnwq",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeerabs4qbc4vb66nf6wupnqruawhzoumootarbkufd5j2kjbkgd3b3bq",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreie3d2s23une63txczwg7vlz54bd4qimtugezduovclhadl5k2zlcm"
+    },
+    {
+      "case_cid": "baguqeera7qnnv7hd7tkej2cy2z2q4qyogf3cphlpdcf3hosvxfuqukrd5dja",
+      "case_family": "legal_corpus",
+      "case_id": "hr_handbook",
+      "compiler": {
+        "ast": false,
+        "canonical": false,
+        "exact": false,
+        "graph": false,
+        "ir_cid": "baguqeeratte4tsl6zbobfecri467ybjq4wdbibggjm3tlgtk4zd6ttjf6tbq",
+        "latency_seconds": 2.9800019380054437,
+        "request_cid": "baguqeeramfbonpmbmbaz4o47wlogk3gcmrvhgetq6x33q5jz2iiisjlmfq2a",
+        "result_cid": "baguqeeraeltak4aqpgjhm34s6mv7mrm4gghssvo6r2mwqalok3boapziac2a",
+        "semantic_score": 0.56,
+        "source_span_receipt_cid": "baguqeera6juev6fbt6qkqol7rh4vxwx4gwoybrx3g54wpomtwmbqy4rezv2a",
+        "status": "success",
+        "trace_cids": [
+          "baguqeeraakkaeiajqik4q25pnpcpbrsgh7zloggi7acmhdznwcajf4fgogha"
+        ],
+        "unsupported_count": 3
+      },
+      "decompiler": {
+        "ast": true,
+        "canonical": true,
+        "exact": true,
+        "graph": true,
+        "l2_ir_cid": "baguqeeratte4tsl6zbobfecri467ybjq4wdbibggjm3tlgtk4zd6ttjf6tbq",
+        "latency_seconds": 0.002155728987418115,
+        "recompile_result_cid": "baguqeerav6ufy5ec5dstjcysxwpyccw2i5bzw2m6bsdssjdigw55z5qotomq",
+        "request_cid": "baguqeera2tn2t225hrflku54hinpldotmedczuy4dq4iijofzifqu53ospoa",
+        "result_cid": "baguqeerakh2mb5gystmdysddmlsindpejutzh3utlt2t3nju7auikvi52lxq",
+        "semantic_score": 1.0,
+        "status": "success",
+        "text_cid": "bafkreihmg4xgv2r24w7wuanoju7ijmqpsb5al3o5rqrzlbmmsubcnbkcyq",
+        "trace_cids": [
+          "baguqeeral6g6zousloijilbvawhatranckkvxxywfc7g6qjd7awbuqjls57q"
+        ]
+      },
+      "domain": "complexity_tier_2",
+      "family": "deontic",
+      "gold_ir_cid": "baguqeeravum42fp4mbvlh7tcliwjqlcob6t2dbcaw7y55zyfvjw6v4vjkl2q",
+      "paired_trace_cids": {
+        "compiler": [
+          "baguqeeraakkaeiajqik4q25pnpcpbrsgh7zloggi7acmhdznwcajf4fgogha"
+        ],
+        "decompiler": [
+          "baguqeeral6g6zousloijilbvawhatranckkvxxywfc7g6qjd7awbuqjls57q"
+        ]
+      },
+      "population": "repair_development",
+      "replay": {
+        "compiler_matched": true,
+        "compiler_replay_result_cid": "baguqeeraeltak4aqpgjhm34s6mv7mrm4gghssvo6r2mwqalok3boapziac2a",
+        "decompiler_matched": true,
+        "decompiler_replay_result_cid": "baguqeerakh2mb5gystmdysddmlsindpejutzh3utlt2t3nju7auikvi52lxq",
+        "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+        "formal_proof_replayed": false,
+        "kind": "independent_deterministic_replay"
+      },
+      "source_cid": "bafkreicmgxdikkrm5ebgzr4fm2shqz5kdo3hh2hosw5s3q7qpvfuxqypre"
+    }
+  ],
+  "catalog_cid": "baguqeeraf2bvrvkrxez4ap4ngftynmgaf6lvkdhdbpakqtmb5he2nzqxjhsq",
+  "compiler_configuration_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+  "corpus_manifest_cid": "bafkreiha35x7mcukzzb5x67hmykwsny5wipf5jb4do5gpsl24mxvix55n4",
+  "decompiler_configuration_cid": "baguqeeratlk326nodsva4rxwm65xgnpenhcovspm7crtyd4enaqhgjciqayq",
+  "experiment_id": "R1",
+  "hidden_labels_opened": false,
+  "hidden_test_commitment": "sha256:6a801b51b980e666b4010da9a679ad8e11a233078f988165565481b98d4b9ded",
+  "hidden_test_selection": false,
+  "identities_cid": "baguqeeraejouoqkj2inudgumy7nygoowwvu3zi767pdofnhguoyxjuzqhpmq",
+  "implementation_raw_cids": {
+    "compiler": "bafkreihkepmhrqadg7uldzbmnqdpvklwuyod55vui23dywqegj5diz4lci",
+    "contracts": "bafkreigwn3h2ulewptnebiopjobjg2ruaopdrtg3gbcenbuxut4qv4uejm",
+    "decompiler": "bafkreih2ju5hvcdwcni3wtxjy2dksmjp5qvo2ipofghkq73ygk2tnnkmke",
+    "roundtrip": "bafkreid2wn2of5alfxwu6oqgcl7kanjsuqgnapkdpgfglbnc3wxeyu34ny"
+  },
+  "independent_replay": {
+    "compiler_all_matched": true,
+    "decompiler_matched_count": 13,
+    "decompiler_replay_denominator": 13,
+    "formal_proof_reason": "frozen fixtures carry no independently checkable proof obligations",
+    "formal_proof_replayed": false
+  },
+  "interface": "IRDeterministicR1Baseline@1",
+  "learned_inference": false,
+  "metrics": {
+    "compiler": [
+      {
+        "denominator": 13,
+        "metric_id": "parser_acceptance",
+        "missing_as_zero": false,
+        "numerator": 13,
+        "reason": null,
+        "status": "measured",
+        "surface": "compiler",
+        "unit": "cases",
+        "value": 1.0
+      },
+      {
+        "denominator": 13,
+        "metric_id": "type_acceptance",
+        "missing_as_zero": false,
+        "numerator": 13,
+        "reason": null,
+        "status": "measured",
+        "surface": "compiler",
+        "unit": "cases",
+        "value": 1.0
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "eligible_cases": 13
+        },
+        "metric_id": "exact",
+        "missing_as_zero": false,
+        "numerator": 1,
+        "reason": null,
+        "status": "measured",
+        "surface": "compiler",
+        "unit": "cases",
+        "value": 0.07692307692307693
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "eligible_cases": 13
+        },
+        "metric_id": "canonical",
+        "missing_as_zero": false,
+        "numerator": 1,
+        "reason": null,
+        "status": "measured",
+        "surface": "compiler",
+        "unit": "cases",
+        "value": 0.07692307692307693
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "eligible_cases": 13
+        },
+        "metric_id": "ast",
+        "missing_as_zero": false,
+        "numerator": 1,
+        "reason": null,
+        "status": "measured",
+        "surface": "compiler",
+        "unit": "cases",
+        "value": 0.07692307692307693
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "eligible_cases": 13
+        },
+        "metric_id": "graph",
+        "missing_as_zero": false,
+        "numerator": 1,
+        "reason": null,
+        "status": "measured",
+        "surface": "compiler",
+        "unit": "cases",
+        "value": 0.07692307692307693
+      },
+      {
+        "denominator": 184,
+        "detail": {
+          "eligible_cases": 13
+        },
+        "metric_id": "source_span",
+        "missing_as_zero": false,
+        "numerator": 184,
+        "reason": null,
+        "status": "measured",
+        "surface": "compiler",
+        "unit": "fields",
+        "value": 1.0
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "count": 13,
+          "max": 1.0,
+          "mean": 0.8096153846153846,
+          "min": 0.5,
+          "p50": 0.866666667,
+          "p95": 0.9699999999999999,
+          "sum": 10.525
+        },
+        "metric_id": "semantic",
+        "missing_as_zero": false,
+        "numerator": null,
+        "reason": null,
+        "status": "measured",
+        "surface": "compiler",
+        "unit": "score",
+        "value": 0.8096153846153846
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "independent_deterministic_replay_available": true
+        },
+        "metric_id": "proof",
+        "missing_as_zero": false,
+        "numerator": null,
+        "reason": "frozen fixtures carry no independently checkable proof obligations",
+        "status": "unsupported",
+        "surface": "compiler",
+        "unit": "obligations",
+        "value": null
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "codes": {
+            "typed_deontic.unmapped_required_atom": 1,
+            "typed_deontic.unrepresented_cross_references": 3,
+            "typed_deontic.unrepresented_penalty": 1,
+            "typed_deontic.unrepresented_procedure": 2,
+            "typed_deontic.unrepresented_recipient": 5
+          },
+          "count": 13,
+          "max": 5.0,
+          "mean": 1.4615384615384615,
+          "min": 0.0,
+          "p50": 1.0,
+          "p95": 4.399999999999999,
+          "sum": 19.0
+        },
+        "metric_id": "unsupported",
+        "missing_as_zero": false,
+        "numerator": 19,
+        "reason": null,
+        "status": "measured",
+        "surface": "compiler",
+        "unit": "disclosures",
+        "value": 1.4615384615384615
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "count": 13,
+          "max": 10.96357723796973,
+          "mean": 3.257285803063916,
+          "min": 0.8551041929749772,
+          "p50": 2.8662063279771246,
+          "p95": 6.766806631768112,
+          "sum": 42.34471543983091
+        },
+        "metric_id": "latency",
+        "missing_as_zero": false,
+        "numerator": null,
+        "reason": null,
+        "status": "measured",
+        "surface": "compiler",
+        "unit": "seconds",
+        "value": 3.257285803063916
+      }
+    ],
+    "decompiler": [
+      {
+        "denominator": 13,
+        "metric_id": "parser_acceptance",
+        "missing_as_zero": false,
+        "numerator": 13,
+        "reason": null,
+        "status": "measured",
+        "surface": "decompiler",
+        "unit": "cases",
+        "value": 1.0
+      },
+      {
+        "denominator": 13,
+        "metric_id": "type_acceptance",
+        "missing_as_zero": false,
+        "numerator": 13,
+        "reason": null,
+        "status": "measured",
+        "surface": "decompiler",
+        "unit": "cases",
+        "value": 1.0
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "eligible_cases": 13
+        },
+        "metric_id": "exact",
+        "missing_as_zero": false,
+        "numerator": 12,
+        "reason": null,
+        "status": "measured",
+        "surface": "decompiler",
+        "unit": "cases",
+        "value": 0.9230769230769231
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "eligible_cases": 13
+        },
+        "metric_id": "canonical",
+        "missing_as_zero": false,
+        "numerator": 12,
+        "reason": null,
+        "status": "measured",
+        "surface": "decompiler",
+        "unit": "cases",
+        "value": 0.9230769230769231
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "eligible_cases": 13
+        },
+        "metric_id": "ast",
+        "missing_as_zero": false,
+        "numerator": 12,
+        "reason": null,
+        "status": "measured",
+        "surface": "decompiler",
+        "unit": "cases",
+        "value": 0.9230769230769231
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "eligible_cases": 13
+        },
+        "metric_id": "graph",
+        "missing_as_zero": false,
+        "numerator": 12,
+        "reason": null,
+        "status": "measured",
+        "surface": "decompiler",
+        "unit": "cases",
+        "value": 0.9230769230769231
+      },
+      {
+        "denominator": 13,
+        "metric_id": "source_span",
+        "missing_as_zero": false,
+        "numerator": null,
+        "reason": "source-withheld decompiler has no source-span channel",
+        "status": "not_applicable",
+        "surface": "decompiler",
+        "unit": "fields",
+        "value": null
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "count": 13,
+          "max": 1.0,
+          "mean": 0.9987179486923078,
+          "min": 0.983333333,
+          "p50": 1.0,
+          "p95": 1.0,
+          "sum": 12.983333333000001
+        },
+        "metric_id": "semantic",
+        "missing_as_zero": false,
+        "numerator": null,
+        "reason": null,
+        "status": "measured",
+        "surface": "decompiler",
+        "unit": "score",
+        "value": 0.9987179486923078
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "independent_deterministic_replay_available": true
+        },
+        "metric_id": "proof",
+        "missing_as_zero": false,
+        "numerator": null,
+        "reason": "frozen fixtures carry no independently checkable proof obligations",
+        "status": "unsupported",
+        "surface": "decompiler",
+        "unit": "obligations",
+        "value": null
+      },
+      {
+        "denominator": 13,
+        "metric_id": "unsupported",
+        "missing_as_zero": false,
+        "numerator": null,
+        "reason": "source-withheld decompiler has no unsupported-construct disclosure channel",
+        "status": "not_applicable",
+        "surface": "decompiler",
+        "unit": "disclosures",
+        "value": null
+      },
+      {
+        "denominator": 13,
+        "detail": {
+          "count": 13,
+          "max": 0.0022659720270894468,
+          "mean": 0.002179887629329012,
+          "min": 0.002128161024302244,
+          "p50": 0.0021709140273742378,
+          "p95": 0.0022646274301223457,
+          "sum": 0.028338539181277156
+        },
+        "metric_id": "latency",
+        "missing_as_zero": false,
+        "numerator": null,
+        "reason": null,
+        "status": "measured",
+        "surface": "decompiler",
+        "unit": "seconds",
+        "value": 0.002179887629329012
+      }
+    ]
+  },
+  "missing_metric_as_zero": false,
+  "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+  "populations": {
+    "pilot": {
+      "case_count": 5,
+      "case_ids": [
+        "exception_with_window",
+        "legal_doc_1",
+        "exec_order_1",
+        "corp_policy_1",
+        "construction_contract"
+      ]
+    },
+    "repair_development": {
+      "case_count": 8,
+      "case_ids": [
+        "missing_temporal",
+        "low_confidence_object",
+        "contradictory_modality",
+        "legal_doc_2",
+        "privacy_act_amendment",
+        "fed_reg_1",
+        "dept_memo_1",
+        "hr_handbook"
+      ]
+    }
+  },
+  "recipe_cid": "baguqeerazuhonzzynznbhtlfgmsbmlrl4fzs73ogo3ogek4e5xbb577unuea",
+  "report_cid": "baguqeerau73uowpiy22d7rohi7gvbtfkwivyldlivxnxqw4zzc7zeyzavasq",
+  "roundtrip_configuration_cid": "baguqeeral25gulrpifchfnppoyodos44kvasvqxsnr3axihwta6y7zh3bona",
+  "schema": "ipfs-datasets.ir-learning.evaluations.deterministic.r1-baseline.v1",
+  "split_manifest_digest": "047b263b85067aa3dad6760f623c2855fbaf776d565ec9c273c49425fcc14eb4",
+  "strata_cid": "baguqeerarwgs6u4nnhxm3n7ezwvfe2frhmnx42tkynjyhxnt3pshbvoti7vq",
+  "task_id": "PGIR-023",
+  "tool_versions_cid": "baguqeerao4yromhadthwds2tmoa5qgrnxkdo4ifwbeeq3goc2p4lo3vg47pq"
+}

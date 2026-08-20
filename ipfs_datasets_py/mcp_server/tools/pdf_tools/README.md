@@ -26,11 +26,11 @@ from ipfs_datasets_py.mcp_server.tools.pdf_tools import pdf_ingest_to_graphrag
 
 result = await pdf_ingest_to_graphrag(
     pdf_path="/data/legal_document.pdf",
-    graph_name="legal_corpus",         # Target knowledge graph
-    enable_ocr=True,                   # Auto-OCR scanned pages
+    graph_name="legal_corpus",  # Target knowledge graph
+    enable_ocr=True,  # Auto-OCR scanned pages
     extract_tables=True,
-    chunk_size=512,                    # Tokens per chunk for LLM
-    model="gpt-4"                      # LLM for entity extraction
+    chunk_size=512,  # Tokens per chunk for LLM
+    model="gpt-4",  # LLM for entity extraction
 )
 # Returns: {"status": "success", "entities_extracted": 142, "relationships": 89, "graph": "legal_corpus"}
 ```
@@ -43,7 +43,7 @@ from ipfs_datasets_py.mcp_server.tools.pdf_tools import pdf_extract_entities
 result = await pdf_extract_entities(
     pdf_path="/data/contract.pdf",
     entity_types=["Person", "Organization", "Date", "MonetaryValue"],
-    include_context=True               # Include surrounding text for each entity
+    include_context=True,  # Include surrounding text for each entity
 )
 ```
 
@@ -55,7 +55,7 @@ from ipfs_datasets_py.mcp_server.tools.pdf_tools import pdf_analyze_relationship
 result = await pdf_analyze_relationships(
     pdf_path="/data/contract.pdf",
     relationship_types=["PARTY_TO", "DATED", "SIGNED_BY"],
-    graph_name="contracts"             # Optional: store to graph
+    graph_name="contracts",  # Optional: store to graph
 )
 ```
 
@@ -67,7 +67,7 @@ from ipfs_datasets_py.mcp_server.tools.pdf_tools import pdf_query_knowledge_grap
 result = await pdf_query_knowledge_graph(
     graph_name="legal_corpus",
     query="MATCH (p:Person)-[:SIGNED]->(d:Document) WHERE d.date > '2023-01-01' RETURN p, d",
-    query_type="cypher"               # "cypher" | "natural_language"
+    query_type="cypher",  # "cypher" | "natural_language"
 )
 ```
 
@@ -80,7 +80,7 @@ result = await pdf_query_corpus(
     corpus_name="legal_corpus",
     query="indemnification clauses in software contracts",
     top_k=10,
-    include_source_pages=True
+    include_source_pages=True,
 )
 ```
 
@@ -93,7 +93,7 @@ result = await pdf_batch_process(
     pdf_directory="/data/documents/",
     graph_name="document_corpus",
     parallel_workers=4,
-    skip_processed=True               # Resume interrupted batch
+    skip_processed=True,  # Resume interrupted batch
 )
 ```
 

@@ -15,12 +15,9 @@ from typing import Dict, List, Any, Optional
 from ipfs_datasets_py.rag.rag_query_optimizer import (
     UnifiedGraphRAGQueryOptimizer,
     WikipediaKnowledgeGraphOptimizer,
-    IPLDGraphRAGQueryOptimizer
+    IPLDGraphRAGQueryOptimizer,
 )
-from ipfs_datasets_py.llm.llm_graphrag import (
-    GraphRAGLLMProcessor,
-    ReasoningEnhancer
-)
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
 from ipfs_datasets_py.llm.llm_interface import LLMInterfaceFactory
 from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
@@ -33,22 +30,22 @@ def create_mock_documents() -> List[Dict[str, Any]]:
             "title": "Neural Networks Overview",
             "content": "Neural networks are a key component of deep learning, inspired by the human brain.",
             "type": "academic",
-            "trace_id": "trace123"
+            "trace_id": "trace123",
         },
         {
             "id": "doc2",
             "title": "Transformer Architecture",
             "content": "Transformers revolutionized NLP by using self-attention mechanisms instead of recurrence.",
             "type": "academic",
-            "trace_id": "trace456"
+            "trace_id": "trace456",
         },
         {
             "id": "doc3",
             "title": "Large Language Models",
             "content": "Large language models are trained on vast amounts of text data to generate human-like responses.",
             "type": "academic",
-            "root_cid": "bafybeihsl7tqdebswdmafvytgkofgxnpq5rwzzqpsbd7gtaiujwsn4qeyy"
-        }
+            "root_cid": "bafybeihsl7tqdebswdmafvytgkofgxnpq5rwzzqpsbd7gtaiujwsn4qeyy",
+        },
     ]
 
 
@@ -60,15 +57,15 @@ def create_mock_connections() -> List[Dict[str, Any]]:
             "doc2": {"id": "doc2", "title": "Transformer Architecture"},
             "entity": {"id": "entity1", "name": "Deep Learning", "type": "concept"},
             "connection_type": "related_to",
-            "explanation": "Both neural networks and transformers are key components of deep learning."
+            "explanation": "Both neural networks and transformers are key components of deep learning.",
         },
         {
             "doc2": {"id": "doc2", "title": "Transformer Architecture"},
             "doc3": {"id": "doc3", "title": "Large Language Models"},
             "entity": {"id": "entity2", "name": "Attention Mechanism", "type": "concept"},
             "connection_type": "instance_of",
-            "explanation": "Large language models use transformer architectures which rely on attention mechanisms."
-        }
+            "explanation": "Large language models use transformer architectures which rely on attention mechanisms.",
+        },
     ]
 
 
@@ -84,23 +81,15 @@ def run_wikipedia_example():
 
     # Create a unified optimizer that includes the Wikipedia optimizer
     unified_optimizer = UnifiedGraphRAGQueryOptimizer(
-        wikipedia_optimizer=wikipedia_optimizer,
-        default_vector_weight=0.6,
-        default_graph_weight=0.4
+        wikipedia_optimizer=wikipedia_optimizer, default_vector_weight=0.6, default_graph_weight=0.4
     )
 
     # Initialize LLM processor with the optimizer
     llm = LLMInterfaceFactory.create()
-    processor = GraphRAGLLMProcessor(
-        llm_interface=llm,
-        query_optimizer=unified_optimizer
-    )
+    processor = GraphRAGLLMProcessor(llm_interface=llm, query_optimizer=unified_optimizer)
 
     # Initialize reasoning enhancer with the processor
-    enhancer = ReasoningEnhancer(
-        llm_processor=processor,
-        query_optimizer=unified_optimizer
-    )
+    enhancer = ReasoningEnhancer(llm_processor=processor, query_optimizer=unified_optimizer)
 
     # Create mock data
     documents = create_mock_documents()
@@ -119,7 +108,7 @@ def run_wikipedia_example():
         documents=documents,
         connections=connections,
         reasoning_depth="moderate",
-        doc_trace_ids=doc_trace_ids
+        doc_trace_ids=doc_trace_ids,
     )
 
     # Print the results
@@ -140,30 +129,20 @@ def run_ipld_example():
 
     # Initialize the IPLD optimizer
     ipld_optimizer = IPLDGraphRAGQueryOptimizer(
-        vector_weight=0.5,
-        graph_weight=0.5,
-        max_cid_depth=2
+        vector_weight=0.5, graph_weight=0.5, max_cid_depth=2
     )
 
     # Create a unified optimizer that includes the IPLD optimizer
     unified_optimizer = UnifiedGraphRAGQueryOptimizer(
-        ipld_optimizer=ipld_optimizer,
-        default_vector_weight=0.5,
-        default_graph_weight=0.5
+        ipld_optimizer=ipld_optimizer, default_vector_weight=0.5, default_graph_weight=0.5
     )
 
     # Initialize LLM processor with the optimizer
     llm = LLMInterfaceFactory.create()
-    processor = GraphRAGLLMProcessor(
-        llm_interface=llm,
-        query_optimizer=unified_optimizer
-    )
+    processor = GraphRAGLLMProcessor(llm_interface=llm, query_optimizer=unified_optimizer)
 
     # Initialize reasoning enhancer with the processor
-    enhancer = ReasoningEnhancer(
-        llm_processor=processor,
-        query_optimizer=unified_optimizer
-    )
+    enhancer = ReasoningEnhancer(llm_processor=processor, query_optimizer=unified_optimizer)
 
     # Create mock data
     documents = create_mock_documents()
@@ -182,7 +161,7 @@ def run_ipld_example():
         documents=documents,
         connections=connections,
         reasoning_depth="moderate",
-        root_cids=root_cids
+        root_cids=root_cids,
     )
 
     # Print the results
@@ -206,30 +185,21 @@ def run_unified_example():
 
     # Initialize the component optimizers
     wikipedia_optimizer = WikipediaKnowledgeGraphOptimizer(tracer=tracer)
-    ipld_optimizer = IPLDGraphRAGQueryOptimizer(
-        vector_weight=0.5,
-        graph_weight=0.5
-    )
+    ipld_optimizer = IPLDGraphRAGQueryOptimizer(vector_weight=0.5, graph_weight=0.5)
 
     # Create a unified optimizer that includes both component optimizers
     unified_optimizer = UnifiedGraphRAGQueryOptimizer(
         wikipedia_optimizer=wikipedia_optimizer,
         ipld_optimizer=ipld_optimizer,
-        auto_detect_graph_type=True
+        auto_detect_graph_type=True,
     )
 
     # Initialize LLM processor with the optimizer
     llm = LLMInterfaceFactory.create()
-    processor = GraphRAGLLMProcessor(
-        llm_interface=llm,
-        query_optimizer=unified_optimizer
-    )
+    processor = GraphRAGLLMProcessor(llm_interface=llm, query_optimizer=unified_optimizer)
 
     # Initialize reasoning enhancer with the processor
-    enhancer = ReasoningEnhancer(
-        llm_processor=processor,
-        query_optimizer=unified_optimizer
-    )
+    enhancer = ReasoningEnhancer(llm_processor=processor, query_optimizer=unified_optimizer)
 
     # Create mock data
     documents = create_mock_documents()
@@ -239,17 +209,17 @@ def run_unified_example():
     graph_specs = []
     for doc in documents:
         if "trace_id" in doc:
-            graph_specs.append({
-                "graph_type": "wikipedia",
-                "trace_id": doc["trace_id"],
-                "weight": 1.0 / len(documents)
-            })
+            graph_specs.append(
+                {
+                    "graph_type": "wikipedia",
+                    "trace_id": doc["trace_id"],
+                    "weight": 1.0 / len(documents),
+                }
+            )
         elif "root_cid" in doc:
-            graph_specs.append({
-                "graph_type": "ipld",
-                "root_cid": doc["root_cid"],
-                "weight": 1.0 / len(documents)
-            })
+            graph_specs.append(
+                {"graph_type": "ipld", "root_cid": doc["root_cid"], "weight": 1.0 / len(documents)}
+            )
 
     # Create a mock query vector
     query_vector = np.random.rand(768)
@@ -260,7 +230,7 @@ def run_unified_example():
         query_vector=query_vector,
         documents=documents,
         connections=connections,
-        reasoning_depth="deep"
+        reasoning_depth="deep",
     )
 
     # Print the results

@@ -3,8 +3,16 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import sys
+from pathlib import Path
 
 import pytest
+
+_DATASETS_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(_DATASETS_ROOT))
+for _name in list(sys.modules):
+    if _name == "scripts" or _name.startswith("scripts."):
+        sys.modules.pop(_name, None)
 
 from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import (
     LEGAL_IR_REPRESENTATION_METRICS,
@@ -255,15 +263,13 @@ def test_gate_applies_metric_specific_tolerances() -> None:
             "representation_fixed_canary_identity_missing",
         ),
         (
-            lambda value: value["canary_evidence"].update(
-                {"fixed_sample_set": False}
-            ),
+            lambda value: value["canary_evidence"].update({"fixed_sample_set": False}),
             "representation_fixed_canary_sample_set_invalid",
         ),
         (
-            lambda value: value["canary_evidence"]["family_metrics"]["deontic"][
-                "candidate"
-            ].pop("hammer_proof_success_rate"),
+            lambda value: value["canary_evidence"]["family_metrics"]["deontic"]["candidate"].pop(
+                "hammer_proof_success_rate"
+            ),
             "representation_canary_evidence_incomplete:deontic:hammer_proof_success_rate",
         ),
         (
@@ -272,9 +278,7 @@ def test_gate_applies_metric_specific_tolerances() -> None:
         ),
     ],
 )
-def test_promoted_candidate_requires_complete_supervision(
-    mutate: object, failure: str
-) -> None:
+def test_promoted_candidate_requires_complete_supervision(mutate: object, failure: str) -> None:
     promotion = _promotion()
     mutate(promotion)
 
@@ -295,8 +299,7 @@ def test_gate_rejects_todo_generation_productivity_regression() -> None:
 
     assert result.accepted is False
     assert any(
-        item.startswith("representation_todo_productivity_regression")
-        for item in result.failures
+        item.startswith("representation_todo_productivity_regression") for item in result.failures
     )
 
 
@@ -318,8 +321,7 @@ def test_blocked_regressing_promotion_still_fails_without_strict_activation() ->
 
     assert result.accepted is False
     assert any(
-        item.startswith("representation_hammer_proof_rate_regression")
-        for item in result.failures
+        item.startswith("representation_hammer_proof_rate_regression") for item in result.failures
     )
     assert "representation_promotion_not_activated" in result.warnings
 
@@ -330,12 +332,8 @@ def test_gate_accepts_reconstruction_and_source_copy_aliases() -> None:
         evidence = promotion["canary_evidence"]["family_metrics"][family]
         for side in ("baseline", "candidate"):
             values = evidence[side]
-            values["hammer_reconstruction_success_rate"] = values.pop(
-                "reconstruction_success_rate"
-            )
-            values["source_copy_reward_hack_penalty"] = values.pop(
-                "source_copy_penalty"
-            )
+            values["hammer_reconstruction_success_rate"] = values.pop("reconstruction_success_rate")
+            values["source_copy_reward_hack_penalty"] = values.pop("source_copy_penalty")
 
     result = rollout_gate(_summary(promotion), _strict_config())
 
@@ -353,9 +351,7 @@ def test_absent_report_is_backward_compatible_but_strict_mode_fails_closed() -> 
 
 def test_promoted_payload_cannot_lie_about_declared_regressions() -> None:
     promotion = deepcopy(_promotion())
-    promotion["canary_evidence"]["metric_regressions"] = [
-        "deontic:hammer_proof_success_rate"
-    ]
+    promotion["canary_evidence"]["metric_regressions"] = ["deontic:hammer_proof_success_rate"]
 
     result = rollout_gate(_summary(promotion), _strict_config())
 

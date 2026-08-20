@@ -95,12 +95,10 @@ def test_accessibility_and_accommodation_duties_export_operative_predicates():
         expected_formula for _, _, _, expected_formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)

@@ -94,7 +94,9 @@ def _store_with_hf_local(*, token: str) -> Dict[str, Any]:
 
     token_value = HfFolder.get_token()
     token_path = _chmod_private(str(Path.home() / ".cache" / "huggingface" / "token"))
-    stored_tokens_path = _chmod_private(str(Path.home() / ".cache" / "huggingface" / "stored_tokens"))
+    stored_tokens_path = _chmod_private(
+        str(Path.home() / ".cache" / "huggingface" / "stored_tokens")
+    )
 
     return {
         "ok": bool(token_value == token),
@@ -105,8 +107,12 @@ def _store_with_hf_local(*, token: str) -> Dict[str, Any]:
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Store a Hugging Face token in keyring or HF local store.")
-    parser.add_argument("--token", help="Hugging Face token. Defaults to HF_TOKEN env var, then interactive prompt.")
+    parser = argparse.ArgumentParser(
+        description="Store a Hugging Face token in keyring or HF local store."
+    )
+    parser.add_argument(
+        "--token", help="Hugging Face token. Defaults to HF_TOKEN env var, then interactive prompt."
+    )
     parser.add_argument(
         "--backend",
         choices=["auto", "keyring", "hf-local"],

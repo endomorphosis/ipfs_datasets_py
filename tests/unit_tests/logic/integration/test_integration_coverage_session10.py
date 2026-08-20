@@ -23,15 +23,21 @@ import pytest
 # Helpers
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 def _make_formula(name: str = "P", args=("a",)):
     from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate, Constant
+
     return Predicate(name, tuple(Constant(a) for a in args))
 
 
 def _make_temporal_formula(op_name: str = "ALWAYS"):
     from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-        TemporalFormula, TemporalOperator, Predicate, Constant,
+        TemporalFormula,
+        TemporalOperator,
+        Predicate,
+        Constant,
     )
+
     op = TemporalOperator[op_name]
     inner = Predicate("P", (Constant("a"),))
     return TemporalFormula(op, inner)
@@ -39,8 +45,12 @@ def _make_temporal_formula(op_name: str = "ALWAYS"):
 
 def _make_deontic_tdfol(op_name: str = "OBLIGATORY"):
     from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-        DeonticFormula, DeonticOperator, Predicate, Constant,
+        DeonticFormula,
+        DeonticOperator,
+        Predicate,
+        Constant,
     )
+
     op = DeonticOperator[op_name]
     inner = Predicate("Report", (Constant("agent"),))
     return DeonticFormula(op, inner)
@@ -50,20 +60,35 @@ def _make_deontic_tdfol(op_name: str = "OBLIGATORY"):
 # Section 1: caching/ipfs_proof_cache.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestIPFSCachedProof:
     """GIVEN IPFSCachedProof WHEN created THEN IPFS fields present."""
 
     def test_ipfs_fields_default(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSCachedProof
-        p = IPFSCachedProof(result={"status": "proved"}, cid="hash1", prover_name="test",
-                            formula_str="p(a)", timestamp=0.0)
+
+        p = IPFSCachedProof(
+            result={"status": "proved"},
+            cid="hash1",
+            prover_name="test",
+            formula_str="p(a)",
+            timestamp=0.0,
+        )
         assert p.ipfs_cid is None
         assert p.pinned is False
 
     def test_ipfs_fields_set(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSCachedProof
-        p = IPFSCachedProof(result={"status": "proved"}, cid="hash1", prover_name="test",
-                            formula_str="p(a)", timestamp=0.0, ipfs_cid="QmXxx", pinned=True)
+
+        p = IPFSCachedProof(
+            result={"status": "proved"},
+            cid="hash1",
+            prover_name="test",
+            formula_str="p(a)",
+            timestamp=0.0,
+            ipfs_cid="QmXxx",
+            pinned=True,
+        )
         assert p.ipfs_cid == "QmXxx"
         assert p.pinned is True
 
@@ -73,6 +98,7 @@ class TestIPFSProofCacheInit:
 
     def test_init_no_ipfs(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         assert cache.enable_ipfs is False
         assert cache.ipfs_client is None
@@ -84,6 +110,7 @@ class TestIPFSProofCacheInit:
     def test_init_ipfs_requested_but_unavailable(self):
         """Covers the warning branch when ipfshttpclient not installed."""
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         # IPFS_AVAILABLE is False in this env → should warn and set enable_ipfs=False
         cache = IPFSProofCache(enable_ipfs=True)
         assert cache.enable_ipfs is False
@@ -91,10 +118,13 @@ class TestIPFSProofCacheInit:
     def test_init_with_ipfs_available_success(self):
         """Covers _init_ipfs_client success path."""
         from ipfs_datasets_py.logic.integration.caching import ipfs_proof_cache as m
+
         mock_client = MagicMock()
         mock_client.id.return_value = {"ID": "node1"}
-        with patch.object(m, 'IPFS_AVAILABLE', True), \
-             patch.object(m, 'ipfshttpclient', create=True) as mock_ipfs_mod:
+        with (
+            patch.object(m, "IPFS_AVAILABLE", True),
+            patch.object(m, "ipfshttpclient", create=True) as mock_ipfs_mod,
+        ):
             mock_ipfs_mod.connect.return_value = mock_client
             cache = m.IPFSProofCache(enable_ipfs=True)
         assert cache.ipfs_client is mock_client
@@ -102,8 +132,11 @@ class TestIPFSProofCacheInit:
     def test_init_with_ipfs_available_failure(self):
         """Covers _init_ipfs_client failure path."""
         from ipfs_datasets_py.logic.integration.caching import ipfs_proof_cache as m
-        with patch.object(m, 'IPFS_AVAILABLE', True), \
-             patch.object(m, 'ipfshttpclient', create=True) as mock_ipfs_mod:
+
+        with (
+            patch.object(m, "IPFS_AVAILABLE", True),
+            patch.object(m, "ipfshttpclient", create=True) as mock_ipfs_mod,
+        ):
             mock_ipfs_mod.connect.side_effect = ConnectionRefusedError("no daemon")
             cache = m.IPFSProofCache(enable_ipfs=True)
         assert cache.enable_ipfs is False
@@ -114,6 +147,7 @@ class TestIPFSProofCachePut:
 
     def _make_cache_with_mock_ipfs(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.add_json.return_value = "QmTest123"
@@ -123,6 +157,7 @@ class TestIPFSProofCachePut:
 
     def test_put_local_only(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         cache.put("p(a)", {"proved": True})
         # Should not raise; local cache stores it
@@ -141,6 +176,7 @@ class TestIPFSProofCachePut:
 
     def test_put_ipfs_error_increments_errors(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.add_json.side_effect = RuntimeError("IPFS error")
@@ -155,12 +191,14 @@ class TestIPFSProofCacheGetFromIPFS:
 
     def test_get_no_ipfs(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         result = cache.get_from_ipfs("QmXxx")
         assert result is None
 
     def test_get_with_ipfs_success(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.get_json.return_value = {"formula": "p(a)", "result": {}}
@@ -172,6 +210,7 @@ class TestIPFSProofCacheGetFromIPFS:
 
     def test_get_with_ipfs_error(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.get_json.side_effect = RuntimeError("not found")
@@ -187,6 +226,7 @@ class TestIPFSProofCacheSyncFromIPFS:
 
     def test_sync_no_ipfs(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         count = cache.sync_from_ipfs()
         assert count == 0
@@ -195,13 +235,14 @@ class TestIPFSProofCacheSyncFromIPFS:
         """Cover the cid_list iteration code path; super().put() bug exits to error handler."""
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
         from ipfs_datasets_py.logic.integration.caching.proof_cache import ProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.get_json.return_value = {"formula": "p(a)", "result": {"ok": True}}
         cache.enable_ipfs = True
         cache.ipfs_client = mock_client
         # Patch ProofCache.put to avoid the pre-existing signature bug in sync_from_ipfs
-        with patch.object(ProofCache, 'put', return_value=None):
+        with patch.object(ProofCache, "put", return_value=None):
             count = cache.sync_from_ipfs(cid_list=["QmA", "QmB"])
         assert count == 2
         assert cache.ipfs_downloads == 2
@@ -209,18 +250,20 @@ class TestIPFSProofCacheSyncFromIPFS:
     def test_sync_with_pins_code_path(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
         from ipfs_datasets_py.logic.integration.caching.proof_cache import ProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.pin.ls.return_value = {"Keys": {"QmPin1": {}, "QmPin2": {}}}
         mock_client.get_json.return_value = {"formula": "q(x)", "result": {}}
         cache.enable_ipfs = True
         cache.ipfs_client = mock_client
-        with patch.object(ProofCache, 'put', return_value=None):
+        with patch.object(ProofCache, "put", return_value=None):
             count = cache.sync_from_ipfs()
         assert count == 2
 
     def test_sync_error_increments(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.pin.ls.side_effect = RuntimeError("network error")
@@ -236,6 +279,7 @@ class TestIPFSProofCachePinUnpin:
 
     def _make_cache(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         return IPFSProofCache(enable_ipfs=False)
 
     def test_pin_no_ipfs(self):
@@ -270,6 +314,7 @@ class TestIPFSProofCacheStatisticsAndClose:
 
     def test_get_statistics_no_ipfs(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         stats = cache.get_statistics()
         assert "ipfs_enabled" in stats
@@ -278,6 +323,7 @@ class TestIPFSProofCacheStatisticsAndClose:
 
     def test_get_statistics_with_ipfs(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.add_json.return_value = "QmX"
@@ -290,11 +336,13 @@ class TestIPFSProofCacheStatisticsAndClose:
 
     def test_close_no_client(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         cache.close()  # Should not raise (ipfs_client is None)
 
     def test_close_with_client(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         cache.ipfs_client = mock_client
@@ -304,6 +352,7 @@ class TestIPFSProofCacheStatisticsAndClose:
 
     def test_close_client_error_handled(self):
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         cache = IPFSProofCache(enable_ipfs=False)
         mock_client = MagicMock()
         mock_client.close.side_effect = RuntimeError("close error")
@@ -317,13 +366,16 @@ class TestGetGlobalIPFSCache:
 
     def test_returns_cache(self):
         from ipfs_datasets_py.logic.integration.caching import ipfs_proof_cache as m
+
         m._global_ipfs_cache = None  # reset
         cache = m.get_global_ipfs_cache(enable_ipfs=False)
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import IPFSProofCache
+
         assert isinstance(cache, IPFSProofCache)
 
     def test_singleton(self):
         from ipfs_datasets_py.logic.integration.caching import ipfs_proof_cache as m
+
         m._global_ipfs_cache = None
         c1 = m.get_global_ipfs_cache(enable_ipfs=False)
         c2 = m.get_global_ipfs_cache(enable_ipfs=False)
@@ -335,11 +387,15 @@ class TestGetGlobalIPFSCache:
 # Section 2: bridges/tdfol_shadowprover_bridge.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestModalLogicType:
     """GIVEN ModalLogicType enum WHEN inspected THEN values present."""
 
     def test_values(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
+
         assert ModalLogicType.K.value == "K"
         assert ModalLogicType.S4.value == "S4"
         assert ModalLogicType.S5.value == "S5"
@@ -351,18 +407,27 @@ class TestTDFOLShadowProverBridgeInit:
     """GIVEN TDFOLShadowProverBridge WHEN initialized THEN state correct."""
 
     def test_init_available(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            TDFOLShadowProverBridge,
+        )
+
         bridge = TDFOLShadowProverBridge()
         assert bridge.available is True
         assert bridge.k_prover is not None
 
     def test_is_available(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            TDFOLShadowProverBridge,
+        )
+
         bridge = TDFOLShadowProverBridge()
         assert bridge.is_available() is True
 
     def test_metadata(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            TDFOLShadowProverBridge,
+        )
+
         bridge = TDFOLShadowProverBridge()
         assert "ShadowProver" in bridge._metadata.name
 
@@ -371,41 +436,59 @@ class TestTDFOLShadowProverBridgeMethods:
     """GIVEN bridge methods WHEN called THEN correct results."""
 
     def _make_bridge(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            TDFOLShadowProverBridge,
+        )
+
         return TDFOLShadowProverBridge()
 
     # -- select_modal_logic --------------------------------------------------
 
     def test_select_temporal_always(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
+
         bridge = self._make_bridge()
         f = _make_temporal_formula("ALWAYS")
         result = bridge.select_modal_logic(f)
         assert result == ModalLogicType.S4
 
     def test_select_temporal_eventually(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
+
         bridge = self._make_bridge()
         f = _make_temporal_formula("EVENTUALLY")
         result = bridge.select_modal_logic(f)
         assert result == ModalLogicType.S4
 
     def test_select_temporal_next(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
+
         bridge = self._make_bridge()
         f = _make_temporal_formula("NEXT")
         result = bridge.select_modal_logic(f)
         assert result == ModalLogicType.K
 
     def test_select_deontic(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
+
         bridge = self._make_bridge()
         f = _make_deontic_tdfol("OBLIGATORY")
         result = bridge.select_modal_logic(f)
         assert result == ModalLogicType.D
 
     def test_select_default(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
+
         bridge = self._make_bridge()
         f = _make_formula()
         result = bridge.select_modal_logic(f)
@@ -414,27 +497,42 @@ class TestTDFOLShadowProverBridgeMethods:
     # -- _get_prover ---------------------------------------------------------
 
     def test_get_prover_k(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
+
         bridge = self._make_bridge()
         assert bridge._get_prover(ModalLogicType.K) is bridge.k_prover
 
     def test_get_prover_s4(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
+
         bridge = self._make_bridge()
         assert bridge._get_prover(ModalLogicType.S4) is bridge.s4_prover
 
     def test_get_prover_s5(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
+
         bridge = self._make_bridge()
         assert bridge._get_prover(ModalLogicType.S5) is bridge.s5_prover
 
     def test_get_prover_d_uses_k(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
+
         bridge = self._make_bridge()
         assert bridge._get_prover(ModalLogicType.D) is bridge.k_prover
 
     def test_get_prover_t_uses_s4(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
+
         bridge = self._make_bridge()
         assert bridge._get_prover(ModalLogicType.T) is bridge.s4_prover
 
@@ -455,36 +553,51 @@ class TestTDFOLShadowProverBridgeMethods:
     # -- _modal_logic_type_to_enum -------------------------------------------
 
     def test_modal_type_to_enum_k(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
         from ipfs_datasets_py.logic.CEC.native import shadow_prover
+
         bridge = self._make_bridge()
         result = bridge._modal_logic_type_to_enum(ModalLogicType.K)
         assert result == shadow_prover.ModalLogic.K
 
     def test_modal_type_to_enum_s4(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
         from ipfs_datasets_py.logic.CEC.native import shadow_prover
+
         bridge = self._make_bridge()
         result = bridge._modal_logic_type_to_enum(ModalLogicType.S4)
         assert result == shadow_prover.ModalLogic.S4
 
     def test_modal_type_to_enum_s5(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
         from ipfs_datasets_py.logic.CEC.native import shadow_prover
+
         bridge = self._make_bridge()
         result = bridge._modal_logic_type_to_enum(ModalLogicType.S5)
         assert result == shadow_prover.ModalLogic.S5
 
     def test_modal_type_to_enum_d(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
         from ipfs_datasets_py.logic.CEC.native import shadow_prover
+
         bridge = self._make_bridge()
         result = bridge._modal_logic_type_to_enum(ModalLogicType.D)
         assert result == shadow_prover.ModalLogic.D
 
     def test_modal_type_to_enum_t(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
         from ipfs_datasets_py.logic.CEC.native import shadow_prover
+
         bridge = self._make_bridge()
         result = bridge._modal_logic_type_to_enum(ModalLogicType.T)
         assert result == shadow_prover.ModalLogic.T
@@ -493,6 +606,7 @@ class TestTDFOLShadowProverBridgeMethods:
 
     def test_from_target_format_proof_result(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult, ProofStatus
+
         bridge = self._make_bridge()
         f = _make_formula()
         r = ProofResult(status=ProofStatus.PROVED, formula=f, time_ms=10, method="test")
@@ -501,6 +615,7 @@ class TestTDFOLShadowProverBridgeMethods:
 
     def test_from_target_format_other(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofStatus
+
         bridge = self._make_bridge()
         result = bridge.from_target_format("some result string")
         assert result.status == ProofStatus.UNKNOWN
@@ -509,6 +624,7 @@ class TestTDFOLShadowProverBridgeMethods:
 
     def test_prove_returns_result(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult
+
         bridge = self._make_bridge()
         f = _make_formula()
         # prove() calls prove_modal(); returns a ProofResult regardless of prover outcome
@@ -517,7 +633,10 @@ class TestTDFOLShadowProverBridgeMethods:
 
     def test_prove_unavailable(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofStatus
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            TDFOLShadowProverBridge,
+        )
+
         bridge = TDFOLShadowProverBridge()
         bridge.available = False
         f = _make_formula()
@@ -529,7 +648,10 @@ class TestModalAwareTDFOLProver:
     """GIVEN ModalAwareTDFOLProver WHEN initialized THEN bridge is set up."""
 
     def test_init(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalAwareTDFOLProver
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalAwareTDFOLProver,
+        )
+
         prover = ModalAwareTDFOLProver()
         assert prover.shadow_bridge is not None
 
@@ -538,17 +660,20 @@ class TestModalAwareTDFOLProver:
 # Section 3: bridges/tdfol_cec_bridge.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestTDFOLCECBridgeInit:
     """GIVEN TDFOLCECBridge WHEN initialized THEN state correct."""
 
     def test_init_available(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         bridge = TDFOLCECBridge()
         assert bridge.is_available() is True
         assert len(bridge.cec_rules) >= 0
 
     def test_metadata(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         bridge = TDFOLCECBridge()
         assert "CEC" in bridge._metadata.name
 
@@ -558,12 +683,14 @@ class TestTDFOLCECBridgeMethods:
 
     def _make_bridge(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         return TDFOLCECBridge()
 
     # -- from_target_format --------------------------------------------------
 
     def test_from_target_format_proof_result(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult, ProofStatus
+
         bridge = self._make_bridge()
         f = _make_formula()
         r = ProofResult(status=ProofStatus.PROVED, formula=f, time_ms=10, method="cec")
@@ -572,6 +699,7 @@ class TestTDFOLCECBridgeMethods:
 
     def test_from_target_format_non_proof_result(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofStatus
+
         bridge = self._make_bridge()
         result = bridge.from_target_format("some_cec_result")
         assert result.status == ProofStatus.UNKNOWN
@@ -582,6 +710,7 @@ class TestTDFOLCECBridgeMethods:
     def test_prove_cec_not_available_returns_unknown(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofStatus
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         bridge = TDFOLCECBridge()
         bridge.cec_available = False
         f = _make_formula()
@@ -590,6 +719,7 @@ class TestTDFOLCECBridgeMethods:
 
     def test_prove_dispatches_to_prove_with_cec(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult, ProofStatus
+
         bridge = self._make_bridge()
         bridge.cec_available = False  # disable to get quick return
         f = _make_formula()
@@ -600,6 +730,7 @@ class TestTDFOLCECBridgeMethods:
 
     def test_prove_with_cec_unavailable(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofStatus
+
         bridge = self._make_bridge()
         bridge.cec_available = False
         f = _make_formula()
@@ -611,10 +742,11 @@ class TestTDFOLCECBridgeMethods:
 
     def test_prove_with_cec_tdfol_to_dcec_error(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofStatus
+
         bridge = self._make_bridge()
         f = _make_formula()
         # Patch tdfol_to_dcec_string to raise error
-        with patch.object(bridge, 'tdfol_to_dcec_string', side_effect=ValueError("bad formula")):
+        with patch.object(bridge, "tdfol_to_dcec_string", side_effect=ValueError("bad formula")):
             result = bridge.prove_with_cec(f, [], timeout_ms=500)
         assert result.status == ProofStatus.ERROR
 
@@ -622,6 +754,7 @@ class TestTDFOLCECBridgeMethods:
 
     def test_to_target_format_raises_if_unavailable(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         bridge = TDFOLCECBridge()
         bridge._available = False  # is_available() checks _available, not cec_available
         f = _make_formula()
@@ -632,6 +765,7 @@ class TestTDFOLCECBridgeMethods:
 
     def test_tdfol_to_dcec_string_unavailable(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         bridge = TDFOLCECBridge()
         bridge._available = False
         f = _make_formula()
@@ -643,17 +777,24 @@ class TestTDFOLCECBridgeMethods:
 # Section 4: bridges/tdfol_grammar_bridge.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestTDFOLGrammarBridgeInit:
     """GIVEN TDFOLGrammarBridge WHEN initialized THEN grammar engine present."""
 
     def test_init(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            TDFOLGrammarBridge,
+        )
+
         bridge = TDFOLGrammarBridge()
-        assert hasattr(bridge, 'grammar_engine')
-        assert hasattr(bridge, 'dcec_grammar')
+        assert hasattr(bridge, "grammar_engine")
+        assert hasattr(bridge, "dcec_grammar")
 
     def test_metadata(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            TDFOLGrammarBridge,
+        )
+
         bridge = TDFOLGrammarBridge()
         assert "Grammar" in bridge._metadata.name
 
@@ -662,33 +803,37 @@ class TestTDFOLGrammarBridgeMethods:
     """GIVEN TDFOLGrammarBridge methods WHEN called THEN correct behavior."""
 
     def _make_bridge(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            TDFOLGrammarBridge,
+        )
+
         return TDFOLGrammarBridge()
 
     # -- parse_natural_language ----------------------------------------------
 
     def test_parse_nl_returns_formula_or_none(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Formula
+
         bridge = self._make_bridge()
         result = bridge.parse_natural_language("All humans are mortal")
         # Either a formula or None (grammar may fail gracefully)
-        assert result is None or hasattr(result, 'to_string')
+        assert result is None or hasattr(result, "to_string")
 
     def test_parse_nl_simple_atom(self):
         bridge = self._make_bridge()
         result = bridge.parse_natural_language("Healthy")
-        assert result is None or hasattr(result, 'to_string')
+        assert result is None or hasattr(result, "to_string")
 
     def test_parse_nl_implication(self):
         bridge = self._make_bridge()
         result = bridge.parse_natural_language("A -> B")
-        assert result is None or hasattr(result, 'to_string')
+        assert result is None or hasattr(result, "to_string")
 
     def test_parse_nl_no_fallback(self):
         bridge = self._make_bridge()
         result = bridge.parse_natural_language("gibberish xyz", use_fallback=False)
         # Can return None if nothing matched
-        assert result is None or hasattr(result, 'to_string')
+        assert result is None or hasattr(result, "to_string")
 
     # -- formula_to_natural_language -----------------------------------------
 
@@ -706,7 +851,10 @@ class TestTDFOLGrammarBridgeMethods:
         assert isinstance(result, str)
 
     def test_formula_to_nl_unavailable(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            TDFOLGrammarBridge,
+        )
+
         bridge = TDFOLGrammarBridge()
         bridge.available = False
         f = _make_formula("P")
@@ -719,6 +867,7 @@ class TestTDFOLGrammarBridgeMethods:
     def test_from_target_format_any(self):
         """Grammar bridge from_target_format always returns UNKNOWN."""
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofStatus
+
         bridge = self._make_bridge()
         f = _make_formula()
         result = bridge.from_target_format("grammar_result")
@@ -728,6 +877,7 @@ class TestTDFOLGrammarBridgeMethods:
 
     def test_prove_returns_result(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_prover import ProofResult
+
         bridge = self._make_bridge()
         f = _make_formula()
         result = bridge.prove(f)
@@ -746,11 +896,13 @@ class TestTDFOLGrammarBridgeMethods:
 
     def test_parse_nl_module_function(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import parse_nl
+
         result = parse_nl("Healthy")
-        assert result is None or hasattr(result, 'to_string')
+        assert result is None or hasattr(result, "to_string")
 
     def test_explain_formula_module_function(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import explain_formula
+
         f = _make_formula("P")
         result = explain_formula(f)
         assert isinstance(result, str)
@@ -762,9 +914,12 @@ class TestNLFormulaUnderstanding:
     def test_understand_and_explain_via_module_classes(self):
         """Test the NLUnderstanding class if present, otherwise skip."""
         import importlib
-        m = importlib.import_module('ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge')
+
+        m = importlib.import_module(
+            "ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge"
+        )
         # Try NLUnderstanding or similar class
-        cls = getattr(m, 'NLFormulaUnderstanding', None) or getattr(m, 'NLUnderstanding', None)
+        cls = getattr(m, "NLFormulaUnderstanding", None) or getattr(m, "NLUnderstanding", None)
         if cls is None:
             pytest.skip("NLFormulaUnderstanding class not found in module")
         nlu = cls()
@@ -775,34 +930,42 @@ class TestNLFormulaUnderstanding:
 # Section 5: converters/deontic_logic_converter.py
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestDeonticLogicConverterInternalMethods:
     """GIVEN DeonticLogicConverter internals WHEN called THEN correct behavior."""
 
     def _make_converter(self):
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import DeonticLogicConverter
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            DeonticLogicConverter,
+        )
+
         return DeonticLogicConverter()
 
     def test_update_statistics_obligation(self):
         conv = self._make_converter()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         conv._update_statistics(DeonticOperator.OBLIGATION)
         assert conv.conversion_stats["obligations_extracted"] == 1
 
     def test_update_statistics_permission(self):
         conv = self._make_converter()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         conv._update_statistics(DeonticOperator.PERMISSION)
         assert conv.conversion_stats["permissions_extracted"] == 1
 
     def test_update_statistics_prohibition(self):
         conv = self._make_converter()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         conv._update_statistics(DeonticOperator.PROHIBITION)
         assert conv.conversion_stats["prohibitions_extracted"] == 1
 
     def test_reset_statistics(self):
         conv = self._make_converter()
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         conv._update_statistics(DeonticOperator.OBLIGATION)
         conv._update_statistics(DeonticOperator.PERMISSION)
         conv._reset_statistics()
@@ -847,21 +1010,27 @@ class TestDeonticLogicConverterInternalMethods:
 
     def test_create_legal_context(self):
         conv = self._make_converter()
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import ConversionContext
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            ConversionContext,
+        )
+
         ctx = ConversionContext(
             source_document_path="test.pdf",
             document_title="Test",
         )
         legal_ctx = conv._create_legal_context(ctx)
         # Should return a LegalContext or None
-        assert legal_ctx is None or hasattr(legal_ctx, 'jurisdiction')
+        assert legal_ctx is None or hasattr(legal_ctx, "jurisdiction")
 
 
 class TestConversionContext:
     """GIVEN ConversionContext WHEN created THEN fields accessible."""
 
     def test_defaults(self):
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import ConversionContext
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
+            ConversionContext,
+        )
+
         ctx = ConversionContext(source_document_path="x.pdf", document_title="X")
         assert ctx.confidence_threshold > 0
         assert ctx.enable_agent_inference is True
@@ -875,22 +1044,27 @@ class TestDemonstrateConversion:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             demonstrate_deontic_conversion,
         )
+
         result = demonstrate_deontic_conversion()
         assert result is not None
-        assert hasattr(result, 'deontic_formulas') or hasattr(result, 'formulas')
+        assert hasattr(result, "deontic_formulas") or hasattr(result, "formulas")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Section 6: converters/deontic_logic_core.py (uncovered tail)
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestDeonticLogicCoreAdditional:
     """GIVEN deontic_logic_core WHEN additional methods called THEN correct."""
 
     def _make_formula(self, op="OBLIGATION", prop="pay_fees"):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent,
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
         )
+
         agent = LegalAgent("a", "A", "person")
         return DeonticFormula(
             operator=DeonticOperator[op],
@@ -902,6 +1076,7 @@ class TestDeonticLogicCoreAdditional:
 
     def test_deontic_rule_set_to_dict(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
         f = self._make_formula()
         rs = DeonticRuleSet(name="Test", formulas=[f], description="test")
         d = rs.to_dict()
@@ -910,8 +1085,10 @@ class TestDeonticLogicCoreAdditional:
 
     def test_deontic_rule_set_find_by_operator(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticRuleSet, DeonticOperator,
+            DeonticRuleSet,
+            DeonticOperator,
         )
+
         f_obl = self._make_formula("OBLIGATION")
         f_perm = self._make_formula("PERMISSION", "do something")
         rs = DeonticRuleSet(name="T", formulas=[f_obl, f_perm])
@@ -922,6 +1099,7 @@ class TestDeonticLogicCoreAdditional:
 
     def test_deontic_rule_set_add_formula(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
         rs = DeonticRuleSet(name="T", formulas=[])
         f = self._make_formula()
         rs.add_formula(f)
@@ -929,6 +1107,7 @@ class TestDeonticLogicCoreAdditional:
 
     def test_deontic_rule_set_check_consistency(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticRuleSet
+
         f = self._make_formula()
         rs = DeonticRuleSet(name="T", formulas=[f])
         # check_consistency returns List of conflicting pairs, may be empty
@@ -937,8 +1116,10 @@ class TestDeonticLogicCoreAdditional:
 
     def test_temporal_condition_creation(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            TemporalCondition, TemporalOperator,
+            TemporalCondition,
+            TemporalOperator,
         )
+
         tc = TemporalCondition(
             operator=TemporalOperator.ALWAYS,
             condition="active",

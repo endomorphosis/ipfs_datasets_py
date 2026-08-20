@@ -28,9 +28,11 @@ The TDFOL Performance Profiler enables:
 ```python
 from ipfs_datasets_py.logic.TDFOL.performance_profiler import profile_this
 
+
 @profile_this
 def expensive_operation(n):
     return sum(i**2 for i in range(n))
+
 
 result = expensive_operation(100000)
 # Automatically prints profiling stats
@@ -112,14 +114,14 @@ from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfile
 
 # Initialize profiler
 profiler = PerformanceProfiler(
-    output_dir="profiling_results",
-    enable_memory=True,
-    enable_cprofile=True
+    output_dir="profiling_results", enable_memory=True, enable_cprofile=True
 )
+
 
 # Profile a function
 def my_operation(n):
     return sum(i**2 for i in range(n))
+
 
 stats = profiler.profile_function(my_operation, 10000, runs=10)
 print(f"Mean time: {stats.mean_time_ms:.2f}ms")
@@ -397,16 +399,10 @@ Rich HTML report with tables and charts:
 
 ```python
 import sys
-from ipfs_datasets_py.logic.TDFOL.performance_profiler import (
-    PerformanceProfiler,
-    ReportFormat
-)
+from ipfs_datasets_py.logic.TDFOL.performance_profiler import PerformanceProfiler, ReportFormat
 
 # Initialize with baseline
-profiler = PerformanceProfiler(
-    output_dir="ci_profiling",
-    baseline_path="baseline.json"
-)
+profiler = PerformanceProfiler(output_dir="ci_profiling", baseline_path="baseline.json")
 
 # Run benchmarks
 results = profiler.run_benchmark_suite()
@@ -426,10 +422,10 @@ print(f"✓ All benchmarks passed ({results.pass_rate:.1%})")
 ```python
 custom_benchmarks = [
     {
-        'name': 'my_custom_benchmark',
-        'formula': '∀x. (Custom(x) → Result(x))',
-        'threshold_ms': 50.0,
-        'func': lambda: my_custom_operation()
+        "name": "my_custom_benchmark",
+        "formula": "∀x. (Custom(x) → Result(x))",
+        "threshold_ms": 50.0,
+        "func": lambda: my_custom_operation(),
     }
 ]
 
@@ -440,19 +436,13 @@ results = profiler.run_benchmark_suite(custom_benchmarks=custom_benchmarks)
 
 ```python
 # First run - establish baseline
-profiler = PerformanceProfiler(
-    output_dir="profiling_results",
-    baseline_path="baseline.json"
-)
+profiler = PerformanceProfiler(output_dir="profiling_results", baseline_path="baseline.json")
 
 results = profiler.run_benchmark_suite()
 profiler._save_baseline()  # Save current performance as baseline
 
 # Later runs - compare against baseline
-profiler2 = PerformanceProfiler(
-    output_dir="profiling_results",
-    baseline_path="baseline.json"
-)
+profiler2 = PerformanceProfiler(output_dir="profiling_results", baseline_path="baseline.json")
 
 results2 = profiler2.run_benchmark_suite()
 

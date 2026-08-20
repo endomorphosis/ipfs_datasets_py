@@ -189,7 +189,10 @@ class TestGetCurrentUser:
 
     def test_missing_sub_returns_401(self, client: TestClient):
         """GIVEN token with no 'sub' claim WHEN authenticated endpoint THEN 401."""
-        payload = {"user_id": "uid-no-sub", "exp": __import__("datetime").datetime.utcnow() + timedelta(hours=1)}
+        payload = {
+            "user_id": "uid-no-sub",
+            "exp": __import__("datetime").datetime.utcnow() + timedelta(hours=1),
+        }
         token = jwt.encode(payload, svc.SECRET_KEY, algorithm=svc.ALGORITHM)
         r = client.get("/tools/list", headers={"Authorization": f"Bearer {token}"})
         assert r.status_code == 401
@@ -211,7 +214,9 @@ class TestEmbeddingsGenerate:
         )
         assert r.status_code == 401
 
-    def test_generate_authenticated_inner_import_error_returns_500(self, client: TestClient, auth_headers):
+    def test_generate_authenticated_inner_import_error_returns_500(
+        self, client: TestClient, auth_headers
+    ):
         """GIVEN authenticated + inner import fails WHEN POST /embeddings/generate THEN 500."""
         # The route does `from .mcp_server.tools...` which fails (nested path doesn't exist).
         r = client.post(
@@ -261,8 +266,11 @@ class TestSearchEndpoints:
         r = client.post(
             "/search/semantic",
             json={
-                "query": "test", "top_k": 5, "collection_name": "test_col",
-                "filter_criteria": None, "include_metadata": True,
+                "query": "test",
+                "top_k": 5,
+                "collection_name": "test_col",
+                "filter_criteria": None,
+                "include_metadata": True,
             },
         )
         assert r.status_code == 401

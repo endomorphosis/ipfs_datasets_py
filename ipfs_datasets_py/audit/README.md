@@ -49,7 +49,8 @@ The audit reporting system provides comprehensive analysis of audit data with th
 from ipfs_datasets_py.audit.audit_logger import AuditLogger
 from ipfs_datasets_py.audit.audit_visualization import setup_audit_visualization
 from ipfs_datasets_py.audit.audit_reporting import (
-    setup_audit_reporting, generate_comprehensive_audit_report
+    setup_audit_reporting,
+    generate_comprehensive_audit_report,
 )
 
 # Get the audit logger instance
@@ -62,8 +63,8 @@ metrics, visualizer, _ = setup_audit_visualization(audit_logger)
 report_path = generate_comprehensive_audit_report(
     audit_logger=audit_logger,
     metrics_aggregator=metrics,
-    report_format='html',
-    output_file='./audit_reports/comprehensive_report.html'
+    report_format="html",
+    output_file="./audit_reports/comprehensive_report.html",
 )
 
 print(f"Report generated at: {report_path}")
@@ -92,7 +93,9 @@ For deeper customization, you can use the reporting components directly:
 from ipfs_datasets_py.audit.audit_logger import AuditLogger
 from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator
 from ipfs_datasets_py.audit.audit_reporting import (
-    AuditPatternDetector, AuditComplianceAnalyzer, AuditReportGenerator
+    AuditPatternDetector,
+    AuditComplianceAnalyzer,
+    AuditReportGenerator,
 )
 
 # Get metrics aggregator with collected audit data
@@ -107,7 +110,7 @@ anomalies = pattern_detector.get_anomalies(threshold=0.7)
 compliance_analyzer = AuditComplianceAnalyzer(
     metrics_aggregator=metrics,
     pattern_detector=pattern_detector,
-    frameworks=['gdpr', 'hipaa']  # Analyze only these frameworks
+    frameworks=["gdpr", "hipaa"],  # Analyze only these frameworks
 )
 compliance_status = compliance_analyzer.analyze_compliance()
 compliance_summary = compliance_analyzer.get_compliance_summary()
@@ -117,7 +120,7 @@ report_generator = AuditReportGenerator(
     metrics_aggregator=metrics,
     pattern_detector=pattern_detector,
     compliance_analyzer=compliance_analyzer,
-    output_dir="./custom_reports"
+    output_dir="./custom_reports",
 )
 
 # Generate a security report with detected anomalies
@@ -125,9 +128,7 @@ security_report = report_generator.generate_security_report()
 
 # Export report in desired format
 report_path = report_generator.export_report(
-    report=security_report,
-    format='json',
-    output_file='./custom_reports/security_analysis.json'
+    report=security_report, format="json", output_file="./custom_reports/security_analysis.json"
 )
 ```
 

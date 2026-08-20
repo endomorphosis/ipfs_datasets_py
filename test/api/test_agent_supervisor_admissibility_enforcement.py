@@ -89,7 +89,13 @@ def _receipt_modules() -> Any:
         derive_capability,
     )
 
-    return InternalDecisionStatus, BoundContext, BoundRoots, build_decision_receipt, derive_capability
+    return (
+        InternalDecisionStatus,
+        BoundContext,
+        BoundRoots,
+        build_decision_receipt,
+        derive_capability,
+    )
 
 
 def _roots(**overrides: Any) -> Any:
@@ -140,9 +146,7 @@ def _allow_receipt(**overrides: Any) -> Any:
         "outcome": InternalDecisionStatus.ALLOW,
         "reasons": ("positive grant proved",),
         "reason_codes": ("allow.positive_grant",),
-        "selected_evidence_cids": (
-            "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
-        ),
+        "selected_evidence_cids": ("bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",),
         "obligation_ids": ("obl:pre-check",),
         "residual_duties": (),
         "attempt_digests": (_DIGEST_1,),
@@ -245,10 +249,7 @@ def test_import_agent_supervisor_without_heavy_provers() -> None:
 
 
 def test_interface_constants_are_pinned() -> None:
-    assert (
-        SUPERVISOR_PRE_INVOCATION_ENFORCEMENT_INTERFACE
-        == "SupervisorPreInvocationEnforcement@1"
-    )
+    assert SUPERVISOR_PRE_INVOCATION_ENFORCEMENT_INTERFACE == "SupervisorPreInvocationEnforcement@1"
     assert SUPERVISOR_PRE_INVOCATION_ENFORCEMENT_VERSION == 1
     assert EnforcementMode.OFF.value == "off"
     assert EnforcementMode.AUDIT.value == "audit"
@@ -297,9 +298,7 @@ def test_unknown_mode_fails_closed() -> None:
 
 def test_injected_store_is_used() -> None:
     store = InMemoryCapabilityConsumptionStore()
-    enforcer = create_supervisor_enforcement(
-        mode=EnforcementMode.OFF, store=store
-    )
+    enforcer = create_supervisor_enforcement(mode=EnforcementMode.OFF, store=store)
     assert enforcer.consumption_store is store
 
 
@@ -359,10 +358,7 @@ def test_mode_shadow_would_block_still_calls() -> None:
         receipt=receipt,
     )
     assert delegate.calls == 1
-    assert (
-        result.observation.disposition
-        is EnforcementDisposition.SHADOW_WOULD_BLOCK
-    )
+    assert result.observation.disposition is EnforcementDisposition.SHADOW_WOULD_BLOCK
     assert result.observation.allowed is True
 
 
@@ -480,9 +476,7 @@ def test_concurrent_consumption_only_one_wins() -> None:
         ("ERROR", EnforcementDenialReason.ERROR.value),
     ],
 )
-def test_enforce_rejects_non_allow_with_zero_calls(
-    status_name: str, expected_reason: str
-) -> None:
+def test_enforce_rejects_non_allow_with_zero_calls(status_name: str, expected_reason: str) -> None:
     _require_datasets_auth()
     from ipfs_datasets_py.logic.admissibility.compose import InternalDecisionStatus
 
@@ -542,10 +536,7 @@ def test_enforce_rejects_root_changed() -> None:
         capability=capability,
     )
     assert delegate.calls == 0
-    assert (
-        EnforcementDenialReason.ROOT_CHANGED.value
-        in result.observation.reason_codes
-    )
+    assert EnforcementDenialReason.ROOT_CHANGED.value in result.observation.reason_codes
 
 
 def test_enforce_rejects_environment_changed() -> None:
@@ -565,10 +556,7 @@ def test_enforce_rejects_environment_changed() -> None:
         capability=capability,
     )
     assert delegate.calls == 0
-    assert (
-        EnforcementDenialReason.ENVIRONMENT_CHANGED.value
-        in result.observation.reason_codes
-    )
+    assert EnforcementDenialReason.ENVIRONMENT_CHANGED.value in result.observation.reason_codes
 
 
 def test_enforce_rejects_exact_context_mutation_actor() -> None:
@@ -599,10 +587,7 @@ def test_enforce_rejects_missing_receipt() -> None:
     )
     result = enforcer.authorize_and_delegate(_supervisor_context(), delegate)
     assert delegate.calls == 0
-    assert (
-        EnforcementDenialReason.MISSING_RECEIPT.value
-        in result.observation.reason_codes
-    )
+    assert EnforcementDenialReason.MISSING_RECEIPT.value in result.observation.reason_codes
 
 
 # ---------------------------------------------------------------------------

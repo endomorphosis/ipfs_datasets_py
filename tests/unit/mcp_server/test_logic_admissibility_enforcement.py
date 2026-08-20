@@ -78,12 +78,8 @@ def _envelope(**overrides: Any) -> InvocationIntentEnvelope:
         "tenant_id": "tenant:acme",
         "actor": ActorBinding(actor_id="actor:alice"),
         "audience": AudienceBinding(audience_id="audience:dispatcher-1"),
-        "tool": ToolBinding(
-            tool_id="tool:ledger.transfer", tool_version="1.2.3"
-        ),
-        "arguments": ArgumentCommitment.from_redacted(
-            {"amount": 10, "currency": "USD"}
-        ),
+        "tool": ToolBinding(tool_id="tool:ledger.transfer", tool_version="1.2.3"),
+        "arguments": ArgumentCommitment.from_redacted({"amount": 10, "currency": "USD"}),
         "nonce": "nonce-mcp-001",
         "created_at": "2026-07-28T12:00:00Z",
         "deadline": "2026-07-28T12:05:00Z",
@@ -173,9 +169,7 @@ def _offline_deps(*, allow: bool = False) -> OfflineAuthorizationDependencies:
     def which(_name: str) -> str | None:
         return f"/fake/bin/{_name}"
 
-    def solver(
-        job: ProofJob, backend_id: str, probe: Any
-    ) -> PortfolioAttemptRecord:
+    def solver(job: ProofJob, backend_id: str, probe: Any) -> PortfolioAttemptRecord:
         return PortfolioAttemptRecord(
             attempt_id=f"attempt:{job.job_id}:{backend_id}",
             job_id=job.job_id,
@@ -243,9 +237,7 @@ async def test_tool_schemas_document_all_handlers() -> None:
 async def test_forbidden_capability_tools_not_exposed() -> None:
     for banned in tools.FORBIDDEN_TOOL_NAMES:
         assert banned not in tools.TOOL_NAMES
-        assert not hasattr(tools, banned) or not callable(
-            getattr(tools, banned, None)
-        )
+        assert not hasattr(tools, banned) or not callable(getattr(tools, banned, None))
 
 
 @pytest.mark.asyncio
@@ -672,9 +664,7 @@ async def test_verify_backend_unavailable_fails_closed() -> None:
         "_load_api",
         side_effect=RuntimeError("authorization API backend unavailable"),
     ):
-        result = await tools.verify_authorization_receipt(
-            {"receipt_id": "receipt:x"}
-        )
+        result = await tools.verify_authorization_receipt({"receipt_id": "receipt:x"})
     _assert_hardened_flags(result)
     assert result["success"] is False
     assert result["error_type"] == "backend_unavailable"

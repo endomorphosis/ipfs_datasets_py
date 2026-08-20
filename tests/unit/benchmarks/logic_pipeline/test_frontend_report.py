@@ -20,19 +20,13 @@ from benchmarks.logic_pipeline.variants import VARIANT_REGISTRY_SHA256
 
 
 ROOT = Path(__file__).resolve().parents[4]
-ARTIFACT_SHA256 = (
-    "86cc7263efe890a80e0ecf3518eaefaad8dfbabb4fb35d544be83905e4c32404"
-)
+ARTIFACT_SHA256 = "86cc7263efe890a80e0ecf3518eaefaad8dfbabb4fb35d544be83905e4c32404"
 
 
 def _redigest(value: dict[str, object]) -> dict[str, object]:
     value["artifact_sha256"] = hashlib.sha256(
         canonical_json(
-            {
-                key: item
-                for key, item in value.items()
-                if key != "artifact_sha256"
-            }
+            {key: item for key, item in value.items() if key != "artifact_sha256"}
         ).encode("utf-8")
     ).hexdigest()
     return value
@@ -56,15 +50,11 @@ def _measured_observations() -> list[dict[str, object]]:
         variant_id = str(row["variant_id"])
         expected_class = str(row["expected_class"])
         symai_variant = variant_id in {"A4", "A5", "A7", "A8"}
-        symai_call = variant_id == "A5" or (
-            symai_variant and case_id.endswith("06")
-        )
+        symai_call = variant_id == "A5" or (symai_variant and case_id.endswith("06"))
         row.update(
             {
                 "status": "semantically_correct",
-                "semantic_signature_sha256": hashlib.sha256(
-                    case_id.encode("utf-8")
-                ).hexdigest(),
+                "semantic_signature_sha256": hashlib.sha256(case_id.encode("utf-8")).hexdigest(),
                 "normalized_ir_exact_match": True,
                 "deterministic_semantic_equivalence": False,
                 "semantic_validator_receipt_sha256": None,
@@ -73,9 +63,7 @@ def _measured_observations() -> list[dict[str, object]]:
                     True if expected_class == "ambiguous" else None
                 ),
                 "fail_closed_classification_correct": (
-                    True
-                    if expected_class in {"disproved", "unsupported"}
-                    else None
+                    True if expected_class in {"disproved", "unsupported"} else None
                 ),
                 "spacy_invoked": variant_id != "A0",
                 "symai_invoked": symai_variant,
@@ -145,9 +133,7 @@ def test_checked_in_report_freezes_exact_matrix_marker_and_identities() -> None:
     assert value["development_selection"] == {
         "status": "preregistered_full_split",
         "case_ids": value["case_ids_by_split"]["development"],
-        "selection_basis": (
-            "all reviewed development cases; no outcome-derived case shortlist"
-        ),
+        "selection_basis": ("all reviewed development cases; no outcome-derived case shortlist"),
         "outcomes_inspected": False,
     }
 
@@ -241,15 +227,11 @@ def test_capability_missingness_is_retained_as_null_not_scored_zero() -> None:
     assert calls["symai_model_calls"] == 0
     assert calls["unnecessary_calls"] == 0
     assert calls["unnecessary_call_rate"] is None
-    assert calls["unavailable_pair_case_ids"] == value["case_ids_by_split"][
-        "pilot"
-    ]
+    assert calls["unavailable_pair_case_ids"] == value["case_ids_by_split"]["pilot"]
 
 
 def test_measured_derivation_retains_disagreements_unique_wins_and_costs() -> None:
-    analysis = frontend_report.derive_frontend_analysis(
-        _measured_observations()
-    )
+    analysis = frontend_report.derive_frontend_analysis(_measured_observations())
 
     assert analysis["coverage"] == {
         "split_count": 2,
@@ -274,9 +256,7 @@ def test_measured_derivation_retains_disagreements_unique_wins_and_costs() -> No
         {
             "case_id": "pilot-p06",
             "stratum": "legal_ir_ambiguity",
-            "left_semantic_signature_sha256": hashlib.sha256(
-                b"pilot-p06"
-            ).hexdigest(),
+            "left_semantic_signature_sha256": hashlib.sha256(b"pilot-p06").hexdigest(),
             "right_semantic_signature_sha256": hashlib.sha256(
                 b"pilot-p06-full-spacy-disagreement"
             ).hexdigest(),

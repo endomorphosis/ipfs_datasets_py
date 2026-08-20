@@ -99,11 +99,11 @@ from ipfs_datasets_py.logic.fol import FOLConverter
 
 # Create converter with ALL features enabled
 converter = FOLConverter(
-    use_cache=True,          # ✅ Caching (14x speedup)
-    use_ipfs=False,          # 🌐 IPFS (distributed cache)
-    use_ml=True,             # 🤖 ML confidence scoring
-    use_nlp=True,            # 🧠 NLP extraction (spaCy)
-    enable_monitoring=True   # 📊 Monitoring & metrics
+    use_cache=True,  # ✅ Caching (14x speedup)
+    use_ipfs=False,  # 🌐 IPFS (distributed cache)
+    use_ml=True,  # 🤖 ML confidence scoring
+    use_nlp=True,  # 🧠 NLP extraction (spaCy)
+    enable_monitoring=True,  # 📊 Monitoring & metrics
 )
 
 # Single conversion

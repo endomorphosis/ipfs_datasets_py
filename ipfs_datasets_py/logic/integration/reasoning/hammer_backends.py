@@ -42,9 +42,7 @@ class PythonZ3HammerBackendRunner:
     name = "z3_python"
     problem_format = "smt-lib"
 
-    def run(
-        self, translation: HammerTranslation, timeout_seconds: float
-    ) -> HammerBackendResult:
+    def run(self, translation: HammerTranslation, timeout_seconds: float) -> HammerBackendResult:
         start = time.time()
         try:
             import z3
@@ -318,9 +316,7 @@ def check_hammer_backend_availability(
             completed = get_process_supervisor().run(
                 [resolved_path, *resolved_spec.version_args],
                 kind=kind,
-                limits=ProcessLimits(
-                    wall_time_seconds=max(0.001, float(timeout_seconds))
-                ),
+                limits=ProcessLimits(wall_time_seconds=max(0.001, float(timeout_seconds))),
             )
             if completed.error:
                 error = completed.error
@@ -520,6 +516,7 @@ def lazy_install_hammer_backend(
     if not spec.install_command:
         return check_hammer_backend_availability(spec)
     if runner is None:
+
         def _run(command: Sequence[str], timeout: float) -> subprocess.CompletedProcess[str]:
             result = get_process_supervisor().run(
                 list(command),

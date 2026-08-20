@@ -11,7 +11,16 @@ def _canary(*, hybrid_enabled: bool) -> dict:
     return {"hybrid_enabled": hybrid_enabled}
 
 
-def _report(*, semantic: float, keyphrase: float, enum_ok: float, relation: float, orphan: float, rel_artifact: float, blocker: bool = False) -> dict:
+def _report(
+    *,
+    semantic: float,
+    keyphrase: float,
+    enum_ok: float,
+    relation: float,
+    orphan: float,
+    rel_artifact: float,
+    blocker: bool = False,
+) -> dict:
     return {
         "summary": {
             "semantic_similarity_final_decoded_mean": semantic,
@@ -81,4 +90,6 @@ def test_ga_gate_can_skip_latency_when_policy_allows_missing_stats() -> None:
     )
 
     assert assessment["summary"]["ga_ready"] is True
-    assert any(c.get("type") == "latency_stats_skipped" and c.get("passed") for c in assessment["checks"])
+    assert any(
+        c.get("type") == "latency_stats_skipped" and c.get("passed") for c in assessment["checks"]
+    )

@@ -157,9 +157,7 @@ def test_report_collapses_family_preservation_paraphrases() -> None:
 
     assert len(report.gaps) == 1
     gap = report.gaps[0]
-    assert gap.normalized_rule_key == (
-        "round_trip_family_preservation_conditional_normative"
-    )
+    assert gap.normalized_rule_key == ("round_trip_family_preservation_conditional_normative")
     assert gap.affected_ir_families == (
         "conditional_normative",
         "frame",
@@ -425,15 +423,16 @@ def test_rule_gap_report_projects_to_synthesis_hints_and_json() -> None:
     assert hints[0].target_component == "modal.ir_decompiler"
     assert hints[0].evidence["gap_id"] == report.gaps[0].gap_id
     assert hints[0].evidence["supporting_evidence_count"] == 1
-    assert parsed["gaps"][0]["supporting_evidence"][0][
-        "drafted_logic_candidates"
-    ][0]["guidance_only"] is True
-    assert hints[0].evidence["leanstral_guidance_mode"] == (
-        "draft_logic_guidance_only"
+    assert (
+        parsed["gaps"][0]["supporting_evidence"][0]["drafted_logic_candidates"][0]["guidance_only"]
+        is True
     )
-    assert hints[0].evidence["leanstral_drafted_logic_candidates"][0][
-        "candidate"
-    ].startswith("obligation")
+    assert hints[0].evidence["leanstral_guidance_mode"] == ("draft_logic_guidance_only")
+    assert (
+        hints[0]
+        .evidence["leanstral_drafted_logic_candidates"][0]["candidate"]
+        .startswith("obligation")
+    )
 
 
 def _patch_result(todo_id: str, *, status: str, metadata: dict) -> dict:
@@ -456,7 +455,9 @@ def _patch_result(todo_id: str, *, status: str, metadata: dict) -> dict:
             "semantic_bundle_key": "leanstral-rule-gap:modal-cue-shall",
             "target_component": "modal.compiler",
             "target_metrics": ["modal_ir_formula_recall"],
-            "validation_commands": ["python -m pytest -q tests/unit_tests/logic/modal/test_modal_codec.py"],
+            "validation_commands": [
+                "python -m pytest -q tests/unit_tests/logic/modal/test_modal_codec.py"
+            ],
             **metadata,
         },
         "status": status,
@@ -510,21 +511,23 @@ def test_patch_feedback_journals_lineage_and_retains_verified_compiler_targets()
     assert outcome.compiler_target is not None
     assert outcome.compiler_target["verified_compiler_rule"] is True
     assert outcome.compiler_target["write_to_autoencoder_weights"] is False
-    assert outcome.compiler_target["metric_attribution"]["pre_patch_metrics"][
-        "modal_ir_formula_recall"
-    ] == 0.5
-    assert outcome.compiler_target["metric_attribution"]["post_patch_metrics"][
-        "modal_ir_formula_recall"
-    ] == 0.54
-    assert outcome.compiler_target["leanstral_guidance_mode"] == (
-        "draft_logic_guidance_only"
+    assert (
+        outcome.compiler_target["metric_attribution"]["pre_patch_metrics"][
+            "modal_ir_formula_recall"
+        ]
+        == 0.5
     )
-    assert outcome.compiler_target["leanstral_drafted_logic_candidates"][0][
-        "candidate"
-    ].startswith("obligation")
-    assert outcome.compiler_target["leanstral_drafted_logic_candidates"][0][
-        "guidance_only"
-    ] is True
+    assert (
+        outcome.compiler_target["metric_attribution"]["post_patch_metrics"][
+            "modal_ir_formula_recall"
+        ]
+        == 0.54
+    )
+    assert outcome.compiler_target["leanstral_guidance_mode"] == ("draft_logic_guidance_only")
+    assert outcome.compiler_target["leanstral_drafted_logic_candidates"][0]["candidate"].startswith(
+        "obligation"
+    )
+    assert outcome.compiler_target["leanstral_drafted_logic_candidates"][0]["guidance_only"] is True
     assert report.compiler_targets_for_autoencoder_evaluation
 
 
@@ -575,7 +578,5 @@ def test_patch_feedback_classifies_regressions_unsupported_operational_and_stale
         "operational_failure",
         "stale_evidence",
     ]
-    assert report.suppressed_feature_clusters == (
-        "leanstral-rule-gap:modal-cue-shall",
-    )
+    assert report.suppressed_feature_clusters == ("leanstral-rule-gap:modal-cue-shall",)
     assert report.compiler_targets_for_autoencoder_evaluation == ()

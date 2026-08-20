@@ -104,9 +104,7 @@ async def validate_bluebook_citations(
             )
 
             validator = CitationValidator(config, reference_db, error_db)
-            total_errors = validator.validate_citations_against_html_and_references(
-                sampled_gnis
-            )
+            total_errors = validator.validate_citations_against_html_and_references(sampled_gnis)
 
             analyzer = ResultsAnalyzer(config)
             error_summary, accuracy_stats, extrapolated = analyzer.analyze(

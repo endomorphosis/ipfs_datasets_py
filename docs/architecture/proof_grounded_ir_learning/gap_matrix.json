@@ -1,0 +1,1536 @@
+{
+  "schema": "PGIRCompilerDecompilerGapMatrix@1",
+  "interface": "proof-grounded-ir-learning/compiler-decompiler-gap-matrix/v1",
+  "schema_version": "1.0.0",
+  "contract_version": 1,
+  "task_id": "PGIR-006",
+  "goal_id": "PGIR-G010",
+  "objective_revision": "baguqeerahfh62jlojscio3ykgnctnpfvow3twabvn4oatndjiye37c7v6ftq",
+  "repository_id": "repository:sha256:4d87e009c221f83df2c5846e6085d4917204de75df8dc438b045c3bbff059dbc",
+  "matrix_cid": "baguqeeraspldjlypaoamdclucjsbktrmkramzhe3kra7tip5h3e5s5zkfnia",
+  "matrix_sha256": "93d634af0f0380c189741264154e2c5440cc9c9b5441f9a1fd3ec9d9772a2b50",
+  "source_binding": {
+    "base_source_set_id": "SRCSET-1",
+    "source_set_binding_sha256": "9da856806306b144ba86a02505946d995750fe0d8bbf4ab7bc9fcd287b047220",
+    "source_dataset_revision": "JDAO-PINSET-1",
+    "compiler_identity": "COMPILER-CURRENT-1",
+    "decompiler_identity": "DECOMPILER-CURRENT-1",
+    "model_checkpoint_identity": "MODEL-LEGACY-1",
+    "data_split_identity": "not-applicable/availability-inventory",
+    "datasets_authority_commit": "df93e91e6338c84a17c3208ef68b88de8566f78c",
+    "accelerator_authority_commit": "8d46a6d25dd006c8cab3c9d9612707d2a014e79c"
+  },
+  "input_artifacts": [
+    {
+      "task_id": "PGIR-002",
+      "path": "ipfs_datasets_py/docs/architecture/proof_grounded_ir_learning/inventory/modules.json",
+      "identity": "sha256:532e1c8b60fcf77515e772368f80475d2f62ba1545490826c3baeea1b402920b",
+      "disposition": "consumed"
+    },
+    {
+      "task_id": "PGIR-003",
+      "path": "docs/architecture/proof_grounded_ir_learning/inventory/supervisor.json",
+      "identity": "baguqeerablvf72zunpjvbievbspxqnc4eqgxneqjwrg5v6imr7edavovmwca",
+      "disposition": "consumed"
+    },
+    {
+      "task_id": "PGIR-004",
+      "path": "ipfs_datasets_py/data/ir_learning/source_inventory/release_inventory.json",
+      "identity": "sha256:f58457d29289d5140bfc63596f28a4648e2bad1ea6222e7b62d22e8cf9b95bb6",
+      "disposition": "consumed"
+    },
+    {
+      "task_id": "PGIR-005",
+      "path": "data/agent_supervisor/proof_grounded_ir_learning/baseline_tests/summary.json",
+      "identity": "baguqeerasr4hxpxwkhe64btsxu56moh7v7ww2a6covaavjd7qnzb4xgl5cpq",
+      "result_cid": "baguqeerabt5f2oxnlybr33a6azszdctygqthph2ww5wrk2dcqxutym4j6yjq",
+      "disposition": "consumed_with_no_go_prerequisites"
+    }
+  ],
+  "a4_contract": {
+    "requirements_source": "workspace:docs/architecture/proof_grounded_ir_learning.todo.md#PGIR-006",
+    "interpretation": "A4 is the closed directed availability matrix over source text, typed syntax, canonical and legacy bridge envelopes, logic-family representations, prover syntax, controlled natural language, and proof/tactic/counterexample/translation traces. No separate A4 JSON Schema exists in the frozen source, so this document makes the row and evidence rules explicit.",
+    "required_direction_classes": [
+      "source",
+      "typed",
+      "bridge",
+      "family",
+      "prover",
+      "cnl",
+      "trace"
+    ],
+    "row_rule": "Every row has explicit source and target schemas, deterministic and learned implementation cells, examples, proof/counterexample/round-trip coverage, token/cosine/syntax/type/proof metric cells, limitations, evidence, and remediation references.",
+    "evidence_rule": "Every non-unknown status cell has at least one evidence_ref. Each evidence_ref resolves through evidence_catalog to repository paths, receipt identities, or both. Unknown cells retain null values and are never converted to zero.",
+    "metric_rule": "A declared field, default value, unit test, provider discovery result, or route availability is not a measured metric. Numeric values appear only when a cited receipt reports that exact value and population.",
+    "authority_rule": "Compilation, decompilation, translation, model output, solver output, and orchestration never increase semantic or proof authority. Only independently accepted evidence bound to exact inputs can do so.",
+    "sorting": "Direction rows are ordered by required_direction_classes and then direction_id; IDs and evidence paths are unique within their owning collections."
+  },
+  "vocabularies": {
+    "availability_status": [
+      "available",
+      "partial",
+      "absent",
+      "blocked",
+      "unknown"
+    ],
+    "implementation_status": [
+      "current",
+      "component",
+      "experimental_not_admitted",
+      "absent_in_scope",
+      "blocked",
+      "unknown"
+    ],
+    "example_status": [
+      "measured_fixture",
+      "test_fixture",
+      "inventory_candidate_only",
+      "absent_in_scope",
+      "unknown"
+    ],
+    "coverage_status": [
+      "measured_historical",
+      "test_only",
+      "contract_only",
+      "blocked",
+      "not_applicable",
+      "unknown"
+    ],
+    "metric_status": [
+      "measured_historical",
+      "test_only_no_metric",
+      "defined_unmeasured",
+      "blocked",
+      "not_applicable",
+      "unknown"
+    ]
+  },
+  "evidence_catalog": {
+    "E-PGIR002": {
+      "repository": "workspace",
+      "paths": [
+        "ipfs_datasets_py/docs/architecture/proof_grounded_ir_learning/inventory/modules.json"
+      ],
+      "receipt_ids": [
+        "sha256:532e1c8b60fcf77515e772368f80475d2f62ba1545490826c3baeea1b402920b"
+      ],
+      "scope": "Behavior-first datasets module inventory, including canonical/component/unresolved classifications and explicit DomainLogicSlice absence."
+    },
+    "E-PGIR003": {
+      "repository": "workspace",
+      "paths": [
+        "docs/architecture/proof_grounded_ir_learning/inventory/supervisor.json"
+      ],
+      "receipt_ids": [
+        "baguqeerablvf72zunpjvbievbspxqnc4eqgxneqjwrg5v6imr7edavovmwca"
+      ],
+      "scope": "Supervisor provider, tactician, hammer, prover, checker, and authority-boundary inventory."
+    },
+    "E-PGIR004": {
+      "repository": "workspace",
+      "paths": [
+        "ipfs_datasets_py/data/ir_learning/source_inventory/release_inventory.json"
+      ],
+      "receipt_ids": [
+        "sha256:f58457d29289d5140bfc63596f28a4648e2bad1ea6222e7b62d22e8cf9b95bb6"
+      ],
+      "scope": "Twenty-one exact JusticeDAO release pins, 7,173 inventory candidate source rows, and zero training-admitted rows."
+    },
+    "E-PGIR005": {
+      "repository": "workspace",
+      "paths": [
+        "data/agent_supervisor/proof_grounded_ir_learning/baseline_tests/summary.json"
+      ],
+      "receipt_ids": [
+        "baguqeera3exv5nz4a3h2lqoic2v3grbdm73mbpheelu73xztazpwzbnf554q",
+        "baguqeerambrs2h4t34he6spelik6co6jec53vkgfnkr2remr4bnyz4bn6yia",
+        "baguqeera4jz46uxax5saxk275bjptynipdhjyw4kksen445eqznk5hoqclba",
+        "baguqeera4orjzamfvz5o7qotkalha4r4h2twyxnw2xwrmsuti2pieyhflasa",
+        "baguqeeradttvo5ivx6rxy3upfekzdabwrkdyv5zbzrkog3bscohpagmuv4va"
+      ],
+      "scope": "Sealed baseline with semantic-CID no-go, missing Lean runtime export no-go, and absent Hammer environment-lock blocker."
+    },
+    "E-CANONICAL-CONTRACT": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+        "ipfs_datasets_py/logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json",
+        "tests/unit/logic/legal_ir/test_canonical_roundtrip_schema.py"
+      ],
+      "receipt_ids": [],
+      "scope": "CanonicalRoundTripIR@1, O/P/F seven-facet rule grammar, request/result contracts, source maps, unsupported semantics, and component traces."
+    },
+    "E-CANONICAL-COMPILER": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+        "tests/conformance/legal_ir/test_legal_ir_compiler_conformance.py"
+      ],
+      "receipt_ids": [],
+      "scope": "Current deterministic source-to-canonical compiler; caller vocabulary, explicit partial handling, no learned stages, and no fallback."
+    },
+    "E-CANONICAL-DECOMPILER": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+        "tests/conformance/legal_ir/test_legal_ir_compiler_conformance.py"
+      ],
+      "receipt_ids": [],
+      "scope": "Current stateless source-withheld deterministic controlled-text realizer."
+    },
+    "E-CANONICAL-ROUNDTRIP": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py",
+        "tests/integration/logic/test_canonical_semantic_roundtrip.py",
+        "tests/fixtures/semantic_roundtrip/pilot_cases.json",
+        "docs/performance_snapshots/2026-07-26_canonical_semantic_roundtrip.json"
+      ],
+      "receipt_ids": [
+        "baguqeera54na4ofbzp27zpgbcnfdzcmepnqqiirm4pb4hdvzbdccjayecslq"
+      ],
+      "scope": "Five-case historical canonical compile/decompile/recompile snapshot; its compiler byte identity is stale under PGIR-005."
+    },
+    "E-REPLACEMENT-MATRIX": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "benchmarks/semantic_roundtrip/constructors/leanstral.py",
+        "benchmarks/semantic_roundtrip/constructors/modal_spacy.py",
+        "benchmarks/semantic_roundtrip/realizers/leanstral.py",
+        "docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json"
+      ],
+      "receipt_ids": [
+        "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
+      ],
+      "scope": "Historical deterministic and model-backed candidate matrix; only two deterministic typed-deontic arms were eligible, the result was an exact tie, and the report allowed no production promotion."
+    },
+    "E-DEONTIC": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/deontic/ir.py",
+        "ipfs_datasets_py/logic/deontic/converter.py",
+        "ipfs_datasets_py/logic/deontic/decoder.py",
+        "ipfs_datasets_py/logic/deontic/formula_builder.py",
+        "tests/unit_tests/logic/deontic/test_deontic_decoder.py",
+        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py"
+      ],
+      "receipt_ids": [],
+      "scope": "Family-specific LegalNormIR parser, controlled decoder, source grounding, formula records, and prover-syntax generation."
+    },
+    "E-FORMALIZATION": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/formalization/compiler.py",
+        "ipfs_datasets_py/logic/formalization/views.py",
+        "ipfs_datasets_py/logic/legal_ir/adapter.py",
+        "ipfs_datasets_py/logic/security_ir/formalization_adapter.py",
+        "ipfs_datasets_py/logic/intent_ir/formalize/compiler.py",
+        "tests/integration/logic/test_ir_family_conformance.py"
+      ],
+      "receipt_ids": [],
+      "scope": "Domain-neutral artifact/view declarations and deterministic Legal, Security, and Intent adapters; declarations do not provide a domain-neutral inverse."
+    },
+    "E-BRIDGE": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/bridge/types.py",
+        "ipfs_datasets_py/logic/bridge/registry.py",
+        "tests/unit/logic/test_logic_bridge_layer.py"
+      ],
+      "receipt_ids": [],
+      "scope": "LegalIRDocument/LogicIRView envelope, six registered adapters, metric field declarations, proof gates, and unresolved repository-wide typed bridge."
+    },
+    "E-TDFOL": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+        "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+        "ipfs_datasets_py/logic/TDFOL/tdfol_converter.py",
+        "ipfs_datasets_py/logic/TDFOL/tdfol_prover.py",
+        "ipfs_datasets_py/logic/TDFOL/countermodels.py",
+        "tests/unit_tests/logic/TDFOL/test_tdfol_dcec_parser.py",
+        "tests/unit_tests/logic/TDFOL/test_countermodels.py"
+      ],
+      "receipt_ids": [],
+      "scope": "TDFOL AST/parser/prover, TDFOL-DCEC and FOL/TPTP conversions, and countermodels; preservation is not repository-wide authority."
+    },
+    "E-DCEC": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/CEC/native/dcec_core.py",
+        "ipfs_datasets_py/logic/CEC/native/prover_core.py",
+        "tests/reasoner/test_dcec_conformance.py"
+      ],
+      "receipt_ids": [],
+      "scope": "Distinct DCEC-family AST and prover contracts."
+    },
+    "E-HAMMER": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/hammers/models.py",
+        "ipfs_datasets_py/logic/hammers/translation.py",
+        "ipfs_datasets_py/logic/hammers/smtlib.py",
+        "ipfs_datasets_py/logic/hammers/tptp.py",
+        "tests/unit_tests/logic/hammers/test_translation.py"
+      ],
+      "receipt_ids": [],
+      "scope": "Typed first-order lowering, emitted-subset SMT-LIB/TPTP codecs, explicit unsupported translation, candidate/reconstruction records, and kernel-check trust boundary."
+    },
+    "E-INTENT": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/intent_ir/schema.py",
+        "ipfs_datasets_py/logic/intent_ir/formalize/compiler.py",
+        "ipfs_datasets_py/logic/intent_ir/formalize/decompiler.py",
+        "tests/integration/logic/test_ir_family_conformance.py"
+      ],
+      "receipt_ids": [],
+      "scope": "Intent typed declarations, formalization, and review-oriented structural decompilation; exact text regeneration is explicitly not claimed."
+    },
+    "E-MODAL": {
+      "repository": "SRC-DATASETS-AUTH-1",
+      "paths": [
+        "ipfs_datasets_py/logic/modal/compiler.py",
+        "ipfs_datasets_py/logic/modal/decompiler.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
+        "tests/integration/logic/test_ir_family_conformance.py"
+      ],
+      "receipt_ids": [],
+      "scope": "Parallel ModalIR family compiler and source-bearing reconstruction, distinct from the source-withheld canonical decompiler."
+    },
+    "E-SUPERVISOR-TACTIC": {
+      "repository": "SRC-ACCEL-AUTH-1",
+      "paths": [
+        "ipfs_accelerate_py/agent_supervisor/proof/goal_directed_tactician.py",
+        "test/api/test_counterexample_guided_tactician.py",
+        "test/api/test_goal_directed_tactician_integration.py"
+      ],
+      "receipt_ids": [
+        "baguqeeray6vfewxu4uhzjttspwrmeshmswm3gcfqknvhpwtkvveb2ahdud4a"
+      ],
+      "scope": "Tactic proposal and orchestration with no independent proof authority."
+    }
+  },
+  "representation_catalog": {
+    "source.legal_policy_text": {
+      "schema_status": "available",
+      "schema_ids": [
+        "utf8-text/raw-cid"
+      ],
+      "evidence_refs": [
+        "E-CANONICAL-CONTRACT"
+      ]
+    },
+    "typed.legal_norm_ir": {
+      "schema_status": "available",
+      "schema_ids": [
+        "LegalNormIR"
+      ],
+      "evidence_refs": [
+        "E-DEONTIC"
+      ]
+    },
+    "typed.domain_declarations": {
+      "schema_status": "available",
+      "schema_ids": [
+        "LegalSample/ModalIRDocument",
+        "SecurityIR",
+        "IntentIRDocument@1"
+      ],
+      "evidence_refs": [
+        "E-FORMALIZATION",
+        "E-INTENT",
+        "E-MODAL"
+      ]
+    },
+    "typed.formalization_artifact": {
+      "schema_status": "available",
+      "schema_ids": [
+        "formalization-artifact/v1",
+        "FormalizationView"
+      ],
+      "evidence_refs": [
+        "E-FORMALIZATION"
+      ]
+    },
+    "bridge.canonical_roundtrip_ir": {
+      "schema_status": "available",
+      "schema_ids": [
+        "CanonicalRoundTripIR@1",
+        "ipfs-datasets.canonical-roundtrip-ir.v1"
+      ],
+      "evidence_refs": [
+        "E-CANONICAL-CONTRACT"
+      ]
+    },
+    "bridge.legal_ir_document": {
+      "schema_status": "available",
+      "schema_ids": [
+        "LegalIRDocument",
+        "LogicIRView",
+        "BridgeEvaluationReport"
+      ],
+      "evidence_refs": [
+        "E-BRIDGE"
+      ]
+    },
+    "bridge.domain_logic_slice": {
+      "schema_status": "absent",
+      "schema_ids": [],
+      "evidence_refs": [
+        "E-PGIR002"
+      ]
+    },
+    "family.tdfol": {
+      "schema_status": "available",
+      "schema_ids": [
+        "TDFOL.Formula"
+      ],
+      "evidence_refs": [
+        "E-TDFOL"
+      ]
+    },
+    "family.dcec": {
+      "schema_status": "available",
+      "schema_ids": [
+        "DCECStatement",
+        "DCEC.DeonticFormula",
+        "DCEC.TemporalFormula",
+        "DCEC.QuantifiedFormula"
+      ],
+      "evidence_refs": [
+        "E-DCEC"
+      ]
+    },
+    "family.fol": {
+      "schema_status": "partial",
+      "schema_ids": [
+        "TDFOL FOL projection"
+      ],
+      "evidence_refs": [
+        "E-TDFOL"
+      ]
+    },
+    "prover.hammer_term": {
+      "schema_status": "available",
+      "schema_ids": [
+        "hammers.translation.Term"
+      ],
+      "evidence_refs": [
+        "E-HAMMER"
+      ]
+    },
+    "prover.smtlib2_subset": {
+      "schema_status": "available",
+      "schema_ids": [
+        "HAMMER-007 emitted SMT-LIB2 first-order subset"
+      ],
+      "evidence_refs": [
+        "E-HAMMER"
+      ]
+    },
+    "prover.tptp_tff_subset": {
+      "schema_status": "available",
+      "schema_ids": [
+        "HAMMER-007 emitted TPTP TFF subset"
+      ],
+      "evidence_refs": [
+        "E-HAMMER"
+      ]
+    },
+    "prover.attempt_or_result": {
+      "schema_status": "available",
+      "schema_ids": [
+        "HammerRequest@1.0.0",
+        "SolverAttemptRecord@1.0.0",
+        "HammerResult@1.0.0"
+      ],
+      "evidence_refs": [
+        "E-HAMMER",
+        "E-PGIR003"
+      ]
+    },
+    "cnl.controlled_legal_text": {
+      "schema_status": "available",
+      "schema_ids": [
+        "typed_deontic_must_paraphrase_v1",
+        "DecodedLegalText"
+      ],
+      "evidence_refs": [
+        "E-CANONICAL-DECOMPILER",
+        "E-DEONTIC"
+      ]
+    },
+    "trace.component_and_source_map": {
+      "schema_status": "available",
+      "schema_ids": [
+        "ComponentTrace",
+        "SourceMapEntry"
+      ],
+      "evidence_refs": [
+        "E-CANONICAL-CONTRACT"
+      ]
+    },
+    "trace.proof_translation_reconstruction": {
+      "schema_status": "available",
+      "schema_ids": [
+        "TranslationRecord@1.0.0",
+        "ProofCandidateRecord@1.0.0",
+        "ReconstructionRecord@1.0.0",
+        "HammerResult@1.0.0"
+      ],
+      "evidence_refs": [
+        "E-HAMMER"
+      ]
+    },
+    "trace.countermodel": {
+      "schema_status": "available",
+      "schema_ids": [
+        "TDFOL.CounterModel"
+      ],
+      "evidence_refs": [
+        "E-TDFOL"
+      ]
+    },
+    "trace.tactic_attempt": {
+      "schema_status": "partial",
+      "schema_ids": [
+        "GoalDirectedTactician attempt records"
+      ],
+      "evidence_refs": [
+        "E-SUPERVISOR-TACTIC",
+        "E-PGIR003"
+      ]
+    }
+  },
+  "direction_matrix": [
+    {
+      "direction_id": "A4-SOURCE-001",
+      "direction_class": "source",
+      "source": {"representation_ids": ["source.legal_policy_text"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+      "target": {"representation_ids": ["typed.legal_norm_ir"], "schema_status": "available", "evidence_refs": ["E-DEONTIC"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "current", "implementation_ids": ["deontic-deterministic-parser", "deontic-converter"], "evidence_refs": ["E-DEONTIC"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-DEONTIC"]},
+      "coverage": {
+        "proof": {"status": "unknown", "evidence_refs": []},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "test_only", "evidence_refs": ["E-DEONTIC"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-DEONTIC"]},
+        "type": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-DEONTIC"]},
+        "proof": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []}
+      },
+      "limitations": ["Family-specific deterministic legal parser; it is not a repository-wide source-to-typed parser.", "No qualified corpus metric or proof-preservation result is available."],
+      "evidence_refs": ["E-DEONTIC", "E-PGIR002"],
+      "remediation_refs": ["GAP-QUALIFIED-EXAMPLES", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-SOURCE-002",
+      "direction_class": "source",
+      "source": {"representation_ids": ["source.legal_policy_text"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+      "target": {"representation_ids": ["bridge.canonical_roundtrip_ir"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+      "availability_status": "available",
+      "implementations": {
+        "deterministic": {"status": "current", "implementation_ids": ["legal-ir-canonical-compiler"], "evidence_refs": ["E-CANONICAL-COMPILER"]},
+        "learned": {"status": "experimental_not_admitted", "implementation_ids": ["LeanstralCanonicalConstructor", "ModalSpacyCanonicalConstructor", "autoencoder-guided candidates"], "evidence_refs": ["E-REPLACEMENT-MATRIX", "E-PGIR002"]}
+      },
+      "examples": {"status": "measured_fixture", "population": 5, "training_admitted": false, "evidence_refs": ["E-CANONICAL-ROUNDTRIP"]},
+      "coverage": {
+        "proof": {"status": "contract_only", "evidence_refs": ["E-REPLACEMENT-MATRIX", "E-PGIR005"]},
+        "counterexample": {"status": "contract_only", "evidence_refs": ["E-REPLACEMENT-MATRIX"]},
+        "round_trip": {"status": "measured_historical", "evidence_refs": ["E-CANONICAL-ROUNDTRIP", "E-PGIR005"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]},
+        "type": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]},
+        "proof": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]}
+      },
+      "limitations": ["CanonicalRoundTripIR@1 supports only O/P/F plus actor, action, object, conditions, exceptions, and temporal facets.", "The caller must supply atom vocabulary; automatic vocabulary inference is unmeasured.", "The five-case snapshot is historical and currently fails the compiler raw-CID gate."],
+      "evidence_refs": ["E-CANONICAL-COMPILER", "E-CANONICAL-ROUNDTRIP", "E-PGIR005"],
+      "remediation_refs": ["GAP-SEMANTIC-CID-DRIFT", "GAP-CANONICAL-BRIDGE", "GAP-METRIC-BASELINE", "GAP-LEARNED-ADMISSION"]
+    },
+    {
+      "direction_id": "A4-SOURCE-003",
+      "direction_class": "source",
+      "source": {"representation_ids": ["source.legal_policy_text"], "schema_status": "available", "evidence_refs": ["E-BRIDGE"]},
+      "target": {"representation_ids": ["bridge.legal_ir_document"], "schema_status": "available", "evidence_refs": ["E-BRIDGE"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["deontic_norms", "fol_tdfol", "cec_dcec", "modal_frame_logic"], "evidence_refs": ["E-BRIDGE"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": ["E-BRIDGE", "E-PGIR002"]}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-BRIDGE"]},
+      "coverage": {
+        "proof": {"status": "contract_only", "evidence_refs": ["E-BRIDGE"]},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "contract_only", "evidence_refs": ["E-BRIDGE"]}
+      },
+      "metrics": {
+        "token": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-BRIDGE"]},
+        "cosine": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-BRIDGE"]},
+        "syntax": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "type": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "proof": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-BRIDGE"]}
+      },
+      "limitations": ["LegalIRDocument retains source text and is not CanonicalRoundTripIR.", "Metric dataclass defaults and registered loss names are definitions, not observations.", "Adapter outputs have parallel family meanings and no single preservation contract."],
+      "evidence_refs": ["E-BRIDGE", "E-PGIR002"],
+      "remediation_refs": ["GAP-CANONICAL-BRIDGE", "GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-TYPED-001",
+      "direction_class": "typed",
+      "source": {"representation_ids": ["typed.legal_norm_ir"], "schema_status": "available", "evidence_refs": ["E-DEONTIC"]},
+      "target": {"representation_ids": ["bridge.canonical_roundtrip_ir"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+      "availability_status": "available",
+      "implementations": {
+        "deterministic": {"status": "current", "implementation_ids": ["project_legal_norms"], "evidence_refs": ["E-CANONICAL-COMPILER"]},
+        "learned": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-CANONICAL-COMPILER"]}
+      },
+      "examples": {"status": "measured_fixture", "population": 5, "training_admitted": false, "evidence_refs": ["E-CANONICAL-ROUNDTRIP"]},
+      "coverage": {
+        "proof": {"status": "unknown", "evidence_refs": []},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "measured_historical", "evidence_refs": ["E-CANONICAL-ROUNDTRIP", "E-PGIR005"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-CANONICAL-COMPILER"]},
+        "type": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-CANONICAL-COMPILER"]},
+        "proof": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []}
+      },
+      "limitations": ["Mental state, recipient, overrides, cross-references, defined terms, penalties, procedures, and definition scope are explicitly unrepresented in canonical v1.", "Unmapped required atoms abstain unless a nonempty explicit partial result is authorized."],
+      "evidence_refs": ["E-CANONICAL-COMPILER", "E-CANONICAL-CONTRACT"],
+      "remediation_refs": ["GAP-CANONICAL-BRIDGE", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-TYPED-002",
+      "direction_class": "typed",
+      "source": {"representation_ids": ["bridge.canonical_roundtrip_ir"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+      "target": {"representation_ids": ["typed.legal_norm_ir"], "schema_status": "available", "evidence_refs": ["E-DEONTIC"]},
+      "availability_status": "absent",
+      "implementations": {
+        "deterministic": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-PGIR002", "E-CANONICAL-DECOMPILER"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "absent_in_scope", "population": 0, "training_admitted": false, "evidence_refs": ["E-PGIR002"]},
+      "coverage": {
+        "proof": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]},
+        "counterexample": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]},
+        "round_trip": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]}
+      },
+      "metrics": {
+        "token": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "cosine": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "syntax": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "type": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "proof": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]}
+      },
+      "limitations": ["The canonical decompiler produces controlled text, not LegalNormIR.", "A controlled-text recompile is a separate semantic cycle and cannot be presented as a direct typed inverse."],
+      "evidence_refs": ["E-PGIR002", "E-CANONICAL-DECOMPILER"],
+      "remediation_refs": ["GAP-DOMAIN-NEUTRAL-DECOMPILER", "GAP-TRANSLATION-PRESERVATION"]
+    },
+    {
+      "direction_id": "A4-TYPED-003",
+      "direction_class": "typed",
+      "source": {"representation_ids": ["typed.domain_declarations"], "schema_status": "available", "evidence_refs": ["E-FORMALIZATION", "E-INTENT", "E-MODAL"]},
+      "target": {"representation_ids": ["typed.formalization_artifact"], "schema_status": "available", "evidence_refs": ["E-FORMALIZATION"]},
+      "availability_status": "available",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["LegalIRFormalizationAdapter", "SecurityIRFormalizationAdapter", "IntentFormalizationCompiler"], "evidence_refs": ["E-FORMALIZATION"]},
+        "learned": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-FORMALIZATION"]}
+      },
+      "examples": {"status": "test_fixture", "population": 3, "training_admitted": false, "evidence_refs": ["E-FORMALIZATION"]},
+      "coverage": {
+        "proof": {"status": "contract_only", "evidence_refs": ["E-FORMALIZATION"]},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "test_only", "evidence_refs": ["E-FORMALIZATION", "E-INTENT"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-FORMALIZATION"]},
+        "type": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-FORMALIZATION"]},
+        "proof": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-FORMALIZATION"]}
+      },
+      "limitations": ["Domain adapters preserve distinct family identities and disjoint view sets.", "Formalization artifacts declare proof obligations but do not claim proof."],
+      "evidence_refs": ["E-FORMALIZATION", "E-PGIR002"],
+      "remediation_refs": ["GAP-CANONICAL-BRIDGE", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-TYPED-004",
+      "direction_class": "typed",
+      "source": {"representation_ids": ["typed.formalization_artifact"], "schema_status": "available", "evidence_refs": ["E-FORMALIZATION"]},
+      "target": {"representation_ids": ["typed.domain_declarations"], "schema_status": "available", "evidence_refs": ["E-FORMALIZATION", "E-INTENT"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["IntentDecompiler"], "evidence_refs": ["E-INTENT", "E-PGIR002"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-INTENT"]},
+      "coverage": {
+        "proof": {"status": "unknown", "evidence_refs": []},
+        "counterexample": {"status": "test_only", "evidence_refs": ["E-INTENT"]},
+        "round_trip": {"status": "test_only", "evidence_refs": ["E-INTENT"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-INTENT"]},
+        "type": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-INTENT"]},
+        "proof": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []}
+      },
+      "limitations": ["IntentDecompiler emits a semantic review, not an exact Intent declaration or source regeneration.", "No domain-neutral formalization decompiler exists for Legal, Security, and Intent together."],
+      "evidence_refs": ["E-INTENT", "E-PGIR002"],
+      "remediation_refs": ["GAP-DOMAIN-NEUTRAL-DECOMPILER", "GAP-TRANSLATION-PRESERVATION"]
+    },
+    {
+      "direction_id": "A4-BRIDGE-001",
+      "direction_class": "bridge",
+      "source": {"representation_ids": ["bridge.canonical_roundtrip_ir"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+      "target": {"representation_ids": ["bridge.legal_ir_document"], "schema_status": "available", "evidence_refs": ["E-BRIDGE"]},
+      "availability_status": "absent",
+      "implementations": {
+        "deterministic": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-PGIR002", "E-BRIDGE"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "absent_in_scope", "population": 0, "training_admitted": false, "evidence_refs": ["E-PGIR002"]},
+      "coverage": {
+        "proof": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]},
+        "counterexample": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]},
+        "round_trip": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]}
+      },
+      "metrics": {
+        "token": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "cosine": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "syntax": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "type": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "proof": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]}
+      },
+      "limitations": ["The two bridge envelopes are explicitly parallel and not aliases.", "LegalIRDocument carries source text and graph views that CanonicalRoundTripIR intentionally excludes."],
+      "evidence_refs": ["E-PGIR002", "E-BRIDGE", "E-CANONICAL-CONTRACT"],
+      "remediation_refs": ["GAP-CANONICAL-BRIDGE"]
+    },
+    {
+      "direction_id": "A4-BRIDGE-002",
+      "direction_class": "bridge",
+      "source": {"representation_ids": ["bridge.legal_ir_document"], "schema_status": "available", "evidence_refs": ["E-BRIDGE"]},
+      "target": {"representation_ids": ["bridge.canonical_roundtrip_ir"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+      "availability_status": "absent",
+      "implementations": {
+        "deterministic": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-PGIR002", "E-BRIDGE"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "absent_in_scope", "population": 0, "training_admitted": false, "evidence_refs": ["E-PGIR002"]},
+      "coverage": {
+        "proof": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]},
+        "counterexample": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]},
+        "round_trip": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]}
+      },
+      "metrics": {
+        "token": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "cosine": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "syntax": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "type": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "proof": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]}
+      },
+      "limitations": ["No reviewed projection reconciles family view payloads, source-bearing fields, and the seven canonical rule facets."],
+      "evidence_refs": ["E-PGIR002", "E-BRIDGE", "E-CANONICAL-CONTRACT"],
+      "remediation_refs": ["GAP-CANONICAL-BRIDGE", "GAP-TRANSLATION-PRESERVATION"]
+    },
+    {
+      "direction_id": "A4-BRIDGE-003",
+      "direction_class": "bridge",
+      "source": {"representation_ids": ["typed.formalization_artifact"], "schema_status": "available", "evidence_refs": ["E-FORMALIZATION"]},
+      "target": {"representation_ids": ["bridge.domain_logic_slice"], "schema_status": "absent", "evidence_refs": ["E-PGIR002"]},
+      "availability_status": "absent",
+      "implementations": {
+        "deterministic": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-PGIR002"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "absent_in_scope", "population": 0, "training_admitted": false, "evidence_refs": ["E-PGIR002"]},
+      "coverage": {
+        "proof": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]},
+        "counterexample": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]},
+        "round_trip": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]}
+      },
+      "metrics": {
+        "token": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "cosine": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "syntax": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "type": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "proof": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]}
+      },
+      "limitations": ["No DomainLogicSlice schema or implementation exists at the bound authority tree; this matrix does not invent one."],
+      "evidence_refs": ["E-PGIR002", "E-FORMALIZATION"],
+      "remediation_refs": ["GAP-DOMAIN-LOGIC-SLICE"]
+    },
+    {
+      "direction_id": "A4-BRIDGE-004",
+      "direction_class": "bridge",
+      "source": {"representation_ids": ["bridge.domain_logic_slice"], "schema_status": "absent", "evidence_refs": ["E-PGIR002"]},
+      "target": {"representation_ids": ["family.tdfol", "family.dcec"], "schema_status": "available", "evidence_refs": ["E-TDFOL", "E-DCEC"]},
+      "availability_status": "absent",
+      "implementations": {
+        "deterministic": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-PGIR002"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "absent_in_scope", "population": 0, "training_admitted": false, "evidence_refs": ["E-PGIR002"]},
+      "coverage": {
+        "proof": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]},
+        "counterexample": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]},
+        "round_trip": {"status": "not_applicable", "evidence_refs": ["E-PGIR002"]}
+      },
+      "metrics": {
+        "token": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "cosine": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "syntax": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "type": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]},
+        "proof": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-PGIR002"]}
+      },
+      "limitations": ["TDFOL and DCEC remain distinct family ASTs; neither is a substitute for the missing slice boundary."],
+      "evidence_refs": ["E-PGIR002", "E-TDFOL", "E-DCEC"],
+      "remediation_refs": ["GAP-DOMAIN-LOGIC-SLICE", "GAP-CANONICAL-BRIDGE"]
+    },
+    {
+      "direction_id": "A4-BRIDGE-005",
+      "direction_class": "bridge",
+      "source": {"representation_ids": ["bridge.legal_ir_document"], "schema_status": "available", "evidence_refs": ["E-BRIDGE"]},
+      "target": {"representation_ids": ["family.tdfol", "family.dcec", "typed.legal_norm_ir", "typed.domain_declarations"], "schema_status": "available", "evidence_refs": ["E-BRIDGE", "E-TDFOL", "E-DCEC", "E-DEONTIC", "E-MODAL"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["bridge-registry", "modal_frame_logic", "deontic_norms", "fol_tdfol", "cec_dcec", "external_prover_router", "zkp_attestation"], "evidence_refs": ["E-BRIDGE"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": ["E-PGIR002"]}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-BRIDGE"]},
+      "coverage": {
+        "proof": {"status": "contract_only", "evidence_refs": ["E-BRIDGE"]},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "contract_only", "evidence_refs": ["E-BRIDGE"]}
+      },
+      "metrics": {
+        "token": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-BRIDGE"]},
+        "cosine": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-BRIDGE"]},
+        "syntax": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "type": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "proof": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-BRIDGE"]}
+      },
+      "limitations": ["The registry supplies discovery metadata and six adapters but does not unify their semantic types.", "Several adapters begin from legal text rather than consuming an already materialized bridge envelope, so this is a partial routing surface rather than a general bridge-to-family compiler."],
+      "evidence_refs": ["E-BRIDGE", "E-PGIR002"],
+      "remediation_refs": ["GAP-CANONICAL-BRIDGE", "GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-FAMILY-001",
+      "direction_class": "family",
+      "source": {"representation_ids": ["family.tdfol"], "schema_status": "available", "evidence_refs": ["E-TDFOL"]},
+      "target": {"representation_ids": ["family.dcec"], "schema_status": "available", "evidence_refs": ["E-DCEC"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["TDFOLToDCECConverter"], "evidence_refs": ["E-TDFOL"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-TDFOL"]},
+      "coverage": {
+        "proof": {"status": "unknown", "evidence_refs": []},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "test_only", "evidence_refs": ["E-TDFOL"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-TDFOL"]},
+        "type": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-TDFOL"]},
+        "proof": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []}
+      },
+      "limitations": ["The converter is a family component, not semantic-preservation authority.", "Lossless, equisatisfiable, over-approximate, under-approximate, and heuristic cases are not closed and measured."],
+      "evidence_refs": ["E-TDFOL", "E-DCEC", "E-PGIR002"],
+      "remediation_refs": ["GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-FAMILY-002",
+      "direction_class": "family",
+      "source": {"representation_ids": ["family.dcec"], "schema_status": "available", "evidence_refs": ["E-DCEC"]},
+      "target": {"representation_ids": ["family.tdfol"], "schema_status": "available", "evidence_refs": ["E-TDFOL"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["DCECToTDFOLConverter"], "evidence_refs": ["E-TDFOL"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-TDFOL"]},
+      "coverage": {
+        "proof": {"status": "unknown", "evidence_refs": []},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "test_only", "evidence_refs": ["E-TDFOL"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-TDFOL"]},
+        "type": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-TDFOL"]},
+        "proof": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []}
+      },
+      "limitations": ["The reverse family converter exists, but bidirectional availability does not establish semantic equivalence."],
+      "evidence_refs": ["E-TDFOL", "E-DCEC", "E-PGIR002"],
+      "remediation_refs": ["GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-FAMILY-003",
+      "direction_class": "family",
+      "source": {"representation_ids": ["family.tdfol"], "schema_status": "available", "evidence_refs": ["E-TDFOL"]},
+      "target": {"representation_ids": ["family.fol", "prover.tptp_tff_subset"], "schema_status": "partial", "evidence_refs": ["E-TDFOL"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["TDFOLToFOLConverter", "TDFOLToTPTPConverter"], "evidence_refs": ["E-TDFOL"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-TDFOL"]},
+      "coverage": {
+        "proof": {"status": "unknown", "evidence_refs": []},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "unknown", "evidence_refs": ["E-TDFOL"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-TDFOL"]},
+        "type": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "proof": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []}
+      },
+      "limitations": ["The inventory classifies FOL/TPTP projections as lossy or heuristic.", "No inverse or preservation-class receipt is bound to this family converter."],
+      "evidence_refs": ["E-TDFOL", "E-PGIR002"],
+      "remediation_refs": ["GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-PROVER-001",
+      "direction_class": "prover",
+      "source": {"representation_ids": ["prover.hammer_term"], "schema_status": "available", "evidence_refs": ["E-HAMMER"]},
+      "target": {"representation_ids": ["prover.smtlib2_subset"], "schema_status": "available", "evidence_refs": ["E-HAMMER"]},
+      "availability_status": "available",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["render_smtlib"], "evidence_refs": ["E-HAMMER"]},
+        "learned": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-HAMMER"]}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-HAMMER"]},
+      "coverage": {
+        "proof": {"status": "contract_only", "evidence_refs": ["E-HAMMER"]},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "test_only", "evidence_refs": ["E-HAMMER"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "type": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "proof": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]}
+      },
+      "limitations": ["Only the lowered first-order subset with domain sorts and Bool is supported; unsupported constructs fail closed."],
+      "evidence_refs": ["E-HAMMER"],
+      "remediation_refs": ["GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-PROVER-002",
+      "direction_class": "prover",
+      "source": {"representation_ids": ["prover.smtlib2_subset"], "schema_status": "available", "evidence_refs": ["E-HAMMER"]},
+      "target": {"representation_ids": ["prover.hammer_term"], "schema_status": "available", "evidence_refs": ["E-HAMMER"]},
+      "availability_status": "available",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["parse_smtlib"], "evidence_refs": ["E-HAMMER"]},
+        "learned": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-HAMMER"]}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-HAMMER"]},
+      "coverage": {
+        "proof": {"status": "contract_only", "evidence_refs": ["E-HAMMER"]},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "test_only", "evidence_refs": ["E-HAMMER"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "type": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "proof": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]}
+      },
+      "limitations": ["The parser accepts the subset emitted by this module, not arbitrary external SMT-LIB2."],
+      "evidence_refs": ["E-HAMMER"],
+      "remediation_refs": ["GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-PROVER-003",
+      "direction_class": "prover",
+      "source": {"representation_ids": ["prover.hammer_term"], "schema_status": "available", "evidence_refs": ["E-HAMMER"]},
+      "target": {"representation_ids": ["prover.tptp_tff_subset"], "schema_status": "available", "evidence_refs": ["E-HAMMER"]},
+      "availability_status": "available",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["render_tff"], "evidence_refs": ["E-HAMMER"]},
+        "learned": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-HAMMER"]}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-HAMMER"]},
+      "coverage": {
+        "proof": {"status": "contract_only", "evidence_refs": ["E-HAMMER"]},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "test_only", "evidence_refs": ["E-HAMMER"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "type": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "proof": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]}
+      },
+      "limitations": ["Translation support is bounded to the typed first-order fragment admitted by hammers.translation."],
+      "evidence_refs": ["E-HAMMER"],
+      "remediation_refs": ["GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-PROVER-004",
+      "direction_class": "prover",
+      "source": {"representation_ids": ["prover.tptp_tff_subset"], "schema_status": "available", "evidence_refs": ["E-HAMMER"]},
+      "target": {"representation_ids": ["prover.hammer_term"], "schema_status": "available", "evidence_refs": ["E-HAMMER"]},
+      "availability_status": "available",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["parse_tff"], "evidence_refs": ["E-HAMMER"]},
+        "learned": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-HAMMER"]}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-HAMMER"]},
+      "coverage": {
+        "proof": {"status": "contract_only", "evidence_refs": ["E-HAMMER"]},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "test_only", "evidence_refs": ["E-HAMMER"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "type": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]},
+        "proof": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-HAMMER"]}
+      },
+      "limitations": ["The parser is a structural inverse for the emitted subset, not a general TPTP importer or semantic-proof authority."],
+      "evidence_refs": ["E-HAMMER"],
+      "remediation_refs": ["GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-PROVER-005",
+      "direction_class": "prover",
+      "source": {"representation_ids": ["family.tdfol", "typed.formalization_artifact"], "schema_status": "available", "evidence_refs": ["E-TDFOL", "E-FORMALIZATION"]},
+      "target": {"representation_ids": ["prover.attempt_or_result"], "schema_status": "available", "evidence_refs": ["E-HAMMER", "E-PGIR003"]},
+      "availability_status": "blocked",
+      "implementations": {
+        "deterministic": {"status": "blocked", "implementation_ids": ["external-prover-router", "hammer", "tdfol-prover"], "evidence_refs": ["E-PGIR003", "E-PGIR005", "E-TDFOL", "E-HAMMER"]},
+        "learned": {"status": "experimental_not_admitted", "implementation_ids": ["learned premise selector", "Leanstral proposal"], "evidence_refs": ["E-HAMMER", "E-PGIR002", "E-PGIR003"]}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-HAMMER", "E-PGIR005"]},
+      "coverage": {
+        "proof": {"status": "blocked", "evidence_refs": ["E-PGIR005"]},
+        "counterexample": {"status": "contract_only", "evidence_refs": ["E-HAMMER", "E-TDFOL"]},
+        "round_trip": {"status": "unknown", "evidence_refs": []}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]},
+        "type": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]},
+        "proof": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]}
+      },
+      "limitations": ["Provider discovery reports route readiness only and is not proof.", "Current qualification is blocked by the missing Hammer environment lock and missing Lean package export.", "Solver outputs remain candidates until independent kernel reconstruction succeeds."],
+      "evidence_refs": ["E-PGIR003", "E-PGIR005", "E-HAMMER", "E-TDFOL"],
+      "remediation_refs": ["GAP-PROOF-ENVIRONMENT", "GAP-METRIC-BASELINE", "GAP-LEARNED-ADMISSION"]
+    },
+    {
+      "direction_id": "A4-CNL-001",
+      "direction_class": "cnl",
+      "source": {"representation_ids": ["bridge.canonical_roundtrip_ir"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+      "target": {"representation_ids": ["cnl.controlled_legal_text"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-DECOMPILER"]},
+      "availability_status": "available",
+      "implementations": {
+        "deterministic": {"status": "current", "implementation_ids": ["legal-ir-canonical-decompiler"], "evidence_refs": ["E-CANONICAL-DECOMPILER"]},
+        "learned": {"status": "experimental_not_admitted", "implementation_ids": ["LeanstralCanonicalRealizer", "SyMAI Leanstral realizer"], "evidence_refs": ["E-REPLACEMENT-MATRIX"]}
+      },
+      "examples": {"status": "measured_fixture", "population": 5, "training_admitted": false, "evidence_refs": ["E-CANONICAL-ROUNDTRIP"]},
+      "coverage": {
+        "proof": {"status": "contract_only", "evidence_refs": ["E-REPLACEMENT-MATRIX", "E-PGIR005"]},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "measured_historical", "evidence_refs": ["E-CANONICAL-ROUNDTRIP", "E-PGIR005"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]},
+        "type": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-CANONICAL-DECOMPILER"]},
+        "proof": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]}
+      },
+      "limitations": ["Output is a fixed controlled paraphrase, not source reconstruction or stylistic fidelity.", "Source, native records, gold IR, and source-bearing caches are forbidden inputs.", "Semantic fidelity requires recompilation and comparison."],
+      "evidence_refs": ["E-CANONICAL-DECOMPILER", "E-CANONICAL-ROUNDTRIP", "E-PGIR005"],
+      "remediation_refs": ["GAP-SEMANTIC-CID-DRIFT", "GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE", "GAP-LEARNED-ADMISSION"]
+    },
+    {
+      "direction_id": "A4-CNL-002",
+      "direction_class": "cnl",
+      "source": {"representation_ids": ["cnl.controlled_legal_text"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-DECOMPILER"]},
+      "target": {"representation_ids": ["bridge.canonical_roundtrip_ir"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+      "availability_status": "available",
+      "implementations": {
+        "deterministic": {"status": "current", "implementation_ids": ["legal-ir-canonical-compiler"], "evidence_refs": ["E-CANONICAL-COMPILER"]},
+        "learned": {"status": "experimental_not_admitted", "implementation_ids": ["LeanstralCanonicalConstructor", "ModalSpacyCanonicalConstructor"], "evidence_refs": ["E-REPLACEMENT-MATRIX"]}
+      },
+      "examples": {"status": "measured_fixture", "population": 5, "training_admitted": false, "evidence_refs": ["E-CANONICAL-ROUNDTRIP"]},
+      "coverage": {
+        "proof": {"status": "contract_only", "evidence_refs": ["E-REPLACEMENT-MATRIX", "E-PGIR005"]},
+        "counterexample": {"status": "contract_only", "evidence_refs": ["E-REPLACEMENT-MATRIX"]},
+        "round_trip": {"status": "measured_historical", "evidence_refs": ["E-CANONICAL-ROUNDTRIP", "E-PGIR005"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]},
+        "type": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]},
+        "proof": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]}
+      },
+      "limitations": ["Recompilation still requires the caller-supplied atom vocabulary.", "The current historical parity receipt is not current-input qualification because compiler bytes drifted."],
+      "evidence_refs": ["E-CANONICAL-COMPILER", "E-CANONICAL-ROUNDTRIP", "E-PGIR005"],
+      "remediation_refs": ["GAP-SEMANTIC-CID-DRIFT", "GAP-METRIC-BASELINE", "GAP-LEARNED-ADMISSION"]
+    },
+    {
+      "direction_id": "A4-CNL-003",
+      "direction_class": "cnl",
+      "source": {"representation_ids": ["typed.legal_norm_ir", "typed.domain_declarations"], "schema_status": "available", "evidence_refs": ["E-DEONTIC", "E-MODAL", "E-INTENT"]},
+      "target": {"representation_ids": ["cnl.controlled_legal_text"], "schema_status": "available", "evidence_refs": ["E-DEONTIC", "E-CANONICAL-DECOMPILER"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["deontic-controlled-decoder", "modal-controlled-decompiler"], "evidence_refs": ["E-DEONTIC", "E-MODAL", "E-PGIR002"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-DEONTIC", "E-MODAL"]},
+      "coverage": {
+        "proof": {"status": "unknown", "evidence_refs": []},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "test_only", "evidence_refs": ["E-DEONTIC", "E-MODAL"]}
+      },
+      "metrics": {
+        "token": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-BRIDGE"]},
+        "cosine": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-BRIDGE"]},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-DEONTIC", "E-MODAL"]},
+        "type": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "proof": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []}
+      },
+      "limitations": ["Deontic reconstruction is controlled and slot-grounded; Modal reconstruction carries source text and has a different fidelity meaning.", "Intent decompilation produces a structural review rather than controlled prose, so it is not included as a full CNL implementation."],
+      "evidence_refs": ["E-DEONTIC", "E-MODAL", "E-INTENT", "E-PGIR002"],
+      "remediation_refs": ["GAP-DOMAIN-NEUTRAL-DECOMPILER", "GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-CNL-004",
+      "direction_class": "cnl",
+      "source": {"representation_ids": ["cnl.controlled_legal_text"], "schema_status": "available", "evidence_refs": ["E-DEONTIC", "E-CANONICAL-DECOMPILER"]},
+      "target": {"representation_ids": ["typed.legal_norm_ir", "family.tdfol", "family.dcec"], "schema_status": "available", "evidence_refs": ["E-DEONTIC", "E-TDFOL", "E-DCEC"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["deontic-deterministic-parser", "tdfol-parser", "CEC family parsers"], "evidence_refs": ["E-DEONTIC", "E-TDFOL", "E-DCEC", "E-PGIR002"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-DEONTIC", "E-TDFOL", "E-DCEC"]},
+      "coverage": {
+        "proof": {"status": "unknown", "evidence_refs": []},
+        "counterexample": {"status": "unknown", "evidence_refs": []},
+        "round_trip": {"status": "test_only", "evidence_refs": ["E-DEONTIC", "E-TDFOL"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-DEONTIC", "E-TDFOL"]},
+        "type": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-TDFOL", "E-DCEC"]},
+        "proof": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []}
+      },
+      "limitations": ["Parsing is family-specific; no repository-wide CNL grammar or shared semantic equality criterion exists."],
+      "evidence_refs": ["E-DEONTIC", "E-TDFOL", "E-DCEC", "E-PGIR002"],
+      "remediation_refs": ["GAP-CANONICAL-BRIDGE", "GAP-TRANSLATION-PRESERVATION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-TRACE-001",
+      "direction_class": "trace",
+      "source": {"representation_ids": ["source.legal_policy_text", "bridge.canonical_roundtrip_ir", "cnl.controlled_legal_text"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT", "E-CANONICAL-DECOMPILER"]},
+      "target": {"representation_ids": ["trace.component_and_source_map"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+      "availability_status": "available",
+      "implementations": {
+        "deterministic": {"status": "current", "implementation_ids": ["canonical compiler component trace", "canonical decompiler component trace", "canonical source map"], "evidence_refs": ["E-CANONICAL-CONTRACT", "E-CANONICAL-COMPILER", "E-CANONICAL-DECOMPILER"]},
+        "learned": {"status": "absent_in_scope", "implementation_ids": [], "evidence_refs": ["E-CANONICAL-COMPILER", "E-CANONICAL-DECOMPILER"]}
+      },
+      "examples": {"status": "measured_fixture", "population": 5, "training_admitted": false, "evidence_refs": ["E-CANONICAL-ROUNDTRIP"]},
+      "coverage": {
+        "proof": {"status": "not_applicable", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+        "counterexample": {"status": "not_applicable", "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+        "round_trip": {"status": "measured_historical", "evidence_refs": ["E-CANONICAL-ROUNDTRIP", "E-PGIR005"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-CANONICAL-CONTRACT"]},
+        "syntax": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]},
+        "type": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]},
+        "proof": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-CANONICAL-CONTRACT"]}
+      },
+      "limitations": ["Compiler source maps use coarse typed-deontic record spans rather than independently measured field-exact spans.", "Component traces bind execution identities but do not prove semantic preservation."],
+      "evidence_refs": ["E-CANONICAL-CONTRACT", "E-CANONICAL-COMPILER", "E-CANONICAL-DECOMPILER", "E-PGIR005"],
+      "remediation_refs": ["GAP-SEMANTIC-CID-DRIFT", "GAP-TRACE-REPLAY", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-TRACE-002",
+      "direction_class": "trace",
+      "source": {"representation_ids": ["family.tdfol", "family.dcec", "prover.hammer_term"], "schema_status": "available", "evidence_refs": ["E-TDFOL", "E-DCEC", "E-HAMMER"]},
+      "target": {"representation_ids": ["trace.proof_translation_reconstruction"], "schema_status": "available", "evidence_refs": ["E-HAMMER"]},
+      "availability_status": "blocked",
+      "implementations": {
+        "deterministic": {"status": "blocked", "implementation_ids": ["hammer translation and result contracts", "tdfol-prover", "dcec-prover"], "evidence_refs": ["E-HAMMER", "E-TDFOL", "E-DCEC", "E-PGIR005"]},
+        "learned": {"status": "experimental_not_admitted", "implementation_ids": ["learned premise selector", "LLM premise ranking"], "evidence_refs": ["E-HAMMER", "E-PGIR003"]}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-HAMMER", "E-PGIR005"]},
+      "coverage": {
+        "proof": {"status": "blocked", "evidence_refs": ["E-PGIR005"]},
+        "counterexample": {"status": "contract_only", "evidence_refs": ["E-HAMMER", "E-TDFOL"]},
+        "round_trip": {"status": "contract_only", "evidence_refs": ["E-HAMMER"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]},
+        "type": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]},
+        "proof": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]}
+      },
+      "limitations": ["The record schemas exist, but the checked release gate lacks its environment lock.", "Untrusted solver verdicts and candidates cannot become verified without exact kernel reconstruction."],
+      "evidence_refs": ["E-HAMMER", "E-TDFOL", "E-DCEC", "E-PGIR005"],
+      "remediation_refs": ["GAP-PROOF-ENVIRONMENT", "GAP-TRACE-REPLAY", "GAP-LEARNED-ADMISSION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-TRACE-003",
+      "direction_class": "trace",
+      "source": {"representation_ids": ["family.tdfol"], "schema_status": "available", "evidence_refs": ["E-TDFOL"]},
+      "target": {"representation_ids": ["trace.countermodel"], "schema_status": "available", "evidence_refs": ["E-TDFOL"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["CounterModelExtractor", "extract_countermodel"], "evidence_refs": ["E-TDFOL"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-TDFOL"]},
+      "coverage": {
+        "proof": {"status": "not_applicable", "evidence_refs": ["E-TDFOL"]},
+        "counterexample": {"status": "test_only", "evidence_refs": ["E-TDFOL"]},
+        "round_trip": {"status": "unknown", "evidence_refs": []}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-TDFOL"]},
+        "type": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "proof": {"status": "not_applicable", "value": null, "denominator": null, "evidence_refs": ["E-TDFOL"]}
+      },
+      "limitations": ["Countermodel extraction is TDFOL-family scoped and has no cross-family semantic-negative authority in the current matrix."],
+      "evidence_refs": ["E-TDFOL", "E-PGIR002"],
+      "remediation_refs": ["GAP-TRACE-REPLAY", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-TRACE-004",
+      "direction_class": "trace",
+      "source": {"representation_ids": ["prover.attempt_or_result"], "schema_status": "available", "evidence_refs": ["E-HAMMER", "E-PGIR003"]},
+      "target": {"representation_ids": ["trace.tactic_attempt"], "schema_status": "partial", "evidence_refs": ["E-SUPERVISOR-TACTIC", "E-PGIR003"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["GoalDirectedTactician", "CounterexampleGuidedTactician"], "evidence_refs": ["E-SUPERVISOR-TACTIC", "E-PGIR003"]},
+        "learned": {"status": "experimental_not_admitted", "implementation_ids": ["Leanstral tactic proposal"], "evidence_refs": ["E-PGIR003"]}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-SUPERVISOR-TACTIC"]},
+      "coverage": {
+        "proof": {"status": "contract_only", "evidence_refs": ["E-PGIR003", "E-SUPERVISOR-TACTIC"]},
+        "counterexample": {"status": "test_only", "evidence_refs": ["E-SUPERVISOR-TACTIC"]},
+        "round_trip": {"status": "unknown", "evidence_refs": []}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "test_only_no_metric", "value": null, "denominator": null, "evidence_refs": ["E-SUPERVISOR-TACTIC"]},
+        "type": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "proof": {"status": "defined_unmeasured", "value": null, "denominator": null, "evidence_refs": ["E-PGIR003"]}
+      },
+      "limitations": ["Tactic selection and orchestration are proposals/guidance; they do not establish proof.", "No closed PGIR training-example trace contract yet binds tactic state, premises, resources, and independent checker outcome."],
+      "evidence_refs": ["E-SUPERVISOR-TACTIC", "E-PGIR003"],
+      "remediation_refs": ["GAP-TRACE-REPLAY", "GAP-LEARNED-ADMISSION", "GAP-METRIC-BASELINE"]
+    },
+    {
+      "direction_id": "A4-TRACE-005",
+      "direction_class": "trace",
+      "source": {"representation_ids": ["trace.component_and_source_map", "trace.proof_translation_reconstruction", "trace.countermodel", "trace.tactic_attempt"], "schema_status": "partial", "evidence_refs": ["E-CANONICAL-CONTRACT", "E-HAMMER", "E-TDFOL", "E-SUPERVISOR-TACTIC"]},
+      "target": {"representation_ids": ["bridge.canonical_roundtrip_ir", "typed.formalization_artifact", "prover.attempt_or_result"], "schema_status": "available", "evidence_refs": ["E-CANONICAL-CONTRACT", "E-FORMALIZATION", "E-HAMMER"]},
+      "availability_status": "partial",
+      "implementations": {
+        "deterministic": {"status": "component", "implementation_ids": ["Hammer ReconstructionRecord to independently checked result", "Intent semantic review"], "evidence_refs": ["E-HAMMER", "E-INTENT", "E-PGIR002"]},
+        "learned": {"status": "unknown", "implementation_ids": [], "evidence_refs": []}
+      },
+      "examples": {"status": "test_fixture", "population": null, "training_admitted": false, "evidence_refs": ["E-HAMMER", "E-INTENT"]},
+      "coverage": {
+        "proof": {"status": "blocked", "evidence_refs": ["E-PGIR005"]},
+        "counterexample": {"status": "test_only", "evidence_refs": ["E-TDFOL", "E-INTENT"]},
+        "round_trip": {"status": "contract_only", "evidence_refs": ["E-HAMMER", "E-INTENT"]}
+      },
+      "metrics": {
+        "token": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "cosine": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "syntax": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "type": {"status": "unknown", "value": null, "denominator": null, "evidence_refs": []},
+        "proof": {"status": "blocked", "value": null, "denominator": null, "evidence_refs": ["E-PGIR005"]}
+      },
+      "limitations": ["Kernel reconstruction can qualify a proof outcome but does not reconstruct CanonicalRoundTripIR.", "No general trace-to-source, trace-to-typed, or trace-to-canonical semantic inverse exists.", "Counterexample and tactic traces cannot silently become semantic training labels without a checked binding."],
+      "evidence_refs": ["E-HAMMER", "E-INTENT", "E-TDFOL", "E-PGIR002", "E-PGIR005"],
+      "remediation_refs": ["GAP-TRACE-REPLAY", "GAP-PROOF-ENVIRONMENT", "GAP-DOMAIN-NEUTRAL-DECOMPILER", "GAP-METRIC-BASELINE"]
+    }
+  ],
+  "historical_measurements": [
+    {
+      "measurement_id": "HIST-CANONICAL-ROUNDTRIP-5",
+      "direction_ids": [
+        "A4-SOURCE-002",
+        "A4-TYPED-001",
+        "A4-CNL-001",
+        "A4-CNL-002",
+        "A4-TRACE-001"
+      ],
+      "status": "historical_not_currently_qualified",
+      "population": {
+        "case_count": 5,
+        "fixture_path": "tests/fixtures/semantic_roundtrip/pilot_cases.json"
+      },
+      "observations": {
+        "end_to_end_loss_by_case": {
+          "construction_contract": "0.141666667",
+          "corp_policy_1": "0.1",
+          "exception_with_window": "0.0",
+          "exec_order_1": "0.05",
+          "legal_doc_1": "0.15"
+        },
+        "full_nonempty_coverage_cases": 5,
+        "polarity_hard_failure_cases": 0,
+        "source_copy_violation_cases": 0
+      },
+      "qualification_blocker": "PGIR-005 observed that the checked-in compiler raw CID differs from the live compiler bytes; these values remain historical and are not current-input metrics.",
+      "evidence_refs": [
+        "E-CANONICAL-ROUNDTRIP",
+        "E-PGIR005"
+      ]
+    }
+  ],
+  "qualification_observations": {
+    "source_examples": {
+      "inventory_candidate_source_rows": 7173,
+      "training_admitted_source_rows": 0,
+      "status": "inventory_candidate_only",
+      "evidence_refs": [
+        "E-PGIR004"
+      ]
+    },
+    "pre_change_tests": {
+      "accelerator": {"collected": 360, "passed": 360, "failed": 0, "skipped": 0, "errors": 0},
+      "datasets": {"collected": 818, "passed": 801, "failed": 2, "skipped": 2, "errors": 13},
+      "semantic_cid_gate": "no_go",
+      "lean_runtime_gate": "no_go",
+      "hammer_environment_gate": "blocked",
+      "proof_claim": "none",
+      "training_claim": "none",
+      "evidence_refs": [
+        "E-PGIR005"
+      ]
+    }
+  },
+  "gap_catalog": {
+    "GAP-SEMANTIC-CID-DRIFT": {
+      "priority": "P0",
+      "finding": "The checked-in canonical parity snapshot is not bound to the live compiler bytes.",
+      "remediation": "Execute the sealed PGIR-005 semantic_cid_drift repair proposal under a separate revision, regenerate only from the admitted implementation, and rerun canonical parity without weakening the exact-CID gate.",
+      "owner_tasks": [
+        "PGIR-021",
+        "PGIR-023"
+      ],
+      "evidence_refs": [
+        "E-PGIR005"
+      ]
+    },
+    "GAP-CANONICAL-BRIDGE": {
+      "priority": "P0",
+      "finding": "CanonicalRoundTripIR, FormalizationArtifact, and LegalIRDocument have parallel meanings and no single rich repository-wide typed bridge.",
+      "remediation": "PGIR-020 must compose one versioned bridge from existing contracts, retain family identity, source references, assumptions, provenance, and explicit unsupported constructs, and provide migrations and family conformance vectors.",
+      "owner_tasks": [
+        "PGIR-020"
+      ],
+      "evidence_refs": [
+        "E-PGIR002",
+        "E-BRIDGE",
+        "E-FORMALIZATION",
+        "E-CANONICAL-CONTRACT"
+      ]
+    },
+    "GAP-DOMAIN-LOGIC-SLICE": {
+      "priority": "P0",
+      "finding": "No DomainLogicSlice schema or implementation exists at the bound authority tree.",
+      "remediation": "PGIR-020 must represent the required slice behavior inside the consolidated bridge or explicitly retain it as unsupported; it must not introduce a new logic family or silently alias an existing family AST.",
+      "owner_tasks": [
+        "PGIR-020"
+      ],
+      "evidence_refs": [
+        "E-PGIR002"
+      ]
+    },
+    "GAP-DOMAIN-NEUTRAL-DECOMPILER": {
+      "priority": "P0",
+      "finding": "There is no domain-neutral inverse of FormalizationCompiler; existing decoders have intentionally different reconstruction guarantees.",
+      "remediation": "PGIR-022 must separate controlled semantic reconstruction, structural review, and style paraphrase, and require recompilation plus semantic comparison before claiming fidelity.",
+      "owner_tasks": [
+        "PGIR-022"
+      ],
+      "evidence_refs": [
+        "E-PGIR002",
+        "E-INTENT",
+        "E-DEONTIC",
+        "E-MODAL"
+      ]
+    },
+    "GAP-TRANSLATION-PRESERVATION": {
+      "priority": "P0",
+      "finding": "Family and prover codecs exist, but preservation classes are not uniformly closed, receipted, and measured in both directions.",
+      "remediation": "PGIR-022 must attach one of lossless, equisatisfiable, over-approximation, under-approximation, heuristic, or unsupported to each translation and validate semantic differences adversarially.",
+      "owner_tasks": [
+        "PGIR-022"
+      ],
+      "evidence_refs": [
+        "E-TDFOL",
+        "E-HAMMER",
+        "E-BRIDGE",
+        "E-PGIR002"
+      ]
+    },
+    "GAP-METRIC-BASELINE": {
+      "priority": "P0",
+      "finding": "Token, cosine, syntax, type, and proof metrics are absent, definition-only, historical, or blocked for most directions; missing values cannot be interpreted as zero.",
+      "remediation": "PGIR-023 must report compiler and decompiler metrics separately with denominators, family/domain strata, unsupported and unknown outcomes, exact trace CIDs, and independent proof replay where available.",
+      "owner_tasks": [
+        "PGIR-023"
+      ],
+      "evidence_refs": [
+        "E-BRIDGE",
+        "E-CANONICAL-ROUNDTRIP",
+        "E-PGIR005"
+      ]
+    },
+    "GAP-LEARNED-ADMISSION": {
+      "priority": "P0",
+      "finding": "Learned compiler, decompiler, embedding, and tactic candidates exist, but no model-backed direction is current semantic or proof authority and the legacy checkpoint is artifact-only.",
+      "remediation": "PGIR-030 and descendants must freeze compatible architecture, tokenizer, checkpoint, loss, lineage, and evaluation identities; model outputs remain candidates until deterministic gates admit them.",
+      "owner_tasks": [
+        "PGIR-030"
+      ],
+      "evidence_refs": [
+        "E-REPLACEMENT-MATRIX",
+        "E-PGIR002",
+        "E-PGIR003",
+        "E-PGIR004"
+      ]
+    },
+    "GAP-PROOF-ENVIRONMENT": {
+      "priority": "P0",
+      "finding": "The proof route inventory is available or degraded by provider, but current qualification lacks the Hammer environment lock and the Lean runtime package export.",
+      "remediation": "Execute the two sealed PGIR-005 repair proposals under separate task revisions, retain unavailable states, and rerun proof/reconstruction evidence without treating discovery as proof.",
+      "owner_tasks": [
+        "PGIR-023"
+      ],
+      "evidence_refs": [
+        "E-PGIR003",
+        "E-PGIR005"
+      ]
+    },
+    "GAP-QUALIFIED-EXAMPLES": {
+      "priority": "P0",
+      "finding": "PGIR-004 identifies 7,173 source candidates but admits zero rows for training; current direction examples are fixtures only.",
+      "remediation": "PGIR-010 through PGIR-012 must establish source, rights, lineage, and leakage-safe split contracts before any inventory row is used for training or evaluation.",
+      "owner_tasks": [
+        "PGIR-010",
+        "PGIR-011",
+        "PGIR-012"
+      ],
+      "evidence_refs": [
+        "E-PGIR004"
+      ]
+    },
+    "GAP-TRACE-REPLAY": {
+      "priority": "P0",
+      "finding": "Trace schemas are family- and workflow-specific, and no closed record binds every compiler, decompiler, translation, proof, tactic, counterexample, and round-trip example with one authority vocabulary.",
+      "remediation": "PGIR-013 must add versioned admissible trace/example contracts and exact proof-to-statement binding; PGIR-021 through PGIR-023 must emit replayable stage identities and equality criteria.",
+      "owner_tasks": [
+        "PGIR-013",
+        "PGIR-021",
+        "PGIR-022",
+        "PGIR-023"
+      ],
+      "evidence_refs": [
+        "E-CANONICAL-CONTRACT",
+        "E-HAMMER",
+        "E-INTENT",
+        "E-PGIR003"
+      ]
+    }
+  },
+  "human_summary": {
+    "headline": "A narrow deterministic Legal text to canonical IR to controlled-text cycle exists, while the repository-wide typed bridge, DomainLogicSlice, domain-neutral inverse, qualified proof environment, and current per-direction metrics remain gaps.",
+    "findings": [
+      "COMPILER-CURRENT-1 and DECOMPILER-CURRENT-1 are deterministic, source-withheld at the reverse boundary, and contain no learned stage, but their canonical grammar covers only seven O/P/F rule facets and requires caller-supplied atoms.",
+      "CanonicalRoundTripIR, FormalizationArtifact, LegalIRDocument, TDFOL, DCEC, Intent, Security, and ModalIR remain distinct meanings. Existing adapters are reusable components, not evidence that one repository-wide bridge already exists.",
+      "TDFOL/DCEC converters and Hammer SMT-LIB/TPTP codecs provide useful deterministic paths, but structural round-trip tests do not establish a declared semantic-preservation class.",
+      "Controlled reconstruction is family-specific: the canonical path emits fixed source-withheld prose, Deontic emits slot-grounded prose, Modal carries source-bearing reconstruction, and Intent emits semantic review rather than prose.",
+      "Proof, tactic, counterexample, and translation trace contracts exist, but current proof qualification is blocked and no general trace-to-semantic inverse exists.",
+      "The only numeric semantic observations carried here are the five-case historical canonical losses. Token, cosine, syntax, type, and proof values remain null wherever no exact current receipt exists.",
+      "JusticeDAO pins provide 7,173 inventory candidate source rows but zero training-admitted rows; fixture availability must not be confused with a qualified corpus."
+    ],
+    "next_actions_in_order": [
+      "Repair the exact semantic implementation CID and proof-environment prerequisites under their sealed separate revisions.",
+      "Use PGIR-020 to consolidate the typed bridge and explicitly resolve or preserve the DomainLogicSlice absence.",
+      "Use PGIR-021 and PGIR-022 to make compiler stages replayable and translation/reconstruction guarantees explicit.",
+      "Use PGIR-023 to measure every required metric with denominators and unknown/unsupported strata before learned training or promotion."
+    ],
+    "universal_semantic_claim": false,
+    "proof_claim": "none",
+    "training_readiness": "no_go"
+  },
+  "counts": {
+    "direction_row_count": 29,
+    "direction_rows_by_class": {
+      "source": 3,
+      "typed": 4,
+      "bridge": 5,
+      "family": 3,
+      "prover": 5,
+      "cnl": 4,
+      "trace": 5
+    },
+    "required_direction_class_count": 7,
+    "covered_direction_class_count": 7,
+    "gap_count": 10,
+    "historical_measurement_count": 1,
+    "training_admitted_source_rows": 0
+  },
+  "explicit_nonclaims": [
+    "Availability is not semantic preservation, proof, training admission, or production promotion.",
+    "A passing unit or integration test without a reported denominator is not converted into a numeric metric.",
+    "RoundTripMetrics defaults and registered loss names are not observed zero values.",
+    "The five-case canonical snapshot is historical because PGIR-005 found compiler CID drift; this matrix does not refresh or reinterpret it.",
+    "Solver success, model output, tactic selection, and provider discovery remain candidates or orchestration until an independent authority accepts exact bound evidence.",
+    "No DomainLogicSlice, repository-wide Formula alias, domain-neutral formalization decompiler, fixed composite loss, unified semantic checkpoint, or qualified publication authority is invented.",
+    "The 7,173 source candidates are not training rows, proof of completeness, or legal authorization."
+  ],
+  "canonicalization": {
+    "cid": "cidv1-dag-json-sha2-256-lower-base32",
+    "identity_projection": "entire parsed document excluding top-level matrix_cid and matrix_sha256",
+    "identity_json": "UTF-8, sorted keys, compact separators, ensure_ascii=false, allow_nan=false",
+    "rendered_json": "UTF-8, two-space indentation, one terminal LF"
+  }
+}

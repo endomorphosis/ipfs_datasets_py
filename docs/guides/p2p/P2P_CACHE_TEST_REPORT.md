@@ -265,6 +265,7 @@ None! All expected functionality working correctly.
 4. **Monitor Cache Statistics**
    ```python
    from ipfs_accelerate_py.github_cli.cache import get_global_cache
+
    stats = get_global_cache().get_stats()
    print(f"Hit rate: {stats['hit_rate']:.1%}")
    ```
@@ -279,6 +280,7 @@ None! All expected functionality working correctly.
 2. **Enable Debug Logging**
    ```python
    import logging
+
    logging.basicConfig(level=logging.DEBUG)
    ```
 

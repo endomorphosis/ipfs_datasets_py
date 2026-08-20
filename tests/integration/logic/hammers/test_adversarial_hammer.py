@@ -292,9 +292,7 @@ class TestPremisePoisoning:
         )
         import dataclasses
 
-        poisoned_result = dataclasses.replace(
-            result, premises=list(result.premises) + [fabricated]
-        )
+        poisoned_result = dataclasses.replace(result, premises=list(result.premises) + [fabricated])
         with pytest.raises(CorpusRevisionMismatchError):
             verify_hammer_result_corpus(poisoned_result, golden_manifest)
 

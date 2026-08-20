@@ -4,6 +4,7 @@ eCode360 Webscraper
 This module provides functions for scraping municipal codes from eCode360
 (ecode360.com), a major provider of municipal code content for US jurisdictions.
 """
+
 from typing import Any, Dict, Optional
 from datetime import datetime
 from bs4 import BeautifulSoup
@@ -12,11 +13,7 @@ import logging
 import aiohttp
 
 
-
-
 import duckdb
-
-
 
 
 def get_url():
@@ -34,28 +31,25 @@ async def _fetch_url(url: str, timeout_seconds: float = 30.0) -> tuple[int, str]
                 return int(response.status), str(await response.text())
 
 
-
-
-
 async def search_jurisdictions(
     state: Optional[str] = None,
     jurisdiction: Optional[str] = None,
     keywords: Optional[str] = None,
-    limit: int = 100
+    limit: int = 100,
 ) -> Dict[str, Any]:
     """
     Search for jurisdictions in eCode360.
-    
+
     Searches the eCode360 database for jurisdictions matching the specified
     criteria. Can filter by state code, jurisdiction name, or keywords. Returns a
     list of matching jurisdictions with their metadata.
-    
+
     Args:
         state (str, optional): Two-letter state code to filter by (e.g., "WA", "CA").
         jurisdiction (str, optional): Full or partial jurisdiction name to search for.
         keywords (str, optional): Keywords to search across jurisdiction data.
         limit (int, optional): Maximum number of results to return. Defaults to 100.
-    
+
     Returns:
         dict: A dictionary containing:
             - jurisdictions (list): List of jurisdiction dictionaries, each with:
@@ -67,12 +61,12 @@ async def search_jurisdictions(
                 - provider (str): Always "ecode360"
             - total (int): Total number of matching jurisdictions
             - limit (int): Applied limit value
-    
+
     Raises:
         ValueError: If state code is invalid or limit is negative.
         ConnectionError: If unable to connect to eCode360.
         TimeoutError: If the request times out.
-    
+
     Example:
         >>> import anyio
         >>> async def example():
@@ -87,23 +81,23 @@ async def search_jurisdictions(
     """
     jurisdictions = []
     base_url = "https://ecode360.com"
-    
+
     try:
         status, html = await _fetch_url(base_url, timeout_seconds=30)
         if status != 200:
             raise ConnectionError(f"Failed to connect to eCode360: HTTP {status}")
 
-        soup = BeautifulSoup(html, 'html.parser')
+        soup = BeautifulSoup(html, "html.parser")
 
         # Parse jurisdiction links
-        links = soup.find_all('a', href=True)
+        links = soup.find_all("a", href=True)
         for link in links:
-            href = link.get('href', '')
+            href = link.get("href", "")
             text = link.get_text(strip=True)
 
             # Extract jurisdiction info from link text
-            if ',' in text:
-                parts = text.split(',')
+            if "," in text:
+                parts = text.split(",")
                 if len(parts) == 2:
                     jur_name = parts[0].strip()
                     jur_state = parts[1].strip()
@@ -116,19 +110,23 @@ async def search_jurisdictions(
                     if keywords and keywords.lower() not in text.lower():
                         continue
 
-                    jurisdictions.append({
-                        "name": text,
-                        "state": jur_state,
-                        "url": f"https://ecode360.com{href}" if not href.startswith('http') else href,
-                        "provider": "ecode360"
-                    })
+                    jurisdictions.append(
+                        {
+                            "name": text,
+                            "state": jur_state,
+                            "url": f"https://ecode360.com{href}"
+                            if not href.startswith("http")
+                            else href,
+                            "provider": "ecode360",
+                        }
+                    )
 
                     if len(jurisdictions) >= limit:
                         break
     except Exception:
         # Keep best-effort behavior; tests patch network results.
         pass
-    
+
     return {
         "jurisdictions": jurisdictions[:limit],
         "total": len(jurisdictions[:limit]),
@@ -136,29 +134,27 @@ async def search_jurisdictions(
     }
 
 
-
 async def get_ecode360_jurisdictions(
-    state: Optional[str] = None,
-    limit: Optional[int] = None
+    state: Optional[str] = None, limit: Optional[int] = None
 ) -> list[str]:
     """
     Retrieve a list of available jurisdictions from eCode360.
-    
+
     Fetches all jurisdictions available in eCode360, optionally filtered
     by state. This is a convenience function that returns a simplified list of
     jurisdictions suitable for batch processing.
-    
+
     Args:
         state (str, optional): Two-letter state code to filter jurisdictions.
         limit (int, optional): Maximum number of jurisdictions to return.
-    
+
     Returns:
         list: List of jurisdiction strings in format "City, ST" (e.g., "Seattle, WA").
-    
+
     Raises:
         ConnectionError: If unable to connect to eCode360.
         ValueError: If state code is invalid.
-    
+
     Example:
         >>> import anyio
         >>> async def example():
@@ -172,25 +168,24 @@ async def get_ecode360_jurisdictions(
     result = await search_jurisdictions(state=state, limit=limit or 100)
     return [j["name"] for j in result["jurisdictions"]]
 
+
 async def scrape_jurisdiction(
-    jurisdiction_url: str,
-    include_metadata: bool = False,
-    max_sections: Optional[int] = None
+    jurisdiction_url: str, include_metadata: bool = False, max_sections: Optional[int] = None
 ) -> Dict[str, Any]:
     """
     Scrape code sections from a single jurisdiction.
-    
+
     Extracts all code sections from a specific jurisdiction in eCode360.
     Each section includes the title, content, section number, and optional metadata
     such as history notes and cross-references.
-    
+
     Args:
         jurisdiction_url (str): Full URL to the jurisdiction's code library.
         include_metadata (bool, optional): Whether to include metadata fields like
             history, cross_references, and annotations. Defaults to False.
         max_sections (int, optional): Maximum number of sections to scrape. Useful
             for testing or partial scraping. Defaults to None (scrape all).
-    
+
     Returns:
         dict: A dictionary containing:
             - jurisdiction (str): Name of the jurisdiction
@@ -205,13 +200,13 @@ async def scrape_jurisdiction(
             - total_sections (int): Total number of sections scraped
             - timestamp (str): ISO 8601 timestamp when scraped
             - provider (str): Always "ecode360"
-    
+
     Raises:
         ValueError: If jurisdiction_url is invalid or malformed.
         ConnectionError: If unable to connect to the jurisdiction URL.
         TimeoutError: If the request times out.
         HTTPError: If the server returns an error response.
-    
+
     Example:
         >>> import anyio
         >>> async def example():
@@ -227,51 +222,35 @@ async def scrape_jurisdiction(
     """
     if not jurisdiction_url:
         raise ValueError("jurisdiction_url is required")
-    
-    if not jurisdiction_url.startswith('http'):
+
+    if not jurisdiction_url.startswith("http"):
         raise ValueError("jurisdiction_url must be a valid HTTP(S) URL")
-    
+
     sections = []
     jurisdiction_name = "Seattle, WA"
-    
+
     try:
         status, html = await _fetch_url(jurisdiction_url, timeout_seconds=30)
 
         if status == 404:
-            return {
-                "error": "Jurisdiction not found",
-                "error_type": "not_found",
-                "sections": []
-            }
+            return {"error": "Jurisdiction not found", "error_type": "not_found", "sections": []}
         if status == 429:
-            return {
-                "error": "Rate limit exceeded",
-                "error_type": "rate_limit",
-                "sections": []
-            }
+            return {"error": "Rate limit exceeded", "error_type": "rate_limit", "sections": []}
         if status >= 500:
-            return {
-                "error": "Server error",
-                "error_type": "server_error",
-                "sections": []
-            }
+            return {"error": "Server error", "error_type": "server_error", "sections": []}
         if status != 200:
-            return {
-                "error": f"HTTP error {status}",
-                "error_type": "http_error",
-                "sections": []
-            }
+            return {"error": f"HTTP error {status}", "error_type": "http_error", "sections": []}
 
-        soup = BeautifulSoup(html, 'html.parser')
+        soup = BeautifulSoup(html, "html.parser")
 
         # Parse sections from HTML
-        h1_tags = soup.find_all('h1')
+        h1_tags = soup.find_all("h1")
         for h1 in h1_tags:
             text = h1.get_text(strip=True)
 
             # Extract section number and title
-            if ' ' in text:
-                parts = text.split(' ', 1)
+            if " " in text:
+                parts = text.split(" ", 1)
                 section_number = parts[0]
                 title = parts[1] if len(parts) > 1 else text
             else:
@@ -279,14 +258,14 @@ async def scrape_jurisdiction(
                 title = text
 
             # Get section content
-            content_div = h1.find_next('div')
+            content_div = h1.find_next("div")
             content = content_div.get_text(strip=True) if content_div else ""
 
             section = {
                 "section_number": section_number,
                 "title": title,
                 "text": content,
-                "source_url": jurisdiction_url
+                "source_url": jurisdiction_url,
             }
 
             if include_metadata:
@@ -298,17 +277,9 @@ async def scrape_jurisdiction(
                 break
 
     except (aiohttp.ClientConnectorError, ConnectionError, OSError):
-        return {
-            "error": "DNS resolution failed",
-            "error_type": "dns",
-            "sections": []
-        }
+        return {"error": "DNS resolution failed", "error_type": "dns", "sections": []}
     except TimeoutError:
-        return {
-            "error": "Network timeout",
-            "error_type": "timeout",
-            "sections": []
-        }
+        return {"error": "Network timeout", "error_type": "timeout", "sections": []}
     except Exception as e:
         # For invalid HTML or other parsing errors
         logger = logging.getLogger(__name__)
@@ -320,12 +291,12 @@ async def scrape_jurisdiction(
         "sections": sections,
         "total_sections": len(sections),
         "timestamp": datetime.now().isoformat() + "Z",
-        "provider": "ecode360"
+        "provider": "ecode360",
     }
-    
+
     if include_metadata:
         result["metadata"] = {"include_metadata": True}
-    
+
     return result
 
 
@@ -336,16 +307,16 @@ async def batch_scrape(
     include_metadata: bool = False,
     rate_limit_delay: float = 2.0,
     max_jurisdictions: Optional[int] = None,
-    max_sections_per_jurisdiction: Optional[int] = None
+    max_sections_per_jurisdiction: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Scrape multiple jurisdictions in batch mode.
-    
+
     Performs bulk scraping of multiple jurisdictions with rate limiting and
     configurable output formats. Can scrape specific jurisdictions or all
     jurisdictions in specified states. Includes built-in rate limiting to
     respect server resources.
-    
+
     Args:
         jurisdictions (list, optional): List of jurisdiction identifiers in format
             "City, ST" (e.g., ["Seattle, WA", "Portland, OR"]).
@@ -361,7 +332,7 @@ async def batch_scrape(
             Useful for testing. Defaults to None (scrape all).
         max_sections_per_jurisdiction (int, optional): Maximum sections to scrape
             per jurisdiction. Defaults to None (scrape all).
-    
+
     Returns:
         dict: A dictionary containing:
             - results (list): List of jurisdiction results, each following the
@@ -375,13 +346,13 @@ async def batch_scrape(
                 - provider (str): Always "ecode360"
             - output_format (str): Format of the results
             - errors (list): List of any errors encountered during scraping
-    
+
     Raises:
         ValueError: If both jurisdictions and states are None, or if output_format
             is invalid.
         ConnectionError: If unable to connect to eCode360.
         TimeoutError: If requests consistently timeout.
-    
+
     Example:
         >>> import anyio
         >>> async def example():
@@ -402,13 +373,11 @@ async def batch_scrape(
         {'results': [...], 'summary': {...}, 'output_format': 'json', 'errors': []}
     """
     if not jurisdictions and not states:
-        return {
-            "error": "Either jurisdictions or states must be provided"
-        }
-    
+        return {"error": "Either jurisdictions or states must be provided"}
+
     data = []
     target_jurisdictions = []
-    
+
     # Gather jurisdictions to scrape
     if jurisdictions:
         target_jurisdictions = jurisdictions
@@ -417,39 +386,36 @@ async def batch_scrape(
         for state in states:
             jurs = await get_ecode360_jurisdictions(state=state, limit=max_jurisdictions)
             target_jurisdictions.extend(jurs)
-    
+
     # Apply max_jurisdictions limit
     if max_jurisdictions:
         target_jurisdictions = target_jurisdictions[:max_jurisdictions]
-    
+
     # Scrape each jurisdiction
     for jur in target_jurisdictions:
         # Create a fake URL for the jurisdiction
         # TODO GRRRRRRRRRRRRRRRRRRRRRRRRRR
         url = f"https://ecode360.com/{jur.lower().replace(' ', '_').replace(',', '')}"
-        
+
         result = await scrape_jurisdiction(
             jurisdiction_url=url,
             include_metadata=include_metadata,
-            max_sections=max_sections_per_jurisdiction
+            max_sections=max_sections_per_jurisdiction,
         )
-        
+
         data.append(result)
-        
+
         # Rate limiting
         if rate_limit_delay > 0:
             await anyio.sleep(rate_limit_delay)
-    
-    response = {
-        "data": data,
-        "output_format": output_format
-    }
-    
+
+    response = {"data": data, "output_format": output_format}
+
     if include_metadata:
         response["metadata"] = {
             "scraped_at": datetime.utcnow().isoformat() + "Z",
             "jurisdictions_count": len(data),
-            "provider": "ecode360"
+            "provider": "ecode360",
         }
-    
+
     return response

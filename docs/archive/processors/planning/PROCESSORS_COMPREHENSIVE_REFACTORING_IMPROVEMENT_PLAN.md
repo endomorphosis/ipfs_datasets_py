@@ -1117,13 +1117,13 @@ warnings.warn(
     "Use processors.specialized.graphrag instead. "
     "This import will be removed in v2.0.0 (August 2026).",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Import from new location
 from ipfs_datasets_py.processors.specialized.graphrag import GraphRAGProcessor
 
-__all__ = ['GraphRAGProcessor']
+__all__ = ["GraphRAGProcessor"]
 ```
 
 ---

@@ -26,12 +26,58 @@ from urllib.parse import urlparse
 logger = logging.getLogger(__name__)
 
 STATE_HOST_CODES = {
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
-    "DC", "PR",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC",
+    "PR",
 }
 
 EXPLICIT_FEDERAL_GOV_HOSTS = (
@@ -69,6 +115,7 @@ try:
     from ipfs_datasets_py.processors.legal_scrapers.huggingface_api_search import (
         HuggingFaceAPISearch,
     )
+
     HAVE_HF_CC_FALLBACK = True
 except Exception:
     HuggingFaceAPISearch = None
@@ -87,7 +134,9 @@ def _default_parquet_root() -> Path:
 
 
 def _default_master_db_path() -> Path:
-    return _env_path("CCINDEX_MASTER_DB") or Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")
+    return _env_path("CCINDEX_MASTER_DB") or Path(
+        "/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb"
+    )
 
 
 def _env_flag(name: str, *, default: bool = False) -> bool:
@@ -155,7 +204,9 @@ def _write_json_cache(path: Path, records: List[Dict[str, Any]]) -> None:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            json.dumps({"created_at": time.time(), "records": records}, sort_keys=True, default=str),
+            json.dumps(
+                {"created_at": time.time(), "records": records}, sort_keys=True, default=str
+            ),
             encoding="utf-8",
         )
     except Exception as exc:
@@ -259,10 +310,15 @@ def _infer_state_code_from_domain(domain: str) -> Optional[str]:
 
 def _is_explicit_federal_host(domain: str) -> bool:
     host = str(urlparse(str(domain or "")).netloc or domain or "").lower().strip(".")
-    return any(host == federal_host or host.endswith(f".{federal_host}") for federal_host in EXPLICIT_FEDERAL_GOV_HOSTS)
+    return any(
+        host == federal_host or host.endswith(f".{federal_host}")
+        for federal_host in EXPLICIT_FEDERAL_GOV_HOSTS
+    )
 
 
-def _normalize_cc_jurisdiction(domain: str, jurisdiction: str, state_code: Optional[str]) -> tuple[str, Optional[str]]:
+def _normalize_cc_jurisdiction(
+    domain: str, jurisdiction: str, state_code: Optional[str]
+) -> tuple[str, Optional[str]]:
     normalized = str(jurisdiction or "state").strip().lower() or "state"
     normalized_state_code = str(state_code).strip().upper() if state_code else None
 
@@ -279,17 +335,17 @@ def _normalize_cc_jurisdiction(domain: str, jurisdiction: str, state_code: Optio
 class CommonCrawlSearchEngine:
     """
     Wrapper class for the Common Crawl Search Engine integration.
-    
+
     This class provides a clean, pythonic interface to the common_crawl_search_engine
     submodule for searching and retrieving data from Common Crawl archives. It serves
     as a redundancy/fallback system for internet data retrieval when dealing with
     Cloudflare bottlenecks or other access restrictions.
-    
+
     Supports three integration modes:
     1. **local** - Direct package imports (default, when submodule is available)
     2. **remote** - MCP JSON-RPC client to connect to standalone server on another machine
     3. **cli** - Execute CLI commands (for local or remote via SSH)
-    
+
     Key Features:
     - Fast domain/URL lookups using rowgroup slicing
     - Per-collection and per-year rowgroup index support
@@ -297,31 +353,31 @@ class CommonCrawlSearchEngine:
     - Integration with MCP server for AI assistant access
     - Support for batch operations and parallel queries
     - Seamless fallback between local and remote modes
-    
+
     Attributes:
         mode: Integration mode ("local", "remote", or "cli")
         master_db_path: Path to the master DuckDB index (local mode)
         state_dir: Directory for storing state and event logs (local mode)
         mcp_endpoint: MCP server endpoint URL (remote mode)
         mcp_client: MCP JSON-RPC client instance (remote mode)
-        
+
     Examples:
         Local mode (default):
         >>> engine = CommonCrawlSearchEngine()
         >>> results = engine.search_domain("example.com", max_matches=50)
-        
+
         Remote mode (connect to standalone MCP server):
         >>> engine = CommonCrawlSearchEngine(
         ...     mode="remote",
         ...     mcp_endpoint="http://ccindex-server.example.com:8787"
         ... )
         >>> results = engine.search_domain("example.com", max_matches=50)
-        
+
         CLI mode:
         >>> engine = CommonCrawlSearchEngine(mode="cli")
         >>> results = engine.search_domain("example.com", max_matches=50)
     """
-    
+
     def __init__(
         self,
         mode: Literal["local", "remote", "cli"] = "local",
@@ -333,11 +389,11 @@ class CommonCrawlSearchEngine:
         mcp_timeout: float = 30.0,
         cli_command: str = "ccindex",
         ssh_host: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize the Common Crawl Search Engine integration.
-        
+
         Args:
             mode: Integration mode - "local", "remote", or "cli"
             master_db_path: Path to master DuckDB index (local mode only)
@@ -361,7 +417,7 @@ class CommonCrawlSearchEngine:
         self.ssh_host = ssh_host
         self.hf_search = None
         self._hf_fallback_enabled = False
-        
+
         # Initialize based on mode
         if mode == "local":
             self._init_local_mode()
@@ -371,15 +427,15 @@ class CommonCrawlSearchEngine:
             self._init_cli_mode()
         else:
             raise ValueError(f"Invalid mode: {mode}. Must be 'local', 'remote', or 'cli'")
-    
+
     def _init_local_mode(self) -> None:
         """Initialize local/embedded mode with direct package imports."""
         # Create state directory if it doesn't exist
         self.state_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Set environment variables for ccindex
         self._configure_environment()
-        
+
         parquet_root = _default_parquet_root()
         master_db = self.master_db_path if self.master_db_path else _default_master_db_path()
 
@@ -387,8 +443,11 @@ class CommonCrawlSearchEngine:
         try:
             import_root = _ensure_common_crawl_import_path()
             if import_root is None:
-                raise ImportError("common_crawl_search_engine package not found on discoverable paths")
+                raise ImportError(
+                    "common_crawl_search_engine package not found on discoverable paths"
+                )
             from common_crawl_search_engine.ccindex import api
+
             self.api = api
             self._available = True
             if not parquet_root.exists() or not master_db.exists():
@@ -400,45 +459,58 @@ class CommonCrawlSearchEngine:
                     master_db,
                     master_db.exists(),
                 )
-            logger.info("Common Crawl Search Engine initialized in local mode (root=%s)", import_root)
+            logger.info(
+                "Common Crawl Search Engine initialized in local mode (root=%s)", import_root
+            )
         except ImportError as e:
             logger.warning(f"Common Crawl Search Engine not available in local mode: {e}")
-            logger.info("Make sure common_crawl_search_engine sources are available (e.g., in src/common_crawl_search_engine)")
+            logger.info(
+                "Make sure common_crawl_search_engine sources are available (e.g., in src/common_crawl_search_engine)"
+            )
             self.api = None
-            if HAVE_HF_CC_FALLBACK and _env_flag("COMMON_CRAWL_ENABLE_LEGACY_HF_STREAMING_FALLBACK", default=False):
+            if HAVE_HF_CC_FALLBACK and _env_flag(
+                "COMMON_CRAWL_ENABLE_LEGACY_HF_STREAMING_FALLBACK", default=False
+            ):
                 try:
                     self.hf_search = HuggingFaceAPISearch(use_streaming=True)
                     self._hf_fallback_enabled = True
                     self._available = True
-                    logger.info("Common Crawl local mode falling back to legacy HuggingFace streaming search")
+                    logger.info(
+                        "Common Crawl local mode falling back to legacy HuggingFace streaming search"
+                    )
                     return
                 except Exception as exc:
-                    logger.warning("Failed to initialize legacy HuggingFace Common Crawl fallback: %s", exc)
+                    logger.warning(
+                        "Failed to initialize legacy HuggingFace Common Crawl fallback: %s", exc
+                    )
             self._available = False
-    
+
     def _init_remote_mode(self) -> None:
         """Initialize remote mode with MCP JSON-RPC client."""
         if not self.mcp_endpoint:
             raise ValueError("mcp_endpoint is required for remote mode")
-        
+
         try:
             # Import MCP client from submodule
             import_root = _ensure_common_crawl_import_path()
             if import_root is None:
-                raise ImportError("common_crawl_search_engine package not found on discoverable paths")
+                raise ImportError(
+                    "common_crawl_search_engine package not found on discoverable paths"
+                )
             from common_crawl_search_engine.mcp_client import CcindexMcpClient
-            
+
             self.mcp_client = CcindexMcpClient(
-                endpoint=self.mcp_endpoint,
-                timeout_s=self.mcp_timeout
+                endpoint=self.mcp_endpoint, timeout_s=self.mcp_timeout
             )
             self._available = True
-            logger.info(f"Common Crawl Search Engine initialized in remote mode: {self.mcp_endpoint}")
+            logger.info(
+                f"Common Crawl Search Engine initialized in remote mode: {self.mcp_endpoint}"
+            )
         except ImportError as e:
             logger.error(f"Failed to import MCP client: {e}")
             self.mcp_client = None
             self._available = False
-    
+
     def _init_cli_mode(self) -> None:
         """Initialize CLI mode."""
         # Check if ccindex CLI is available
@@ -446,70 +518,65 @@ class CommonCrawlSearchEngine:
             cmd = [self.cli_command, "--help"]
             if self.ssh_host:
                 cmd = ["ssh", self.ssh_host] + cmd
-            
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            self._available = (result.returncode == 0)
+
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            self._available = result.returncode == 0
             if self._available:
-                logger.info(f"Common Crawl Search Engine initialized in CLI mode: {self.cli_command}")
+                logger.info(
+                    f"Common Crawl Search Engine initialized in CLI mode: {self.cli_command}"
+                )
             else:
                 logger.warning(f"CLI command '{self.cli_command}' not available or returned error")
         except Exception as e:
             logger.error(f"Failed to initialize CLI mode: {e}")
             self._available = False
-    
+
     def _configure_environment(self) -> None:
         """Configure environment variables for ccindex."""
         os.environ.setdefault("CCINDEX_STATE_DIR", str(self.state_dir))
-        os.environ.setdefault("CCINDEX_EVENT_LOG_PATH", str(self.state_dir / "ccindex_events.jsonl"))
+        os.environ.setdefault(
+            "CCINDEX_EVENT_LOG_PATH", str(self.state_dir / "ccindex_events.jsonl")
+        )
         os.environ.setdefault("CCINDEX_BRAVE_TRACE", "1")
         os.environ.setdefault("BRAVE_RESOLVE_STRATEGY", "domain_url_join_parallel")
         os.environ.setdefault("BRAVE_RESOLVE_ROWGROUP_SLICE_MODE", "auto")
         os.environ.setdefault("BRAVE_RESOLVE_SKIP_LEGACY_SCHEMA", "1")
         os.environ.setdefault("BRAVE_RESOLVE_ROWGROUP_WORKERS", "8")
-        
+
         if self.rowgroup_index_dir:
             os.environ["BRAVE_RESOLVE_ROWGROUP_INDEX_DIR"] = str(self.rowgroup_index_dir)
         if self.year_index_dir:
             os.environ["BRAVE_RESOLVE_ROWGROUP_YEAR_DIR"] = str(self.year_index_dir)
-    
+
     def is_available(self) -> bool:
         """Check if the Common Crawl Search Engine is available."""
         return self._available
-    
+
     def search_domain(
-        self,
-        domain: str,
-        max_matches: int = 100,
-        collection: Optional[str] = None,
-        **kwargs
+        self, domain: str, max_matches: int = 100, collection: Optional[str] = None, **kwargs
     ) -> List[Dict[str, Any]]:
         """
         Search Common Crawl for URLs from a specific domain.
-        
+
         Works in all three modes: local, remote, and CLI.
-        
+
         Args:
             domain: Domain to search for (e.g., "example.com")
             max_matches: Maximum number of matches to return
             collection: Specific Common Crawl collection (e.g., "CC-MAIN-2024-10")
             **kwargs: Additional search parameters
-            
+
         Returns:
             List of matching records with URL, timestamp, and WARC location info
-            
+
         Raises:
             RuntimeError: If the search engine is not available
         """
         if not self._available:
             raise RuntimeError(f"Common Crawl Search Engine is not available in {self.mode} mode")
-        
+
         logger.info(f"Searching Common Crawl for domain: {domain} (mode: {self.mode})")
-        
+
         try:
             if self.mode == "local":
                 if self._hf_fallback_enabled:
@@ -522,13 +589,9 @@ class CommonCrawlSearchEngine:
         except Exception as e:
             logger.error(f"Error searching Common Crawl: {e}")
             raise
-    
+
     def _search_domain_local(
-        self,
-        domain: str,
-        max_matches: int,
-        collection: Optional[str],
-        **kwargs
+        self, domain: str, max_matches: int, collection: Optional[str], **kwargs
     ) -> List[Dict[str, Any]]:
         """Search using local package imports."""
         year = kwargs.get("year")
@@ -576,22 +639,31 @@ class CommonCrawlSearchEngine:
                     "year_db": None,
                     "collection_db": None,
                     "hf_remote_meta": True,
-                    "hf_meta_index_dataset": str(kwargs.get("hf_meta_index_dataset") or _default_hf_meta_index_dataset()),
-                    "hf_pointer_dataset": str(kwargs.get("hf_pointer_dataset") or _default_hf_pointer_dataset()),
-                    "hf_revision": str(kwargs.get("hf_revision") or os.getenv("COMMON_CRAWL_HF_REVISION") or "main"),
+                    "hf_meta_index_dataset": str(
+                        kwargs.get("hf_meta_index_dataset") or _default_hf_meta_index_dataset()
+                    ),
+                    "hf_pointer_dataset": str(
+                        kwargs.get("hf_pointer_dataset") or _default_hf_pointer_dataset()
+                    ),
+                    "hf_revision": str(
+                        kwargs.get("hf_revision") or os.getenv("COMMON_CRAWL_HF_REVISION") or "main"
+                    ),
                 }
             )
         else:
             options["hf_remote_meta"] = bool(kwargs.get("hf_remote_meta", False))
 
         cache_path: Optional[Path] = None
-        use_cache = (
-            bool(options.get("hf_remote_meta"))
-            and _env_flag("COMMON_CRAWL_HF_REMOTE_META_CACHE", default=True)
+        use_cache = bool(options.get("hf_remote_meta")) and _env_flag(
+            "COMMON_CRAWL_HF_REMOTE_META_CACHE", default=True
         )
         if use_cache:
-            cache_dir = Path(kwargs.get("hf_remote_meta_cache_dir") or _default_hf_remote_meta_cache_dir())
-            cache_key = _json_cache_key({"domain": domain, "collection": collection, "options": options})
+            cache_dir = Path(
+                kwargs.get("hf_remote_meta_cache_dir") or _default_hf_remote_meta_cache_dir()
+            )
+            cache_key = _json_cache_key(
+                {"domain": domain, "collection": collection, "options": options}
+            )
             cache_path = cache_dir / f"{cache_key}.json"
             cached = _read_json_cache(cache_path, ttl_seconds=_hf_remote_meta_cache_ttl_seconds())
             if cached is not None:
@@ -602,13 +674,9 @@ class CommonCrawlSearchEngine:
         if cache_path is not None:
             _write_json_cache(cache_path, records)
         return records
-    
+
     def _search_domain_remote(
-        self,
-        domain: str,
-        max_matches: int,
-        collection: Optional[str],
-        **kwargs
+        self, domain: str, max_matches: int, collection: Optional[str], **kwargs
     ) -> List[Dict[str, Any]]:
         """Search using remote MCP JSON-RPC client."""
         try:
@@ -636,20 +704,19 @@ class CommonCrawlSearchEngine:
         except Exception as e:
             logger.error(f"Remote search failed: {e}")
             raise
-    
+
     def _search_domain_cli(
-        self,
-        domain: str,
-        max_matches: int,
-        collection: Optional[str],
-        **kwargs
+        self, domain: str, max_matches: int, collection: Optional[str], **kwargs
     ) -> List[Dict[str, Any]]:
         """Search using CLI command."""
         cmd = [
             self.cli_command,
-            "search", "meta",
-            "--domain", domain,
-            "--max-matches", str(max_matches)
+            "search",
+            "meta",
+            "--domain",
+            domain,
+            "--max-matches",
+            str(max_matches),
         ]
 
         year = kwargs.get("year")
@@ -666,18 +733,13 @@ class CommonCrawlSearchEngine:
         parquet_root = kwargs.get("parquet_root")
         if parquet_root:
             cmd.extend(["--parquet-root", str(parquet_root)])
-        
+
         if self.ssh_host:
             cmd = ["ssh", self.ssh_host] + cmd
-        
+
         try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
-            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+
             if result.returncode != 0:
                 logger.error(f"CLI search failed: {result.stderr}")
                 return []
@@ -703,11 +765,7 @@ class CommonCrawlSearchEngine:
             raise
 
     def _search_domain_hf(
-        self,
-        domain: str,
-        max_matches: int,
-        collection: Optional[str],
-        **kwargs
+        self, domain: str, max_matches: int, collection: Optional[str], **kwargs
     ) -> List[Dict[str, Any]]:
         """Search via the HuggingFace-backed Common Crawl query fallback."""
         if not self.hf_search:
@@ -746,8 +804,15 @@ class CommonCrawlSearchEngine:
                 or record.get("link")
                 or ""
             ).strip()
-            haystack = " ".join(str(record.get(k, "")) for k in ("url", "target_uri", "source_url", "domain", "host")).lower()
-            if lowered_domain and lowered_domain not in haystack and lowered_domain not in candidate_url.lower():
+            haystack = " ".join(
+                str(record.get(k, ""))
+                for k in ("url", "target_uri", "source_url", "domain", "host")
+            ).lower()
+            if (
+                lowered_domain
+                and lowered_domain not in haystack
+                and lowered_domain not in candidate_url.lower()
+            ):
                 continue
             normalized.append(dict(record))
 
@@ -785,34 +850,30 @@ class CommonCrawlSearchEngine:
             out.append(rec)
 
         return out
-    
+
     def fetch_warc_record(
-        self,
-        warc_filename: str,
-        warc_offset: int,
-        warc_length: int,
-        **kwargs
+        self, warc_filename: str, warc_offset: int, warc_length: int, **kwargs
     ) -> bytes:
         """
         Fetch a WARC record from Common Crawl.
-        
+
         Args:
             warc_filename: WARC file name
             warc_offset: Byte offset in the WARC file
             warc_length: Length of the record in bytes
             **kwargs: Additional fetch parameters
-            
+
         Returns:
             Raw WARC record bytes
-            
+
         Raises:
             RuntimeError: If the search engine is not available
         """
         if not self._available:
             raise RuntimeError("Common Crawl Search Engine is not available")
-        
+
         logger.info(f"Fetching WARC record: {warc_filename} @ {warc_offset}:{warc_length}")
-        
+
         try:
             if self.mode == "local":
                 fetch, _source, _local_path = self.api.fetch_warc_record(
@@ -825,7 +886,11 @@ class CommonCrawlSearchEngine:
                     decode_gzip_text=False,
                     max_preview_chars=0,
                     cache_mode=str(kwargs.get("cache_mode") or "range"),
-                    full_warc_cache_dir=(Path(str(kwargs.get("full_warc_cache_dir"))) if kwargs.get("full_warc_cache_dir") else None),
+                    full_warc_cache_dir=(
+                        Path(str(kwargs.get("full_warc_cache_dir")))
+                        if kwargs.get("full_warc_cache_dir")
+                        else None
+                    ),
                 )
                 if not fetch.ok or not fetch.raw_base64:
                     raise RuntimeError(fetch.error or "empty WARC payload")
@@ -873,17 +938,17 @@ class CommonCrawlSearchEngine:
         except Exception as e:
             logger.error(f"Error fetching WARC record: {e}")
             raise
-    
+
     def list_collections(self, **kwargs) -> List[str]:
         """
         List available Common Crawl collections.
-        
+
         Args:
             **kwargs: Additional parameters
-            
+
         Returns:
             List of collection names (e.g., ["CC-MAIN-2024-10", ...])
-            
+
         Raises:
             RuntimeError: If the search engine is not available
         """
@@ -894,13 +959,17 @@ class CommonCrawlSearchEngine:
             if self.mode == "local":
                 year = kwargs.get("year")
                 refs = self.api.list_collections(
-                    master_db=(self.master_db_path if self.master_db_path else _default_master_db_path()),
+                    master_db=(
+                        self.master_db_path if self.master_db_path else _default_master_db_path()
+                    ),
                     year=(str(year) if year else None),
                 )
                 return [str(r.collection) for r in refs if getattr(r, "collection", None)]
 
             if self.mode == "remote":
-                info = self.mcp_client.collinfo_list(prefer_cache=bool(kwargs.get("prefer_cache", True)))
+                info = self.mcp_client.collinfo_list(
+                    prefer_cache=bool(kwargs.get("prefer_cache", True))
+                )
                 collections = info.get("collections", []) if isinstance(info, dict) else []
                 out: List[str] = []
                 for item in collections:
@@ -911,7 +980,15 @@ class CommonCrawlSearchEngine:
                         out.append(collection_name)
                 return out
 
-            cmd = [self.cli_command, "mcp", "call", "--tool", "cc_collinfo_list", "--args-json", "{}"]
+            cmd = [
+                self.cli_command,
+                "mcp",
+                "call",
+                "--tool",
+                "cc_collinfo_list",
+                "--args-json",
+                "{}",
+            ]
             if self.ssh_host:
                 cmd = ["ssh", self.ssh_host] + cmd
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
@@ -930,18 +1007,18 @@ class CommonCrawlSearchEngine:
         except Exception as e:
             logger.error(f"Error listing collections: {e}")
             raise
-    
+
     def get_collection_info(self, collection: str, **kwargs) -> Dict[str, Any]:
         """
         Get information about a specific Common Crawl collection.
-        
+
         Args:
             collection: Collection name (e.g., "CC-MAIN-2024-10")
             **kwargs: Additional parameters
-            
+
         Returns:
             Dictionary with collection metadata
-            
+
         Raises:
             RuntimeError: If the search engine is not available
         """
@@ -955,7 +1032,10 @@ class CommonCrawlSearchEngine:
 
             if self.mode == "local":
                 try:
-                    from common_crawl_search_engine.ccindex.orchestrator_manager import load_collinfo
+                    from common_crawl_search_engine.ccindex.orchestrator_manager import (
+                        load_collinfo,
+                    )
+
                     data = load_collinfo(prefer_cache=bool(kwargs.get("prefer_cache", True)))
                     collections = data.get("collections", []) if isinstance(data, dict) else []
                     for item in collections:
@@ -967,7 +1047,9 @@ class CommonCrawlSearchEngine:
                     pass
 
                 for ref in self.api.list_collections(
-                    master_db=(self.master_db_path if self.master_db_path else _default_master_db_path())
+                    master_db=(
+                        self.master_db_path if self.master_db_path else _default_master_db_path()
+                    )
                 ):
                     if str(getattr(ref, "collection", "")).strip() == collection_s:
                         return {
@@ -978,7 +1060,9 @@ class CommonCrawlSearchEngine:
                 return {}
 
             if self.mode == "remote":
-                info = self.mcp_client.collinfo_list(prefer_cache=bool(kwargs.get("prefer_cache", True)))
+                info = self.mcp_client.collinfo_list(
+                    prefer_cache=bool(kwargs.get("prefer_cache", True))
+                )
                 collections = info.get("collections", []) if isinstance(info, dict) else []
                 for item in collections:
                     if not isinstance(item, dict):
@@ -1000,10 +1084,10 @@ class CommonCrawlSearchEngine:
 def create_search_engine(**kwargs) -> CommonCrawlSearchEngine:
     """
     Create a CommonCrawlSearchEngine instance with default configuration.
-    
+
     Args:
         **kwargs: Configuration options passed to CommonCrawlSearchEngine
-        
+
     Returns:
         Configured CommonCrawlSearchEngine instance
     """

@@ -161,9 +161,7 @@ def test_compiler_exposes_packet_000782_explicit_adaptive_ambiguities() -> None:
 
     threshold = 0.15
     for sample_id, predicted_family, target_family, family_margin in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_adaptive_ranking(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -187,13 +185,9 @@ def test_compiler_exposes_packet_000782_explicit_adaptive_ambiguities() -> None:
             sample_id,
             [item.to_dict() for item in result.ambiguities],
         )
-        expected_margin_direction = (
-            "contested" if family_margin > 0.0 else "outvoted"
-        )
+        expected_margin_direction = "contested" if family_margin > 0.0 else "outvoted"
         expected_priority = (
-            threshold - family_margin
-            if family_margin > 0.0
-            else abs(family_margin) + threshold
+            threshold - family_margin if family_margin > 0.0 else abs(family_margin) + threshold
         )
 
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True

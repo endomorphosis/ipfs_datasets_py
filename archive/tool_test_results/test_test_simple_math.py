@@ -24,12 +24,11 @@ if str(project_root) not in sys.path:
 @pytest.fixture
 def sample_dataset():
     """Sample dataset for testing"""
-    return {'text': ['hello', 'world'], 'label': [0, 1]}
+    return {"text": ["hello", "world"], "label": [0, 1]}
 
 
 def test_test_add():
     """Test add function"""
-
 
     # Test execution
     assert add(2, 3) == 5
@@ -38,8 +37,5 @@ def test_test_add():
 def test_test_subtract():
     """Test subtract function"""
 
-
     # Test execution
     assert subtract(5, 3) == 2
-
-

@@ -243,12 +243,21 @@ tdfol_inference_rules/
 def _expand_and(formula, branch): ...
 def _expand_or(formula, branch): ...
 def _expand_implies(formula, branch): ...
+
+
 # ... 5 more ...
+
 
 # tdfol_inference_rules.py has similar logic:
 class AndIntroductionRule: ...
+
+
 class OrEliminationRule: ...
+
+
 class ImpliesEliminationRule: ...
+
+
 # ... overlapping expansion logic ...
 ```
 
@@ -261,15 +270,21 @@ class ExpansionContext:
     assumptions: List[Formula]
     options: Dict[str, Any]
 
+
 class ExpansionRule(ABC):
     @abstractmethod
-    def can_expand(self, formula: Formula) -> bool: pass
-    
+    def can_expand(self, formula: Formula) -> bool:
+        pass
+
     @abstractmethod
-    def expand(self, formula: Formula, context: ExpansionContext) -> List[Formula]: pass
+    def expand(self, formula: Formula, context: ExpansionContext) -> List[Formula]:
+        pass
+
 
 # Both modal_tableaux.py and inference_rules.py use these
 class AndExpansionRule(ExpansionRule): ...
+
+
 class OrExpansionRule(ExpansionRule): ...
 ```
 
@@ -325,12 +340,15 @@ Reduction: 9 files → 7 files, -569 LOC (18%)
 class TDFOLProofCache:
     def __init__(self):
         self._cache: Dict[str, TDFOLProofResult] = {}
+
     # No eviction policy, no size limit, no stats
+
 
 # tdfol_optimization.py: Indexed KB with LRU cache
 class IndexedKnowledgeBase:
     def __init__(self, max_cache_size: int = 10000):
         self._cache = LRUCache(max_cache_size)
+
     # LRU eviction, configurable size, rich indexing
 ```
 
@@ -362,6 +380,7 @@ class ProofResult:
     proof_tree: Optional[ProofTree]
     # 8 fields total
 
+
 # strategies/base.py (different!)
 @dataclass
 class StrategyProofResult:
@@ -377,6 +396,7 @@ Move to `tdfol_core.py` (single source of truth):
 @dataclass(frozen=True)
 class ProofResult:
     """Unified proof result across all proving strategies."""
+
     status: ProofStatus
     steps: List[ProofStep] = field(default_factory=list)
     time_ms: int = 0
@@ -467,10 +487,18 @@ class TDFOLError(Exception):
         super().__init__(message)
         self.category = category
 
+
 class TDFOLProofError(TDFOLError): ...
+
+
 class TDFOLProofTimeoutError(TDFOLProofError): ...
+
+
 class TDFOLStrategyError(TDFOLProofError): ...
+
+
 class TDFOLTableauError(TDFOLProofError): ...
+
 
 # Backward compatibility aliases
 ProofError = TDFOLProofError
@@ -500,10 +528,13 @@ class GraphVizRenderer:
     @staticmethod
     def render_dot(dot_source: str, format: str = "png") -> bytes: ...
 
+
 class ASCIIFormatter:
     BOX_CHARS = {...}
+
     @staticmethod
     def draw_box(text: str, width: int = 80) -> str: ...
+
 
 class MarkdownFormatter:
     @staticmethod

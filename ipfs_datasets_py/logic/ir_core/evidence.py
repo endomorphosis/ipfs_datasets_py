@@ -86,9 +86,7 @@ class EvidenceRef:
     def __post_init__(self) -> None:
         object.__setattr__(self, "source_ref_ids", _unique_tuple(self.source_ref_ids))
         object.__setattr__(self, "span_ids", _unique_tuple(self.span_ids))
-        object.__setattr__(
-            self, "parent_evidence_ids", _unique_tuple(self.parent_evidence_ids)
-        )
+        object.__setattr__(self, "parent_evidence_ids", _unique_tuple(self.parent_evidence_ids))
         object.__setattr__(self, "metadata", freeze_json_mapping(self.metadata))
 
     @property
@@ -100,9 +98,7 @@ class EvidenceRef:
             _validate_id("EvidenceRef.evidence_id", self.evidence_id)
             _validate_sha256("EvidenceRef.content_sha256", self.content_sha256)
             if not isinstance(self.kind, EvidenceKind):
-                raise ProvenanceValidationError(
-                    "EvidenceRef.kind must be an EvidenceKind member"
-                )
+                raise ProvenanceValidationError("EvidenceRef.kind must be an EvidenceKind member")
             if not isinstance(self.review_status, EvidenceReviewStatus):
                 raise ProvenanceValidationError(
                     "EvidenceRef.review_status must be an EvidenceReviewStatus member"
@@ -119,9 +115,7 @@ class EvidenceRef:
             if self.config_id:
                 _validate_id("EvidenceRef.config_id", self.config_id)
             if self.config_id and not self.producer_id:
-                raise ProvenanceValidationError(
-                    "EvidenceRef config_id requires producer_id"
-                )
+                raise ProvenanceValidationError("EvidenceRef config_id requires producer_id")
         except ProvenanceValidationError as exc:
             raise EvidenceValidationError(str(exc)) from exc
 
@@ -145,9 +139,7 @@ class EvidenceRef:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "EvidenceRef":
         try:
-            kind = _enum_value(
-                EvidenceKind, data.get("kind"), "EvidenceRef.kind"
-            )
+            kind = _enum_value(EvidenceKind, data.get("kind"), "EvidenceRef.kind")
             status = _enum_value(
                 EvidenceReviewStatus,
                 data.get("review_status"),
@@ -188,9 +180,7 @@ class Evidence:
             self,
             "references",
             tuple(
-                item
-                if isinstance(item, EvidenceRef)
-                else EvidenceRef.from_dict(_as_mapping(item))
+                item if isinstance(item, EvidenceRef) else EvidenceRef.from_dict(_as_mapping(item))
                 for item in self.references
             ),
         )
@@ -205,9 +195,7 @@ class Evidence:
             "metadata": thaw_json(self.metadata),
             "references": [
                 item.to_dict()
-                for item in sorted(
-                    self.references, key=lambda item: item.evidence_id
-                )
+                for item in sorted(self.references, key=lambda item: item.evidence_id)
             ],
             "schema_version": self.schema_version,
         }
@@ -233,9 +221,7 @@ class Evidence:
                     for item in _as_sequence(data.get("references"))
                 ),
                 metadata=_as_mapping(data.get("metadata")),
-                schema_version=str(
-                    data.get("schema_version") or IR_EVIDENCE_SCHEMA_VERSION
-                ),
+                schema_version=str(data.get("schema_version") or IR_EVIDENCE_SCHEMA_VERSION),
             )
         except ProvenanceValidationError as exc:
             raise EvidenceValidationError(str(exc)) from exc
@@ -270,9 +256,7 @@ def validate_evidence(
         for reference in evidence.references:
             reference.validate()
             if reference.evidence_id in ids:
-                raise ProvenanceValidationError(
-                    f"duplicate evidence id {reference.evidence_id!r}"
-                )
+                raise ProvenanceValidationError(f"duplicate evidence id {reference.evidence_id!r}")
             ids.add(reference.evidence_id)
         for reference in evidence.references:
             _require_known(
@@ -285,10 +269,7 @@ def validate_evidence(
                     f"EvidenceRef {reference.evidence_id!r} is its own parent"
                 )
         _reject_lineage_cycles(
-            {
-                item.evidence_id: item.parent_evidence_ids
-                for item in evidence.references
-            },
+            {item.evidence_id: item.parent_evidence_ids for item in evidence.references},
             "evidence",
         )
 
@@ -311,10 +292,7 @@ def validate_evidence(
                 )
                 for span_id in reference.span_ids:
                     source_id = spans[span_id].source_ref_id
-                    if (
-                        reference.source_ref_ids
-                        and source_id not in reference.source_ref_ids
-                    ):
+                    if reference.source_ref_ids and source_id not in reference.source_ref_ids:
                         raise ProvenanceValidationError(
                             f"EvidenceRef {reference.evidence_id!r} span "
                             f"{span_id!r} belongs to unlisted source {source_id!r}"

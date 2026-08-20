@@ -119,9 +119,7 @@ class LegalIRHammerReport:
             ],
             "route_results": [result.to_dict() for result in self.route_results],
             "schema_version": self.schema_version,
-            "translation_records": [
-                record.to_dict() for record in self.translation_records
-            ],
+            "translation_records": [record.to_dict() for record in self.translation_records],
             "trusted_count": int(self.trusted_count),
             "trusted_success_rate": round(self.trusted_success_rate, 12),
         }
@@ -182,9 +180,7 @@ class LegalIRHammerRunner:
             contract_telemetry = collect_legal_ir_contract_telemetry(sample_or_document)
             pipeline = HammerPipeline(
                 backends=self.backends,
-                premise_selector=LegalIRPremiseSelector(
-                    contract_telemetry=contract_telemetry
-                ),
+                premise_selector=LegalIRPremiseSelector(contract_telemetry=contract_telemetry),
                 max_premises=self.config.max_premises,
                 timeout_seconds=self.config.timeout_seconds,
                 parallel_workers=self.config.parallel_workers,
@@ -243,12 +239,8 @@ class LegalIRHammerRunner:
                 "target_metrics": self._target_metrics_for_obligation(obligation),
                 "premise_security": premise_security.to_dict(),
                 "premise_security_rejected": bool(premise_security.rejected),
-                "premise_security_rejection_reasons": list(
-                    premise_security.rejection_reasons
-                ),
-                "premise_security_schema_version": (
-                    LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION
-                ),
+                "premise_security_rejection_reasons": list(premise_security.rejection_reasons),
+                "premise_security_schema_version": (LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION),
                 **dict(obligation.metadata),
                 **dict(extra_candidate_metadata or {}),
             }
@@ -262,10 +254,7 @@ class LegalIRHammerRunner:
                 artifact = replace(
                     artifact,
                     proved=route_result.proved,
-                    trusted=(
-                        route_result.trust_satisfied
-                        and not bool(premise_security.rejected)
-                    ),
+                    trusted=(route_result.trust_satisfied and not bool(premise_security.rejected)),
                     failure_reason="" if route_result.proved else route_result.status.value,
                     rejection_reasons=(
                         sorted(

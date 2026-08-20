@@ -62,9 +62,7 @@ def _copy_receipts(tmp_path: Path) -> Path:
 
 def _seal_live_receipt(value: dict[str, object]) -> None:
     value.pop("receipt_sha256", None)
-    value["receipt_sha256"] = hashlib.sha256(
-        _canonical_json(value).encode("utf-8")
-    ).hexdigest()
+    value["receipt_sha256"] = hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
 
 
 def _fresh_test_reprobe(
@@ -162,9 +160,9 @@ def test_checked_freeze_is_strict_complete_and_source_bound() -> None:
     assert frozen.source_binding["detached"] is True
     assert frozen.source_binding["active_checkout_unchanged"] is True
     assert frozen.source_binding["recursive_gitlink_count"] == 20
-    assert {
-        record.kind for record in frozen.inventory.capabilities
-    } == set(capabilities.CapabilityKind)
+    assert {record.kind for record in frozen.inventory.capabilities} == set(
+        capabilities.CapabilityKind
+    )
     assert all(
         record.status is capabilities.CapabilityStatus.AVAILABLE
         and record.identity["bounded_smoke"] is True
@@ -226,16 +224,16 @@ def test_checked_snapshot_cross_binds_inventory_freeze_and_safety() -> None:
 
     freeze = _load(freeze_path)
     freeze_sha256 = freeze.pop("freeze_sha256")
-    assert hashlib.sha256(
-        _canonical_json(freeze).encode("utf-8")
-    ).hexdigest() == freeze_sha256 == freeze_ref["semantic_sha256"]
+    assert (
+        hashlib.sha256(_canonical_json(freeze).encode("utf-8")).hexdigest()
+        == freeze_sha256
+        == freeze_ref["semantic_sha256"]
+    )
     assert results["source_binding"] == freeze["source_binding"]
     native = results["native_kernel"]
     assert isinstance(native, dict)
     assert native["status"] == "pass"
-    assert native["receipt_sha256"] == freeze["receipts"]["native_kernel"][
-        "receipt_sha256"
-    ]
+    assert native["receipt_sha256"] == freeze["receipts"]["native_kernel"]["receipt_sha256"]
 
 
 def test_tampered_component_receipt_is_rejected_from_a_copied_tree(
@@ -287,10 +285,7 @@ def test_live_reprobe_rejects_identity_mismatch_and_secret_bearing_receipt() -> 
         repository_root=ROOT,
         receipt_directory=RECEIPTS,
     )
-    receipts = {
-        component: dict(receipt)
-        for component, receipt in frozen.receipts.items()
-    }
+    receipts = {component: dict(receipt) for component, receipt in frozen.receipts.items()}
     mismatched = dict(receipts["spacy_pipeline"])
     mismatched["effective_identity"] = {
         **dict(mismatched["effective_identity"]),
@@ -304,10 +299,7 @@ def test_live_reprobe_rejects_identity_mismatch_and_secret_bearing_receipt() -> 
             frozen.source_binding,
         )
 
-    receipts = {
-        component: dict(receipt)
-        for component, receipt in frozen.receipts.items()
-    }
+    receipts = {component: dict(receipt) for component, receipt in frozen.receipts.items()}
     secret_bearing = dict(receipts["spacy_pipeline"])
     requested = dict(secret_bearing["requested_identity"])
     requested["api_key"] = "must-not-be-frozen"
@@ -360,12 +352,8 @@ def test_freeze_is_exclusive_and_refuses_a_second_write(
     snapshot = _load(layout.capability_snapshot)
     captured = date.fromisoformat(str(snapshot["captured_on"]))
     assert captured <= datetime.now(timezone.utc).date()
-    assert snapshot["results"]["inventory"]["path"] == (
-        "receipts/capability-inventory.json"
-    )
-    assert snapshot["results"]["freeze"]["path"] == (
-        "receipts/capability-freeze.json"
-    )
+    assert snapshot["results"]["inventory"]["path"] == ("receipts/capability-inventory.json")
+    assert snapshot["results"]["freeze"]["path"] == ("receipts/capability-freeze.json")
     validated = reprobe.validate_capability_snapshot(
         repository_root=repository,
         expected_run_id=FRESH_TEST_RUN_ID,

@@ -62,9 +62,7 @@ def test_public_policy_and_receipt_are_path_free_cid_records(
         approved_tcp_ports=(8080, 19001),
     )
 
-    restored = validate_g240_landlock_policy_v1(
-        sources.policy.to_dict()
-    )
+    restored = validate_g240_landlock_policy_v1(sources.policy.to_dict())
     assert restored == sources.policy
     assert restored.read_only_path_count == 1
     assert restored.read_write_path_count == 3
@@ -109,9 +107,7 @@ def test_public_policy_and_receipt_are_path_free_cid_records(
         cache_path_set_cid=restored.cache_path_set_cid,
         cache_rule_count=restored.cache_path_count,
         approved_tcp_port_set_cid=restored.approved_tcp_port_set_cid,
-        approved_tcp_port_rule_count=(
-            restored.approved_tcp_port_count
-        ),
+        approved_tcp_port_rule_count=(restored.approved_tcp_port_count),
         no_new_privs_set=True,
         filesystem_rules_enforced=True,
         device_ioctl_restricted=True,
@@ -312,9 +308,7 @@ def test_child_enforces_allowed_and_denied_filesystem_and_tcp_ports(
     allowed_listener = _listening_socket()
     denied_listener = _listening_socket()
     abstract_listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    abstract_name = (
-        f"hssl-g240-{os.getpid()}-{tmp_path.name}"
-    )[:90]
+    abstract_name = (f"hssl-g240-{os.getpid()}-{tmp_path.name}")[:90]
     abstract_listener.bind("\0" + abstract_name)
     abstract_listener.listen(1)
     allowed_port = int(allowed_listener.getsockname()[1])
@@ -494,10 +488,7 @@ print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     assert result["read_only_write_errno"] == result["expected_denial_errno"]
     assert result["denied_tcp_errno"] == result["expected_denial_errno"]
     assert result["denied_bind_errno"] == result["expected_denial_errno"]
-    assert (
-        result["denied_abstract_unix_errno"]
-        == result["expected_scope_errno"]
-    )
+    assert result["denied_abstract_unix_errno"] == result["expected_scope_errno"]
     assert result["denied_signal_errno"] == result["expected_scope_errno"]
     assert not denied_write.exists()
     assert not (read_only / "forbidden-write.txt").exists()
@@ -590,9 +581,7 @@ def test_public_receipt_rejects_policy_rebinding(
     foreign_errata_receipt = G240LandlockReceiptV1(
         **{
             **receipt.identity_payload(),
-            "observed_landlock_errata": (
-                receipt.observed_landlock_errata ^ 1
-            ),
+            "observed_landlock_errata": (receipt.observed_landlock_errata ^ 1),
         }
     )
     with pytest.raises(

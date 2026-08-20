@@ -9,6 +9,7 @@ Reusable by:
     - CLI commands
     - Direct Python imports
 """
+
 import json
 import logging
 import os
@@ -40,7 +41,10 @@ async def index_warc_to_ipwb(
         try:
             from ipwb import indexer  # noqa: F401
         except ImportError:
-            return {"status": "error", "error": "ipwb not installed. Install with: pip install ipwb"}
+            return {
+                "status": "error",
+                "error": "ipwb not installed. Install with: pip install ipwb",
+            }
 
         if not ipfs_endpoint:
             ipfs_endpoint = "http://localhost:5001"
@@ -106,7 +110,10 @@ async def start_ipwb_replay(
         try:
             from ipwb import replay  # noqa: F401
         except ImportError:
-            return {"status": "error", "error": "ipwb not installed. Install with: pip install ipwb"}
+            return {
+                "status": "error",
+                "error": "ipwb not installed. Install with: pip install ipwb",
+            }
 
         if not os.path.exists(cdxj_path):
             return {"status": "error", "error": f"CDXJ index file not found: {cdxj_path}"}

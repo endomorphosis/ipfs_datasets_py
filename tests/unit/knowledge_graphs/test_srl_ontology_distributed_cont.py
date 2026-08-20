@@ -128,9 +128,7 @@ class TestSRLExtractorIntegration:
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
 
         ext = KnowledgeGraphExtractor(use_srl=True, use_tracer=False)
-        kg = ext.extract_knowledge_graph(
-            "Alice acquired Bob.", structure_temperature=0.9
-        )
+        kg = ext.extract_knowledge_graph("Alice acquired Bob.", structure_temperature=0.9)
         assert isinstance(kg, KnowledgeGraph)
 
     def test_merge_srl_into_kg_adds_srl_relationships(self):
@@ -243,9 +241,7 @@ class TestPropertyChains:
         kg2 = OntologyReasoner(schema).materialize(kg)
 
         chain_rels = [
-            r
-            for r in kg2.relationships.values()
-            if r.relationship_type == "hasMaternalGrandmother"
+            r for r in kg2.relationships.values() if r.relationship_type == "hasMaternalGrandmother"
         ]
         assert len(chain_rels) == 1
         assert kg2.entities[chain_rels[0].source_id].name == "Alice"
@@ -278,9 +274,7 @@ class TestPropertyChains:
         schema.add_property_chain(["step1", "step2", "step3"], "fullPath")
         kg2 = OntologyReasoner(schema).materialize(kg)
 
-        path_rels = [
-            r for r in kg2.relationships.values() if r.relationship_type == "fullPath"
-        ]
+        path_rels = [r for r in kg2.relationships.values() if r.relationship_type == "fullPath"]
         assert len(path_rels) == 1
         assert kg2.entities[path_rels[0].source_id].name == "A"
         assert kg2.entities[path_rels[0].target_id].name == "D"
@@ -310,8 +304,7 @@ class TestPropertyChains:
         kg2 = OntologyReasoner(schema).materialize(kg)
 
         assert not any(
-            r.relationship_type == "hasMaternalGrandmother"
-            for r in kg2.relationships.values()
+            r.relationship_type == "hasMaternalGrandmother" for r in kg2.relationships.values()
         )
 
     def test_property_chain_idempotent(self):
@@ -565,9 +558,7 @@ class TestFederatedQueryExecutorContinuation:
         dist, _, _ = self._make_dist_graph(num_partitions=2, num_entities=4)
         executor = FederatedQueryExecutor(dist)
 
-        result = asyncio.run(
-            executor.execute_cypher_async("MATCH (n:Item) RETURN n")
-        )
+        result = asyncio.run(executor.execute_cypher_async("MATCH (n:Item) RETURN n"))
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
             FederatedQueryResult,
         )
@@ -588,9 +579,7 @@ class TestFederatedQueryExecutorContinuation:
         dist, kg, _ = self._make_dist_graph(num_partitions=2, num_entities=4)
         executor = FederatedQueryExecutor(dist, dedup=True)
 
-        result = asyncio.run(
-            executor.execute_cypher_async("MATCH (n:Item) RETURN n")
-        )
+        result = asyncio.run(executor.execute_cypher_async("MATCH (n:Item) RETURN n"))
         # There should be at most num_entities records (no duplicates)
         assert len(result.records) <= len(kg.entities)
 
@@ -604,9 +593,7 @@ class TestFederatedQueryExecutorContinuation:
             FederatedQueryExecutor,
         )
 
-        dist, kg, entities = self._make_dist_graph(
-            num_partitions=4, num_entities=12
-        )
+        dist, kg, entities = self._make_dist_graph(num_partitions=4, num_entities=12)
         executor = FederatedQueryExecutor(dist)
 
         for entity in entities:

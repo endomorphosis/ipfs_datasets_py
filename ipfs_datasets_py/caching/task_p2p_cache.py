@@ -182,7 +182,9 @@ class TaskP2PCacheAdapter:
         if not self.enabled or self._cipher is None:
             raise RuntimeError("Task P2P cache encryption is not configured")
         payload = {"namespace": self.namespace, "value": value} if self.wrap_namespace else value
-        plaintext = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        plaintext = json.dumps(
+            payload, sort_keys=True, ensure_ascii=False, separators=(",", ":")
+        ).encode("utf-8")
         return {"enc": "fernet-v1", "ct": self._cipher.encrypt(plaintext).decode("ascii")}
 
     def decrypt_value(self, wrapped: Any) -> Any | None:

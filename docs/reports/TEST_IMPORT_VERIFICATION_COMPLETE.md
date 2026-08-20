@@ -48,7 +48,9 @@ grep -r "mcp_server\.tools\.media_tools" tests/
 
 **Imports:**
 ```python
-from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import perform_clustering_analysis
+from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
+    perform_clustering_analysis,
+)
 from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import assess_embedding_quality
 from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import reduce_dimensionality
 # ... and 10+ more functions
@@ -68,7 +70,9 @@ from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import redu
 from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import search_vector_index
 from ipfs_datasets_py.mcp_server.tools.admin_tools.system_health import system_health
 from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import record_audit_event
-from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report
+from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import (
+    generate_audit_report,
+)
 from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import perform_clustering
 
 # Core Modules (for mocking)
@@ -139,7 +143,9 @@ Tests use one of two patterns, both correct:
 #### Pattern 1: Import from MCP Wrapper (Public API)
 ```python
 # Tests the MCP interface layer
-from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import perform_clustering_analysis
+from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
+    perform_clustering_analysis,
+)
 ```
 
 **Purpose:** Test MCP tool interface  

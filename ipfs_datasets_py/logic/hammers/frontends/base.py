@@ -217,12 +217,12 @@ class LocalHypothesis:
     raw: str = ""
 
     def validate(self) -> None:
-        if not isinstance(self.names, list) or not self.names or not all(
-            isinstance(n, str) and n.strip() for n in self.names
+        if (
+            not isinstance(self.names, list)
+            or not self.names
+            or not all(isinstance(n, str) and n.strip() for n in self.names)
         ):
-            raise ValueError(
-                "LocalHypothesis.names must be a non-empty list of non-empty strings"
-            )
+            raise ValueError("LocalHypothesis.names must be a non-empty list of non-empty strings")
         _require_nonempty_str(self.type_text, field_name="type_text", owner="LocalHypothesis")
         _require_nonempty_str(self.raw, field_name="raw", owner="LocalHypothesis")
 
@@ -361,8 +361,10 @@ class GoalSnapshot:
         if not isinstance(self.source_position, SourcePosition):
             raise ValueError("GoalSnapshot.source_position must be a SourcePosition")
         self.source_position.validate()
-        if not isinstance(self.native_command, list) or not self.native_command or not all(
-            isinstance(c, str) and c.strip() for c in self.native_command
+        if (
+            not isinstance(self.native_command, list)
+            or not self.native_command
+            or not all(isinstance(c, str) and c.strip() for c in self.native_command)
         ):
             raise ValueError(
                 "GoalSnapshot.native_command must be a non-empty list of non-empty strings"

@@ -22,32 +22,34 @@ class WestVirginiaScraper(BaseStateScraper):
             if self._WV_SECTION_URL_RE.search(source):
                 filtered.append(statute)
         return filtered
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for West Virginia's legislative website."""
         return "https://code.wvlegislature.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for West Virginia."""
-        return [{
-            "name": "West Virginia Code",
-            "url": f"{self.get_base_url()}/11-8-12/",
-            "type": "Code"
-        }]
-    
-    async def scrape_code(self, code_name: str, code_url: str, max_statutes: int | None = None) -> List[NormalizedStatute]:
+        return [
+            {"name": "West Virginia Code", "url": f"{self.get_base_url()}/11-8-12/", "type": "Code"}
+        ]
+
+    async def scrape_code(
+        self, code_name: str, code_url: str, max_statutes: int | None = None
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from West Virginia's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
         return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
         if not self._full_corpus_enabled() and max_statutes is None:
-            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=int(return_threshold))
+            direct = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=int(return_threshold)
+            )
             if direct:
                 return direct[: int(return_threshold)]
 
@@ -93,7 +95,9 @@ class WestVirginiaScraper(BaseStateScraper):
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "W. Va. Code", max_sections=fallback_scan_limit)
+            statutes = await self._generic_scrape(
+                code_name, candidate, "W. Va. Code", max_sections=fallback_scan_limit
+            )
             statutes = self._filter_section_level(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
@@ -128,7 +132,9 @@ class WestVirginiaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         chapter_links = await self._discover_chapter_links()
-        self.logger.info("West Virginia official index: discovered %s chapter links", len(chapter_links))
+        self.logger.info(
+            "West Virginia official index: discovered %s chapter links", len(chapter_links)
+        )
         statutes: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         for chapter_index, (chapter_url, chapter_label) in enumerate(chapter_links, start=1):
@@ -147,7 +153,11 @@ class WestVirginiaScraper(BaseStateScraper):
                 if limit is not None and len(statutes) >= limit:
                     break
                 section_links = await self._discover_section_links(article_url)
-                if article_index == 1 or article_index % 10 == 0 or article_index == len(article_links):
+                if (
+                    article_index == 1
+                    or article_index % 10 == 0
+                    or article_index == len(article_links)
+                ):
                     self.logger.info(
                         "West Virginia official index: chapter=%s article=%s/%s sections=%s statutes_so_far=%s",
                         chapter_label or chapter_url,
@@ -260,10 +270,11 @@ class WestVirginiaScraper(BaseStateScraper):
             node = soup.select_one("div.sectiontext")
             if node is None:
                 continue
-            heading = self._normalize_legal_text((node.find("h4") or node).get_text(" ", strip=True))
+            heading = self._normalize_legal_text(
+                (node.find("h4") or node).get_text(" ", strip=True)
+            )
             body_parts = [
-                self._normalize_legal_text(p.get_text(" ", strip=True))
-                for p in node.find_all("p")
+                self._normalize_legal_text(p.get_text(" ", strip=True)) for p in node.find_all("p")
             ]
             body = self._normalize_legal_text(" ".join([heading, *body_parts]))
             if len(body) < 180:

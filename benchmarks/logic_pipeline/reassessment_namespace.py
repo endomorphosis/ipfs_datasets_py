@@ -23,24 +23,16 @@ PUBLISHED_CAPABILITY_SNAPSHOT: Final = (
     / "2026-07-24_hssl_reassessment_capability_inventory.json"
 )
 PUBLISHED_MATRIX_SNAPSHOT: Final = (
-    Path("docs")
-    / "performance_snapshots"
-    / "2026-07-24_hssl_reassessment_matrix.json"
+    Path("docs") / "performance_snapshots" / "2026-07-24_hssl_reassessment_matrix.json"
 )
 PUBLISHED_PILOT_SNAPSHOT: Final = (
-    Path("docs")
-    / "performance_snapshots"
-    / "2026-07-24_hssl_reassessment_pilot_shortlist.json"
+    Path("docs") / "performance_snapshots" / "2026-07-24_hssl_reassessment_pilot_shortlist.json"
 )
 PUBLISHED_HOLDOUT_SNAPSHOT: Final = (
-    Path("docs")
-    / "performance_snapshots"
-    / "2026-07-24_hssl_reassessment_holdout.json"
+    Path("docs") / "performance_snapshots" / "2026-07-24_hssl_reassessment_holdout.json"
 )
 PUBLISHED_REPORTS_SNAPSHOT: Final = (
-    Path("docs")
-    / "performance_snapshots"
-    / "2026-07-24_hssl_reassessment_reports.json"
+    Path("docs") / "performance_snapshots" / "2026-07-24_hssl_reassessment_reports.json"
 )
 PUBLISHED_FINAL_DECISION: Final = (
     Path("docs")
@@ -48,21 +40,12 @@ PUBLISHED_FINAL_DECISION: Final = (
     / "2026-07-24_hammer_symai_spacy_leanstral_final_decision_v2.json"
 )
 PUBLISHED_RUNBOOK: Final = (
-    Path("docs")
-    / "implementation"
-    / "runbooks"
-    / "hammer_symai_spacy_leanstral_benchmark.md"
+    Path("docs") / "implementation" / "runbooks" / "hammer_symai_spacy_leanstral_benchmark.md"
 )
 PUBLISHED_RUNTIME_LOCKS: Final = (
     Path("benchmarks") / "logic_pipeline" / "runtime_env" / "spacy.lock",
-    Path("benchmarks")
-    / "logic_pipeline"
-    / "runtime_env"
-    / "symai-router.lock",
-    Path("benchmarks")
-    / "logic_pipeline"
-    / "runtime_env"
-    / "leanstral.lock",
+    Path("benchmarks") / "logic_pipeline" / "runtime_env" / "symai-router.lock",
+    Path("benchmarks") / "logic_pipeline" / "runtime_env" / "leanstral.lock",
 )
 PUBLISHED_PREDECESSOR_ARTIFACTS: Final = (
     Path("workspace")
@@ -141,24 +124,12 @@ class ReassessmentRunLayout:
             # Fresh snapshots are run artifacts. Publication into docs is a
             # separate reviewed action, so a retry cannot replace a public
             # decision artifact merely by choosing a new run id.
-            capability_snapshot = (
-                run_paths.results / "capability-reassessment-snapshot.json"
-            )
-            matrix_snapshot = (
-                run_paths.results / "matrix-reassessment-snapshot.json"
-            )
-            pilot_snapshot = (
-                run_paths.results / "pilot-shortlist-snapshot.json"
-            )
-            holdout_snapshot = (
-                run_paths.results / "holdout-evaluation-snapshot.json"
-            )
-            reports_snapshot = (
-                run_paths.results / "reassessment-reports-snapshot.json"
-            )
-            final_decision = (
-                run_paths.results / "final-decision.json"
-            )
+            capability_snapshot = run_paths.results / "capability-reassessment-snapshot.json"
+            matrix_snapshot = run_paths.results / "matrix-reassessment-snapshot.json"
+            pilot_snapshot = run_paths.results / "pilot-shortlist-snapshot.json"
+            holdout_snapshot = run_paths.results / "holdout-evaluation-snapshot.json"
+            reports_snapshot = run_paths.results / "reassessment-reports-snapshot.json"
+            final_decision = run_paths.results / "final-decision.json"
         return cls(
             run_id=run_id,
             run_paths=run_paths,
@@ -169,12 +140,8 @@ class ReassessmentRunLayout:
             matrix_index=run_paths.results / "matrix-execution-v2.json",
             matrix_snapshot=matrix_snapshot,
             frontend_report=run_paths.results / "frontend-semantic-report.json",
-            frontend_receipt_directory=(
-                run_paths.receipts / "semantic-validation"
-            ),
-            frontend_receipt_index=(
-                run_paths.results / "frontend-semantic-receipts.json"
-            ),
+            frontend_receipt_directory=(run_paths.receipts / "semantic-validation"),
+            frontend_receipt_index=(run_paths.results / "frontend-semantic-receipts.json"),
             pilot_report=run_paths.results / "pilot-shortlist-v2.json",
             pilot_snapshot=pilot_snapshot,
             holdout_report=run_paths.results / "holdout-evaluation-v2.json",
@@ -225,9 +192,7 @@ def reject_published_write_targets(
         benchmark_root=benchmark_root,
     )
     repository = Path(repository_root).resolve()
-    canonical_published = ReassessmentRunLayout.for_run(
-        PUBLISHED_REASSESSMENT_RUN_ID
-    )
+    canonical_published = ReassessmentRunLayout.for_run(PUBLISHED_REASSESSMENT_RUN_ID)
     selected_published = ReassessmentRunLayout.for_run(
         PUBLISHED_REASSESSMENT_RUN_ID,
         benchmark_root=benchmark_root,
@@ -242,11 +207,7 @@ def reject_published_write_targets(
         for item in published_layouts
     }
     published_files = {
-        (
-            path
-            if path.is_absolute()
-            else repository / path
-        ).resolve()
+        (path if path.is_absolute() else repository / path).resolve()
         for item in published_layouts
         for path in (
             item.capability_snapshot,
@@ -258,12 +219,9 @@ def reject_published_write_targets(
         )
     }
     published_files.add((repository / PUBLISHED_RUNBOOK).resolve())
+    published_files.update((repository / path).resolve() for path in PUBLISHED_RUNTIME_LOCKS)
     published_files.update(
-        (repository / path).resolve() for path in PUBLISHED_RUNTIME_LOCKS
-    )
-    published_files.update(
-        (repository / path).resolve()
-        for path in PUBLISHED_PREDECESSOR_ARTIFACTS
+        (repository / path).resolve() for path in PUBLISHED_PREDECESSOR_ARTIFACTS
     )
     for raw_target in targets:
         target = Path(raw_target)

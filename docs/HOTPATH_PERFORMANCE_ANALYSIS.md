@@ -76,9 +76,9 @@ where:
 ```python
 # Skip certain type combinations
 IMPOSSIBLE_PAIRS = {
-    ('Date', 'Date'),
-    ('MonetaryAmount', 'Location'),
-    ('Concept', 'Concept'),
+    ("Date", "Date"),
+    ("MonetaryAmount", "Location"),
+    ("Concept", "Concept"),
 }
 
 if (e1.type, e2.type) in IMPOSSIBLE_PAIRS:
@@ -110,7 +110,7 @@ if (e1.type, e2.type) in IMPOSSIBLE_PAIRS:
 ```python
 config = ExtractionConfig(
     enable_parallel_inference=True,
-    max_workers=4  # Adjust based on CPU cores
+    max_workers=4,  # Adjust based on CPU cores
 )
 ```
 

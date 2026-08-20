@@ -25,7 +25,12 @@ DEFAULT_TOKEN_ROOT = Path.home() / ".config" / "complaint-generator" / "gmail_oa
 
 
 def _slugify(value: str) -> str:
-    return "".join(char if char.isalnum() else "-" for char in str(value or "").strip().lower()).strip("-") or "gmail"
+    return (
+        "".join(char if char.isalnum() else "-" for char in str(value or "").strip().lower()).strip(
+            "-"
+        )
+        or "gmail"
+    )
 
 
 def _load_keyring():
@@ -39,6 +44,7 @@ def _load_keyring():
 def _load_ipfs_secrets_vault():
     try:
         from ipfs_datasets_py.mcp_server.secrets_vault import SecretsVault  # type: ignore
+
         return SecretsVault
     except Exception:
         return None
@@ -70,10 +76,14 @@ def read_password_from_ipfs_secrets_vault(gmail_user: str) -> str:
         return ""
 
 
-def save_password_to_keyring(gmail_user: str, gmail_app_password: str, parser: argparse.ArgumentParser) -> None:
+def save_password_to_keyring(
+    gmail_user: str, gmail_app_password: str, parser: argparse.ArgumentParser
+) -> None:
     keyring = _load_keyring()
     if keyring is None:
-        parser.error("keyring support is not available. Install the 'keyring' package to use --save-to-keyring.")
+        parser.error(
+            "keyring support is not available. Install the 'keyring' package to use --save-to-keyring."
+        )
     try:
         keyring.set_password(KEYRING_SERVICE, gmail_user, gmail_app_password)
     except Exception as exc:
@@ -95,7 +105,9 @@ def save_password_to_ipfs_secrets_vault(
         vault = SecretsVault()
         vault.set(_vault_secret_name(gmail_user), gmail_app_password)
     except Exception as exc:
-        parser.error(f"failed to save Gmail app password to the ipfs_datasets_py secrets vault: {exc}")
+        parser.error(
+            f"failed to save Gmail app password to the ipfs_datasets_py secrets vault: {exc}"
+        )
 
 
 def resolve_gmail_credentials(
@@ -111,7 +123,10 @@ def resolve_gmail_credentials(
 ) -> tuple[str, str]:
     resolved_user = str(gmail_user or "").strip()
     resolved_password = str(gmail_app_password or "").strip()
-    can_prompt = bool(getattr(sys.stdin, "isatty", lambda: False)() and getattr(sys.stderr, "isatty", lambda: False)())
+    can_prompt = bool(
+        getattr(sys.stdin, "isatty", lambda: False)()
+        and getattr(sys.stderr, "isatty", lambda: False)()
+    )
 
     if use_ipfs_secrets_vault and resolved_user and not resolved_password:
         resolved_password = read_password_from_ipfs_secrets_vault(resolved_user)
@@ -147,7 +162,9 @@ def default_token_cache_path(gmail_user: str) -> Path:
 
 
 def load_client_profile(client_secrets_path: str) -> dict[str, Any]:
-    payload = json.loads(Path(client_secrets_path).expanduser().resolve().read_text(encoding="utf-8"))
+    payload = json.loads(
+        Path(client_secrets_path).expanduser().resolve().read_text(encoding="utf-8")
+    )
     profile = payload.get("installed") or payload.get("web") or {}
     if not profile:
         raise ValueError("Client secrets JSON must contain an 'installed' or 'web' section.")
@@ -213,7 +230,9 @@ def _loopback_redirect_uri(profile: dict[str, Any], port: int) -> str:
     return f"http://127.0.0.1:{port}"
 
 
-def _build_auth_url(profile: dict[str, Any], *, redirect_uri: str, state: str, login_hint: str = "") -> str:
+def _build_auth_url(
+    profile: dict[str, Any], *, redirect_uri: str, state: str, login_hint: str = ""
+) -> str:
     params = {
         "client_id": profile["client_id"],
         "redirect_uri": redirect_uri,
@@ -228,7 +247,9 @@ def _build_auth_url(profile: dict[str, Any], *, redirect_uri: str, state: str, l
     return f"{profile['auth_uri']}?{urlencode(params)}"
 
 
-def _exchange_code_for_token(profile: dict[str, Any], *, code: str, redirect_uri: str) -> dict[str, Any]:
+def _exchange_code_for_token(
+    profile: dict[str, Any], *, code: str, redirect_uri: str
+) -> dict[str, Any]:
     response = requests.post(
         profile["token_uri"],
         data={
@@ -277,7 +298,9 @@ def run_local_server_oauth_flow(
 
     server = HTTPServer(("127.0.0.1", 0), _Handler)
     redirect_uri = _loopback_redirect_uri(profile, server.server_port)
-    auth_url = _build_auth_url(profile, redirect_uri=redirect_uri, state=state, login_hint=gmail_user)
+    auth_url = _build_auth_url(
+        profile, redirect_uri=redirect_uri, state=state, login_hint=gmail_user
+    )
 
     thread = threading.Thread(target=server.handle_request, daemon=True)
     thread.start()
@@ -299,7 +322,11 @@ def run_local_server_oauth_flow(
         raise RuntimeError("Google OAuth did not return an authorization code.")
 
     token_payload = _exchange_code_for_token(profile, code=code, redirect_uri=redirect_uri)
-    cache_path = Path(token_cache_path).expanduser().resolve() if token_cache_path else default_token_cache_path(gmail_user)
+    cache_path = (
+        Path(token_cache_path).expanduser().resolve()
+        if token_cache_path
+        else default_token_cache_path(gmail_user)
+    )
     save_cached_token(cache_path, token_payload)
     return token_payload
 
@@ -312,7 +339,11 @@ def resolve_gmail_oauth_access_token(
     open_browser: bool = True,
 ) -> tuple[str, dict[str, Any]]:
     profile = load_client_profile(client_secrets_path)
-    cache_path = Path(token_cache_path).expanduser().resolve() if token_cache_path else default_token_cache_path(gmail_user)
+    cache_path = (
+        Path(token_cache_path).expanduser().resolve()
+        if token_cache_path
+        else default_token_cache_path(gmail_user)
+    )
     token_payload = load_cached_token(cache_path)
 
     if token_is_usable(token_payload):

@@ -48,10 +48,7 @@ audit.enable()
 from ipfs_datasets_py.auth import AuthManager
 
 auth = AuthManager()
-auth.configure(
-    api_key="your-api-key",
-    require_auth=True
-)
+auth.configure(api_key="your-api-key", require_auth=True)
 ```
 
 ### 3. Set Up Access Control

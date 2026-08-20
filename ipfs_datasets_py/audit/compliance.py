@@ -19,6 +19,7 @@ from ipfs_datasets_py.audit.audit_logger import AuditEvent, AuditCategory, Audit
 
 class ComplianceStandard(Enum):
     """Supported compliance standards."""
+
     GDPR = auto()  # General Data Protection Regulation
     HIPAA = auto()  # Health Insurance Portability and Accountability Act
     SOC2 = auto()  # Service Organization Control 2
@@ -32,6 +33,7 @@ class ComplianceStandard(Enum):
 @dataclass
 class ComplianceRequirement:
     """A specific compliance requirement that needs to be demonstrated."""
+
     id: str  # Identifier (e.g., "GDPR-Art30")
     standard: ComplianceStandard
     description: str
@@ -51,6 +53,7 @@ class ComplianceReport:
     This class represents a compliance report generated from audit logs,
     showing whether and how compliance requirements are being met.
     """
+
     report_id: str
     standard: ComplianceStandard
     generated_at: str
@@ -64,7 +67,7 @@ class ComplianceReport:
     def to_dict(self) -> Dict[str, Any]:
         """Convert the report to a dictionary."""
         report_dict = asdict(self)
-        report_dict['standard'] = self.standard.name
+        report_dict["standard"] = self.standard.name
         return report_dict
 
     def to_json(self, pretty=False) -> str:
@@ -75,23 +78,25 @@ class ComplianceReport:
 
     def save_json(self, file_path: str, pretty=True) -> None:
         """Save the report to a JSON file."""
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(self.to_json(pretty=pretty))
 
     def save_csv(self, file_path: str) -> None:
         """Save requirements status to a CSV file."""
-        with open(file_path, 'w', newline='', encoding='utf-8') as f:
+        with open(file_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow(['Requirement ID', 'Description', 'Status', 'Evidence Count', 'Notes'])
+            writer.writerow(["Requirement ID", "Description", "Status", "Evidence Count", "Notes"])
 
             for req in self.requirements:
-                writer.writerow([
-                    req['id'],
-                    req['description'],
-                    req['status'],
-                    req.get('evidence_count', 0),
-                    req.get('notes', '')
-                ])
+                writer.writerow(
+                    [
+                        req["id"],
+                        req["description"],
+                        req["status"],
+                        req.get("evidence_count", 0),
+                        req.get("notes", ""),
+                    ]
+                )
 
     def save_html(self, file_path: str) -> None:
         """Save the report as an HTML document."""
@@ -125,18 +130,22 @@ class ComplianceReport:
         <h1>Compliance Report - {self.standard.name}</h1>
         <p><strong>Report ID:</strong> {self.report_id}</p>
         <p><strong>Generated:</strong> {self.generated_at}</p>
-        <p><strong>Time Period:</strong> {self.time_period['start']} to {self.time_period['end']}</p>
-        <p><strong>Overall Status:</strong> <span class="{'compliant' if self.compliant else 'non-compliant'}">{self.get_status_text(self.compliant)}</span></p>
+        <p><strong>Time Period:</strong> {self.time_period["start"]} to {
+            self.time_period["end"]
+        }</p>
+        <p><strong>Overall Status:</strong> <span class="{
+            "compliant" if self.compliant else "non-compliant"
+        }">{self.get_status_text(self.compliant)}</span></p>
     </div>
 
     <div class="summary">
         <div class="summary-box">
             <h3>Summary</h3>
-            <p><strong>Total Requirements:</strong> {self.summary.get('total_requirements', 0)}</p>
-            <p><strong>Compliant:</strong> {self.summary.get('compliant_count', 0)}</p>
-            <p><strong>Non-Compliant:</strong> {self.summary.get('non_compliant_count', 0)}</p>
-            <p><strong>Partial:</strong> {self.summary.get('partial_count', 0)}</p>
-            <p><strong>Compliance Rate:</strong> {self.summary.get('compliance_rate', 0)}%</p>
+            <p><strong>Total Requirements:</strong> {self.summary.get("total_requirements", 0)}</p>
+            <p><strong>Compliant:</strong> {self.summary.get("compliant_count", 0)}</p>
+            <p><strong>Non-Compliant:</strong> {self.summary.get("non_compliant_count", 0)}</p>
+            <p><strong>Partial:</strong> {self.summary.get("partial_count", 0)}</p>
+            <p><strong>Compliance Rate:</strong> {self.summary.get("compliance_rate", 0)}%</p>
         </div>
     </div>
 
@@ -149,32 +158,36 @@ class ComplianceReport:
             <th>Evidence</th>
             <th>Notes</th>
         </tr>
-        {"".join(
-            f'''<tr>
+        {
+            "".join(
+                f'''<tr>
                 <td>{req['id']}</td>
                 <td>{req['description']}</td>
                 <td class="status-{req['status'].lower()}">{req['status']}</td>
                 <td>{req.get('evidence_count', 0)}</td>
                 <td>{req.get('notes', '')}</td>
             </tr>'''
-            for req in self.requirements
-        )}
+                for req in self.requirements
+            )
+        }
     </table>
 
-    {"".join(
-        f'''<div class="remediation">
+    {
+            "".join(
+                f'''<div class="remediation">
             <h3>Remediation Suggestions for {req_id}</h3>
             <ul>
                 {"".join(f'<li>{suggestion}</li>' for suggestion in suggestions)}
             </ul>
         </div>'''
-        for req_id, suggestions in self.remediation_suggestions.items()
-    )}
+                for req_id, suggestions in self.remediation_suggestions.items()
+            )
+        }
 </body>
 </html>
 """
 
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(html)
 
     @staticmethod
@@ -211,9 +224,12 @@ class ComplianceReporter:
         """
         self.requirements.append(requirement)
 
-    def generate_report(self, events: List[AuditEvent],
-                       start_time: Optional[str] = None,
-                       end_time: Optional[str] = None) -> ComplianceReport:
+    def generate_report(
+        self,
+        events: List[AuditEvent],
+        start_time: Optional[str] = None,
+        end_time: Optional[str] = None,
+    ) -> ComplianceReport:
         """
         Generate a compliance report from audit events.
 
@@ -230,13 +246,13 @@ class ComplianceReporter:
             # Default to last 30 days
             end = datetime.datetime.utcnow()
             start = end - datetime.timedelta(days=30)
-            end_time = end_time or end.isoformat() + 'Z'
-            start_time = start_time or start.isoformat() + 'Z'
+            end_time = end_time or end.isoformat() + "Z"
+            start_time = start_time or start.isoformat() + "Z"
 
         # Filter events by time period
         filtered_events = []
         for event in events:
-            event_time = event.timestamp.rstrip('Z')
+            event_time = event.timestamp.rstrip("Z")
             if start_time <= event_time <= end_time:
                 filtered_events.append(event)
 
@@ -254,52 +270,53 @@ class ComplianceReporter:
 
             # Add to results
             result = {
-                'id': req.id,
-                'description': req.description,
-                'status': requirement_status,
-                'evidence_count': len(relevant_events),
-                'details': details,
-                'notes': details.get('notes', '')
+                "id": req.id,
+                "description": req.description,
+                "status": requirement_status,
+                "evidence_count": len(relevant_events),
+                "details": details,
+                "notes": details.get("notes", ""),
             }
             requirement_results.append(result)
 
             # Update overall compliance status
-            if requirement_status == 'Non-Compliant':
+            if requirement_status == "Non-Compliant":
                 all_compliant = False
                 remediation_suggestions[req.id] = self._generate_remediation(req, details)
-            elif requirement_status == 'Partial' and all_compliant:
+            elif requirement_status == "Partial" and all_compliant:
                 all_compliant = False
 
         # Generate summary
-        compliant_count = sum(1 for r in requirement_results if r['status'] == 'Compliant')
-        non_compliant_count = sum(1 for r in requirement_results if r['status'] == 'Non-Compliant')
-        partial_count = sum(1 for r in requirement_results if r['status'] == 'Partial')
+        compliant_count = sum(1 for r in requirement_results if r["status"] == "Compliant")
+        non_compliant_count = sum(1 for r in requirement_results if r["status"] == "Non-Compliant")
+        partial_count = sum(1 for r in requirement_results if r["status"] == "Partial")
         total = len(requirement_results)
 
         summary = {
-            'total_requirements': total,
-            'compliant_count': compliant_count,
-            'non_compliant_count': non_compliant_count,
-            'partial_count': partial_count,
-            'compliance_rate': round((compliant_count / total) * 100, 1) if total else 0
+            "total_requirements": total,
+            "compliant_count": compliant_count,
+            "non_compliant_count": non_compliant_count,
+            "partial_count": partial_count,
+            "compliance_rate": round((compliant_count / total) * 100, 1) if total else 0,
         }
 
         # Create the report
         report = ComplianceReport(
             report_id=f"{self.standard.name}-{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
             standard=self.standard,
-            generated_at=datetime.datetime.utcnow().isoformat() + 'Z',
-            time_period={'start': start_time, 'end': end_time},
+            generated_at=datetime.datetime.utcnow().isoformat() + "Z",
+            time_period={"start": start_time, "end": end_time},
             requirements=requirement_results,
             summary=summary,
             compliant=all_compliant,
-            remediation_suggestions=remediation_suggestions
+            remediation_suggestions=remediation_suggestions,
         )
 
         return report
 
-    def _filter_events_for_requirement(self, events: List[AuditEvent],
-                                     requirement: ComplianceRequirement) -> List[AuditEvent]:
+    def _filter_events_for_requirement(
+        self, events: List[AuditEvent], requirement: ComplianceRequirement
+    ) -> List[AuditEvent]:
         """
         Filter events relevant to a specific compliance requirement.
 
@@ -318,8 +335,7 @@ class ComplianceReporter:
                 continue
 
             # Check category
-            if (requirement.audit_categories and
-                event.category not in requirement.audit_categories):
+            if requirement.audit_categories and event.category not in requirement.audit_categories:
                 continue
 
             # Check action
@@ -331,9 +347,9 @@ class ComplianceReporter:
                 missing_fields = False
                 for field in requirement.required_fields:
                     # Handle nested fields in details
-                    if '.' in field:
-                        parts = field.split('.', 1)
-                        if parts[0] == 'details':
+                    if "." in field:
+                        parts = field.split(".", 1)
+                        if parts[0] == "details":
                             if parts[1] not in event.details:
                                 missing_fields = True
                                 break
@@ -349,8 +365,9 @@ class ComplianceReporter:
 
         return result
 
-    def _check_requirement(self, requirement: ComplianceRequirement,
-                         events: List[AuditEvent]) -> tuple:
+    def _check_requirement(
+        self, requirement: ComplianceRequirement, events: List[AuditEvent]
+    ) -> tuple:
         """
         Check if a compliance requirement is met.
 
@@ -366,21 +383,22 @@ class ComplianceReporter:
         if requirement.verification_function:
             try:
                 result = requirement.verification_function(events)
-                status = result.get('status', 'Non-Compliant')
+                status = result.get("status", "Non-Compliant")
                 return status, result
             except Exception as e:
                 self.logger.error(f"Error in verification function for {requirement.id}: {str(e)}")
-                return 'Non-Compliant', {'error': str(e)}
+                return "Non-Compliant", {"error": str(e)}
 
         # Default verification based on event presence
         if not events:
-            return 'Non-Compliant', {'notes': 'No relevant audit events found'}
+            return "Non-Compliant", {"notes": "No relevant audit events found"}
 
         # Simple presence check
-        return 'Compliant', {'notes': f'Found {len(events)} relevant audit events'}
+        return "Compliant", {"notes": f"Found {len(events)} relevant audit events"}
 
-    def _generate_remediation(self, requirement: ComplianceRequirement,
-                            details: Dict[str, Any]) -> List[str]:
+    def _generate_remediation(
+        self, requirement: ComplianceRequirement, details: Dict[str, Any]
+    ) -> List[str]:
         """
         Generate remediation suggestions for a failed requirement.
 
@@ -395,17 +413,17 @@ class ComplianceReporter:
         suggestions = [
             f"Ensure proper logging for {', '.join([cat.name for cat in requirement.audit_categories])} events",
             f"Verify that required actions ({', '.join(requirement.actions)}) are being audited",
-            f"Check that audit level is at least {requirement.min_level.name}"
+            f"Check that audit level is at least {requirement.min_level.name}",
         ]
 
         # Add specific suggestions based on requirement
-        if requirement.id.startswith('GDPR'):
+        if requirement.id.startswith("GDPR"):
             suggestions.append("Verify data access controls and consent tracking")
-        elif requirement.id.startswith('HIPAA'):
+        elif requirement.id.startswith("HIPAA"):
             suggestions.append("Ensure PHI access is properly authenticated and authorized")
-        elif requirement.id.startswith('SOC2'):
+        elif requirement.id.startswith("SOC2"):
             suggestions.append("Review system integrity and availability monitoring")
-        elif requirement.id.startswith('PCI'):
+        elif requirement.id.startswith("PCI"):
             suggestions.append("Verify cardholder data protection measures")
 
         return suggestions
@@ -424,51 +442,61 @@ class GDPRComplianceReporter(ComplianceReporter):
         super().__init__(ComplianceStandard.GDPR)
 
         # Add GDPR-specific requirements
-        self.add_requirement(ComplianceRequirement(
-            id="GDPR-Art30",
-            standard=ComplianceStandard.GDPR,
-            description="Records of processing activities",
-            audit_categories=[AuditCategory.DATA_ACCESS, AuditCategory.DATA_MODIFICATION],
-            actions=["read", "write", "update", "delete"],
-            min_level=AuditLevel.INFO,
-            required_fields=["user", "resource_id", "timestamp"]
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="GDPR-Art30",
+                standard=ComplianceStandard.GDPR,
+                description="Records of processing activities",
+                audit_categories=[AuditCategory.DATA_ACCESS, AuditCategory.DATA_MODIFICATION],
+                actions=["read", "write", "update", "delete"],
+                min_level=AuditLevel.INFO,
+                required_fields=["user", "resource_id", "timestamp"],
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="GDPR-Art32",
-            standard=ComplianceStandard.GDPR,
-            description="Security of processing",
-            audit_categories=[AuditCategory.SECURITY, AuditCategory.AUTHENTICATION],
-            actions=["login", "logout", "access_denied", "permission_changed"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="GDPR-Art32",
+                standard=ComplianceStandard.GDPR,
+                description="Security of processing",
+                audit_categories=[AuditCategory.SECURITY, AuditCategory.AUTHENTICATION],
+                actions=["login", "logout", "access_denied", "permission_changed"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="GDPR-Art33",
-            standard=ComplianceStandard.GDPR,
-            description="Notification of personal data breaches",
-            audit_categories=[AuditCategory.SECURITY, AuditCategory.INTRUSION_DETECTION],
-            actions=["security_incident", "breach_detected", "unauthorized_access"],
-            min_level=AuditLevel.WARNING
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="GDPR-Art33",
+                standard=ComplianceStandard.GDPR,
+                description="Notification of personal data breaches",
+                audit_categories=[AuditCategory.SECURITY, AuditCategory.INTRUSION_DETECTION],
+                actions=["security_incident", "breach_detected", "unauthorized_access"],
+                min_level=AuditLevel.WARNING,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="GDPR-Art15",
-            standard=ComplianceStandard.GDPR,
-            description="Right of access by the data subject",
-            audit_categories=[AuditCategory.DATA_ACCESS],
-            actions=["subject_access_request", "data_export"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="GDPR-Art15",
+                standard=ComplianceStandard.GDPR,
+                description="Right of access by the data subject",
+                audit_categories=[AuditCategory.DATA_ACCESS],
+                actions=["subject_access_request", "data_export"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="GDPR-Art17",
-            standard=ComplianceStandard.GDPR,
-            description="Right to erasure ('right to be forgotten')",
-            audit_categories=[AuditCategory.DATA_MODIFICATION],
-            actions=["data_deletion", "right_to_be_forgotten"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="GDPR-Art17",
+                standard=ComplianceStandard.GDPR,
+                description="Right to erasure ('right to be forgotten')",
+                audit_categories=[AuditCategory.DATA_MODIFICATION],
+                actions=["data_deletion", "right_to_be_forgotten"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
 
 class HIPAAComplianceReporter(ComplianceReporter):
@@ -484,52 +512,62 @@ class HIPAAComplianceReporter(ComplianceReporter):
         super().__init__(ComplianceStandard.HIPAA)
 
         # Add HIPAA-specific requirements
-        self.add_requirement(ComplianceRequirement(
-            id="HIPAA-164.312.a.1",
-            standard=ComplianceStandard.HIPAA,
-            description="Access Control - Unique User Identification",
-            audit_categories=[AuditCategory.AUTHENTICATION, AuditCategory.AUTHORIZATION],
-            actions=["login", "access_granted", "access_denied"],
-            min_level=AuditLevel.INFO,
-            required_fields=["user", "client_ip", "timestamp"]
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="HIPAA-164.312.a.1",
+                standard=ComplianceStandard.HIPAA,
+                description="Access Control - Unique User Identification",
+                audit_categories=[AuditCategory.AUTHENTICATION, AuditCategory.AUTHORIZATION],
+                actions=["login", "access_granted", "access_denied"],
+                min_level=AuditLevel.INFO,
+                required_fields=["user", "client_ip", "timestamp"],
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="HIPAA-164.312.b",
-            standard=ComplianceStandard.HIPAA,
-            description="Audit Controls",
-            audit_categories=[AuditCategory.DATA_ACCESS, AuditCategory.DATA_MODIFICATION],
-            actions=["read", "write", "update", "delete"],
-            min_level=AuditLevel.INFO,
-            required_fields=["user", "resource_id", "timestamp"]
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="HIPAA-164.312.b",
+                standard=ComplianceStandard.HIPAA,
+                description="Audit Controls",
+                audit_categories=[AuditCategory.DATA_ACCESS, AuditCategory.DATA_MODIFICATION],
+                actions=["read", "write", "update", "delete"],
+                min_level=AuditLevel.INFO,
+                required_fields=["user", "resource_id", "timestamp"],
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="HIPAA-164.312.c.1",
-            standard=ComplianceStandard.HIPAA,
-            description="Integrity",
-            audit_categories=[AuditCategory.DATA_MODIFICATION, AuditCategory.SECURITY],
-            actions=["update", "delete", "checksum_validation"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="HIPAA-164.312.c.1",
+                standard=ComplianceStandard.HIPAA,
+                description="Integrity",
+                audit_categories=[AuditCategory.DATA_MODIFICATION, AuditCategory.SECURITY],
+                actions=["update", "delete", "checksum_validation"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="HIPAA-164.312.d",
-            standard=ComplianceStandard.HIPAA,
-            description="Person or Entity Authentication",
-            audit_categories=[AuditCategory.AUTHENTICATION],
-            actions=["login", "mfa_challenge", "password_change"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="HIPAA-164.312.d",
+                standard=ComplianceStandard.HIPAA,
+                description="Person or Entity Authentication",
+                audit_categories=[AuditCategory.AUTHENTICATION],
+                actions=["login", "mfa_challenge", "password_change"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="HIPAA-164.312.e.1",
-            standard=ComplianceStandard.HIPAA,
-            description="Transmission Security",
-            audit_categories=[AuditCategory.SECURITY, AuditCategory.DATA_ACCESS],
-            actions=["data_export", "data_transfer", "encryption_status"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="HIPAA-164.312.e.1",
+                standard=ComplianceStandard.HIPAA,
+                description="Transmission Security",
+                audit_categories=[AuditCategory.SECURITY, AuditCategory.DATA_ACCESS],
+                actions=["data_export", "data_transfer", "encryption_status"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
 
 class SOC2ComplianceReporter(ComplianceReporter):
@@ -546,74 +584,94 @@ class SOC2ComplianceReporter(ComplianceReporter):
         super().__init__(ComplianceStandard.SOC2)
 
         # Add SOC2-specific requirements
-        self.add_requirement(ComplianceRequirement(
-            id="SOC2-CC1.1",
-            standard=ComplianceStandard.SOC2,
-            description="Common Criteria - Management has defined organizational structure and responsibility",
-            audit_categories=[AuditCategory.CONFIGURATION, AuditCategory.AUTHORIZATION],
-            actions=["role_assignment", "permission_changed", "policy_update"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="SOC2-CC1.1",
+                standard=ComplianceStandard.SOC2,
+                description="Common Criteria - Management has defined organizational structure and responsibility",
+                audit_categories=[AuditCategory.CONFIGURATION, AuditCategory.AUTHORIZATION],
+                actions=["role_assignment", "permission_changed", "policy_update"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="SOC2-CC5.1",
-            standard=ComplianceStandard.SOC2,
-            description="Common Criteria - Logical access security/cybersecurity",
-            audit_categories=[AuditCategory.AUTHENTICATION, AuditCategory.AUTHORIZATION, AuditCategory.SECURITY],
-            actions=["login", "logout", "access_denied", "password_change", "mfa_challenge"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="SOC2-CC5.1",
+                standard=ComplianceStandard.SOC2,
+                description="Common Criteria - Logical access security/cybersecurity",
+                audit_categories=[
+                    AuditCategory.AUTHENTICATION,
+                    AuditCategory.AUTHORIZATION,
+                    AuditCategory.SECURITY,
+                ],
+                actions=["login", "logout", "access_denied", "password_change", "mfa_challenge"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="SOC2-CC5.2",
-            standard=ComplianceStandard.SOC2,
-            description="Common Criteria - System changes are authorized and properly designed and implemented",
-            audit_categories=[AuditCategory.CONFIGURATION, AuditCategory.SYSTEM],
-            actions=["system_update", "configuration_change", "deployment"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="SOC2-CC5.2",
+                standard=ComplianceStandard.SOC2,
+                description="Common Criteria - System changes are authorized and properly designed and implemented",
+                audit_categories=[AuditCategory.CONFIGURATION, AuditCategory.SYSTEM],
+                actions=["system_update", "configuration_change", "deployment"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="SOC2-CC6.1",
-            standard=ComplianceStandard.SOC2,
-            description="Common Criteria - Vulnerabilities are identified and managed",
-            audit_categories=[AuditCategory.SECURITY, AuditCategory.INTRUSION_DETECTION],
-            actions=["vulnerability_scan", "security_incident", "patch_applied"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="SOC2-CC6.1",
+                standard=ComplianceStandard.SOC2,
+                description="Common Criteria - Vulnerabilities are identified and managed",
+                audit_categories=[AuditCategory.SECURITY, AuditCategory.INTRUSION_DETECTION],
+                actions=["vulnerability_scan", "security_incident", "patch_applied"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="SOC2-A1.1",
-            standard=ComplianceStandard.SOC2,
-            description="Availability - System availability is planned, supported, and managed",
-            audit_categories=[AuditCategory.SYSTEM, AuditCategory.OPERATIONAL],
-            actions=["system_startup", "system_shutdown", "service_status_change"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="SOC2-A1.1",
+                standard=ComplianceStandard.SOC2,
+                description="Availability - System availability is planned, supported, and managed",
+                audit_categories=[AuditCategory.SYSTEM, AuditCategory.OPERATIONAL],
+                actions=["system_startup", "system_shutdown", "service_status_change"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="SOC2-PI1.1",
-            standard=ComplianceStandard.SOC2,
-            description="Processing Integrity - System processing is complete, valid, accurate, timely, and authorized",
-            audit_categories=[AuditCategory.DATA_MODIFICATION, AuditCategory.OPERATIONAL],
-            actions=["data_validation", "processing_complete", "error_detected"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="SOC2-PI1.1",
+                standard=ComplianceStandard.SOC2,
+                description="Processing Integrity - System processing is complete, valid, accurate, timely, and authorized",
+                audit_categories=[AuditCategory.DATA_MODIFICATION, AuditCategory.OPERATIONAL],
+                actions=["data_validation", "processing_complete", "error_detected"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="SOC2-C1.1",
-            standard=ComplianceStandard.SOC2,
-            description="Confidentiality - Confidential information is protected during collection, use, and disposal",
-            audit_categories=[AuditCategory.DATA_ACCESS, AuditCategory.SECURITY],
-            actions=["data_access", "data_deletion", "encryption_status"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="SOC2-C1.1",
+                standard=ComplianceStandard.SOC2,
+                description="Confidentiality - Confidential information is protected during collection, use, and disposal",
+                audit_categories=[AuditCategory.DATA_ACCESS, AuditCategory.SECURITY],
+                actions=["data_access", "data_deletion", "encryption_status"],
+                min_level=AuditLevel.INFO,
+            )
+        )
 
-        self.add_requirement(ComplianceRequirement(
-            id="SOC2-P1.1",
-            standard=ComplianceStandard.SOC2,
-            description="Privacy - Personal information is collected, used, retained, and disposed of properly",
-            audit_categories=[AuditCategory.DATA_ACCESS, AuditCategory.DATA_MODIFICATION],
-            actions=["data_collection", "consent_management", "data_deletion"],
-            min_level=AuditLevel.INFO
-        ))
+        self.add_requirement(
+            ComplianceRequirement(
+                id="SOC2-P1.1",
+                standard=ComplianceStandard.SOC2,
+                description="Privacy - Personal information is collected, used, retained, and disposed of properly",
+                audit_categories=[AuditCategory.DATA_ACCESS, AuditCategory.DATA_MODIFICATION],
+                actions=["data_collection", "consent_management", "data_deletion"],
+                min_level=AuditLevel.INFO,
+            )
+        )

@@ -94,9 +94,7 @@ class SyMAICanonicalRealizer:
             self._client.endpoint.rstrip("/") != LEANSTRAL_ENDPOINT
             or self._client.model != LEANSTRAL_MODEL
         ):
-            raise ValueError(
-                "client must bind the exact frozen Leanstral endpoint/model"
-            )
+            raise ValueError("client must bind the exact frozen Leanstral endpoint/model")
         self._last_receipt: SyMAIRouteReceipt | None = None
 
     @property
@@ -122,10 +120,7 @@ class SyMAICanonicalRealizer:
 
     @property
     def ranking_eligible(self) -> bool:
-        return bool(
-            self._last_receipt is not None
-            and self._last_receipt.ranking_eligible
-        )
+        return bool(self._last_receipt is not None and self._last_receipt.ranking_eligible)
 
     @property
     def round_trip_contract(self) -> Mapping[str, object]:
@@ -154,14 +149,10 @@ class SyMAICanonicalRealizer:
                 max_tokens=REALIZER_MAX_TOKENS,
             )
             if set(candidate) != {"text"}:
-                raise SyMAIMalformedResponseError(
-                    "realization must contain exactly the text key"
-                )
+                raise SyMAIMalformedResponseError("realization must contain exactly the text key")
             text = candidate["text"]
             if not isinstance(text, str):
-                raise SyMAIMalformedResponseError(
-                    "realization text must be a string"
-                )
+                raise SyMAIMalformedResponseError("realization text must be a string")
             text = " ".join(text.strip().split())
             if not text:
                 self._last_receipt = replace(
@@ -174,9 +165,7 @@ class SyMAICanonicalRealizer:
                     failure_detail="SyMAI returned a blank realization",
                 )
             if len(text) > REALIZATION_MAX_LENGTH:
-                raise SyMAIMalformedResponseError(
-                    "realization exceeds the fixed character bound"
-                )
+                raise SyMAIMalformedResponseError("realization exceeds the fixed character bound")
             self._last_receipt = replace(
                 receipt,
                 canonical_contract_validated=True,

@@ -15,18 +15,26 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 # Add parent directory to path to ensure imports work
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
 # Import required modules
 from ipfs_datasets_py.analytics.data_provenance_enhanced import (
-    EnhancedProvenanceManager, SourceRecord, TransformationRecord,
-    ProvenanceRecordType
+    EnhancedProvenanceManager,
+    SourceRecord,
+    TransformationRecord,
+    ProvenanceRecordType,
 )
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
-    EnhancedLineageTracker, LineageNode, LineageLink, LineageDomain,
-    LineageBoundary, LineageTransformationDetail, LineageVersion, LineageSubgraph
+    EnhancedLineageTracker,
+    LineageNode,
+    LineageLink,
+    LineageDomain,
+    LineageBoundary,
+    LineageTransformationDetail,
+    LineageVersion,
+    LineageSubgraph,
 )
 from ipfs_datasets_py.audit.integration import AuditProvenanceIntegrator
 
@@ -54,7 +62,7 @@ def create_test_provenance_data():
         source_type="csv",
         source_uri="s3://data-bucket/dataset1.csv",
         description="Original source data",
-        metadata=doc1_metadata
+        metadata=doc1_metadata,
     )
 
     source2 = manager.record_source(
@@ -62,7 +70,7 @@ def create_test_provenance_data():
         source_type="api",
         source_uri="https://api.example.com/data",
         description="API data source",
-        metadata=doc1_metadata
+        metadata=doc1_metadata,
     )
 
     # Transformation records
@@ -71,7 +79,7 @@ def create_test_provenance_data():
         output_id="cleaned_data1",
         transformation_type="clean",
         description="Clean dataset1",
-        metadata=doc1_metadata
+        metadata=doc1_metadata,
     )
 
     transform2 = manager.record_transformation(
@@ -79,7 +87,7 @@ def create_test_provenance_data():
         output_id="cleaned_data2",
         transformation_type="clean",
         description="Clean dataset2",
-        metadata=doc1_metadata
+        metadata=doc1_metadata,
     )
 
     # Create records for Document 2
@@ -91,7 +99,7 @@ def create_test_provenance_data():
         source_type="parquet",
         source_uri="s3://data-bucket/cleaned_data1.parquet",
         description="Cleaned data from Document 1",
-        metadata=doc2_metadata
+        metadata=doc2_metadata,
     )
 
     source4 = manager.record_source(
@@ -99,7 +107,7 @@ def create_test_provenance_data():
         source_type="parquet",
         source_uri="s3://data-bucket/cleaned_data2.parquet",
         description="Cleaned data from Document 1",
-        metadata=doc2_metadata
+        metadata=doc2_metadata,
     )
 
     # Transformation records for Document 2
@@ -108,7 +116,7 @@ def create_test_provenance_data():
         output_id="merged_data",
         transformation_type="merge",
         description="Merge cleaned datasets",
-        metadata=doc2_metadata
+        metadata=doc2_metadata,
     )
 
     transform4 = manager.record_transformation(
@@ -116,7 +124,7 @@ def create_test_provenance_data():
         output_id="analyzed_data",
         transformation_type="analyze",
         description="Analyze merged data",
-        metadata=doc2_metadata
+        metadata=doc2_metadata,
     )
 
     # Create records for Document 3
@@ -128,7 +136,7 @@ def create_test_provenance_data():
         source_type="parquet",
         source_uri="s3://data-bucket/analyzed_data.parquet",
         description="Analyzed data from Document 2",
-        metadata=doc3_metadata
+        metadata=doc3_metadata,
     )
 
     # Transformation records for Document 3
@@ -137,7 +145,7 @@ def create_test_provenance_data():
         output_id="training_data",
         transformation_type="split",
         description="Split into training data",
-        metadata=doc3_metadata
+        metadata=doc3_metadata,
     )
 
     transform6 = manager.record_transformation(
@@ -145,7 +153,7 @@ def create_test_provenance_data():
         output_id="ml_model",
         transformation_type="train",
         description="Train ML model",
-        metadata=doc3_metadata
+        metadata=doc3_metadata,
     )
 
     # Create cross-document links
@@ -163,9 +171,9 @@ def create_test_provenance_data():
         semantic_context={
             "category": "causal",
             "description": "Direct data derivation with cleaning",
-            "keywords": ["clean", "transform", "source"]
+            "keywords": ["clean", "transform", "source"],
         },
-        boundary_type="dataset"
+        boundary_type="dataset",
     )
 
     enhancer.link_cross_document_provenance(
@@ -176,9 +184,9 @@ def create_test_provenance_data():
         semantic_context={
             "category": "causal",
             "description": "Direct data derivation with cleaning",
-            "keywords": ["clean", "transform", "source"]
+            "keywords": ["clean", "transform", "source"],
         },
-        boundary_type="dataset"
+        boundary_type="dataset",
     )
 
     # Link Document 2 to Document 3
@@ -190,9 +198,9 @@ def create_test_provenance_data():
         semantic_context={
             "category": "causal",
             "description": "Data analysis pipeline",
-            "keywords": ["analyze", "process", "derived"]
+            "keywords": ["analyze", "process", "derived"],
         },
-        boundary_type="system"
+        boundary_type="system",
     )
 
     return manager
@@ -212,24 +220,24 @@ def demonstrate_enhanced_cross_document_lineage():
     start_record = "dataset1"  # Start from the first source record
 
     lineage_graph = enhancer.build_enhanced_cross_document_lineage_graph(
-        record_ids=start_record,
-        max_depth=4,
-        include_semantic_analysis=True
+        record_ids=start_record, max_depth=4, include_semantic_analysis=True
     )
 
-    print(f"Graph created with {lineage_graph.number_of_nodes()} nodes and "
-          f"{lineage_graph.number_of_edges()} edges")
+    print(
+        f"Graph created with {lineage_graph.number_of_nodes()} nodes and "
+        f"{lineage_graph.number_of_edges()} edges"
+    )
 
     # Print document clusters
-    if 'document_clusters' in lineage_graph.graph:
+    if "document_clusters" in lineage_graph.graph:
         print("\nDocument clusters:")
-        for cluster_id, docs in lineage_graph.graph['document_clusters'].items():
+        for cluster_id, docs in lineage_graph.graph["document_clusters"].items():
             print(f"  {cluster_id}: {docs}")
 
     # Print boundary types
-    if 'boundary_types' in lineage_graph.graph:
+    if "boundary_types" in lineage_graph.graph:
         print("\nBoundary types:")
-        for boundary_type, count in lineage_graph.graph['boundary_types'].items():
+        for boundary_type, count in lineage_graph.graph["boundary_types"].items():
             print(f"  {boundary_type}: {count}")
 
     # Save visualization to file
@@ -242,7 +250,7 @@ def demonstrate_enhanced_cross_document_lineage():
         show_clusters=True,
         show_metrics=True,
         file_path=image_path,
-        format="png"
+        format="png",
     )
     print(f"Visualization saved to {image_path}")
 
@@ -252,34 +260,32 @@ def demonstrate_enhanced_cross_document_lineage():
         lineage_graph=lineage_graph,
         include_semantic_analysis=True,
         include_impact_analysis=True,
-        include_cluster_analysis=True
+        include_cluster_analysis=True,
     )
 
     # Print key analysis results
     print("\nCross-document lineage analysis results:")
     print(f"Basic metrics: {analysis['basic_metrics']}")
 
-    if 'document_boundaries' in analysis:
+    if "document_boundaries" in analysis:
         print(f"Document boundaries: {analysis['document_boundaries']}")
 
-    if 'semantic_relationships' in analysis:
+    if "semantic_relationships" in analysis:
         print(f"Semantic relationships: {analysis['semantic_relationships']}")
 
-    if 'critical_paths' in analysis:
+    if "critical_paths" in analysis:
         print(f"Critical paths: {len(analysis['critical_paths'])}")
-        for i, path in enumerate(analysis['critical_paths']):
-            print(f"  Path {i+1}: {' -> '.join(path)}")
+        for i, path in enumerate(analysis["critical_paths"]):
+            print(f"  Path {i + 1}: {' -> '.join(path)}")
 
-    if 'time_analysis' in analysis:
+    if "time_analysis" in analysis:
         print(f"Time span: {analysis['time_analysis']['time_span_days']:.2f} days")
 
     # 3. Export lineage graph
     print("\nExporting lineage graph...")
     export_path = os.path.join(os.path.dirname(__file__), "cross_doc_lineage.json")
     enhancer.export_cross_document_lineage(
-        lineage_graph=lineage_graph,
-        format="json",
-        file_path=export_path
+        lineage_graph=lineage_graph, format="json", file_path=export_path
     )
     print(f"Lineage graph exported to {export_path}")
 
@@ -294,10 +300,7 @@ def demonstrate_enhanced_cross_document_lineage():
     # Visualize impact
     impact_path = os.path.join(os.path.dirname(__file__), "impact_analysis.png")
     impact_analyzer.visualize_impact(
-        source_id=start_record,
-        max_depth=4,
-        file_path=impact_path,
-        format="png"
+        source_id=start_record, max_depth=4, file_path=impact_path, format="png"
     )
     print(f"Impact visualization saved to {impact_path}")
 

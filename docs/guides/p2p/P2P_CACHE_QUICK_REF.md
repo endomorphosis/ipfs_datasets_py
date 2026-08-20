@@ -172,6 +172,7 @@ runner_mgr = RunnerManager(gh)  # Uses same cache
 **Check if enabled:**
 ```python
 from ipfs_accelerate_py.github_cli.cache import get_global_cache
+
 cache = get_global_cache()
 print(f"P2P enabled: {cache.enable_p2p}")
 print(f"libp2p available: {cache.enable_p2p}")

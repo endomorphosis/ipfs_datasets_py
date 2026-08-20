@@ -31,6 +31,7 @@ from .cid_artifacts import DecisionObject, IntentObject, artifact_cid
 # Policy representation
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PolicyClause:
     """A single deontic clause within a policy.
@@ -157,6 +158,7 @@ class PolicyObject:
 # Factory helpers
 # ---------------------------------------------------------------------------
 
+
 def make_simple_permission_policy(
     actor: Optional[str] = None,
     action: Optional[str] = None,
@@ -239,6 +241,7 @@ class PolicyClauseType:
 # ---------------------------------------------------------------------------
 # Policy Evaluator
 # ---------------------------------------------------------------------------
+
 
 def _parse_iso(ts: Optional[Union[str, float, int, datetime]]) -> Optional[datetime]:
     """Parse an ISO-8601 UTC timestamp string into a timezone-aware datetime.
@@ -395,7 +398,9 @@ class PolicyEvaluator:
         denial_reasons: List[str] = []
 
         for clause in policy_obj.clauses:
-            if not _clause_matches(clause, effective_actor, intent.tool, effective_resource, eval_time):
+            if not _clause_matches(
+                clause, effective_actor, intent.tool, effective_resource, eval_time
+            ):
                 continue
 
             if clause.clause_type == "prohibition":
@@ -426,7 +431,9 @@ class PolicyEvaluator:
             justification = f"Explicit permission for actor={effective_actor} action={intent.tool}"
         else:
             verdict = "deny"
-            justification = f"No matching permission for actor={effective_actor} action={intent.tool}"
+            justification = (
+                f"No matching permission for actor={effective_actor} action={intent.tool}"
+            )
 
         return DecisionObject(
             decision=verdict,

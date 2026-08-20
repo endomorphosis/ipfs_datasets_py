@@ -8,14 +8,13 @@ import os
 
 
 class IpfsMultiformats:
-
     def __init__(self):
         return None
 
     # Step 1: Hash the file content with SHA-256
     def get_file_sha256(self, file_path: str) -> bytes:
         """
-        Calculate the SHA-256 hash of a file. 
+        Calculate the SHA-256 hash of a file.
         This method reads the file in 8192-byte chunks to handle large files
         without loading everything into memory all at once.
 
@@ -26,7 +25,7 @@ class IpfsMultiformats:
             bytes: The SHA-256 hash of the file content.
         """
         hasher = hashlib.sha256()
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             while chunk := f.read(8192):
                 hasher.update(chunk)
         return hasher.digest()
@@ -43,7 +42,7 @@ class IpfsMultiformats:
         Returns:
             bytes: The Multihash-formatted hash.
         """
-        return multihash.wrap(file_content_hash, 'sha2-256')
+        return multihash.wrap(file_content_hash, "sha2-256")
 
     # Step 3: Generate CID from Multihash (CIDv1)
     def get_cid(self, file_data: str | bytes) -> str:
@@ -66,19 +65,20 @@ class IpfsMultiformats:
                 print("Empty file. Defaulting to temp file.")
                 file_content_hash = self.get_file_sha256(file_data)
                 mh = self.get_multihash_sha256(file_content_hash)
-                cid = CID('base32', 1, 'raw', mh)
+                cid = CID("base32", 1, "raw", mh)
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             filename = f.name
-            with open(filename, 'w') as f_new:
+            with open(filename, "w") as f_new:
                 f_new.write(file_data)
 
             file_content_hash = self.get_file_sha256(filename)
             mh = self.get_multihash_sha256(file_content_hash)
-            cid = CID('base32', 1, 'raw', mh)
+            cid = CID("base32", 1, "raw", mh)
         os.remove(filename)
 
         return str(cid)
+
 
 def get_cid(file_data: str | Path | bytes) -> str:
     """
@@ -93,7 +93,7 @@ def get_cid(file_data: str | Path | bytes) -> str:
         str: The generated CID as a string.
     """
     if isinstance(file_data, Path):
-       file_data = str(file_data)
+        file_data = str(file_data)
 
     ipfs_multiformats = IpfsMultiformats()
     return ipfs_multiformats.get_cid(file_data)

@@ -80,10 +80,7 @@ Advanced tracker with ML-based entity resolution:
 from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
 
 # Initialize with ML models
-tracker = EnhancedLineageTracker(
-    similarity_threshold=0.8,
-    use_embeddings=True
-)
+tracker = EnhancedLineageTracker(similarity_threshold=0.8, use_embeddings=True)
 
 # Add documents
 tracker.add_document("paper1", kg1)
@@ -180,7 +177,7 @@ from ipfs_datasets_py.knowledge_graphs.lineage import (
     EntityLineage,
     EntityProfile,
     DocumentLink,
-    LineageMetadata
+    LineageMetadata,
 )
 
 # EntityLineage: Cross-document entity tracking
@@ -189,19 +186,15 @@ lineage = EntityLineage(
     canonical_name="Alice Smith",
     variants=["Alice", "A. Smith", "Alice S."],
     documents=["doc1", "doc2", "doc3"],
-    confidence=0.95
+    confidence=0.95,
 )
 
 # EntityProfile: Merged entity attributes
 profile = EntityProfile(
     name="Alice Smith",
-    attributes={
-        "age": 30,
-        "occupation": "Engineer",
-        "location": "NYC"
-    },
+    attributes={"age": 30, "occupation": "Engineer", "location": "NYC"},
     sources=["doc1", "doc2"],
-    confidence_by_attribute={"age": 1.0, "occupation": 0.9}
+    confidence_by_attribute={"age": 1.0, "occupation": 0.9},
 )
 ```
 
@@ -223,7 +216,7 @@ extractor = KnowledgeGraphExtractor()
 documents = {
     "bio": "Alice Smith is an engineer at Google.",
     "paper": "A. Smith published a paper on AI.",
-    "article": "Alice S. received an award."
+    "article": "Alice S. received an award.",
 }
 
 for doc_id, text in documents.items():
@@ -247,7 +240,7 @@ from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
 tracker = EnhancedLineageTracker(
     similarity_threshold=0.85,
     use_embeddings=True,
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
 )
 
 # Add documents
@@ -295,10 +288,7 @@ for duplicate_set in duplicates:
 ### Example 4: Temporal Analysis
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.lineage import (
-    LineageTracker,
-    LineageMetrics
-)
+from ipfs_datasets_py.knowledge_graphs.lineage import LineageTracker, LineageMetrics
 from datetime import datetime
 
 tracker = LineageTracker()
@@ -338,8 +328,8 @@ tracker.add_document(
         "source": "Wikipedia",
         "url": "https://en.wikipedia.org/wiki/Alice_Smith",
         "retrieved": "2024-01-01",
-        "confidence": 0.9
-    }
+        "confidence": 0.9,
+    },
 )
 
 tracker.add_document(
@@ -349,8 +339,8 @@ tracker.add_document(
         "source": "LinkedIn",
         "url": "https://linkedin.com/in/alice-smith",
         "retrieved": "2024-01-02",
-        "confidence": 0.95
-    }
+        "confidence": 0.95,
+    },
 )
 
 # Get entity with provenance
@@ -373,48 +363,32 @@ for attr, value in profile.attributes.items():
 
 ```python
 # Conservative (fewer false positives)
-tracker = LineageTracker(
-    name_similarity_threshold=0.95,
-    attribute_similarity_threshold=0.9
-)
+tracker = LineageTracker(name_similarity_threshold=0.95, attribute_similarity_threshold=0.9)
 
 # Balanced
-tracker = LineageTracker(
-    name_similarity_threshold=0.85,
-    attribute_similarity_threshold=0.8
-)
+tracker = LineageTracker(name_similarity_threshold=0.85, attribute_similarity_threshold=0.8)
 
 # Aggressive (more matches, some false positives)
-tracker = LineageTracker(
-    name_similarity_threshold=0.7,
-    attribute_similarity_threshold=0.6
-)
+tracker = LineageTracker(name_similarity_threshold=0.7, attribute_similarity_threshold=0.6)
 ```
 
 ### Resolution Strategies
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.lineage import (
-    LineageTracker,
-    ResolutionStrategy
-)
+from ipfs_datasets_py.knowledge_graphs.lineage import LineageTracker, ResolutionStrategy
 
 # Use embeddings for semantic similarity
 tracker = LineageTracker(
     resolution_strategy=ResolutionStrategy.EMBEDDINGS,
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
 )
 
 # Use fuzzy string matching
-tracker = LineageTracker(
-    resolution_strategy=ResolutionStrategy.FUZZY_MATCHING
-)
+tracker = LineageTracker(resolution_strategy=ResolutionStrategy.FUZZY_MATCHING)
 
 # Use hybrid approach
 tracker = LineageTracker(
-    resolution_strategy=ResolutionStrategy.HYBRID,
-    fuzzy_weight=0.3,
-    embedding_weight=0.7
+    resolution_strategy=ResolutionStrategy.HYBRID, fuzzy_weight=0.3, embedding_weight=0.7
 )
 ```
 
@@ -446,7 +420,7 @@ tracker.resolve_all()
 # Use streaming for large datasets
 tracker = LineageTracker(
     cache_size=1000,  # Keep last 1000 entities in memory
-    disk_cache=True   # Store rest on disk
+    disk_cache=True,  # Store rest on disk
 )
 ```
 

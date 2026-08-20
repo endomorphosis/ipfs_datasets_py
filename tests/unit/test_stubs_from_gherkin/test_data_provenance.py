@@ -4,11 +4,13 @@ Test stubs for data_provenance module.
 Feature: Data Provenance Tracking
   Track data lineage and transformation history
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_data_source():
@@ -74,6 +76,7 @@ def multiple_transformation_steps():
 
 
 # Test scenarios
+
 
 def test_record_data_origin():
     """
@@ -164,6 +167,7 @@ def test_validate_provenance_integrity():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a data source")
@@ -327,4 +331,3 @@ def the_transformation_is_recorded_in_lineage():
     """Step: Then the transformation is recorded in lineage"""
     # TODO: Implement step
     pass
-

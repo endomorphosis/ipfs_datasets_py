@@ -4,7 +4,14 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_legal_ir import Condition, DeonticOp, LegalIR, Norm, deterministic_id, parse_cnl_sentence
+from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_legal_ir import (
+    Condition,
+    DeonticOp,
+    LegalIR,
+    Norm,
+    deterministic_id,
+    parse_cnl_sentence,
+)
 from ipfs_datasets_py.processors.legal_data.reasoner import HybridLawReasoner
 from ipfs_datasets_py.processors.legal_data.reasoner.models import SourceProvenance
 
@@ -26,13 +33,19 @@ def _merge_irs(irs: list[LegalIR]) -> LegalIR:
     return kb
 
 
-def _build_reasoner() -> tuple[HybridLawReasoner, str, dict[str, str], dict[str, dict[str, Any]], dict[str, dict[str, bool]]]:
-    ir_wages = parse_cnl_sentence("Employer shall pay wages within 14 days.", jurisdiction="us/federal")
+def _build_reasoner() -> tuple[
+    HybridLawReasoner, str, dict[str, str], dict[str, dict[str, Any]], dict[str, dict[str, bool]]
+]:
+    ir_wages = parse_cnl_sentence(
+        "Employer shall pay wages within 14 days.", jurisdiction="us/federal"
+    )
     ir_disclose = parse_cnl_sentence(
         "Employer shall not disclose employee medical record unless court order.",
         jurisdiction="us/federal",
     )
-    ir_breach = parse_cnl_sentence("Employer shall notify regulator of breach within 72 hours.", jurisdiction="us/federal")
+    ir_breach = parse_cnl_sentence(
+        "Employer shall notify regulator of breach within 72 hours.", jurisdiction="us/federal"
+    )
     kb = _merge_irs([ir_wages, ir_disclose, ir_breach])
 
     frame_by_key = {
@@ -68,9 +81,7 @@ def _build_reasoner() -> tuple[HybridLawReasoner, str, dict[str, str], dict[str,
     events_cases: dict[str, dict[str, Any]] = {
         "none": {"events": []},
         "wages_paid_on_time": {
-            "events": [
-                {"frame_ref": frame_by_key["pay_wages"], "time": "2026-05-10T10:00:00Z"}
-            ]
+            "events": [{"frame_ref": frame_by_key["pay_wages"], "time": "2026-05-10T10:00:00Z"}]
         },
         "record_disclosed": {
             "events": [
@@ -78,9 +89,7 @@ def _build_reasoner() -> tuple[HybridLawReasoner, str, dict[str, str], dict[str,
             ]
         },
         "breach_notified_on_time": {
-            "events": [
-                {"frame_ref": frame_by_key["notify_breach"], "time": "2026-07-02T12:00:00Z"}
-            ]
+            "events": [{"frame_ref": frame_by_key["notify_breach"], "time": "2026-07-02T12:00:00Z"}]
         },
         "all_required_on_time": {
             "events": [

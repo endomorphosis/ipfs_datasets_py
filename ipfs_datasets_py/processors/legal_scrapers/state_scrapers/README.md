@@ -12,29 +12,29 @@ All scrapers output data in a consistent `NormalizedStatute` schema:
 @dataclass
 class NormalizedStatute:
     # Identification
-    state_code: str          # e.g., "CA", "NY"
-    state_name: str          # e.g., "California"
-    statute_id: str          # Unique identifier
-    
+    state_code: str  # e.g., "CA", "NY"
+    state_name: str  # e.g., "California"
+    statute_id: str  # Unique identifier
+
     # Hierarchy
-    code_name: str           # e.g., "Penal Code"
-    title_number: str        # Title/Part number
-    chapter_number: str      # Chapter number
-    section_number: str      # Section number
-    
+    code_name: str  # e.g., "Penal Code"
+    title_number: str  # Title/Part number
+    chapter_number: str  # Chapter number
+    section_number: str  # Section number
+
     # Content
     short_title: str
-    full_text: str           # Actual statute text
+    full_text: str  # Actual statute text
     summary: str
-    
+
     # Classification
-    legal_area: str          # e.g., "criminal", "civil"
-    topics: List[str]        # e.g., ["murder", "homicide"]
-    
+    legal_area: str  # e.g., "criminal", "civil"
+    topics: List[str]  # e.g., ["murder", "homicide"]
+
     # Source
-    source_url: str          # URL to official source
-    official_cite: str       # Official citation
-    
+    source_url: str  # URL to official source
+    official_cite: str  # Official citation
+
     # Metadata
     metadata: StatuteMetadata
     scraped_at: str
@@ -107,9 +107,7 @@ scraper = get_scraper_for_state("CA", "California")
 
 # Scrape all codes
 statutes = await scraper.scrape_all(
-    legal_areas=["criminal"],
-    max_statutes=100,
-    rate_limit_delay=2.0
+    legal_areas=["criminal"], max_statutes=100, rate_limit_delay=2.0
 )
 
 # Each statute is a NormalizedStatute object
@@ -185,18 +183,20 @@ Example:
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
 
+
 class FloridaScraper(BaseStateScraper):
     def get_base_url(self) -> str:
         return "http://www.leg.state.fl.us/"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         # Return list of Florida statutes
         return [...]
-    
+
     async def scrape_code(self, code_name, code_url) -> List[NormalizedStatute]:
         # Parse Florida's specific HTML structure
         # Return normalized statutes
         return [...]
+
 
 # Register it
 StateScraperRegistry.register("FL", FloridaScraper)
@@ -244,20 +244,22 @@ Each scraper should be tested with:
 ```python
 import asyncio
 
+
 async def test_california():
     scraper = CaliforniaScraper("CA", "California")
-    
+
     # Test code list
     codes = scraper.get_code_list()
     assert len(codes) == 29
-    
+
     # Test scraping
-    statutes = await scraper.scrape_code("Penal Code", codes[0]['url'])
+    statutes = await scraper.scrape_code("Penal Code", codes[0]["url"])
     assert all(isinstance(s, NormalizedStatute) for s in statutes)
-    
+
     # Test normalization
     assert statutes[0].state_code == "CA"
     assert statutes[0].code_name == "Penal Code"
+
 
 asyncio.run(test_california())
 ```

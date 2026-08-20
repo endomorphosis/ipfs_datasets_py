@@ -30,7 +30,7 @@ Example:
     ...     domain='legal',
     ...     config=config
     ... )
-    
+
     # Logic usage (typed)
     >>> config = LogicExtractionConfig(
     ...     confidence_threshold=0.8,
@@ -57,11 +57,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BaseExtractionConfig:
     """Base configuration for all extraction types.
-    
+
     This dataclass provides a common set of configuration fields used by all
     extractors (GraphRAG, logic, agentic). Subclasses add optimizer-specific
     fields while inheriting these core parameters.
-    
+
     Attributes:
         confidence_threshold: Minimum confidence score to include assertions (0.0-1.0).
         max_entities: Maximum number of entities to extract (0 = unlimited).
@@ -74,7 +74,7 @@ class BaseExtractionConfig:
         allowed_entity_types: Whitelist of entity types (empty = allow all).
         max_confidence: Upper bound on confidence scores (clamp to this value).
     """
-    
+
     confidence_threshold: float = 0.5
     max_entities: int = 0
     max_assertions: int = 0
@@ -85,7 +85,7 @@ class BaseExtractionConfig:
     stopwords: List[str] = field(default_factory=list)
     allowed_entity_types: List[str] = field(default_factory=list)
     max_confidence: float = 1.0
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Return plain-dict representation (backward-compat)."""
         return {
@@ -100,7 +100,7 @@ class BaseExtractionConfig:
             "allowed_entity_types": list(self.allowed_entity_types),
             "max_confidence": self.max_confidence,
         }
-    
+
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> BaseExtractionConfig:
         """Construct from plain dict (backward-compat)."""
@@ -125,31 +125,33 @@ class BaseExtractionConfig:
 @dataclass
 class GraphRAGExtractionConfig(BaseExtractionConfig):
     """GraphRAG-specific extraction configuration.
-    
+
     Extends BaseExtractionConfig with fields specific to ontology/entity/
     relationship extraction in the GraphRAG optimizer.
-    
+
     Attributes:
         window_size: Co-occurrence window for relationship inference (default: 5).
         include_properties: Emit property predicates in formula set (default: True).
         domain_vocab: Domain-specific vocabulary dict {type: [terms]} (default: {}).
         max_relationships: (inherited) max relationships to extract (0 = unlimited).
     """
-    
+
     window_size: int = 5
     include_properties: bool = True
     domain_vocab: Dict[str, List[str]] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Return plain-dict representation (backward-compat)."""
         d = super().to_dict()
-        d.update({
-            "window_size": self.window_size,
-            "include_properties": self.include_properties,
-            "domain_vocab": {k: list(v) for k, v in self.domain_vocab.items()},
-        })
+        d.update(
+            {
+                "window_size": self.window_size,
+                "include_properties": self.include_properties,
+                "domain_vocab": {k: list(v) for k, v in self.domain_vocab.items()},
+            }
+        )
         return d
-    
+
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> GraphRAGExtractionConfig:
         """Construct from plain dict (backward-compat)."""
@@ -173,6 +175,7 @@ class GraphRAGExtractionConfig(BaseExtractionConfig):
 
 class ExtractionMode(Enum):
     """Mode of logic extraction."""
+
     TDFOL = "tdfol"  # Temporal Deontic First-Order Logic
     FOL = "fol"  # First-Order Logic
     CEC = "cec"  # Cognitive Event Calculus
@@ -184,10 +187,10 @@ class ExtractionMode(Enum):
 @dataclass
 class LogicExtractionConfig(BaseExtractionConfig):
     """Logic theorem optimizer extraction configuration.
-    
+
     Extends BaseExtractionConfig with fields specific to logical statement
     extraction and formal verification in the logic optimizer.
-    
+
     Attributes:
         extraction_mode: Formalism to extract into (TDFOL, FOL, etc.).
         formalism_hint: Hint for formalism selection (default: None).
@@ -195,25 +198,29 @@ class LogicExtractionConfig(BaseExtractionConfig):
         prover_list: List of applicable theorem provers (default: []).
         include_schema: Include type/predicate schema in output (default: True).
     """
-    
+
     extraction_mode: ExtractionMode = ExtractionMode.AUTO
     formalism_hint: Optional[str] = None
     modal_profile: Optional[str] = None
     prover_list: List[str] = field(default_factory=list)
     include_schema: bool = True
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Return plain-dict representation (backward-compat)."""
         d = super().to_dict()
-        d.update({
-            "extraction_mode": self.extraction_mode.value if isinstance(self.extraction_mode, ExtractionMode) else self.extraction_mode,
-            "formalism_hint": self.formalism_hint,
-            "modal_profile": self.modal_profile,
-            "prover_list": list(self.prover_list),
-            "include_schema": self.include_schema,
-        })
+        d.update(
+            {
+                "extraction_mode": self.extraction_mode.value
+                if isinstance(self.extraction_mode, ExtractionMode)
+                else self.extraction_mode,
+                "formalism_hint": self.formalism_hint,
+                "modal_profile": self.modal_profile,
+                "prover_list": list(self.prover_list),
+                "include_schema": self.include_schema,
+            }
+        )
         return d
-    
+
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> LogicExtractionConfig:
         """Construct from plain dict (backward-compat)."""
@@ -244,7 +251,7 @@ class LogicExtractionConfig(BaseExtractionConfig):
 
 class OptimizationMethod(Enum):
     """Type of optimization method to use."""
-    
+
     ADVERSARIAL = "adversarial"  # Generate competing solutions
     ACTOR_CRITIC = "actor_critic"  # Reward-based learning
     TEST_DRIVEN = "test_driven"  # Test-first optimization
@@ -254,10 +261,10 @@ class OptimizationMethod(Enum):
 @dataclass
 class AgenticExtractionConfig(BaseExtractionConfig):
     """Agentic optimizer extraction configuration.
-    
+
     Extends BaseExtractionConfig with fields specific to agentic multi-method
     optimization (adversarial, actor-critic, test-driven, chaos).
-    
+
     Attributes:
         optimization_method: Which optimization strategy to use.
         enable_validation: Run multi-level validation post-extraction (default: True).
@@ -265,32 +272,38 @@ class AgenticExtractionConfig(BaseExtractionConfig):
         enable_change_control: Use GitHub/patch-based change control (default: True).
         change_control_method: GitHub or patch-based control (default: 'patch').
     """
-    
+
     optimization_method: OptimizationMethod = OptimizationMethod.TEST_DRIVEN
     enable_validation: bool = True
     validation_level: str = "full"  # Options: 'basic', 'full', 'extended'
     enable_change_control: bool = True
     change_control_method: str = "patch"  # Options: 'github', 'patch'
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Return plain-dict representation (backward-compat)."""
         d = super().to_dict()
-        d.update({
-            "optimization_method": self.optimization_method.value if isinstance(self.optimization_method, OptimizationMethod) else self.optimization_method,
-            "enable_validation": self.enable_validation,
-            "validation_level": self.validation_level,
-            "enable_change_control": self.enable_change_control,
-            "change_control_method": self.change_control_method,
-        })
+        d.update(
+            {
+                "optimization_method": self.optimization_method.value
+                if isinstance(self.optimization_method, OptimizationMethod)
+                else self.optimization_method,
+                "enable_validation": self.enable_validation,
+                "validation_level": self.validation_level,
+                "enable_change_control": self.enable_change_control,
+                "change_control_method": self.change_control_method,
+            }
+        )
         return d
-    
+
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> AgenticExtractionConfig:
         """Construct from plain dict (backward-compat)."""
         base = BaseExtractionConfig.from_dict(d)
         method_str = d.get("optimization_method", "test_driven")
         try:
-            opt_method = OptimizationMethod(method_str) if isinstance(method_str, str) else method_str
+            opt_method = (
+                OptimizationMethod(method_str) if isinstance(method_str, str) else method_str
+            )
         except ValueError:
             opt_method = OptimizationMethod.TEST_DRIVEN
         return cls(

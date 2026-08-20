@@ -46,9 +46,7 @@ def complete_runtime_sources(tmp_path_factory):
         manifest_sha256=MANIFEST_SHA256,
         environment_sha256=ENVIRONMENT_SHA256,
     )
-    matrix = _complete_runtime_matrix(
-        tmp_path_factory.mktemp("complete-g235-semantic")
-    )
+    matrix = _complete_runtime_matrix(tmp_path_factory.mktemp("complete-g235-semantic"))
     return index, matrix
 
 
@@ -60,9 +58,7 @@ def test_g235_evidence_marker_names_the_bounded_lane() -> None:
 
 
 def test_g201_replays_full_sources_and_absolute_quality(complete_index) -> None:
-    replayed = validate_g201_semantic_evidence_index_v2(
-        complete_index.to_dict()
-    )
+    replayed = validate_g201_semantic_evidence_index_v2(complete_index.to_dict())
     wire = replayed.to_dict()
 
     assert wire["schema"] == G201_SEMANTIC_EVIDENCE_INDEX_SCHEMA_V2
@@ -90,8 +86,7 @@ def test_g201_replays_full_sources_and_absolute_quality(complete_index) -> None:
     ]
     assert len(symai_cache_receipts) == 20
     assert all(
-        receipt["reviewed_answers_absent"] is True
-        and receipt["source_only"] is True
+        receipt["reviewed_answers_absent"] is True and receipt["source_only"] is True
         for receipt in symai_cache_receipts
     )
 
@@ -111,15 +106,9 @@ def test_g201_rejects_report_cids_and_reduced_aggregates(complete_index) -> None
 
 
 @pytest.mark.parametrize("variant_id", ["A5", "A8"])
-def test_g201_rejects_missing_arm_or_coordinate(
-    complete_index, variant_id: str
-) -> None:
+def test_g201_rejects_missing_arm_or_coordinate(complete_index, variant_id: str) -> None:
     wire = mutable(complete_index.to_dict())
-    wire["results"] = [
-        result
-        for result in wire["results"]
-        if result["variant_id"] != variant_id
-    ]
+    wire["results"] = [result for result in wire["results"] if result["variant_id"] != variant_id]
 
     with pytest.raises(SemanticQualityError):
         validate_g201_semantic_evidence_index_v2(wire)
@@ -127,9 +116,7 @@ def test_g201_rejects_missing_arm_or_coordinate(
 
 def test_g201_rejects_forged_reviewed_field(complete_index) -> None:
     wire = mutable(complete_index.to_dict())
-    wire["target_manifest"]["cases"][0]["expected_semantics"][
-        "target"
-    ] = "forged_reviewed_answer"
+    wire["target_manifest"]["cases"][0]["expected_semantics"]["target"] = "forged_reviewed_answer"
 
     with pytest.raises(SemanticQualityError):
         validate_g201_semantic_evidence_index_v2(wire)
@@ -165,42 +152,28 @@ def test_g201_rejects_cache_key_or_producer_identity_tampering(
     complete_index,
 ) -> None:
     cache_wire = mutable(complete_index.to_dict())
-    symai_result = next(
-        result
-        for result in cache_wire["results"]
-        if result["variant_id"] == "A5"
-    )
-    symai_stage = next(
-        stage
-        for stage in symai_result["stages"]
-        if stage["stage"] == "symai"
-    )
+    symai_result = next(result for result in cache_wire["results"] if result["variant_id"] == "A5")
+    symai_stage = next(stage for stage in symai_result["stages"] if stage["stage"] == "symai")
     symai_stage["data"]["cache"]["key"] += "-reviewed-answer"
     with pytest.raises(SemanticQualityError):
         validate_g201_semantic_evidence_index_v2(cache_wire)
 
     identity_wire = mutable(complete_index.to_dict())
     compiler = identity_wire["results"][0]["stages"][0]
-    compiler["provenance"]["requested_identity"][
-        "expected_ir"
-    ] = {"target": "reviewed-answer"}
+    compiler["provenance"]["requested_identity"]["expected_ir"] = {"target": "reviewed-answer"}
     with pytest.raises(SemanticQualityError):
         validate_g201_semantic_evidence_index_v2(identity_wire)
 
 
 def test_g201_validation_error_precedence_is_measured_zero() -> None:
-    index = complete_g201_index(
-        symai_validation_error_case_id="synthetic-g201-pilot-00"
-    )
+    index = complete_g201_index(symai_validation_error_case_id="synthetic-g201-pilot-00")
     symai_observations = [
         row["semantic_observation"]
         for row in index.to_dict()["source_coordinates"]
         if row["producer_id"] == "symai"
     ]
     precedence = [
-        row
-        for row in symai_observations
-        if row["validation_error_precedence_applied"] is True
+        row for row in symai_observations if row["validation_error_precedence_applied"] is True
     ]
 
     assert len(precedence) == 1
@@ -223,9 +196,7 @@ def test_g235_replays_every_selected_runtime_semantic_coordinate(
     complete_runtime_sources,
 ) -> None:
     index, matrix = complete_runtime_sources
-    gate = build_g235_semantic_quality_gate_v2(
-        index, matrix, ("A1", "A12")
-    )
+    gate = build_g235_semantic_quality_gate_v2(index, matrix, ("A1", "A12"))
 
     assert gate["schema"] == G235_SEMANTIC_QUALITY_GATE_SCHEMA_V2
     assert gate["status"] == "passed"
@@ -235,8 +206,7 @@ def test_g235_replays_every_selected_runtime_semantic_coordinate(
     assert gate["observed_coordinate_count"] == 12
     assert len(gate["observations"]) == 12
     assert {
-        (row["variant_id"], row["split"], row["cache_mode"])
-        for row in gate["observations"]
+        (row["variant_id"], row["split"], row["cache_mode"]) for row in gate["observations"]
     } == {
         (variant_id, split, cache_mode)
         for variant_id in ("A0", "A1", "A12")
@@ -247,10 +217,7 @@ def test_g235_replays_every_selected_runtime_semantic_coordinate(
         row["measured"] is True
         and row["quality_millionths"] == 1_000_000
         and row["projection_nonvacuous"] is True
-        and row[
-            "reviewed_answers_in_producer_inputs_or_cache_keys"
-        ]
-        is False
+        and row["reviewed_answers_in_producer_inputs_or_cache_keys"] is False
         and str(row["runtime_receipt_cid"]).startswith("b")
         and str(row["case_result_cid"]).startswith("b")
         and str(row["observation_cid"]).startswith("b")
@@ -264,9 +231,7 @@ def test_g235_replays_every_selected_runtime_semantic_coordinate(
         for metric in gate["per_arm_metrics"]
     )
     assert (
-        validate_g235_semantic_quality_gate_v2(
-            gate, index, matrix
-        )["receipt_cid"]
+        validate_g235_semantic_quality_gate_v2(gate, index, matrix)["receipt_cid"]
         == gate["receipt_cid"]
     )
 
@@ -287,13 +252,11 @@ def test_g235_missing_target_and_arm_remain_null_and_incomplete(
         "runtime_semantic_measurement_incomplete",
     }
     assert all(
-        row["quality_millionths"] is None
-        and row["measured"] is False
+        row["quality_millionths"] is None and row["measured"] is False
         for row in gate["observations"]
     )
     assert all(
-        metric["semantic_quality_millionths"] is None
-        and metric["semantic_quality_rate"] is None
+        metric["semantic_quality_millionths"] is None and metric["semantic_quality_rate"] is None
         for metric in gate["per_arm_metrics"]
     )
 
@@ -304,31 +267,21 @@ def test_g235_rejects_derived_observation_and_protocol_drift(
     index, matrix = complete_runtime_sources
     gate = build_g235_semantic_quality_gate_v2(index, matrix, ("A12",))
     observation_tamper = mutable(gate)
-    observation_tamper["observations"][0][
-        "quality_millionths"
-    ] = 999_999
+    observation_tamper["observations"][0]["quality_millionths"] = 999_999
     with pytest.raises(SemanticQualityError):
-        validate_g235_semantic_quality_gate_v2(
-            observation_tamper, index, matrix
-        )
+        validate_g235_semantic_quality_gate_v2(observation_tamper, index, matrix)
 
     prompt_tamper = mutable(gate)
-    prompt_tamper["protocol_identities"]["prompt_cid"] = (
-        prompt_tamper["protocol_identities"]["response_schema_cid"]
-    )
+    prompt_tamper["protocol_identities"]["prompt_cid"] = prompt_tamper["protocol_identities"][
+        "response_schema_cid"
+    ]
     with pytest.raises(SemanticQualityError):
-        validate_g235_semantic_quality_gate_v2(
-            prompt_tamper, index, matrix
-        )
+        validate_g235_semantic_quality_gate_v2(prompt_tamper, index, matrix)
 
     precedence_tamper = mutable(gate)
-    precedence_tamper["per_arm_metrics"][0][
-        "validation_error_precedence_verified_count"
-    ] = 0
+    precedence_tamper["per_arm_metrics"][0]["validation_error_precedence_verified_count"] = 0
     with pytest.raises(SemanticQualityError):
-        validate_g235_semantic_quality_gate_v2(
-            precedence_tamper, index, matrix
-        )
+        validate_g235_semantic_quality_gate_v2(precedence_tamper, index, matrix)
 
 
 def test_g235_requires_the_preregistered_g201_absolute_quality_condition(
@@ -339,21 +292,15 @@ def test_g235_requires_the_preregistered_g201_absolute_quality_condition(
         runtime_source_text=SOURCE_TEXT,
         manifest_sha256=MANIFEST_SHA256,
         environment_sha256=ENVIRONMENT_SHA256,
-        validation_error_case_ids=tuple(
-            f"synthetic-g201-pilot-{index:02d}" for index in range(6)
-        ),
+        validation_error_case_ids=tuple(f"synthetic-g201-pilot-{index:02d}" for index in range(6)),
     )
-    gate = build_g235_semantic_quality_gate_v2(
-        failing_index, matrix, ("A1",)
-    )
+    gate = build_g235_semantic_quality_gate_v2(failing_index, matrix, ("A1",))
 
     assert failing_index.absolute_quality_passed is False
     assert gate["status"] == "failed"
     assert gate["complete"] is True
     assert gate["passed"] is False
-    assert gate["failure_codes"] == (
-        "g201_absolute_quality_condition_failed",
-    )
+    assert gate["failure_codes"] == ("g201_absolute_quality_condition_failed",)
 
 
 def test_g235_runtime_validation_error_precedence_is_zero_not_missing(
@@ -371,40 +318,24 @@ def test_g235_runtime_validation_error_precedence_is_zero_not_missing(
             (Split.PILOT, CacheMode.WARM, "A12"),
         ),
     )
-    gate = build_g235_semantic_quality_gate_v2(
-        index, matrix, ("A12",)
-    )
+    gate = build_g235_semantic_quality_gate_v2(index, matrix, ("A12",))
     precedence = [
         row
         for row in gate["observations"]
-        if row["variant_id"] == "A12"
-        and row["validation_error_precedence_applied"] is True
+        if row["variant_id"] == "A12" and row["validation_error_precedence_applied"] is True
     ]
     candidate_metric = next(
-        metric
-        for metric in gate["per_arm_metrics"]
-        if metric["variant_id"] == "A12"
+        metric for metric in gate["per_arm_metrics"] if metric["variant_id"] == "A12"
     )
 
     assert gate["status"] == "failed"
     assert gate["complete"] is True
     assert gate["passed"] is False
-    assert gate["failure_codes"] == (
-        "runtime_arm_absolute_quality_failed",
-    )
+    assert gate["failure_codes"] == ("runtime_arm_absolute_quality_failed",)
     assert len(precedence) == 2
-    assert all(
-        row["quality_millionths"] == 0 and row["measured"] is True
-        for row in precedence
-    )
+    assert all(row["quality_millionths"] == 0 and row["measured"] is True for row in precedence)
     assert candidate_metric["measured_coordinate_count"] == 4
-    assert (
-        candidate_metric["validation_error_precedence_verified_count"]
-        == 4
-    )
-    assert (
-        candidate_metric["validation_error_precedence_applied_count"]
-        == 2
-    )
+    assert candidate_metric["validation_error_precedence_verified_count"] == 4
+    assert candidate_metric["validation_error_precedence_applied_count"] == 2
     assert candidate_metric["semantic_quality_millionths"] == 500_000
     assert candidate_metric["absolute_quality_passed"] is False

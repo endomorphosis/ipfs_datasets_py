@@ -46,18 +46,15 @@ from datetime import datetime, timedelta
 
 # Fetch stock data (uses available scraper)
 result = get_stock_data(
-    symbol='AAPL',
-    start_date=(datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d'),
-    end_date=datetime.now().strftime('%Y-%m-%d'),
-    interval='1d'
+    symbol="AAPL",
+    start_date=(datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d"),
+    end_date=datetime.now().strftime("%Y-%m-%d"),
+    interval="1d",
 )
 
 # Fetch specifically from Yahoo Finance
 yf_result = get_stock_data_yfinance(
-    symbol='AAPL',
-    start_date='2024-01-01',
-    end_date='2024-12-31',
-    interval='1d'
+    symbol="AAPL", start_date="2024-01-01", end_date="2024-12-31", interval="1d"
 )
 
 print(f"Fetched {len(result)} data points")
@@ -88,18 +85,16 @@ from datetime import datetime, timedelta
 
 # Scrape news from multiple sources
 news = scrape_financial_news(
-    topic='tech stocks',
-    start_date='2024-11-01',
-    end_date='2024-12-01',
-    sources=['reuters', 'ap', 'bloomberg'],
-    max_articles=100
+    topic="tech stocks",
+    start_date="2024-11-01",
+    end_date="2024-12-01",
+    sources=["reuters", "ap", "bloomberg"],
+    max_articles=100,
 )
 
 # Scrape from specific source
 reuters = scrape_reuters_news(
-    query='artificial intelligence',
-    start_date='2024-11-01',
-    max_articles=50
+    query="artificial intelligence", start_date="2024-11-01", max_articles=50
 )
 
 print(f"Collected {len(news)} articles")
@@ -125,33 +120,27 @@ Analyze news with knowledge graphs:
 #### Python Package
 
 ```python
-from ipfs_datasets_py.finance import (
-    analyze_news_with_graphrag,
-    create_financial_knowledge_graph
-)
+from ipfs_datasets_py.finance import analyze_news_with_graphrag, create_financial_knowledge_graph
 import json
 
 # Load news and stock data
-with open('news_data.json', 'r') as f:
+with open("news_data.json", "r") as f:
     news_articles = json.load(f)
 
-with open('stock_data.json', 'r') as f:
+with open("stock_data.json", "r") as f:
     stock_data = json.load(f)
 
 # Analyze with GraphRAG
 analysis = analyze_news_with_graphrag(
     news_articles=news_articles,
     stock_data=stock_data,
-    analysis_type='executive_performance',
-    hypothesis='Executive announcements correlate with stock movement',
-    groups={'A': 'tech_companies', 'B': 'finance_companies'}
+    analysis_type="executive_performance",
+    hypothesis="Executive announcements correlate with stock movement",
+    groups={"A": "tech_companies", "B": "finance_companies"},
 )
 
 # Create knowledge graph
-kg = create_financial_knowledge_graph(
-    news_articles=news_articles,
-    stock_data=stock_data
-)
+kg = create_financial_knowledge_graph(news_articles=news_articles, stock_data=stock_data)
 
 print(f"Analysis confidence: {analysis['confidence']}")
 ```
@@ -179,7 +168,7 @@ Analyze market correlations using embeddings:
 ```python
 from ipfs_datasets_py.finance import (
     calculate_embedding_correlation,
-    analyze_multimodal_correlations
+    analyze_multimodal_correlations,
 )
 
 # Calculate embedding correlation
@@ -187,7 +176,7 @@ correlation = calculate_embedding_correlation(
     news_articles=news_data,
     stock_data=stock_data,
     time_window=7,  # days
-    n_clusters=5
+    n_clusters=5,
 )
 
 # Multimodal analysis (text + images)
@@ -196,7 +185,7 @@ multimodal = analyze_multimodal_correlations(
     stock_data=stock_data,
     enable_multimodal=True,
     time_window=7,
-    n_clusters=5
+    n_clusters=5,
 )
 
 print(f"Found {len(correlation['patterns'])} correlation patterns")
@@ -231,32 +220,28 @@ Apply temporal deontic logic theorems to financial events:
 from ipfs_datasets_py.finance import (
     list_finance_theorems,
     apply_theorem,
-    validate_theorem_assumptions
+    validate_theorem_assumptions,
 )
 
 # List available theorems
-theorems = list_finance_theorems(event_type='stock_split')
+theorems = list_finance_theorems(event_type="stock_split")
 print(f"Available theorems: {len(theorems)}")
 
 # Apply theorem to event data
 event_data = {
-    'event_type': 'stock_split',
-    'symbol': 'AAPL',
-    'split_ratio': '4:1',
-    'announcement_date': '2024-01-15',
-    'effective_date': '2024-02-01',
-    'stock_prices': [...]
+    "event_type": "stock_split",
+    "symbol": "AAPL",
+    "split_ratio": "4:1",
+    "announcement_date": "2024-01-15",
+    "effective_date": "2024-02-01",
+    "stock_prices": [...],
 }
 
-result = apply_theorem(
-    theorem_id='stock_split_price_adjustment',
-    event_data=event_data
-)
+result = apply_theorem(theorem_id="stock_split_price_adjustment", event_data=event_data)
 
 # Validate assumptions
 valid, messages = validate_theorem_assumptions(
-    theorem_id='stock_split_price_adjustment',
-    event_data=event_data
+    theorem_id="stock_split_price_adjustment", event_data=event_data
 )
 
 print(f"Theorem result: {result['conclusion']}")
@@ -289,7 +274,7 @@ from ipfs_datasets_py.mcp_server.tools.finance_data_tools import (
     news_scrapers,
     graphrag_news_analyzer,
     embedding_correlation,
-    finance_theorems
+    finance_theorems,
 )
 
 # These are the source implementations
@@ -375,6 +360,7 @@ ipfs-datasets finance theorems \
 ```python
 # If imports fail, check if finance package is properly installed
 from ipfs_datasets_py.finance import STOCK_AVAILABLE, NEWS_AVAILABLE
+
 print(f"Stock tools: {STOCK_AVAILABLE}")
 print(f"News tools: {NEWS_AVAILABLE}")
 ```

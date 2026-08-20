@@ -51,7 +51,12 @@ class TestBackgroundTaskTools:
         assert result is not None
         assert "status" in result
         assert result["status"] in [
-            "success", "not_found", "pending", "completed", "failed", "running",
+            "success",
+            "not_found",
+            "pending",
+            "completed",
+            "failed",
+            "running",
         ]
 
     @pytest.mark.asyncio
@@ -119,6 +124,7 @@ class TestTaskMonitoring:
             from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_tools import (
                 get_task_logs,
             )
+
             result = await get_task_logs(task_id="task_001", log_level="info", limit=100)
             assert result is not None
             if isinstance(result, dict):
@@ -126,7 +132,13 @@ class TestTaskMonitoring:
         except ImportError:
             mock_logs = {
                 "status": "retrieved",
-                "logs": [{"timestamp": "2025-01-04T10:30:00Z", "level": "info", "message": "Task started"}],
+                "logs": [
+                    {
+                        "timestamp": "2025-01-04T10:30:00Z",
+                        "level": "info",
+                        "message": "Task started",
+                    }
+                ],
                 "task_id": "task_001",
                 "total_entries": 1,
             }
@@ -142,10 +154,15 @@ class TestTaskMonitoring:
             from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_tools import (
                 get_task_metrics,
             )
+
             result = await get_task_metrics(task_id="task_001", time_range="1h")
             assert result is not None
         except ImportError:
-            mock_metrics = {"status": "collected", "metrics": {"execution_time": "2m 30s"}, "task_id": "task_001"}
+            mock_metrics = {
+                "status": "collected",
+                "metrics": {"execution_time": "2m 30s"},
+                "task_id": "task_001",
+            }
             assert "metrics" in mock_metrics
 
     @pytest.mark.asyncio
@@ -158,6 +175,7 @@ class TestTaskMonitoring:
             from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_tools import (
                 monitor_task_progress,
             )
+
             result = await monitor_task_progress(task_id="task_001", include_subtasks=True)
             assert result is not None
         except ImportError:
@@ -178,10 +196,15 @@ class TestTaskRetryAndRecovery:
             from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_tools import (
                 retry_task,
             )
+
             result = await retry_task(task_id="failed_task_001", retry_count=3, delay_seconds=30)
             assert result is not None
         except ImportError:
-            mock_retry = {"status": "retry_scheduled", "retry_status": "queued", "new_task_id": "retry_task_001"}
+            mock_retry = {
+                "status": "retry_scheduled",
+                "retry_status": "queued",
+                "new_task_id": "retry_task_001",
+            }
             assert "retry_status" in mock_retry
 
     @pytest.mark.asyncio
@@ -223,6 +246,7 @@ class TestTaskScheduling:
             from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_tools import (
                 schedule_cron_task,
             )
+
             result = await schedule_cron_task(
                 task_name="daily_cleanup",
                 cron_expression="0 2 * * *",
@@ -244,6 +268,7 @@ class TestTaskScheduling:
             from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_tools import (
                 schedule_interval_task,
             )
+
             result = await schedule_interval_task(
                 task_name="reindex", interval_seconds=3600, task_config={"action": "reindex"}
             )

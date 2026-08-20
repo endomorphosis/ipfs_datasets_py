@@ -52,6 +52,7 @@ from ipfs_datasets_py.mcp_server.compliance_checker import (
 # Profile C: UCAN Delegation
 # ===========================================================================
 
+
 class TestCapability(unittest.TestCase):
     """Tests for Capability wildcard matching."""
 
@@ -149,8 +150,7 @@ class TestDelegationEvaluator(unittest.TestCase):
             proof_cid=None,
         )
 
-    def _leaf(self, cid="leaf", proof_cid="root", expiry=None,
-              audience="did:key:bob"):
+    def _leaf(self, cid="leaf", proof_cid="root", expiry=None, audience="did:key:bob"):
         return Delegation(
             cid=cid,
             issuer="did:key:alice",
@@ -201,7 +201,7 @@ class TestDelegationEvaluator(unittest.TestCase):
         ev.add(self._leaf("leaf", proof_cid="root"))
         chain = ev.build_chain("leaf")
         self.assertEqual(len(chain), 2)
-        self.assertEqual(chain[0].cid, "root")   # root first
+        self.assertEqual(chain[0].cid, "root")  # root first
         self.assertEqual(chain[1].cid, "leaf")
 
     def test_build_chain_missing_leaf_returns_empty(self):
@@ -243,17 +243,13 @@ class TestDelegationEvaluator(unittest.TestCase):
         ev = DelegationEvaluator()
         ev.add(self._root())
         ev.add(self._leaf())
-        allowed, reason = ev.can_invoke(
-            "leaf", "mcp://tool/load_dataset", "invoke"
-        )
+        allowed, reason = ev.can_invoke("leaf", "mcp://tool/load_dataset", "invoke")
         self.assertTrue(allowed, reason)
         self.assertEqual(reason, "authorized")
 
     def test_can_invoke_missing_leaf_deny(self):
         ev = DelegationEvaluator()
-        allowed, reason = ev.can_invoke(
-            "nonexistent", "mcp://tool/load_dataset", "invoke"
-        )
+        allowed, reason = ev.can_invoke("nonexistent", "mcp://tool/load_dataset", "invoke")
         self.assertFalse(allowed)
         self.assertIn("not found", reason)
 
@@ -261,9 +257,7 @@ class TestDelegationEvaluator(unittest.TestCase):
         ev = DelegationEvaluator()
         ev.add(self._root(expiry=time.time() - 100))
         ev.add(self._leaf())
-        allowed, reason = ev.can_invoke(
-            "leaf", "mcp://tool/load_dataset", "invoke"
-        )
+        allowed, reason = ev.can_invoke("leaf", "mcp://tool/load_dataset", "invoke")
         self.assertFalse(allowed)
         self.assertIn("expired", reason)
 
@@ -272,8 +266,7 @@ class TestDelegationEvaluator(unittest.TestCase):
         ev.add(self._root())
         ev.add(self._leaf(audience="did:key:charlie"))
         allowed, reason = ev.can_invoke(
-            "leaf", "mcp://tool/load_dataset", "invoke",
-            actor="did:key:wrong"
+            "leaf", "mcp://tool/load_dataset", "invoke", actor="did:key:wrong"
         )
         self.assertFalse(allowed)
         self.assertIn("does not match", reason)
@@ -282,18 +275,13 @@ class TestDelegationEvaluator(unittest.TestCase):
         ev = DelegationEvaluator()
         ev.add(self._root())
         ev.add(self._leaf(audience="did:key:bob"))
-        allowed, _ = ev.can_invoke(
-            "leaf", "mcp://tool/load_dataset", "invoke",
-            actor="did:key:bob"
-        )
+        allowed, _ = ev.can_invoke("leaf", "mcp://tool/load_dataset", "invoke", actor="did:key:bob")
         self.assertTrue(allowed)
 
     def test_can_invoke_capability_mismatch_deny(self):
         ev = DelegationEvaluator()
-        ev.add(self._root())   # only has load_dataset/invoke
-        allowed, reason = ev.can_invoke(
-            "root", "mcp://tool/other", "invoke"
-        )
+        ev.add(self._root())  # only has load_dataset/invoke
+        allowed, reason = ev.can_invoke("root", "mcp://tool/other", "invoke")
         self.assertFalse(allowed)
         self.assertIn("No delegation", reason)
 
@@ -302,9 +290,7 @@ class TestDelegationEvaluator(unittest.TestCase):
         ev.add(self._root())
         # Manually remove from store after build_chain would complete
         # (simulate broken chain via subclass)
-        allowed, reason = ev.can_invoke(
-            "nonexistent", "*", "*"
-        )
+        allowed, reason = ev.can_invoke("nonexistent", "*", "*")
         self.assertFalse(allowed)
 
 
@@ -314,6 +300,7 @@ class TestGlobalDelegation(unittest.TestCase):
     def setUp(self):
         # Reset global evaluator between tests
         import ipfs_datasets_py.mcp_server.ucan_delegation as mod
+
         mod._GLOBAL_EVALUATOR = None
 
     def test_add_and_get_delegation(self):
@@ -345,6 +332,7 @@ class TestInvocationContext(unittest.TestCase):
 # ===========================================================================
 # Risk Scorer
 # ===========================================================================
+
 
 class TestRiskLevel(unittest.TestCase):
     def test_from_score_negligible(self):
@@ -480,9 +468,7 @@ class TestRiskScorer(unittest.TestCase):
             max_acceptable_risk=0.5,
         )
         scorer = RiskScorer(policy)
-        decision = scorer.score_and_gate(
-            {"tool_name": "scary", "actor": "unknown"}, policy
-        )
+        decision = scorer.score_and_gate({"tool_name": "scary", "actor": "unknown"}, policy)
         self.assertEqual(decision["decision"], "deny")
 
     def test_score_works_with_object_intent(self):
@@ -508,6 +494,7 @@ class TestRiskScorer(unittest.TestCase):
 # ===========================================================================
 # Compliance Checker
 # ===========================================================================
+
 
 class TestComplianceStatus(unittest.TestCase):
     def test_values(self):
@@ -548,25 +535,31 @@ class TestComplianceResult(unittest.TestCase):
 
 class TestComplianceReport(unittest.TestCase):
     def test_summary_pass(self):
-        report = ComplianceReport(results=[
-            ComplianceResult("r1", ComplianceStatus.COMPLIANT),
-        ])
+        report = ComplianceReport(
+            results=[
+                ComplianceResult("r1", ComplianceStatus.COMPLIANT),
+            ]
+        )
         self.assertEqual(report.summary, "pass")
 
     def test_summary_fail(self):
-        report = ComplianceReport(results=[
-            ComplianceResult("r1", ComplianceStatus.COMPLIANT),
-            ComplianceResult("r2", ComplianceStatus.NON_COMPLIANT, [
-                ComplianceViolation("r2", "bad", "error")
-            ]),
-        ])
+        report = ComplianceReport(
+            results=[
+                ComplianceResult("r1", ComplianceStatus.COMPLIANT),
+                ComplianceResult(
+                    "r2",
+                    ComplianceStatus.NON_COMPLIANT,
+                    [ComplianceViolation("r2", "bad", "error")],
+                ),
+            ]
+        )
         self.assertEqual(report.summary, "fail")
 
     def test_all_violations(self):
         v = ComplianceViolation("r", "m", "error")
-        report = ComplianceReport(results=[
-            ComplianceResult("r", ComplianceStatus.NON_COMPLIANT, [v])
-        ])
+        report = ComplianceReport(
+            results=[ComplianceResult("r", ComplianceStatus.NON_COMPLIANT, [v])]
+        )
         self.assertEqual(len(report.all_violations), 1)
         self.assertIs(report.all_violations[0], v)
 
@@ -730,6 +723,7 @@ class TestComplianceCheckerManagement(unittest.TestCase):
 # HTM: get_tool_schema_cid + dispatch_with_trace
 # ===========================================================================
 
+
 class TestHTMSchemaCIDAndTrace(unittest.IsolatedAsyncioTestCase):
     """Tests for HierarchicalToolManager new MCP++ methods."""
 
@@ -738,6 +732,7 @@ class TestHTMSchemaCIDAndTrace(unittest.IsolatedAsyncioTestCase):
         from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import (
             HierarchicalToolManager,
         )
+
         manager = HierarchicalToolManager.__new__(HierarchicalToolManager)
         # Minimal state
         manager._discovered_categories = True
@@ -747,10 +742,12 @@ class TestHTMSchemaCIDAndTrace(unittest.IsolatedAsyncioTestCase):
 
     async def test_get_tool_schema_cid_returns_string(self):
         manager = await self._make_manager()
-        manager.get_tool_schema = AsyncMock(return_value={
-            "status": "success",
-            "schema": {"name": "load_dataset", "params": {}},
-        })
+        manager.get_tool_schema = AsyncMock(
+            return_value={
+                "status": "success",
+                "schema": {"name": "load_dataset", "params": {}},
+            }
+        )
         cid = await manager.get_tool_schema_cid("dataset_tools", "load_dataset")
         self.assertIsInstance(cid, str)
         self.assertTrue(cid.startswith("bafy"), f"CID should start with 'bafy', got: {cid!r}")
@@ -767,11 +764,13 @@ class TestHTMSchemaCIDAndTrace(unittest.IsolatedAsyncioTestCase):
         manager = await self._make_manager()
         schema = {"status": "success", "schema": {}}
         manager.get_tool_schema = AsyncMock(return_value=schema)
-        manager.dispatch = AsyncMock(return_value={
-            "status": "success",
-            "result": "loaded",
-            "request_id": "abc",
-        })
+        manager.dispatch = AsyncMock(
+            return_value={
+                "status": "success",
+                "result": "loaded",
+                "request_id": "abc",
+            }
+        )
         result = await manager.dispatch_with_trace("cat", "tool", {"src": "sq"})
         self.assertIn("trace", result)
         trace = result["trace"]
@@ -791,11 +790,13 @@ class TestHTMSchemaCIDAndTrace(unittest.IsolatedAsyncioTestCase):
     async def test_dispatch_with_trace_includes_dispatch_result(self):
         manager = await self._make_manager()
         manager.get_tool_schema = AsyncMock(return_value={})
-        manager.dispatch = AsyncMock(return_value={
-            "status": "success",
-            "result": "data",
-            "request_id": "xyz",
-        })
+        manager.dispatch = AsyncMock(
+            return_value={
+                "status": "success",
+                "result": "data",
+                "request_id": "xyz",
+            }
+        )
         result = await manager.dispatch_with_trace("cat", "tool")
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["result"], "data")

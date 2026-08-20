@@ -181,9 +181,7 @@ def test_prompt_contract_uses_exact_ids_and_normalizes_null_abstention() -> None
     assert template["drafted_logic_candidates"] == []
     assert "candidate" in payload["drafted_logic_candidate_contract"]["required_fields"]
     assert (
-        payload["drafted_logic_candidate_contract"]["required_values"][
-            "source_copy_policy"
-        ]
+        payload["drafted_logic_candidate_contract"]["required_values"]["source_copy_policy"]
         == "reject_full_span_copy"
     )
 
@@ -202,8 +200,7 @@ def test_audit_response_preserves_sanitized_drafted_logic_guidance() -> None:
             {
                 "logic_family": "deontic",
                 "candidate": (
-                    "obligation(agency, notify(applicant)) "
-                    "unless exception(emergency_review)"
+                    "obligation(agency, notify(applicant)) unless exception(emergency_review)"
                 ),
                 "proof_obligation_id": "PO-modal-001",
                 "compiler_surface": "modal.ir_decompiler",
@@ -213,8 +210,7 @@ def test_audit_response_preserves_sanitized_drafted_logic_guidance() -> None:
             {
                 "logic_family": "deontic",
                 "candidate": (
-                    "obligation(agency, notify(applicant)) "
-                    "unless exception(emergency_review)"
+                    "obligation(agency, notify(applicant)) unless exception(emergency_review)"
                 ),
                 "proof_obligation_id": "PO-modal-001",
             },
@@ -286,11 +282,14 @@ def test_family_candidate_shape_distinguishes_tdfol_dcec_and_flogic() -> None:
         "frame_logic",
         "modal.frame_logic",
     )
-    assert _logic_family_candidate_rejection_reason(
-        "frame_role(subject:agency, role:notice, object:person)",
-        "event_calculus",
-        "CEC.native",
-    ) == "dcec_candidate_shape_mismatch"
+    assert (
+        _logic_family_candidate_rejection_reason(
+            "frame_role(subject:agency, role:notice, object:person)",
+            "event_calculus",
+            "CEC.native",
+        )
+        == "dcec_candidate_shape_mismatch"
+    )
 
 
 def test_abstention_requires_reason_and_malformed_json_is_not_a_response() -> None:
@@ -489,12 +488,14 @@ def test_audit_runner_repairs_schema_invalid_response_once(tmp_path) -> None:
                 ).to_dict()
             )
         assert payload["repair_instructions"]["mode"] == "validation_repair"
-        assert "missing_counterexample_or_witness" in payload["repair_instructions"][
-            "validation_reasons"
-        ]
-        assert "missing_proposed_compiler_surface" in payload["repair_instructions"][
-            "validation_reasons"
-        ]
+        assert (
+            "missing_counterexample_or_witness"
+            in payload["repair_instructions"]["validation_reasons"]
+        )
+        assert (
+            "missing_proposed_compiler_surface"
+            in payload["repair_instructions"]["validation_reasons"]
+        )
         return json.dumps(_response(request).to_dict())
 
     config = LeanstralAuditConfig(

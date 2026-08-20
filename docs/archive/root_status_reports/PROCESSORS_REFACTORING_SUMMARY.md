@@ -80,16 +80,20 @@
 ```python
 # BEFORE
 import asyncio
+
 await asyncio.gather(*tasks)
 await asyncio.sleep(1)
 await asyncio.wait_for(coro, 30)
 
-# AFTER  
+# AFTER
 import anyio
+
 async with anyio.create_task_group() as tg:
-    for task in tasks: tg.start_soon(task)
+    for task in tasks:
+        tg.start_soon(task)
 await anyio.sleep(1)
-with anyio.fail_after(30): await coro
+with anyio.fail_after(30):
+    await coro
 ```
 
 **Deliverables:**

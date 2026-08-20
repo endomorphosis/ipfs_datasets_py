@@ -14,9 +14,7 @@ MCP tools for recording audit events and generating compliance reports. Thin wra
 ## Usage
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.audit_tools import (
-    record_audit_event, generate_audit_report
-)
+from ipfs_datasets_py.mcp_server.tools.audit_tools import record_audit_event, generate_audit_report
 
 # Record an event
 await record_audit_event(
@@ -24,15 +22,15 @@ await record_audit_event(
     action="dataset.download",
     resource="ipfs://QmXxx",
     outcome="success",
-    metadata={"bytes": 1024000}
+    metadata={"bytes": 1024000},
 )
 
 # Generate a compliance report
 report = await generate_audit_report(
     start_date="2024-01-01",
     end_date="2024-12-31",
-    format="json",       # "json" | "html" | "csv"
-    filter_actor="user_42"
+    format="json",  # "json" | "html" | "csv"
+    filter_actor="user_42",
 )
 ```
 

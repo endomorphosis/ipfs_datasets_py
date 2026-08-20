@@ -72,7 +72,9 @@ ROOT = Path(__file__).resolve().parents[4]
 FIXTURE = ROOT / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
 
 
-def _load_sealed_qualification(path: Path = DEFAULT_REPLACEMENT_QUALIFICATION_PATH) -> dict[str, object]:
+def _load_sealed_qualification(
+    path: Path = DEFAULT_REPLACEMENT_QUALIFICATION_PATH,
+) -> dict[str, object]:
     """Load the sealed replacement qualification without rebuild rebind.
 
     Full ``validate_replacement_qualification`` rebuilds adapter raw CIDs from
@@ -141,19 +143,14 @@ def test_checked_qualification_preserves_exact_matrix_and_protocol(
     qualification: dict[str, object],
 ) -> None:
     assert qualification["schema_version"] == REPLACEMENT_QUALIFICATION_SCHEMA
-    assert qualification["interface"] == (
-        QUALIFIED_REPLACEMENT_MATRIX_INTERFACE
-    )
+    assert qualification["interface"] == (QUALIFIED_REPLACEMENT_MATRIX_INTERFACE)
     assert qualification["frozen_before_scored_execution"] is True
     plan = qualification["plan"]
     assert isinstance(plan, dict)
     assert plan["cell_count"] == 30
     assert len(plan["deterministic_cell_ids"]) == 4
     assert len(plan["model_backed_cell_ids"]) == 26
-    assert len(
-        set(plan["deterministic_cell_ids"])
-        | set(plan["model_backed_cell_ids"])
-    ) == 30
+    assert len(set(plan["deterministic_cell_ids"]) | set(plan["model_backed_cell_ids"])) == 30
     assert plan["selection_gates"] == [
         "source_copy_exclusion",
         "polarity_preservation",
@@ -174,9 +171,7 @@ def test_checked_qualification_preserves_exact_matrix_and_protocol(
             "cache_namespace",
         ],
         "deterministic_realizer_configuration_cid": (
-            qualification["bindings"]["adapters"][
-                "source_withheld_paraphrase"
-            ]["configuration_cid"]
+            qualification["bindings"]["adapters"]["source_withheld_paraphrase"]["configuration_cid"]
         ),
         "factory": "build_replacement_coordinate_runner",
         "frozen_coordinate_count": 670,
@@ -216,34 +211,22 @@ def test_every_arm_has_unique_exact_identity_and_honest_terminal_state(
     assert len({arm["cell_id"] for arm in arms}) == 30
     assert len({arm["arm_identity_cid"] for arm in arms}) == 30
     assert all(
-        validate_cid(
-            arm["arm_identity_cid"], codecs=("dag-json",)
-        )
-        == arm["arm_identity_cid"]
+        validate_cid(arm["arm_identity_cid"], codecs=("dag-json",)) == arm["arm_identity_cid"]
         for arm in arms
     )
     statuses = Counter(arm["qualification_status"] for arm in arms)
     assert statuses[QUALIFIED_CANDIDATE] >= 1
     assert statuses[TERMINAL_UNSUPPORTED] == 12
     assert statuses[CAPABILITY_UNAVAILABLE] == 0
-    guided = [
-        arm
-        for arm in arms
-        if arm["composition"]["guidance"] == "guided"
-    ]
+    guided = [arm for arm in arms if arm["composition"]["guidance"] == "guided"]
     assert len(guided) == 12
     assert all(
         arm["qualification_status"] == TERMINAL_UNSUPPORTED
-        and arm["qualification_reason"]
-        == "unavailable_no_reviewed_causal_l1_adapter"
+        and arm["qualification_reason"] == "unavailable_no_reviewed_causal_l1_adapter"
         and arm["selection_eligibility"] is False
         for arm in guided
     )
-    candidates = [
-        arm
-        for arm in arms
-        if arm["qualification_status"] == QUALIFIED_CANDIDATE
-    ]
+    candidates = [arm for arm in arms if arm["qualification_status"] == QUALIFIED_CANDIDATE]
     assert all(
         arm["selection_eligibility"] == "pending_scored_execution"
         and arm["fallback_allowed"] is False
@@ -295,9 +278,7 @@ def test_exact_capability_adapter_prompt_and_schema_bindings(
     assert model["call_contract"]["stop"] == ["<|im_end|>"]
     assert model["call_contract"]["physical_model_slots"] == 1
     router = adapters["symai_router_contract"]
-    assert router["gitlink_commit"] == (
-        "f979431ac5fe3c4a088a2f15ec6379fba48bbde6"
-    )
+    assert router["gitlink_commit"] == ("f979431ac5fe3c4a088a2f15ec6379fba48bbde6")
     assert validate_cid(router["source_raw_cid"], codecs=("raw",))
 
 
@@ -310,8 +291,7 @@ def test_non_scored_positive_and_negative_smokes_are_complete(
     assert deterministic["status"] == "passed"
     assert deterministic["case_count"] == 5
     assert all(
-        record["nonempty_l1_t1_l2"] is True
-        and all(record["gates"].values())
+        record["nonempty_l1_t1_l2"] is True and all(record["gates"].values())
         for record in deterministic["records"]
     )
     model = smokes["model_routes"]
@@ -342,9 +322,7 @@ def test_non_scored_positive_and_negative_smokes_are_complete(
             record["status"] == "success"
             and validate_cid(record["prompt_cid"], codecs=("raw",))
             and validate_cid(record["schema_cid"], codecs=("dag-json",))
-            and validate_cid(
-                record["recovery_receipt_cid"], codecs=("dag-json",)
-            )
+            and validate_cid(record["recovery_receipt_cid"], codecs=("dag-json",))
             for record in route["roles"]
         )
     assert all(model["negative_controls"].values())
@@ -372,16 +350,12 @@ def test_schedule_is_frozen_unique_uncached_and_position_balanced(
         for coordinate in block["coordinates"]
     )
     per_arm = Counter(
-        coordinate["arm_id"]
-        for block in schedule["blocks"]
-        for coordinate in block["coordinates"]
+        coordinate["arm_id"] for block in schedule["blocks"] for coordinate in block["coordinates"]
     )
     assert set(per_arm) == set(model_arms)
     assert set(per_arm.values()) == {25}
     for position in range(26):
-        counts = Counter(
-            block["arm_order"][position] for block in schedule["blocks"]
-        )
+        counts = Counter(block["arm_order"][position] for block in schedule["blocks"])
         observed = [counts[arm_id] for arm_id in model_arms]
         assert max(observed) - min(observed) <= 1
     assert 5 * 4 + schedule["coordinate_count"] == 670
@@ -391,23 +365,22 @@ def test_schedule_builder_is_content_addressed_and_deterministic() -> None:
     plan_cid = cid_for_dag_json({"plan": "fixture"})
     arms = [f"model-arm-{index:02d}" for index in range(26)]
     cases = [f"case-{index}" for index in range(5)]
-    first = build_balanced_model_schedule(
-        model_arm_ids=arms, case_ids=cases, plan_cid=plan_cid
-    )
-    second = build_balanced_model_schedule(
-        model_arm_ids=arms, case_ids=cases, plan_cid=plan_cid
-    )
+    first = build_balanced_model_schedule(model_arm_ids=arms, case_ids=cases, plan_cid=plan_cid)
+    second = build_balanced_model_schedule(model_arm_ids=arms, case_ids=cases, plan_cid=plan_cid)
     assert first == second
     body = dict(first)
     supplied = body.pop("schedule_cid")
     assert supplied == cid_for_dag_json(body)
-    assert len(
-        {
-            coordinate["cache_namespace"]
-            for block in first["blocks"]
-            for coordinate in block["coordinates"]
-        }
-    ) == 650
+    assert (
+        len(
+            {
+                coordinate["cache_namespace"]
+                for block in first["blocks"]
+                for coordinate in block["coordinates"]
+            }
+        )
+        == 650
+    )
 
 
 def test_coordinate_registry_exactly_preserves_frozen_rotated_schedule_order(
@@ -416,17 +389,20 @@ def test_coordinate_registry_exactly_preserves_frozen_rotated_schedule_order(
 ) -> None:
     coordinates = coordinate_runner.frozen_coordinates()
     assert len(coordinates) == 670
-    assert len(
-        {
-            (
-                item["case_id"],
-                item["cell_id"],
-                item["repeat_index"],
-                item["cache_namespace"],
-            )
-            for item in coordinates
-        }
-    ) == 670
+    assert (
+        len(
+            {
+                (
+                    item["case_id"],
+                    item["cell_id"],
+                    item["repeat_index"],
+                    item["cache_namespace"],
+                )
+                for item in coordinates
+            }
+        )
+        == 670
+    )
     expected_model_tail = [
         {
             "case_id": block["case_id"],
@@ -446,10 +422,7 @@ def test_coordinate_runner_executes_deterministic_path_with_paraphraser_receipt(
     coordinate_runner,
 ) -> None:
     case = cases[0]
-    cell_id = (
-        "typed_deontic__no_guidance__no_repair__not_applicable"
-        "__deterministic"
-    )
+    cell_id = "typed_deontic__no_guidance__no_repair__not_applicable__deterministic"
     namespace = coordinate_runner.cache_namespace_for(
         case_id=case.case_id,
         cell_id=cell_id,
@@ -462,9 +435,7 @@ def test_coordinate_runner_executes_deterministic_path_with_paraphraser_receipt(
         namespace,
     )
     assert execution.status is ComponentStatus.SUCCESS
-    assert execution.to_dict()["schema_version"] == (
-        REPLACEMENT_COORDINATE_RECEIPT_SCHEMA
-    )
+    assert execution.to_dict()["schema_version"] == (REPLACEMENT_COORDINATE_RECEIPT_SCHEMA)
     receipt = execution.to_dict()
     assert receipt["execution_disposition"] == "executed_complete"
     assert receipt["stage_count"] == 3
@@ -474,14 +445,11 @@ def test_coordinate_runner_executes_deterministic_path_with_paraphraser_receipt(
         "l2",
     ]
     paraphraser = receipt["stages"][1]["component_receipt"]
-    assert paraphraser["interface"] == (
-        "SourceWithheldParaphraseAttribution@1"
+    assert paraphraser["interface"] == ("SourceWithheldParaphraseAttribution@1")
+    assert (
+        paraphraser["input_attribution"]["frozen_replacement_config_cid"]
+        == qualification["bindings"]["adapters"]["source_withheld_paraphrase"]["configuration_cid"]
     )
-    assert paraphraser["input_attribution"][
-        "frozen_replacement_config_cid"
-    ] == qualification["bindings"]["adapters"][
-        "source_withheld_paraphrase"
-    ]["configuration_cid"]
     assert all(
         validate_cid(
             stage["stage_receipt_cid"],
@@ -542,10 +510,7 @@ def test_coordinate_runner_returns_typed_loss_one_for_guided_arm(
     coordinate_runner,
 ) -> None:
     case = cases[0]
-    cell_id = (
-        "typed_deontic__guided__no_repair__not_applicable"
-        "__deterministic"
-    )
+    cell_id = "typed_deontic__guided__no_repair__not_applicable__deterministic"
     namespace = coordinate_runner.cache_namespace_for(
         case_id=case.case_id,
         cell_id=cell_id,
@@ -558,16 +523,12 @@ def test_coordinate_runner_returns_typed_loss_one_for_guided_arm(
         namespace,
     )
     assert execution.status is ComponentStatus.FAILED
-    assert execution.result.failure_reason is (
-        FailureReason.CAPABILITY_UNAVAILABLE
-    )
+    assert execution.result.failure_reason is (FailureReason.CAPABILITY_UNAVAILABLE)
     assert execution.primary_loss == 1.0
     receipt = execution.to_dict()
     assert receipt["execution_disposition"] == TERMINAL_UNSUPPORTED
     assert receipt["stage_count"] == 0
-    assert receipt["qualification_reason"] == (
-        "unavailable_no_reviewed_causal_l1_adapter"
-    )
+    assert receipt["qualification_reason"] == ("unavailable_no_reviewed_causal_l1_adapter")
     assert receipt["fallback_used"] is False
     assert receipt["substitute_used"] is False
 
@@ -624,10 +585,7 @@ def test_model_coordinate_retains_raw_role_explicit_recovery_receipts(
         },
         validators=FAKE_VALIDATORS,
     )
-    cell_id = (
-        "model__not_applicable__always_on__direct"
-        "__leanstral_direct"
-    )
+    cell_id = "model__not_applicable__always_on__direct__leanstral_direct"
     namespace = runner.cache_namespace_for(
         case_id=case.case_id,
         cell_id=cell_id,
@@ -656,9 +614,7 @@ def test_model_coordinate_retains_raw_role_explicit_recovery_receipts(
         assert native["role"] == role
         assert native["status"] == "success"
         assert native["recovery_receipt"]["role"] == role
-        assert native["recovery_receipt"]["boundary"][
-            "fallback_allowed"
-        ] is False
+        assert native["recovery_receipt"]["boundary"]["fallback_allowed"] is False
         assert validate_cid(
             native["recovery_receipt_cid"],
             codecs=("dag-json",),
@@ -690,10 +646,7 @@ def test_selective_coordinate_retains_repair_and_paraphraser_receipts(
         },
         validators=FAKE_VALIDATORS,
     )
-    cell_id = (
-        "typed_deontic__no_guidance__selective__not_applicable"
-        "__deterministic"
-    )
+    cell_id = "typed_deontic__no_guidance__selective__not_applicable__deterministic"
     namespace = runner.cache_namespace_for(
         case_id=case.case_id,
         cell_id=cell_id,
@@ -702,16 +655,10 @@ def test_selective_coordinate_retains_repair_and_paraphraser_receipts(
     execution = runner.run_coordinate(case, cell_id, 0, namespace)
     assert execution.status is ComponentStatus.SUCCESS
     stages = execution.to_dict()["stages"]
-    assert stages[0]["component_receipt"]["interface"] == (
-        "SelectiveRepairCausalReceipt@1"
-    )
+    assert stages[0]["component_receipt"]["interface"] == ("SelectiveRepairCausalReceipt@1")
     assert stages[0]["component_receipt"]["status"] == "not_triggered"
-    assert stages[1]["component_receipt"]["interface"] == (
-        "SourceWithheldParaphraseAttribution@1"
-    )
-    assert stages[2]["component_receipt"]["interface"] == (
-        "SelectiveRepairCausalReceipt@1"
-    )
+    assert stages[1]["component_receipt"]["interface"] == ("SourceWithheldParaphraseAttribution@1")
+    assert stages[2]["component_receipt"]["interface"] == ("SelectiveRepairCausalReceipt@1")
 
 
 IR = CanonicalRuleIR(
@@ -759,13 +706,9 @@ class ScriptedClient:
 
 
 def test_role_aware_adapter_never_infers_l1_or_l2_from_call_order() -> None:
-    adapter = RoleAwareModelRecovery(
-        BoundedModelOutputRecovery(ScriptedClient(), route="direct")
-    )
+    adapter = RoleAwareModelRecovery(BoundedModelOutputRecovery(ScriptedClient(), route="direct"))
     assert adapter.identity.startswith(ROLE_AWARE_MODEL_RECOVERY_INTERFACE)
-    l1 = adapter.construct_l1(
-        ConstructorRequest("The agency must file notice.", VOCABULARY, {})
-    )
+    l1 = adapter.construct_l1(ConstructorRequest("The agency must file notice.", VOCABULARY, {}))
     assert l1.status is ComponentStatus.SUCCESS
     assert l1.canonical_ir == IR
     t1 = adapter.realize_t1(RealizerRequest(IR, VOCABULARY, {}))
@@ -798,26 +741,19 @@ def test_research_hybrid_modes_are_preregistered_without_changing_promotion(
         "realizer_only",
         "hybrid",
     }
-    assert CONSTRUCTOR_ONLY_BASELINE_ARM_ID in registry["research_modes"][
-        "constructor_only"
-    ]
-    assert REALIZER_ONLY_DETERMINISTIC_ARM_ID in registry["research_modes"][
-        "realizer_only"
-    ]
+    assert CONSTRUCTOR_ONLY_BASELINE_ARM_ID in registry["research_modes"]["constructor_only"]
+    assert REALIZER_ONLY_DETERMINISTIC_ARM_ID in registry["research_modes"]["realizer_only"]
     assert HYBRID_CANONICAL_PATH_ARM_ID in registry["research_modes"]["hybrid"]
-    assert registry["loss_reporting"][
-        "report_forward_cycle_end_to_end_separately"
-    ] is True
-    assert registry["loss_reporting"][
-        "hybrid_success_requires_paired_bootstrap_vs_deterministic_baseline"
-    ] is True
-    promotion_ids = {
-        arm["cell_id"] for arm in qualification["plan"]["arms"]
-    }
+    assert registry["loss_reporting"]["report_forward_cycle_end_to_end_separately"] is True
+    assert (
+        registry["loss_reporting"][
+            "hybrid_success_requires_paired_bootstrap_vs_deterministic_baseline"
+        ]
+        is True
+    )
+    promotion_ids = {arm["cell_id"] for arm in qualification["plan"]["arms"]}
     research_ids = {
-        arm_id
-        for mode_ids in registry["research_modes"].values()
-        for arm_id in mode_ids
+        arm_id for mode_ids in registry["research_modes"].values() for arm_id in mode_ids
     }
     assert research_ids.isdisjoint(promotion_ids)
     # Frozen promotion arm count is unchanged.
@@ -825,9 +761,7 @@ def test_research_hybrid_modes_are_preregistered_without_changing_promotion(
 
 
 def test_research_mode_selection_and_fail_closed_missing_preflight() -> None:
-    assert select_research_evaluation_mode("constructor_only") is (
-        EvaluationMode.CONSTRUCTOR_ONLY
-    )
+    assert select_research_evaluation_mode("constructor_only") is (EvaluationMode.CONSTRUCTOR_ONLY)
     arm = select_research_hybrid_arm(mode="hybrid")
     assert arm.arm_id == HYBRID_CANONICAL_PATH_ARM_ID
 
@@ -851,9 +785,7 @@ def test_research_mode_selection_and_fail_closed_missing_preflight() -> None:
         require_preflight=True,
     )
     assert schedule["promotion_arm_set_unchanged"] is True
-    assert schedule["hybrid_success_requires_paired_bootstrap_vs_baseline"] is (
-        True
-    )
+    assert schedule["hybrid_success_requires_paired_bootstrap_vs_baseline"] is (True)
     assert set(schedule["arm_ids"]) == {
         CONSTRUCTOR_ONLY_BASELINE_ARM_ID,
         REALIZER_ONLY_DETERMINISTIC_ARM_ID,
@@ -899,8 +831,7 @@ def test_unavailable_symai_preflight_is_explicit_not_substituted(
         if (
             isinstance(cmd, (list, tuple))
             and len(cmd) >= 3
-            and list(cmd)[:3]
-            == ["git", "rev-parse", "HEAD:ipfs_accelerate_py"]
+            and list(cmd)[:3] == ["git", "rev-parse", "HEAD:ipfs_accelerate_py"]
         ):
 
             class _Completed:
@@ -920,9 +851,7 @@ def test_unavailable_symai_preflight_is_explicit_not_substituted(
             resolved = self.resolve()
         except OSError:
             return real_is_file(self)
-        if resolved.name == router_suffix.name and str(resolved).endswith(
-            str(router_suffix)
-        ):
+        if resolved.name == router_suffix.name and str(resolved).endswith(str(router_suffix)):
             return False
         return real_is_file(self)
 
@@ -941,24 +870,19 @@ def test_unavailable_symai_preflight_is_explicit_not_substituted(
     body.pop("smoke_cid")
     smokes["smoke_cid"] = cid_for_dag_json(body)
     monkeypatch.setattr(
-        "benchmarks.semantic_roundtrip.replacement_matrix."
-        "run_deterministic_pilot_smoke",
+        "benchmarks.semantic_roundtrip.replacement_matrix.run_deterministic_pilot_smoke",
         lambda cases: qualification["smokes"]["deterministic_five_case"],
     )
-    rebuilt = build_replacement_qualification(
-        repo_root=ROOT, model_smokes=smokes
-    )
+    rebuilt = build_replacement_qualification(repo_root=ROOT, model_smokes=smokes)
     affected = [
         arm
         for arm in rebuilt["plan"]["arms"]
-        if "symai" in arm["route_requirements"]
-        and arm["composition"]["guidance"] != "guided"
+        if "symai" in arm["route_requirements"] and arm["composition"]["guidance"] != "guided"
     ]
     assert affected
     assert all(
         arm["qualification_status"] == CAPABILITY_UNAVAILABLE
-        and arm["qualification_reason"]
-        == "route_preflight_unavailable:symai"
+        and arm["qualification_reason"] == "route_preflight_unavailable:symai"
         and arm["fallback_allowed"] is False
         for arm in affected
     )
@@ -987,9 +911,7 @@ def test_cids_and_fresh_evidence_reject_readdressed_tampering(
     tampered["qualification_cid"] = cid_for_dag_json(qualification_body)
     plan = tampered["plan"]
     assert isinstance(plan, dict)
-    with pytest.raises(
-        (ReplacementQualificationError, ContractError, AssertionError, KeyError)
-    ):
+    with pytest.raises((ReplacementQualificationError, ContractError, AssertionError, KeyError)):
         # Runner construction validates schedule/plan coherence.
         build_replacement_coordinate_runner(
             tampered,
@@ -1004,16 +926,15 @@ def test_deterministic_smoke_recomputes_all_five_cases() -> None:
     assert smoke["status"] == "passed"
     assert smoke["case_count"] == 5
     assert all(
-        record["nonempty_l1_t1_l2"] is True
-        and all(record["gates"].values())
+        record["nonempty_l1_t1_l2"] is True and all(record["gates"].values())
         for record in smoke["records"]
     )
 
 
 def test_qualification_uses_cids_instead_of_new_legacy_digest_fields() -> None:
-    source = (
-        ROOT / "benchmarks/semantic_roundtrip/replacement_matrix.py"
-    ).read_text(encoding="utf-8")
+    source = (ROOT / "benchmarks/semantic_roundtrip/replacement_matrix.py").read_text(
+        encoding="utf-8"
+    )
     assert "hashlib" not in source
     assert "sha256" not in source.lower()
     assert DEFAULT_REPLACEMENT_QUALIFICATION_PATH.is_file()

@@ -60,7 +60,7 @@ def slugify_artifact_name(value: str, *, fallback: str, limit: int = 80) -> str:
     """Return a filesystem-friendly slug for daemon artifact filenames."""
 
     slug = re.sub(r"[^A-Za-z0-9._-]+", "-", str(value or "").lower()).strip("-")
-    return (slug[:limit].strip("-") or fallback)
+    return slug[:limit].strip("-") or fallback
 
 
 def timestamped_artifact_base(
@@ -163,7 +163,9 @@ def accepted_work_manifest(
     }
 
 
-def failed_work_workspace_payload(proposal: Proposal, *, reason: str, transport: str) -> dict[str, Any]:
+def failed_work_workspace_payload(
+    proposal: Proposal, *, reason: str, transport: str
+) -> dict[str, Any]:
     """Build the standard failed-work workspace payload."""
 
     payload = workspace_artifact_payload(
@@ -448,7 +450,8 @@ def build_accepted_work_ledger_entry(
             "errors": [str(error) for error in (promotion_errors or [])],
         },
         "validation_results": compact_results,
-        "validation_passed": bool(compact_results) and all(result["returncode"] == 0 for result in compact_results),
+        "validation_passed": bool(compact_results)
+        and all(result["returncode"] == 0 for result in compact_results),
     }
 
 

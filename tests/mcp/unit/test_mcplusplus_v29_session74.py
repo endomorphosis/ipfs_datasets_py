@@ -15,26 +15,33 @@ import warnings
 
 try:
     from ipfs_datasets_py.mcp_server.ucan_delegation import (
-        DelegationManager, MergeResult, Delegation, Capability,
+        DelegationManager,
+        MergeResult,
+        Delegation,
+        Capability,
     )
+
     _UCAN_OK = True
 except Exception:
     _UCAN_OK = False
 
 try:
     from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
     _IPFS_OK = True
 except Exception:
     _IPFS_OK = False
 
 try:
     from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus, PubSubEventType
+
     _PUBSUB_OK = True
 except Exception:
     _PUBSUB_OK = False
 
 try:
     from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
     _COMPLIANCE_OK = True
 except Exception:
     _COMPLIANCE_OK = False
@@ -43,6 +50,7 @@ except Exception:
 # ===========================================================================
 # 1. MergeResult.import_rate
 # ===========================================================================
+
 
 @unittest.skipUnless(_UCAN_OK, "ucan_delegation not importable")
 class TestMergeResultImportRate(unittest.TestCase):
@@ -110,6 +118,7 @@ class TestMergeResultImportRate(unittest.TestCase):
 # 2. IPFSReloadResult.summarize()
 # ===========================================================================
 
+
 @unittest.skipUnless(_IPFS_OK, "nl_ucan_policy not importable")
 class TestIPFSReloadResultSummarize(unittest.TestCase):
     """IPFSReloadResult.summarize() produces expected one-line strings."""
@@ -171,6 +180,7 @@ class TestIPFSReloadResultSummarize(unittest.TestCase):
 # 3. PubSubBus.clear_topic()
 # ===========================================================================
 
+
 @unittest.skipUnless(_PUBSUB_OK, "mcp_p2p_transport not importable")
 class TestPubSubBusClearTopic(unittest.TestCase):
     """PubSubBus.clear_topic() removes all handlers for a topic."""
@@ -187,9 +197,15 @@ class TestPubSubBusClearTopic(unittest.TestCase):
         self.assertEqual(count, 1)
 
     def test_clear_multiple_handlers(self):
-        def h1(_t, _p): pass  # noqa: E704
-        def h2(_t, _p): pass  # noqa: E704
-        def h3(_t, _p): pass  # noqa: E704
+        def h1(_t, _p):
+            pass  # noqa: E704
+
+        def h2(_t, _p):
+            pass  # noqa: E704
+
+        def h3(_t, _p):
+            pass  # noqa: E704
+
         self.bus.subscribe("t2", h1)
         self.bus.subscribe("t2", h2)
         self.bus.subscribe("t2", h3)
@@ -204,7 +220,9 @@ class TestPubSubBusClearTopic(unittest.TestCase):
         self.assertEqual(received, [])
 
     def test_cleared_topic_not_in_topics(self):
-        def h(_t, _p): pass  # noqa: E704
+        def h(_t, _p):
+            pass  # noqa: E704
+
         self.bus.subscribe("t4", h)
         self.bus.clear_topic("t4")
         self.assertNotIn("t4", self.bus.topics())
@@ -247,6 +265,7 @@ class TestPubSubBusClearTopic(unittest.TestCase):
 # 4. ComplianceChecker.backup_and_save()
 # ===========================================================================
 
+
 @unittest.skipUnless(_COMPLIANCE_OK, "compliance_checker not importable")
 class TestComplianceCheckerBackupAndSave(unittest.TestCase):
     """ComplianceChecker.backup_and_save() rotates bak then writes content."""
@@ -257,6 +276,7 @@ class TestComplianceCheckerBackupAndSave(unittest.TestCase):
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_creates_file_when_absent(self):
@@ -315,6 +335,7 @@ class TestComplianceCheckerBackupAndSave(unittest.TestCase):
 # 5. E2E combined regression
 # ===========================================================================
 
+
 @unittest.skipUnless(
     _UCAN_OK and _IPFS_OK and _PUBSUB_OK and _COMPLIANCE_OK,
     "one or more modules not importable",
@@ -327,6 +348,7 @@ class TestE2ESession74(unittest.TestCase):
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_import_rate_after_partial_merge(self):
@@ -345,9 +367,7 @@ class TestE2ESession74(unittest.TestCase):
         self.assertAlmostEqual(result.import_rate, 0.5)
 
     def test_summarize_all_ok(self):
-        r = IPFSReloadResult(
-            count=2, pin_results={"p1": "cid:1", "p2": "cid:2"}
-        )
+        r = IPFSReloadResult(count=2, pin_results={"p1": "cid:1", "p2": "cid:2"})
         self.assertTrue(r.all_succeeded)
         self.assertEqual(r.summarize(), "2/2 policies pinned successfully")
 
@@ -383,9 +403,9 @@ class TestE2ESession74(unittest.TestCase):
         self.assertAlmostEqual(r.import_rate, 0.75)
 
         # summarize
-        reload_r = IPFSReloadResult(count=4, pin_results={
-            "a": "cid", "b": "cid", "c": None, "d": "cid"
-        })
+        reload_r = IPFSReloadResult(
+            count=4, pin_results={"a": "cid", "b": "cid", "c": None, "d": "cid"}
+        )
         s = reload_r.summarize()
         self.assertIn("3/4", s)
         self.assertIn("1 failed", s)

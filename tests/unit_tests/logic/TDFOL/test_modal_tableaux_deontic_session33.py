@@ -41,6 +41,7 @@ from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _pred(name: str) -> Predicate:
     return Predicate(name, ())
 
@@ -60,6 +61,7 @@ def _make_branch_with_world() -> tuple:
 # ---------------------------------------------------------------------------
 # World.__hash__ and __eq__
 # ---------------------------------------------------------------------------
+
 
 class TestWorldHashAndEq:
     """Test World.__hash__ and World.__eq__."""
@@ -106,6 +108,7 @@ class TestWorldHashAndEq:
 # ---------------------------------------------------------------------------
 # _expand_binary: negated OR, negated IMPLIES, return fallback
 # ---------------------------------------------------------------------------
+
 
 class TestExpandBinaryNegatedCases:
     """Test _expand_binary for negated OR and IMPLIES branches."""
@@ -199,6 +202,7 @@ class TestExpandBinaryNegatedCases:
 # _expand_formula: atomic formula with contradiction
 # ---------------------------------------------------------------------------
 
+
 class TestExpandFormulaAtomicContradiction:
     """Test _expand_formula atomic branch: contradiction detection."""
 
@@ -213,7 +217,7 @@ class TestExpandFormulaAtomicContradiction:
         p = _pred("P")
         # Pre-load both P and ¬P so contradiction is present after expansion
         world.add_formula(p, negated=False)  # needed for _expand_formula to process it
-        world.add_formula(p, negated=True)   # the existing negation
+        world.add_formula(p, negated=True)  # the existing negation
 
         steps = []
         result = tableaux._expand_formula(branch, 0, p, negated=False, proof_steps=steps)
@@ -243,6 +247,7 @@ class TestExpandFormulaAtomicContradiction:
 # ---------------------------------------------------------------------------
 # _expand_deontic: OBLIGATION
 # ---------------------------------------------------------------------------
+
 
 class TestExpandDeonticObligation:
     """Test _expand_deontic for OBLIGATION (O) operator."""
@@ -315,6 +320,7 @@ class TestExpandDeonticObligation:
 # _expand_deontic: PERMISSION
 # ---------------------------------------------------------------------------
 
+
 class TestExpandDeonticPermission:
     """Test _expand_deontic for PERMISSION (P) operator."""
 
@@ -386,6 +392,7 @@ class TestExpandDeonticPermission:
 # _expand_deontic: FORBIDDEN
 # ---------------------------------------------------------------------------
 
+
 class TestExpandDeonticForbidden:
     """Test _expand_deontic for FORBIDDEN (F) operator."""
 
@@ -456,6 +463,7 @@ class TestExpandDeonticForbidden:
 # End-to-end deontic tableau proofs
 # ---------------------------------------------------------------------------
 
+
 class TestDeonticTableauxProofs:
     """End-to-end tests for deontic formula proving."""
 
@@ -499,6 +507,7 @@ class TestDeonticTableauxProofs:
 # ---------------------------------------------------------------------------
 # _get_all_ancestor_box_bodies
 # ---------------------------------------------------------------------------
+
 
 class TestGetAllAncestorBoxBodies:
     """Test _get_all_ancestor_box_bodies transitive ancestor traversal."""
@@ -567,6 +576,7 @@ class TestGetAllAncestorBoxBodies:
 # ---------------------------------------------------------------------------
 # S4/S5 box propagation
 # ---------------------------------------------------------------------------
+
 
 class TestS4S5BoxPropagation:
     """Test that S4/S5 propagates box histories to new worlds."""

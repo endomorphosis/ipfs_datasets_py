@@ -54,8 +54,12 @@ def _make_mediator():
 
 def _make_score(c=0.8, con=0.7, cl=0.6, g=0.5, da=0.9) -> CriticScore:
     return CriticScore(
-        completeness=c, consistency=con, clarity=cl, granularity=g, relationship_coherence=da
-    , domain_alignment=da
+        completeness=c,
+        consistency=con,
+        clarity=cl,
+        granularity=g,
+        relationship_coherence=da,
+        domain_alignment=da,
     )
 
 
@@ -143,7 +147,9 @@ class TestDedupByTextPrefix:
         out = self.gen.dedup_by_text_prefix(r, prefix_len=1)
         # "1" (Alpha) removed, relationship should be gone
         kept_ids = {e.id for e in out.entities}
-        assert all(rel.source_id in kept_ids and rel.target_id in kept_ids for rel in out.relationships)
+        assert all(
+            rel.source_id in kept_ids and rel.target_id in kept_ids for rel in out.relationships
+        )
 
     def test_invalid_prefix_len_raises(self):
         r = _make_result()
@@ -289,6 +295,7 @@ class TestSerializeToFile:
 
     def test_creates_valid_json_file(self):
         import json
+
         adapter = OntologyLearningAdapter()
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
@@ -345,7 +352,9 @@ class TestRandomSample:
         e1 = _make_entity("1", "Alice")
         e2 = _make_entity("2", "Bob")
         rel = Relationship(id="r1", source_id="1", target_id="2", type="knows", confidence=0.9)
-        r = EntityExtractionResult(entities=[e1, e2], relationships=[rel], confidence=0.8, metadata={})
+        r = EntityExtractionResult(
+            entities=[e1, e2], relationships=[rel], confidence=0.8, metadata={}
+        )
         # sample only 1 entity — relationship must be removed
         sampled = r.random_sample(1)
         kept_ids = {e.id for e in sampled.entities}

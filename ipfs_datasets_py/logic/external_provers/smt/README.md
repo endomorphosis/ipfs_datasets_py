@@ -67,7 +67,7 @@ from ipfs_datasets_py.logic.external_provers.smt import CVC5ProverBridge
 prover = CVC5ProverBridge(
     timeout=5.0,
     use_proof=True,  # Generate proofs
-    enable_cache=True
+    enable_cache=True,
 )
 result = prover.prove(formula)
 ```

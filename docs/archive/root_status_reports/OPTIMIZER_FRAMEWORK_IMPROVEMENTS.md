@@ -232,40 +232,43 @@ class UnifiedOptimizerCLI:
 
 from ipfs_datasets_py.optimizers.common import BaseOptimizer
 
+
 class LogicTheoremOptimizer(BaseOptimizer):
     """Logic theorem optimizer using base layer."""
-    
+
     def generate(self, input_data, context):
         """Extract formal logic from input."""
         return self.logic_extractor.extract(input_data)
-    
+
     def critique(self, artifact, context):
         """Evaluate logic correctness."""
         score = self.logic_critic.evaluate(artifact)
         return (score.overall, score.feedback)
-    
+
     def optimize(self, artifact, score, feedback, context):
         """Improve logic formulation."""
         return self._apply_theorem_proving(artifact, feedback)
-    
+
     def validate(self, artifact, context):
         """Validate theorem proofs."""
         return self._run_provers(artifact)
 
+
 # Phase 2: GraphRAG Optimizer Migration (Week 2)
+
 
 class GraphRAGOptimizer(BaseOptimizer):
     """GraphRAG optimizer using base layer."""
-    
+
     def generate(self, input_data, context):
         """Generate initial ontology."""
         return self.ontology_generator.generate(input_data)
-    
+
     def critique(self, artifact, context):
         """Evaluate ontology quality."""
         score = self.ontology_critic.evaluate(artifact)
         return (score.overall, score.feedback)
-    
+
     def optimize(self, artifact, score, feedback, context):
         """Optimize knowledge graph structure."""
         return self._improve_ontology(artifact, feedback)
@@ -296,33 +299,34 @@ class GraphRAGOptimizer(BaseOptimizer):
 ```python
 # tests/integration/optimizers/test_cross_optimizer.py
 
+
 class TestCrossOptimizerIntegration:
     """Test interactions between optimizer types."""
-    
+
     def test_agentic_to_logic_workflow(self):
         """Test: Agentic optimizes code → Logic verifies correctness."""
         # 1. Optimize code with agentic
         agentic = AgenticOptimizer(...)
         result = agentic.optimize(code_task)
-        
+
         # 2. Verify with logic optimizer
         logic = LogicTheoremOptimizer(...)
         verification = logic.verify_correctness(result.optimized_code)
-        
+
         assert verification.passed
-    
+
     def test_logic_to_graphrag_workflow(self):
         """Test: Logic extracts → GraphRAG structures knowledge."""
         # 1. Extract logic from text
         logic = LogicTheoremOptimizer(...)
         logic_result = logic.extract(legal_text)
-        
+
         # 2. Structure in knowledge graph
         graphrag = GraphRAGOptimizer(...)
         kg_result = graphrag.structure(logic_result.formulas)
-        
+
         assert kg_result.nodes > 0
-    
+
     def test_batch_optimization_all_types(self):
         """Test: Run all optimizer types in parallel."""
         tasks = [
@@ -330,7 +334,7 @@ class TestCrossOptimizerIntegration:
             ("logic", theorem_task),
             ("graphrag", ontology_task),
         ]
-        
+
         results = run_parallel_optimization(tasks)
         assert all(r.success for r in results)
 ```
@@ -407,15 +411,16 @@ class BaseOptimizer:
 class OptimizerLLMRouter:
     def __init__(self):
         self.cache = LRUCache(maxsize=1000)
-    
+
     def generate(self, prompt, **kwargs):
         cache_key = hash((prompt, frozenset(kwargs.items())))
         if cache_key in self.cache:
             return self.cache[cache_key]
-        
+
         result = self._call_llm(prompt, **kwargs)
         self.cache[cache_key] = result
         return result
+
 
 # 2. Parallelize validation
 class OptimizationValidator:
@@ -430,13 +435,14 @@ class OptimizationValidator:
         results = await asyncio.gather(*tasks)
         return self._aggregate_results(results)
 
+
 # 3. Batch file operations
 class PatchManager:
     def apply_patches_batch(self, patches):
         """Apply multiple patches efficiently."""
         # Group by file
         by_file = self._group_patches_by_file(patches)
-        
+
         # Apply all patches to each file at once
         for file, file_patches in by_file.items():
             self._apply_file_patches(file, file_patches)
@@ -460,45 +466,47 @@ class PatchManager:
 ```python
 # optimizers/common/result_cache.py
 
+
 class OptimizationResultCache:
     """Cache optimization results across runs."""
-    
+
     def __init__(self, backend="local"):
         if backend == "local":
             self.cache = LocalCache(maxsize=10000)
         elif backend == "redis":
             self.cache = RedisCache()
-    
+
     def get(self, task_hash):
         """Get cached result for task."""
         return self.cache.get(task_hash)
-    
+
     def set(self, task_hash, result, ttl=3600):
         """Cache optimization result."""
         self.cache.set(task_hash, result, ttl=ttl)
-    
+
     def invalidate(self, pattern):
         """Invalidate cached results matching pattern."""
         self.cache.delete_pattern(pattern)
+
 
 # Usage in BaseOptimizer
 class BaseOptimizer:
     def __init__(self, config):
         self.result_cache = OptimizationResultCache()
-    
+
     def run_session(self, input_data, context):
         # Check cache first
         task_hash = self._hash_task(input_data, context)
         cached = self.result_cache.get(task_hash)
         if cached and not context.force_rerun:
             return cached
-        
+
         # Run optimization
         result = self._run_optimization(input_data, context)
-        
+
         # Cache result
         self.result_cache.set(task_hash, result)
-        
+
         return result
 ```
 
@@ -518,25 +526,36 @@ class BaseOptimizer:
 ```python
 # optimizers/common/exceptions.py
 
+
 class OptimizerError(Exception):
     """Base exception for all optimizer errors."""
+
     pass
+
 
 class OptimizationFailed(OptimizerError):
     """Optimization failed to complete."""
+
     pass
+
 
 class ValidationFailed(OptimizerError):
     """Validation checks failed."""
+
     pass
+
 
 class ConfigurationError(OptimizerError):
     """Invalid configuration."""
+
     pass
+
 
 class ResourceExhausted(OptimizerError):
     """Resource limits exceeded."""
+
     pass
+
 
 # Standardized error handling
 class BaseOptimizer:
@@ -569,9 +588,10 @@ class BaseOptimizer:
 import logging
 import structlog
 
+
 def configure_optimizer_logging(level="INFO"):
     """Configure standardized logging for optimizers."""
-    
+
     # Structured logging
     structlog.configure(
         processors=[
@@ -581,17 +601,18 @@ def configure_optimizer_logging(level="INFO"):
         ],
         logger_factory=structlog.stdlib.LoggerFactory(),
     )
-    
+
     # Standard format
     logging.basicConfig(
         level=level,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-    
+
     # Set levels for all optimizer modules
     for module in ["agentic", "logic_theorem_optimizer", "graphrag"]:
         logger = logging.getLogger(f"ipfs_datasets_py.optimizers.{module}")
         logger.setLevel(level)
+
 
 # Usage
 from ipfs_datasets_py.optimizers.common.logging_config import configure_optimizer_logging

@@ -292,8 +292,7 @@ class NativeAutomationAttempt:
         if self.attempted:
             if self.skipped_reason is not None:
                 raise ValueError(
-                    "NativeAutomationAttempt.skipped_reason must be None when "
-                    "attempted is True"
+                    "NativeAutomationAttempt.skipped_reason must be None when attempted is True"
                 )
             if self.proof_candidate is None or self.reconstruction is None:
                 raise ValueError(
@@ -309,20 +308,15 @@ class NativeAutomationAttempt:
                 )
             if self.reconstruction.request_id != self.request_id:
                 raise ValueError(
-                    "NativeAutomationAttempt.reconstruction.request_id must "
-                    "match request_id"
+                    "NativeAutomationAttempt.reconstruction.request_id must match request_id"
                 )
             if self.recovered != self.reconstruction.kernel_accepted:
                 raise ValueError(
-                    "NativeAutomationAttempt.recovered must equal "
-                    "reconstruction.kernel_accepted"
+                    "NativeAutomationAttempt.recovered must equal reconstruction.kernel_accepted"
                 )
-            if self.evidence is not None and not isinstance(
-                self.evidence, ReconstructionEvidence
-            ):
+            if self.evidence is not None and not isinstance(self.evidence, ReconstructionEvidence):
                 raise ValueError(
-                    "NativeAutomationAttempt.evidence must be a "
-                    "ReconstructionEvidence or None"
+                    "NativeAutomationAttempt.evidence must be a ReconstructionEvidence or None"
                 )
             if self.environment_lock is not None:
                 if not isinstance(self.environment_lock, EnvironmentLockRecord):
@@ -349,8 +343,7 @@ class NativeAutomationAttempt:
                 )
             if self.recovered:
                 raise ValueError(
-                    "NativeAutomationAttempt.recovered must be False when "
-                    "attempted is False"
+                    "NativeAutomationAttempt.recovered must be False when attempted is False"
                 )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -360,12 +353,8 @@ class NativeAutomationAttempt:
             "itp": self.itp.value,
             "attempted": self.attempted,
             "recovered": self.recovered,
-            "proof_candidate": (
-                self.proof_candidate.to_dict() if self.proof_candidate else None
-            ),
-            "reconstruction": (
-                self.reconstruction.to_dict() if self.reconstruction else None
-            ),
+            "proof_candidate": (self.proof_candidate.to_dict() if self.proof_candidate else None),
+            "reconstruction": (self.reconstruction.to_dict() if self.reconstruction else None),
             "evidence": self.evidence.to_dict() if self.evidence else None,
             "environment_lock": (
                 self.environment_lock.to_dict() if self.environment_lock else None
@@ -391,9 +380,7 @@ class NativeAutomationAttempt:
         else:
             data["evidence"] = None
         if data.get("environment_lock"):
-            data["environment_lock"] = EnvironmentLockRecord.from_dict(
-                data["environment_lock"]
-            )
+            data["environment_lock"] = EnvironmentLockRecord.from_dict(data["environment_lock"])
         else:
             data["environment_lock"] = None
         return cls(**data)
@@ -463,13 +450,9 @@ class DecompositionSubgoal:
             raise ValueError("DecompositionSubgoal.rank must be non-negative")
         if not isinstance(self.source, DecompositionSource):
             raise ValueError("DecompositionSubgoal.source must be a DecompositionSource")
-        _require_nonempty_str(
-            self.statement, field_name="statement", owner="DecompositionSubgoal"
-        )
+        _require_nonempty_str(self.statement, field_name="statement", owner="DecompositionSubgoal")
         if not isinstance(self.review_status, ReviewStatus):
-            raise ValueError(
-                "DecompositionSubgoal.review_status must be a ReviewStatus"
-            )
+            raise ValueError("DecompositionSubgoal.review_status must be a ReviewStatus")
         if not isinstance(self.status, SubgoalStatus):
             raise ValueError("DecompositionSubgoal.status must be a SubgoalStatus")
         _require_nonempty_str(
@@ -507,12 +490,9 @@ class DecompositionSubgoal:
                     "a NATIVE_STRUCTURAL subgoal"
                 )
 
-        if self.review_status is ReviewStatus.REJECTED and self.status is (
-            SubgoalStatus.VERIFIED
-        ):
+        if self.review_status is ReviewStatus.REJECTED and self.status is (SubgoalStatus.VERIFIED):
             raise ValueError(
-                "DecompositionSubgoal.status cannot be VERIFIED when "
-                "review_status is REJECTED"
+                "DecompositionSubgoal.status cannot be VERIFIED when review_status is REJECTED"
             )
         if self.status is SubgoalStatus.VERIFIED:
             _require_nonempty_str(
@@ -522,8 +502,7 @@ class DecompositionSubgoal:
             )
         if (self.reviewed_by is None) != (self.reviewed_at is None):
             raise ValueError(
-                "DecompositionSubgoal.reviewed_by and reviewed_at must be set "
-                "together"
+                "DecompositionSubgoal.reviewed_by and reviewed_at must be set together"
             )
         if self.reviewed_by is not None and self.review_status in (
             ReviewStatus.NOT_REQUIRED,
@@ -598,9 +577,7 @@ class DecompositionPlan:
     def validate(self) -> None:
         _require_schema_version(self.schema_version, owner="DecompositionPlan")
         _require_nonempty_str(self.plan_id, field_name="plan_id", owner="DecompositionPlan")
-        _require_nonempty_str(
-            self.request_id, field_name="request_id", owner="DecompositionPlan"
-        )
+        _require_nonempty_str(self.request_id, field_name="request_id", owner="DecompositionPlan")
         if not isinstance(self.trigger, FallbackTrigger):
             raise ValueError("DecompositionPlan.trigger must be a FallbackTrigger")
         if self.max_subgoals <= 0:
@@ -617,14 +594,11 @@ class DecompositionPlan:
         seen_ranks: set = set()
         for subgoal in self.subgoals:
             if not isinstance(subgoal, DecompositionSubgoal):
-                raise ValueError(
-                    "DecompositionPlan.subgoals must contain DecompositionSubgoal"
-                )
+                raise ValueError("DecompositionPlan.subgoals must contain DecompositionSubgoal")
             subgoal.validate()
             if subgoal.request_id != self.request_id:
                 raise ValueError(
-                    "DecompositionPlan.subgoals entries must share the plan's "
-                    "request_id"
+                    "DecompositionPlan.subgoals entries must share the plan's request_id"
                 )
             if subgoal.subgoal_id in seen_ids:
                 raise ValueError(
@@ -634,14 +608,11 @@ class DecompositionPlan:
             seen_ids.add(subgoal.subgoal_id)
             if subgoal.rank in seen_ranks:
                 raise ValueError(
-                    f"DecompositionPlan.subgoals contains duplicate rank "
-                    f"{subgoal.rank}"
+                    f"DecompositionPlan.subgoals contains duplicate rank {subgoal.rank}"
                 )
             seen_ranks.add(subgoal.rank)
 
-        if not isinstance(self.notes, list) or not all(
-            isinstance(n, str) for n in self.notes
-        ):
+        if not isinstance(self.notes, list) or not all(isinstance(n, str) for n in self.notes):
             raise ValueError("DecompositionPlan.notes must be a list of strings")
 
     def is_fully_verified(self) -> bool:
@@ -671,9 +642,7 @@ class DecompositionPlan:
         data = dict(data)
         if isinstance(data.get("trigger"), str):
             data["trigger"] = FallbackTrigger(data["trigger"])
-        data["subgoals"] = [
-            DecompositionSubgoal.from_dict(s) for s in data.get("subgoals", [])
-        ]
+        data["subgoals"] = [DecompositionSubgoal.from_dict(s) for s in data.get("subgoals", [])]
         if "created_at" in data:
             data["created_at"] = _parse_datetime(data["created_at"])
         return cls(**data)
@@ -708,9 +677,7 @@ class FallbackOutcome:
     outcome_id: str = ""
     request_id: str = ""
     trigger: FallbackTrigger = FallbackTrigger.RECONSTRUCTION_FAILURE
-    native_automation: NativeAutomationAttempt = field(
-        default_factory=NativeAutomationAttempt
-    )
+    native_automation: NativeAutomationAttempt = field(default_factory=NativeAutomationAttempt)
     decomposition_plan: Optional[DecompositionPlan] = None
     recovered: bool = False
     created_at: datetime = field(default_factory=_utcnow)
@@ -719,48 +686,32 @@ class FallbackOutcome:
 
     def validate(self) -> None:
         _require_schema_version(self.schema_version, owner="FallbackOutcome")
-        _require_nonempty_str(
-            self.outcome_id, field_name="outcome_id", owner="FallbackOutcome"
-        )
-        _require_nonempty_str(
-            self.request_id, field_name="request_id", owner="FallbackOutcome"
-        )
+        _require_nonempty_str(self.outcome_id, field_name="outcome_id", owner="FallbackOutcome")
+        _require_nonempty_str(self.request_id, field_name="request_id", owner="FallbackOutcome")
         if not isinstance(self.trigger, FallbackTrigger):
             raise ValueError("FallbackOutcome.trigger must be a FallbackTrigger")
         if not isinstance(self.native_automation, NativeAutomationAttempt):
-            raise ValueError(
-                "FallbackOutcome.native_automation must be a NativeAutomationAttempt"
-            )
+            raise ValueError("FallbackOutcome.native_automation must be a NativeAutomationAttempt")
         self.native_automation.validate()
         if self.native_automation.request_id != self.request_id:
-            raise ValueError(
-                "FallbackOutcome.native_automation.request_id must match "
-                "request_id"
-            )
+            raise ValueError("FallbackOutcome.native_automation.request_id must match request_id")
         if not isinstance(self.recovered, bool):
             raise ValueError("FallbackOutcome.recovered must be a boolean")
         if self.recovered != self.native_automation.recovered:
-            raise ValueError(
-                "FallbackOutcome.recovered must equal native_automation.recovered"
-            )
+            raise ValueError("FallbackOutcome.recovered must equal native_automation.recovered")
 
         if self.decomposition_plan is not None:
             if not isinstance(self.decomposition_plan, DecompositionPlan):
                 raise ValueError(
-                    "FallbackOutcome.decomposition_plan must be a "
-                    "DecompositionPlan or None"
+                    "FallbackOutcome.decomposition_plan must be a DecompositionPlan or None"
                 )
             self.decomposition_plan.validate()
             if self.decomposition_plan.request_id != self.request_id:
                 raise ValueError(
-                    "FallbackOutcome.decomposition_plan.request_id must match "
-                    "request_id"
+                    "FallbackOutcome.decomposition_plan.request_id must match request_id"
                 )
             if self.decomposition_plan.trigger is not self.trigger:
-                raise ValueError(
-                    "FallbackOutcome.decomposition_plan.trigger must match "
-                    "trigger"
-                )
+                raise ValueError("FallbackOutcome.decomposition_plan.trigger must match trigger")
 
         if self.recovered and self.decomposition_plan is not None:
             raise ValueError(
@@ -768,13 +719,9 @@ class FallbackOutcome:
                 "automation already recovered the goal"
             )
 
-        if not isinstance(self.notes, list) or not all(
-            isinstance(n, str) for n in self.notes
-        ):
+        if not isinstance(self.notes, list) or not all(isinstance(n, str) for n in self.notes):
             raise ValueError("FallbackOutcome.notes must be a list of strings")
-        if not isinstance(self.errors, list) or not all(
-            isinstance(e, str) for e in self.errors
-        ):
+        if not isinstance(self.errors, list) or not all(isinstance(e, str) for e in self.errors):
             raise ValueError("FallbackOutcome.errors must be a list of strings")
 
     def to_dict(self) -> Dict[str, Any]:
@@ -798,13 +745,9 @@ class FallbackOutcome:
         data = dict(data)
         if isinstance(data.get("trigger"), str):
             data["trigger"] = FallbackTrigger(data["trigger"])
-        data["native_automation"] = NativeAutomationAttempt.from_dict(
-            data["native_automation"]
-        )
+        data["native_automation"] = NativeAutomationAttempt.from_dict(data["native_automation"])
         if data.get("decomposition_plan"):
-            data["decomposition_plan"] = DecompositionPlan.from_dict(
-                data["decomposition_plan"]
-            )
+            data["decomposition_plan"] = DecompositionPlan.from_dict(data["decomposition_plan"])
         else:
             data["decomposition_plan"] = None
         if "created_at" in data:
@@ -830,10 +773,7 @@ def redact_llm_text(text: str) -> str:
     """
 
     digest = compute_content_digest({"llm_suggestion": text})
-    return (
-        f"<llm-suggested subgoal redacted pending review; length={len(text)}; "
-        f"digest={digest}>"
-    )
+    return f"<llm-suggested subgoal redacted pending review; length={len(text)}; digest={digest}>"
 
 
 # ---------------------------------------------------------------------------
@@ -936,9 +876,7 @@ def _render_binder_groups(hypotheses: Sequence[LocalHypothesis]) -> str:
     groups (``(n : Nat) (h : n = n)``), reusing each hypothesis's own
     native names/type text verbatim — never inventing a binder."""
 
-    return " ".join(
-        f"({' '.join(h.names)} : {h.type_text})" for h in hypotheses
-    )
+    return " ".join(f"({' '.join(h.names)} : {h.type_text})" for h in hypotheses)
 
 
 def _build_lean_subgoal_source(
@@ -1005,9 +943,7 @@ def _build_native_subgoal_source(
         return _build_coq_subgoal_source(decl_name, hypotheses, statement)
     if itp is ITPKind.ISABELLE:
         return _build_isabelle_subgoal_source(decl_name, hypotheses, statement)
-    raise FallbackInputError(
-        f"no synthetic subgoal source builder is registered for {itp!r}"
-    )
+    raise FallbackInputError(f"no synthetic subgoal source builder is registered for {itp!r}")
 
 
 # ---------------------------------------------------------------------------
@@ -1135,9 +1071,7 @@ def build_decomposition_plan(
     request: HammerRequest,
     trigger: FallbackTrigger,
     goal_snapshot: GoalSnapshot,
-    llm_decomposition_provider: Optional[
-        Callable[[GoalSnapshot], Sequence[str]]
-    ] = None,
+    llm_decomposition_provider: Optional[Callable[[GoalSnapshot], Sequence[str]]] = None,
 ) -> DecompositionPlan:
     """Build a bounded :class:`DecompositionPlan` for ``goal_snapshot``.
 
@@ -1161,9 +1095,7 @@ def build_decomposition_plan(
     notes: List[str] = []
     subgoals: List[DecompositionSubgoal] = []
 
-    native_statements = split_top_level_conjuncts(
-        goal_snapshot.goal_text, max_parts=max_subgoals
-    )
+    native_statements = split_top_level_conjuncts(goal_snapshot.goal_text, max_parts=max_subgoals)
     if not native_statements:
         notes.append(
             "no top-level conjunction connective (∧ / /\\) was found in "
@@ -1209,7 +1141,8 @@ def build_decomposition_plan(
             )
         else:
             raw_suggestions = [
-                text for text in (llm_decomposition_provider(goal_snapshot) or [])
+                text
+                for text in (llm_decomposition_provider(goal_snapshot) or [])
                 if isinstance(text, str) and text.strip()
             ]
             accepted = raw_suggestions[:remaining]
@@ -1359,17 +1292,12 @@ def verify_decomposition_subgoal(
     """
 
     if subgoal.request_id != request.request_id:
-        raise FallbackInputError(
-            "subgoal.request_id does not match request.request_id"
-        )
+        raise FallbackInputError("subgoal.request_id does not match request.request_id")
     if subgoal.status is SubgoalStatus.VERIFIED:
-        raise FallbackInputError(
-            f"subgoal {subgoal.subgoal_id!r} has already been verified"
-        )
+        raise FallbackInputError(f"subgoal {subgoal.subgoal_id!r} has already been verified")
     if subgoal.review_status is ReviewStatus.REJECTED:
         raise FallbackInputError(
-            f"subgoal {subgoal.subgoal_id!r} was rejected during review and "
-            "cannot be verified"
+            f"subgoal {subgoal.subgoal_id!r} was rejected during review and cannot be verified"
         )
     if (
         subgoal.source is DecompositionSource.LLM_SUGGESTED
@@ -1391,9 +1319,7 @@ def verify_decomposition_subgoal(
         subgoal.validate()
         return subgoal, None, None
 
-    decl_name = _safe_identifier(
-        f"hammer_fallback_subgoal_{subgoal.rank}_{subgoal.subgoal_id}"
-    )
+    decl_name = _safe_identifier(f"hammer_fallback_subgoal_{subgoal.rank}_{subgoal.subgoal_id}")
     synthetic_source = _build_native_subgoal_source(
         request.itp, decl_name, goal_snapshot.hypotheses, subgoal.statement
     )
@@ -1404,7 +1330,9 @@ def verify_decomposition_subgoal(
         goal_text=subgoal.statement,
         hypotheses=list(goal_snapshot.hypotheses),
         imports=list(goal_snapshot.imports),
-        source_position=SourcePosition(file=f"<synthetic-decomposition:{decl_name}>", line=1, column=0),
+        source_position=SourcePosition(
+            file=f"<synthetic-decomposition:{decl_name}>", line=1, column=0
+        ),
         native_command=["synthetic-decomposition-subgoal", decl_name],
         raw_native_output=(
             f"synthetic decomposition subgoal (rank {subgoal.rank}) derived "
@@ -1446,9 +1374,7 @@ def verify_decomposition_subgoal(
     )
 
     subgoal.reconstruction_id = record.reconstruction_id
-    subgoal.status = (
-        SubgoalStatus.VERIFIED if record.kernel_accepted else SubgoalStatus.REJECTED
-    )
+    subgoal.status = SubgoalStatus.VERIFIED if record.kernel_accepted else SubgoalStatus.REJECTED
     subgoal.validate()
     return subgoal, record, evidence
 
@@ -1467,9 +1393,7 @@ def attempt_fallback(
     reconstructor: Optional[Reconstructor] = None,
     environment_lock: Optional[EnvironmentLockRecord] = None,
     timeout: Optional[float] = None,
-    llm_decomposition_provider: Optional[
-        Callable[[GoalSnapshot], Sequence[str]]
-    ] = None,
+    llm_decomposition_provider: Optional[Callable[[GoalSnapshot], Sequence[str]]] = None,
 ) -> FallbackOutcome:
     """Run the full HAMMER-011 recovery pipeline for one translation,
     search, or reconstruction failure.
@@ -1529,8 +1453,7 @@ def attempt_fallback(
             )
         else:
             notes.append(
-                "native automation fallback was not attempted: "
-                f"{native_automation.skipped_reason}"
+                f"native automation fallback was not attempted: {native_automation.skipped_reason}"
             )
 
         decomposition_plan = build_decomposition_plan(
@@ -1547,9 +1470,7 @@ def attempt_fallback(
             "trigger": trigger.value,
             "native_automation_attempted": native_automation.attempted,
             "native_automation_recovered": native_automation.recovered,
-            "decomposition_plan_id": (
-                decomposition_plan.plan_id if decomposition_plan else None
-            ),
+            "decomposition_plan_id": (decomposition_plan.plan_id if decomposition_plan else None),
         }
     )
 

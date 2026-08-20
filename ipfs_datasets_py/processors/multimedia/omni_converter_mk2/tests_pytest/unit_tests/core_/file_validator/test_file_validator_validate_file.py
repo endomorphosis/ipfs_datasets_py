@@ -3,6 +3,7 @@
 """
 Test file for FileValidator.validate_file method converted from unittest to pytest.
 """
+
 import tempfile
 import pytest
 import logging
@@ -40,7 +41,7 @@ def mock_configs():
     mock_configs = Mock(spec=Configs)
     mock_configs.security = Mock()
     mock_configs.security.max_file_size_mb = 100
-    mock_configs.security.allowed_formats = ['pdf', 'txt', 'docx']
+    mock_configs.security.allowed_formats = ["pdf", "txt", "docx"]
     return mock_configs
 
 
@@ -60,8 +61,8 @@ def mock_get_file_info():
     mock_file_info.size = 1024  # 1KB file
     mock_file_info.is_readable = True
     mock_file_info.last_modified = datetime.now()
-    mock_file_info.extension = 'txt'
-    mock_file_info.mime_type = 'text/plain'
+    mock_file_info.extension = "txt"
+    mock_file_info.mime_type = "text/plain"
     mock_get_file_info.return_value = mock_file_info
     return mock_get_file_info
 
@@ -75,7 +76,7 @@ def mock_resources(mock_validation_result, mock_file_exists, mock_get_file_info)
         "logger": Mock(spec=logging.Logger),
         "validation_result": mock_validation_result_class,
         "file_exists": mock_file_exists,
-        "get_file_info": mock_get_file_info
+        "get_file_info": mock_get_file_info,
     }
 
 
@@ -84,25 +85,25 @@ def temp_files():
     """Create temporary test files."""
     temp_dir = tempfile.TemporaryDirectory()
     temp_path = Path(temp_dir.name)
-    
+
     # Create test files
     valid_file = temp_path / "valid_file.txt"
     valid_file.write_text("This is a valid test file.")
-    
+
     invalid_file = temp_path / "invalid_file.txt"
     invalid_file.write_text("This file will be treated as invalid.")
-    
+
     empty_file = temp_path / "empty_file.txt"
     empty_file.touch()
-    
+
     yield {
-        'temp_dir': temp_dir,
-        'temp_path': temp_path,
-        'valid_file': valid_file,
-        'invalid_file': invalid_file,
-        'empty_file': empty_file
+        "temp_dir": temp_dir,
+        "temp_path": temp_path,
+        "valid_file": valid_file,
+        "invalid_file": invalid_file,
+        "empty_file": empty_file,
     }
-    
+
     temp_dir.cleanup()
 
 
@@ -116,7 +117,9 @@ def validator(mock_resources, mock_configs):
 class TestValidateFile:
     """Test FileValidator.validate_file method."""
 
-    def test_validate_valid_file_with_format(self, validator, temp_files, mock_resources, mock_validation_result):
+    def test_validate_valid_file_with_format(
+        self, validator, temp_files, mock_resources, mock_validation_result
+    ):
         """
         GIVEN a FileValidator instance
         AND a valid file path to an existing, readable file
@@ -135,33 +138,35 @@ class TestValidateFile:
             size=1024,
             is_readable=True,
             last_modified=datetime.now(),
-            extension='txt',
-            mime_type='text/plain'
+            extension="txt",
+            mime_type="text/plain",
         )
-        mock_resources["file_format_detector"].get_format_category.return_value = 'document'
-        
+        mock_resources["file_format_detector"].get_format_category.return_value = "document"
+
         # Configure the mock ValidationResult
         mock_validation_result.is_valid = True
         mock_validation_result.errors = []
         mock_validation_result.warnings = []
         mock_validation_result.validation_context = {}
-        
+
         # WHEN
-        result = validator.validate_file(str(temp_files['valid_file']), 'txt')
-        
+        result = validator.validate_file(str(temp_files["valid_file"]), "txt")
+
         # THEN
         assert isinstance(result, Mock)  # Mock ValidationResult
-        
+
         # Verify ValidationResult was created
         mock_resources["validation_result"].assert_called_once()
-        
+
         # Verify get_format_category was called for provided format
-        mock_resources["file_format_detector"].get_format_category.assert_called_once_with('txt')
-        
+        mock_resources["file_format_detector"].get_format_category.assert_called_once_with("txt")
+
         # Verify context was added
         mock_validation_result.add_context.assert_called()
 
-    def test_validate_valid_file_auto_detect_format(self, validator, temp_files, mock_resources, mock_validation_result):
+    def test_validate_valid_file_auto_detect_format(
+        self, validator, temp_files, mock_resources, mock_validation_result
+    ):
         """
         GIVEN a FileValidator instance
         AND a valid file path to an existing, readable file
@@ -175,22 +180,23 @@ class TestValidateFile:
         """
         # GIVEN
         # Fix: Return tuple as expected by implementation
-        mock_resources["file_format_detector"].detect_format.return_value = ('txt', 'document')
+        mock_resources["file_format_detector"].detect_format.return_value = ("txt", "document")
         mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True,
-            mime_type='text/plain',
-            extension='txt'
+            size=1024, is_readable=True, mime_type="text/plain", extension="txt"
         )
-        
+
         # WHEN
-        result = validator.validate_file(str(temp_files['valid_file']), None)
-        
+        result = validator.validate_file(str(temp_files["valid_file"]), None)
+
         # THEN
         assert isinstance(result, Mock)
-        mock_resources["file_format_detector"].detect_format.assert_called_once_with(str(temp_files['valid_file']))
+        mock_resources["file_format_detector"].detect_format.assert_called_once_with(
+            str(temp_files["valid_file"])
+        )
 
-    def test_validate_nonexistent_file_returns_invalid_result(self, validator, temp_files, mock_resources, mock_validation_result):
+    def test_validate_nonexistent_file_returns_invalid_result(
+        self, validator, temp_files, mock_resources, mock_validation_result
+    ):
         """
         GIVEN a FileValidator instance
         AND a file path to a non-existent file
@@ -199,22 +205,24 @@ class TestValidateFile:
             - Returns ValidationResult with error, doesn't raise exception
         """
         # GIVEN
-        nonexistent_file = temp_files['temp_path'] / "does_not_exist.txt"
+        nonexistent_file = temp_files["temp_path"] / "does_not_exist.txt"
         mock_resources["file_exists"].return_value = False
-        
+
         # Set up validation result to have an error
         mock_validation_result.errors = ["File does not exist"]
         mock_validation_result.is_valid = False
-        
+
         # WHEN
-        result = validator.validate_file(str(nonexistent_file), 'txt')
-        
+        result = validator.validate_file(str(nonexistent_file), "txt")
+
         # THEN
         assert isinstance(result, Mock)
         # Verify error was added
         mock_validation_result.add_error.assert_called()
 
-    def test_validate_file_with_size_exceeded(self, validator, temp_files, mock_resources, mock_validation_result):
+    def test_validate_file_with_size_exceeded(
+        self, validator, temp_files, mock_resources, mock_validation_result
+    ):
         """
         GIVEN a FileValidator instance with max_file_size_mb configured
         AND a file path to a file exceeding the size limit
@@ -228,26 +236,25 @@ class TestValidateFile:
         # GIVEN
         large_size = 1024 * 1024 * 200  # 200MB, exceeds 100MB limit
         mock_resources["get_file_info"].return_value = Mock(
-            size=large_size,
-            is_readable=True,
-            mime_type='text/plain',
-            extension='txt'
+            size=large_size, is_readable=True, mime_type="text/plain", extension="txt"
         )
-        
+
         # Configure mock to reflect invalid state
         mock_validation_result.is_valid = False
         mock_validation_result.errors = ["File size exceeds maximum allowed size"]
-        
+
         # WHEN
-        result = validator.validate_file(str(temp_files['invalid_file']), 'txt')
-        
+        result = validator.validate_file(str(temp_files["invalid_file"]), "txt")
+
         # THEN
         assert isinstance(result, Mock)
-        
+
         # Verify error was added
         mock_validation_result.add_error.assert_called()
 
-    def test_validate_file_with_unsupported_format(self, validator, temp_files, mock_resources, mock_validation_result):
+    def test_validate_file_with_unsupported_format(
+        self, validator, temp_files, mock_resources, mock_validation_result
+    ):
         """
         GIVEN a FileValidator instance
         AND a file path to a file
@@ -261,26 +268,27 @@ class TestValidateFile:
         """
         # GIVEN
         mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True,
-            mime_type='application/unknown',
-            extension='xyz'
+            size=1024, is_readable=True, mime_type="application/unknown", extension="xyz"
         )
-        mock_resources["file_format_detector"].get_format_category.return_value = None  # Unsupported
-        
+        mock_resources[
+            "file_format_detector"
+        ].get_format_category.return_value = None  # Unsupported
+
         # Set up validation result to have format error
         mock_validation_result.errors = ["Format 'xyz' is not supported"]
         mock_validation_result.is_valid = False
-        
+
         # WHEN
-        result = validator.validate_file(str(temp_files['valid_file']), 'xyz')
-        
+        result = validator.validate_file(str(temp_files["valid_file"]), "xyz")
+
         # THEN
         assert isinstance(result, Mock)
         # Verify get_format_category was called
-        mock_resources["file_format_detector"].get_format_category.assert_called_once_with('xyz')
+        mock_resources["file_format_detector"].get_format_category.assert_called_once_with("xyz")
 
-    def test_validate_empty_file(self, validator, temp_files, mock_resources, mock_validation_result):
+    def test_validate_empty_file(
+        self, validator, temp_files, mock_resources, mock_validation_result
+    ):
         """
         GIVEN a FileValidator instance
         AND a file path to an empty file (0 bytes)
@@ -295,23 +303,25 @@ class TestValidateFile:
         mock_resources["get_file_info"].return_value = Mock(
             size=0,  # Empty file
             is_readable=True,
-            mime_type='text/plain',
-            extension='txt'
+            mime_type="text/plain",
+            extension="txt",
         )
-        
+
         # Set up validation result to have empty file error
         mock_validation_result.errors = ["File is empty"]
         mock_validation_result.is_valid = False
-        
+
         # WHEN
-        result = validator.validate_file(str(temp_files['empty_file']), 'txt')
-        
+        result = validator.validate_file(str(temp_files["empty_file"]), "txt")
+
         # THEN
         assert isinstance(result, Mock)
         # Verify error was added for empty file
         mock_validation_result.add_error.assert_called()
 
-    def test_validate_file_with_warnings(self, validator, temp_files, mock_resources, mock_validation_result):
+    def test_validate_file_with_warnings(
+        self, validator, temp_files, mock_resources, mock_validation_result
+    ):
         """
         GIVEN a FileValidator instance
         AND a valid file path that triggers warnings but is still valid
@@ -324,27 +334,26 @@ class TestValidateFile:
         """
         # GIVEN
         mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True,
-            mime_type='text/plain',
-            extension='txt'
+            size=1024, is_readable=True, mime_type="text/plain", extension="txt"
         )
-        mock_resources["file_format_detector"].get_format_category.return_value = 'document'
-        
+        mock_resources["file_format_detector"].get_format_category.return_value = "document"
+
         # Set up validation result with warnings but still valid
         mock_validation_result.is_valid = True
         mock_validation_result.errors = []
         mock_validation_result.warnings = ["File format is deprecated"]
-        
+
         # WHEN
-        result = validator.validate_file(str(temp_files['valid_file']), 'txt')
-        
+        result = validator.validate_file(str(temp_files["valid_file"]), "txt")
+
         # THEN
         assert isinstance(result, Mock)
         # Verify warning was added
         mock_validation_result.add_warning.assert_called()
 
-    def test_validate_file_populates_context(self, validator, temp_files, mock_resources, mock_validation_result):
+    def test_validate_file_populates_context(
+        self, validator, temp_files, mock_resources, mock_validation_result
+    ):
         """
         GIVEN a FileValidator instance
         AND a valid file path
@@ -358,21 +367,23 @@ class TestValidateFile:
             size=2048,
             is_readable=True,
             last_modified=datetime.now(),
-            extension='txt',
-            mime_type='text/plain'
+            extension="txt",
+            mime_type="text/plain",
         )
         mock_resources["get_file_info"].return_value = expected_file_info
-        mock_resources["file_format_detector"].get_format_category.return_value = 'document'
-        
+        mock_resources["file_format_detector"].get_format_category.return_value = "document"
+
         # WHEN
-        result = validator.validate_file(str(temp_files['valid_file']), 'txt')
-        
+        result = validator.validate_file(str(temp_files["valid_file"]), "txt")
+
         # THEN
         assert isinstance(result, Mock)
         # Verify context was populated with file metadata
         mock_validation_result.add_context.assert_called()
 
-    def test_validate_corrupted_file(self, validator, temp_files, mock_resources, mock_validation_result):
+    def test_validate_corrupted_file(
+        self, validator, temp_files, mock_resources, mock_validation_result
+    ):
         """
         GIVEN a FileValidator instance
         AND a file path to a corrupted file (detected by format detector)
@@ -384,27 +395,28 @@ class TestValidateFile:
         """
         # GIVEN
         mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True,
-            mime_type='text/plain',
-            extension='txt'
+            size=1024, is_readable=True, mime_type="text/plain", extension="txt"
         )
         # Simulate format detector throwing exception for corrupted file
-        mock_resources["file_format_detector"].get_format_category.side_effect = Exception("File appears corrupted")
-        
+        mock_resources["file_format_detector"].get_format_category.side_effect = Exception(
+            "File appears corrupted"
+        )
+
         # Set up validation result to reflect corruption
         mock_validation_result.is_valid = False
         mock_validation_result.errors = ["File appears corrupted"]
-        
+
         # WHEN
-        result = validator.validate_file(str(temp_files['valid_file']), 'txt')
-        
+        result = validator.validate_file(str(temp_files["valid_file"]), "txt")
+
         # THEN
         assert isinstance(result, Mock)
         # Verify error was added for corruption
         mock_validation_result.add_error.assert_called()
 
-    def test_validate_file_format_not_allowed(self, validator, temp_files, mock_resources, mock_validation_result, mock_configs):
+    def test_validate_file_format_not_allowed(
+        self, validator, temp_files, mock_resources, mock_validation_result, mock_configs
+    ):
         """
         GIVEN a FileValidator instance with restricted allowed_formats
         AND a file with a format not in the allowed list
@@ -415,28 +427,27 @@ class TestValidateFile:
             - result.errors contains format not allowed error
         """
         # GIVEN
-        mock_configs.security.allowed_formats = ['pdf', 'docx']  # txt not allowed
+        mock_configs.security.allowed_formats = ["pdf", "docx"]  # txt not allowed
         mock_resources["get_file_info"].return_value = Mock(
-            size=1024,
-            is_readable=True,
-            mime_type='text/plain',
-            extension='txt'
+            size=1024, is_readable=True, mime_type="text/plain", extension="txt"
         )
-        mock_resources["file_format_detector"].get_format_category.return_value = 'document'
-        
+        mock_resources["file_format_detector"].get_format_category.return_value = "document"
+
         # Set up validation result to reflect format not allowed
         mock_validation_result.is_valid = False
         mock_validation_result.errors = ["Format 'txt' is not in allowed formats list"]
-        
+
         # WHEN
-        result = validator.validate_file(str(temp_files['valid_file']), 'txt')
-        
+        result = validator.validate_file(str(temp_files["valid_file"]), "txt")
+
         # THEN
         assert isinstance(result, Mock)
         # Verify error was added for format not allowed
         mock_validation_result.add_error.assert_called()
 
-    def test_validate_unreadable_file(self, validator, temp_files, mock_resources, mock_validation_result):
+    def test_validate_unreadable_file(
+        self, validator, temp_files, mock_resources, mock_validation_result
+    ):
         """
         GIVEN a FileValidator instance
         AND a file path to an unreadable file (permissions issue)
@@ -450,17 +461,17 @@ class TestValidateFile:
         mock_resources["get_file_info"].return_value = Mock(
             size=1024,
             is_readable=False,  # File exists but cannot be read
-            mime_type='text/plain',
-            extension='txt'
+            mime_type="text/plain",
+            extension="txt",
         )
-        
+
         # Set up validation result to reflect unreadable file
         mock_validation_result.is_valid = False
         mock_validation_result.errors = ["File is not readable (permission denied)"]
-        
+
         # WHEN
-        result = validator.validate_file(str(temp_files['valid_file']), 'txt')
-        
+        result = validator.validate_file(str(temp_files["valid_file"]), "txt")
+
         # THEN
         assert isinstance(result, Mock)
         # Verify error was added for unreadable file

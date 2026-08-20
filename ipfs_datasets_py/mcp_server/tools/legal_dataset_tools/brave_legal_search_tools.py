@@ -11,6 +11,7 @@ Tools:
 - brave_legal_search_explain
 - brave_legal_search_entities
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.processors.legal_scrapers import BraveLegalSearch
+
     _HAVE_BRAVE = True
 except Exception:
     _HAVE_BRAVE = False
@@ -52,7 +54,9 @@ def brave_legal_search(
     if not query:
         return {"status": "error", "error": "Missing required parameter: query"}
     try:
-        results = BraveLegalSearch().search(query=query, max_results=max_results, country=country, lang=lang)
+        results = BraveLegalSearch().search(
+            query=query, max_results=max_results, country=country, lang=lang
+        )
         return {
             "status": "success",
             "query": results["query"],
@@ -109,10 +113,7 @@ def brave_legal_search_entities(query: str, entity_type: str = "all") -> Dict[st
         )
         formatted: Dict[str, Any] = {}
         for key, entities in results.items():
-            formatted[key] = [
-                {"name": _entity_display_name(e), "type": key}
-                for e in entities[:10]
-            ]
+            formatted[key] = [{"name": _entity_display_name(e), "type": key} for e in entities[:10]]
         return {
             "status": "success",
             "query": query,

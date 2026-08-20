@@ -58,13 +58,13 @@ def session(
     database: Optional[str] = None,  # ✅ Already accepts parameter
     default_access_mode: str = "WRITE",
     bookmarks: Optional[Any] = None,
-    **config
+    **config,
 ) -> IPFSSession:
     return IPFSSession(
         driver=self,
         database=database,  # ✅ Passes to session
         default_access_mode=default_access_mode,
-        bookmarks=bookmarks
+        bookmarks=bookmarks,
     )
 ```
 
@@ -106,33 +106,37 @@ Location: Class `__init__` method (line 114)
 class IPLDBackend:
     def __init__(
         self,
-        deps: Optional['RouterDeps'] = None,
+        deps: Optional["RouterDeps"] = None,
         database: str = "neo4j",  # NEW: database name
         pin_by_default: bool = True,
-        cache_capacity: int = 1000
+        cache_capacity: int = 1000,
     ):
         if not HAVE_ROUTER:
             raise ImportError(...)
-        
+
         self.deps = deps if deps is not None else RouterDeps()
         self.database = database  # NEW: store database name
         self._namespace = f"kg:db:{database}:"  # NEW: namespace prefix
         self.pin_by_default = pin_by_default
         self._backend = None
         self._cache = LRUCache(cache_capacity) if cache_capacity > 0 else None
-        
-        logger.debug("IPLDBackend initialized (database=%s, deps=%s, cache=%s)", 
-                    database, self.deps, cache_capacity if self._cache else "disabled")
-    
+
+        logger.debug(
+            "IPLDBackend initialized (database=%s, deps=%s, cache=%s)",
+            database,
+            self.deps,
+            cache_capacity if self._cache else "disabled",
+        )
+
     def _make_key(self, key: str) -> str:
         """
         Add database namespace to key.
-        
+
         This ensures different databases have isolated storage.
         Example: "node:123" -> "kg:db:neo4j:node:123"
         """
         return f"{self._namespace}{key}"
-    
+
     # Then modify store/retrieve methods to use _make_key()
 ```
 
@@ -218,18 +222,18 @@ Location: Class `__init__` method (line 136)
 class IPFSSession:
     def __init__(
         self,
-        driver: 'IPFSDriver',
+        driver: "IPFSDriver",
         backend: IPLDBackend,  # NEW: accept backend parameter
         database: Optional[str] = None,
         default_access_mode: str = "WRITE",
-        bookmarks: Optional[Union[str, List[str], Bookmarks]] = None
+        bookmarks: Optional[Union[str, List[str], Bookmarks]] = None,
     ):
         """Initialize a session."""
         self._driver = driver
         self.backend = backend  # NEW: use provided backend
         self.database = database or "default"
         self.default_access_mode = default_access_mode
-        
+
         # ... rest of initialization ...
 ```
 
@@ -242,6 +246,7 @@ def list_databases(self) -> List[str]:
     """List all databases (currently created backends)."""
     return list(self._backend_cache.keys())
 
+
 def create_database(self, name: str) -> None:
     """Create a new database (pre-initialize backend)."""
     if name in self._backend_cache:
@@ -249,6 +254,7 @@ def create_database(self, name: str) -> None:
         return
     self._get_database_backend(name)
     logger.info("Database created: %s", name)
+
 
 def drop_database(self, name: str) -> None:
     """Drop a database (remove backend from cache)."""
@@ -281,7 +287,7 @@ Categories:
 
 Usage:
     from ipfs_datasets_py.knowledge_graphs.cypher.functions import FUNCTION_REGISTRY
-    
+
     # Get function
     abs_fn = FUNCTION_REGISTRY['abs']
     result = abs_fn(-5)  # Returns 5
@@ -296,21 +302,21 @@ from typing import Any, Callable, Dict, Optional, Union
 class Point:
     """
     Represents a 2D point for spatial operations.
-    
+
     Attributes:
         x: X-coordinate
         y: Y-coordinate
     """
-    
+
     def __init__(self, x: float, y: float):
         """Initialize a point."""
         self.x = float(x)
         self.y = float(y)
-    
+
     def __repr__(self) -> str:
         """String representation."""
         return f"Point(x={self.x}, y={self.y})"
-    
+
     def __eq__(self, other) -> bool:
         """Equality comparison."""
         if not isinstance(other, Point):
@@ -321,6 +327,7 @@ class Point:
 # ============================================================================
 # Math Functions
 # ============================================================================
+
 
 def fn_abs(n: Union[int, float]) -> Union[int, float]:
     """Return the absolute value of a number."""
@@ -368,48 +375,49 @@ def fn_rand() -> float:
 # Spatial Functions
 # ============================================================================
 
+
 def fn_point(params: Dict[str, float]) -> Point:
     """
     Create a 2D point from coordinates.
-    
+
     Args:
         params: Dictionary with 'x' and 'y' keys
-        
+
     Returns:
         Point object
-        
+
     Example:
         point({x: 3.0, y: 4.0})
     """
     if not isinstance(params, dict):
         raise TypeError("point() requires a dictionary parameter")
-    
-    x = params.get('x', 0.0)
-    y = params.get('y', 0.0)
-    
+
+    x = params.get("x", 0.0)
+    y = params.get("y", 0.0)
+
     return Point(x, y)
 
 
 def fn_distance(p1: Point, p2: Point) -> float:
     """
     Calculate Euclidean distance between two points.
-    
+
     Args:
         p1: First point
         p2: Second point
-        
+
     Returns:
         Distance as float
-        
+
     Example:
         distance(point({x: 0, y: 0}), point({x: 3, y: 4})) => 5.0
     """
     if not isinstance(p1, Point) or not isinstance(p2, Point):
         raise TypeError("distance() requires two Point objects")
-    
+
     dx = p2.x - p1.x
     dy = p2.y - p1.y
-    
+
     return math.sqrt(dx * dx + dy * dy)
 
 
@@ -417,16 +425,17 @@ def fn_distance(p1: Point, p2: Point) -> float:
 # Temporal Functions
 # ============================================================================
 
+
 def fn_date(s: Optional[str] = None) -> date:
     """
     Return current date or parse from string.
-    
+
     Args:
         s: Optional ISO format date string (YYYY-MM-DD)
-        
+
     Returns:
         date object
-        
+
     Example:
         date() => today's date
         date("2024-01-15") => 2024-01-15
@@ -439,13 +448,13 @@ def fn_date(s: Optional[str] = None) -> date:
 def fn_datetime(s: Optional[str] = None) -> datetime:
     """
     Return current datetime or parse from string.
-    
+
     Args:
         s: Optional ISO format datetime string
-        
+
     Returns:
         datetime object
-        
+
     Example:
         datetime() => current datetime
         datetime("2024-01-15T10:30:00") => 2024-01-15 10:30:00
@@ -458,10 +467,10 @@ def fn_datetime(s: Optional[str] = None) -> datetime:
 def fn_timestamp() -> int:
     """
     Return current timestamp in milliseconds since Unix epoch.
-    
+
     Returns:
         Timestamp as integer (milliseconds)
-        
+
     Example:
         timestamp() => 1705315200000
     """
@@ -471,49 +480,49 @@ def fn_timestamp() -> int:
 def fn_duration(s: str) -> timedelta:
     """
     Parse duration string to timedelta.
-    
+
     Args:
         s: Duration string (e.g., "P1D", "PT2H", "PT30M")
-        
+
     Returns:
         timedelta object
-        
+
     Example:
         duration("P1D") => 1 day
         duration("PT2H30M") => 2 hours 30 minutes
     """
     # Basic ISO 8601 duration parsing
     # Format: P[nY][nM][nD][T[nH][nM][nS]]
-    
-    if not s.startswith('P'):
+
+    if not s.startswith("P"):
         raise ValueError("Duration string must start with 'P'")
-    
+
     days = 0
     hours = 0
     minutes = 0
     seconds = 0
-    
+
     # Split on 'T' to separate date and time parts
-    parts = s[1:].split('T')
+    parts = s[1:].split("T")
     date_part = parts[0]
-    time_part = parts[1] if len(parts) > 1 else ''
-    
+    time_part = parts[1] if len(parts) > 1 else ""
+
     # Parse date part
-    if 'D' in date_part:
-        days = int(date_part.split('D')[0])
-    
+    if "D" in date_part:
+        days = int(date_part.split("D")[0])
+
     # Parse time part
-    if 'H' in time_part:
-        hours = int(time_part.split('H')[0])
-        time_part = time_part.split('H')[1]
-    
-    if 'M' in time_part:
-        minutes = int(time_part.split('M')[0])
-        time_part = time_part.split('M')[1]
-    
-    if 'S' in time_part:
-        seconds = int(time_part.split('S')[0])
-    
+    if "H" in time_part:
+        hours = int(time_part.split("H")[0])
+        time_part = time_part.split("H")[1]
+
+    if "M" in time_part:
+        minutes = int(time_part.split("M")[0])
+        time_part = time_part.split("M")[1]
+
+    if "S" in time_part:
+        seconds = int(time_part.split("S")[0])
+
     return timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
 
 
@@ -523,33 +532,31 @@ def fn_duration(s: str) -> timedelta:
 
 FUNCTION_REGISTRY: Dict[str, Callable] = {
     # Math functions
-    'abs': fn_abs,
-    'ceil': fn_ceil,
-    'floor': fn_floor,
-    'round': fn_round,
-    'sqrt': fn_sqrt,
-    'sign': fn_sign,
-    'rand': fn_rand,
-    
+    "abs": fn_abs,
+    "ceil": fn_ceil,
+    "floor": fn_floor,
+    "round": fn_round,
+    "sqrt": fn_sqrt,
+    "sign": fn_sign,
+    "rand": fn_rand,
     # Spatial functions
-    'point': fn_point,
-    'distance': fn_distance,
-    
+    "point": fn_point,
+    "distance": fn_distance,
     # Temporal functions
-    'date': fn_date,
-    'datetime': fn_datetime,
-    'timestamp': fn_timestamp,
-    'duration': fn_duration,
+    "date": fn_date,
+    "datetime": fn_datetime,
+    "timestamp": fn_timestamp,
+    "duration": fn_duration,
 }
 
 
 def get_function(name: str) -> Optional[Callable]:
     """
     Get function by name.
-    
+
     Args:
         name: Function name (case-insensitive)
-        
+
     Returns:
         Function callable or None if not found
     """
@@ -564,23 +571,24 @@ Location: `_evaluate_compiled_expression` method
 # Add import at top
 from ..cypher.functions import FUNCTION_REGISTRY
 
+
 # In _evaluate_compiled_expression method, add function evaluation:
 def _evaluate_compiled_expression(self, expr: Any, bindings: Dict[str, Any]) -> Any:
     """Evaluate a compiled expression."""
-    
+
     # ... existing code for property access, literals, etc. ...
-    
+
     # NEW: Function call evaluation
-    if isinstance(expr, dict) and 'function' in expr:
-        func_name = expr['function'].lower()
-        
+    if isinstance(expr, dict) and "function" in expr:
+        func_name = expr["function"].lower()
+
         if func_name in FUNCTION_REGISTRY:
             # Evaluate arguments
             args = []
-            for arg in expr.get('args', []):
+            for arg in expr.get("args", []):
                 arg_value = self._evaluate_compiled_expression(arg, bindings)
                 args.append(arg_value)
-            
+
             # Call function
             func = FUNCTION_REGISTRY[func_name]
             try:
@@ -591,7 +599,7 @@ def _evaluate_compiled_expression(self, expr: Any, bindings: Dict[str, Any]) -> 
         else:
             logger.warning("Unknown function: %s", func_name)
             return None
-    
+
     # ... rest of existing evaluation code ...
 ```
 
@@ -685,35 +693,35 @@ from ipfs_datasets_py.knowledge_graphs.cypher.functions import *
 
 class TestMathFunctions:
     """Test math functions."""
-    
+
     def test_abs(self):
         assert fn_abs(-5) == 5
         assert fn_abs(5) == 5
         assert fn_abs(0) == 0
-    
+
     def test_ceil(self):
         assert fn_ceil(1.2) == 2
         assert fn_ceil(-1.2) == -1
-    
+
     def test_floor(self):
         assert fn_floor(1.8) == 1
         assert fn_floor(-1.2) == -2
-    
+
     def test_round(self):
         assert fn_round(1.5) == 2
         assert fn_round(1.4) == 1
-    
+
     def test_sqrt(self):
         assert fn_sqrt(4) == 2.0
         assert fn_sqrt(9) == 3.0
         with pytest.raises(ValueError):
             fn_sqrt(-1)
-    
+
     def test_sign(self):
         assert fn_sign(5) == 1
         assert fn_sign(-5) == -1
         assert fn_sign(0) == 0
-    
+
     def test_rand(self):
         r = fn_rand()
         assert 0 <= r < 1
@@ -721,13 +729,13 @@ class TestMathFunctions:
 
 class TestSpatialFunctions:
     """Test spatial functions."""
-    
+
     def test_point(self):
-        p = fn_point({'x': 3.0, 'y': 4.0})
+        p = fn_point({"x": 3.0, "y": 4.0})
         assert isinstance(p, Point)
         assert p.x == 3.0
         assert p.y == 4.0
-    
+
     def test_distance(self):
         p1 = Point(0, 0)
         p2 = Point(3, 4)
@@ -737,27 +745,27 @@ class TestSpatialFunctions:
 
 class TestTemporalFunctions:
     """Test temporal functions."""
-    
+
     def test_date_current(self):
         d = fn_date()
         assert isinstance(d, date)
         assert d == date.today()
-    
+
     def test_date_parse(self):
         d = fn_date("2024-01-15")
         assert d.year == 2024
         assert d.month == 1
         assert d.day == 15
-    
+
     def test_datetime_current(self):
         dt = fn_datetime()
         assert isinstance(dt, datetime)
-    
+
     def test_datetime_parse(self):
         dt = fn_datetime("2024-01-15T10:30:00")
         assert dt.year == 2024
         assert dt.hour == 10
-    
+
     def test_timestamp(self):
         ts = fn_timestamp()
         assert isinstance(ts, int)

@@ -16,6 +16,7 @@ Covers sessions from MASTER_IMPROVEMENT_PLAN_2026_v13.md:
     - fallback when no strategy handles formula
     - prefer_low_cost selection
 """
+
 from __future__ import annotations
 
 import sys
@@ -40,6 +41,7 @@ try:
         UnaryFormula,
         Predicate,
     )
+
     _CORE_OK = True
 except Exception as _e:
     _CORE_OK = False
@@ -49,6 +51,7 @@ try:
     from ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux import (
         ModalTableauxStrategy,
     )
+
     _MODAL_OK = True
 except Exception as _e:
     _MODAL_OK = False
@@ -57,6 +60,7 @@ try:
     from ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining import (
         ForwardChainingStrategy,
     )
+
     _FC_OK = True
 except Exception as _e:
     _FC_OK = False
@@ -65,6 +69,7 @@ try:
     from ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector import (
         StrategySelector,
     )
+
     _SELECTOR_OK = True
 except Exception as _e:
     _SELECTOR_OK = False
@@ -76,6 +81,7 @@ try:
         StrategyType,
         ProofStep,
     )
+
     _PROVER_OK = True
 except Exception as _e:
     _PROVER_OK = False
@@ -85,6 +91,7 @@ _skip = pytest.mark.skipif(not _ALL_OK, reason="TDFOL strategy modules not impor
 
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
+
 
 def _obligation(name: str = "P") -> "DeonticFormula":
     return DeonticFormula(DeonticOperator.OBLIGATION, Predicate(name, ()))
@@ -245,6 +252,7 @@ class TestStrategySelectorAddStrategy:
 
     def _custom_strategy(self, priority: int = 999) -> "ProverStrategy":
         """Create a minimal custom strategy with a given priority."""
+
         class _Custom(ProverStrategy):
             def __init__(self, p: int) -> None:
                 super().__init__(f"Custom-{p}", StrategyType.FORWARD_CHAINING)

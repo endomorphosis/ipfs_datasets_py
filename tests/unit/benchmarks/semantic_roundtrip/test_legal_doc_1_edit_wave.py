@@ -94,9 +94,7 @@ def test_legal_doc_1_forward_loss_clears_prior_residual() -> None:
         "required_by_law_enforcement_agencies",
     )
     assert by_action["report"].temporal == ("within_30_days_of_detection",)
-    assert by_action["maintain"].conditions == (
-        "transaction_amount_exceeds_10000",
-    )
+    assert by_action["maintain"].conditions == ("transaction_amount_exceeds_10000",)
     assert by_action["maintain"].temporal == ("for_five_years",)
 
 
@@ -104,9 +102,7 @@ def test_mean_pilot_forward_not_worse_than_sealed_plateau() -> None:
     losses: list[float] = []
     for case in load_pilot_matrix_cases():
         l1 = construct_baseline_l1(case)
-        losses.append(
-            float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"])
-        )
+        losses.append(float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"]))
     mean_forward = sum(losses) / len(losses)
     assert mean_forward <= BASELINE_E2E_MEAN + 1e-9
     assert mean_forward < 0.05
@@ -121,9 +117,7 @@ def test_currency_amount_and_exception_context_projection() -> None:
         "All financial institutions must maintain records of all "
         "transactions exceeding $10,000 for a period of five years"
     )
-    assert _qualifier_fully_grounded(
-        maintain_evidence, "transaction_amount_exceeds_10000"
-    )
+    assert _qualifier_fully_grounded(maintain_evidence, "transaction_amount_exceeds_10000")
     assert _qualifier_fully_grounded(maintain_evidence, "for_five_years")
 
     disclose_evidence = (
@@ -131,14 +125,9 @@ def test_currency_amount_and_exception_context_projection() -> None:
         "without explicit consent, except when required by law "
         "enforcement agencies"
     )
+    assert _classify_qualifier_facet("explicit_consent", disclose_evidence) == "exceptions"
     assert (
-        _classify_qualifier_facet("explicit_consent", disclose_evidence)
-        == "exceptions"
-    )
-    assert (
-        _classify_qualifier_facet(
-            "required_by_law_enforcement_agencies", disclose_evidence
-        )
+        _classify_qualifier_facet("required_by_law_enforcement_agencies", disclose_evidence)
         == "exceptions"
     )
     # Pure temporal stays temporal under surrounding exception wording.
@@ -190,8 +179,7 @@ def test_currency_amount_and_exception_context_projection() -> None:
                 "norm_type": "prohibition",
                 "actor": "Banks",
                 "action": (
-                    "disclose customer information to third parties "
-                    "without explicit consent"
+                    "disclose customer information to third parties without explicit consent"
                 ),
                 "action_verb": "disclose",
                 "action_object": "customer information to third parties",
@@ -240,8 +228,7 @@ def test_currency_amount_and_exception_context_projection() -> None:
                 ),
                 "action_verb": "report",
                 "action_object": (
-                    "suspicious activities to the Financial Crimes "
-                    "Enforcement Network"
+                    "suspicious activities to the Financial Crimes Enforcement Network"
                 ),
                 "conditions": [],
                 "exceptions": [],
@@ -289,10 +276,7 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion() -> None
 
     packet_cids = receipt["packet_cids"]
     assert isinstance(packet_cids, list) and packet_cids
-    assert all(
-        isinstance(item, str) and item.startswith("baguqeera")
-        for item in packet_cids
-    )
+    assert all(isinstance(item, str) and item.startswith("baguqeera") for item in packet_cids)
     packet_ids = receipt["packet_ids"]
     assert isinstance(packet_ids, list) and packet_ids
     assert any("legal-doc" in str(item) for item in packet_ids)
@@ -309,12 +293,10 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion() -> None
 
     post = receipt["post_scores"]
     assert isinstance(post, dict)
-    assert float(post["legal_doc_1_forward_loss"]) <= float(
-        prior["legal_doc_1_forward_loss"]
-    ) + 1e-9
-    assert float(post["legal_doc_1_forward_loss"]) == pytest.approx(
-        0.0, abs=1e-9
+    assert (
+        float(post["legal_doc_1_forward_loss"]) <= float(prior["legal_doc_1_forward_loss"]) + 1e-9
     )
+    assert float(post["legal_doc_1_forward_loss"]) == pytest.approx(0.0, abs=1e-9)
     assert float(post["mean_pilot_forward_loss"]) <= BASELINE_E2E_MEAN + 1e-9
 
     assert receipt["optional_runtimes_promoted"] == []
@@ -327,9 +309,7 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion() -> None
 
     changes = receipt["deterministic_changes"]
     assert isinstance(changes, list) and changes
-    change_ids = {
-        change.get("id") for change in changes if isinstance(change, dict)
-    }
+    change_ids = {change.get("id") for change in changes if isinstance(change, dict)}
     assert "currency_thousands_numeric_normalize" in change_ids
     assert "exception_context_without_except_reclassify" in change_ids
     for change in changes:
@@ -360,9 +340,9 @@ def test_constructor_identity_unchanged_and_no_llm_dependency() -> None:
     constructor = TypedDeonticCanonicalConstructor()
     assert constructor.identity == TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE
     # Module surface stays deterministic: no teacher runtime hooks on construct.
-    source = (
-        ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py"
-    ).read_text(encoding="utf-8")
+    source = (ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py").read_text(
+        encoding="utf-8"
+    )
     lowered = source.lower()
     for banned in (
         "openai",
@@ -373,9 +353,7 @@ def test_constructor_identity_unchanged_and_no_llm_dependency() -> None:
         "autoencoder_guided",
     ):
         assert banned not in lowered, banned
-    case = next(
-        c for c in load_pilot_matrix_cases() if c.case_id == "legal_doc_1"
-    )
+    case = next(c for c in load_pilot_matrix_cases() if c.case_id == "legal_doc_1")
     result = constructor.construct(
         ConstructorRequest(case.source_text, case.allowed_atom_vocabulary, {})
     )
@@ -383,9 +361,7 @@ def test_constructor_identity_unchanged_and_no_llm_dependency() -> None:
     assert result.canonical_ir is not None
     assert not result.canonical_ir.is_empty
     by_action = {rule.action: rule for rule in result.canonical_ir.rules}
-    assert by_action["maintain"].conditions == (
-        "transaction_amount_exceeds_10000",
-    )
+    assert by_action["maintain"].conditions == ("transaction_amount_exceeds_10000",)
     assert by_action["disclose"].exceptions == (
         "explicit_consent",
         "required_by_law_enforcement_agencies",

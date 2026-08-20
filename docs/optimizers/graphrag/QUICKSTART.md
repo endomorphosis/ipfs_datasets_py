@@ -12,7 +12,11 @@ pip install -e .
 ## Example 1: Generate an Ontology from Text (Simplest)
 
 ```python
-from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator, OntologyGenerationContext, ExtractionStrategy
+from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+    OntologyGenerator,
+    OntologyGenerationContext,
+    ExtractionStrategy,
+)
 
 # Define what you want to extract
 context = OntologyGenerationContext(
@@ -96,7 +100,9 @@ session = OntologySession(
 refined_ontology = session.run(text)
 
 # What you get
-print(f"✅ Final ontology: {len(refined_ontology.entities)} entities, {len(refined_ontology.relationships)} relationships")
+print(
+    f"✅ Final ontology: {len(refined_ontology.entities)} entities, {len(refined_ontology.relationships)} relationships"
+)
 print(f"✅ Iterations: {session.total_iterations}")
 print(f"✅ Final score: {session.final_score:.2f}/100")
 
@@ -194,17 +200,20 @@ result = gen.generate(text, config=config)
 ### Get relationship types explained
 ```python
 for rel in result.relationships:
-    print(f"{rel['source']} --[{rel['type']}]--> {rel['target']} (confidence: {rel['confidence']:.2f})")
+    print(
+        f"{rel['source']} --[{rel['type']}]--> {rel['target']} (confidence: {rel['confidence']:.2f})"
+    )
 ```
 
 ### Validate extracted entities before using
 ```python
-valid_entities = [e for e in result.entities if e['confidence'] > 0.7 and len(e['name']) > 2]
+valid_entities = [e for e in result.entities if e["confidence"] > 0.7 and len(e["name"]) > 2]
 ```
 
 ### Export to JSON for downstream tools
 ```python
 import json
+
 with open("ontology.json", "w") as f:
     json.dump(result.to_dict(), f, indent=2)
 ```

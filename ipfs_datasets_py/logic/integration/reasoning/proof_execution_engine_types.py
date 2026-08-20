@@ -16,21 +16,22 @@ from typing import Any, Dict, List
 class ProofStatus(Enum):
     """
     Status of proof execution.
-    
+
     Attributes:
         SUCCESS: Proof was successfully verified
         FAILURE: Proof verification failed
         TIMEOUT: Proof execution timed out
         ERROR: Error occurred during execution
         UNSUPPORTED: Prover doesn't support the formula type
-        
+
     Example:
         >>> status = ProofStatus.SUCCESS
         >>> status.value
         'success'
     """
+
     SUCCESS = "success"
-    FAILURE = "failure" 
+    FAILURE = "failure"
     TIMEOUT = "timeout"
     ERROR = "error"
     UNSUPPORTED = "unsupported"
@@ -40,7 +41,7 @@ class ProofStatus(Enum):
 class ProofResult:
     """
     Result of executing a proof.
-    
+
     Attributes:
         prover: Name of the theorem prover used
         statement: The statement that was proved
@@ -50,7 +51,7 @@ class ProofResult:
         errors: List of error messages
         warnings: List of warning messages
         metadata: Additional metadata about the proof
-        
+
     Example:
         >>> result = ProofResult(
         ...     prover="z3",
@@ -59,6 +60,7 @@ class ProofResult:
         ...     execution_time=0.5
         ... )
     """
+
     prover: str
     statement: str
     status: ProofStatus
@@ -67,14 +69,14 @@ class ProofResult:
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert to dictionary representation.
-        
+
         Returns:
             Dictionary containing all proof result data
-            
+
         Example:
             >>> result = ProofResult(prover="z3", statement="P", status=ProofStatus.SUCCESS)
             >>> d = result.to_dict()
@@ -89,12 +91,12 @@ class ProofResult:
             "execution_time": self.execution_time,
             "errors": self.errors,
             "warnings": self.warnings,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
 # Export all types
 __all__ = [
-    'ProofStatus',
-    'ProofResult',
+    "ProofStatus",
+    "ProofResult",
 ]

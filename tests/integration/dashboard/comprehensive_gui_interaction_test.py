@@ -28,7 +28,7 @@ try:
     from playwright.async_api import async_playwright, Page, Browser, BrowserContext
 except ImportError:
     print("Playwright not available. Using alternative approach.")
-    
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -36,34 +36,32 @@ logger = logging.getLogger(__name__)
 
 class DashboardServer:
     """Manages the dashboard server for testing."""
-    
+
     def __init__(self, port: int = 8080):
         self.port = port
         self.process = None
-        
+
     def start_server(self):
         """Start the dashboard server in a separate process."""
         try:
             # Use the demo script to start the server
-            self.process = subprocess.Popen([
-                sys.executable, 
-                "demo_unified_investigation_dashboard.py"
-            ], 
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            self.process = subprocess.Popen(
+                [sys.executable, "demo_unified_investigation_dashboard.py"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
             )
-            
+
             # Wait for server to start
             time.sleep(3)
-            
+
             logger.info(f"Dashboard server started on port {self.port}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to start server: {e}")
             return False
-    
+
     def stop_server(self):
         """Stop the dashboard server."""
         if self.process:
@@ -74,7 +72,7 @@ class DashboardServer:
 
 class GUITester:
     """Comprehensive GUI testing with Playwright."""
-    
+
     def __init__(self, base_url: str = "http://localhost:8080"):
         self.base_url = base_url
         self.screenshots_dir = Path("gui_interaction_screenshots")
@@ -84,319 +82,344 @@ class GUITester:
             "interactions": [],
             "errors": [],
             "performance": {},
-            "accessibility": []
+            "accessibility": [],
         }
-        
+
     async def run_comprehensive_tests(self):
         """Run all GUI tests."""
         try:
             async with async_playwright() as p:
                 # Launch browser
                 browser = await p.chromium.launch(headless=True)
-                context = await browser.new_context(
-                    viewport={'width': 1280, 'height': 800}
-                )
+                context = await browser.new_context(viewport={"width": 1280, "height": 800})
                 page = await context.new_page()
-                
+
                 # Enable console logging to catch JavaScript errors
                 page.on("console", self._handle_console_message)
                 page.on("pageerror", self._handle_page_error)
-                
+
                 # Run test suite
                 await self._test_dashboard_loading(page)
                 await self._test_navigation_tabs(page)
                 await self._test_form_interactions(page)
                 await self._test_responsive_design(page)
                 await self._test_accessibility_features(page)
-                
+
                 await browser.close()
-                
+
         except Exception as e:
             logger.error(f"Playwright tests failed: {e}")
             # Fall back to static HTML generation
             await self._generate_static_test_results()
-    
+
     async def _test_dashboard_loading(self, page: Page):
         """Test initial dashboard loading."""
         try:
             logger.info("Testing dashboard loading...")
-            
+
             # Navigate to dashboard
             await page.goto(self.base_url, timeout=10000)
             await page.wait_for_load_state("networkidle")
-            
+
             # Take main screenshot
             screenshot_path = self.screenshots_dir / "01_dashboard_main.png"
             await page.screenshot(path=screenshot_path, full_page=True)
-            self.test_results["screenshots"].append({
-                "name": "Main Dashboard",
-                "path": str(screenshot_path),
-                "description": "Complete unified investigation dashboard interface"
-            })
-            
+            self.test_results["screenshots"].append(
+                {
+                    "name": "Main Dashboard",
+                    "path": str(screenshot_path),
+                    "description": "Complete unified investigation dashboard interface",
+                }
+            )
+
             # Check for essential elements
             essential_elements = [
                 ".dashboard-container",
                 ".sidebar",
                 ".main-content",
-                ".investigation-section"
+                ".investigation-section",
             ]
-            
+
             for selector in essential_elements:
                 element = await page.query_selector(selector)
                 if element:
-                    self.test_results["interactions"].append({
-                        "type": "element_check",
-                        "selector": selector,
-                        "status": "found",
-                        "timestamp": time.time()
-                    })
+                    self.test_results["interactions"].append(
+                        {
+                            "type": "element_check",
+                            "selector": selector,
+                            "status": "found",
+                            "timestamp": time.time(),
+                        }
+                    )
                 else:
-                    self.test_results["errors"].append({
-                        "type": "missing_element",
-                        "selector": selector,
-                        "message": f"Essential element {selector} not found"
-                    })
-            
+                    self.test_results["errors"].append(
+                        {
+                            "type": "missing_element",
+                            "selector": selector,
+                            "message": f"Essential element {selector} not found",
+                        }
+                    )
+
             logger.info("Dashboard loading test completed")
-            
+
         except Exception as e:
-            self.test_results["errors"].append({
-                "type": "loading_error",
-                "message": str(e)
-            })
-    
+            self.test_results["errors"].append({"type": "loading_error", "message": str(e)})
+
     async def _test_navigation_tabs(self, page: Page):
         """Test navigation tab functionality."""
         try:
             logger.info("Testing navigation tabs...")
-            
+
             # Find navigation tabs
             nav_tabs = [
-                "Overview", "Entity Explorer", "Relationship Map", 
-                "Timeline Analysis", "Data Ingestion", "Corpus Browser",
-                "Advanced Search", "Pattern Detection", "Conflict Analysis"
+                "Overview",
+                "Entity Explorer",
+                "Relationship Map",
+                "Timeline Analysis",
+                "Data Ingestion",
+                "Corpus Browser",
+                "Advanced Search",
+                "Pattern Detection",
+                "Conflict Analysis",
             ]
-            
+
             for tab_name in nav_tabs:
                 try:
                     # Look for tab by text content
                     tab_selector = f"text={tab_name}"
                     tab_element = await page.query_selector(tab_selector)
-                    
+
                     if tab_element:
                         # Click the tab
                         await tab_element.click()
                         await page.wait_for_timeout(1000)  # Wait for animation
-                        
+
                         # Take screenshot of tab content
-                        screenshot_path = self.screenshots_dir / f"02_tab_{tab_name.lower().replace(' ', '_')}.png"
+                        screenshot_path = (
+                            self.screenshots_dir
+                            / f"02_tab_{tab_name.lower().replace(' ', '_')}.png"
+                        )
                         await page.screenshot(path=screenshot_path)
-                        
-                        self.test_results["screenshots"].append({
-                            "name": f"{tab_name} Tab",
-                            "path": str(screenshot_path),
-                            "description": f"Content view for {tab_name} section"
-                        })
-                        
-                        self.test_results["interactions"].append({
-                            "type": "tab_click",
-                            "tab": tab_name,
-                            "status": "success",
-                            "timestamp": time.time()
-                        })
-                        
+
+                        self.test_results["screenshots"].append(
+                            {
+                                "name": f"{tab_name} Tab",
+                                "path": str(screenshot_path),
+                                "description": f"Content view for {tab_name} section",
+                            }
+                        )
+
+                        self.test_results["interactions"].append(
+                            {
+                                "type": "tab_click",
+                                "tab": tab_name,
+                                "status": "success",
+                                "timestamp": time.time(),
+                            }
+                        )
+
                     else:
-                        self.test_results["errors"].append({
-                            "type": "tab_not_found",
-                            "tab": tab_name,
-                            "message": f"Tab {tab_name} not found in navigation"
-                        })
-                        
+                        self.test_results["errors"].append(
+                            {
+                                "type": "tab_not_found",
+                                "tab": tab_name,
+                                "message": f"Tab {tab_name} not found in navigation",
+                            }
+                        )
+
                 except Exception as e:
-                    self.test_results["errors"].append({
-                        "type": "tab_interaction_error",
-                        "tab": tab_name,
-                        "message": str(e)
-                    })
-            
+                    self.test_results["errors"].append(
+                        {"type": "tab_interaction_error", "tab": tab_name, "message": str(e)}
+                    )
+
             logger.info("Navigation tabs test completed")
-            
+
         except Exception as e:
-            self.test_results["errors"].append({
-                "type": "navigation_test_error",
-                "message": str(e)
-            })
-    
+            self.test_results["errors"].append({"type": "navigation_test_error", "message": str(e)})
+
     async def _test_form_interactions(self, page: Page):
         """Test form input and interaction functionality."""
         try:
             logger.info("Testing form interactions...")
-            
+
             # Test common form elements
             form_tests = [
                 {"selector": "input[type='text']", "test_value": "Test entity analysis"},
                 {"selector": "input[type='url']", "test_value": "https://example.com/test-article"},
                 {"selector": "select", "test_option": "entity_analysis"},
-                {"selector": "textarea", "test_value": "Test investigation notes"}
+                {"selector": "textarea", "test_value": "Test investigation notes"},
             ]
-            
+
             for test_case in form_tests:
                 try:
                     selector = test_case["selector"]
                     elements = await page.query_selector_all(selector)
-                    
+
                     if elements:
                         element = elements[0]  # Test first matching element
-                        
+
                         if "test_value" in test_case:
                             await element.fill(test_case["test_value"])
-                            
+
                         elif "test_option" in test_case:
                             await element.select_option(value=test_case["test_option"])
-                        
+
                         # Take screenshot after interaction
-                        screenshot_path = self.screenshots_dir / f"03_form_{selector.replace('[', '').replace(']', '').replace('=', '_')}.png"
+                        screenshot_path = (
+                            self.screenshots_dir
+                            / f"03_form_{selector.replace('[', '').replace(']', '').replace('=', '_')}.png"
+                        )
                         await page.screenshot(path=screenshot_path)
-                        
-                        self.test_results["screenshots"].append({
-                            "name": f"Form {selector}",
-                            "path": str(screenshot_path),
-                            "description": f"Form interaction test for {selector}"
-                        })
-                        
-                        self.test_results["interactions"].append({
-                            "type": "form_input",
-                            "selector": selector,
-                            "status": "success",
-                            "timestamp": time.time()
-                        })
-                        
+
+                        self.test_results["screenshots"].append(
+                            {
+                                "name": f"Form {selector}",
+                                "path": str(screenshot_path),
+                                "description": f"Form interaction test for {selector}",
+                            }
+                        )
+
+                        self.test_results["interactions"].append(
+                            {
+                                "type": "form_input",
+                                "selector": selector,
+                                "status": "success",
+                                "timestamp": time.time(),
+                            }
+                        )
+
                 except Exception as e:
-                    self.test_results["errors"].append({
-                        "type": "form_interaction_error",
-                        "selector": test_case["selector"],
-                        "message": str(e)
-                    })
-            
+                    self.test_results["errors"].append(
+                        {
+                            "type": "form_interaction_error",
+                            "selector": test_case["selector"],
+                            "message": str(e),
+                        }
+                    )
+
             logger.info("Form interactions test completed")
-            
+
         except Exception as e:
-            self.test_results["errors"].append({
-                "type": "form_test_error",
-                "message": str(e)
-            })
-    
+            self.test_results["errors"].append({"type": "form_test_error", "message": str(e)})
+
     async def _test_responsive_design(self, page: Page):
         """Test responsive design at different viewport sizes."""
         try:
             logger.info("Testing responsive design...")
-            
+
             viewports = [
                 {"width": 1920, "height": 1080, "name": "desktop"},
                 {"width": 768, "height": 1024, "name": "tablet"},
-                {"width": 375, "height": 667, "name": "mobile"}
+                {"width": 375, "height": 667, "name": "mobile"},
             ]
-            
+
             for viewport in viewports:
-                await page.set_viewport_size({"width": viewport["width"], "height": viewport["height"]})
+                await page.set_viewport_size(
+                    {"width": viewport["width"], "height": viewport["height"]}
+                )
                 await page.wait_for_timeout(1000)
-                
+
                 screenshot_path = self.screenshots_dir / f"04_responsive_{viewport['name']}.png"
                 await page.screenshot(path=screenshot_path, full_page=True)
-                
-                self.test_results["screenshots"].append({
-                    "name": f"Responsive {viewport['name'].title()}",
-                    "path": str(screenshot_path),
-                    "description": f"Dashboard at {viewport['width']}x{viewport['height']} resolution"
-                })
-            
+
+                self.test_results["screenshots"].append(
+                    {
+                        "name": f"Responsive {viewport['name'].title()}",
+                        "path": str(screenshot_path),
+                        "description": f"Dashboard at {viewport['width']}x{viewport['height']} resolution",
+                    }
+                )
+
             logger.info("Responsive design test completed")
-            
+
         except Exception as e:
-            self.test_results["errors"].append({
-                "type": "responsive_test_error",
-                "message": str(e)
-            })
-    
+            self.test_results["errors"].append({"type": "responsive_test_error", "message": str(e)})
+
     async def _test_accessibility_features(self, page: Page):
         """Test accessibility features."""
         try:
             logger.info("Testing accessibility features...")
-            
+
             # Test keyboard navigation
             await page.keyboard.press("Tab")
             await page.wait_for_timeout(500)
-            
+
             # Check for ARIA labels
             aria_elements = await page.query_selector_all("[aria-label]")
-            self.test_results["accessibility"].append({
-                "type": "aria_labels",
-                "count": len(aria_elements),
-                "status": "found" if aria_elements else "missing"
-            })
-            
+            self.test_results["accessibility"].append(
+                {
+                    "type": "aria_labels",
+                    "count": len(aria_elements),
+                    "status": "found" if aria_elements else "missing",
+                }
+            )
+
             # Check for proper heading structure
             headings = await page.query_selector_all("h1, h2, h3, h4, h5, h6")
-            self.test_results["accessibility"].append({
-                "type": "heading_structure",
-                "count": len(headings),
-                "status": "good" if headings else "needs_improvement"
-            })
-            
+            self.test_results["accessibility"].append(
+                {
+                    "type": "heading_structure",
+                    "count": len(headings),
+                    "status": "good" if headings else "needs_improvement",
+                }
+            )
+
             screenshot_path = self.screenshots_dir / "05_accessibility_focus.png"
             await page.screenshot(path=screenshot_path)
-            
-            self.test_results["screenshots"].append({
-                "name": "Accessibility Focus",
-                "path": str(screenshot_path),
-                "description": "Dashboard with keyboard focus indicators"
-            })
-            
+
+            self.test_results["screenshots"].append(
+                {
+                    "name": "Accessibility Focus",
+                    "path": str(screenshot_path),
+                    "description": "Dashboard with keyboard focus indicators",
+                }
+            )
+
             logger.info("Accessibility test completed")
-            
+
         except Exception as e:
-            self.test_results["errors"].append({
-                "type": "accessibility_test_error",
-                "message": str(e)
-            })
-    
+            self.test_results["errors"].append(
+                {"type": "accessibility_test_error", "message": str(e)}
+            )
+
     def _handle_console_message(self, msg):
         """Handle console messages from the page."""
         if msg.type in ["error", "warning"]:
-            self.test_results["errors"].append({
-                "type": "console_error",
-                "level": msg.type,
-                "message": msg.text,
-                "timestamp": time.time()
-            })
-    
+            self.test_results["errors"].append(
+                {
+                    "type": "console_error",
+                    "level": msg.type,
+                    "message": msg.text,
+                    "timestamp": time.time(),
+                }
+            )
+
     def _handle_page_error(self, error):
         """Handle page errors."""
-        self.test_results["errors"].append({
-            "type": "page_error",
-            "message": str(error),
-            "timestamp": time.time()
-        })
-    
+        self.test_results["errors"].append(
+            {"type": "page_error", "message": str(error), "timestamp": time.time()}
+        )
+
     async def _generate_static_test_results(self):
         """Generate static test results when Playwright is unavailable."""
         logger.info("Generating static test results...")
-        
+
         # Create static HTML preview
         html_content = self._create_unified_dashboard_html()
-        
+
         # Write to file
         static_preview_path = self.screenshots_dir / "unified_dashboard_preview.html"
-        with open(static_preview_path, 'w') as f:
+        with open(static_preview_path, "w") as f:
             f.write(html_content)
-        
-        self.test_results["screenshots"].append({
-            "name": "Static Dashboard Preview",
-            "path": str(static_preview_path),
-            "description": "Complete unified investigation dashboard interface (static version)"
-        })
-    
+
+        self.test_results["screenshots"].append(
+            {
+                "name": "Static Dashboard Preview",
+                "path": str(static_preview_path),
+                "description": "Complete unified investigation dashboard interface (static version)",
+            }
+        )
+
     def _create_unified_dashboard_html(self) -> str:
         """Create a complete HTML preview of the unified dashboard."""
         return """
@@ -898,63 +921,71 @@ class GUITester:
 </body>
 </html>
         """
-    
+
     def generate_test_report(self):
         """Generate comprehensive test report with visual documentation."""
         report_content = {
             "test_summary": {
                 "total_screenshots": len(self.test_results["screenshots"]),
-                "successful_interactions": len([i for i in self.test_results["interactions"] if i.get("status") == "success"]),
+                "successful_interactions": len(
+                    [i for i in self.test_results["interactions"] if i.get("status") == "success"]
+                ),
                 "errors_found": len(self.test_results["errors"]),
-                "accessibility_checks": len(self.test_results["accessibility"])
+                "accessibility_checks": len(self.test_results["accessibility"]),
             },
             "screenshots": self.test_results["screenshots"],
             "interactions": self.test_results["interactions"],
             "errors": self.test_results["errors"],
             "accessibility": self.test_results["accessibility"],
-            "recommendations": self._generate_recommendations()
+            "recommendations": self._generate_recommendations(),
         }
-        
+
         # Write JSON report
         report_path = self.screenshots_dir / "gui_interaction_test_report.json"
-        with open(report_path, 'w') as f:
+        with open(report_path, "w") as f:
             json.dump(report_content, f, indent=2)
-        
+
         # Create visual HTML report
         html_report = self._create_visual_report(report_content)
         html_report_path = self.screenshots_dir / "gui_interaction_test_report.html"
-        with open(html_report_path, 'w') as f:
+        with open(html_report_path, "w") as f:
             f.write(html_report)
-        
+
         logger.info(f"Test report generated: {html_report_path}")
         return report_content
-    
+
     def _generate_recommendations(self) -> List[Dict[str, Any]]:
         """Generate recommendations based on test results."""
         recommendations = []
-        
+
         if len(self.test_results["errors"]) > 0:
-            recommendations.append({
-                "type": "error_fixes",
-                "priority": "high",
-                "message": f"Fix {len(self.test_results['errors'])} JavaScript/interaction errors"
-            })
-        
+            recommendations.append(
+                {
+                    "type": "error_fixes",
+                    "priority": "high",
+                    "message": f"Fix {len(self.test_results['errors'])} JavaScript/interaction errors",
+                }
+            )
+
         if len(self.test_results["accessibility"]) < 3:
-            recommendations.append({
-                "type": "accessibility",
-                "priority": "medium",
-                "message": "Improve accessibility features (ARIA labels, keyboard navigation)"
-            })
-        
-        recommendations.append({
-            "type": "enhancement",
-            "priority": "low",
-            "message": "Consider adding loading states and error handling for better UX"
-        })
-        
+            recommendations.append(
+                {
+                    "type": "accessibility",
+                    "priority": "medium",
+                    "message": "Improve accessibility features (ARIA labels, keyboard navigation)",
+                }
+            )
+
+        recommendations.append(
+            {
+                "type": "enhancement",
+                "priority": "low",
+                "message": "Consider adding loading states and error handling for better UX",
+            }
+        )
+
         return recommendations
-    
+
     def _create_visual_report(self, report_content: Dict) -> str:
         """Create visual HTML report."""
         return f"""
@@ -1002,7 +1033,9 @@ class GUITester:
                 <div class="stat-label">Screenshots Captured</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">{report_content["test_summary"]["successful_interactions"]}</div>
+                <div class="stat-number">{
+            report_content["test_summary"]["successful_interactions"]
+        }</div>
                 <div class="stat-label">Successful Interactions</div>
             </div>
             <div class="stat-card">
@@ -1010,7 +1043,9 @@ class GUITester:
                 <div class="stat-label">Errors Found</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">{report_content["test_summary"]["accessibility_checks"]}</div>
+                <div class="stat-number">{
+            report_content["test_summary"]["accessibility_checks"]
+        }</div>
                 <div class="stat-label">Accessibility Checks</div>
             </div>
         </div>
@@ -1018,36 +1053,61 @@ class GUITester:
         <div class="section">
             <h2>📸 Screenshots Captured</h2>
             <div class="screenshot-grid">
-                {"".join([f'''
+                {
+            "".join(
+                [
+                    f'''
                 <div class="screenshot-item">
                     <h4>{shot["name"]}</h4>
                     <p>{shot["description"]}</p>
                 </div>
-                ''' for shot in report_content["screenshots"]])}
+                '''
+                    for shot in report_content["screenshots"]
+                ]
+            )
+        }
             </div>
         </div>
         
-        {"" if len(report_content["errors"]) == 0 else f'''
+        {
+            ""
+            if len(report_content["errors"]) == 0
+            else f'''
         <div class="section">
             <h2>❌ Errors and Issues</h2>
             <ul class="error-list">
-                {"".join([f'''
+                {
+                "".join(
+                    [
+                        f'''
                 <li class="error-item">
                     <div class="error-type">{error.get("type", "Unknown Error")}</div>
                     <div>{error.get("message", "No message available")}</div>
                 </li>
-                ''' for error in report_content["errors"]])}
+                '''
+                        for error in report_content["errors"]
+                    ]
+                )
+            }
             </ul>
         </div>
-        '''}
+        '''
+        }
         
         <div class="section">
             <h2>💡 Recommendations</h2>
-            {"".join([f'''
+            {
+            "".join(
+                [
+                    f'''
             <div class="recommendation priority-{rec["priority"]}">
                 <strong>{rec["type"].title()}:</strong> {rec["message"]}
             </div>
-            ''' for rec in report_content["recommendations"]])}
+            '''
+                    for rec in report_content["recommendations"]
+                ]
+            )
+        }
         </div>
         
         <div class="section">
@@ -1070,35 +1130,36 @@ class GUITester:
 async def main():
     """Main test runner."""
     logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    
+
     logger.info("Starting comprehensive GUI interaction tests...")
-    
+
     # Initialize server and tester
     server = DashboardServer()
     tester = GUITester()
-    
+
     try:
         # Start server
         if server.start_server():
             logger.info("Server started successfully")
-            
+
             # Run tests
             await tester.run_comprehensive_tests()
-            
+
             # Generate report
             report = tester.generate_test_report()
-            
+
             logger.info(f"Tests completed successfully!")
             logger.info(f"Screenshots: {report['test_summary']['total_screenshots']}")
-            logger.info(f"Successful interactions: {report['test_summary']['successful_interactions']}")
+            logger.info(
+                f"Successful interactions: {report['test_summary']['successful_interactions']}"
+            )
             logger.info(f"Errors found: {report['test_summary']['errors_found']}")
-            
+
         else:
             logger.error("Failed to start server")
-            
+
     finally:
         # Cleanup
         server.stop_server()

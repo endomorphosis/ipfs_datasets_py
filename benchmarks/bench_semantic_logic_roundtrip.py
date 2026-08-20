@@ -63,13 +63,9 @@ RULE_FIELDS = (
 LIST_FIELDS = ("conditions", "exceptions", "temporal")
 MODALITIES = frozenset({"O", "P", "F"})
 TOKEN_RE = re.compile(r"[a-z0-9]+")
-DEFAULT_FIXTURE = (
-    REPO_ROOT / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
-)
+DEFAULT_FIXTURE = REPO_ROOT / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
 DEFAULT_ENDPOINT = "http://127.0.0.1:8080/v1"
-DEFAULT_MODEL = (
-    "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
-)
+DEFAULT_MODEL = "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
 
 
 class BenchmarkError(RuntimeError):
@@ -91,12 +87,8 @@ def _json_safe(value: Any) -> Any:
     if isinstance(value, Enum):
         return value.value
     if isinstance(value, Mapping):
-        return {
-            str(key): _json_safe(item) for key, item in value.items()
-        }
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_json_safe(item) for item in value]
     if hasattr(value, "__dataclass_fields__"):
         return _json_safe(asdict(value))
@@ -134,9 +126,7 @@ def _flatten_strings(value: Any) -> list[str]:
             result.append(str(key))
             result.extend(_flatten_strings(item))
         return result
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         result = []
         for item in value:
             result.extend(_flatten_strings(item))
@@ -174,10 +164,7 @@ def _best_atom(
     scored = sorted(
         (
             (
-                max(
-                    [_jaccard(text, candidate)]
-                    + [_jaccard(piece, candidate) for piece in pieces]
-                ),
+                max([_jaccard(text, candidate)] + [_jaccard(piece, candidate) for piece in pieces]),
                 candidate,
             )
             for candidate in candidates
@@ -191,19 +178,13 @@ def _best_atom(
 
 def _map_many(value: Any, candidates: Sequence[str]) -> list[str]:
     values: list[Any]
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         values = list(value)
     elif value in (None, "", []):
         values = []
     else:
         values = [value]
-    mapped = {
-        atom
-        for item in values
-        if (atom := _best_atom(item, candidates))
-    }
+    mapped = {atom for item in values if (atom := _best_atom(item, candidates))}
     return sorted(mapped)
 
 
@@ -239,9 +220,7 @@ def validate_semantic_ir(
     rules: list[dict[str, Any]] = []
     for index, raw in enumerate(raw_rules):
         if not isinstance(raw, Mapping) or set(raw) != set(RULE_FIELDS):
-            raise BenchmarkError(
-                f"rule {index} must contain exactly {', '.join(RULE_FIELDS)}"
-            )
+            raise BenchmarkError(f"rule {index} must contain exactly {', '.join(RULE_FIELDS)}")
         modality = str(raw["modality"])
         if modality not in MODALITIES:
             raise BenchmarkError(f"rule {index} has invalid modality")
@@ -258,24 +237,16 @@ def validate_semantic_ir(
                 or len(items) > 8
                 or not all(isinstance(item, str) for item in items)
             ):
-                raise BenchmarkError(
-                    f"rule {index}.{field} must be a bounded string array"
-                )
-            rule[field] = sorted(
-                {_clean_text(item) for item in items if _clean_text(item)}
-            )
+                raise BenchmarkError(f"rule {index}.{field} must be a bounded string array")
+            rule[field] = sorted({_clean_text(item) for item in items if _clean_text(item)})
         if strict_vocabulary:
             for field in ("actor", "action", "object"):
                 if rule[field] not in vocab[field]:
-                    raise BenchmarkError(
-                        f"rule {index}.{field} is outside the case vocabulary"
-                    )
+                    raise BenchmarkError(f"rule {index}.{field} is outside the case vocabulary")
             for field in LIST_FIELDS:
                 unknown = set(rule[field]) - vocab["qualifier"]
                 if unknown:
-                    raise BenchmarkError(
-                        f"rule {index}.{field} contains unknown atoms"
-                    )
+                    raise BenchmarkError(f"rule {index}.{field} contains unknown atoms")
         rules.append(rule)
     rules.sort(key=_rule_key)
     return {"rules": rules}
@@ -400,11 +371,7 @@ def _maximum_weight_assignment(
             continue
         row_index = matched_row[column] - 1
         column_index = column - 1
-        assignment.append(
-            (column_index, row_index)
-            if transposed
-            else (row_index, column_index)
-        )
+        assignment.append((column_index, row_index) if transposed else (row_index, column_index))
     return sorted(assignment)
 
 
@@ -414,40 +381,29 @@ def compare_semantic_ir(
     left = list(reference.get("rules") or [])
     right = list(candidate.get("rules") or [])
     weights = [
-        [
-            rule_similarity(left_rule, right_rule)
-            for right_rule in right
-        ]
-        for left_rule in left
+        [rule_similarity(left_rule, right_rule) for right_rule in right] for left_rule in left
     ]
     pairs = [
         (weights[left_index][right_index], left_index, right_index)
         for left_index, right_index in _maximum_weight_assignment(weights)
     ]
     matches: list[dict[str, Any]] = []
-    for score, li, ri in sorted(
-        pairs, key=lambda item: (item[1], item[2])
-    ):
+    for score, li, ri in sorted(pairs, key=lambda item: (item[1], item[2])):
         matches.append(
             {
                 "reference_index": li,
                 "candidate_index": ri,
                 "score": score,
                 "exact": left[li] == right[ri],
-                "modality_preserved": (
-                    left[li].get("modality") == right[ri].get("modality")
-                ),
+                "modality_preserved": (left[li].get("modality") == right[ri].get("modality")),
                 "condition_preserved": (
-                    set(left[li].get("conditions") or ())
-                    == set(right[ri].get("conditions") or ())
+                    set(left[li].get("conditions") or ()) == set(right[ri].get("conditions") or ())
                 ),
                 "exception_preserved": (
-                    set(left[li].get("exceptions") or ())
-                    == set(right[ri].get("exceptions") or ())
+                    set(left[li].get("exceptions") or ()) == set(right[ri].get("exceptions") or ())
                 ),
                 "temporal_preserved": (
-                    set(left[li].get("temporal") or ())
-                    == set(right[ri].get("temporal") or ())
+                    set(left[li].get("temporal") or ()) == set(right[ri].get("temporal") or ())
                 ),
             }
         )
@@ -499,8 +455,7 @@ def source_copy_metrics(source: str, reconstruction: str) -> dict[str, Any]:
 
     def ngrams(tokens: tuple[str, ...], width: int) -> Counter[tuple[str, ...]]:
         return Counter(
-            tuple(tokens[index : index + width])
-            for index in range(max(0, len(tokens) - width + 1))
+            tuple(tokens[index : index + width]) for index in range(max(0, len(tokens) - width + 1))
         )
 
     source_ngrams = ngrams(source_tokens, 8)
@@ -508,9 +463,7 @@ def source_copy_metrics(source: str, reconstruction: str) -> dict[str, Any]:
     copied = sum((source_ngrams & output_ngrams).values())
     output_total = sum(output_ngrams.values())
     source_total = sum(source_ngrams.values())
-    exact = bool(
-        source_tokens and output_tokens and source_tokens == output_tokens
-    )
+    exact = bool(source_tokens and output_tokens and source_tokens == output_tokens)
     precision = copied / output_total if output_total else 0.0
     recall = copied / source_total if source_total else 0.0
     return {
@@ -540,9 +493,7 @@ def _load_cases(path: Path) -> list[dict[str, Any]]:
         if not _clean_text(raw.get("source_text")):
             raise BenchmarkError(f"{case_id} has no source text")
         raw["gold_ir"] = validate_semantic_ir(raw.get("gold_ir"), raw)
-        raw["source_text_cid"] = cid_for_bytes(
-            raw["source_text"].encode("utf-8")
-        )
+        raw["source_text_cid"] = cid_for_bytes(raw["source_text"].encode("utf-8"))
         raw["gold_ir_cid"] = cid_for_dag_json(raw["gold_ir"])
         result.append(raw)
     return result
@@ -564,9 +515,7 @@ def _modality_from_text(value: Any) -> str:
 
 def _qualifier_values(records: Any) -> list[str]:
     values: list[str] = []
-    if not isinstance(records, Sequence) or isinstance(
-        records, (str, bytes, bytearray)
-    ):
+    if not isinstance(records, Sequence) or isinstance(records, (str, bytes, bytearray)):
         return values
     for record in records:
         if isinstance(record, Mapping):
@@ -588,9 +537,7 @@ def _qualifier_values(records: Any) -> list[str]:
     return values
 
 
-def project_decompiler_record(
-    record: Mapping[str, Any], case: Mapping[str, Any]
-) -> dict[str, Any]:
+def project_decompiler_record(record: Mapping[str, Any], case: Mapping[str, Any]) -> dict[str, Any]:
     actors = _allowed(case, "actors")
     actions = _allowed(case, "actions")
     objects = _allowed(case, "objects")
@@ -600,10 +547,7 @@ def project_decompiler_record(
         if not isinstance(formula, Mapping):
             continue
         predicate = formula.get("predicate")
-        if (
-            isinstance(predicate, Mapping)
-            and predicate.get("role") not in {None, "", "clause"}
-        ):
+        if isinstance(predicate, Mapping) and predicate.get("role") not in {None, "", "clause"}:
             # The modal compiler also materializes if/unless cues as helper
             # formulas. They are guards, not independent legal norms.
             continue
@@ -619,15 +563,9 @@ def project_decompiler_record(
             actions,
         )
         obj = _best_atom(roles.get("object"), objects, allow_empty=True)
-        conditions = _map_many(
-            formula.get("conditions") or (), qualifiers
-        )
-        exceptions = _map_many(
-            formula.get("exceptions") or (), qualifiers
-        )
-        temporal = _map_many(
-            structure.get("temporal_anchors") or (), qualifiers
-        )
+        conditions = _map_many(formula.get("conditions") or (), qualifiers)
+        exceptions = _map_many(formula.get("exceptions") or (), qualifiers)
+        temporal = _map_many(structure.get("temporal_anchors") or (), qualifiers)
         if not actor or not action:
             continue
         rules.append(
@@ -647,9 +585,7 @@ def project_decompiler_record(
                 "temporal": temporal,
             }
         )
-    return validate_semantic_ir(
-        {"rules": rules}, case, strict_vocabulary=True
-    )
+    return validate_semantic_ir({"rules": rules}, case, strict_vocabulary=True)
 
 
 def _compact_modal_realization(record: Mapping[str, Any]) -> str:
@@ -658,10 +594,7 @@ def _compact_modal_realization(record: Mapping[str, Any]) -> str:
         if not isinstance(formula, Mapping):
             continue
         predicate = formula.get("predicate")
-        if (
-            isinstance(predicate, Mapping)
-            and predicate.get("role") not in {None, "", "clause"}
-        ):
+        if isinstance(predicate, Mapping) and predicate.get("role") not in {None, "", "clause"}:
             continue
         structure = formula.get("reconstructed_structure")
         structure = structure if isinstance(structure, Mapping) else {}
@@ -687,28 +620,18 @@ def _compact_modal_realization(record: Mapping[str, Any]) -> str:
             sentence += f" concerning {obj}"
         conditions = _qualifier_values(formula.get("conditions") or ())
         exceptions = _qualifier_values(formula.get("exceptions") or ())
-        temporal = _qualifier_values(
-            structure.get("temporal_anchors") or ()
-        )
+        temporal = _qualifier_values(structure.get("temporal_anchors") or ())
         if conditions:
-            sentence += " if " + " and ".join(
-                value.replace("_", " ") for value in conditions
-            )
+            sentence += " if " + " and ".join(value.replace("_", " ") for value in conditions)
         if temporal:
-            sentence += " " + " and ".join(
-                value.replace("_", " ") for value in temporal
-            )
+            sentence += " " + " and ".join(value.replace("_", " ") for value in temporal)
         if exceptions:
-            sentence += " unless " + " or ".join(
-                value.replace("_", " ") for value in exceptions
-            )
+            sentence += " unless " + " or ".join(value.replace("_", " ") for value in exceptions)
         sentences.append(sentence.strip() + ".")
     return " ".join(sentences)
 
 
-def run_modal_codec(
-    case: Mapping[str, Any], *, backend: str
-) -> dict[str, Any]:
+def run_modal_codec(case: Mapping[str, Any], *, backend: str) -> dict[str, Any]:
     from ipfs_datasets_py.logic.modal.codec import (
         DeterministicModalLogicCodec,
         ModalLogicCodecConfig,
@@ -718,9 +641,7 @@ def run_modal_codec(
     )
 
     started = time.perf_counter()
-    codec = DeterministicModalLogicCodec(
-        ModalLogicCodecConfig(parser_backend=backend)
-    )
+    codec = DeterministicModalLogicCodec(ModalLogicCodecConfig(parser_backend=backend))
     encoded = codec.encode(
         str(case["source_text"]),
         document_id=str(case["id"]),
@@ -758,41 +679,27 @@ def run_modal_codec(
         "forward_vs_gold": compare_semantic_ir(case["gold_ir"], l1),
         "cycle_l1_vs_l2": compare_semantic_ir(l1, l2),
         "end_to_end_vs_gold": compare_semantic_ir(case["gold_ir"], l2),
-        "source_copy": source_copy_metrics(
-            str(case["source_text"]), realization
-        ),
+        "source_copy": source_copy_metrics(str(case["source_text"]), realization),
         "codec_losses_l1": dict(encoded.losses),
         "codec_losses_l2": l2_codec_losses,
         "diagnostic_structural_text": {
             "cid": cid_for_bytes(
-                str(
-                    encoded.metadata.get(
-                        "modal_decompiler_structural_text", ""
-                    )
-                ).encode("utf-8")
+                str(encoded.metadata.get("modal_decompiler_structural_text", "")).encode("utf-8")
             ),
             "bytes": len(
-                str(
-                    encoded.metadata.get(
-                        "modal_decompiler_structural_text", ""
-                    )
-                ).encode("utf-8")
+                str(encoded.metadata.get("modal_decompiler_structural_text", "")).encode("utf-8")
             ),
             "readable_realization_used": False,
         },
         "timing": {
             "forward_seconds": round(forward_seconds, 9),
             "recompile_seconds": round(recompile_seconds, 9),
-            "total_seconds": round(
-                forward_seconds + recompile_seconds, 9
-            ),
+            "total_seconds": round(forward_seconds + recompile_seconds, 9),
         },
     }
 
 
-def _project_legal_norms(
-    norms: Sequence[Any], case: Mapping[str, Any]
-) -> dict[str, Any]:
+def _project_legal_norms(norms: Sequence[Any], case: Mapping[str, Any]) -> dict[str, Any]:
     actors = _allowed(case, "actors")
     actions = _allowed(case, "actions")
     objects = _allowed(case, "objects")
@@ -801,36 +708,22 @@ def _project_legal_norms(
     for norm in norms:
         data = norm.to_dict()
         actor = _best_atom(data.get("actor"), actors)
-        action = _best_atom(
-            [data.get("action"), data.get("action_verb")], actions
-        )
-        obj = _best_atom(
-            data.get("action_object"), objects, allow_empty=True
-        )
+        action = _best_atom([data.get("action"), data.get("action_verb")], actions)
+        obj = _best_atom(data.get("action_object"), objects, allow_empty=True)
         if not actor or not action:
             continue
         rules.append(
             {
-                "modality": _modality_from_text(
-                    [data.get("modality"), data.get("norm_type")]
-                ),
+                "modality": _modality_from_text([data.get("modality"), data.get("norm_type")]),
                 "actor": actor,
                 "action": action,
                 "object": obj,
-                "conditions": _map_many(
-                    data.get("conditions") or (), qualifiers
-                ),
-                "exceptions": _map_many(
-                    data.get("exceptions") or (), qualifiers
-                ),
-                "temporal": _map_many(
-                    data.get("temporal_constraints") or (), qualifiers
-                ),
+                "conditions": _map_many(data.get("conditions") or (), qualifiers),
+                "exceptions": _map_many(data.get("exceptions") or (), qualifiers),
+                "temporal": _map_many(data.get("temporal_constraints") or (), qualifiers),
             }
         )
-    return validate_semantic_ir(
-        {"rules": rules}, case, strict_vocabulary=True
-    )
+    return validate_semantic_ir({"rules": rules}, case, strict_vocabulary=True)
 
 
 def run_deontic_codec(case: Mapping[str, Any]) -> dict[str, Any]:
@@ -846,9 +739,7 @@ def run_deontic_codec(case: Mapping[str, Any]) -> dict[str, Any]:
         document_type="general",
     )
     started = time.perf_counter()
-    converted = converter.convert(
-        str(case["source_text"]), use_cache=False
-    )
+    converted = converter.convert(str(case["source_text"]), use_cache=False)
     elements = (
         list(getattr(converted.output, "parser_elements", ()) or ())
         if converted.output is not None
@@ -857,9 +748,7 @@ def run_deontic_codec(case: Mapping[str, Any]) -> dict[str, Any]:
     norms = [LegalNormIR.from_parser_element(element) for element in elements]
     forward_seconds = time.perf_counter() - started
     l1 = _project_legal_norms(norms, case)
-    realization = " ".join(
-        decode_legal_norm_ir(norm).text for norm in norms
-    )
+    realization = " ".join(decode_legal_norm_ir(norm).text for norm in norms)
     recompile_started = time.perf_counter()
     reconverted = converter.convert(realization, use_cache=False)
     elements2 = (
@@ -867,9 +756,7 @@ def run_deontic_codec(case: Mapping[str, Any]) -> dict[str, Any]:
         if reconverted.output is not None
         else []
     )
-    norms2 = [
-        LegalNormIR.from_parser_element(element) for element in elements2
-    ]
+    norms2 = [LegalNormIR.from_parser_element(element) for element in elements2]
     l2 = _project_legal_norms(norms2, case)
     recompile_seconds = time.perf_counter() - recompile_started
     return {
@@ -889,15 +776,11 @@ def run_deontic_codec(case: Mapping[str, Any]) -> dict[str, Any]:
         "forward_vs_gold": compare_semantic_ir(case["gold_ir"], l1),
         "cycle_l1_vs_l2": compare_semantic_ir(l1, l2),
         "end_to_end_vs_gold": compare_semantic_ir(case["gold_ir"], l2),
-        "source_copy": source_copy_metrics(
-            str(case["source_text"]), realization
-        ),
+        "source_copy": source_copy_metrics(str(case["source_text"]), realization),
         "timing": {
             "forward_seconds": round(forward_seconds, 9),
             "recompile_seconds": round(recompile_seconds, 9),
-            "total_seconds": round(
-                forward_seconds + recompile_seconds, 9
-            ),
+            "total_seconds": round(forward_seconds + recompile_seconds, 9),
         },
     }
 
@@ -921,23 +804,16 @@ def _project_cnl_v2(ir: Any, case: Mapping[str, Any]) -> dict[str, Any]:
         actor_ref = frame.roles.get("agent", "")
         actor_entity = ir.entities.get(actor_ref)
         actor_label = (
-            actor_entity.attrs.get("label", actor_ref)
-            if actor_entity is not None
-            else actor_ref
+            actor_entity.attrs.get("label", actor_ref) if actor_entity is not None else actor_ref
         )
         patient_ref = frame.roles.get("patient", "")
         patient = ir.entities.get(patient_ref)
         patient_label = (
-            patient.attrs.get("label", patient_ref)
-            if patient is not None
-            else patient_ref
+            patient.attrs.get("label", patient_ref) if patient is not None else patient_ref
         )
         activation = (
             []
-            if (
-                norm.activation.atom is not None
-                and norm.activation.atom.pred == "true"
-            )
+            if (norm.activation.atom is not None and norm.activation.atom.pred == "true")
             else _condition_atoms(norm.activation)
         )
         temporal: list[Any] = []
@@ -952,24 +828,16 @@ def _project_cnl_v2(ir: Any, case: Mapping[str, Any]) -> dict[str, Any]:
                 "modality": str(norm.op.value),
                 "actor": actor,
                 "action": action,
-                "object": _best_atom(
-                    patient_label, objects, allow_empty=True
-                ),
+                "object": _best_atom(patient_label, objects, allow_empty=True),
                 "conditions": _map_many(activation, qualifiers),
                 "exceptions": _map_many(
-                    [
-                        item
-                        for exception in norm.exceptions
-                        for item in _condition_atoms(exception)
-                    ],
+                    [item for exception in norm.exceptions for item in _condition_atoms(exception)],
                     qualifiers,
                 ),
                 "temporal": _map_many(temporal, qualifiers),
             }
         )
-    return validate_semantic_ir(
-        {"rules": rules}, case, strict_vocabulary=True
-    )
+    return validate_semantic_ir({"rules": rules}, case, strict_vocabulary=True)
 
 
 def run_cnl_v2(case: Mapping[str, Any]) -> dict[str, Any]:
@@ -988,34 +856,25 @@ def run_cnl_v2(case: Mapping[str, Any]) -> dict[str, Any]:
             "status": "unsupported",
             "translator": "controlled_natural_language_v2",
             "reason": f"{type(exc).__name__}: {_clean_text(exc)[:300]}",
-            "timing": {
-                "total_seconds": round(time.perf_counter() - started, 9)
-            },
+            "timing": {"total_seconds": round(time.perf_counter() - started, 9)},
         }
     forward_seconds = time.perf_counter() - started
     l1 = _project_cnl_v2(ir, case)
-    sentences = [
-        generate_cnl_from_ir(norm_ref, ir)
-        for norm_ref in sorted(ir.norms)
-    ]
+    sentences = [generate_cnl_from_ir(norm_ref, ir) for norm_ref in sorted(ir.norms)]
     realization = " ".join(sentences)
     l2_rules: list[dict[str, Any]] = []
     recompile_started = time.perf_counter()
     roundtrip_diagnostics: list[dict[str, Any]] = []
     for sentence in sentences:
         try:
-            parsed, diag = parse_cnl_to_ir_with_diagnostics(
-                sentence, jurisdiction="us/federal"
-            )
+            parsed, diag = parse_cnl_to_ir_with_diagnostics(sentence, jurisdiction="us/federal")
             l2_rules.extend(_project_cnl_v2(parsed, case)["rules"])
             roundtrip_diagnostics.append(diag)
         except Exception as exc:
             roundtrip_diagnostics.append(
                 {"error": f"{type(exc).__name__}: {_clean_text(exc)[:300]}"}
             )
-    l2 = validate_semantic_ir(
-        {"rules": l2_rules}, case, strict_vocabulary=True
-    )
+    l2 = validate_semantic_ir({"rules": l2_rules}, case, strict_vocabulary=True)
     recompile_seconds = time.perf_counter() - recompile_started
     return {
         "status": "success",
@@ -1035,17 +894,13 @@ def run_cnl_v2(case: Mapping[str, Any]) -> dict[str, Any]:
         "forward_vs_gold": compare_semantic_ir(case["gold_ir"], l1),
         "cycle_l1_vs_l2": compare_semantic_ir(l1, l2),
         "end_to_end_vs_gold": compare_semantic_ir(case["gold_ir"], l2),
-        "source_copy": source_copy_metrics(
-            str(case["source_text"]), realization
-        ),
+        "source_copy": source_copy_metrics(str(case["source_text"]), realization),
         "parser_diagnostics": diagnostics,
         "roundtrip_parser_diagnostics": roundtrip_diagnostics,
         "timing": {
             "forward_seconds": round(forward_seconds, 9),
             "recompile_seconds": round(recompile_seconds, 9),
-            "total_seconds": round(
-                forward_seconds + recompile_seconds, 9
-            ),
+            "total_seconds": round(forward_seconds + recompile_seconds, 9),
         },
     }
 
@@ -1053,11 +908,7 @@ def run_cnl_v2(case: Mapping[str, Any]) -> dict[str, Any]:
 def _atoms_supported_by_text(
     text: str, candidates: Sequence[str], *, threshold: float = 0.22
 ) -> list[str]:
-    return sorted(
-        candidate
-        for candidate in candidates
-        if _jaccard(text, candidate) >= threshold
-    )
+    return sorted(candidate for candidate in candidates if _jaccard(text, candidate) >= threshold)
 
 
 def _project_dcec_formula(
@@ -1068,9 +919,7 @@ def _project_dcec_formula(
     signal = f"{formula_text} {realization}"
     action = _best_atom(signal, _allowed(case, "actions"))
     actor = _best_atom(signal, _allowed(case, "actors"))
-    obj = _best_atom(
-        signal, _allowed(case, "objects"), allow_empty=True
-    )
+    obj = _best_atom(signal, _allowed(case, "objects"), allow_empty=True)
     if not actor or not action:
         return {"rules": []}
     formula_lower = formula_text.lower()
@@ -1082,27 +931,21 @@ def _project_dcec_formula(
         or "¬" in formula_text
     ):
         modality = "F"
-    elif formula_text.startswith("P(") or realization_lower.startswith(
-        ("may ", "can ")
-    ):
+    elif formula_text.startswith("P(") or realization_lower.startswith(("may ", "can ")):
         modality = "P"
     else:
         modality = "O"
     qualifiers = _allowed(case, "qualifiers")
     supported = _atoms_supported_by_text(signal, qualifiers)
     conditions = [
-        item
-        for item in supported
-        if any(token in item for token in ("if_", "when_", "condition"))
+        item for item in supported if any(token in item for token in ("if_", "when_", "condition"))
     ]
     exceptions = [
         item
         for item in supported
         if any(token in item for token in ("unless_", "except_", "without_"))
     ]
-    temporal = sorted(
-        set(supported) - set(conditions) - set(exceptions)
-    )
+    temporal = sorted(set(supported) - set(conditions) - set(exceptions))
     return validate_semantic_ir(
         {
             "rules": [
@@ -1134,15 +977,11 @@ def run_dcec(case: Mapping[str, Any]) -> dict[str, Any]:
             "status": "failed",
             "translator": "dcec_natural_language_converter",
             "reason": _clean_text(result.error_message),
-            "timing": {
-                "total_seconds": round(time.perf_counter() - started, 9)
-            },
+            "timing": {"total_seconds": round(time.perf_counter() - started, 9)},
         }
     formula_text = result.dcec_formula.to_string()
     realization = converter.convert_from_dcec(result.dcec_formula)
-    l1 = _project_dcec_formula(
-        formula_text, realization, case
-    )
+    l1 = _project_dcec_formula(formula_text, realization, case)
     forward_seconds = time.perf_counter() - started
     recompile_started = time.perf_counter()
     result2 = converter.convert_to_dcec(realization)
@@ -1159,9 +998,7 @@ def run_dcec(case: Mapping[str, Any]) -> dict[str, Any]:
         "translator": "dcec_natural_language_converter",
         "source_withheld_from_realizer": True,
         "coverage": {
-            "formula_nontrivial": any(
-                marker in formula_text for marker in ("O(", "P(", "F(", "¬")
-            ),
+            "formula_nontrivial": any(marker in formula_text for marker in ("O(", "P(", "F(", "¬")),
             "gold_rule_count": len(case["gold_ir"]["rules"]),
         },
         "formula": formula_text,
@@ -1176,15 +1013,11 @@ def run_dcec(case: Mapping[str, Any]) -> dict[str, Any]:
         "forward_vs_gold": compare_semantic_ir(case["gold_ir"], l1),
         "cycle_l1_vs_l2": compare_semantic_ir(l1, l2),
         "end_to_end_vs_gold": compare_semantic_ir(case["gold_ir"], l2),
-        "source_copy": source_copy_metrics(
-            str(case["source_text"]), realization
-        ),
+        "source_copy": source_copy_metrics(str(case["source_text"]), realization),
         "timing": {
             "forward_seconds": round(forward_seconds, 9),
             "recompile_seconds": round(recompile_seconds, 9),
-            "total_seconds": round(
-                forward_seconds + recompile_seconds, 9
-            ),
+            "total_seconds": round(forward_seconds + recompile_seconds, 9),
         },
     }
 
@@ -1238,9 +1071,7 @@ REALIZATION_JSON_SCHEMA: dict[str, Any] = {
 }
 
 
-def _semantic_schema_for_case(
-    case: Mapping[str, Any], text: str
-) -> dict[str, Any]:
+def _semantic_schema_for_case(case: Mapping[str, Any], text: str) -> dict[str, Any]:
     schema = json.loads(json.dumps(SEMANTIC_IR_JSON_SCHEMA))
     rules_schema = schema["properties"]["rules"]
     cue_count = len(
@@ -1280,17 +1111,13 @@ def _semantic_encode_max_tokens(
     try:
         rule_capacity = response_schema["properties"]["rules"]["maxItems"]
     except (KeyError, TypeError) as exc:
-        raise BenchmarkError(
-            "semantic response schema omits the rule-capacity contract"
-        ) from exc
+        raise BenchmarkError("semantic response schema omits the rule-capacity contract") from exc
     if (
         isinstance(rule_capacity, bool)
         or not isinstance(rule_capacity, int)
         or not 0 <= rule_capacity <= 16
     ):
-        raise BenchmarkError(
-            "semantic response schema has an invalid rule capacity"
-        )
+        raise BenchmarkError("semantic response schema has an invalid rule capacity")
     source_allowance = min(384, 8 * len(_tokens(text)))
     return min(
         3072,
@@ -1318,9 +1145,7 @@ def _strict_json_object(raw: str) -> dict[str, Any]:
     except BenchmarkError:
         raise
     except (json.JSONDecodeError, RecursionError, TypeError, ValueError) as exc:
-        raise BenchmarkError(
-            f"model response is not strict JSON: {type(exc).__name__}"
-        ) from exc
+        raise BenchmarkError(f"model response is not strict JSON: {type(exc).__name__}") from exc
     if not isinstance(value, dict):
         raise BenchmarkError("model response must be one JSON object")
     return value
@@ -1357,20 +1182,14 @@ class LeanstralClient:
         timeout_seconds: float,
     ) -> None:
         self.endpoint = endpoint.rstrip("/")
-        self.origin = (
-            self.endpoint[:-3]
-            if self.endpoint.endswith("/v1")
-            else self.endpoint
-        )
+        self.origin = self.endpoint[:-3] if self.endpoint.endswith("/v1") else self.endpoint
         self.model = model
         self.timeout_seconds = timeout_seconds
         self.cache: dict[str, TimedResult] = {}
 
     def _get_json(self, path: str, *, max_bytes: int = 1_048_576) -> Any:
         request = urllib.request.Request(self.origin + path)
-        with urllib.request.urlopen(
-            request, timeout=min(self.timeout_seconds, 10.0)
-        ) as response:
+        with urllib.request.urlopen(request, timeout=min(self.timeout_seconds, 10.0)) as response:
             raw = response.read(max_bytes + 1)
         if len(raw) > max_bytes:
             raise BenchmarkError(f"HTTP response from {path} is oversized")
@@ -1388,15 +1207,12 @@ class LeanstralClient:
         if str(health.get("status") or "").lower() not in {"ok", "healthy"}:
             raise BenchmarkError("Leanstral service is not healthy")
         if served.count(self.model) != 1:
-            raise BenchmarkError(
-                "exact Leanstral model is absent or ambiguous"
-            )
+            raise BenchmarkError("exact Leanstral model is absent or ambiguous")
         selected_model = next(
             (
                 item
                 for item in models.get("data", [])
-                if isinstance(item, Mapping)
-                and str(item.get("id") or "") == self.model
+                if isinstance(item, Mapping) and str(item.get("id") or "") == self.model
             ),
             {},
         )
@@ -1470,19 +1286,13 @@ class LeanstralClient:
         )
         started = time.perf_counter()
         try:
-            with urllib.request.urlopen(
-                request, timeout=self.timeout_seconds
-            ) as response:
+            with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
                 raw_response = response.read(2 * 1024 * 1024 + 1)
         except urllib.error.HTTPError as exc:
             detail = exc.read(4096).decode("utf-8", "replace")
-            raise BenchmarkError(
-                f"Leanstral HTTP {exc.code}: {_clean_text(detail)[:500]}"
-            ) from exc
+            raise BenchmarkError(f"Leanstral HTTP {exc.code}: {_clean_text(detail)[:500]}") from exc
         except (TimeoutError, urllib.error.URLError) as exc:
-            raise BenchmarkError(
-                f"Leanstral request failed: {type(exc).__name__}"
-            ) from exc
+            raise BenchmarkError(f"Leanstral request failed: {type(exc).__name__}") from exc
         elapsed = time.perf_counter() - started
         if len(raw_response) > 2 * 1024 * 1024:
             raise BenchmarkError("Leanstral response exceeds 2 MiB")
@@ -1496,15 +1306,9 @@ class LeanstralClient:
             raise BenchmarkError("Leanstral returned an invalid choice set")
         choice = choices[0]
         if choice.get("finish_reason") != "stop":
-            raise BenchmarkError(
-                f"Leanstral finish reason: {choice.get('finish_reason')!r}"
-            )
+            raise BenchmarkError(f"Leanstral finish reason: {choice.get('finish_reason')!r}")
         message = choice.get("message")
-        content = (
-            message.get("content")
-            if isinstance(message, Mapping)
-            else None
-        )
+        content = message.get("content") if isinstance(message, Mapping) else None
         if not isinstance(content, str) or not content.strip():
             raise BenchmarkError("Leanstral returned no content")
         if envelope.get("model") != self.model:
@@ -1546,8 +1350,7 @@ def _spacy_evidence(nlp: Any, text: str) -> dict[str, Any]:
             for token in list(doc)[:256]
         ],
         "entities": [
-            {"text": entity.text, "label": entity.label_}
-            for entity in list(doc.ents)[:32]
+            {"text": entity.text, "label": entity.label_} for entity in list(doc.ents)[:32]
         ],
     }
 
@@ -1586,9 +1389,7 @@ def _encoder_prompt(
     )
 
 
-def _realizer_prompt(
-    case: Mapping[str, Any], logic_ir: Mapping[str, Any]
-) -> str:
+def _realizer_prompt(case: Mapping[str, Any], logic_ir: Mapping[str, Any]) -> str:
     return (
         "Realize every and only the supplied legal rules as concise, fluent "
         "English. Atom IDs are semantic labels: replace underscores with "
@@ -1598,8 +1399,7 @@ def _realizer_prompt(
         "invent facts, explanations, headings, citations, or rules. Return "
         "exactly one compact JSON object with exactly one string key: "
         '{"text":"..."}. Do not imitate a generic example; lexicalize the '
-        "actual IR below.\nLOGIC_IR_JSON:\n"
-        + _canonical(logic_ir)
+        "actual IR below.\nLOGIC_IR_JSON:\n" + _canonical(logic_ir)
     )
 
 
@@ -1697,9 +1497,7 @@ def _leanstral_realize(
     prompt = _realizer_prompt(case, logic_ir)
     source = str(case["source_text"])
     if source in prompt:
-        raise BenchmarkError(
-            "source text leaked into the source-withheld realization prompt"
-        )
+        raise BenchmarkError("source text leaked into the source-withheld realization prompt")
     result = client.complete_json(
         system=(
             "You are a source-withheld formal-logic realizer. The supplied "
@@ -1782,9 +1580,7 @@ def _symai_realize(
     prompt = _realizer_prompt(case, canonical_ir)
     source = str(case["source_text"])
     if source in prompt:
-        raise BenchmarkError(
-            "source text leaked into the source-withheld SyMAI prompt"
-        )
+        raise BenchmarkError("source text leaked into the source-withheld SyMAI prompt")
     response_format = _symai_realization_response_format()
     request_contract = {
         "prompt": prompt,
@@ -1801,10 +1597,7 @@ def _symai_realize(
     except BenchmarkError:
         raise
     except Exception as exc:
-        raise BenchmarkError(
-            "SyMAI realization invocation failed: "
-            f"{type(exc).__name__}"
-        ) from exc
+        raise BenchmarkError(f"SyMAI realization invocation failed: {type(exc).__name__}") from exc
     elapsed = time.perf_counter() - started
     if not isinstance(raw_output, str):
         raise BenchmarkError("SyMAI realization output must be text")
@@ -1815,9 +1608,7 @@ def _symai_realize(
 
     value = _strict_json_object(raw_output)
     if set(value) != {"text"} or not isinstance(value["text"], str):
-        raise BenchmarkError(
-            "SyMAI realization response must contain exactly one text string"
-        )
+        raise BenchmarkError("SyMAI realization response must contain exactly one text string")
     if len(value["text"]) > 12_000:
         raise BenchmarkError("SyMAI realization text exceeds 12000 characters")
     text = _clean_text(value["text"])
@@ -1829,9 +1620,7 @@ def _symai_realize(
         {
             "request_cid": cid_for_dag_json(request_contract),
             "prompt_cid": cid_for_bytes(prompt.encode("utf-8")),
-            "raw_content_cid": cid_for_bytes(
-                raw_output.encode("utf-8")
-            ),
+            "raw_content_cid": cid_for_bytes(raw_output.encode("utf-8")),
             "response_format_cid": cid_for_dag_json(response_format),
             "source_withheld": True,
             "router_metadata": _safe_symai_realizer_metadata(metadata),
@@ -1849,35 +1638,23 @@ def run_leanstral_cycle(
     method = (
         "leanstral_oracle_reverse"
         if oracle_l1
-        else (
-            "spacy_plus_leanstral_cycle"
-            if nlp is not None
-            else "leanstral_direct_cycle"
-        )
+        else ("spacy_plus_leanstral_cycle" if nlp is not None else "leanstral_direct_cycle")
     )
     receipts: list[dict[str, Any]] = []
     if oracle_l1:
         l1 = case["gold_ir"]
         forward_seconds = 0.0
     else:
-        encoded = _leanstral_encode(
-            client, case, str(case["source_text"]), nlp=nlp
-        )
+        encoded = _leanstral_encode(client, case, str(case["source_text"]), nlp=nlp)
         l1 = encoded.value
         forward_seconds = encoded.elapsed_seconds
         receipts.append({"operation": "encode", **encoded.metadata})
     realized = _leanstral_realize(client, case, l1)
     receipts.append({"operation": "realize", **realized.metadata})
-    reencoded = _leanstral_encode(
-        client, case, realized.value, nlp=nlp
-    )
+    reencoded = _leanstral_encode(client, case, realized.value, nlp=nlp)
     receipts.append({"operation": "reencode", **reencoded.metadata})
     l2 = reencoded.value
-    total_seconds = (
-        forward_seconds
-        + realized.elapsed_seconds
-        + reencoded.elapsed_seconds
-    )
+    total_seconds = forward_seconds + realized.elapsed_seconds + reencoded.elapsed_seconds
     return {
         "status": "success",
         "translator": method,
@@ -1887,17 +1664,13 @@ def run_leanstral_cycle(
         "l1": l1,
         "l1_cid": cid_for_dag_json(l1),
         "realization": realized.value,
-        "realization_cid": cid_for_bytes(
-            realized.value.encode("utf-8")
-        ),
+        "realization_cid": cid_for_bytes(realized.value.encode("utf-8")),
         "l2": l2,
         "l2_cid": cid_for_dag_json(l2),
         "forward_vs_gold": compare_semantic_ir(case["gold_ir"], l1),
         "cycle_l1_vs_l2": compare_semantic_ir(l1, l2),
         "end_to_end_vs_gold": compare_semantic_ir(case["gold_ir"], l2),
-        "source_copy": source_copy_metrics(
-            str(case["source_text"]), realized.value
-        ),
+        "source_copy": source_copy_metrics(str(case["source_text"]), realized.value),
         "timing": {
             "forward_seconds": round(forward_seconds, 9),
             "realize_seconds": round(realized.elapsed_seconds, 9),
@@ -1914,9 +1687,7 @@ class SymaiForwardRunner:
     def __init__(self, *, endpoint: str, inner_model: str) -> None:
         self.endpoint = endpoint.rstrip("/")
         self.inner_model = inner_model
-        self._temporary = tempfile.TemporaryDirectory(
-            prefix="semantic-roundtrip-symai-"
-        )
+        self._temporary = tempfile.TemporaryDirectory(prefix="semantic-roundtrip-symai-")
         config_root = Path(self._temporary.name)
         config_dir = config_root / ".symai"
         config_dir.mkdir(mode=0o700)
@@ -1935,12 +1706,8 @@ class SymaiForwardRunner:
         try:
             sys.prefix = str(config_root)
             importlib.import_module("symai")
-            adapters = importlib.import_module(
-                "benchmarks.logic_pipeline.adapters"
-            )
-            contracts = importlib.import_module(
-                "benchmarks.logic_pipeline.contracts"
-            )
+            adapters = importlib.import_module("benchmarks.logic_pipeline.adapters")
+            contracts = importlib.import_module("benchmarks.logic_pipeline.contracts")
         finally:
             sys.prefix = original_prefix
         self.StageRequest = adapters.StageRequest
@@ -1975,19 +1742,14 @@ class SymaiForwardRunner:
         *,
         run_id: str,
     ) -> TimedResult:
-        namespace = (
-            "semantic-roundtrip/symai-realize/"
-            + cid_for_dag_json(
-                {
-                    "run_id": run_id,
-                    "case_id": str(case["id"]),
-                    "logic_ir": logic_ir,
-                }
-            )
+        namespace = "semantic-roundtrip/symai-realize/" + cid_for_dag_json(
+            {
+                "run_id": run_id,
+                "case_id": str(case["id"]),
+                "logic_ir": logic_ir,
+            }
         )
-        engine = self._adapters._default_symai_engine_factory(
-            self._config, namespace
-        )
+        engine = self._adapters._default_symai_engine_factory(self._config, namespace)
 
         def invoke(
             prompt: str,
@@ -2006,9 +1768,7 @@ class SymaiForwardRunner:
                 for key, value in trace.items():
                     metadata.setdefault(str(key), value)
             try:
-                self._adapters._validate_symai_inner_route(
-                    self._config, metadata
-                )
+                self._adapters._validate_symai_inner_route(self._config, metadata)
             except Exception as exc:
                 raise BenchmarkError(
                     "SyMAI realization route identity was unavailable or "
@@ -2022,15 +1782,8 @@ class SymaiForwardRunner:
                 "route",
                 "router_provider",
             ):
-                if (
-                    key in metadata
-                    and self._adapters._is_recursive_symai_identity(
-                        metadata[key]
-                    )
-                ):
-                    raise BenchmarkError(
-                        "recursive SyMAI realization routing is forbidden"
-                    )
+                if key in metadata and self._adapters._is_recursive_symai_identity(metadata[key]):
+                    raise BenchmarkError("recursive SyMAI realization routing is forbidden")
             return raw_output, metadata
 
         return _symai_realize(case, logic_ir, invoke=invoke)
@@ -2068,9 +1821,7 @@ class SymaiForwardRunner:
                 "status": status,
                 "translator": "symai_forward_projection",
                 "roundtrip_supported": False,
-                "failure_code": str(
-                    getattr(record.failure_code, "value", record.failure_code)
-                ),
+                "failure_code": str(getattr(record.failure_code, "value", record.failure_code)),
                 "failure_detail": record.failure_detail,
                 "record_cid": cid_for_dag_json(serialized),
                 "timing": {"total_seconds": round(elapsed, 9)},
@@ -2082,11 +1833,7 @@ class SymaiForwardRunner:
                 for rule in case["gold_ir"]["rules"]
                 for field, value in rule.items()
                 if field != "modality"
-                for value in (
-                    value
-                    if isinstance(value, list)
-                    else [value]
-                )
+                for value in (value if isinstance(value, list) else [value])
                 if value
             }
         )
@@ -2152,9 +1899,7 @@ def run_symai_oracle_reverse_cycle(
 
     l1 = validate_semantic_ir(case["gold_ir"], case)
     realized = symai_runner.realize(case, l1, run_id=run_id)
-    reencoded = _leanstral_encode(
-        leanstral_client, case, realized.value
-    )
+    reencoded = _leanstral_encode(leanstral_client, case, realized.value)
     l2 = reencoded.value
     total_seconds = realized.elapsed_seconds + reencoded.elapsed_seconds
     return {
@@ -2167,19 +1912,13 @@ def run_symai_oracle_reverse_cycle(
         "l1": l1,
         "l1_cid": cid_for_dag_json(l1),
         "realization": realized.value,
-        "realization_cid": cid_for_bytes(
-            realized.value.encode("utf-8")
-        ),
+        "realization_cid": cid_for_bytes(realized.value.encode("utf-8")),
         "l2": l2,
         "l2_cid": cid_for_dag_json(l2),
         "forward_vs_gold": compare_semantic_ir(case["gold_ir"], l1),
         "cycle_l1_vs_l2": compare_semantic_ir(l1, l2),
-        "end_to_end_vs_gold": compare_semantic_ir(
-            case["gold_ir"], l2
-        ),
-        "source_copy": source_copy_metrics(
-            str(case["source_text"]), realized.value
-        ),
+        "end_to_end_vs_gold": compare_semantic_ir(case["gold_ir"], l2),
+        "source_copy": source_copy_metrics(str(case["source_text"]), realized.value),
         "timing": {
             "forward_seconds": 0.0,
             "realize_seconds": round(realized.elapsed_seconds, 9),
@@ -2197,9 +1936,7 @@ def run_symai_oracle_reverse_cycle(
 
 
 def _rule_cids(ir: Mapping[str, Any]) -> list[str]:
-    return sorted(
-        cid_for_dag_json(rule) for rule in (ir.get("rules") or ())
-    )
+    return sorted(cid_for_dag_json(rule) for rule in (ir.get("rules") or ()))
 
 
 def hammer_cvc5_equivalence(
@@ -2234,10 +1971,7 @@ def hammer_cvc5_equivalence(
     left_ids = _rule_cids(left)
     right_ids = _rule_cids(right)
     all_ids = sorted(set(left_ids) | set(right_ids))
-    atoms = {
-        cid: Const(f"rule_{index:03d}", PROP_SORT)
-        for index, cid in enumerate(all_ids)
-    }
+    atoms = {cid: Const(f"rule_{index:03d}", PROP_SORT) for index, cid in enumerate(all_ids)}
 
     def conjunction(values: Sequence[str]) -> Any:
         terms = [atoms[value] for value in sorted(set(values))]
@@ -2248,9 +1982,7 @@ def hammer_cvc5_equivalence(
             result = And(result, term)
         return result
 
-    counterexample_query = Not(
-        Iff(conjunction(left_ids), conjunction(right_ids))
-    )
+    counterexample_query = Not(Iff(conjunction(left_ids), conjunction(right_ids)))
     translation = TranslationContext(request_id=request_id).translate(
         source_construct="semantic_rule_set_counterexample",
         term=counterexample_query,
@@ -2268,11 +2000,7 @@ def hammer_cvc5_equivalence(
     started = time.perf_counter()
     result = SolverPortfolio(policy).run(
         request_id,
-        [
-            PortfolioAttemptSpec(
-                translation=translation, solver_name="cvc5"
-            )
-        ],
+        [PortfolioAttemptSpec(translation=translation, solver_name="cvc5")],
     )
     elapsed = time.perf_counter() - started
     if not result.attempts:
@@ -2299,18 +2027,12 @@ def hammer_cvc5_equivalence(
         "solver_set_equivalent": solver_set_equivalent,
         "multiplicity_equal": multiplicity_equal,
         "nonvacuous": nonvacuous,
-        "equivalent": (
-            solver_set_equivalent and multiplicity_equal and nonvacuous
-        ),
+        "equivalent": (solver_set_equivalent and multiplicity_equal and nonvacuous),
         "left_rule_cids": left_ids,
         "right_rule_cids": right_ids,
         "translation_cid": cid_for_dag_json(translation.to_dict()),
         "attempt_cid": cid_for_dag_json(attempt.to_dict()),
-        "evidence_cid": (
-            cid_for_dag_json(evidence.to_dict())
-            if evidence is not None
-            else None
-        ),
+        "evidence_cid": (cid_for_dag_json(evidence.to_dict()) if evidence is not None else None),
         "elapsed_seconds": round(elapsed, 9),
     }
 
@@ -2337,9 +2059,7 @@ def lean_exact_identity(
         + "theorem exactSemanticRuleIdentity : leftRules = rightRules := by\n"
         + "  decide\n"
     )
-    with tempfile.TemporaryDirectory(
-        prefix="semantic-roundtrip-lean-"
-    ) as raw_directory:
+    with tempfile.TemporaryDirectory(prefix="semantic-roundtrip-lean-") as raw_directory:
         directory = Path(raw_directory)
         source_path = directory / "Main.lean"
         source_path.write_text(source, encoding="utf-8")
@@ -2377,9 +2097,7 @@ def lean_exact_identity(
         "claim": "exact_canonical_rule_cid_list_identity",
         "kernel_accepted": return_code == 0,
         "nonvacuous": bool(left_ids) and bool(right_ids),
-        "benchmark_accepted": (
-            return_code == 0 and bool(left_ids) and bool(right_ids)
-        ),
+        "benchmark_accepted": (return_code == 0 and bool(left_ids) and bool(right_ids)),
         "return_code": return_code,
         "source_cid": cid_for_bytes(source.encode("utf-8")),
         "stdout_cid": cid_for_bytes(stdout),
@@ -2405,9 +2123,7 @@ def attach_validators(
             "status": "not_applicable",
             "reason": "arm did not produce both L1 and L2",
         }
-    safe_request = re.sub(
-        r"[^A-Za-z0-9_.:-]", "_", f"{case_id}:{arm_id}"
-    )[:120]
+    safe_request = re.sub(r"[^A-Za-z0-9_.:-]", "_", f"{case_id}:{arm_id}")[:120]
     arm["validation"] = {
         "status": "success",
         "hammer_cvc5": hammer_cvc5_equivalence(
@@ -2415,9 +2131,7 @@ def attach_validators(
             arm["l2"],
             request_id=safe_request,
         ),
-        "lean": lean_exact_identity(
-            arm["l1"], arm["l2"], lean_path=lean_path
-        ),
+        "lean": lean_exact_identity(arm["l1"], arm["l2"], lean_path=lean_path),
         "scope": (
             "Exact canonical rule-set identity only. Unsupported richer "
             "legal semantics are not promoted to proof claims."
@@ -2436,9 +2150,7 @@ def _safe_arm(function: Any, *args: Any, **kwargs: Any) -> dict[str, Any]:
             "translator": getattr(function, "__name__", "unknown"),
             "failure_type": type(exc).__name__,
             "failure_detail": _clean_text(exc)[:1000],
-            "timing": {
-                "total_seconds": round(time.perf_counter() - started, 9)
-            },
+            "timing": {"total_seconds": round(time.perf_counter() - started, 9)},
         }
 
 
@@ -2461,10 +2173,7 @@ def attach_validators_safely(
     if receipt.get("status") == "failed":
         arm["validation"] = {
             **receipt,
-            "scope": (
-                "Validator execution failed; no proof-backed identity claim "
-                "is available."
-            ),
+            "scope": ("Validator execution failed; no proof-backed identity claim is available."),
         }
     return receipt
 
@@ -2517,9 +2226,9 @@ def capability_inventory(
         try:
             processor = next(
                 line.split(":", 1)[1].strip()
-                for line in Path("/proc/cpuinfo").read_text(
-                    encoding="utf-8", errors="replace"
-                ).splitlines()
+                for line in Path("/proc/cpuinfo")
+                .read_text(encoding="utf-8", errors="replace")
+                .splitlines()
                 if line.lower().startswith("model name")
             )
         except (OSError, StopIteration):
@@ -2539,9 +2248,7 @@ def capability_inventory(
             "package_version": _package_version("spacy"),
             "model": "en_core_web_sm",
             "model_version": _package_version("en-core-web-sm"),
-            "pipeline": (
-                list(spacy_nlp.pipe_names) if spacy_nlp is not None else []
-            ),
+            "pipeline": (list(spacy_nlp.pipe_names) if spacy_nlp is not None else []),
         },
         "symai": {
             "distribution": "symbolicai",
@@ -2564,20 +2271,16 @@ def capability_inventory(
 
 
 def _aggregate_standard_arm(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    successful = [
-        record for record in records if record.get("status") == "success"
-    ]
+    successful = [record for record in records if record.get("status") == "success"]
     forward_covered = [
         record
         for record in successful
-        if isinstance(record.get("l1"), Mapping)
-        and bool(record["l1"].get("rules"))
+        if isinstance(record.get("l1"), Mapping) and bool(record["l1"].get("rules"))
     ]
     roundtrip_covered = [
         record
         for record in forward_covered
-        if isinstance(record.get("l2"), Mapping)
-        and bool(record["l2"].get("rules"))
+        if isinstance(record.get("l2"), Mapping) and bool(record["l2"].get("rules"))
     ]
 
     def values(
@@ -2597,9 +2300,7 @@ def _aggregate_standard_arm(records: Sequence[Mapping[str, Any]]) -> dict[str, A
         found = values(successful, path)
         return round(sum(found) / len(found), 9) if found else None
 
-    def all_case_mean(
-        path: tuple[str, ...], *, missing_value: float
-    ) -> float | None:
+    def all_case_mean(path: tuple[str, ...], *, missing_value: float) -> float | None:
         if not records:
             return None
         values: list[float] = []
@@ -2616,9 +2317,7 @@ def _aggregate_standard_arm(records: Sequence[Mapping[str, Any]]) -> dict[str, A
     return {
         "case_count": len(records),
         "success_count": len(successful),
-        "execution_rate": round(
-            len(successful) / len(records) if records else 0.0, 9
-        ),
+        "execution_rate": round(len(successful) / len(records) if records else 0.0, 9),
         "forward_semantic_coverage_count": len(forward_covered),
         "forward_semantic_coverage_rate": round(
             len(forward_covered) / len(records) if records else 0.0, 9
@@ -2630,9 +2329,7 @@ def _aggregate_standard_arm(records: Sequence[Mapping[str, Any]]) -> dict[str, A
         # Backward-compatible aliases now use the stricter full-roundtrip
         # definition rather than merely checking for a non-empty L1.
         "semantic_coverage_count": len(roundtrip_covered),
-        "coverage_rate": round(
-            len(roundtrip_covered) / len(records) if records else 0.0, 9
-        ),
+        "coverage_rate": round(len(roundtrip_covered) / len(records) if records else 0.0, 9),
         "mean_forward_semantic_score": all_case_mean(
             ("forward_vs_gold", "semantic_score"), missing_value=0.0
         ),
@@ -2660,36 +2357,21 @@ def _aggregate_standard_arm(records: Sequence[Mapping[str, Any]]) -> dict[str, A
         "conditional_mean_end_to_end_semantic_score": conditional_mean(
             ("end_to_end_vs_gold", "semantic_score")
         ),
-        "mean_total_seconds": conditional_mean(
-            ("timing", "total_seconds")
-        ),
+        "mean_total_seconds": conditional_mean(("timing", "total_seconds")),
         "timing_scope": "arm_reported_wall_time_on_executed_cases",
         "copy_risk_count": sum(
-            bool(record.get("source_copy", {}).get("copy_risk"))
-            for record in successful
+            bool(record.get("source_copy", {}).get("copy_risk")) for record in successful
         ),
         "hammer_equivalent_count": sum(
-            bool(
-                record.get("validation", {})
-                .get("hammer_cvc5", {})
-                .get("equivalent")
-            )
+            bool(record.get("validation", {}).get("hammer_cvc5", {}).get("equivalent"))
             for record in successful
         ),
         "raw_lean_kernel_accepted_count": sum(
-            bool(
-                record.get("validation", {})
-                .get("lean", {})
-                .get("kernel_accepted")
-            )
+            bool(record.get("validation", {}).get("lean", {}).get("kernel_accepted"))
             for record in successful
         ),
         "nonvacuous_exact_identity_count": sum(
-            bool(
-                record.get("validation", {})
-                .get("lean", {})
-                .get("benchmark_accepted")
-            )
+            bool(record.get("validation", {}).get("lean", {}).get("benchmark_accepted"))
             for record in successful
         ),
         "validation_failure_count": sum(
@@ -2708,46 +2390,28 @@ def summarize_cases(cases: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for arm_id, records in sorted(arms.items()):
         if arm_id == "symai_forward":
-            successful = [
-                record
-                for record in records
-                if record.get("status") == "success"
-            ]
+            successful = [record for record in records if record.get("status") == "success"]
             values = [
                 float(record["gold_atom_lexical_recall"])
                 for record in successful
-                if isinstance(
-                    record.get("gold_atom_lexical_recall"), (int, float)
-                )
+                if isinstance(record.get("gold_atom_lexical_recall"), (int, float))
             ]
             timings = [
                 float(record["timing"]["total_seconds"])
                 for record in successful
                 if isinstance(record.get("timing"), Mapping)
-                and isinstance(
-                    record["timing"].get("total_seconds"), (int, float)
-                )
+                and isinstance(record["timing"].get("total_seconds"), (int, float))
             ]
             result[arm_id] = {
                 "case_count": len(records),
                 "success_count": len(successful),
-                "execution_rate": round(
-                    len(successful) / len(records) if records else 0.0, 9
-                ),
+                "execution_rate": round(len(successful) / len(records) if records else 0.0, 9),
                 "roundtrip_supported": False,
                 "mean_gold_atom_lexical_recall": (
-                    round(sum(values) / len(records), 9)
-                    if records
-                    else None
+                    round(sum(values) / len(records), 9) if records else None
                 ),
-                "lexical_recall_scope": (
-                    "all_cases_missing_or_failed_cases_score_zero"
-                ),
-                "mean_total_seconds": (
-                    round(sum(timings) / len(timings), 9)
-                    if timings
-                    else None
-                ),
+                "lexical_recall_scope": ("all_cases_missing_or_failed_cases_score_zero"),
+                "mean_total_seconds": (round(sum(timings) / len(timings), 9) if timings else None),
                 "timing_scope": "adapter_wall_time_on_executed_cases",
             }
         else:
@@ -2842,46 +2506,33 @@ def _git_state() -> dict[str, Any]:
     diff = run("diff", "--binary", "--submodule=diff", "HEAD")
     untracked_paths = [
         item
-        for item in run(
-            "ls-files", "--others", "--exclude-standard"
-        ).splitlines()
-        if item
-        and item.startswith(("benchmarks/", "ipfs_datasets_py/", "tests/"))
+        for item in run("ls-files", "--others", "--exclude-standard").splitlines()
+        if item and item.startswith(("benchmarks/", "ipfs_datasets_py/", "tests/"))
     ]
     untracked_file_cids: dict[str, str] = {}
     for relative in sorted(untracked_paths):
         path = REPO_ROOT / relative
         if path.is_symlink():
-            untracked_file_cids[relative] = cid_for_bytes(
-                os.readlink(path).encode("utf-8")
-            )
+            untracked_file_cids[relative] = cid_for_bytes(os.readlink(path).encode("utf-8"))
         elif path.is_file():
             untracked_file_cids[relative] = cid_for_bytes(path.read_bytes())
     submodule_status = run("submodule", "status", "--recursive")
     return {
         "head_commit": run("rev-parse", "HEAD"),
         "branch": run("branch", "--show-current"),
-        "worktree_status": run(
-            "status", "--short", "--untracked-files=all"
-        ),
+        "worktree_status": run("status", "--short", "--untracked-files=all"),
         "worktree_diff_cid": cid_for_bytes(diff.encode("utf-8")),
         "untracked_file_cids": untracked_file_cids,
         "untracked_manifest_cid": cid_for_dag_json(untracked_file_cids),
         "submodule_status": submodule_status,
-        "submodule_status_cid": cid_for_bytes(
-            submodule_status.encode("utf-8")
-        ),
+        "submodule_status_cid": cid_for_bytes(submodule_status.encode("utf-8")),
     }
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--fixture", type=Path, default=DEFAULT_FIXTURE
-    )
-    parser.add_argument(
-        "--output-directory", type=Path, required=True
-    )
+    parser.add_argument("--fixture", type=Path, default=DEFAULT_FIXTURE)
+    parser.add_argument("--output-directory", type=Path, required=True)
     parser.add_argument(
         "--mode",
         choices=("deterministic", "live", "all"),
@@ -2893,9 +2544,7 @@ def _parser() -> argparse.ArgumentParser:
         default=[],
         help="Run only this case id; repeat as needed.",
     )
-    parser.add_argument(
-        "--endpoint", default=DEFAULT_ENDPOINT
-    )
+    parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--timeout-seconds", type=float, default=120.0)
     parser.add_argument("--skip-symai", action="store_true")
@@ -2912,9 +2561,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
         cases = [case for case in cases if case["id"] in requested]
         missing = requested - {case["id"] for case in cases}
         if missing:
-            raise BenchmarkError(
-                "unknown requested cases: " + ", ".join(sorted(missing))
-            )
+            raise BenchmarkError("unknown requested cases: " + ", ".join(sorted(missing)))
     deterministic = args.mode in {"deterministic", "all"}
     live = args.mode in {"live", "all"}
     client = (
@@ -2948,37 +2595,25 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             else:
                 os.environ[symai_max_tokens_key] = symai_max_tokens_previous
             raise
-    capabilities = capability_inventory(
-        client=client, spacy_nlp=spacy_nlp
-    )
+    capabilities = capability_inventory(client=client, spacy_nlp=spacy_nlp)
     lean_path = str(capabilities["lean"].get("path") or "")
     if not args.skip_validation and not lean_path:
         raise BenchmarkError("Lean is required for validation")
 
     run_started = time.perf_counter()
-    run_id = "semantic-roundtrip-" + time.strftime(
-        "%Y%m%dT%H%M%SZ", time.gmtime()
-    )
+    run_id = "semantic-roundtrip-" + time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
     case_results: list[dict[str, Any]] = []
     try:
         for case in cases:
             arms: dict[str, dict[str, Any]] = {}
             if deterministic:
-                arms["modal_regex"] = _safe_arm(
-                    run_modal_codec, case, backend="regex"
-                )
-                arms["modal_spacy"] = _safe_arm(
-                    run_modal_codec, case, backend="spacy"
-                )
-                arms["typed_deontic"] = _safe_arm(
-                    run_deontic_codec, case
-                )
+                arms["modal_regex"] = _safe_arm(run_modal_codec, case, backend="regex")
+                arms["modal_spacy"] = _safe_arm(run_modal_codec, case, backend="spacy")
+                arms["typed_deontic"] = _safe_arm(run_deontic_codec, case)
                 arms["cnl_v2"] = _safe_arm(run_cnl_v2, case)
                 arms["dcec"] = _safe_arm(run_dcec, case)
             if live and client is not None:
-                arms["leanstral_direct"] = _safe_arm(
-                    run_leanstral_cycle, case, client
-                )
+                arms["leanstral_direct"] = _safe_arm(run_leanstral_cycle, case, client)
                 if spacy_nlp is not None:
                     arms["spacy_leanstral"] = _safe_arm(
                         run_leanstral_cycle,
@@ -2994,9 +2629,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
                         oracle_l1=True,
                     )
             if symai_runner is not None:
-                arms["symai_forward"] = _safe_arm(
-                    symai_runner.run, case, run_id=run_id
-                )
+                arms["symai_forward"] = _safe_arm(symai_runner.run, case, run_id=run_id)
                 if client is not None and not args.skip_oracle:
                     arms["symai_oracle_reverse"] = _safe_arm(
                         run_symai_oracle_reverse_cycle,
@@ -3016,9 +2649,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             case_results.append(
                 {
                     "case_id": case["id"],
-                    "complexity": case.get(
-                        "complexity", case.get("complexity_tier")
-                    ),
+                    "complexity": case.get("complexity", case.get("complexity_tier")),
                     "source_ref": case.get("source_ref"),
                     "source_text_cid": case["source_text_cid"],
                     "source_word_count": len(_tokens(case["source_text"])),
@@ -3063,9 +2694,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             "timeout_seconds": args.timeout_seconds,
             "generation_temperature": 0,
             "generation_seed": 0,
-            "symai_max_tokens": (
-                384 if live and not args.skip_symai else None
-            ),
+            "symai_max_tokens": (384 if live and not args.skip_symai else None),
         },
         "methodology": {
             "path": "T0_source -> L1_logic -> T1_source_withheld_text -> L2_logic",
@@ -3088,9 +2717,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
         "corpus": {
             "fixture": str(args.fixture.resolve()),
             "fixture_file_cid": fixture_file_cid,
-            "semantic_case_manifest_cid": cid_for_dag_json(
-                corpus_identity
-            ),
+            "semantic_case_manifest_cid": cid_for_dag_json(corpus_identity),
             "cid": cid_for_dag_json(
                 {
                     "fixture_file_cid": fixture_file_cid,
@@ -3098,12 +2725,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
                 }
             ),
             "case_count": len(cases),
-            "gold_rule_count": sum(
-                len(case["gold_ir"]["rules"]) for case in cases
-            ),
-            "source_word_count": sum(
-                len(_tokens(case["source_text"])) for case in cases
-            ),
+            "gold_rule_count": sum(len(case["gold_ir"]["rules"]) for case in cases),
+            "source_word_count": sum(len(_tokens(case["source_text"])) for case in cases),
         },
         "cases": case_results,
         "summary": summarize_cases(case_results),
@@ -3131,9 +2754,7 @@ def write_report(report: Mapping[str, Any], output_directory: Path) -> dict[str,
     summary_text = _summary_markdown(report)
     summary_path.write_text(summary_text, encoding="utf-8")
     manifest = {
-        "schema_version": (
-            "ipfs-datasets.semantic-logic-roundtrip-artifacts.v1"
-        ),
+        "schema_version": ("ipfs-datasets.semantic-logic-roundtrip-artifacts.v1"),
         "run_id": report["run_id"],
         "report": {
             "path": report_path.name,
@@ -3147,9 +2768,7 @@ def write_report(report: Mapping[str, Any], output_directory: Path) -> dict[str,
         },
     }
     manifest_path = output_directory / "artifact-manifest.json"
-    manifest_bytes = (
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n"
-    ).encode("utf-8")
+    manifest_bytes = (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode("utf-8")
     manifest_path.write_bytes(manifest_bytes)
     return {
         "output_directory": str(output_directory.resolve()),

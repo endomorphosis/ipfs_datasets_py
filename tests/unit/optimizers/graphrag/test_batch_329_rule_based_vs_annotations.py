@@ -43,7 +43,15 @@ _CORPUS: Dict[str, Dict[str, object]] = {
             "Patient Bob was diagnosed with diabetes and prescribed "
             "metformin 500 mg by Dr. Chen at Mercy Hospital."
         ),
-        "expected": {"bob", "diabetes", "metformin", "500 mg", "dr. chen", "mercy hospital", "patient"},
+        "expected": {
+            "bob",
+            "diabetes",
+            "metformin",
+            "500 mg",
+            "dr. chen",
+            "mercy hospital",
+            "patient",
+        },
     },
     "technical": {
         "text": (
@@ -55,7 +63,9 @@ _CORPUS: Dict[str, Dict[str, object]] = {
 }
 
 
-def _run_benchmark(generator: OntologyGenerator, domain: str, text: str, expected: Set[str]) -> AnnotationBenchmark:
+def _run_benchmark(
+    generator: OntologyGenerator, domain: str, text: str, expected: Set[str]
+) -> AnnotationBenchmark:
     context = OntologyGenerationContext(
         data_source="manual-annotation-benchmark",
         data_type="text",

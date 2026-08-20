@@ -29,10 +29,7 @@ def test_discovers_binary_from_explicit_environment(monkeypatch, tmp_path):
 def test_discovers_binary_from_package_candidate(tmp_path):
     binary = _executable(tmp_path / "bin" / "provekit-cli")
 
-    assert (
-        discover_provekit_binary(env={}, package_dir=tmp_path, search_path=False)
-        == binary
-    )
+    assert discover_provekit_binary(env={}, package_dir=tmp_path, search_path=False) == binary
 
 
 def test_invalid_explicit_environment_path_fails_closed(monkeypatch, tmp_path):

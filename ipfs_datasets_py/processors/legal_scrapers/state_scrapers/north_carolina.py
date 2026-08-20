@@ -16,8 +16,13 @@ from .registry import StateScraperRegistry
 class NorthCarolinaScraper(BaseStateScraper):
     """Scraper for North Carolina state laws from https://www.ncleg.gov"""
 
-    _NC_SECTION_URL_RE = re.compile(r"/enactedlegislation/statutes/html/bysection/chapter_[0-9A-Za-z]+/gs_[0-9A-Za-z\-\.]+\.html$", re.IGNORECASE)
-    _NC_CHAPTER_URL_RE = re.compile(r"/laws/generalstatutesections/chapter[0-9A-Za-z]+$", re.IGNORECASE)
+    _NC_SECTION_URL_RE = re.compile(
+        r"/enactedlegislation/statutes/html/bysection/chapter_[0-9A-Za-z]+/gs_[0-9A-Za-z\-\.]+\.html$",
+        re.IGNORECASE,
+    )
+    _NC_CHAPTER_URL_RE = re.compile(
+        r"/laws/generalstatutesections/chapter[0-9A-Za-z]+$", re.IGNORECASE
+    )
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -26,19 +31,21 @@ class NorthCarolinaScraper(BaseStateScraper):
             if self._NC_SECTION_URL_RE.search(source) or self._NC_CHAPTER_URL_RE.search(source):
                 filtered.append(statute)
         return filtered
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for North Carolina's legislative website."""
         return "https://www.ncleg.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for North Carolina."""
-        return [{
-            "name": "North Carolina General Statutes",
-            "url": f"{self.get_base_url()}/Laws/GeneralStatutes",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "North Carolina General Statutes",
+                "url": f"{self.get_base_url()}/Laws/GeneralStatutes",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -46,11 +53,11 @@ class NorthCarolinaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from North Carolina's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -75,7 +82,9 @@ class NorthCarolinaScraper(BaseStateScraper):
         seen = set()
         best_statutes: List[NormalizedStatute] = []
         if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            direct = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=return_threshold
+            )
             if direct:
                 return direct[: int(return_threshold)]
         for candidate in candidate_urls:
@@ -101,7 +110,9 @@ class NorthCarolinaScraper(BaseStateScraper):
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "N.C. Gen. Stat.", max_sections=max(10, return_threshold))
+            statutes = await self._generic_scrape(
+                code_name, candidate, "N.C. Gen. Stat.", max_sections=max(10, return_threshold)
+            )
             statutes = self._filter_section_level(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
@@ -118,7 +129,9 @@ class NorthCarolinaScraper(BaseStateScraper):
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=limit)
         chapter_urls = await self._discover_chapter_urls()
-        self.logger.info("North Carolina official index: discovered %s chapter urls", len(chapter_urls))
+        self.logger.info(
+            "North Carolina official index: discovered %s chapter urls", len(chapter_urls)
+        )
         statutes: List[NormalizedStatute] = []
         seen_source_urls: set[str] = set()
         seen_keys: set[str] = set()
@@ -254,7 +267,9 @@ class NorthCarolinaScraper(BaseStateScraper):
             out.append(absolute)
         return out
 
-    async def _discover_section_urls(self, chapter_url: str, limit: Optional[int] = None) -> List[str]:
+    async def _discover_section_urls(
+        self, chapter_url: str, limit: Optional[int] = None
+    ) -> List[str]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -268,7 +283,9 @@ class NorthCarolinaScraper(BaseStateScraper):
         seen: set[str] = set()
         for anchor in soup.find_all("a", href=True):
             href = str(anchor.get("href") or "").strip()
-            if not href.startswith("/EnactedLegislation/Statutes/HTML/BySection/Chapter_") or not href.endswith(".html"):
+            if not href.startswith(
+                "/EnactedLegislation/Statutes/HTML/BySection/Chapter_"
+            ) or not href.endswith(".html"):
                 continue
             absolute = urljoin(chapter_url, href)
             if absolute in seen:
@@ -314,8 +331,14 @@ class NorthCarolinaScraper(BaseStateScraper):
                 derived = re.sub(r"^GS_", "", derived, flags=re.IGNORECASE)
                 derived = re.sub(r"\.html$", "", derived, flags=re.IGNORECASE)
                 section_number = derived.replace("_", "-")
-            section_name_match = re.search(rf"§\s*{re.escape(section_number)}\.\s*([^\.]{{2,220}})", text)
-            section_name = self._normalize_legal_text(section_name_match.group(1)) if section_name_match else f"G.S. {section_number}"
+            section_name_match = re.search(
+                rf"§\s*{re.escape(section_number)}\.\s*([^\.]{{2,220}})", text
+            )
+            section_name = (
+                self._normalize_legal_text(section_name_match.group(1))
+                if section_name_match
+                else f"G.S. {section_number}"
+            )
             return NormalizedStatute(
                 state_code=self.state_code,
                 state_name=self.state_name,
@@ -363,15 +386,23 @@ class NorthCarolinaScraper(BaseStateScraper):
             await asyncio.gather(*tasks, return_exceptions=True)
         return out
 
-    async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
+    async def _scrape_direct_seed_sections(
+        self, code_name: str, max_statutes: int = 1
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
         seeds = [
-            ("1-1", f"{self.get_base_url()}/EnactedLegislation/Statutes/HTML/BySection/Chapter_1/GS_1-1.html"),
-            ("14-17", f"{self.get_base_url()}/EnactedLegislation/Statutes/HTML/BySection/Chapter_14/GS_14-17.html"),
+            (
+                "1-1",
+                f"{self.get_base_url()}/EnactedLegislation/Statutes/HTML/BySection/Chapter_1/GS_1-1.html",
+            ),
+            (
+                "14-17",
+                f"{self.get_base_url()}/EnactedLegislation/Statutes/HTML/BySection/Chapter_14/GS_14-17.html",
+            ),
         ]
         out: List[NormalizedStatute] = []
         for section_number, source_url in seeds[: max(1, int(max_statutes or 1))]:
@@ -384,7 +415,9 @@ class NorthCarolinaScraper(BaseStateScraper):
             text = self._normalize_legal_text(soup.get_text(" ", strip=True))
             if len(text) < 80:
                 continue
-            name_match = re.search(rf"§\s*{re.escape(section_number)}[.;]?\s*([^§]{{4,180}}?)(?:\.|$)", text)
+            name_match = re.search(
+                rf"§\s*{re.escape(section_number)}[.;]?\s*([^§]{{4,180}}?)(?:\.|$)", text
+            )
             section_name = name_match.group(1).strip() if name_match else f"G.S. {section_number}"
             out.append(
                 NormalizedStatute(

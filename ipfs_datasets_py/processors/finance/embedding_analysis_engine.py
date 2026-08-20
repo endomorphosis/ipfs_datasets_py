@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # ── optional dependencies ──────────────────────────────────────────────────
 try:
     import numpy as np  # type: ignore
+
     NUMPY_AVAILABLE = True
 except (ImportError, ModuleNotFoundError):
     logger.warning("NumPy not available. Using Python-list stubs for embeddings.")
@@ -35,39 +36,44 @@ except (ImportError, ModuleNotFoundError):
         @staticmethod
         def random_randn(*args: int) -> list:  # type: ignore
             import random
+
             size = args[0] if args else 1
             return [random.gauss(0, 1) for _ in range(size)]
 
         @staticmethod
         def random_seed(seed: int) -> None:  # type: ignore
             import random
+
             random.seed(seed)
 
         class random:  # noqa: N801
             @staticmethod
             def seed(s: int) -> None:
                 import random as _r
+
                 _r.seed(s)
 
             @staticmethod
             def randint(low: int, high: int, size: int = 1) -> list:
                 import random as _r
+
                 return [_r.randint(low, high - 1) for _ in range(size)]
 
             @staticmethod
             def randn(*args: int) -> list:
                 import random as _r
+
                 size = args[0] if args else 1
                 return [_r.gauss(0, 1) for _ in range(size)]
 
         @staticmethod
         def linalg_norm(arr: list) -> float:
-            return sum(x ** 2 for x in arr) ** 0.5
+            return sum(x**2 for x in arr) ** 0.5
 
         class linalg:  # noqa: N801
             @staticmethod
             def norm(arr: list) -> float:
-                return sum(x ** 2 for x in arr) ** 0.5
+                return sum(x**2 for x in arr) ** 0.5
 
         @staticmethod
         def dot(a: list, b: list) -> float:
@@ -112,6 +118,7 @@ try:
     from sentence_transformers import SentenceTransformer  # type: ignore
     from transformers import CLIPModel, CLIPProcessor  # type: ignore
     import torch  # type: ignore
+
     EMBEDDINGS_AVAILABLE = True
 except (ImportError, ModuleNotFoundError):
     EMBEDDINGS_AVAILABLE = False
@@ -123,6 +130,7 @@ try:
         get_accelerate_status,
         is_accelerate_available,
     )
+
     HAVE_ACCELERATE = True
 except (ImportError, ModuleNotFoundError):
     HAVE_ACCELERATE = False
@@ -132,6 +140,7 @@ except (ImportError, ModuleNotFoundError):
 
 
 # ── data classes ──────────────────────────────────────────────────────────
+
 
 @dataclass
 class DocumentEmbedding:
@@ -155,7 +164,9 @@ class DocumentEmbedding:
             "url": self.url,
             "published_date": self.published_date.isoformat(),
             "has_text_embedding": self.text_embedding is not None,
-            "text_embedding_dim": len(self.text_embedding) if self.text_embedding is not None else 0,
+            "text_embedding_dim": len(self.text_embedding)
+            if self.text_embedding is not None
+            else 0,
             "num_image_embeddings": len(self.image_embeddings),
             "has_fused_embedding": self.fused_embedding is not None,
             "embedding_model": self.embedding_model,
@@ -197,6 +208,7 @@ class MarketEmbeddingCorrelation:
 
 
 # ── engine ─────────────────────────────────────────────────────────────────
+
 
 class VectorEmbeddingAnalyzer:
     """Analyzer for creating and correlating vector embeddings with market movements.
@@ -245,7 +257,7 @@ class VectorEmbeddingAnalyzer:
         if self.text_model is not None:
             pass  # production path
         hash_val = int(hashlib.md5(text.encode()).hexdigest(), 16)
-        np.random.seed(hash_val % (2 ** 32))
+        np.random.seed(hash_val % (2**32))
         embedding = np.random.randn(768)
         norm = np.linalg.norm(embedding)
         if norm:
@@ -259,7 +271,7 @@ class VectorEmbeddingAnalyzer:
             pass  # production path
         raw = image_data if isinstance(image_data, str) else str(image_data)
         hash_val = int(hashlib.md5(raw.encode()).hexdigest(), 16)
-        np.random.seed(hash_val % (2 ** 32))
+        np.random.seed(hash_val % (2**32))
         embedding = np.random.randn(512)
         norm = np.linalg.norm(embedding)
         if norm:
@@ -288,7 +300,7 @@ class VectorEmbeddingAnalyzer:
                 else:
                     img_proj = img_emb[:target_dim]
                 fused = [f + img_weight * p for f, p in zip(fused, img_proj)]
-            norm = sum(v ** 2 for v in fused) ** 0.5
+            norm = sum(v**2 for v in fused) ** 0.5
             if norm:
                 fused = [v / norm for v in fused]
             return fused
@@ -296,7 +308,7 @@ class VectorEmbeddingAnalyzer:
             fused = list(text_embedding)
             for img_emb in image_embeddings:
                 fused.extend(img_emb)
-            norm = sum(v ** 2 for v in fused) ** 0.5
+            norm = sum(v**2 for v in fused) ** 0.5
             if norm:
                 fused = [v / norm for v in fused]
             return fused
@@ -372,7 +384,7 @@ class VectorEmbeddingAnalyzer:
         """Return a mock correlation score (replace with ML model in production)."""
         if embedding is None:
             return 0.0
-        emb_mag = sum(v ** 2 for v in embedding) ** 0.5
+        emb_mag = sum(v**2 for v in embedding) ** 0.5
         market_mag = abs(price_change) + abs(volume_change) / 10
         return min(1.0, (emb_mag * market_mag) / 100)
 
@@ -392,14 +404,16 @@ class VectorEmbeddingAnalyzer:
     ) -> List[Tuple[DocumentEmbedding, float]]:
         """Return the top-k documents most similar to *query_embedding*."""
         similarities: List[Tuple[DocumentEmbedding, float]] = []
-        q_norm = sum(v ** 2 for v in query_embedding) ** 0.5
+        q_norm = sum(v**2 for v in query_embedding) ** 0.5
         for doc_emb in self.embeddings.values():
             if doc_emb.fused_embedding is None:
                 continue
-            d_norm = sum(v ** 2 for v in doc_emb.fused_embedding) ** 0.5
+            d_norm = sum(v**2 for v in doc_emb.fused_embedding) ** 0.5
             if not q_norm or not d_norm:
                 continue
-            sim = sum(a * b for a, b in zip(query_embedding, doc_emb.fused_embedding)) / (q_norm * d_norm)
+            sim = sum(a * b for a, b in zip(query_embedding, doc_emb.fused_embedding)) / (
+                q_norm * d_norm
+            )
             if sim >= threshold:
                 similarities.append((doc_emb, float(sim)))
         similarities.sort(key=lambda x: x[1], reverse=True)
@@ -413,6 +427,7 @@ class VectorEmbeddingAnalyzer:
             logger.warning("No embeddings to cluster")
             return {}
         import random
+
         random.seed(42)
         doc_ids = [
             doc_id for doc_id, emb in self.embeddings.items() if emb.fused_embedding is not None

@@ -79,7 +79,7 @@ def _extract_openai_key(text: str) -> Optional[str]:
     if not text:
         return None
     # Fast path: exact key-like string.
-    stripped = text.strip().strip('"\'')
+    stripped = text.strip().strip("\"'")
     if stripped.startswith("sk-") and len(stripped) >= 24:
         return stripped
 

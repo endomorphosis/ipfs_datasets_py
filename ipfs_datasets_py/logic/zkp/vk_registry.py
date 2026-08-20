@@ -42,7 +42,9 @@ def compute_vk_hash(vk: object) -> str:
     elif isinstance(vk, str):
         payload = vk.encode("utf-8")
     elif isinstance(vk, (dict, list)):
-        payload = json.dumps(vk, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        payload = json.dumps(vk, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+            "utf-8"
+        )
     else:
         raise TypeError("vk must be bytes, str, dict, or list")
 
@@ -95,7 +97,9 @@ class VKRegistry:
             for entry in entries:
                 self.register(entry.circuit_id, entry.version, entry.vk_hash_hex, overwrite=False)
 
-    def register(self, circuit_id: str, version: int, vk_hash_hex: str, *, overwrite: bool = False) -> None:
+    def register(
+        self, circuit_id: str, version: int, vk_hash_hex: str, *, overwrite: bool = False
+    ) -> None:
         circuit_id = _validate_circuit_id(circuit_id)
         version = _validate_version(version)
         vk_hash_hex = _validate_vk_hash_hex(vk_hash_hex)

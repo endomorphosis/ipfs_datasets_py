@@ -275,12 +275,16 @@ def list_canonical_legal_corpora() -> List[CanonicalLegalCorpus]:
 
 def list_canonical_legal_corpora_by_branch(branch: str) -> List[CanonicalLegalCorpus]:
     normalized = str(branch or "").strip().lower()
-    return [corpus for corpus in list_canonical_legal_corpora() if corpus.matches_branch(normalized)]
+    return [
+        corpus for corpus in list_canonical_legal_corpora() if corpus.matches_branch(normalized)
+    ]
 
 
 def list_canonical_legal_corpora_by_country(country_code: str) -> List[CanonicalLegalCorpus]:
     normalized = str(country_code or "").strip().upper()
-    return [corpus for corpus in list_canonical_legal_corpora() if corpus.matches_country(normalized)]
+    return [
+        corpus for corpus in list_canonical_legal_corpora() if corpus.matches_country(normalized)
+    ]
 
 
 def build_canonical_corpus_branch_map() -> Dict[str, List[str]]:
@@ -306,7 +310,11 @@ def build_missing_eu_corpus_proposals(
         if str(code).strip() and str(code).strip().upper() != "EU"
     )
     for country_code in supported_country_codes:
-        existing = [corpus for corpus in list_canonical_legal_corpora_by_country(country_code) if corpus.matches_branch("eu")]
+        existing = [
+            corpus
+            for corpus in list_canonical_legal_corpora_by_country(country_code)
+            if corpus.matches_branch("eu")
+        ]
         if existing:
             continue
         profile = dict(eu_profiles.get(country_code) or {})
@@ -349,8 +357,12 @@ def build_canonical_corpus_local_root_overrides(
 ) -> Dict[str, str]:
     source = env or {}
     overrides: MutableMapping[str, str] = {}
-    shared_data_root = str(source.get(data_root_env_name or "", "")).strip() if data_root_env_name else ""
-    shared_data_root_path = Path(shared_data_root).expanduser().resolve() if shared_data_root else None
+    shared_data_root = (
+        str(source.get(data_root_env_name or "", "")).strip() if data_root_env_name else ""
+    )
+    shared_data_root_path = (
+        Path(shared_data_root).expanduser().resolve() if shared_data_root else None
+    )
 
     for corpus in list_canonical_legal_corpora():
         env_name = None
@@ -363,6 +375,8 @@ def build_canonical_corpus_local_root_overrides(
             overrides[corpus.key] = value
             continue
         if shared_data_root_path is not None:
-            overrides[corpus.key] = str((shared_data_root_path / corpus.local_root_name / corpus.parquet_dir_name).resolve())
+            overrides[corpus.key] = str(
+                (shared_data_root_path / corpus.local_root_name / corpus.parquet_dir_name).resolve()
+            )
 
     return dict(overrides)

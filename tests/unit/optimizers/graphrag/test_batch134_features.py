@@ -6,6 +6,7 @@ Methods under test:
   - OntologyPipeline.stabilization_index(window)
   - OntologyPipeline.run_improvement()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -14,8 +15,10 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -34,6 +37,7 @@ def _push_opt(opt, avg):
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -48,6 +52,7 @@ def _push_run(p, overall):
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.export_history_csv
 # ---------------------------------------------------------------------------
+
 
 class TestExportHistoryCsv:
     def test_empty_returns_header_only(self):
@@ -89,6 +94,7 @@ class TestExportHistoryCsv:
 # OntologyOptimizer.history_as_dicts
 # ---------------------------------------------------------------------------
 
+
 class TestHistoryAsDicts:
     def test_empty(self):
         o = _make_optimizer()
@@ -121,6 +127,7 @@ class TestHistoryAsDicts:
 # OntologyPipeline.stabilization_index
 # ---------------------------------------------------------------------------
 
+
 class TestStabilizationIndex:
     @pytest.mark.parametrize(
         "scores,assertion",
@@ -148,6 +155,7 @@ class TestStabilizationIndex:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.run_improvement
 # ---------------------------------------------------------------------------
+
 
 class TestRunImprovement:
     @pytest.mark.parametrize(

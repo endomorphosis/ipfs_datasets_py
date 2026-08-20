@@ -33,7 +33,7 @@ Complete IPFS integration for distributed storage:
 from ipfs_datasets_py.processors.file_converter import get_ipfs_backend
 
 backend = get_ipfs_backend()
-cid = await backend.add_file(Path('document.pdf'), pin=True)
+cid = await backend.add_file(Path("document.pdf"), pin=True)
 url = backend.get_gateway_url(cid)
 # url: http://127.0.0.1:8080/ipfs/Qm...
 ```
@@ -58,14 +58,11 @@ High-level converter combining all Phase 1-3 features:
 from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 
 converter = IPFSAcceleratedConverter(
-    backend='native',
-    enable_ipfs=True,
-    enable_acceleration=True,
-    auto_pin=False
+    backend="native", enable_ipfs=True, enable_acceleration=True, auto_pin=False
 )
 
 # Convert and store
-result = await converter.convert('doc.pdf', store_on_ipfs=True, pin=True)
+result = await converter.convert("doc.pdf", store_on_ipfs=True, pin=True)
 
 print(f"Text: {result.text}")
 print(f"CID: {result.ipfs_cid}")
@@ -284,13 +281,9 @@ IPFSConversionResult
 ```python
 from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 
-converter = IPFSAcceleratedConverter(
-    backend='native',
-    enable_ipfs=False,
-    enable_acceleration=False
-)
+converter = IPFSAcceleratedConverter(backend="native", enable_ipfs=False, enable_acceleration=False)
 
-result = await converter.convert('document.pdf')
+result = await converter.convert("document.pdf")
 print(result.text)
 ```
 
@@ -301,7 +294,7 @@ print(result.text)
 ```python
 converter = IPFSAcceleratedConverter(enable_ipfs=True)
 
-result = await converter.convert('document.pdf', store_on_ipfs=True, pin=True)
+result = await converter.convert("document.pdf", store_on_ipfs=True, pin=True)
 
 print(f"CID: {result.ipfs_cid}")
 print(f"URL: {result.ipfs_gateway_url}")
@@ -312,7 +305,7 @@ print(f"URL: {result.ipfs_gateway_url}")
 ### Pattern 3: Batch Processing
 
 ```python
-files = ['doc1.pdf', 'doc2.docx', 'doc3.txt']
+files = ["doc1.pdf", "doc2.docx", "doc3.txt"]
 results = await converter.convert_batch(files, max_concurrent=5)
 
 for result in results:
@@ -326,7 +319,7 @@ for result in results:
 
 ```python
 # Convert and store without pinning
-result = await converter.convert('doc.pdf', store_on_ipfs=True, pin=False)
+result = await converter.convert("doc.pdf", store_on_ipfs=True, pin=False)
 
 # Pin later when needed
 await converter.pin_result(result.ipfs_cid)
@@ -344,13 +337,13 @@ await converter.unpin_result(result.ipfs_cid)
 
 ```python
 # Retrieve previously converted text
-text = await converter.retrieve_from_ipfs('QmXxx...')
+text = await converter.retrieve_from_ipfs("QmXxx...")
 
 # Or from any source
 from ipfs_datasets_py.processors.file_converter import get_ipfs_backend
 
 backend = get_ipfs_backend()
-await backend.get_file('QmXxx...', Path('output.txt'))
+await backend.get_file("QmXxx...", Path("output.txt"))
 ```
 
 **Use Case:** Retrieve content by content ID from distributed storage.
@@ -394,11 +387,7 @@ results = await converter.convert_batch(documents)
 
 # Build graph with CIDs as nodes
 for result in results:
-    graph.add_node(
-        cid=result.ipfs_cid,
-        text=result.text,
-        url=result.ipfs_gateway_url
-    )
+    graph.add_node(cid=result.ipfs_cid, text=result.text, url=result.ipfs_gateway_url)
 
 # Retrieve when needed
 text = await converter.retrieve_from_ipfs(cid)

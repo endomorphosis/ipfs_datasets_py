@@ -79,7 +79,9 @@ class TaskQueue:
                 )
                 """
             )
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status_created ON tasks(status, created_at)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_tasks_status_created ON tasks(status, created_at)"
+            )
         finally:
             try:
                 conn.close()
@@ -276,7 +278,9 @@ class TaskQueue:
                 (status_norm, result_json, error, now, str(task_id)),
             )
 
-            row = conn.execute("SELECT status FROM tasks WHERE task_id=?", (str(task_id),)).fetchone()
+            row = conn.execute(
+                "SELECT status FROM tasks WHERE task_id=?", (str(task_id),)
+            ).fetchone()
             return bool(row and str(row[0]) == status_norm)
         finally:
             try:

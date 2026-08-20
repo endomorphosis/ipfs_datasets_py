@@ -127,9 +127,7 @@ def discover_provekit_ffi_library(
             if candidate.is_file():
                 return candidate
         tried = ", ".join(str(path) for path in candidates)
-        raise ZKPError(
-            f"{var_name} is set, but no ProveKit FFI library was found. Tried: {tried}"
-        )
+        raise ZKPError(f"{var_name} is set, but no ProveKit FFI library was found. Tried: {tried}")
 
     package_root = Path(package_dir) if package_dir is not None else Path(__file__).resolve().parent
     for candidate in tuple(package_root / "ffi" / name for name in names) + tuple(
@@ -204,7 +202,11 @@ class ProveKitFFI:
 
     def __post_init__(self) -> None:
         if self.library is None:
-            path = Path(self.library_path) if self.library_path is not None else discover_provekit_ffi_library()
+            path = (
+                Path(self.library_path)
+                if self.library_path is not None
+                else discover_provekit_ffi_library()
+            )
             if path is None:
                 raise ZKPError(
                     "ProveKit FFI library not found. Set "
@@ -339,7 +341,9 @@ class ProveKitFFI:
                 self._raise_status("pk_prove_inputs", status, sensitive_values=sensitive_values)
             return self._read_and_free_buf(out)
 
-    def verify(self, verifier: ProveKitVerifierHandle | c_void_p, proof: bytes | bytearray | memoryview) -> bool:
+    def verify(
+        self, verifier: ProveKitVerifierHandle | c_void_p, proof: bytes | bytearray | memoryview
+    ) -> bool:
         """Verify proof bytes with ``pk_verify``.
 
         Returns ``False`` for invalid proofs. Other native failures raise
@@ -512,21 +516,29 @@ def _input_format_value(input_format: str | int) -> int:
     if isinstance(input_format, int):
         if input_format in {PK_INPUT_FORMAT_JSON, PK_INPUT_FORMAT_TOML}:
             return input_format
-        raise ValueError("input_format integer must be PK_INPUT_FORMAT_JSON or PK_INPUT_FORMAT_TOML")
+        raise ValueError(
+            "input_format integer must be PK_INPUT_FORMAT_JSON or PK_INPUT_FORMAT_TOML"
+        )
 
     normalized = str(input_format).strip().lower()
     if normalized == "json":
         return PK_INPUT_FORMAT_JSON
     if normalized == "toml":
         return PK_INPUT_FORMAT_TOML
-    raise ValueError("input_format must be 'json', 'toml', PK_INPUT_FORMAT_JSON, or PK_INPUT_FORMAT_TOML")
+    raise ValueError(
+        "input_format must be 'json', 'toml', PK_INPUT_FORMAT_JSON, or PK_INPUT_FORMAT_TOML"
+    )
 
 
 def _handle_value(
     handle: ProveKitProverHandle | ProveKitVerifierHandle | c_void_p,
     label: str,
 ) -> c_void_p:
-    raw = handle.handle if isinstance(handle, (ProveKitProverHandle, ProveKitVerifierHandle)) else handle
+    raw = (
+        handle.handle
+        if isinstance(handle, (ProveKitProverHandle, ProveKitVerifierHandle))
+        else handle
+    )
     if not isinstance(raw, c_void_p):
         raise TypeError(f"{label} handle must be a ctypes.c_void_p or ProveKit handle")
     return _require_handle(raw, label)

@@ -11,7 +11,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-_MODULE_PATH = Path(__file__).resolve().parents[1] / "legal_data" / "legal_source_recovery_promotion.py"
+_MODULE_PATH = (
+    Path(__file__).resolve().parents[1] / "legal_data" / "legal_source_recovery_promotion.py"
+)
 if not _MODULE_PATH.is_file():  # pragma: no cover
     raise ImportError(f"Unable to load legal source recovery promotion module from {_MODULE_PATH}")
 

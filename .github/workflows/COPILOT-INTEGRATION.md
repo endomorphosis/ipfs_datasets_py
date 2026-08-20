@@ -332,15 +332,15 @@ repo = g.get_repo("owner/repo")
 total = 0
 approved = 0
 
-for pr in repo.get_pulls(state='closed'):
-    if 'copilot-ready' in [l.name for l in pr.labels]:
+for pr in repo.get_pulls(state="closed"):
+    if "copilot-ready" in [l.name for l in pr.labels]:
         total += 1
         for review in pr.get_reviews():
-            if review.user.login == 'github-copilot' and review.state == 'APPROVED':
+            if review.user.login == "github-copilot" and review.state == "APPROVED":
                 approved += 1
                 break
 
-print(f"Copilot approval rate: {approved/total*100:.1f}%")
+print(f"Copilot approval rate: {approved / total * 100:.1f}%")
 ```
 
 ## Troubleshooting

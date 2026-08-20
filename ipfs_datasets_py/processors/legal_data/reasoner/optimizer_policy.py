@@ -84,7 +84,9 @@ def build_optimizer_onoff_benchmark(
         "optimizer_on_summary": on_summary,
         "comparisons": comparisons,
     }
-    digest = hashlib.sha1(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()[:12]
+    digest = hashlib.sha1(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()[:12]
 
     return {
         "summary": {
@@ -160,11 +162,7 @@ def build_optimizer_chain_plan(
         "notes": {
             "failing_modalities": failing_modalities,
             "policy": "optimizer_chain_v1",
-            "reason": (
-                "policy_accepted"
-                if accepted
-                else "policy_rejected_post_compile_disabled"
-            ),
+            "reason": ("policy_accepted" if accepted else "policy_rejected_post_compile_disabled"),
         },
     }
 
@@ -261,7 +259,9 @@ def build_optimizer_acceptance_decision(
         "default_modality_floor": float(default_modality_floor),
         "checks": checks,
     }
-    digest = hashlib.sha1(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()[:12]
+    digest = hashlib.sha1(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()[:12]
 
     return {
         "summary": {

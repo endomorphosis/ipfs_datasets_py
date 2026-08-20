@@ -25,18 +25,18 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGene
 generator = OntologyGenerator()
 generator.enable_semantic_dedup(
     threshold=0.85,  # Similarity threshold (0-1)
-    batch_size=32,   # Embedding batch size
+    batch_size=32,  # Embedding batch size
 )
 
 # Extract entities and get deduplicated results
 result = generator.generate_ontology(
     text="Your document text...",
     domain="legal",
-    strategy="SEMANTIC_RULE_HYBRID"  # Uses semantic dedup when enabled
+    strategy="SEMANTIC_RULE_HYBRID",  # Uses semantic dedup when enabled
 )
 
 # Access dedup stats
-stats = result.dedup_metrics if hasattr(result, 'dedup_metrics') else None
+stats = result.dedup_metrics if hasattr(result, "dedup_metrics") else None
 print(f"Removed {stats['removed_count']} similar entities" if stats else "")
 ```
 
@@ -94,10 +94,10 @@ export SEMANTIC_DEDUP_BATCH_SIZE=64
 ```python
 # Enable semantic dedup with custom settings
 generator.enable_semantic_dedup(
-    threshold=0.82,          # Similarity threshold
-    batch_size=64,           # Batch size for embeddings
-    use_description=True,    # Include entity description in embedding
-    normalize=True,          # L2-normalize vectors
+    threshold=0.82,  # Similarity threshold
+    batch_size=64,  # Batch size for embeddings
+    use_description=True,  # Include entity description in embedding
+    normalize=True,  # L2-normalize vectors
 )
 
 # Disable semantic dedup (revert to rule-based)
@@ -107,7 +107,7 @@ generator.disable_semantic_dedup()
 is_enabled = generator.semantic_dedup_enabled  # Boolean property
 
 # Get dedup metrics from results
-if hasattr(result, 'dedup_metrics'):
+if hasattr(result, "dedup_metrics"):
     print(f"Original: {result.dedup_metrics['original_count']}")
     print(f"After dedup: {result.dedup_metrics['final_count']}")
     print(f"Removed: {result.dedup_metrics['removed_count']}")
@@ -121,17 +121,18 @@ if hasattr(result, 'dedup_metrics'):
 ```python
 # Different thresholds for different domains
 DOMAIN_THRESHOLDS = {
-    "legal": 0.88,      # Conservative (fewer dedup)
-    "medical": 0.85,    # Standard
-    "business": 0.82,   # Aggressive (more dedup)
-    "general": 0.85,    # Default
+    "legal": 0.88,  # Conservative (fewer dedup)
+    "medical": 0.85,  # Standard
+    "business": 0.82,  # Aggressive (more dedup)
+    "general": 0.85,  # Default
 }
+
 
 def extract_with_domain_dedup(text: str, domain: str) -> Dict[str, Any]:
     generator = OntologyGenerator()
     threshold = DOMAIN_THRESHOLDS.get(domain, 0.85)
     generator.enable_semantic_dedup(threshold=threshold)
-    
+
     result = generator.generate_ontology(text, domain=domain)
     return result.to_dict()
 ```
@@ -164,9 +165,10 @@ def extract_quality_first(text: str, domain: str):
     generator = OntologyGenerator()
     generator.enable_semantic_dedup(
         threshold=0.90,  # Very conservative
-        batch_size=16,   # Smaller batches, potentially better
+        batch_size=16,  # Smaller batches, potentially better
     )
     return generator.generate_ontology(text, domain=domain)
+
 
 # Speed-focused: Aggressive dedup
 def extract_speed_first(text: str, domain: str):
@@ -184,7 +186,8 @@ def extract_speed_first(text: str, domain: str):
 
 ```python
 from ipfs_datasets_py.optimizers.tests.unit.optimizers.graphrag.bench_graphrag import (
-    GraphRAGBenchmarkSuite, BenchmarkConfig
+    GraphRAGBenchmarkSuite,
+    BenchmarkConfig,
 )
 
 # Run semantic vs. rule-based comparison
@@ -250,11 +253,11 @@ print(f"Quality improvement: {semantic_results['quality_delta']:.2%}")
 Use these metrics to evaluate dedup effectiveness:
 
 ```python
-def evaluate_dedup_quality(original_entities: List[str], 
-                           deduplicated_entities: List[str],
-                           domain: str) -> Dict[str, float]:
+def evaluate_dedup_quality(
+    original_entities: List[str], deduplicated_entities: List[str], domain: str
+) -> Dict[str, float]:
     """Evaluate deduplication quality."""
-    
+
     return {
         "dedup_ratio": 1.0 - (len(deduplicated_entities) / len(original_entities)),
         "execution_speed": len(original_entities) / duration_ms,
@@ -283,10 +286,12 @@ def evaluate_dedup_quality(original_entities: List[str],
 ```python
 # 1. Check environment variable
 import os
+
 print(os.getenv("ENABLE_SEMANTIC_DEDUP"))  # Should be "true"
 
 # 2. Check feature flag
 from ipfs_datasets_py.optimizers.agentic.feature_flags import FeatureFlags
+
 print(FeatureFlags.is_enabled("semantic_entity_dedup"))  # Should be True
 
 # 3. Explicitly enable
@@ -336,12 +341,14 @@ generator.enable_semantic_dedup(
 # 1. Embedding model not found
 # Solution: Install sentence-transformers
 import subprocess
+
 subprocess.run(["pip", "install", "sentence-transformers"])
 
 # 2. CUDA not available (if using GPU)
 # Solution: Use CPU, slower but works
 # Set environment before import
 import os
+
 os.environ["CUDA_VISIBLE_DEVICES"] = ""  # Disable CUDA
 
 # 3. Embedding generation timeout
@@ -382,12 +389,14 @@ def old_extract(text: str, domain: str):
     generator = OntologyGenerator()
     return generator.generate_ontology(text, domain=domain)
 
+
 # New: With semantic dedup option
 def new_extract(text: str, domain: str, use_semantic: bool = False):
     generator = OntologyGenerator()
     if use_semantic:
         generator.enable_semantic_dedup(threshold=0.85)
     return generator.generate_ontology(text, domain=domain)
+
 
 # Gradual rollout
 # Start with 10% traffic on semantic
@@ -414,10 +423,12 @@ generator.set_embedding_model(
 # Cache embeddings for repeated documents
 from functools import lru_cache
 
+
 @lru_cache(maxsize=1000)
 def get_entity_embedding(entity_name: str, domain: str) -> List[float]:
     generator = OntologyGenerator()
     return generator._embed_text(entity_name)
+
 
 # Use cached embeddings in dedup
 ```

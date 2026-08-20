@@ -24,6 +24,7 @@ from .embedding_analysis_engine import (  # noqa: F401
 
 # ── MCP Tool Functions ─────────────────────────────────────────────────────
 
+
 def analyze_embedding_market_correlation(
     news_articles_json: str,
     stock_data_json: str,

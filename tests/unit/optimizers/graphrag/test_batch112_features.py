@@ -6,6 +6,7 @@ Methods under test:
   - OntologyCritic.normalize_scores(scores)
   - OntologyPipeline.is_stable(threshold, window)
 """
+
 import pytest
 
 
@@ -13,8 +14,10 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -36,11 +39,13 @@ def _opt_with_history(scores):
 
 def _entity(eid, etype="Person", text="Alice", confidence=0.9):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=etype, text=text, confidence=confidence)
 
 
 def _result(entities=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=[],
@@ -50,26 +55,38 @@ def _result(entities=None):
 
 def _make_gen():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_critic_score(v):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
-    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, relationship_coherence=v, domain_alignment=v)
+
+    return CriticScore(
+        completeness=v,
+        consistency=v,
+        clarity=v,
+        granularity=v,
+        relationship_coherence=v,
+        domain_alignment=v,
+    )
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
 def _push_run(pipeline, overall):
     from unittest.mock import MagicMock
+
     score = MagicMock()
     score.overall = overall
     run = MagicMock()
@@ -80,6 +97,7 @@ def _push_run(pipeline, overall):
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.has_improved
 # ---------------------------------------------------------------------------
+
 
 class TestHasImproved:
     def test_empty_history_false(self):
@@ -107,6 +125,7 @@ class TestHasImproved:
 # OntologyGenerator.normalize_confidence
 # ---------------------------------------------------------------------------
 
+
 class TestNormalizeConfidence:
     def test_empty_result_unchanged(self):
         gen = _make_gen()
@@ -123,10 +142,12 @@ class TestNormalizeConfidence:
 
     def test_spreads_to_zero_one(self):
         gen = _make_gen()
-        r = _result([
-            _entity("e1", confidence=0.2),
-            _entity("e2", confidence=0.8),
-        ])
+        r = _result(
+            [
+                _entity("e1", confidence=0.2),
+                _entity("e2", confidence=0.8),
+            ]
+        )
         normalized = gen.normalize_confidence(r)
         confs = sorted(e.confidence for e in normalized.entities)
         assert confs[0] == pytest.approx(0.0)
@@ -134,11 +155,13 @@ class TestNormalizeConfidence:
 
     def test_three_entities(self):
         gen = _make_gen()
-        r = _result([
-            _entity("e1", confidence=0.0),
-            _entity("e2", confidence=0.5),
-            _entity("e3", confidence=1.0),
-        ])
+        r = _result(
+            [
+                _entity("e1", confidence=0.0),
+                _entity("e2", confidence=0.5),
+                _entity("e3", confidence=1.0),
+            ]
+        )
         normalized = gen.normalize_confidence(r)
         confs = {e.id: e.confidence for e in normalized.entities}
         assert confs["e1"] == pytest.approx(0.0)
@@ -155,6 +178,7 @@ class TestNormalizeConfidence:
 # ---------------------------------------------------------------------------
 # OntologyCritic.normalize_scores
 # ---------------------------------------------------------------------------
+
 
 class TestNormalizeScores:
     def test_empty_returns_empty(self):
@@ -194,6 +218,7 @@ class TestNormalizeScores:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.is_stable
 # ---------------------------------------------------------------------------
+
 
 class TestIsStable:
     def test_too_few_runs_false(self):

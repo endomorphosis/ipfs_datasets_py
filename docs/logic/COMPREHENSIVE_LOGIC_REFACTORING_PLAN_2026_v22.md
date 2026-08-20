@@ -83,31 +83,43 @@ and defines the v31 evergreen backlog.
 ```python
 # GV262 – Thai detection
 from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
-    detect_i18n_clauses, _load_i18n_keywords,
+    detect_i18n_clauses,
+    _load_i18n_keywords,
 )
-kw = _load_i18n_keywords("th")   # → {"permission": [...], "prohibition": [...], "obligation": [...]}
+
+kw = _load_i18n_keywords("th")  # → {"permission": [...], "prohibition": [...], "obligation": [...]}
 clauses = detect_i18n_clauses("ต้องปฏิบัติตามกฎ", "th")  # → list
 
 # GW263 – Indonesian detection
-kw = _load_i18n_keywords("id")   # → {"permission": [...], ...}
+kw = _load_i18n_keywords("id")  # → {"permission": [...], ...}
 clauses = detect_i18n_clauses("harus mematuhi peraturan", "id")
 
 # Full pipeline (20 languages)
 from ipfs_datasets_py.logic.api import detect_all_languages
+
 report = detect_all_languages("user may read; admin must approve")
 assert len(report.by_language) >= 20  # fr/es/de/en/.../th/id
 
 # GZ266 – Triple combined delegation E2E
-from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, DelegationToken, Capability
+from ipfs_datasets_py.mcp_server.ucan_delegation import (
+    DelegationManager,
+    DelegationToken,
+    Capability,
+)
+
 mgr_a = DelegationManager(path=None)
 mgr_b = DelegationManager(path=None)
-tok = DelegationToken(issuer="alice", audience="bob",
-                      capabilities=[Capability(resource="files", ability="read")],
-                      expiry=9999999999.0, nonce="unique")
+tok = DelegationToken(
+    issuer="alice",
+    audience="bob",
+    capabilities=[Capability(resource="files", ability="read")],
+    expiry=9999999999.0,
+    nonce="unique",
+)
 mgr_b.add(tok)
 mgr_a.merge(mgr_b)
 
-actors = dict(mgr_a.active_tokens_by_actor("bob"))      # non-empty
+actors = dict(mgr_a.active_tokens_by_actor("bob"))  # non-empty
 resources = dict(mgr_a.active_tokens_by_resource("files"))  # same CID
 ```
 

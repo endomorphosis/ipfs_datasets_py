@@ -25,7 +25,7 @@ class TestToolMetadata:
     def test_metadata_creation_minimal(self):
         """Test creating metadata with minimal required fields."""
         metadata = ToolMetadata(name="test_tool")
-        
+
         assert metadata.name == "test_tool"
         assert metadata.runtime == RUNTIME_AUTO
         assert metadata.requires_p2p is False
@@ -54,9 +54,9 @@ class TestToolMetadata:
             cpu_intensive=False,
             io_intensive=True,
             mcp_schema=schema,
-            mcp_description="Advanced P2P workflow tool"
+            mcp_description="Advanced P2P workflow tool",
         )
-        
+
         assert metadata.name == "advanced_tool"
         assert metadata.runtime == RUNTIME_TRIO
         assert metadata.requires_p2p is True
@@ -73,7 +73,7 @@ class TestToolMetadata:
     def test_metadata_immutable(self):
         """Test that metadata is immutable after creation."""
         metadata = ToolMetadata(name="test_tool")
-        
+
         with pytest.raises((FrozenInstanceError, AttributeError)):
             metadata.name = "modified_name"
 
@@ -88,7 +88,7 @@ class TestToolMetadata:
         for priority in [1, 5, 10]:
             metadata = ToolMetadata(name=f"tool_{priority}", priority=priority)
             assert metadata.priority == priority
-        
+
         # Priority outside typical range still allowed (no hard validation)
         metadata = ToolMetadata(name="tool_high", priority=100)
         assert metadata.priority == 100
@@ -98,7 +98,7 @@ class TestToolMetadata:
         # Quick timeout
         metadata = ToolMetadata(name="quick_tool", timeout_seconds=5.0)
         assert metadata.timeout_seconds == 5.0
-        
+
         # Long timeout
         metadata = ToolMetadata(name="long_tool", timeout_seconds=300.0)
         assert metadata.timeout_seconds == 300.0
@@ -123,7 +123,7 @@ class TestToolMetadataRegistry:
         """Test registering and retrieving metadata."""
         metadata = ToolMetadata(name="test_tool", category="test")
         self.registry.register(metadata)
-        
+
         retrieved = self.registry.get("test_tool")
         assert retrieved is not None
         assert retrieved.name == "test_tool"
@@ -138,10 +138,10 @@ class TestToolMetadataRegistry:
         """Test that duplicate registration updates metadata."""
         metadata1 = ToolMetadata(name="tool", category="cat1")
         metadata2 = ToolMetadata(name="tool", category="cat2")
-        
+
         self.registry.register(metadata1)
         self.registry.register(metadata2)
-        
+
         retrieved = self.registry.get("tool")
         assert retrieved.category == "cat2"  # Updated
 
@@ -152,10 +152,10 @@ class TestToolMetadataRegistry:
             ToolMetadata(name="tool2"),
             ToolMetadata(name="tool3"),
         ]
-        
+
         for tool in tools:
             self.registry.register(tool)
-        
+
         all_tools = self.registry.list_all()
         assert len(all_tools) == 3
         names = {t.name for t in all_tools}
@@ -169,14 +169,14 @@ class TestToolMetadataRegistry:
             ToolMetadata(name="trio_tool1", runtime=RUNTIME_TRIO),
             ToolMetadata(name="auto_tool", runtime=RUNTIME_AUTO),
         ]
-        
+
         for tool in tools:
             self.registry.register(tool)
-        
+
         fastapi_tools = self.registry.get_by_runtime(RUNTIME_FASTAPI)
         assert len(fastapi_tools) == 2
         assert all(t.runtime == RUNTIME_FASTAPI for t in fastapi_tools)
-        
+
         trio_tools = self.registry.get_by_runtime(RUNTIME_TRIO)
         assert len(trio_tools) == 1
         assert trio_tools[0].name == "trio_tool1"
@@ -189,10 +189,10 @@ class TestToolMetadataRegistry:
             ToolMetadata(name="queue1", category="p2p_taskqueue"),
             ToolMetadata(name="general1", category="general"),
         ]
-        
+
         for tool in tools:
             self.registry.register(tool)
-        
+
         workflow_tools = self.registry.get_by_category("p2p_workflow")
         assert len(workflow_tools) == 2
         assert all(t.category == "p2p_workflow" for t in workflow_tools)
@@ -202,9 +202,9 @@ class TestToolMetadataRegistry:
         tools = [ToolMetadata(name=f"tool{i}") for i in range(5)]
         for tool in tools:
             self.registry.register(tool)
-        
+
         assert len(self.registry.list_all()) == 5
-        
+
         self.registry.clear()
         assert len(self.registry.list_all()) == 0
 
@@ -217,12 +217,12 @@ class TestToolMetadataRegistry:
             ToolMetadata(name="t2", runtime=RUNTIME_TRIO, category="cat2"),
             ToolMetadata(name="t3", runtime=RUNTIME_TRIO, category="cat3"),
         ]
-        
+
         for tool in tools:
             self.registry.register(tool)
-        
+
         stats = self.registry.get_statistics()
-        
+
         assert stats["total"] == 5
         assert stats["by_runtime"][RUNTIME_FASTAPI] == 2
         assert stats["by_runtime"][RUNTIME_TRIO] == 3
@@ -233,23 +233,23 @@ class TestToolMetadataRegistry:
     def test_registry_thread_safety(self):
         """Test concurrent access to registry (basic check)."""
         import threading
-        
+
         def register_tools(start, count):
             for i in range(start, start + count):
                 metadata = ToolMetadata(name=f"tool_{i}")
                 self.registry.register(metadata)
-        
+
         threads = [
             threading.Thread(target=register_tools, args=(0, 10)),
             threading.Thread(target=register_tools, args=(10, 10)),
             threading.Thread(target=register_tools, args=(20, 10)),
         ]
-        
+
         for t in threads:
             t.start()
         for t in threads:
             t.join()
-        
+
         # Should have all 30 tools registered
         assert len(self.registry.list_all()) == 30
 
@@ -265,13 +265,14 @@ class TestToolMetadataDecorator:
 
     def test_decorator_basic(self):
         """Test basic decorator usage."""
+
         @tool_metadata(runtime=RUNTIME_TRIO, category="test")
         def test_function():
             return "result"
-        
+
         # Function should still work
         assert test_function() == "result"
-        
+
         # Metadata should be registered
         registry = get_registry()
         metadata = registry.get("test_function")
@@ -282,6 +283,7 @@ class TestToolMetadataDecorator:
 
     def test_decorator_with_all_params(self):
         """Test decorator with all parameters."""
+
         @tool_metadata(
             runtime=RUNTIME_TRIO,
             requires_p2p=True,
@@ -292,11 +294,11 @@ class TestToolMetadataDecorator:
             memory_intensive=True,
             cpu_intensive=False,
             io_intensive=True,
-            mcp_description="Test workflow tool"
+            mcp_description="Test workflow tool",
         )
         def workflow_tool():
             return "workflow_result"
-        
+
         metadata = get_registry().get("workflow_tool")
         assert metadata.runtime == RUNTIME_TRIO
         assert metadata.requires_p2p is True
@@ -311,10 +313,11 @@ class TestToolMetadataDecorator:
 
     def test_decorator_async_function(self):
         """Test decorator on async function."""
+
         @tool_metadata(runtime=RUNTIME_TRIO)
         async def async_tool():
             return "async_result"
-        
+
         # Metadata should be registered
         metadata = get_registry().get("async_tool")
         assert metadata is not None
@@ -322,32 +325,35 @@ class TestToolMetadataDecorator:
 
     def test_decorator_preserves_docstring(self):
         """Test that decorator preserves function docstring."""
+
         @tool_metadata(runtime=RUNTIME_TRIO)
         def documented_function():
             """This is the docstring."""
             return "result"
-        
+
         assert documented_function.__doc__ == "This is the docstring."
 
     def test_decorator_preserves_name(self):
         """Test that decorator preserves function name."""
+
         @tool_metadata(runtime=RUNTIME_TRIO)
         def named_function():
             return "result"
-        
+
         assert named_function.__name__ == "named_function"
 
     def test_get_tool_metadata_helper(self):
         """Test get_tool_metadata helper function."""
+
         @tool_metadata(runtime=RUNTIME_TRIO, category="helper_test")
         def test_tool():
             return "result"
-        
+
         # Should be able to get metadata by name
         metadata = get_tool_metadata("test_tool")
         assert metadata is not None
         assert metadata.category == "helper_test"
-        
+
         # Nonexistent tool should return None
         assert get_tool_metadata("nonexistent") is None
 
@@ -359,17 +365,17 @@ class TestGlobalRegistry:
         """Test that get_registry returns singleton."""
         registry1 = get_registry()
         registry2 = get_registry()
-        
+
         assert registry1 is registry2
 
     def test_global_registry_persistence(self):
         """Test that registry persists across calls."""
         registry = get_registry()
         registry.clear()
-        
+
         metadata = ToolMetadata(name="persistent_tool")
         registry.register(metadata)
-        
+
         # Get registry again and tool should still be there
         registry2 = get_registry()
         retrieved = registry2.get("persistent_tool")

@@ -4,6 +4,7 @@ PDF Cross-Document Analysis Tool - thin MCP wrapper.
 Business logic is in:
     ipfs_datasets_py.processors.specialized.pdf.cross_document_engine
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -18,6 +19,7 @@ try:
     from ipfs_datasets_py.processors.specialized.pdf.cross_document_engine import (
         pdf_cross_document_analysis as _engine_fn,
     )
+
     _ENGINE_AVAILABLE = True
 except ImportError:
     _engine_fn = None
@@ -52,7 +54,11 @@ async def pdf_cross_document_analysis(
                     analysis_types=data.get("analysis_types") or analysis_types,
                     options=data.get("options") or {},
                 )
-                return mcp_text_response(result) if isinstance(result, dict) else mcp_text_response({"status": "success", "result": result})
+                return (
+                    mcp_text_response(result)
+                    if isinstance(result, dict)
+                    else mcp_text_response({"status": "success", "result": result})
+                )
             except Exception as exc:
                 return mcp_text_response({"status": "error", "error": str(exc)})
 

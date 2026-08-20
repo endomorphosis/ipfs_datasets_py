@@ -17,23 +17,31 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
-home_dir = os.path.expanduser('~')
-file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer.py")
-md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
+home_dir = os.path.expanduser("~")
+file_path = os.path.join(
+    home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer.py"
+)
+md_path = os.path.join(
+    home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md"
+)
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
 )
 
 
@@ -71,29 +79,28 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
 @pytest.fixture
 def test_constants():
     """Provide common test constants for chunk optimization tests."""
     return {
-        'ARBITRARY_BOUNDARY_ONE': 25,
-        'ARBITRARY_BOUNDARY_TWO': 60,
-        'BOUNDARY_NEAR_SENTENCE': 20,
-        'BOUNDARY_MID_SENTENCE': 80,
-        'SINGLE_BOUNDARY': 50,
-        'LARGE_BOUNDARY_ONE': 200,
-        'LARGE_BOUNDARY_TWO': 400,
-        'ASCENDING_BOUNDARY_ONE': 20,
-        'ASCENDING_BOUNDARY_TWO': 40,
-        'ASCENDING_BOUNDARY_THREE': 65,
-        'MAX_CHUNK_SIZE': 1024,
-        'CHUNK_OVERLAP': 100,
-        'MIN_CHUNK_SIZE': 50,
-        'INVALID_BOUNDARY_ONE': 50,
-        'INVALID_BOUNDARY_TWO': 100,
-        'FLOAT_BOUNDARY': 10.5,
-        'STRING_BOUNDARY': "20",
-        'NONE_BOUNDARY': None,
+        "ARBITRARY_BOUNDARY_ONE": 25,
+        "ARBITRARY_BOUNDARY_TWO": 60,
+        "BOUNDARY_NEAR_SENTENCE": 20,
+        "BOUNDARY_MID_SENTENCE": 80,
+        "SINGLE_BOUNDARY": 50,
+        "LARGE_BOUNDARY_ONE": 200,
+        "LARGE_BOUNDARY_TWO": 400,
+        "ASCENDING_BOUNDARY_ONE": 20,
+        "ASCENDING_BOUNDARY_TWO": 40,
+        "ASCENDING_BOUNDARY_THREE": 65,
+        "MAX_CHUNK_SIZE": 1024,
+        "CHUNK_OVERLAP": 100,
+        "MIN_CHUNK_SIZE": 50,
+        "INVALID_BOUNDARY_ONE": 50,
+        "INVALID_BOUNDARY_TWO": 100,
+        "FLOAT_BOUNDARY": 10.5,
+        "STRING_BOUNDARY": "20",
+        "NONE_BOUNDARY": None,
     }
 
 
@@ -118,15 +125,29 @@ def texts():
 def boundaries(test_constants):
     """Provide various boundary configurations for testing."""
     return {
-        "arbitrary": [test_constants['ARBITRARY_BOUNDARY_ONE'], test_constants['ARBITRARY_BOUNDARY_TWO']],
-        "large": [test_constants['LARGE_BOUNDARY_ONE'], test_constants['LARGE_BOUNDARY_TWO']],
+        "arbitrary": [
+            test_constants["ARBITRARY_BOUNDARY_ONE"],
+            test_constants["ARBITRARY_BOUNDARY_TWO"],
+        ],
+        "large": [test_constants["LARGE_BOUNDARY_ONE"], test_constants["LARGE_BOUNDARY_TWO"]],
         "empty": [],
-        "single": [test_constants['SINGLE_BOUNDARY']],
-        "invalid_types": [test_constants['FLOAT_BOUNDARY'], test_constants['STRING_BOUNDARY'], test_constants['NONE_BOUNDARY']],
-        "ascending": [test_constants['ASCENDING_BOUNDARY_ONE'], test_constants['ASCENDING_BOUNDARY_TWO'], test_constants['ASCENDING_BOUNDARY_THREE']],
-        "beyond_text": [test_constants['INVALID_BOUNDARY_ONE'], test_constants['INVALID_BOUNDARY_TWO']],
-        "near_sentence": [test_constants['BOUNDARY_NEAR_SENTENCE']],
-        "mid_sentence": [test_constants['BOUNDARY_MID_SENTENCE']],
+        "single": [test_constants["SINGLE_BOUNDARY"]],
+        "invalid_types": [
+            test_constants["FLOAT_BOUNDARY"],
+            test_constants["STRING_BOUNDARY"],
+            test_constants["NONE_BOUNDARY"],
+        ],
+        "ascending": [
+            test_constants["ASCENDING_BOUNDARY_ONE"],
+            test_constants["ASCENDING_BOUNDARY_TWO"],
+            test_constants["ASCENDING_BOUNDARY_THREE"],
+        ],
+        "beyond_text": [
+            test_constants["INVALID_BOUNDARY_ONE"],
+            test_constants["INVALID_BOUNDARY_TWO"],
+        ],
+        "near_sentence": [test_constants["BOUNDARY_NEAR_SENTENCE"]],
+        "mid_sentence": [test_constants["BOUNDARY_MID_SENTENCE"]],
     }
 
 
@@ -134,24 +155,29 @@ def boundaries(test_constants):
 def chunk_optimizer(test_constants):
     """Create a ChunkOptimizer instance for testing."""
     return ChunkOptimizer(
-        max_size=test_constants['MAX_CHUNK_SIZE'],
-        overlap=test_constants['CHUNK_OVERLAP'],
-        min_size=test_constants['MIN_CHUNK_SIZE']
+        max_size=test_constants["MAX_CHUNK_SIZE"],
+        overlap=test_constants["CHUNK_OVERLAP"],
+        min_size=test_constants["MIN_CHUNK_SIZE"],
     )
 
-class TestChunkOptimizerOptimizeChunkBoundariesReturnsList:
 
-    @pytest.mark.parametrize("text_key,boundary_key", [
-        ("ascending", "ascending"),
-        ("basic", "empty"),
-        ("continuous", "arbitrary"),
-        ("different_punctuation_marks", "arbitrary"),
-        ("different_punctuation_marks", "near_sentence"),
-        ("long_sentences", "mid_sentence"),
-        ("mixed", "ascending"),
-        ("paragraphs", "arbitrary"),
-    ])
-    def test_optimize_boundaries_returns_list(self, chunk_optimizer, texts, boundaries, text_key, boundary_key):
+class TestChunkOptimizerOptimizeChunkBoundariesReturnsList:
+    @pytest.mark.parametrize(
+        "text_key,boundary_key",
+        [
+            ("ascending", "ascending"),
+            ("basic", "empty"),
+            ("continuous", "arbitrary"),
+            ("different_punctuation_marks", "arbitrary"),
+            ("different_punctuation_marks", "near_sentence"),
+            ("long_sentences", "mid_sentence"),
+            ("mixed", "ascending"),
+            ("paragraphs", "arbitrary"),
+        ],
+    )
+    def test_optimize_boundaries_returns_list(
+        self, chunk_optimizer, texts, boundaries, text_key, boundary_key
+    ):
         """
         GIVEN text with various natural break patterns and current boundaries
         WHEN optimize_chunk_boundaries is called
@@ -168,18 +194,21 @@ class TestChunkOptimizerOptimizeChunkBoundariesReturnsList:
         assert isinstance(optimized, list)
 
 
-
-@pytest.mark.parametrize("text_key,boundary_key", [
-    ("ascending", "ascending"),
-    ("continuous", "arbitrary"),
-    ("different_punctuation_marks", "arbitrary"),
-    ("long_sentences", "mid_sentence"),
-    ("mixed", "ascending"),
-    ("paragraphs", "arbitrary"),
-])
+@pytest.mark.parametrize(
+    "text_key,boundary_key",
+    [
+        ("ascending", "ascending"),
+        ("continuous", "arbitrary"),
+        ("different_punctuation_marks", "arbitrary"),
+        ("long_sentences", "mid_sentence"),
+        ("mixed", "ascending"),
+        ("paragraphs", "arbitrary"),
+    ],
+)
 class TestChunkOptimizerOptimizeChunkBoundariesReturnsExpectedSpecifications:
-
-    def test_optimize_boundaries_return_list_is_same_length_as_input(self, chunk_optimizer, texts, boundaries, text_key, boundary_key):
+    def test_optimize_boundaries_return_list_is_same_length_as_input(
+        self, chunk_optimizer, texts, boundaries, text_key, boundary_key
+    ):
         """
         GIVEN text with various natural break patterns and current boundaries
         WHEN optimize_chunk_boundaries is called
@@ -195,7 +224,9 @@ class TestChunkOptimizerOptimizeChunkBoundariesReturnsExpectedSpecifications:
         # Then
         assert len(optimized) == len(current_boundaries)
 
-    def test_optimize_boundaries_returns_list_of_integers(self, chunk_optimizer, texts, boundaries, text_key, boundary_key):
+    def test_optimize_boundaries_returns_list_of_integers(
+        self, chunk_optimizer, texts, boundaries, text_key, boundary_key
+    ):
         """
         GIVEN text with various natural break patterns and current boundaries
         WHEN optimize_chunk_boundaries is called
@@ -212,7 +243,9 @@ class TestChunkOptimizerOptimizeChunkBoundariesReturnsExpectedSpecifications:
         for boundary in optimized:
             assert isinstance(boundary, int)
 
-    def test_optimize_boundaries_returns_indices_in_text_bounds(self, chunk_optimizer, texts, boundaries, text_key, boundary_key):
+    def test_optimize_boundaries_returns_indices_in_text_bounds(
+        self, chunk_optimizer, texts, boundaries, text_key, boundary_key
+    ):
         """
         GIVEN text with various natural break patterns and current boundaries
         WHEN optimize_chunk_boundaries is called
@@ -229,15 +262,19 @@ class TestChunkOptimizerOptimizeChunkBoundariesReturnsExpectedSpecifications:
         for boundary in optimized:
             assert 0 <= boundary <= len(text)
 
-class TestChunkOptimizerOptimizeChunkBoundariesRejectsInvalidInputs:
 
-    @pytest.mark.parametrize("text_key,boundary_key,expected_exception", [
-        ("empty", "arbitrary", ValueError),
-        ("short", "beyond_text", IndexError),
-        ("basic", "invalid_types", TypeError),
-    ])
+class TestChunkOptimizerOptimizeChunkBoundariesRejectsInvalidInputs:
+    @pytest.mark.parametrize(
+        "text_key,boundary_key,expected_exception",
+        [
+            ("empty", "arbitrary", ValueError),
+            ("short", "beyond_text", IndexError),
+            ("basic", "invalid_types", TypeError),
+        ],
+    )
     def test_optimize_boundaries_error_cases(
-        self, chunk_optimizer, texts, boundaries, text_key, boundary_key, expected_exception):
+        self, chunk_optimizer, texts, boundaries, text_key, boundary_key, expected_exception
+    ):
         """
         GIVEN various invalid inputs (empty text, out-of-bounds positions, non-integer boundaries)
         WHEN optimize_chunk_boundaries is called
@@ -251,18 +288,21 @@ class TestChunkOptimizerOptimizeChunkBoundariesRejectsInvalidInputs:
         with pytest.raises(expected_exception):
             chunk_optimizer.optimize_chunk_boundaries(text, current_boundaries)
 
+
 class TestChunkOptimizerOptimizeChunkBoundariesInputScenarios:
     """Various input scenarios. NOTE Could be further parameterized if needed."""
 
-    def test_optimize_boundaries_single_boundary_remains_single(self, chunk_optimizer, texts, boundaries):
+    def test_optimize_boundaries_single_boundary_remains_single(
+        self, chunk_optimizer, texts, boundaries
+    ):
         """
         GIVEN text with single boundary
         WHEN optimize_chunk_boundaries is called
         THEN expect single boundary to remain single after optimization
         """
         # Given
-        text = texts['short']
-        current_boundaries = boundaries['single']
+        text = texts["short"]
+        current_boundaries = boundaries["single"]
 
         # When
         optimized = chunk_optimizer.optimize_chunk_boundaries(text, current_boundaries)
@@ -270,15 +310,17 @@ class TestChunkOptimizerOptimizeChunkBoundariesInputScenarios:
         # Then
         assert len(optimized) == 1
 
-    def test_optimize_boundaries_continuous_text_unchanged(self, chunk_optimizer, texts, boundaries):
+    def test_optimize_boundaries_continuous_text_unchanged(
+        self, chunk_optimizer, texts, boundaries
+    ):
         """
         GIVEN continuous text with arbitrary boundaries
         WHEN optimize_chunk_boundaries is called
         THEN expect boundaries to remain unchanged
         """
         # Given
-        text = texts['continuous']
-        current_boundaries = boundaries['arbitrary']
+        text = texts["continuous"]
+        current_boundaries = boundaries["arbitrary"]
 
         # When
         optimized = chunk_optimizer.optimize_chunk_boundaries(text, current_boundaries)
@@ -286,15 +328,17 @@ class TestChunkOptimizerOptimizeChunkBoundariesInputScenarios:
         # Then
         assert optimized == current_boundaries
 
-    def test_optimize_boundaries_empty_boundaries_remain_empty(self, chunk_optimizer, texts, boundaries):
+    def test_optimize_boundaries_empty_boundaries_remain_empty(
+        self, chunk_optimizer, texts, boundaries
+    ):
         """
         GIVEN basic text with empty boundaries
         WHEN optimize_chunk_boundaries is called
         THEN expect empty boundaries to remain empty
         """
         # Given
-        text = texts['basic']
-        current_boundaries = boundaries['empty']
+        text = texts["basic"]
+        current_boundaries = boundaries["empty"]
 
         # When
         optimized = chunk_optimizer.optimize_chunk_boundaries(text, current_boundaries)
@@ -302,15 +346,17 @@ class TestChunkOptimizerOptimizeChunkBoundariesInputScenarios:
         # Then
         assert optimized == []
 
-    def test_optimize_boundaries_mid_sentence_moves_to_sentence_end(self, chunk_optimizer, texts, boundaries):
+    def test_optimize_boundaries_mid_sentence_moves_to_sentence_end(
+        self, chunk_optimizer, texts, boundaries
+    ):
         """
         GIVEN long sentences with mid-sentence boundary
         WHEN optimize_chunk_boundaries is called
         THEN expect boundary to move to sentence end
         """
         # Given
-        text = texts['long_sentences']
-        current_boundaries = boundaries['mid_sentence']
+        text = texts["long_sentences"]
+        current_boundaries = boundaries["mid_sentence"]
 
         # When
         optimized = chunk_optimizer.optimize_chunk_boundaries(text, current_boundaries)
@@ -318,22 +364,25 @@ class TestChunkOptimizerOptimizeChunkBoundariesInputScenarios:
         # Then
         assert optimized[0] != current_boundaries[0]
 
-    def test_optimize_boundaries_maintains_ascending_order(self, chunk_optimizer, texts, boundaries):
+    def test_optimize_boundaries_maintains_ascending_order(
+        self, chunk_optimizer, texts, boundaries
+    ):
         """
         GIVEN multiple boundaries in ascending order
         WHEN optimize_chunk_boundaries is called
         THEN expect returned boundaries to maintain ascending order
         """
         # Given
-        text = texts['ascending']
-        current_boundaries = boundaries['ascending']
+        text = texts["ascending"]
+        current_boundaries = boundaries["ascending"]
 
         # When
         optimized = chunk_optimizer.optimize_chunk_boundaries(text, current_boundaries)
 
         # Then
         for i in range(1, len(optimized)):
-            assert optimized[i-1] <= optimized[i]
+            assert optimized[i - 1] <= optimized[i]
+
 
 if __name__ == "__main__":
     pytest.main()

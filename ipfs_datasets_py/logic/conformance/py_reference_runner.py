@@ -130,7 +130,10 @@ def run_vector(vector: Dict[str, Any]) -> Dict[str, Any]:
                 "status": "unknown",
                 "reason": "unknown",
                 "proverId": "python-reference",
-                "metadata": {"skipped": "unsupported-vector-input", "inputType": vector.get("inputType")},
+                "metadata": {
+                    "skipped": "unsupported-vector-input",
+                    "inputType": vector.get("inputType"),
+                },
             }
         duration_ms = max(0.0, (time.perf_counter() - start) * 1000.0)
         expected = vector.get("expected", {})
@@ -169,7 +172,9 @@ def run_vector(vector: Dict[str, Any]) -> Dict[str, Any]:
         }
 
 
-def evaluate_policy(policy: Dict[str, Any], vector: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def evaluate_policy(
+    policy: Dict[str, Any], vector: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
     subsystem = str((vector or {}).get("subsystem") or infer_policy_subsystem(policy))
     conflict = exact_permission_conflict(policy) or obligation_prohibition_conflict(policy)
     prover_checks = run_python_prover_checks(policy, subsystem)
@@ -188,11 +193,15 @@ def evaluate_policy(policy: Dict[str, Any], vector: Optional[Dict[str, Any]] = N
         return {
             "status": "refuted",
             "reason": "refuted",
-            "proverId": "python-z3-reference" if z3_status == "unsat" else preferred_policy_prover_id(subsystem, prover_checks),
+            "proverId": "python-z3-reference"
+            if z3_status == "unsat"
+            else preferred_policy_prover_id(subsystem, prover_checks),
             "metadata": {**metadata, "route": "policy-conflict"},
         }
 
-    if policy.get("temporal") or any("deadline" in obligation for obligation in policy.get("obligations", [])):
+    if policy.get("temporal") or any(
+        "deadline" in obligation for obligation in policy.get("obligations", [])
+    ):
         return {
             "status": "proved",
             "reason": "proved",
@@ -211,7 +220,9 @@ def evaluate_policy(policy: Dict[str, Any], vector: Optional[Dict[str, Any]] = N
     return {
         "status": "sat",
         "reason": "sat",
-        "proverId": "python-z3-reference" if z3_status == "sat" else preferred_policy_prover_id(subsystem, prover_checks),
+        "proverId": "python-z3-reference"
+        if z3_status == "sat"
+        else preferred_policy_prover_id(subsystem, prover_checks),
         "modelHash": stable_hash(policy),
         "metadata": {**metadata, "route": "smt"},
     }
@@ -223,7 +234,11 @@ def evaluate_smt2(smt2: str) -> Dict[str, Any]:
             "status": "unknown",
             "reason": "unknown",
             "proverId": "python-z3-reference",
-            "metadata": {"pythonModuleMode": "smt2-runner", "hostDependent": True, "route": "no-assertions"},
+            "metadata": {
+                "pythonModuleMode": "smt2-runner",
+                "hostDependent": True,
+                "route": "no-assertions",
+            },
         }
 
     z3_result = run_z3_smt2_check(smt2)
@@ -233,14 +248,22 @@ def evaluate_smt2(smt2: str) -> Dict[str, Any]:
             "reason": "sat",
             "proverId": "python-z3-reference",
             "modelHash": stable_hash({"smt2": smt2}),
-            "metadata": {"pythonModuleMode": "smt2-runner", "pythonProverChecks": [z3_result], "route": "z3"},
+            "metadata": {
+                "pythonModuleMode": "smt2-runner",
+                "pythonProverChecks": [z3_result],
+                "route": "z3",
+            },
         }
     if z3_result.get("status") == "unsat":
         return {
             "status": "refuted",
             "reason": "refuted",
             "proverId": "python-z3-reference",
-            "metadata": {"pythonModuleMode": "smt2-runner", "pythonProverChecks": [z3_result], "route": "z3"},
+            "metadata": {
+                "pythonModuleMode": "smt2-runner",
+                "pythonProverChecks": [z3_result],
+                "route": "z3",
+            },
         }
 
     fallback = deterministic_smt2_outcome(smt2)
@@ -256,7 +279,9 @@ def evaluate_smt2(smt2: str) -> Dict[str, Any]:
 
 
 def infer_policy_subsystem(policy: Dict[str, Any]) -> str:
-    if policy.get("temporal") or any("deadline" in obligation for obligation in policy.get("obligations", [])):
+    if policy.get("temporal") or any(
+        "deadline" in obligation for obligation in policy.get("obligations", [])
+    ):
         return "temporal"
     if policy.get("obligations") or policy.get("prohibitions"):
         return "dcec"
@@ -292,7 +317,11 @@ def run_tdfol_prover_check(policy: Dict[str, Any], subsystem: str) -> Dict[str, 
             "formulaHash": stable_hash(formula.to_string()),
         }
     except Exception as exc:
-        return {"engine": "tdfol", "status": "unavailable", "error": f"{exc.__class__.__name__}: {exc}"}
+        return {
+            "engine": "tdfol",
+            "status": "unavailable",
+            "error": f"{exc.__class__.__name__}: {exc}",
+        }
 
 
 def run_dcec_prover_check(policy: Dict[str, Any]) -> Dict[str, Any]:
@@ -307,7 +336,11 @@ def run_dcec_prover_check(policy: Dict[str, Any]) -> Dict[str, Any]:
             "formulaHash": stable_hash(formula.to_string()),
         }
     except Exception as exc:
-        return {"engine": "dcec", "status": "unavailable", "error": f"{exc.__class__.__name__}: {exc}"}
+        return {
+            "engine": "dcec",
+            "status": "unavailable",
+            "error": f"{exc.__class__.__name__}: {exc}",
+        }
 
 
 def run_z3_policy_check(policy: Dict[str, Any]) -> Dict[str, Any]:
@@ -328,18 +361,22 @@ def run_z3_policy_check(policy: Dict[str, Any]) -> Dict[str, Any]:
             solver.add(atom(name))
         for prohibition in policy.get("prohibitions", []):
             name = atom_name(str(prohibition.get("cap", "")), str(prohibition.get("rsc", "")))
-            solver.add(
-                z3.Not(atom(name))
-            )
+            solver.add(z3.Not(atom(name)))
         for obligation in policy.get("obligations", []):
-            required = atom_name(str(obligation.get("requiredCap", "")), str(obligation.get("rsc", "")))
+            required = atom_name(
+                str(obligation.get("requiredCap", "")), str(obligation.get("rsc", ""))
+            )
             description = normalize_atom(str(obligation.get("description", "")))
             solver.add(atom(required or description or "obligation"))
 
         result = solver.check()
         return {"engine": "z3", "status": str(result), "assertionCount": len(solver.assertions())}
     except Exception as exc:
-        return {"engine": "z3", "status": "unavailable", "error": f"{exc.__class__.__name__}: {exc}"}
+        return {
+            "engine": "z3",
+            "status": "unavailable",
+            "error": f"{exc.__class__.__name__}: {exc}",
+        }
 
 
 def run_z3_smt2_check(smt2: str) -> Dict[str, Any]:
@@ -356,7 +393,11 @@ def run_z3_smt2_check(smt2: str) -> Dict[str, Any]:
         result = solver.check()
         return {"engine": "z3", "status": str(result), "assertionCount": len(solver.assertions())}
     except Exception as exc:
-        return {"engine": "z3", "status": "unavailable", "error": f"{exc.__class__.__name__}: {exc}"}
+        return {
+            "engine": "z3",
+            "status": "unavailable",
+            "error": f"{exc.__class__.__name__}: {exc}",
+        }
 
 
 def deterministic_smt2_outcome(smt2: str) -> Dict[str, Any]:
@@ -412,7 +453,9 @@ def deterministic_smt2_outcome(smt2: str) -> Dict[str, Any]:
 
 
 def evaluate_tdfol(payload: Dict[str, Any], subsystem: str = "temporal") -> Dict[str, Any]:
-    axioms = [str(item or "").strip() for item in payload.get("axioms", []) if str(item or "").strip()]
+    axioms = [
+        str(item or "").strip() for item in payload.get("axioms", []) if str(item or "").strip()
+    ]
     goal = str(payload.get("goal") or "").strip()
 
     obligations = set()
@@ -528,7 +571,9 @@ def evaluate_tdfol(payload: Dict[str, Any], subsystem: str = "temporal") -> Dict
 
 
 def evaluate_fol_formula(payload: Dict[str, Any]) -> Dict[str, Any]:
-    premises = [str(item or "").strip() for item in payload.get("premises", []) if str(item or "").strip()]
+    premises = [
+        str(item or "").strip() for item in payload.get("premises", []) if str(item or "").strip()
+    ]
     goal = str(payload.get("goal") or "").strip()
 
     positives = set()
@@ -586,7 +631,9 @@ def evaluate_fol_formula(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def evaluate_temporal_trace(payload: Dict[str, Any]) -> Dict[str, Any]:
-    events = [str(item or "").strip() for item in payload.get("events", []) if str(item or "").strip()]
+    events = [
+        str(item or "").strip() for item in payload.get("events", []) if str(item or "").strip()
+    ]
     query = str(payload.get("query") or "").strip()
 
     positives = set()
@@ -644,7 +691,9 @@ def evaluate_temporal_trace(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def evaluate_modal_kripke(payload: Dict[str, Any]) -> Dict[str, Any]:
-    worlds = [str(item or "").strip() for item in payload.get("worlds", []) if str(item or "").strip()]
+    worlds = [
+        str(item or "").strip() for item in payload.get("worlds", []) if str(item or "").strip()
+    ]
     query = str(payload.get("query") or "").strip()
 
     positives = set()
@@ -702,8 +751,16 @@ def evaluate_modal_kripke(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def evaluate_deontic_conflict(payload: Dict[str, Any]) -> Dict[str, Any]:
-    obligations = [str(item or "").strip() for item in payload.get("obligations", []) if str(item or "").strip()]
-    prohibitions = [str(item or "").strip() for item in payload.get("prohibitions", []) if str(item or "").strip()]
+    obligations = [
+        str(item or "").strip()
+        for item in payload.get("obligations", [])
+        if str(item or "").strip()
+    ]
+    prohibitions = [
+        str(item or "").strip()
+        for item in payload.get("prohibitions", [])
+        if str(item or "").strip()
+    ]
     query = str(payload.get("query") or "").strip()
 
     prohibited = set(prohibitions)
@@ -720,7 +777,11 @@ def evaluate_deontic_conflict(payload: Dict[str, Any]) -> Dict[str, Any]:
                 "status": "refuted",
                 "reason": "refuted",
                 "proverId": "deontic-native",
-                "metadata": {"simulated": True, "route": "obligation-prohibition-conflict", "atom": obligation},
+                "metadata": {
+                    "simulated": True,
+                    "route": "obligation-prohibition-conflict",
+                    "atom": obligation,
+                },
             }
             return align_decision_with_native_policy(fallback, policy, "deontic", "deontic-native")
 
@@ -751,7 +812,9 @@ def evaluate_deontic_conflict(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def evaluate_dcec(payload: Dict[str, Any]) -> Dict[str, Any]:
-    premises = [str(item or "").strip() for item in payload.get("premises", []) if str(item or "").strip()]
+    premises = [
+        str(item or "").strip() for item in payload.get("premises", []) if str(item or "").strip()
+    ]
     goal = str(payload.get("goal") or "").strip()
 
     obligations = set()
@@ -815,8 +878,12 @@ def evaluate_dcec(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def evaluate_legal_norm(payload: Dict[str, Any]) -> Dict[str, Any]:
-    norms = [str(item or "").strip() for item in payload.get("norms", []) if str(item or "").strip()]
-    facts = [str(item or "").strip() for item in payload.get("facts", []) if str(item or "").strip()]
+    norms = [
+        str(item or "").strip() for item in payload.get("norms", []) if str(item or "").strip()
+    ]
+    facts = [
+        str(item or "").strip() for item in payload.get("facts", []) if str(item or "").strip()
+    ]
     query = str(payload.get("query") or "").strip()
 
     fallback: Dict[str, Any]
@@ -861,7 +928,9 @@ def evaluate_legal_norm(payload: Dict[str, Any]) -> Dict[str, Any]:
     try:
         native_outcome = evaluate_policy(policy, {"subsystem": "legal-norm"})
         mapped = map_native_policy_outcome(native_outcome, "legal-norm-native")
-        if mapped is not None and str(mapped.get("reason") or "") == str(fallback.get("reason") or ""):
+        if mapped is not None and str(mapped.get("reason") or "") == str(
+            fallback.get("reason") or ""
+        ):
             metadata = dict(mapped.get("metadata") or {})
             metadata.update(
                 {
@@ -897,7 +966,9 @@ def evaluate_legal_norm(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def evaluate_zkp_statement(payload: Dict[str, Any]) -> Dict[str, Any]:
-    claims = [str(item or "").strip() for item in payload.get("claims", []) if str(item or "").strip()]
+    claims = [
+        str(item or "").strip() for item in payload.get("claims", []) if str(item or "").strip()
+    ]
     proof_state = str(payload.get("proofState") or "").strip().lower()
 
     fallback: Dict[str, Any]
@@ -907,7 +978,11 @@ def evaluate_zkp_statement(payload: Dict[str, Any]) -> Dict[str, Any]:
             "status": "refuted",
             "reason": "refuted",
             "proverId": "zkp-native",
-            "metadata": {"simulated": False, "route": "native-state-check", "stateRoute": "proof-invalid"},
+            "metadata": {
+                "simulated": False,
+                "route": "native-state-check",
+                "stateRoute": "proof-invalid",
+            },
         }
         return fallback
 
@@ -937,14 +1012,18 @@ def evaluate_zkp_statement(payload: Dict[str, Any]) -> Dict[str, Any]:
     try:
         native_outcome = evaluate_zkp_statement_native(payload, policy)
         mapped = map_native_policy_outcome(native_outcome, "zkp-native")
-        if mapped is not None and str(mapped.get("reason") or "") == str(fallback.get("reason") or ""):
+        if mapped is not None and str(mapped.get("reason") or "") == str(
+            fallback.get("reason") or ""
+        ):
             metadata = dict(mapped.get("metadata") or {})
             metadata.update(
                 {
                     "nativeAttempted": True,
                     "nativeProverId": native_outcome.get("proverId"),
                     "nativeReason": native_outcome.get("reason"),
-                    "nativeAttemptKind": native_outcome.get("metadata", {}).get("nativeAttemptKind", "policy-proxy"),
+                    "nativeAttemptKind": native_outcome.get("metadata", {}).get(
+                        "nativeAttemptKind", "policy-proxy"
+                    ),
                 }
             )
             mapped["metadata"] = metadata
@@ -955,7 +1034,9 @@ def evaluate_zkp_statement(payload: Dict[str, Any]) -> Dict[str, Any]:
                 "nativeAttempted": True,
                 "nativeProverId": native_outcome.get("proverId"),
                 "nativeReason": native_outcome.get("reason"),
-                "nativeAttemptKind": native_outcome.get("metadata", {}).get("nativeAttemptKind", "policy-proxy"),
+                "nativeAttemptKind": native_outcome.get("metadata", {}).get(
+                    "nativeAttemptKind", "policy-proxy"
+                ),
                 "nativeFallback": True,
             }
         )
@@ -975,7 +1056,9 @@ def evaluate_zkp_statement(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def evaluate_zkp_witness(payload: Dict[str, Any]) -> Dict[str, Any]:
-    claims = [str(item or "").strip() for item in payload.get("claims", []) if str(item or "").strip()]
+    claims = [
+        str(item or "").strip() for item in payload.get("claims", []) if str(item or "").strip()
+    ]
     witness_state = str(payload.get("witnessState") or "").strip().lower()
 
     if witness_state == "invalid":
@@ -983,7 +1066,11 @@ def evaluate_zkp_witness(payload: Dict[str, Any]) -> Dict[str, Any]:
             "status": "refuted",
             "reason": "refuted",
             "proverId": "zkp-witness-native",
-            "metadata": {"simulated": False, "route": "native-state-check", "stateRoute": "witness-invalid"},
+            "metadata": {
+                "simulated": False,
+                "route": "native-state-check",
+                "stateRoute": "witness-invalid",
+            },
         }
 
     if witness_state == "valid" or claims:
@@ -1006,8 +1093,12 @@ def evaluate_zkp_witness(payload: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def evaluate_zkp_statement_native(payload: Dict[str, Any], policy_fallback: Dict[str, Any]) -> Dict[str, Any]:
-    claims = [str(item or "").strip() for item in payload.get("claims", []) if str(item or "").strip()]
+def evaluate_zkp_statement_native(
+    payload: Dict[str, Any], policy_fallback: Dict[str, Any]
+) -> Dict[str, Any]:
+    claims = [
+        str(item or "").strip() for item in payload.get("claims", []) if str(item or "").strip()
+    ]
     theorem = claims[0] if claims else "zkp_statement"
     proof_state = str(payload.get("proofState") or "").strip().lower()
 
@@ -1093,8 +1184,12 @@ def map_native_policy_outcome(outcome: Dict[str, Any], prover_id: str) -> Option
 
 
 def policy_from_legal_norm_payload(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    norms = [str(item or "").strip() for item in payload.get("norms", []) if str(item or "").strip()]
-    facts = [str(item or "").strip() for item in payload.get("facts", []) if str(item or "").strip()]
+    norms = [
+        str(item or "").strip() for item in payload.get("norms", []) if str(item or "").strip()
+    ]
+    facts = [
+        str(item or "").strip() for item in payload.get("facts", []) if str(item or "").strip()
+    ]
     query = normalize_atom(str(payload.get("query") or "").strip())
     if not norms and not facts and not query:
         return None
@@ -1106,18 +1201,14 @@ def policy_from_legal_norm_payload(payload: Dict[str, Any]) -> Optional[Dict[str
     prohibitions = [
         {"cap": atom, "rsc": "legal_norm"}
         for atom in (
-            normalize_atom(str(fact)[4:])
-            for fact in facts
-            if str(fact).startswith("not:")
+            normalize_atom(str(fact)[4:]) for fact in facts if str(fact).startswith("not:")
         )
         if atom
     ]
     permissions = [
         {"cap": atom, "rsc": "legal_norm"}
         for atom in (
-            normalize_atom(str(fact))
-            for fact in facts
-            if not str(fact).startswith("not:")
+            normalize_atom(str(fact)) for fact in facts if not str(fact).startswith("not:")
         )
         if atom
     ]
@@ -1135,7 +1226,11 @@ def policy_from_legal_norm_payload(payload: Dict[str, Any]) -> Optional[Dict[str
 
 
 def policy_from_zkp_statement_payload(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    claims = [normalize_atom(str(item or "").strip()) for item in payload.get("claims", []) if str(item or "").strip()]
+    claims = [
+        normalize_atom(str(item or "").strip())
+        for item in payload.get("claims", [])
+        if str(item or "").strip()
+    ]
     claims = [claim for claim in claims if claim]
     proof_state = str(payload.get("proofState") or "").strip().lower()
 
@@ -1260,23 +1355,31 @@ def build_tdfol_policy_formula(policy: Dict[str, Any], subsystem: str) -> Any:
         formulas.append(
             DeonticFormula(
                 DeonticOperator.PERMISSION,
-                Predicate(atom_name(str(permission.get("cap", "")), str(permission.get("rsc", ""))), ()),
+                Predicate(
+                    atom_name(str(permission.get("cap", "")), str(permission.get("rsc", ""))), ()
+                ),
             )
         )
     for prohibition in policy.get("prohibitions", []):
         formulas.append(
             DeonticFormula(
                 DeonticOperator.PROHIBITION,
-                Predicate(atom_name(str(prohibition.get("cap", "")), str(prohibition.get("rsc", ""))), ()),
+                Predicate(
+                    atom_name(str(prohibition.get("cap", "")), str(prohibition.get("rsc", ""))), ()
+                ),
             )
         )
     for index, obligation in enumerate(policy.get("obligations", [])):
         atom = atom_name(str(obligation.get("requiredCap", "")), str(obligation.get("rsc", "")))
-        atom = atom or normalize_atom(str(obligation.get("description", ""))) or f"obligation_{index}"
+        atom = (
+            atom or normalize_atom(str(obligation.get("description", ""))) or f"obligation_{index}"
+        )
         formulas.append(DeonticFormula(DeonticOperator.OBLIGATION, Predicate(atom, ())))
 
     formula = combine_tdfol_formulas(formulas, Predicate(f"{normalize_atom(subsystem)}_policy", ()))
-    if policy.get("temporal") or any("deadline" in obligation for obligation in policy.get("obligations", [])):
+    if policy.get("temporal") or any(
+        "deadline" in obligation for obligation in policy.get("obligations", [])
+    ):
         return TemporalFormula(TemporalOperator.ALWAYS, formula)
     return formula
 
@@ -1321,8 +1424,12 @@ def build_dcec_policy_formula(policy: Dict[str, Any]) -> Any:
         )
     for index, obligation in enumerate(policy.get("obligations", [])):
         atom = atom_name(str(obligation.get("requiredCap", "")), str(obligation.get("rsc", "")))
-        atom = atom or normalize_atom(str(obligation.get("description", ""))) or f"obligation_{index}"
-        formulas.append(DeonticFormula(DeonticOperator.OBLIGATION, AtomicFormula(Predicate(atom, []), [])))
+        atom = (
+            atom or normalize_atom(str(obligation.get("description", ""))) or f"obligation_{index}"
+        )
+        formulas.append(
+            DeonticFormula(DeonticOperator.OBLIGATION, AtomicFormula(Predicate(atom, []), []))
+        )
 
     if not formulas:
         return AtomicFormula(Predicate("policy", []), [])
@@ -1360,7 +1467,9 @@ def backend_mode(vector: Dict[str, Any], outcome: Optional[Dict[str, Any]]) -> s
     return expected_mode or "host-dependent"
 
 
-def structured_artifacts_for_vector(vector: Dict[str, Any], outcome: Dict[str, Any]) -> Dict[str, str]:
+def structured_artifacts_for_vector(
+    vector: Dict[str, Any], outcome: Dict[str, Any]
+) -> Dict[str, str]:
     status = str(outcome.get("reason") or "unknown").strip().lower()
     base = {
         "inputType": vector.get("inputType"),
@@ -1410,7 +1519,10 @@ def exact_permission_conflict(policy: Dict[str, Any]) -> Optional[str]:
 
 
 def obligation_prohibition_conflict(policy: Dict[str, Any]) -> Optional[str]:
-    prohibited = {atom_name(rule.get("cap", ""), rule.get("rsc", "")) for rule in policy.get("prohibitions", [])}
+    prohibited = {
+        atom_name(rule.get("cap", ""), rule.get("rsc", ""))
+        for rule in policy.get("prohibitions", [])
+    }
     for obligation in policy.get("obligations", []):
         description = normalize_atom(str(obligation.get("description", "")))
         required = atom_name(str(obligation.get("requiredCap", "")), str(obligation.get("rsc", "")))
@@ -1471,7 +1583,9 @@ def discover_engine_versions() -> Dict[str, str]:
     return versions
 
 
-def assert_required_engines(engine_versions: Dict[str, str], require_engines: Optional[Iterable[str]]) -> None:
+def assert_required_engines(
+    engine_versions: Dict[str, str], require_engines: Optional[Iterable[str]]
+) -> None:
     if not require_engines:
         return
 
@@ -1512,7 +1626,11 @@ def default_vectors_dir() -> pathlib.Path:
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run Python reference conformance vectors")
-    parser.add_argument("--vectors", default=str(default_vectors_dir()), help="Directory containing vector JSON files")
+    parser.add_argument(
+        "--vectors",
+        default=str(default_vectors_dir()),
+        help="Directory containing vector JSON files",
+    )
     parser.add_argument("--out", help="Output result JSON path")
     parser.add_argument("--subsystems", help="Comma-separated subsystem filter")
     parser.add_argument("--limit", type=int, help="Limit vector count after filtering")

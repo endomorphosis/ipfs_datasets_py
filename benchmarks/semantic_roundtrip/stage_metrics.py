@@ -25,9 +25,7 @@ from benchmarks.semantic_roundtrip.metrics import compare_semantic_ir
 
 
 STAGE_METRICS_INTERFACE: Final = "StageMetrics@1"
-STAGE_METRICS_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-stage-metrics.v1"
-)
+STAGE_METRICS_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-stage-metrics.v1"
 STAGE_CONSTRUCTOR_ONLY: Final = "constructor_only"
 
 # Documented promotion policy bound into every stage-metric export.
@@ -75,9 +73,7 @@ def _finite_unit_interval(value: object, field_name: str) -> float:
         or not math.isfinite(float(value))
         or not 0.0 <= float(value) <= 1.0
     ):
-        raise ContractError(
-            f"{field_name} must be a finite number from zero to one"
-        )
+        raise ContractError(f"{field_name} must be a finite number from zero to one")
     return float(value)
 
 
@@ -109,9 +105,7 @@ class ConstructorOnlyStageMetrics:
 
     def __post_init__(self) -> None:
         if self.stage != STAGE_CONSTRUCTOR_ONLY:
-            raise ContractError(
-                f"stage must be {STAGE_CONSTRUCTOR_ONLY!r}"
-            )
+            raise ContractError(f"stage must be {STAGE_CONSTRUCTOR_ONLY!r}")
         for field in (
             "forward_loss",
             "modality_survival",
@@ -134,14 +128,8 @@ class ConstructorOnlyStageMetrics:
             "candidate_rule_count",
         ):
             value = getattr(self, field)
-            if (
-                isinstance(value, bool)
-                or not isinstance(value, int)
-                or value < 0
-            ):
-                raise ContractError(
-                    f"{field} must be a nonnegative integer"
-                )
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ContractError(f"{field} must be a nonnegative integer")
         if not isinstance(self.evaluated, bool):
             raise ContractError("evaluated must be a boolean")
         if self.promotion_requires_full_gates is not True:
@@ -150,9 +138,7 @@ class ConstructorOnlyStageMetrics:
                 "stage metrics never authorize promotion alone"
             )
         if tuple(self.promotion_full_gate_ids) != PROMOTION_FULL_GATE_IDS:
-            raise ContractError(
-                "promotion_full_gate_ids must match the frozen full-gate set"
-            )
+            raise ContractError("promotion_full_gate_ids must match the frozen full-gate set")
         if (
             not isinstance(self.promotion_policy_note, str)
             or not self.promotion_policy_note.strip()
@@ -218,9 +204,7 @@ def compute_constructor_only_metrics(
     comparison = compare_semantic_ir(gold, candidate)
     matches = comparison["matches"]
     assert isinstance(matches, list)
-    inversions = [
-        match for match in matches if not bool(match["modality_preserved"])
-    ]
+    inversions = [match for match in matches if not bool(match["modality_preserved"])]
     facets = comparison["facet_survival"]
     assert isinstance(facets, Mapping)
     semantic_score = float(comparison["semantic_score"])
@@ -274,8 +258,7 @@ def constructor_only_metrics_from_matrix_record(
         inversions = [
             match
             for match in match_list
-            if isinstance(match, Mapping)
-            and not bool(match.get("modality_preserved", False))
+            if isinstance(match, Mapping) and not bool(match.get("modality_preserved", False))
         ]
         semantic_score = _finite_unit_interval(
             forward.get("semantic_score", 0.0),
@@ -284,9 +267,7 @@ def constructor_only_metrics_from_matrix_record(
         # Prefer sealed comparison; optionally reconcile loss from losses.forward.
         losses = _mapping(record.get("losses"))
         if "forward" in losses:
-            forward_loss = _finite_unit_interval(
-                losses["forward"], "losses.forward"
-            )
+            forward_loss = _finite_unit_interval(losses["forward"], "losses.forward")
         else:
             forward_loss = round(1.0 - semantic_score, 9)
         return ConstructorOnlyStageMetrics(
@@ -300,12 +281,8 @@ def constructor_only_metrics_from_matrix_record(
             polarity_preserved=not inversions,
             polarity_inversion_count=len(inversions),
             matched_rule_count=int(forward.get("matched_rule_count") or 0),
-            reference_rule_count=int(
-                forward.get("reference_rule_count") or 0
-            ),
-            candidate_rule_count=int(
-                forward.get("candidate_rule_count") or 0
-            ),
+            reference_rule_count=int(forward.get("reference_rule_count") or 0),
+            candidate_rule_count=int(forward.get("candidate_rule_count") or 0),
             evaluated=True,
         )
 
@@ -326,29 +303,22 @@ def constructor_only_metrics_from_matrix_record(
 def export_constructor_only_stage_metrics(
     records: Sequence[Mapping[str, object]],
     *,
-    gold_ir_by_case: Mapping[str, CanonicalRuleIR | Mapping[str, object]]
-    | None = None,
+    gold_ir_by_case: Mapping[str, CanonicalRuleIR | Mapping[str, object]] | None = None,
 ) -> list[dict[str, object]]:
     """Export constructor_only metrics for a sequence of matrix records."""
 
-    if not isinstance(records, Sequence) or isinstance(
-        records, (str, bytes, bytearray)
-    ):
+    if not isinstance(records, Sequence) or isinstance(records, (str, bytes, bytearray)):
         raise ContractError("records must be a sequence of matrix records")
     gold_map = gold_ir_by_case or {}
     exported: list[dict[str, object]] = []
     for index, record in enumerate(records):
         if not isinstance(record, Mapping):
-            raise ContractError(
-                f"records[{index}] must be a matrix record object"
-            )
+            raise ContractError(f"records[{index}] must be a matrix record object")
         case_id = record.get("case_id")
         gold = None
         if isinstance(case_id, str) and case_id in gold_map:
             gold = gold_map[case_id]
-        metrics = constructor_only_metrics_from_matrix_record(
-            record, gold_ir=gold
-        )
+        metrics = constructor_only_metrics_from_matrix_record(record, gold_ir=gold)
         payload = metrics.to_dict()
         payload["case_id"] = case_id
         payload["cell_id"] = record.get("cell_id")

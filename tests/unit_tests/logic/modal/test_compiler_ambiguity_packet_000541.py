@@ -104,13 +104,9 @@ def test_packet_000541_family_pairs_are_registered() -> None:
     assert COMPILER_REFINED_PACKET_000541_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -198,9 +194,7 @@ def test_compiler_exposes_packet_000541_explicit_adaptive_ambiguities(
         expected_type,
         expected_severity,
     ) in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="regex")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="regex"))
         ranking = _ranking_for_margin(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -231,7 +225,4 @@ def test_compiler_exposes_packet_000541_explicit_adaptive_ambiguities(
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
         assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
-        assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin) <= 1e-12

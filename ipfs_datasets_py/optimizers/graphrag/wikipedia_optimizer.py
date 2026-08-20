@@ -27,14 +27,12 @@ from ipfs_datasets_py.optimizers.graphrag.query_optimizer import (
     QueryRewriter,
     QueryBudgetManager,
     UnifiedGraphRAGQueryOptimizer,
-    QueryMetricsCollector
+    QueryMetricsCollector,
 )
 from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
 _WIKIPEDIA_QUERY_DOMAIN_PATTERNS: Dict[str, re.Pattern[str]] = {
-    "topic_lookup": re.compile(
-        r"(?:about|information|details)\s+(?:on|about)\s+([a-zA-Z0-9\s]+)"
-    ),
+    "topic_lookup": re.compile(r"(?:about|information|details)\s+(?:on|about)\s+([a-zA-Z0-9\s]+)"),
     "comparison": re.compile(
         r"(?:compare|comparison|differences?|similarities?)\s+(?:between|of)\s+([a-zA-Z0-9\s]+)\s+(?:and|vs\.?|versus)\s+([a-zA-Z0-9\s]+)"
     ),
@@ -125,35 +123,28 @@ class WikipediaRelationshipWeightCalculator:
         "instance_of": 1.4,
         "part_of": 1.3,
         "has_part": 1.2,
-
         # Category relationships
         "category_contains": 1.3,
         "in_category": 1.3,
-
         # Topic relationships
         "related_to": 1.0,
         "similar_to": 0.9,
         "refers_to": 0.8,
-
         # Authorship and creation relationships
         "created_by": 0.7,
         "authored_by": 0.7,
         "developed_by": 0.7,
-
         # Temporal relationships
         "preceded_by": 0.6,
         "succeeded_by": 0.6,
-
         # Causal relationships
         "causes": 1.1,
         "caused_by": 1.1,
-
         # Generic relationships
         "mentions": 0.5,
         "mentioned_in": 0.5,
-
         # Default for unknown relationships
-        "default": 0.5
+        "default": 0.5,
     }
 
     def __init__(self, custom_weights: Optional[Dict[str, float]] = None):
@@ -282,7 +273,7 @@ class WikipediaRelationshipWeightCalculator:
         normalized = relationship_type.lower()
 
         # Remove spaces and underscores, convert to snake_case
-        normalized = re.sub(r'[\s-]+', '_', normalized)
+        normalized = re.sub(r"[\s-]+", "_", normalized)
 
         # Handle common variations
         mapping = {
@@ -298,7 +289,7 @@ class WikipediaRelationshipWeightCalculator:
             "is_developed_by": "developed_by",
             "is_preceded_by": "preceded_by",
             "is_succeeded_by": "succeeded_by",
-            "is_mentioned_in": "mentioned_in"
+            "is_mentioned_in": "mentioned_in",
         }
 
         return mapping.get(normalized, normalized)
@@ -344,13 +335,11 @@ class WikipediaRelationshipWeightCalculator:
         return sorted(
             relationship_types,
             key=lambda rel_type: self.get_relationship_weight(rel_type),
-            reverse=True
+            reverse=True,
         )
 
     def get_filtered_high_value_relationships(
-        self,
-        relationship_types: List[str],
-        min_weight: float = 0.7
+        self, relationship_types: List[str], min_weight: float = 0.7
     ) -> List[str]:
         """
         Filter relationship types to only include those meeting minimum weight thresholds.
@@ -393,7 +382,8 @@ class WikipediaRelationshipWeightCalculator:
             - Threshold can be adjusted based on query requirements and performance needs
         """
         return [
-            rel_type for rel_type in relationship_types
+            rel_type
+            for rel_type in relationship_types
             if self.get_relationship_weight(rel_type) >= min_weight
         ]
 
@@ -597,8 +587,7 @@ class WikipediaCategoryHierarchyManager:
 
         # If category has no parents, it's a root category (depth 0)
         parents = [
-            parent for parent, children in self.category_connections.items()
-            if category in children
+            parent for parent, children in self.category_connections.items() if category in children
         ]
 
         if not parents:
@@ -612,8 +601,12 @@ class WikipediaCategoryHierarchyManager:
 
         return depth
 
-    def assign_category_weights(self, query_vector: np.ndarray, categories: List[str],
-                               similarity_scores: Dict[str, float] = None) -> Dict[str, float]:
+    def assign_category_weights(
+        self,
+        query_vector: np.ndarray,
+        categories: List[str],
+        similarity_scores: Dict[str, float] = None,
+    ) -> Dict[str, float]:
         """
         Assign weights to categories based on depth and similarity to query.
 
@@ -784,13 +777,11 @@ class WikipediaEntityImportanceCalculator:
             "reference_count": 0.2,
             "category_importance": 0.2,
             "explicitness": 0.15,
-            "recency": 0.15
+            "recency": 0.15,
         }
 
     def calculate_entity_importance(
-        self,
-        entity_data: Dict[str, Any],
-        category_weights: Optional[Dict[str, float]] = None
+        self, entity_data: Dict[str, Any], category_weights: Optional[Dict[str, float]] = None
     ) -> float:
         """
         Calculate comprehensive importance score for an entity using multiple relevance factors.
@@ -892,12 +883,16 @@ class WikipediaEntityImportanceCalculator:
             # Calculate recency score (1.0 for newest, decreasing with age)
             now = time.time()
             age_days = (now - timestamp) / (24 * 3600)
-            scores["recency"] = max(0.0, min(1.0, 1.0 - (age_days / 365)))  # Linear decay over a year
+            scores["recency"] = max(
+                0.0, min(1.0, 1.0 - (age_days / 365))
+            )  # Linear decay over a year
         else:
             scores["recency"] = 0.5  # Default if no timestamp
 
         # Combine feature scores with weights
-        importance = sum(scores[feature] * weight for feature, weight in self.feature_weights.items())
+        importance = sum(
+            scores[feature] * weight for feature, weight in self.feature_weights.items()
+        )
 
         # Cache the result
         if entity_id:
@@ -906,9 +901,7 @@ class WikipediaEntityImportanceCalculator:
         return importance
 
     def rank_entities_by_importance(
-        self,
-        entities: List[Dict[str, Any]],
-        category_weights: Optional[Dict[str, float]] = None
+        self, entities: List[Dict[str, Any]], category_weights: Optional[Dict[str, float]] = None
     ) -> List[Dict[str, Any]]:
         """
         Rank a collection of entities by their calculated importance scores.
@@ -1064,7 +1057,7 @@ class WikipediaQueryExpander:
         query_text: str,
         vector_store: Any,
         category_hierarchy: WikipediaCategoryHierarchyManager,
-        trace_id: Optional[str] = None
+        trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Expand a query with related Wikipedia topics and categories for enhanced discovery.
@@ -1122,36 +1115,33 @@ class WikipediaQueryExpander:
             - Token-based category matching handles category name variations
             - Tracer integration enables detailed expansion analysis and debugging
         """
-        expansions = {
-            "topics": [],
-            "categories": [],
-            "entities": []
-        }
+        expansions = {"topics": [], "categories": [], "entities": []}
 
         # 1. Find related topics via vector search
-        if vector_store and hasattr(vector_store, 'search'):
+        if vector_store and hasattr(vector_store, "search"):
             try:
                 topic_results = vector_store.search(
                     query_vector,
                     top_k=self.max_expansions * 2,  # Get more candidates
-                    filter_fn=lambda x: x.get("metadata", {}).get("type") == "topic"
+                    filter_fn=lambda x: x.get("metadata", {}).get("type") == "topic",
                 )
 
                 # Filter by similarity threshold
                 similar_topics = [
-                    result for result in topic_results
+                    result
+                    for result in topic_results
                     if result.get("score", 0) >= self.similarity_threshold
                 ]
 
                 # Limit to max_expansions
-                similar_topics = similar_topics[:self.max_expansions]
+                similar_topics = similar_topics[: self.max_expansions]
 
                 # Extract topic information
                 expansions["topics"] = [
                     {
                         "id": result.get("id", ""),
                         "name": result.get("metadata", {}).get("name", ""),
-                        "similarity": result.get("score", 0)
+                        "similarity": result.get("score", 0),
                     }
                     for result in similar_topics
                 ]
@@ -1167,7 +1157,7 @@ class WikipediaQueryExpander:
 
         for category in category_hierarchy.category_connections.keys():
             # Normalize category name for matching
-            category_name = category.lower().replace('_', ' ')
+            category_name = category.lower().replace("_", " ")
             category_tokens = set(category_name.split())
 
             # Check overlap with query
@@ -1186,13 +1176,13 @@ class WikipediaQueryExpander:
         sorted_categories = sorted(
             all_categories,
             key=lambda cat: category_hierarchy.calculate_category_depth(cat),
-            reverse=True
+            reverse=True,
         )
 
         # Limit to max_expansions
         expansions["categories"] = [
             {"name": category, "depth": category_hierarchy.calculate_category_depth(category)}
-            for category in sorted_categories[:self.max_expansions]
+            for category in sorted_categories[: self.max_expansions]
         ]
 
         # 3. Create expanded query parameters
@@ -1200,15 +1190,13 @@ class WikipediaQueryExpander:
             "original_query_vector": query_vector,
             "original_query_text": query_text,
             "expansions": expansions,
-            "has_expansions": bool(expansions["topics"] or expansions["categories"])
+            "has_expansions": bool(expansions["topics"] or expansions["categories"]),
         }
 
         # Log expansion details if tracer is available
         if self.tracer and trace_id:
             self.tracer.log_query_expansion(
-                trace_id=trace_id,
-                query_text=query_text,
-                expansions=expansions
+                trace_id=trace_id, query_text=query_text, expansions=expansions
             )
 
         return expanded_query
@@ -1319,27 +1307,22 @@ class WikipediaPathOptimizer:
             "instance_of": 0.6,
             "part_of": 0.7,
             "has_part": 0.7,
-
             # Category relationships (efficient to traverse)
             "category_contains": 0.7,
             "in_category": 0.7,
-
             # Topic relationships (moderate cost)
             "related_to": 1.0,
             "similar_to": 1.0,
             "refers_to": 1.1,
-
             # Authorship and creation relationships (higher cost)
             "created_by": 1.2,
             "authored_by": 1.2,
             "developed_by": 1.2,
-
             # High branching-factor relationships (expensive)
             "mentions": 1.5,
             "mentioned_in": 1.5,
-
             # Default cost
-            "default": 1.0
+            "default": 1.0,
         }
 
     def get_edge_traversal_cost(self, edge_type: str) -> float:
@@ -1392,7 +1375,7 @@ class WikipediaPathOptimizer:
         start_entities: List[Dict[str, Any]],
         relationship_types: List[str],
         max_depth: int,
-        budget: Dict[str, Any]
+        budget: Dict[str, Any],
     ) -> Dict[str, Any]:
         """
         Generate an optimized traversal plan based on Wikipedia-specific considerations.
@@ -1467,7 +1450,7 @@ class WikipediaPathOptimizer:
                 level_budget = min(remaining_budget, int(total_budget * 0.4))
             else:
                 # Later levels get progressively less budget
-                decay_factor = 0.7 ** depth  # Exponential decay
+                decay_factor = 0.7**depth  # Exponential decay
                 level_budget = min(remaining_budget, int(total_budget * 0.2 * decay_factor))
 
             level_costs.append(level_budget)
@@ -1490,8 +1473,10 @@ class WikipediaPathOptimizer:
             "relationship_priority": prioritized_relationships,
             "level_budgets": level_costs,
             "relationship_activation": relationship_activation,
-            "traversal_costs": {rel: self.get_edge_traversal_cost(rel) for rel in relationship_types},
-            "original_max_depth": max_depth
+            "traversal_costs": {
+                rel: self.get_edge_traversal_cost(rel) for rel in relationship_types
+            },
+            "original_max_depth": max_depth,
         }
 
         return optimized_plan
@@ -1605,7 +1590,7 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
         cache_enabled=True,
         cache_ttl=300.0,
         cache_size_limit=100,
-        tracer=None
+        tracer=None,
     ):
         """
         Initialize the Wikipedia RAG Query Optimizer.
@@ -1625,7 +1610,7 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
             graph_weight=graph_weight,
             cache_enabled=cache_enabled,
             cache_ttl=cache_ttl,
-            cache_size_limit=cache_size_limit
+            cache_size_limit=cache_size_limit,
         )
 
         # Initialize Wikipedia-specific components
@@ -1651,7 +1636,7 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
         query_text: Optional[str] = None,
         graph_processor=None,
         vector_store=None,
-        trace_id: Optional[str] = None
+        trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Generate an optimized query plan for Wikipedia knowledge graphs.
@@ -1672,11 +1657,7 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
         """
         # Start with parent class optimization
         base_plan = super().optimize_query(
-            query_vector,
-            max_vector_results,
-            max_traversal_depth,
-            edge_types,
-            min_similarity
+            query_vector, max_vector_results, max_traversal_depth, edge_types, min_similarity
         )
 
         # Get optimized parameters
@@ -1684,7 +1665,15 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
 
         # Ensure edge_types is a list
         if edge_types is None:
-            edge_types = ["subclass_of", "instance_of", "part_of", "related_to", "mentions", "category_contains", "similar_to"]
+            edge_types = [
+                "subclass_of",
+                "instance_of",
+                "part_of",
+                "related_to",
+                "mentions",
+                "category_contains",
+                "similar_to",
+            ]
 
         # 1. Apply query expansion if query text is provided
         expanded_query = None
@@ -1694,11 +1683,13 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
                 query_text=query_text,
                 vector_store=vector_store,
                 category_hierarchy=self.category_hierarchy,
-                trace_id=trace_id
+                trace_id=trace_id,
             )
 
         # 2. Prioritize relationship types for traversal
-        prioritized_edge_types = self.relationship_calculator.get_prioritized_relationship_types(edge_types)
+        prioritized_edge_types = self.relationship_calculator.get_prioritized_relationship_types(
+            edge_types
+        )
 
         # 3. Calculate relationship activation depths
         relationship_depths = {}
@@ -1716,7 +1707,7 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
             "edge_types": prioritized_edge_types,
             "relationship_depths": relationship_depths,
             "entity_importance_strategy": entity_importance_strategy,
-            "hierarchical_weight": 1.5  # Boost for hierarchical relationships
+            "hierarchical_weight": 1.5,  # Boost for hierarchical relationships
         }
 
         # 6. Create final optimized plan
@@ -1724,30 +1715,32 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
             "query": {
                 "vector_params": {
                     "top_k": optimized_params["max_vector_results"],
-                    "min_score": optimized_params["min_similarity"]
+                    "min_score": optimized_params["min_similarity"],
                 },
-                "traversal": wiki_traversal_plan
+                "traversal": wiki_traversal_plan,
             },
             "weights": {
                 "vector": self.vector_weight,
                 "graph": self.graph_weight,
-                "hierarchical_bonus": 0.2  # Extra weight for hierarchical relationships
+                "hierarchical_bonus": 0.2,  # Extra weight for hierarchical relationships
             },
-            "expansions": expanded_query["expansions"] if expanded_query else None
+            "expansions": expanded_query["expansions"] if expanded_query else None,
         }
 
         # 7. Record optimization for learning
-        self.optimization_history.append({
-            "timestamp": time.time(),
-            "input_params": {
-                "max_vector_results": max_vector_results,
-                "max_traversal_depth": max_traversal_depth,
-                "edge_types": edge_types,
-                "min_similarity": min_similarity
-            },
-            "optimized_plan": wiki_optimized_plan,
-            "query_expanded": expanded_query is not None
-        })
+        self.optimization_history.append(
+            {
+                "timestamp": time.time(),
+                "input_params": {
+                    "max_vector_results": max_vector_results,
+                    "max_traversal_depth": max_traversal_depth,
+                    "edge_types": edge_types,
+                    "min_similarity": min_similarity,
+                },
+                "optimized_plan": wiki_optimized_plan,
+                "query_expanded": expanded_query is not None,
+            }
+        )
 
         # 8. Log optimization details if tracer is available
         if self.tracer and trace_id:
@@ -1757,9 +1750,9 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
                     "max_vector_results": max_vector_results,
                     "max_traversal_depth": max_traversal_depth,
                     "edge_types": edge_types,
-                    "min_similarity": min_similarity
+                    "min_similarity": min_similarity,
                 },
-                optimized_plan=wiki_optimized_plan
+                optimized_plan=wiki_optimized_plan,
             )
 
         return wiki_optimized_plan
@@ -1815,7 +1808,7 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
         # Get entity data from graph processor
         entity_data = (
             graph_processor.get_entity_info(entity_id)
-            if graph_processor and hasattr(graph_processor, 'get_entity_info')
+            if graph_processor and hasattr(graph_processor, "get_entity_info")
             else {"id": entity_id}
         )
 
@@ -1823,11 +1816,7 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
         return self.entity_importance.calculate_entity_importance(entity_data)
 
     def learn_from_query_results(
-        self,
-        query_id: str,
-        results: List[Dict[str, Any]],
-        time_taken: float,
-        plan: Dict[str, Any]
+        self, query_id: str, results: List[Dict[str, Any]], time_taken: float, plan: Dict[str, Any]
     ) -> None:
         """
         Learn from query execution results to improve future optimizations.
@@ -1900,8 +1889,7 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
 
         # Calculate edge type effectiveness (normalized by result count)
         edge_effectiveness = {
-            edge: count / max(1, result_count)
-            for edge, count in edge_type_counts.items()
+            edge: count / max(1, result_count) for edge, count in edge_type_counts.items()
         }
 
         # Record learning data
@@ -1911,7 +1899,7 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
             "result_count": result_count,
             "avg_score": avg_score,
             "edge_effectiveness": edge_effectiveness,
-            "strategy": strategy
+            "strategy": strategy,
         }
 
         # Update relationship weights based on effectiveness
@@ -1933,7 +1921,7 @@ class WikipediaRAGQueryOptimizer(GraphRAGQueryOptimizer):
         pattern = {
             "edge_types": edge_types,
             "max_depth": traversal.get("original_max_depth", 2),
-            "strategy": strategy
+            "strategy": strategy,
         }
         super().record_query_pattern(pattern)
 
@@ -2016,7 +2004,9 @@ class WikipediaGraphRAGQueryRewriter(QueryRewriter):
         # Reuse precompiled patterns across instances to avoid repeat compilation.
         self.domain_patterns = dict(_WIKIPEDIA_QUERY_DOMAIN_PATTERNS)
 
-    def rewrite_query(self, query: Dict[str, Any], graph_info: Dict[str, Any] = None) -> Dict[str, Any]:
+    def rewrite_query(
+        self, query: Dict[str, Any], graph_info: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """
         Rewrite a query with optimizations for Wikipedia knowledge graphs.
 
@@ -2039,12 +2029,16 @@ class WikipediaGraphRAGQueryRewriter(QueryRewriter):
             pattern_match = self._detect_query_pattern(query_text)
             if pattern_match:
                 pattern_type, entities = pattern_match
-                rewritten_query = self._apply_pattern_optimization(rewritten_query, pattern_type, entities)
+                rewritten_query = self._apply_pattern_optimization(
+                    rewritten_query, pattern_type, entities
+                )
 
         # 2. Prioritize edge types for Wikipedia
         if "traversal" in rewritten_query and "edge_types" in rewritten_query["traversal"]:
             edge_types = rewritten_query["traversal"]["edge_types"]
-            rewritten_query["traversal"]["edge_types"] = self.relationship_calculator.get_prioritized_relationship_types(edge_types)
+            rewritten_query["traversal"]["edge_types"] = (
+                self.relationship_calculator.get_prioritized_relationship_types(edge_types)
+            )
 
             # Add hierarchical weight for Wikipedia graphs
             rewritten_query["traversal"]["hierarchical_weight"] = 1.5
@@ -2062,7 +2056,9 @@ class WikipediaGraphRAGQueryRewriter(QueryRewriter):
                 rewritten_query["traversal"] = {}
 
             rewritten_query["traversal"]["expand_topics"] = True
-            rewritten_query["traversal"]["topic_expansion_factor"] = query.get("topic_expansion_factor", 1.0)
+            rewritten_query["traversal"]["topic_expansion_factor"] = query.get(
+                "topic_expansion_factor", 1.0
+            )
 
         return rewritten_query
 
@@ -2088,10 +2084,7 @@ class WikipediaGraphRAGQueryRewriter(QueryRewriter):
         return None
 
     def _apply_pattern_optimization(
-        self,
-        query: Dict[str, Any],
-        pattern_type: str,
-        entities: List[str]
+        self, query: Dict[str, Any], pattern_type: str, entities: List[str]
     ) -> Dict[str, Any]:
         """
         Apply pattern-specific optimizations for Wikipedia queries based on detected patterns.
@@ -2152,17 +2145,31 @@ class WikipediaGraphRAGQueryRewriter(QueryRewriter):
         elif pattern_type == "definition":
             # Focus on definition relationships
             query["traversal"]["strategy"] = "definition"
-            query["traversal"]["prioritize_edge_types"] = ["instance_of", "subclass_of", "defined_as"]
+            query["traversal"]["prioritize_edge_types"] = [
+                "instance_of",
+                "subclass_of",
+                "defined_as",
+            ]
 
         elif pattern_type == "cause_effect":
             # Focus on causal relationships
             query["traversal"]["strategy"] = "causal"
-            query["traversal"]["prioritize_edge_types"] = ["causes", "caused_by", "affects", "affected_by"]
+            query["traversal"]["prioritize_edge_types"] = [
+                "causes",
+                "caused_by",
+                "affects",
+                "affected_by",
+            ]
 
         elif pattern_type == "list":
             # Focus on collecting instances or examples
             query["traversal"]["strategy"] = "collection"
-            query["traversal"]["prioritize_edge_types"] = ["instance_of", "subclass_of", "example_of", "has_example"]
+            query["traversal"]["prioritize_edge_types"] = [
+                "instance_of",
+                "subclass_of",
+                "example_of",
+                "has_example",
+            ]
             query["traversal"]["collection_target"] = entities[0]
 
         return query
@@ -2245,9 +2252,9 @@ class WikipediaGraphRAGBudgetManager(QueryBudgetManager):
         # Wikipedia-specific default budget extensions
         self.wikipedia_budget_extensions = {
             "category_traversal_ms": 5000,  # Allocated time for category traversal
-            "topic_expansion_ms": 3000,     # Allocated time for topic expansion
-            "max_categories": 20,           # Maximum number of categories to explore
-            "max_topics": 15                # Maximum number of topics to explore
+            "topic_expansion_ms": 3000,  # Allocated time for topic expansion
+            "max_categories": 20,  # Maximum number of categories to explore
+            "max_topics": 15,  # Maximum number of topics to explore
         }
 
         # Update default budget with Wikipedia extensions
@@ -2276,13 +2283,17 @@ class WikipediaGraphRAGBudgetManager(QueryBudgetManager):
         if any(edge in ["category_contains", "in_category"] for edge in edge_types):
             # Increase category-specific budget
             category_focus = 1.5  # Multiplier for category operations
-            budget["category_traversal_ms"] = int(self.default_budget["category_traversal_ms"] * category_focus)
+            budget["category_traversal_ms"] = int(
+                self.default_budget["category_traversal_ms"] * category_focus
+            )
             budget["max_categories"] = int(self.default_budget["max_categories"] * category_focus)
 
         # Topic expansion budget adjustments
         if traversal.get("expand_topics", False):
             expansion_factor = traversal.get("topic_expansion_factor", 1.0)
-            budget["topic_expansion_ms"] = int(self.default_budget["topic_expansion_ms"] * expansion_factor)
+            budget["topic_expansion_ms"] = int(
+                self.default_budget["topic_expansion_ms"] * expansion_factor
+            )
             budget["max_topics"] = int(self.default_budget["max_topics"] * expansion_factor)
 
         # Strategy-specific budget adjustments
@@ -2300,7 +2311,9 @@ class WikipediaGraphRAGBudgetManager(QueryBudgetManager):
 
         return budget
 
-    def suggest_early_stopping(self, results: List[Dict[str, Any]], budget_consumed_ratio: float) -> bool:
+    def suggest_early_stopping(
+        self, results: List[Dict[str, Any]], budget_consumed_ratio: float
+    ) -> bool:
         """
         Provide Wikipedia-specific early stopping suggestions.
 
@@ -2318,7 +2331,8 @@ class WikipediaGraphRAGBudgetManager(QueryBudgetManager):
         if len(results) > 0:
             # Check if we have high-confidence category matches
             category_matches = [
-                r for r in results
+                r
+                for r in results
                 if r.get("metadata", {}).get("type") == "category" and r.get("score", 0) > 0.85
             ]
 
@@ -2426,7 +2440,7 @@ class UnifiedWikipediaGraphRAGQueryOptimizer(UnifiedGraphRAGQueryOptimizer):
         base_optimizer=None,
         graph_info=None,
         metrics_collector=None,
-        tracer=None
+        tracer=None,
     ):
         """
         Initialize the unified Wikipedia graph optimizer.
@@ -2459,7 +2473,7 @@ class UnifiedWikipediaGraphRAGQueryOptimizer(UnifiedGraphRAGQueryOptimizer):
             base_optimizer=base_optimizer,
             graph_info=graph_info,
             metrics_collector=metrics_collector,
-            visualizer=None
+            visualizer=None,
         )
 
         # Set tracer
@@ -2470,7 +2484,7 @@ class UnifiedWikipediaGraphRAGQueryOptimizer(UnifiedGraphRAGQueryOptimizer):
         query: Dict[str, Any],
         graph_processor=None,
         vector_store=None,
-        trace_id: Optional[str] = None
+        trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Optimize a query for Wikipedia knowledge graphs.
@@ -2506,7 +2520,7 @@ class UnifiedWikipediaGraphRAGQueryOptimizer(UnifiedGraphRAGQueryOptimizer):
                 query_text=query_text,
                 graph_processor=graph_processor,
                 vector_store=vector_store,
-                trace_id=trace_id
+                trace_id=trace_id,
             )
         else:
             # Fall back to standard optimization if not using Wikipedia optimizer
@@ -2515,20 +2529,18 @@ class UnifiedWikipediaGraphRAGQueryOptimizer(UnifiedGraphRAGQueryOptimizer):
                 max_vector_results=max_vector_results,
                 max_traversal_depth=max_traversal_depth,
                 edge_types=edge_types,
-                min_similarity=min_similarity
+                min_similarity=min_similarity,
             )
 
         # 2. Apply query rewriting
         rewritten_query = self.rewriter.rewrite_query(
-            query=optimized_plan["query"],
-            graph_info=self.graph_info
+            query=optimized_plan["query"], graph_info=self.graph_info
         )
         optimized_plan["query"] = rewritten_query
 
         # 3. Allocate budget
         budget = self.budget_manager.allocate_budget(
-            query=rewritten_query,
-            priority=query.get("priority", "normal")
+            query=rewritten_query, priority=query.get("priority", "normal")
         )
         optimized_plan["budget"] = budget
 
@@ -2536,8 +2548,7 @@ class UnifiedWikipediaGraphRAGQueryOptimizer(UnifiedGraphRAGQueryOptimizer):
         query_id = None
         if self.metrics_collector:
             query_id = self.metrics_collector.start_query_tracking(
-                query_params=query,
-                query_id=trace_id
+                query_params=query, query_id=trace_id
             )
 
             # Record optimization phase
@@ -2552,15 +2563,14 @@ class UnifiedWikipediaGraphRAGQueryOptimizer(UnifiedGraphRAGQueryOptimizer):
         # 5. Log optimization details if tracer is available
         if self.tracer and trace_id:
             self.tracer.log_unified_optimization(
-                trace_id=trace_id,
-                original_query=query,
-                optimized_plan=optimized_plan
+                trace_id=trace_id, original_query=query, optimized_plan=optimized_plan
             )
 
         return optimized_plan
 
 
 # Utility functions for working with Wikipedia knowledge graphs
+
 
 def detect_graph_type(graph_processor) -> str:
     """
@@ -2605,7 +2615,7 @@ def detect_graph_type(graph_processor) -> str:
         - Detection is based on indicator counting with threshold comparison
     """
     # Check if graph processor has type information
-    if hasattr(graph_processor, 'graph_type'):
+    if hasattr(graph_processor, "graph_type"):
         return graph_processor.graph_type
 
     # Check entity and relationship types as indicators
@@ -2615,43 +2625,43 @@ def detect_graph_type(graph_processor) -> str:
     # Try to get a sample of entities
     sample_entities = []
     try:
-        if hasattr(graph_processor, 'get_entities'):
+        if hasattr(graph_processor, "get_entities"):
             sample_entities = graph_processor.get_entities(limit=20)
-        elif hasattr(graph_processor, 'list_entities'):
+        elif hasattr(graph_processor, "list_entities"):
             sample_entities = graph_processor.list_entities(limit=20)
     except (AttributeError, TypeError, ValueError):
         pass
 
     # Analyze entity types
     for entity in sample_entities:
-        entity_type = entity.get('type', '')
+        entity_type = entity.get("type", "")
 
         # Wikipedia indicators
-        if any(t in entity_type.lower() for t in ['category', 'article', 'wikidata', 'topic']):
+        if any(t in entity_type.lower() for t in ["category", "article", "wikidata", "topic"]):
             wiki_indicators += 1
 
         # IPLD indicators
-        if any(t in entity_type.lower() for t in ['ipld', 'cid', 'dag', 'content_addressed']):
+        if any(t in entity_type.lower() for t in ["ipld", "cid", "dag", "content_addressed"]):
             ipld_indicators += 1
 
     # Check for relationship types
     relationship_types = set()
     try:
-        if hasattr(graph_processor, 'get_relationship_types'):
+        if hasattr(graph_processor, "get_relationship_types"):
             relationship_types = set(graph_processor.get_relationship_types())
-        elif hasattr(graph_processor, 'list_relationship_types'):
+        elif hasattr(graph_processor, "list_relationship_types"):
             relationship_types = set(graph_processor.list_relationship_types())
     except (AttributeError, TypeError, ValueError):
         pass
 
     # Wikipedia relationship indicators
-    wiki_rel_indicators = ['subclass_of', 'instance_of', 'category_contains', 'article_in_category']
+    wiki_rel_indicators = ["subclass_of", "instance_of", "category_contains", "article_in_category"]
     for rel in wiki_rel_indicators:
         if any(rel.lower() in r.lower() for r in relationship_types):
             wiki_indicators += 1
 
     # IPLD relationship indicators
-    ipld_rel_indicators = ['links_to', 'references', 'contains_hash', 'content_references']
+    ipld_rel_indicators = ["links_to", "references", "contains_hash", "content_references"]
     for rel in ipld_rel_indicators:
         if any(rel.lower() in r.lower() for r in relationship_types):
             ipld_indicators += 1
@@ -2669,7 +2679,7 @@ def create_appropriate_optimizer(
     graph_processor=None,
     graph_type: Optional[str] = None,
     metrics_collector: Optional[QueryMetricsCollector] = None,
-    tracer: Optional[WikipediaKnowledgeGraphTracer] = None
+    tracer: Optional[WikipediaKnowledgeGraphTracer] = None,
 ) -> UnifiedGraphRAGQueryOptimizer:
     """
     Create an appropriate optimizer based on detected or specified graph type.
@@ -2738,14 +2748,11 @@ def create_appropriate_optimizer(
     # Create appropriate optimizer
     if graph_type.lower() == "wikipedia":
         return UnifiedWikipediaGraphRAGQueryOptimizer(
-            metrics_collector=metrics_collector,
-            tracer=tracer
+            metrics_collector=metrics_collector, tracer=tracer
         )
     else:
         # Default to standard optimizer for other graph types
-        return UnifiedGraphRAGQueryOptimizer(
-            metrics_collector=metrics_collector
-        )
+        return UnifiedGraphRAGQueryOptimizer(metrics_collector=metrics_collector)
 
 
 # Main integration function
@@ -2755,7 +2762,7 @@ def optimize_wikipedia_query(
     vector_store=None,
     tracer: Optional[WikipediaKnowledgeGraphTracer] = None,
     metrics_collector: Optional[QueryMetricsCollector] = None,
-    trace_id: Optional[str] = None
+    trace_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Optimize a query for Wikipedia-derived knowledge graphs with comprehensive optimization.
@@ -2834,15 +2841,12 @@ def optimize_wikipedia_query(
         graph_processor=graph_processor,
         graph_type="wikipedia",
         metrics_collector=metrics_collector,
-        tracer=tracer
+        tracer=tracer,
     )
 
     # Optimize query
     optimized_plan = optimizer.optimize_query(
-        query=query,
-        graph_processor=graph_processor,
-        vector_store=vector_store,
-        trace_id=trace_id
+        query=query, graph_processor=graph_processor, vector_store=vector_store, trace_id=trace_id
     )
 
     return optimized_plan

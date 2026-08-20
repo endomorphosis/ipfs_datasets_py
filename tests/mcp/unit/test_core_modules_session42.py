@@ -8,6 +8,7 @@ Targets:
 - configs.py        (75 stmts, 48% → 100%)
 - trio_bridge.py    (28 stmts, 0%  → 100%)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -26,24 +27,29 @@ import pytest
 # logger.py — all 12 stmts are module-level; importing executes them all.
 # ===========================================================================
 
+
 class TestLogger:
     def test_import_creates_loggers(self):
         """Importing logger.py executes all module-level stmts."""
         from ipfs_datasets_py.mcp_server import logger as logger_mod
+
         assert logger_mod.logger is not None
         assert logger_mod.mcp_logger is not None
 
     def test_loggers_are_logging_logger_instances(self):
         from ipfs_datasets_py.mcp_server import logger as logger_mod
+
         assert isinstance(logger_mod.logger, logging.Logger)
         assert isinstance(logger_mod.mcp_logger, logging.Logger)
 
     def test_log_file_path_attribute_exists(self):
         from ipfs_datasets_py.mcp_server import logger as logger_mod
+
         assert hasattr(logger_mod, "mcp_log_path")
 
     def test_log_dir_created(self):
         from ipfs_datasets_py.mcp_server import logger as logger_mod
+
         assert hasattr(logger_mod, "log_dir")
 
 
@@ -51,8 +57,8 @@ class TestLogger:
 # mcp_interfaces.py
 # ===========================================================================
 
-class TestMCPInterfaces:
 
+class TestMCPInterfaces:
     # --- Protocol isinstance checks ----------------------------------------
 
     def test_mcp_server_protocol_isinstance_with_conforming_object(self):
@@ -60,6 +66,7 @@ class TestMCPInterfaces:
 
         class FakeServer:
             tools: Dict[str, Callable[..., Any]] = {}
+
             def validate_p2p_token(self, token: str) -> bool:
                 return True
 
@@ -80,10 +87,13 @@ class TestMCPInterfaces:
         class FakeTM:
             def list_categories(self) -> list:
                 return []
+
             def list_tools(self, category=None) -> list:
                 return []
+
             def get_schema(self, tool_name: str) -> dict:
                 return {}
+
             def dispatch(self, tool_name: str, **kw) -> Any:
                 return None
 
@@ -95,6 +105,7 @@ class TestMCPInterfaces:
         class FakeClient:
             def add_tool(self, func, name=None, description=None) -> None:
                 pass
+
             def list_tools(self) -> list:
                 return []
 
@@ -104,10 +115,17 @@ class TestMCPInterfaces:
         from ipfs_datasets_py.mcp_server.mcp_interfaces import P2PServiceProtocol
 
         class FakeP2P:
-            def start(self) -> None: pass
-            def stop(self) -> None: pass
-            def is_running(self) -> bool: return False
-            def register_tool(self, name: str, func) -> None: pass
+            def start(self) -> None:
+                pass
+
+            def stop(self) -> None:
+                pass
+
+            def is_running(self) -> bool:
+                return False
+
+            def register_tool(self, name: str, func) -> None:
+                pass
 
         assert isinstance(FakeP2P(), P2PServiceProtocol)
 
@@ -115,31 +133,40 @@ class TestMCPInterfaces:
 
     def test_check_protocol_true(self):
         from ipfs_datasets_py.mcp_server.mcp_interfaces import (
-            MCPClientProtocol, check_protocol_implementation,
+            MCPClientProtocol,
+            check_protocol_implementation,
         )
 
         class FakeClient:
-            def add_tool(self, func, name=None, description=None) -> None: pass
-            def list_tools(self) -> list: return []
+            def add_tool(self, func, name=None, description=None) -> None:
+                pass
+
+            def list_tools(self) -> list:
+                return []
 
         assert check_protocol_implementation(FakeClient(), MCPClientProtocol) is True
 
     def test_check_protocol_false_non_strict(self):
         from ipfs_datasets_py.mcp_server.mcp_interfaces import (
-            MCPClientProtocol, check_protocol_implementation,
+            MCPClientProtocol,
+            check_protocol_implementation,
         )
+
         assert check_protocol_implementation(object(), MCPClientProtocol) is False
 
     def test_check_protocol_strict_raises(self):
         from ipfs_datasets_py.mcp_server.mcp_interfaces import (
-            MCPClientProtocol, check_protocol_implementation,
+            MCPClientProtocol,
+            check_protocol_implementation,
         )
+
         with pytest.raises(TypeError, match="does not implement"):
             check_protocol_implementation(object(), MCPClientProtocol, strict=True)
 
     # --- Type aliases are importable ----------------------------------------
     def test_type_aliases(self):
         from ipfs_datasets_py.mcp_server import mcp_interfaces
+
         assert hasattr(mcp_interfaces, "ToolDict")
         assert hasattr(mcp_interfaces, "ToolDescriptor")
         assert hasattr(mcp_interfaces, "ToolRegistry")
@@ -149,11 +176,12 @@ class TestMCPInterfaces:
 # exceptions.py — fill in the 22% missing (lines 39, 59-64, 77-81, 121-122)
 # ===========================================================================
 
-class TestExceptions:
 
+class TestExceptions:
     # --- MCPServerError.__str__ with details --------------------------------
     def test_mcp_server_error_str_with_details(self):
         from ipfs_datasets_py.mcp_server.exceptions import MCPServerError
+
         err = MCPServerError("something went wrong", {"tool": "my_tool", "code": 42})
         s = str(err)
         assert "something went wrong" in s
@@ -162,12 +190,14 @@ class TestExceptions:
 
     def test_mcp_server_error_str_without_details(self):
         from ipfs_datasets_py.mcp_server.exceptions import MCPServerError
+
         err = MCPServerError("bare error")
         assert str(err) == "bare error"
 
     # --- ToolNotFoundError with category ------------------------------------
     def test_tool_not_found_with_category(self):
         from ipfs_datasets_py.mcp_server.exceptions import ToolNotFoundError
+
         err = ToolNotFoundError("my_func", category="search")
         assert err.tool_name == "my_func"
         assert err.category == "search"
@@ -175,6 +205,7 @@ class TestExceptions:
 
     def test_tool_not_found_without_category(self):
         from ipfs_datasets_py.mcp_server.exceptions import ToolNotFoundError
+
         err = ToolNotFoundError("my_func")
         assert err.category is None
         assert "my_func" in str(err)
@@ -182,6 +213,7 @@ class TestExceptions:
     # --- ToolExecutionError -------------------------------------------------
     def test_tool_execution_error(self):
         from ipfs_datasets_py.mcp_server.exceptions import ToolExecutionError
+
         cause = ValueError("bad input")
         err = ToolExecutionError("compute_fn", cause)
         assert err.tool_name == "compute_fn"
@@ -193,6 +225,7 @@ class TestExceptions:
     # --- RuntimeNotFoundError -----------------------------------------------
     def test_runtime_not_found_error(self):
         from ipfs_datasets_py.mcp_server.exceptions import RuntimeNotFoundError
+
         err = RuntimeNotFoundError("trio")
         assert err.runtime == "trio"
         assert "trio" in str(err)
@@ -200,6 +233,7 @@ class TestExceptions:
     # --- HealthCheckError ---------------------------------------------------
     def test_health_check_error(self):
         from ipfs_datasets_py.mcp_server.exceptions import HealthCheckError
+
         err = HealthCheckError("db_health", "connection refused")
         assert err.check_name == "db_health"
         assert "db_health" in str(err)
@@ -208,13 +242,26 @@ class TestExceptions:
     # --- Remaining exception types are constructable -------------------------
     def test_all_exception_types_instantiable(self):
         from ipfs_datasets_py.mcp_server.exceptions import (
-            MCPServerError, ToolError, ToolNotFoundError, ToolExecutionError,
-            ToolRegistrationError, ValidationError, RuntimeRoutingError,
-            RuntimeNotFoundError, RuntimeExecutionError, P2PServiceError,
-            P2PConnectionError, P2PAuthenticationError, ConfigurationError,
-            ServerStartupError, ServerShutdownError, HealthCheckError,
-            MonitoringError, MetricsCollectionError,
+            MCPServerError,
+            ToolError,
+            ToolNotFoundError,
+            ToolExecutionError,
+            ToolRegistrationError,
+            ValidationError,
+            RuntimeRoutingError,
+            RuntimeNotFoundError,
+            RuntimeExecutionError,
+            P2PServiceError,
+            P2PConnectionError,
+            P2PAuthenticationError,
+            ConfigurationError,
+            ServerStartupError,
+            ServerShutdownError,
+            HealthCheckError,
+            MonitoringError,
+            MetricsCollectionError,
         )
+
         instances = [
             MCPServerError("m"),
             ToolRegistrationError("r"),
@@ -235,6 +282,7 @@ class TestExceptions:
 
     def test_validation_error_field_attribute(self):
         from ipfs_datasets_py.mcp_server.exceptions import ValidationError
+
         err = ValidationError("query_text", "must not be empty")
         assert err.field == "query_text"
         assert "query_text" in str(err)
@@ -245,11 +293,12 @@ class TestExceptions:
 # configs.py — lines 77, 82, 87 (properties) and 100-151 (load_config_from_yaml)
 # ===========================================================================
 
-class TestConfigs:
 
+class TestConfigs:
     # --- Dataclass defaults -------------------------------------------------
     def test_defaults(self):
         from ipfs_datasets_py.mcp_server.configs import Configs
+
         c = Configs()
         assert c.host == "127.0.0.1"
         assert c.port == 5000
@@ -259,17 +308,20 @@ class TestConfigs:
     # --- Properties (lines 77, 82, 87) --------------------------------------
     def test_root_dir_property(self):
         from ipfs_datasets_py.mcp_server.configs import Configs
+
         c = Configs()
         assert isinstance(c.ROOT_DIR, Path)
         assert c.ROOT_DIR.is_dir()
 
     def test_project_name_property(self):
         from ipfs_datasets_py.mcp_server.configs import Configs
+
         c = Configs()
         assert c.PROJECT_NAME == "ipfs_datasets_mcp"
 
     def test_config_dir_property(self):
         from ipfs_datasets_py.mcp_server.configs import Configs
+
         c = Configs()
         assert isinstance(c.CONFIG_DIR, Path)
         assert str(c.CONFIG_DIR).endswith("config")
@@ -277,17 +329,20 @@ class TestConfigs:
     # --- load_config_from_yaml: no path → defaults -------------------------
     def test_load_no_path_returns_default(self):
         from ipfs_datasets_py.mcp_server.configs import load_config_from_yaml, Configs
+
         result = load_config_from_yaml()
         assert isinstance(result, Configs)
         assert result.host == "127.0.0.1"
 
     def test_load_nonexistent_path_returns_default(self):
         from ipfs_datasets_py.mcp_server.configs import load_config_from_yaml, Configs
+
         result = load_config_from_yaml("/tmp/definitely_nonexistent_config_42.yaml")
         assert isinstance(result, Configs)
 
     def test_load_valid_yaml_server_section(self):
         from ipfs_datasets_py.mcp_server.configs import load_config_from_yaml
+
         yaml_content = """
 server:
   host: 0.0.0.0
@@ -313,6 +368,7 @@ server:
 
     def test_load_yaml_with_tools_section(self):
         from ipfs_datasets_py.mcp_server.configs import load_config_from_yaml
+
         yaml_content = """
 tools:
   enabled_categories:
@@ -334,6 +390,7 @@ tools:
 
     def test_load_yaml_with_ipfs_kit_section(self):
         from ipfs_datasets_py.mcp_server.configs import load_config_from_yaml
+
         yaml_content = """
 ipfs_kit:
   integration: mcp
@@ -351,6 +408,7 @@ ipfs_kit:
 
     def test_load_invalid_yaml_returns_default(self):
         from ipfs_datasets_py.mcp_server.configs import load_config_from_yaml, Configs
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(": bad: yaml: [[[")
             fname = f.name
@@ -363,6 +421,7 @@ ipfs_kit:
     # --- Global configs instance -------------------------------------------
     def test_global_configs_instance(self):
         from ipfs_datasets_py.mcp_server.configs import configs, Configs
+
         assert isinstance(configs, Configs)
 
 
@@ -370,15 +429,18 @@ ipfs_kit:
 # trio_bridge.py
 # ===========================================================================
 
+
 class TestTrioBridge:
     """Tests for run_in_trio() utility."""
 
     def test_run_in_trio_is_importable(self):
         from ipfs_datasets_py.mcp_server.trio_bridge import run_in_trio
+
         assert callable(run_in_trio)
 
     def test_all_exported(self):
         from ipfs_datasets_py.mcp_server import trio_bridge
+
         assert "run_in_trio" in trio_bridge.__all__
 
     def test_sniffio_not_found_falls_back_to_thread_runner(self):
@@ -391,8 +453,7 @@ class TestTrioBridge:
 
         # Mock anyio.to_thread.run_sync to return the result directly
         mock_coro = AsyncMock(return_value="fallback_ok")
-        with patch("sniffio.current_async_library",
-                   side_effect=sniffio.AsyncLibraryNotFoundError):
+        with patch("sniffio.current_async_library", side_effect=sniffio.AsyncLibraryNotFoundError):
             with patch("anyio.to_thread.run_sync", mock_coro):
                 result = asyncio.run(trio_bridge.run_in_trio(simple))
         assert result == "fallback_ok"
@@ -407,8 +468,9 @@ class TestTrioBridge:
             return "unreachable"
 
         async def run_it():
-            with patch("sniffio.current_async_library",
-                       side_effect=ImportError("trio not installed")):
+            with patch(
+                "sniffio.current_async_library", side_effect=ImportError("trio not installed")
+            ):
                 with pytest.raises(RuntimeExecutionError, match="Trio runtime unavailable"):
                     await trio_bridge.run_in_trio(simple)
 
@@ -422,8 +484,7 @@ class TestTrioBridge:
             return "generic_fallback"
 
         mock_coro = AsyncMock(return_value="generic_fallback")
-        with patch("sniffio.current_async_library",
-                   side_effect=RuntimeError("unexpected")):
+        with patch("sniffio.current_async_library", side_effect=RuntimeError("unexpected")):
             with patch("anyio.to_thread.run_sync", mock_coro):
                 result = asyncio.run(trio_bridge.run_in_trio(simple))
         assert result == "generic_fallback"
@@ -456,13 +517,15 @@ class TestTrioBridge:
 # Additional coverage for ... Protocol bodies and trio_bridge _runner path
 # ===========================================================================
 
+
 class TestMCPInterfaceProtocolBodies:
     """Call Protocol method bodies directly via concrete subclasses."""
 
     def test_mcp_server_protocol_validate_method_body(self):
         from ipfs_datasets_py.mcp_server.mcp_interfaces import MCPServerProtocol
 
-        class Stub(MCPServerProtocol): pass
+        class Stub(MCPServerProtocol):
+            pass
 
         obj = Stub()
         # Calling the Protocol's own unimplemented method returns None (body is ...)
@@ -472,7 +535,8 @@ class TestMCPInterfaceProtocolBodies:
     def test_tool_manager_protocol_bodies(self):
         from ipfs_datasets_py.mcp_server.mcp_interfaces import ToolManagerProtocol
 
-        class Stub(ToolManagerProtocol): pass
+        class Stub(ToolManagerProtocol):
+            pass
 
         obj = Stub()
         assert ToolManagerProtocol.list_categories(obj) is None
@@ -483,7 +547,8 @@ class TestMCPInterfaceProtocolBodies:
     def test_mcp_client_protocol_bodies(self):
         from ipfs_datasets_py.mcp_server.mcp_interfaces import MCPClientProtocol
 
-        class Stub(MCPClientProtocol): pass
+        class Stub(MCPClientProtocol):
+            pass
 
         obj = Stub()
         assert MCPClientProtocol.add_tool(obj, lambda: None) is None
@@ -492,7 +557,8 @@ class TestMCPInterfaceProtocolBodies:
     def test_p2p_service_protocol_bodies(self):
         from ipfs_datasets_py.mcp_server.mcp_interfaces import P2PServiceProtocol
 
-        class Stub(P2PServiceProtocol): pass
+        class Stub(P2PServiceProtocol):
+            pass
 
         obj = Stub()
         assert P2PServiceProtocol.start(obj) is None
@@ -523,9 +589,7 @@ class TestTrioBridgeRunnerPath:
 
         # Create a mock sniffio that raises AsyncLibraryNotFoundError
         mock_sniffio = MagicMock()
-        mock_sniffio.current_async_library.side_effect = (
-            real_sniffio.AsyncLibraryNotFoundError
-        )
+        mock_sniffio.current_async_library.side_effect = real_sniffio.AsyncLibraryNotFoundError
         mock_sniffio.AsyncLibraryNotFoundError = real_sniffio.AsyncLibraryNotFoundError
 
         async def driver():

@@ -44,9 +44,7 @@ DEFAULT_MAX_REVOCATION_ENTRIES: Final = 65_536
 _DIGEST_RE: Final = re.compile(r"^sha256:[0-9a-f]{64}$")
 _BARE_DIGEST_RE: Final = re.compile(r"^[0-9a-f]{64}$")
 _CID_RE: Final = re.compile(r"^b[a-z2-7]{10,200}$")
-_MUTABLE_LATEST_RE: Final = re.compile(
-    r"(^|[./_-])latest($|[./_-])", re.IGNORECASE
-)
+_MUTABLE_LATEST_RE: Final = re.compile(r"(^|[./_-])latest($|[./_-])", re.IGNORECASE)
 
 _SNAPSHOT_FIELDS: Final[frozenset[str]] = frozenset(
     {
@@ -68,9 +66,7 @@ class ProofRevocationError(ProofCorpusManifestError):
     """Raised when a revocation snapshot or entry is malformed."""
 
 
-class ProofRevocationIntegrityError(
-    ProofRevocationError, ProofCorpusManifestIntegrityError
-):
+class ProofRevocationIntegrityError(ProofRevocationError, ProofCorpusManifestIntegrityError):
     """Raised when a revocation snapshot fails integrity or lineage checks."""
 
 
@@ -115,8 +111,7 @@ def _json_ready(value: Any) -> Any:
     if callable(to_dict):
         return _json_ready(to_dict())
     raise ProofRevocationError(
-        f"value of type {type(value).__name__} is not JSON-serializable "
-        "for the revocation snapshot"
+        f"value of type {type(value).__name__} is not JSON-serializable for the revocation snapshot"
     )
 
 
@@ -128,9 +123,7 @@ def _as_mapping(value: Any, label: str) -> Mapping[str, Any]:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise ProofRevocationError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise ProofRevocationError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
@@ -145,9 +138,7 @@ def _require_digest(value: Any, field_name: str) -> str:
     if _BARE_DIGEST_RE.fullmatch(digest):
         digest = f"sha256:{digest}"
     if not _DIGEST_RE.fullmatch(digest):
-        raise ProofRevocationError(
-            f"{field_name} must be a sha256:<hex> digest"
-        )
+        raise ProofRevocationError(f"{field_name} must be a sha256:<hex> digest")
     return digest
 
 
@@ -160,9 +151,7 @@ def _optional_digest(value: Any, field_name: str) -> str:
 def _require_cid(value: Any, field_name: str) -> str:
     cid = _require_text(value, field_name)
     if not _CID_RE.fullmatch(cid):
-        raise ProofRevocationError(
-            f"{field_name} must be a CIDv1 base32 string"
-        )
+        raise ProofRevocationError(f"{field_name} must be a CIDv1 base32 string")
     return cid
 
 
@@ -188,14 +177,10 @@ def _require_non_negative_int(value: Any, field_name: str) -> int:
     return value
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ProofRevocationError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise ProofRevocationError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
@@ -205,9 +190,7 @@ def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
         return enum_cls(value)
     except (TypeError, ValueError) as exc:
         allowed = ", ".join(item.value for item in enum_cls)
-        raise ProofRevocationError(
-            f"{field_name} must be one of: {allowed}"
-        ) from exc
+        raise ProofRevocationError(f"{field_name} must be one of: {allowed}") from exc
 
 
 def _reject_mutable_latest(value: str, field_name: str) -> None:
@@ -239,28 +222,18 @@ class RevocationEntry:
     schema_version: str = REVOCATION_ENTRY_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "target_cid", _require_cid(self.target_cid, "target_cid")
-        )
+        object.__setattr__(self, "target_cid", _require_cid(self.target_cid, "target_cid"))
         object.__setattr__(
             self,
             "reason_kind",
             _parse_enum(self.reason_kind, RevocationReasonKind, "reason_kind"),
         )
-        object.__setattr__(
-            self, "reason", _require_text(self.reason, "reason")
-        )
+        object.__setattr__(self, "reason", _require_text(self.reason, "reason"))
         _reject_mutable_latest(self.reason, "reason")
-        object.__setattr__(
-            self, "revoked_at", _require_text(self.revoked_at, "revoked_at")
-        )
-        object.__setattr__(
-            self, "issuer_id", _require_text(self.issuer_id, "issuer_id")
-        )
+        object.__setattr__(self, "revoked_at", _require_text(self.revoked_at, "revoked_at"))
+        object.__setattr__(self, "issuer_id", _require_text(self.issuer_id, "issuer_id"))
         _reject_mutable_latest(self.issuer_id, "issuer_id")
-        object.__setattr__(
-            self, "ordinal", _require_non_negative_int(self.ordinal, "ordinal")
-        )
+        object.__setattr__(self, "ordinal", _require_non_negative_int(self.ordinal, "ordinal"))
         object.__setattr__(
             self,
             "supersedes_cid",
@@ -279,8 +252,7 @@ class RevocationEntry:
         )
         if self.schema_version != REVOCATION_ENTRY_SCHEMA_VERSION:
             raise ProofRevocationError(
-                f"unsupported revocation entry schema: "
-                f"{self.schema_version!r}"
+                f"unsupported revocation entry schema: {self.schema_version!r}"
             )
 
         body = self._identity_payload()
@@ -289,8 +261,7 @@ class RevocationEntry:
             recorded = _require_digest(self.entry_digest, "entry_digest")
             if recorded != digest:
                 raise ProofRevocationIntegrityError(
-                    "revocation entry_digest does not match payload "
-                    "(hash mismatch)"
+                    "revocation entry_digest does not match payload (hash mismatch)"
                 )
         object.__setattr__(self, "entry_digest", digest)
 
@@ -353,9 +324,7 @@ class RevocationEntry:
             evidence_cid=payload.get("evidence_cid", ""),
             notes=payload.get("notes", ""),
             entry_digest=payload.get("entry_digest", ""),
-            schema_version=payload.get(
-                "schema_version", REVOCATION_ENTRY_SCHEMA_VERSION
-            ),
+            schema_version=payload.get("schema_version", REVOCATION_ENTRY_SCHEMA_VERSION),
         )
 
 
@@ -368,20 +337,14 @@ def _normalize_entries(value: Any) -> tuple[RevocationEntry, ...]:
     if value in (None, ()):
         return ()
     if isinstance(value, (str, bytes, bytearray, Mapping, RevocationEntry)):
-        raise ProofRevocationError(
-            "entries must be a sequence of revocation entries"
-        )
+        raise ProofRevocationError("entries must be a sequence of revocation entries")
     try:
         items = tuple(
-            item
-            if isinstance(item, RevocationEntry)
-            else RevocationEntry.from_dict(item)
+            item if isinstance(item, RevocationEntry) else RevocationEntry.from_dict(item)
             for item in value
         )
     except TypeError as exc:
-        raise ProofRevocationError(
-            "entries must be a sequence of revocation entries"
-        ) from exc
+        raise ProofRevocationError("entries must be a sequence of revocation entries") from exc
     return items
 
 
@@ -413,8 +376,7 @@ class ProofRevocationSnapshot:
         object.__setattr__(self, "entries", _normalize_entries(self.entries))
         if len(self.entries) > DEFAULT_MAX_REVOCATION_ENTRIES:
             raise ProofRevocationIntegrityError(
-                f"entries exceed max_revocation_entries "
-                f"({DEFAULT_MAX_REVOCATION_ENTRIES})"
+                f"entries exceed max_revocation_entries ({DEFAULT_MAX_REVOCATION_ENTRIES})"
             )
 
         ordinals = [entry.ordinal for entry in self.entries]
@@ -423,39 +385,29 @@ class ProofRevocationSnapshot:
                 "revocation entries must be ordered by non-decreasing ordinal"
             )
         if len(ordinals) != len(set(ordinals)):
-            raise ProofRevocationIntegrityError(
-                "revocation entries must have unique ordinals"
-            )
+            raise ProofRevocationIntegrityError("revocation entries must have unique ordinals")
 
         targets = [entry.target_cid for entry in self.entries]
         if len(targets) != len(set(targets)):
-            raise ProofRevocationIntegrityError(
-                "revocation entries contain duplicate target_cid"
-            )
+            raise ProofRevocationIntegrityError("revocation entries contain duplicate target_cid")
 
-        object.__setattr__(
-            self, "parent_cid", _optional_cid(self.parent_cid, "parent_cid")
-        )
+        object.__setattr__(self, "parent_cid", _optional_cid(self.parent_cid, "parent_cid"))
         object.__setattr__(
             self,
             "generation",
             _require_positive_int(self.generation, "generation"),
         )
-        object.__setattr__(
-            self, "producer_id", _optional_text(self.producer_id, "producer_id")
-        )
+        object.__setattr__(self, "producer_id", _optional_text(self.producer_id, "producer_id"))
         if self.producer_id:
             _reject_mutable_latest(self.producer_id, "producer_id")
 
         if self.schema_version != PROOF_REVOCATION_SNAPSHOT_SCHEMA_VERSION:
             raise ProofRevocationError(
-                f"unsupported revocation snapshot schema: "
-                f"{self.schema_version!r}"
+                f"unsupported revocation snapshot schema: {self.schema_version!r}"
             )
         if self.interface != PROOF_REVOCATION_SNAPSHOT_INTERFACE:
             raise ProofRevocationError(
-                f"unsupported revocation snapshot interface: "
-                f"{self.interface!r}"
+                f"unsupported revocation snapshot interface: {self.interface!r}"
             )
 
         body = self._identity_payload()
@@ -483,15 +435,13 @@ class ProofRevocationSnapshot:
             recorded = _require_digest(self.content_digest, "content_digest")
             if recorded != digest:
                 raise ProofRevocationIntegrityError(
-                    "revocation content_digest does not match payload "
-                    "(hash mismatch)"
+                    "revocation content_digest does not match payload (hash mismatch)"
                 )
         if self.content_cid:
             recorded_cid = _require_cid(self.content_cid, "content_cid")
             if recorded_cid != cid:
                 raise ProofRevocationIntegrityError(
-                    "revocation content_cid does not match payload "
-                    "(CID mismatch)"
+                    "revocation content_cid does not match payload (CID mismatch)"
                 )
         if self.root_cid:
             recorded_root = _require_cid(self.root_cid, "root_cid")
@@ -505,8 +455,7 @@ class ProofRevocationSnapshot:
 
         if self.parent_cid and self.parent_cid == self.root_cid:
             raise ProofRevocationIntegrityError(
-                "revocation parent_cid must not equal its own root_cid "
-                "(revocation cycle rejected)"
+                "revocation parent_cid must not equal its own root_cid (revocation cycle rejected)"
             )
 
     def _identity_payload(self) -> dict[str, Any]:
@@ -542,12 +491,8 @@ class ProofRevocationSnapshot:
             content_digest=payload.get("content_digest", ""),
             content_cid=payload.get("content_cid", ""),
             root_cid=payload.get("root_cid", ""),
-            schema_version=payload.get(
-                "schema_version", PROOF_REVOCATION_SNAPSHOT_SCHEMA_VERSION
-            ),
-            interface=payload.get(
-                "interface", PROOF_REVOCATION_SNAPSHOT_INTERFACE
-            ),
+            schema_version=payload.get("schema_version", PROOF_REVOCATION_SNAPSHOT_SCHEMA_VERSION),
+            interface=payload.get("interface", PROOF_REVOCATION_SNAPSHOT_INTERFACE),
         )
 
     def verify_integrity(self) -> None:
@@ -555,13 +500,9 @@ class ProofRevocationSnapshot:
 
         restored = ProofRevocationSnapshot.from_dict(self.to_dict())
         if restored.content_digest != self.content_digest:
-            raise ProofRevocationIntegrityError(
-                "revocation content_digest drifted on rehash"
-            )
+            raise ProofRevocationIntegrityError("revocation content_digest drifted on rehash")
         if restored.root_cid != self.root_cid:
-            raise ProofRevocationIntegrityError(
-                "revocation root_cid drifted on rehash"
-            )
+            raise ProofRevocationIntegrityError("revocation root_cid drifted on rehash")
 
     def revoked_cids(self) -> frozenset[str]:
         return frozenset(entry.target_cid for entry in self.entries)
@@ -586,9 +527,7 @@ class ProofRevocationSnapshot:
         revoked: set[str] = set(self.revoked_cids())
         for ancestor in ancestors:
             if not isinstance(ancestor, ProofRevocationSnapshot):
-                raise ProofRevocationError(
-                    "ancestors must be ProofRevocationSnapshot instances"
-                )
+                raise ProofRevocationError("ancestors must be ProofRevocationSnapshot instances")
             revoked.update(ancestor.revoked_cids())
         return frozenset(revoked)
 
@@ -639,8 +578,7 @@ def detect_revocation_cycle(
     parent = _require_cid(parent_cid, "parent_cid")
     if parent == child:
         raise ProofRevocationIntegrityError(
-            "revocation parent_cid must not equal its own root_cid "
-            "(revocation cycle rejected)"
+            "revocation parent_cid must not equal its own root_cid (revocation cycle rejected)"
         )
     if lineage is None:
         return
@@ -686,9 +624,7 @@ def check_revocation_lineage(
             "child revocation snapshot must declare parent_cid for lineage"
         )
     if child.parent_cid != parent.root_cid:
-        raise ProofRevocationIntegrityError(
-            "child.parent_cid must equal parent.root_cid"
-        )
+        raise ProofRevocationIntegrityError("child.parent_cid must equal parent.root_cid")
     if child.generation <= parent.generation:
         raise ProofRevocationIntegrityError(
             f"child generation {child.generation} must be strictly greater "
@@ -729,17 +665,12 @@ def bind_manifest_revocation_root(
     if not isinstance(manifest, ProofCorpusManifest):
         raise ProofRevocationError("manifest must be a ProofCorpusManifest")
     if not isinstance(snapshot, ProofRevocationSnapshot):
-        raise ProofRevocationError(
-            "snapshot must be a ProofRevocationSnapshot"
-        )
+        raise ProofRevocationError("snapshot must be a ProofRevocationSnapshot")
     if snapshot.corpus_root_cid != manifest.root_cid:
         raise ProofRevocationIntegrityError(
             "revocation snapshot corpus_root_cid must equal manifest root_cid"
         )
-    if (
-        manifest.revocation_root_cid
-        and manifest.revocation_root_cid != snapshot.root_cid
-    ):
+    if manifest.revocation_root_cid and manifest.revocation_root_cid != snapshot.root_cid:
         raise ProofRevocationIntegrityError(
             "manifest revocation_root_cid must equal snapshot root_cid"
         )
@@ -753,9 +684,7 @@ def cumulative_revoked_cids(
     revoked: set[str] = set()
     for snapshot in snapshots:
         if not isinstance(snapshot, ProofRevocationSnapshot):
-            raise ProofRevocationError(
-                "snapshots must be ProofRevocationSnapshot instances"
-            )
+            raise ProofRevocationError("snapshots must be ProofRevocationSnapshot instances")
         revoked.update(snapshot.revoked_cids())
     return frozenset(revoked)
 

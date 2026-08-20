@@ -74,10 +74,7 @@ from ipfs_datasets_py.error_reporting.cli_error_reporter import CLIErrorReporter
 
 reporter = CLIErrorReporter()
 error_report = reporter.format_cli_error(
-    error=exception,
-    command='ipfs-datasets',
-    args=['test', 'command'],
-    logs='command output'
+    error=exception, command="ipfs-datasets", args=["test", "command"], logs="command output"
 )
 ```
 
@@ -240,10 +237,7 @@ try:
     # Your code
     pass
 except Exception as e:
-    reporter.report_error(
-        error=e,
-        context={'component': 'mcp_tools', 'tool': 'dataset_loader'}
-    )
+    reporter.report_error(error=e, context={"component": "mcp_tools", "tool": "dataset_loader"})
 ```
 
 ### CLI Error Reporter
@@ -260,6 +254,7 @@ except Exception as e:
 ```python
 # Automatically installed in ipfs_datasets_cli.py
 from ipfs_datasets_py.error_reporting.cli_error_reporter import install_cli_error_handler
+
 install_cli_error_handler()
 ```
 
@@ -423,9 +418,9 @@ excluded_workflows:
 # Custom configuration
 reporter = ErrorReporter(
     enabled=True,
-    repo='owner/repo',
-    github_token='token',
-    min_report_interval=7200  # 2 hours
+    repo="owner/repo",
+    github_token="token",
+    min_report_interval=7200,  # 2 hours
 )
 ```
 
@@ -535,11 +530,11 @@ Always provide context when reporting errors:
 reporter.report_error(
     error=e,
     context={
-        'component': 'cli',
-        'command': 'ipfs-datasets',
-        'args': ['info', 'status'],
-        'user': 'test@example.com'
-    }
+        "component": "cli",
+        "command": "ipfs-datasets",
+        "args": ["info", "status"],
+        "user": "test@example.com",
+    },
 )
 ```
 

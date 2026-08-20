@@ -110,8 +110,7 @@ def test_rescue_manifest_is_cid_bound_source_only_and_round_trips() -> None:
     assert restored.component_case_counts == {"hammer": 1, "leanstral": 1}
     assert restored.split_counts == {"pilot": 2, "development": 0}
     assert all(
-        case.deterministic_reference_condition
-        == CAUSAL_REFERENCE_FAILURE_CONDITION_V2
+        case.deterministic_reference_condition == CAUSAL_REFERENCE_FAILURE_CONDITION_V2
         for case in restored.cases
     )
     assert restored.cases[0].proof_context == {
@@ -134,9 +133,7 @@ def test_rescue_manifest_is_cid_bound_source_only_and_round_trips() -> None:
 
     def keys(value: object) -> set[str]:
         if isinstance(value, dict):
-            return set(value).union(
-                *(keys(item) for item in value.values())
-            )
+            return set(value).union(*(keys(item) for item in value.values()))
         if isinstance(value, list):
             return set().union(*(keys(item) for item in value), set())
         return set()
@@ -183,9 +180,7 @@ def test_rescue_case_cid_rejects_outcome_informed_flag_tampering() -> None:
 
 
 def test_rescue_manifest_cid_rejects_derived_count_tampering() -> None:
-    value = copy.deepcopy(
-        build_causal_rescue_manifest_v2(_plan(), _cases()).to_dict()
-    )
+    value = copy.deepcopy(build_causal_rescue_manifest_v2(_plan(), _cases()).to_dict())
     value["component_case_counts"]["hammer"] = 2
 
     with pytest.raises(CausalAblationError, match="derived fields"):
@@ -218,9 +213,7 @@ def _one_case_manifest(plan) -> CausalRescueManifestV2:
             CausalRescueCaseV2(
                 case_id="rescue-shared",
                 split=Split.PILOT,
-                source_cid=cid_for_bytes(
-                    b"Every clerk is calm. Cora is a clerk."
-                ),
+                source_cid=cid_for_bytes(b"Every clerk is calm. Cora is a clerk."),
                 obligation_id="rescue-shared-obligation",
                 proof_obligation={
                     "kind": "theorem",
@@ -242,10 +235,7 @@ def _one_case_manifest(plan) -> CausalRescueManifestV2:
 
 def _passing_calibration() -> dict[str, object]:
     body: dict[str, object] = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "semantic-calibration-report.v2"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.semantic-calibration-report.v2"),
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
         "status": "complete",
         "coverage": {
@@ -271,9 +261,7 @@ def _compiler_candidate(certificate: bytes = b"exact compiler proof"):
     return CausalProofCandidate(
         source="compiler",
         certificate=certificate,
-        artifact_cid=cid_for_dag_json(
-            {"schema": "synthetic-compiler-artifact.v1"}
-        ),
+        artifact_cid=cid_for_dag_json({"schema": "synthetic-compiler-artifact.v1"}),
     )
 
 
@@ -314,9 +302,7 @@ def _controller_factory(
                 candidate_cid=candidate.candidate_cid,
                 accepted=accepted,
                 receipt=receipt,
-                failure_code=(
-                    None if accepted else FailureCode.KERNEL_REJECTION
-                ),
+                failure_code=(None if accepted else FailureCode.KERNEL_REJECTION),
             )
 
         return CausalProofGraphController(
@@ -354,12 +340,8 @@ def test_selection_only_batch_executor_is_disabled_before_optional_work(
             plan,
             _one_case_manifest(plan),
             {("rescue-shared", CacheMode.COLD): compiler},
-            _optional_maps(
-                plan, hammer=hammer, leanstral=leanstral
-            ),
-            _controller_factory(
-                plan, accepted_certificates={b"exact compiler proof"}
-            ),
+            _optional_maps(plan, hammer=hammer, leanstral=leanstral),
+            _controller_factory(plan, accepted_certificates={b"exact compiler proof"}),
             semantic_reviewed_cases=(),
             semantic_evidence_sources=(),
             output_root=root,
@@ -370,8 +352,7 @@ def test_selection_only_batch_executor_is_disabled_before_optional_work(
     assert not root.exists()
 
 
-def test_source_revalidation_rejects_missing_persisted_graphs(
-) -> None:
+def test_source_revalidation_rejects_missing_persisted_graphs() -> None:
     with pytest.raises(
         CausalAblationError,
         match="source evidence failed independent revalidation",
@@ -382,15 +363,10 @@ def test_source_revalidation_rejects_missing_persisted_graphs(
         )
 
 
-def test_incomplete_self_cid_g200_report_fails_shape_validation(
-) -> None:
+def test_incomplete_self_cid_g200_report_fails_shape_validation() -> None:
     calibration = _passing_calibration()
     calibration["absolute_quality_gate"]["passed"] = False
-    body = {
-        key: value
-        for key, value in calibration.items()
-        if key != "artifact_cid"
-    }
+    body = {key: value for key, value in calibration.items() if key != "artifact_cid"}
     calibration["artifact_cid"] = cid_for_dag_json(body)
     with pytest.raises(CausalAblationError, match="fields changed"):
         validate_semantic_calibration_prerequisite_v2(calibration)

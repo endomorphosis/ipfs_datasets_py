@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_legal_ir import compile_to_dcec, parse_cnl_sentence
+from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_legal_ir import (
+    compile_to_dcec,
+    parse_cnl_sentence,
+)
 
 
 def _load_cases() -> list[dict[str, Any]]:
@@ -25,6 +28,10 @@ def test_compile_to_dcec_matches_golden_conformance_fixtures() -> None:
 
 def test_compile_to_dcec_is_replay_stable_for_fixed_inputs() -> None:
     for case in _load_cases():
-        ir_a = parse_cnl_sentence(case["sentence"], jurisdiction=case.get("jurisdiction", "default"))
-        ir_b = parse_cnl_sentence(case["sentence"], jurisdiction=case.get("jurisdiction", "default"))
+        ir_a = parse_cnl_sentence(
+            case["sentence"], jurisdiction=case.get("jurisdiction", "default")
+        )
+        ir_b = parse_cnl_sentence(
+            case["sentence"], jurisdiction=case.get("jurisdiction", "default")
+        )
         assert compile_to_dcec(ir_a) == compile_to_dcec(ir_b), case["id"]

@@ -30,7 +30,7 @@ Usage::
         logger.error(f"Validation failed: {e}")
     except OptimizerError as e:
         logger.error(f"Optimizer error: {e}")
-    
+
     # Using context managers
     with wrap_exceptions(ExtractionError, "Entity extraction failed"):
         entities = extract_entities(text)
@@ -208,14 +208,14 @@ class AuthenticationError(ExternalServiceError):
 
 def format_validation_errors(errors: list[str], max_errors: int = 5) -> str:
     """Format a list of validation errors as a human-readable string.
-    
+
     Args:
         errors: List of validation error messages
         max_errors: Maximum number of errors to include in output
-        
+
     Returns:
         Formatted string with errors numbered and truncated if needed
-        
+
     Example:
         >>> errors = ["Missing field: id", "Invalid type: foo", "Bad value: -1"]
         >>> print(format_validation_errors(errors))
@@ -226,17 +226,17 @@ def format_validation_errors(errors: list[str], max_errors: int = 5) -> str:
     """
     if not errors:
         return "No validation errors"
-    
+
     count = len(errors)
     shown = errors[:max_errors]
-    
+
     lines = [f"{count} validation error{'s' if count != 1 else ''}:"]
     for i, error in enumerate(shown, 1):
         lines.append(f"  {i}. {error}")
-    
+
     if count > max_errors:
         lines.append(f"  ... and {count - max_errors} more")
-    
+
     return "\n".join(lines)
 
 
@@ -248,19 +248,19 @@ def wrap_exceptions(
     reraise: bool = True,
 ) -> Generator[None, None, None]:
     """Context manager that wraps any exception as a typed OptimizerError.
-    
+
     Args:
         exception_class: The OptimizerError subclass to raise
         message: Error message for the wrapped exception
         details: Optional additional context
         reraise: If True, sets original exception as __cause__
-        
+
     Yields:
         None
-        
+
     Raises:
         exception_class: If any exception occurs in the context
-        
+
     Example:
         >>> with wrap_exceptions(ExtractionError, "Failed to extract entities"):
         ...     entities = extract_from_text(text)  # might raise any exception
@@ -282,13 +282,13 @@ def wrap_exceptions(
 
 def exception_to_dict(exc: BaseException) -> dict[str, Any]:
     """Convert an exception to a dictionary for serialization.
-    
+
     Args:
         exc: Any exception instance
-        
+
     Returns:
         Dictionary with exception type, message, and details
-        
+
     Example:
         >>> err = ValidationError("Schema invalid", errors=["Missing id"])
         >>> exception_to_dict(err)
@@ -296,12 +296,12 @@ def exception_to_dict(exc: BaseException) -> dict[str, Any]:
     """
     # Use raw message for OptimizerError (not str() which includes details)
     message = exc.message if isinstance(exc, OptimizerError) else str(exc)
-    
+
     result: dict[str, Any] = {
         "type": type(exc).__name__,
         "message": message,
     }
-    
+
     # Add OptimizerError-specific fields if present
     if isinstance(exc, OptimizerError):
         if exc.details is not None:
@@ -317,11 +317,11 @@ def exception_to_dict(exc: BaseException) -> dict[str, Any]:
             result["service"] = exc.service
         if isinstance(exc, RateLimitError) and exc.retry_after_seconds is not None:
             result["retry_after_seconds"] = exc.retry_after_seconds
-    
+
     # Include cause chain if present
     if exc.__cause__:
         result["cause"] = exception_to_dict(exc.__cause__)
-    
+
     return result
 
 
@@ -331,17 +331,17 @@ def safe_error_handler(
     log_level: int = logging.WARNING,
 ) -> Callable[[F], F]:
     """Decorator that catches specific exceptions and returns a default value.
-    
+
     Useful for making non-critical operations fault-tolerant.
-    
+
     Args:
         *exception_types: Exception types to catch (default: Exception)
         default: Value to return if exception is caught
         log_level: Logging level for caught exceptions
-        
+
     Returns:
         Decorator function
-        
+
     Example:
         >>> @safe_error_handler(ValueError, KeyError, default=[])
         ... def get_entities(data):
@@ -351,7 +351,7 @@ def safe_error_handler(
     """
     if not exception_types:
         exception_types = (Exception,)
-    
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -360,10 +360,12 @@ def safe_error_handler(
             except exception_types as e:
                 logger.log(
                     log_level,
-                    f"{func.__name__} raised {type(e).__name__}: {e}; returning default={default!r}"
+                    f"{func.__name__} raised {type(e).__name__}: {e}; returning default={default!r}",
                 )
                 return default
+
         return wrapper  # type: ignore
+
     return decorator
 
 

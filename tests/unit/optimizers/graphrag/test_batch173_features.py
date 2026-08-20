@@ -7,16 +7,19 @@ Methods under test:
   - OntologyLearningAdapter.feedback_last_improvement()
   - OntologyCritic.top_k_dimensions(score, k)
 """
+
 import pytest
 
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
 def _make_result(entities, rels=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=rels or [], confidence=1.0, metadata={}, errors=[]
     )
@@ -24,6 +27,7 @@ def _make_result(entities, rels=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
@@ -41,24 +45,34 @@ class _FakeOntology:
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(adapter, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     adapter._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -66,10 +80,12 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 # ── OntologyGenerator.confidence_quartiles ───────────────────────────────────
+
 
 class TestConfidenceQuartiles:
     def test_empty_returns_zeros(self):
@@ -98,6 +114,7 @@ class TestConfidenceQuartiles:
 
 # ── LogicValidator.triangle_count ─────────────────────────────────────────────
 
+
 class TestTriangleCount:
     def test_empty_returns_zero(self):
         v = _make_validator()
@@ -116,13 +133,18 @@ class TestTriangleCount:
     def test_two_triangles(self):
         v = _make_validator()
         rels = [
-            _FakeRel("a", "b"), _FakeRel("b", "c"), _FakeRel("c", "a"),
-            _FakeRel("x", "y"), _FakeRel("y", "z"), _FakeRel("z", "x"),
+            _FakeRel("a", "b"),
+            _FakeRel("b", "c"),
+            _FakeRel("c", "a"),
+            _FakeRel("x", "y"),
+            _FakeRel("y", "z"),
+            _FakeRel("z", "x"),
         ]
         assert v.triangle_count(_FakeOntology(rels)) == 2
 
 
 # ── OntologyLearningAdapter.feedback_score_std ───────────────────────────────
+
 
 class TestFeedbackScoreStd:
     def test_empty_returns_zero(self):
@@ -148,6 +170,7 @@ class TestFeedbackScoreStd:
 
 
 # ── OntologyLearningAdapter.feedback_last_improvement ────────────────────────
+
 
 class TestFeedbackLastImprovement:
     def test_empty_returns_zero(self):
@@ -182,6 +205,7 @@ class TestFeedbackLastImprovement:
 
 # ── OntologyCritic.top_k_dimensions ──────────────────────────────────────────
 
+
 class TestTopKDimensions:
     def test_top1_returns_single_item(self):
         critic = _make_critic()
@@ -192,8 +216,12 @@ class TestTopKDimensions:
     def test_top3_ordering(self):
         critic = _make_critic()
         score = _make_score(
-            completeness=0.9, consistency=0.7, clarity=0.5,
-            granularity=0.4, relationship_coherence=0.3, domain_alignment=0.1
+            completeness=0.9,
+            consistency=0.7,
+            clarity=0.5,
+            granularity=0.4,
+            relationship_coherence=0.3,
+            domain_alignment=0.1,
         )
         top = critic.top_k_dimensions(score, k=3)
         assert top == ["completeness", "consistency", "clarity"]

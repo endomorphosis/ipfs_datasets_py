@@ -51,10 +51,10 @@ Successfully completed **Week 1 of the 4-week improvement plan**, adding **3 cri
 
 **Usage:**
 ```python
-result = await processor.process("QmXXX...")              # Direct CID
-result = await processor.process("ipfs://QmXXX...")       # URL
-result = await processor.process("/ipfs/QmXXX...")       # Path
-result = await processor.process("ipns://example.com")    # IPNS
+result = await processor.process("QmXXX...")  # Direct CID
+result = await processor.process("ipfs://QmXXX...")  # URL
+result = await processor.process("/ipfs/QmXXX...")  # Path
+result = await processor.process("ipns://example.com")  # IPNS
 ```
 
 ### 2. Web Archive Adapter (Priority 8)
@@ -73,12 +73,11 @@ result = await processor.process("ipns://example.com")    # IPNS
 ```python
 # Choose services
 result = await processor.process(
-    "https://example.com",
-    archive_services=['internet_archive', 'archive_is', 'local_warc']
+    "https://example.com", archive_services=["internet_archive", "archive_is", "local_warc"]
 )
 
 # Result includes archive URLs
-print(result.content['archive_urls'])
+print(result.content["archive_urls"])
 # {
 #     'internet_archive': 'https://web.archive.org/web/.../example.com',
 #     'archive_is': 'https://archive.is/xxxxx',
@@ -199,15 +198,12 @@ processor = UniversalProcessor()
 result = await processor.process("QmV9tSDx9UiPeWExXEeH6aoDvmihvx6jD5eLb4jbTaKGps")
 
 # Access IPFS metadata
-print(result.metadata.resource_usage['ipfs_cid'])
-print(result.metadata.resource_usage['ipfs_size'])
-print(result.metadata.resource_usage['ipfs_type'])
+print(result.metadata.resource_usage["ipfs_cid"])
+print(result.metadata.resource_usage["ipfs_size"])
+print(result.metadata.resource_usage["ipfs_type"])
 
 # IPFS entities in knowledge graph
-ipfs_entities = [
-    e for e in result.knowledge_graph.entities 
-    if e.type == "IPFSContent"
-]
+ipfs_entities = [e for e in result.knowledge_graph.entities if e.type == "IPFSContent"]
 ```
 
 ### 2. Web Archiving
@@ -216,8 +212,8 @@ ipfs_entities = [
 # Archive to multiple services
 result = await processor.process(
     "https://important-site.com",
-    archive_services=['internet_archive', 'archive_is', 'local_warc'],
-    verify_archives=True
+    archive_services=["internet_archive", "archive_is", "local_warc"],
+    verify_archives=True,
 )
 
 # Check archive status
@@ -225,7 +221,7 @@ print(f"Status: {result.content['archive_status']}")
 print(f"Archived to: {list(result.content['archive_urls'].keys())}")
 
 # Access archive URLs
-for service, url in result.content['archive_urls'].items():
+for service, url in result.content["archive_urls"].items():
     print(f"{service}: {url}")
 ```
 
@@ -238,14 +234,10 @@ legal_result = await processor.process(
 )
 
 # Patent (auto-routes to patent scraper)
-patent_result = await processor.process(
-    "https://patents.google.com/patent/US10123456B2"
-)
+patent_result = await processor.process("https://patents.google.com/patent/US10123456B2")
 
 # Wikipedia (auto-routes to Wikipedia scraper)
-wiki_result = await processor.process(
-    "https://en.wikipedia.org/wiki/Artificial_intelligence"
-)
+wiki_result = await processor.process("https://en.wikipedia.org/wiki/Artificial_intelligence")
 
 # All return knowledge graphs with domain-specific entities
 ```
@@ -254,13 +246,15 @@ wiki_result = await processor.process(
 
 ```python
 # Process mixed input types
-results = await processor.process([
-    "QmXXX...",                              # IPFS
-    "https://wikipedia.org/wiki/Python",    # Specialized scraper
-    "https://example.com",                  # Web archive + GraphRAG
-    "document.pdf",                         # PDF
-    "video.mp4"                             # Multimedia
-])
+results = await processor.process(
+    [
+        "QmXXX...",  # IPFS
+        "https://wikipedia.org/wiki/Python",  # Specialized scraper
+        "https://example.com",  # Web archive + GraphRAG
+        "document.pdf",  # PDF
+        "video.mp4",  # Multimedia
+    ]
+)
 
 print(f"Success rate: {results.success_rate() * 100:.1f}%")
 print(f"Processed: {len(results.results)} items")

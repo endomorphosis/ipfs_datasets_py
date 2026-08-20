@@ -12,91 +12,97 @@ from typing import Any, Mapping, Sequence
 from ..ir.cid import calculate_artifact_cid
 
 
-TASK_ID = 'PORTAL-CXTP-135'
-GENERATED_AT_UTC = '2026-07-11T00:00:00Z'
-SCHEMA_VERSION = 'xaman-testnet-protocol-report/v1'
-THEORY_NAME = 'XamanTestnetPayload'
-MODEL_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json'
-MODEL_CID_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid'
-TRACE_MAP_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json'
-ASSUMPTIONS_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json'
-TAMARIN_ARTIFACT_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.spthy'
-PROVERIF_ARTIFACT_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv'
-PROTOCOL_REPORT_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json'
+TASK_ID = "PORTAL-CXTP-135"
+GENERATED_AT_UTC = "2026-07-11T00:00:00Z"
+SCHEMA_VERSION = "xaman-testnet-protocol-report/v1"
+THEORY_NAME = "XamanTestnetPayload"
+MODEL_PATH = "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json"
+MODEL_CID_PATH = "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid"
+TRACE_MAP_PATH = "security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json"
+ASSUMPTIONS_PATH = "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+TAMARIN_ARTIFACT_PATH = (
+    "security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.spthy"
+)
+PROVERIF_ARTIFACT_PATH = (
+    "security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv"
+)
+PROTOCOL_REPORT_PATH = (
+    "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
+)
 FUZZ_COUNTEREXAMPLE_MANIFEST_PATH = (
-    'security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json'
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
 )
 
 PROTOCOL_CLAIM_IDS = (
-    'xaman-testnet-claim:network-binding-is-testnet-only',
-    'xaman-testnet-claim:account-provenance-is-fresh-testnet-only',
-    'xaman-testnet-claim:review-auth-sequence-observed',
-    'xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled',
-    'xaman-testnet-claim:submission-ui-attempt-and-result-are-observed',
-    'xaman-testnet-claim:payload-intake-is-categorical-only',
-    'xaman-testnet-claim:refusal-path-is-not-modeled',
-    'xaman-testnet-claim:replay-controls-are-not-modeled',
-    'xaman-testnet-claim:expiry-path-is-not-modeled',
-    'xaman-testnet-claim:cancellation-path-is-not-modeled',
-    'xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled',
-    'xaman-testnet-claim:audit-redaction-boundary-is-preserved',
+    "xaman-testnet-claim:network-binding-is-testnet-only",
+    "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+    "xaman-testnet-claim:review-auth-sequence-observed",
+    "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+    "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+    "xaman-testnet-claim:payload-intake-is-categorical-only",
+    "xaman-testnet-claim:refusal-path-is-not-modeled",
+    "xaman-testnet-claim:replay-controls-are-not-modeled",
+    "xaman-testnet-claim:expiry-path-is-not-modeled",
+    "xaman-testnet-claim:cancellation-path-is-not-modeled",
+    "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+    "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
 )
 
 MODELED_CLAIM_IDS = (
-    'xaman-testnet-claim:network-binding-is-testnet-only',
-    'xaman-testnet-claim:account-provenance-is-fresh-testnet-only',
-    'xaman-testnet-claim:review-auth-sequence-observed',
-    'xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled',
-    'xaman-testnet-claim:submission-ui-attempt-and-result-are-observed',
-    'xaman-testnet-claim:audit-redaction-boundary-is-preserved',
+    "xaman-testnet-claim:network-binding-is-testnet-only",
+    "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+    "xaman-testnet-claim:review-auth-sequence-observed",
+    "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+    "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+    "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
 )
 
 NOT_MODELED_CLAIM_IDS = (
-    'xaman-testnet-claim:payload-intake-is-categorical-only',
-    'xaman-testnet-claim:refusal-path-is-not-modeled',
-    'xaman-testnet-claim:replay-controls-are-not-modeled',
-    'xaman-testnet-claim:expiry-path-is-not-modeled',
-    'xaman-testnet-claim:cancellation-path-is-not-modeled',
-    'xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled',
+    "xaman-testnet-claim:payload-intake-is-categorical-only",
+    "xaman-testnet-claim:refusal-path-is-not-modeled",
+    "xaman-testnet-claim:replay-controls-are-not-modeled",
+    "xaman-testnet-claim:expiry-path-is-not-modeled",
+    "xaman-testnet-claim:cancellation-path-is-not-modeled",
+    "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
 )
 
 REQUIRED_LEMMAS = (
-    'review_requires_testnet_binding',
-    'review_requires_fresh_testnet_account',
-    'auth_requires_review',
-    'signing_decision_requires_review_and_auth',
-    'submit_ui_requires_signing_decision',
-    'audit_redaction_preserved_for_payload_intake',
-    'audit_redaction_preserved_for_review',
-    'audit_redaction_preserved_for_signing_decision',
-    'audit_redaction_preserved_for_submit_result',
-    'preserved_attack_traces_are_reachable',
+    "review_requires_testnet_binding",
+    "review_requires_fresh_testnet_account",
+    "auth_requires_review",
+    "signing_decision_requires_review_and_auth",
+    "submit_ui_requires_signing_decision",
+    "audit_redaction_preserved_for_payload_intake",
+    "audit_redaction_preserved_for_review",
+    "audit_redaction_preserved_for_signing_decision",
+    "audit_redaction_preserved_for_submit_result",
+    "preserved_attack_traces_are_reachable",
 )
 
 REQUIRED_EVENTS = (
-    'RemotePayloadIssued',
-    'TestnetBound',
-    'FreshTestnetAccountBoundary',
-    'PayloadIntakeCategorical',
-    'PayloadReviewed',
-    'AuthDecisionAuthorized',
-    'SigningDecisionObserved',
-    'SubmitAttemptObserved',
-    'SubmitResultObserved',
-    'AuditRedactionPreserved',
-    'AttackTraceWrongNetwork',
-    'AttackTraceImportedProductionAccount',
-    'AttackTraceSigningBeforeAuth',
-    'AttackTraceReplayDuplicateResolution',
-    'AttackTraceRawPayloadMaterial',
-    'AttackTraceRawSignatureBlob',
-    'AttackTraceForgedBroadcastFinality',
-    'AttackTraceDeclineGap',
-    'AttackTraceCancelGap',
-    'AttackTraceExpiryGap',
+    "RemotePayloadIssued",
+    "TestnetBound",
+    "FreshTestnetAccountBoundary",
+    "PayloadIntakeCategorical",
+    "PayloadReviewed",
+    "AuthDecisionAuthorized",
+    "SigningDecisionObserved",
+    "SubmitAttemptObserved",
+    "SubmitResultObserved",
+    "AuditRedactionPreserved",
+    "AttackTraceWrongNetwork",
+    "AttackTraceImportedProductionAccount",
+    "AttackTraceSigningBeforeAuth",
+    "AttackTraceReplayDuplicateResolution",
+    "AttackTraceRawPayloadMaterial",
+    "AttackTraceRawSignatureBlob",
+    "AttackTraceForgedBroadcastFinality",
+    "AttackTraceDeclineGap",
+    "AttackTraceCancelGap",
+    "AttackTraceExpiryGap",
 )
 
-XAMAN_TESTNET_PAYLOAD_SPTHY = r'''theory XamanTestnetPayload
+XAMAN_TESTNET_PAYLOAD_SPTHY = r"""theory XamanTestnetPayload
 begin
 
 builtins: hashing, signing
@@ -275,10 +281,10 @@ lemma preserved_attack_traces_are_reachable:
     AttackTraceExpiryGap(expiry_payload) @ r"
 
 end
-'''
+"""
 
 
-XAMAN_TESTNET_PAYLOAD_PV = r'''(*
+XAMAN_TESTNET_PAYLOAD_PV = r"""(*
   PORTAL-CXTP-135: bounded ProVerif projection of the redacted Xaman Testnet
   payload lifecycle. The model establishes only event ordering. It does not
   model native signing, raw payload JSON, backend single-use, cancellation,
@@ -317,7 +323,7 @@ process
   event signing_decision_observed(payload);
   event submit_attempt_observed(payload);
   event submit_result_observed(payload)
-'''
+"""
 
 
 def build_xaman_testnet_protocol_report(
@@ -339,24 +345,29 @@ def build_xaman_testnet_protocol_report(
     """Build a deterministic protocol coverage report for the Testnet payload lane."""
 
     _validate_bound_inputs(model_payload, model_cid, trace_map_payload, assumptions_payload)
-    claims_by_id = {claim['id']: claim for claim in model_payload.get('claims', [])}
+    claims_by_id = {claim["id"]: claim for claim in model_payload.get("claims", [])}
     assumptions_by_id = {
-        assumption['id']: assumption
-        for assumption in assumptions_payload.get('assumptions', model_payload.get('assumptions', []))
+        assumption["id"]: assumption
+        for assumption in assumptions_payload.get(
+            "assumptions", model_payload.get("assumptions", [])
+        )
     }
-    not_modeled_records = list(trace_map_payload.get('not_modeled_records', []))
-    disproof_vectors = list(model_payload.get('disproof_vectors', []))
+    not_modeled_records = list(trace_map_payload.get("not_modeled_records", []))
+    disproof_vectors = list(model_payload.get("disproof_vectors", []))
     missing_claim_ids = sorted(set(PROTOCOL_CLAIM_IDS) - set(claims_by_id))
     unresolved_assumptions = [
         {
-            'id': assumption['id'],
-            'status': assumption.get('status'),
-            'description': assumption.get('description'),
-            'required_evidence_to_clear': assumption.get('required_evidence_to_clear', []),
+            "id": assumption["id"],
+            "status": assumption.get("status"),
+            "description": assumption.get("description"),
+            "required_evidence_to_clear": assumption.get("required_evidence_to_clear", []),
         }
         for assumption in assumptions_by_id.values()
-        if assumption.get('status') == 'BLOCKING'
-        and any(claim_id in PROTOCOL_CLAIM_IDS for claim_id in _claim_ids_for_assumption(claims_by_id, assumption['id']))
+        if assumption.get("status") == "BLOCKING"
+        and any(
+            claim_id in PROTOCOL_CLAIM_IDS
+            for claim_id in _claim_ids_for_assumption(claims_by_id, assumption["id"])
+        )
     ]
 
     tamarin_available = tamarin_executable is not None
@@ -375,148 +386,159 @@ def build_xaman_testnet_protocol_report(
 
     unsupported_protocol_semantics = [
         {
-            'id': record['id'],
-            'claim_id': record['claim_id'],
-            'category': record.get('category'),
-            'status': 'NOT_MODELED',
-            'assumption_id': record.get('assumption_id'),
-            'reason': record.get('reason'),
-            'source_location': record.get('source_location'),
-            'evidence_review_status': record.get('evidence_review_status'),
+            "id": record["id"],
+            "claim_id": record["claim_id"],
+            "category": record.get("category"),
+            "status": "NOT_MODELED",
+            "assumption_id": record.get("assumption_id"),
+            "reason": record.get("reason"),
+            "source_location": record.get("source_location"),
+            "evidence_review_status": record.get("evidence_review_status"),
         }
         for record in not_modeled_records
-        if record.get('claim_id') in PROTOCOL_CLAIM_IDS
+        if record.get("claim_id") in PROTOCOL_CLAIM_IDS
     ]
 
     if blockers:
-        overall_status = 'blocked_required_lane_unavailable'
-        security_decision = 'BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE'
+        overall_status = "blocked_required_lane_unavailable"
+        security_decision = "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE"
     elif unresolved_assumptions:
-        overall_status = 'checked_with_unresolved_threat_model_gaps'
-        security_decision = 'BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS'
+        overall_status = "checked_with_unresolved_threat_model_gaps"
+        security_decision = "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS"
     else:
-        overall_status = 'checked'
-        security_decision = 'TESTNET_PROTOCOL_MODEL_CHECKED'
+        overall_status = "checked"
+        security_decision = "TESTNET_PROTOCOL_MODEL_CHECKED"
 
     report: dict[str, Any] = {
-        'schema_version': SCHEMA_VERSION,
-        'task_id': TASK_ID,
-        'generated_at_utc': GENERATED_AT_UTC,
-        'model': {
-            'path': MODEL_PATH,
-            'cid_path': MODEL_CID_PATH,
-            'id': model_payload['model_id'],
-            'schema_version': model_payload['schema_version'],
-            'cid': model_cid,
+        "schema_version": SCHEMA_VERSION,
+        "task_id": TASK_ID,
+        "generated_at_utc": GENERATED_AT_UTC,
+        "model": {
+            "path": MODEL_PATH,
+            "cid_path": MODEL_CID_PATH,
+            "id": model_payload["model_id"],
+            "schema_version": model_payload["schema_version"],
+            "cid": model_cid,
         },
-        'inputs': {
-            'claim_trace_map': {
-                'path': TRACE_MAP_PATH,
-                'model_cid': trace_map_payload['model_cid'],
-                'artifact_cid': trace_map_payload.get('artifact_cid') or calculate_artifact_cid(trace_map_payload),
+        "inputs": {
+            "claim_trace_map": {
+                "path": TRACE_MAP_PATH,
+                "model_cid": trace_map_payload["model_cid"],
+                "artifact_cid": trace_map_payload.get("artifact_cid")
+                or calculate_artifact_cid(trace_map_payload),
             },
-            'assumptions': {
-                'path': ASSUMPTIONS_PATH,
-                'model_cid': assumptions_payload['model_cid'],
-                'artifact_cid': assumptions_payload.get('artifact_cid') or calculate_artifact_cid(assumptions_payload),
+            "assumptions": {
+                "path": ASSUMPTIONS_PATH,
+                "model_cid": assumptions_payload["model_cid"],
+                "artifact_cid": assumptions_payload.get("artifact_cid")
+                or calculate_artifact_cid(assumptions_payload),
             },
-            'fuzz_counterexamples': _fuzz_input_summary(fuzz_counterexample_manifest),
+            "fuzz_counterexamples": _fuzz_input_summary(fuzz_counterexample_manifest),
         },
-        'tamarin_model': {
-            'theory': THEORY_NAME,
-            'path': TAMARIN_ARTIFACT_PATH,
-            'artifact_cid': calculate_artifact_cid({'theory': THEORY_NAME, 'source': tamarin_source}),
-            'sha256': 'sha256:' + hashlib.sha256(tamarin_source.encode('utf-8')).hexdigest(),
-            'line_count': len(tamarin_source.splitlines()),
-            'required_events': list(REQUIRED_EVENTS),
-            'lemmas': list(REQUIRED_LEMMAS),
+        "tamarin_model": {
+            "theory": THEORY_NAME,
+            "path": TAMARIN_ARTIFACT_PATH,
+            "artifact_cid": calculate_artifact_cid(
+                {"theory": THEORY_NAME, "source": tamarin_source}
+            ),
+            "sha256": "sha256:" + hashlib.sha256(tamarin_source.encode("utf-8")).hexdigest(),
+            "line_count": len(tamarin_source.splitlines()),
+            "required_events": list(REQUIRED_EVENTS),
+            "lemmas": list(REQUIRED_LEMMAS),
         },
-        'proverif_model': {
-            'path': PROVERIF_ARTIFACT_PATH,
-            'exists': proverif_model_present,
-            'sha256': (
-                'sha256:' + hashlib.sha256(proverif_model_source.encode('utf-8')).hexdigest()
+        "proverif_model": {
+            "path": PROVERIF_ARTIFACT_PATH,
+            "exists": proverif_model_present,
+            "sha256": (
+                "sha256:" + hashlib.sha256(proverif_model_source.encode("utf-8")).hexdigest()
                 if proverif_model_source is not None
                 else None
             ),
-            'coverage_decision': (
-                'required_but_unavailable'
+            "coverage_decision": (
+                "required_but_unavailable"
                 if not proverif_model_present
-                else 'required_projection_present'
+                else "required_projection_present"
             ),
         },
-        'coverage_decision': {
-            'decision': 'required',
-            'reason': (
-                'The approved Testnet threat model contains remote-payload claims for network binding, '
-                'fresh account provenance, review/auth ordering, signing decision ordering, submission UI '
-                'ordering, audit boundaries, and explicit protocol gaps. Tamarin and ProVerif are required '
-                'lanes; unavailable solvers or missing ProVerif projection block Testnet assurance.'
+        "coverage_decision": {
+            "decision": "required",
+            "reason": (
+                "The approved Testnet threat model contains remote-payload claims for network binding, "
+                "fresh account provenance, review/auth ordering, signing decision ordering, submission UI "
+                "ordering, audit boundaries, and explicit protocol gaps. Tamarin and ProVerif are required "
+                "lanes; unavailable solvers or missing ProVerif projection block Testnet assurance."
             ),
-            'required_solvers': ['tamarin-prover', 'proverif'],
-            'covered_claim_ids': list(PROTOCOL_CLAIM_IDS),
-            'modeled_claim_ids': list(MODELED_CLAIM_IDS),
-            'not_modeled_claim_ids': list(NOT_MODELED_CLAIM_IDS),
-            'unavailable_protocol_solver_blocks_testnet_assurance': True,
+            "required_solvers": ["tamarin-prover", "proverif"],
+            "covered_claim_ids": list(PROTOCOL_CLAIM_IDS),
+            "modeled_claim_ids": list(MODELED_CLAIM_IDS),
+            "not_modeled_claim_ids": list(NOT_MODELED_CLAIM_IDS),
+            "unavailable_protocol_solver_blocks_testnet_assurance": True,
         },
-        'solver_lanes': {
-            'tamarin': {
-                'solver': 'tamarin-prover',
-                'required': True,
-                'available': tamarin_available,
-                'executable': tamarin_executable,
-                'version': tamarin_version,
-                'command': [tamarin_executable or 'tamarin-prover', '--prove', TAMARIN_ARTIFACT_PATH],
-                'status': tamarin_status,
-                'run': dict(tamarin_run) if tamarin_run is not None else None,
-                'unavailable_blocks_testnet_assurance': True,
+        "solver_lanes": {
+            "tamarin": {
+                "solver": "tamarin-prover",
+                "required": True,
+                "available": tamarin_available,
+                "executable": tamarin_executable,
+                "version": tamarin_version,
+                "command": [
+                    tamarin_executable or "tamarin-prover",
+                    "--prove",
+                    TAMARIN_ARTIFACT_PATH,
+                ],
+                "status": tamarin_status,
+                "run": dict(tamarin_run) if tamarin_run is not None else None,
+                "unavailable_blocks_testnet_assurance": True,
             },
-            'proverif': {
-                'solver': 'proverif',
-                'required': True,
-                'available': proverif_available,
-                'executable': proverif_executable,
-                'version': proverif_version,
-                'command': [proverif_executable or 'proverif', PROVERIF_ARTIFACT_PATH],
-                'status': proverif_status,
-                'run': dict(proverif_run) if proverif_run is not None else None,
-                'unavailable_blocks_testnet_assurance': True,
+            "proverif": {
+                "solver": "proverif",
+                "required": True,
+                "available": proverif_available,
+                "executable": proverif_executable,
+                "version": proverif_version,
+                "command": [proverif_executable or "proverif", PROVERIF_ARTIFACT_PATH],
+                "status": proverif_status,
+                "run": dict(proverif_run) if proverif_run is not None else None,
+                "unavailable_blocks_testnet_assurance": True,
             },
         },
-        'claim_coverage': _claim_coverage(claims_by_id),
-        'unsupported_protocol_semantics': unsupported_protocol_semantics,
-        'attack_trace_retention': {
-            'policy': 'preserve_attack_traces_as_blocking_counterevidence_until an approved solver run discharges or refines them',
-            'disproof_vectors': [
+        "claim_coverage": _claim_coverage(claims_by_id),
+        "unsupported_protocol_semantics": unsupported_protocol_semantics,
+        "attack_trace_retention": {
+            "policy": "preserve_attack_traces_as_blocking_counterevidence_until an approved solver run discharges or refines them",
+            "disproof_vectors": [
                 {
-                    'id': vector['id'],
-                    'claim_id': vector['claim_id'],
-                    'status': vector.get('status'),
-                    'tactic': vector.get('tactic'),
+                    "id": vector["id"],
+                    "claim_id": vector["claim_id"],
+                    "status": vector.get("status"),
+                    "tactic": vector.get("tactic"),
                 }
                 for vector in disproof_vectors
-                if vector.get('claim_id') in PROTOCOL_CLAIM_IDS
+                if vector.get("claim_id") in PROTOCOL_CLAIM_IDS
             ],
-            'fuzz_counterexamples': list((fuzz_counterexample_manifest or {}).get('counterexamples', [])),
+            "fuzz_counterexamples": list(
+                (fuzz_counterexample_manifest or {}).get("counterexamples", [])
+            ),
         },
-        'unresolved_required_assumptions': unresolved_assumptions,
-        'missing_claim_ids': missing_claim_ids,
-        'blockers': blockers,
-        'summary': {
-            'claim_count': len(PROTOCOL_CLAIM_IDS),
-            'modeled_claim_count': len(MODELED_CLAIM_IDS),
-            'not_modeled_claim_count': len(NOT_MODELED_CLAIM_IDS),
-            'unsupported_semantic_count': len(unsupported_protocol_semantics),
-            'blocking_assumption_count': len(unresolved_assumptions),
-            'attack_trace_count': len(disproof_vectors) + len((fuzz_counterexample_manifest or {}).get('counterexamples', [])),
-            'blocker_count': len(blockers),
+        "unresolved_required_assumptions": unresolved_assumptions,
+        "missing_claim_ids": missing_claim_ids,
+        "blockers": blockers,
+        "summary": {
+            "claim_count": len(PROTOCOL_CLAIM_IDS),
+            "modeled_claim_count": len(MODELED_CLAIM_IDS),
+            "not_modeled_claim_count": len(NOT_MODELED_CLAIM_IDS),
+            "unsupported_semantic_count": len(unsupported_protocol_semantics),
+            "blocking_assumption_count": len(unresolved_assumptions),
+            "attack_trace_count": len(disproof_vectors)
+            + len((fuzz_counterexample_manifest or {}).get("counterexamples", [])),
+            "blocker_count": len(blockers),
         },
-        'overall_status': overall_status,
-        'security_decision': security_decision,
-        'testnet_assurance_blocked': security_decision.startswith('BLOCK_'),
-        'production_release_blocked': True,
+        "overall_status": overall_status,
+        "security_decision": security_decision,
+        "testnet_assurance_blocked": security_decision.startswith("BLOCK_"),
+        "production_release_blocked": True,
     }
-    report['report_cid'] = calculate_artifact_cid(_without_key(report, 'report_cid'))
+    report["report_cid"] = calculate_artifact_cid(_without_key(report, "report_cid"))
     return report
 
 
@@ -526,17 +548,17 @@ def run_tamarin_check(
     tamarin_executable: str,
     timeout_seconds: int = 120,
 ) -> dict[str, Any]:
-    command = [tamarin_executable, '--prove', str(tamarin_path)]
+    command = [tamarin_executable, "--prove", str(tamarin_path)]
     result = _run_solver(command, timeout_seconds=timeout_seconds)
-    output = str(result.get('stdout', '')).lower()
-    if result['status'] == 'pass' and (
-        'falsified' in output or 'wellformedness check failed' in output
+    output = str(result.get("stdout", "")).lower()
+    if result["status"] == "pass" and (
+        "falsified" in output or "wellformedness check failed" in output
     ):
-        result['status'] = 'failed'
-        result['output_retained'] = True
-        result['stderr'] = (
-            str(result.get('stderr', ''))
-            + '\nTamarin returned an unacceptable lemma result or wellformedness warning.'
+        result["status"] = "failed"
+        result["output_retained"] = True
+        result["stderr"] = (
+            str(result.get("stderr", ""))
+            + "\nTamarin returned an unacceptable lemma result or wellformedness warning."
         ).strip()
     return result
 
@@ -549,17 +571,18 @@ def run_proverif_check(
 ) -> dict[str, Any]:
     command = [proverif_executable, str(proverif_path)]
     result = _run_solver(command, timeout_seconds=timeout_seconds)
-    if result['status'] == 'pass' and ' is false.' in str(result.get('stdout', '')).lower():
-        result['status'] = 'failed'
-        result['output_retained'] = True
-        result['stderr'] = (
-            str(result.get('stderr', ''))
-            + '\nProVerif returned a false correspondence query.'
+    if result["status"] == "pass" and " is false." in str(result.get("stdout", "")).lower():
+        result["status"] = "failed"
+        result["output_retained"] = True
+        result["stderr"] = (
+            str(result.get("stderr", "")) + "\nProVerif returned a false correspondence query."
         ).strip()
     return result
 
 
-def detect_solver(name: str, *, install_if_missing: bool = False, reason: str | None = None) -> str | None:
+def detect_solver(
+    name: str, *, install_if_missing: bool = False, reason: str | None = None
+) -> str | None:
     """Resolve a protocol solver and install only for an actual solver run."""
 
     executable = shutil.which(name)
@@ -569,14 +592,14 @@ def detect_solver(name: str, *, install_if_missing: bool = False, reason: str | 
 
     return ensure_prover_executable(
         name,
-        reason=reason or f'{name} protocol solver execution',
+        reason=reason or f"{name} protocol solver execution",
     )
 
 
 def solver_version(executable: str | None) -> str | None:
     if executable is None:
         return None
-    for args in (['--version'], ['-version'], ['version'], []):
+    for args in (["--version"], ["-version"], ["version"], []):
         try:
             completed = subprocess.run(
                 [executable, *args],
@@ -589,10 +612,10 @@ def solver_version(executable: str | None) -> str | None:
             continue
         output = (completed.stdout or completed.stderr).strip()
         lowered = output.lower()
-        if output and 'unknown option' not in lowered and not lowered.startswith('error:'):
+        if output and "unknown option" not in lowered and not lowered.startswith("error:"):
             return output.splitlines()[0]
         for line in output.splitlines():
-            if 'proverif' in line.lower() and 'cryptographic protocol verifier' in line.lower():
+            if "proverif" in line.lower() and "cryptographic protocol verifier" in line.lower():
                 return line
     return None
 
@@ -602,19 +625,19 @@ def _claim_coverage(claims_by_id: Mapping[str, Mapping[str, Any]]) -> list[dict[
     for claim_id in PROTOCOL_CLAIM_IDS:
         claim = claims_by_id.get(claim_id, {})
         if claim_id in NOT_MODELED_CLAIM_IDS:
-            protocol_status = 'NOT_MODELED'
+            protocol_status = "NOT_MODELED"
             lemmas: list[str] = []
         else:
-            protocol_status = claim.get('status', 'MISSING')
+            protocol_status = claim.get("status", "MISSING")
             lemmas = list(REQUIRED_LEMMAS[:-1])
         coverage.append(
             {
-                'claim_id': claim_id,
-                'model_status': claim.get('status', 'MISSING'),
-                'protocol_status': protocol_status,
-                'severity': claim.get('severity', 'MISSING'),
-                'coverage_tags': list(claim.get('coverage_tags', [])),
-                'modeled_by_lemmas': lemmas,
+                "claim_id": claim_id,
+                "model_status": claim.get("status", "MISSING"),
+                "protocol_status": protocol_status,
+                "severity": claim.get("severity", "MISSING"),
+                "coverage_tags": list(claim.get("coverage_tags", [])),
+                "modeled_by_lemmas": lemmas,
             }
         )
     return coverage
@@ -633,48 +656,58 @@ def _blockers(
     if not tamarin_available:
         blockers.append(
             {
-                'code': 'TAMARIN_EXECUTABLE_MISSING',
-                'message': 'Required tamarin-prover executable is not available on PATH.',
+                "code": "TAMARIN_EXECUTABLE_MISSING",
+                "message": "Required tamarin-prover executable is not available on PATH.",
             }
         )
     if not proverif_available:
         blockers.append(
             {
-                'code': 'PROVERIF_EXECUTABLE_MISSING',
-                'message': 'Required proverif executable is not available on PATH.',
+                "code": "PROVERIF_EXECUTABLE_MISSING",
+                "message": "Required proverif executable is not available on PATH.",
             }
         )
     if not proverif_model_present:
         blockers.append(
             {
-                'code': 'PROVERIF_MODEL_MISSING',
-                'message': f'Required ProVerif projection {PROVERIF_ARTIFACT_PATH} is not present.',
+                "code": "PROVERIF_MODEL_MISSING",
+                "message": f"Required ProVerif projection {PROVERIF_ARTIFACT_PATH} is not present.",
             }
         )
-    if tamarin_available and tamarin_status == 'not-run':
+    if tamarin_available and tamarin_status == "not-run":
         blockers.append(
             {
-                'code': 'TAMARIN_CHECK_NOT_RUN',
-                'message': 'Required Tamarin protocol check has not been executed.',
+                "code": "TAMARIN_CHECK_NOT_RUN",
+                "message": "Required Tamarin protocol check has not been executed.",
             }
         )
-    if proverif_available and proverif_model_present and proverif_status == 'not-run':
+    if proverif_available and proverif_model_present and proverif_status == "not-run":
         blockers.append(
             {
-                'code': 'PROVERIF_CHECK_NOT_RUN',
-                'message': 'Required ProVerif protocol check has not been executed.',
+                "code": "PROVERIF_CHECK_NOT_RUN",
+                "message": "Required ProVerif protocol check has not been executed.",
             }
         )
-    if tamarin_status in {'failed', 'timeout', 'unknown'}:
-        blockers.append({'code': 'TAMARIN_CHECK_NOT_ACCEPTED', 'message': f'Tamarin status is {tamarin_status}.'})
-    if proverif_status in {'failed', 'timeout', 'unknown'}:
-        blockers.append({'code': 'PROVERIF_CHECK_NOT_ACCEPTED', 'message': f'ProVerif status is {proverif_status}.'})
+    if tamarin_status in {"failed", "timeout", "unknown"}:
+        blockers.append(
+            {
+                "code": "TAMARIN_CHECK_NOT_ACCEPTED",
+                "message": f"Tamarin status is {tamarin_status}.",
+            }
+        )
+    if proverif_status in {"failed", "timeout", "unknown"}:
+        blockers.append(
+            {
+                "code": "PROVERIF_CHECK_NOT_ACCEPTED",
+                "message": f"ProVerif status is {proverif_status}.",
+            }
+        )
     if missing_claim_ids:
         blockers.append(
             {
-                'code': 'PROTOCOL_CLAIMS_MISSING',
-                'message': 'The pinned Testnet model does not contain every required protocol claim.',
-                'missing_claim_ids': list(missing_claim_ids),
+                "code": "PROTOCOL_CLAIMS_MISSING",
+                "message": "The pinned Testnet model does not contain every required protocol claim.",
+                "missing_claim_ids": list(missing_claim_ids),
             }
         )
     return blockers
@@ -682,15 +715,15 @@ def _blockers(
 
 def _solver_status(solver_inputs_available: bool, run: Mapping[str, Any] | None) -> str:
     if not solver_inputs_available:
-        return 'not-run'
+        return "not-run"
     if run is None:
-        return 'not-run'
-    status = str(run.get('status', 'unknown'))
-    if status in {'pass', 'passed'}:
-        return 'passed'
-    if status in {'timeout', 'failed', 'unknown'}:
+        return "not-run"
+    status = str(run.get("status", "unknown"))
+    if status in {"pass", "passed"}:
+        return "passed"
+    if status in {"timeout", "failed", "unknown"}:
         return status
-    return 'failed'
+    return "failed"
 
 
 def _claim_ids_for_assumption(
@@ -700,27 +733,27 @@ def _claim_ids_for_assumption(
     return [
         claim_id
         for claim_id, claim in claims_by_id.items()
-        if assumption_id in claim.get('required_assumptions', [])
+        if assumption_id in claim.get("required_assumptions", [])
     ]
 
 
 def _fuzz_input_summary(fuzz_counterexample_manifest: Mapping[str, Any] | None) -> dict[str, Any]:
     if fuzz_counterexample_manifest is None:
         return {
-            'path': FUZZ_COUNTEREXAMPLE_MANIFEST_PATH,
-            'exists': False,
-            'artifact_cid': None,
-            'counterexample_count': 0,
+            "path": FUZZ_COUNTEREXAMPLE_MANIFEST_PATH,
+            "exists": False,
+            "artifact_cid": None,
+            "counterexample_count": 0,
         }
     return {
-        'path': FUZZ_COUNTEREXAMPLE_MANIFEST_PATH,
-        'exists': True,
-        'model_cid': fuzz_counterexample_manifest.get('model_cid'),
-        'artifact_cid': fuzz_counterexample_manifest.get('artifact_cid')
+        "path": FUZZ_COUNTEREXAMPLE_MANIFEST_PATH,
+        "exists": True,
+        "model_cid": fuzz_counterexample_manifest.get("model_cid"),
+        "artifact_cid": fuzz_counterexample_manifest.get("artifact_cid")
         or calculate_artifact_cid(fuzz_counterexample_manifest),
-        'counterexample_count': fuzz_counterexample_manifest.get(
-            'counterexample_count',
-            len(fuzz_counterexample_manifest.get('counterexamples', [])),
+        "counterexample_count": fuzz_counterexample_manifest.get(
+            "counterexample_count",
+            len(fuzz_counterexample_manifest.get("counterexamples", [])),
         ),
     }
 
@@ -736,29 +769,29 @@ def _run_solver(command: Sequence[str], *, timeout_seconds: int) -> dict[str, An
         )
     except subprocess.TimeoutExpired as exc:
         return {
-            'command': list(command),
-            'exit_code': None,
-            'status': 'timeout',
-            'stdout': exc.stdout or '',
-            'stderr': exc.stderr or '',
-            'output_retained': True,
+            "command": list(command),
+            "exit_code": None,
+            "status": "timeout",
+            "stdout": exc.stdout or "",
+            "stderr": exc.stderr or "",
+            "output_retained": True,
         }
     except OSError as exc:
         return {
-            'command': list(command),
-            'exit_code': None,
-            'status': 'failed',
-            'stdout': '',
-            'stderr': str(exc),
-            'output_retained': True,
+            "command": list(command),
+            "exit_code": None,
+            "status": "failed",
+            "stdout": "",
+            "stderr": str(exc),
+            "output_retained": True,
         }
     return {
-        'command': list(command),
-        'exit_code': completed.returncode,
-        'status': 'pass' if completed.returncode == 0 else 'failed',
-        'stdout': completed.stdout,
-        'stderr': completed.stderr,
-        'output_retained': completed.returncode != 0,
+        "command": list(command),
+        "exit_code": completed.returncode,
+        "status": "pass" if completed.returncode == 0 else "failed",
+        "stdout": completed.stdout,
+        "stderr": completed.stderr,
+        "output_retained": completed.returncode != 0,
     }
 
 
@@ -768,12 +801,12 @@ def _validate_bound_inputs(
     trace_map_payload: Mapping[str, Any],
     assumptions_payload: Mapping[str, Any],
 ) -> None:
-    if trace_map_payload.get('model_cid') != model_cid:
-        raise ValueError('claim-trace-map model_cid does not match the pinned Testnet model CID')
-    if assumptions_payload.get('model_cid') != model_cid:
-        raise ValueError('assumptions model_cid does not match the pinned Testnet model CID')
-    if model_payload.get('metadata', {}).get('production_release_blocked') is not True:
-        raise ValueError('Testnet protocol report must bind to a production-blocking Testnet model')
+    if trace_map_payload.get("model_cid") != model_cid:
+        raise ValueError("claim-trace-map model_cid does not match the pinned Testnet model CID")
+    if assumptions_payload.get("model_cid") != model_cid:
+        raise ValueError("assumptions model_cid does not match the pinned Testnet model CID")
+    if model_payload.get("metadata", {}).get("production_release_blocked") is not True:
+        raise ValueError("Testnet protocol report must bind to a production-blocking Testnet model")
 
 
 def _without_key(payload: Mapping[str, Any], key: str) -> dict[str, Any]:

@@ -1,0 +1,164 @@
+{
+  "compiler": {
+    "configuration": {
+      "composition": {
+        "base_constructor_id": "typed_deontic",
+        "constructor_route": "not_applicable",
+        "guidance": "no_guidance",
+        "repair": "no_repair"
+      },
+      "constructor": {
+        "adapter_raw_cid": "bafkreig2yeibug44tbffleyvju4zvo62thdqkpht3n2qn6guefkvbv7z2a",
+        "interface": "TypedDeonticCanonicalConstructor@1"
+      },
+      "converter": {
+        "document_type": "general",
+        "enable_monitoring": false,
+        "use_cache": false,
+        "use_ipfs": false,
+        "use_ml": false
+      },
+      "fallback_allowed": false,
+      "interface": "CanonicalStructuredTextCompiler@1",
+      "learned_stages": [],
+      "selection": {
+        "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "arm_identity_cid": "baguqeeraylvbngffosmvcvwowelspcdbbk5wom5itjvfanbzty4eioxsauhq",
+        "basis": "replacement_bounded_tie_policy"
+      }
+    },
+    "configuration_cid": "baguqeera7dlkg3mkupddznjq3ehefgfy3uwcarhir2yfgukpgjmo4spmroea",
+    "learned_stages": [],
+    "schema_binding": "RESULT(PGIR-021)"
+  },
+  "corpus": {
+    "derived_count": 38690,
+    "kind": "ir-sealed-corpus-root/v1",
+    "lineage_graph_cid": "bafkreia5jirpcpummrddhczxebz554lkd7wrq4o5ynizjlgbczyzuwhakq",
+    "manifest_cid": "bafkreiha35x7mcukzzb5x67hmykwsny5wipf5jb4do5gpsl24mxvix55n4",
+    "manifest_id": "corp:jdao-pinset-1",
+    "materialized": false,
+    "path": "data/ir_learning/corpora/corpus_root.json",
+    "pinset_id": "JDAO-PINSET-1",
+    "root_sha256": "sha256:c54519f43b7950a04b79167e7b61be68d358b2441b8beb810c54b1b10ab2c9dd",
+    "schema_binding": "RESULT(PGIR-011)",
+    "source_count": 7173,
+    "training_admitted_rows": 0
+  },
+  "decompiler": {
+    "configuration_cid": "baguqeeratlk326nodsva4rxwm65xgnpenhcovspm7crtyd4enaqhgjciqayq",
+    "interface": "SourceWithheldCanonicalParaphraser@1",
+    "learned_stages": [],
+    "rendering_spec_cid": "baguqeera72pqowlkovfqvydbtk5lxc7g42o75xtfgmx7cm4vqdvnaimjpjvq",
+    "schema_binding": "RESULT(PGIR-022)",
+    "source_withheld": true
+  },
+  "experiment_id": "R1",
+  "identities_cid": "baguqeeraejouoqkj2inudgumy7nygoowwvu3zi767pdofnhguoyxjuzqhpmq",
+  "implementation_raw_cids": {
+    "compiler": "bafkreihkepmhrqadg7uldzbmnqdpvklwuyod55vui23dywqegj5diz4lci",
+    "contracts": "bafkreigwn3h2ulewptnebiopjobjg2ruaopdrtg3gbcenbuxut4qv4uejm",
+    "decompiler": "bafkreih2ju5hvcdwcni3wtxjy2dksmjp5qvo2ipofghkq73ygk2tnnkmke",
+    "roundtrip": "bafkreid2wn2of5alfxwu6oqgcl7kanjsuqgnapkdpgfglbnc3wxeyu34ny"
+  },
+  "interface": "IRDeterministicBaselineRecipe@1",
+  "model_checkpoint_identity": "none/deterministic",
+  "roundtrip": {
+    "configuration_cid": "baguqeeral25gulrpifchfnppoyodos44kvasvqxsnr3axihwta6y7zh3bona",
+    "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a"
+  },
+  "split": {
+    "hidden_labels_opened": false,
+    "hidden_test_commitment": "sha256:6a801b51b980e666b4010da9a679ad8e11a233078f988165565481b98d4b9ded",
+    "holdout_fixture_loaded": false,
+    "holdout_fixture_present": true,
+    "holdouts": {
+      "compiler": {
+        "count": 0,
+        "split": "compiler",
+        "status": "insufficient"
+      },
+      "cross_reference": {
+        "count": 0,
+        "split": "cross_reference",
+        "status": "insufficient"
+      },
+      "domain": {
+        "count": 0,
+        "split": "domain",
+        "status": "insufficient"
+      },
+      "exception": {
+        "count": 0,
+        "split": "exception",
+        "status": "insufficient"
+      },
+      "family": {
+        "count": 4999,
+        "split": "statute_family",
+        "status": "populated"
+      },
+      "jurisdiction": {
+        "count": 74,
+        "split": "jurisdiction",
+        "status": "populated"
+      },
+      "length": {
+        "count": 0,
+        "split": "length",
+        "status": "insufficient"
+      },
+      "lineage": {
+        "count": 0,
+        "split": "lineage",
+        "status": "insufficient"
+      },
+      "notation": {
+        "count": 0,
+        "split": "notation",
+        "status": "insufficient"
+      },
+      "premise": {
+        "count": 0,
+        "split": "premise",
+        "status": "insufficient"
+      },
+      "proof_library": {
+        "count": 0,
+        "split": "proof_library",
+        "status": "insufficient"
+      },
+      "publication": {
+        "count": 0,
+        "split": "publication",
+        "status": "insufficient"
+      },
+      "rare_operator": {
+        "count": 0,
+        "split": "rare_operator",
+        "status": "insufficient"
+      },
+      "time": {
+        "count": 0,
+        "split": "temporal",
+        "status": "insufficient"
+      },
+      "type": {
+        "count": 0,
+        "split": "type",
+        "status": "insufficient"
+      }
+    },
+    "kind": "ir-sealed-split-root/v1",
+    "leakage_passed": true,
+    "manifest_path": "data/ir_learning/splits/ir_split_manifest.json",
+    "manifest_size_bytes": 395278,
+    "path": "data/ir_learning/splits/split_root.json",
+    "root_sha256": "sha256:b522f15f2597ed4902f1af9b7f3aac5b855193d289369df70ccfda5ce8798f9d",
+    "schema": "IRSplitManifest@1",
+    "schema_binding": "RESULT(PGIR-012)",
+    "split_manifest_digest": "047b263b85067aa3dad6760f623c2855fbaf776d565ec9c273c49425fcc14eb4",
+    "split_manifest_sha256": "9e552a46d1f850fd0455d2c5b1d87810077fd35eb88ea849e64de24090bc167f"
+  },
+  "task_id": "PGIR-023"
+}

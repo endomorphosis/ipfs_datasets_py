@@ -178,11 +178,15 @@ class GraphRAGIntegrator:
         except Exception:
             return None
 
-    async def integrate_document(self, llm_document: Any, document_id: Optional[str] = None) -> KnowledgeGraph:
+    async def integrate_document(
+        self, llm_document: Any, document_id: Optional[str] = None
+    ) -> KnowledgeGraph:
         if llm_document is None:
             raise ValueError("llm_document must not be None")
 
-        resolved_document_id = str(document_id or getattr(llm_document, "document_id", "") or "").strip()
+        resolved_document_id = str(
+            document_id or getattr(llm_document, "document_id", "") or ""
+        ).strip()
         if not resolved_document_id:
             raise ValueError("llm_document must define a document_id")
 
@@ -227,7 +231,9 @@ class GraphRAGIntegrator:
                 extracted.append(entity)
         return extracted
 
-    def _extract_entities_from_text(self, text: str, source_chunk: Optional[str] = None) -> List[Entity]:
+    def _extract_entities_from_text(
+        self, text: str, source_chunk: Optional[str] = None
+    ) -> List[Entity]:
         text = str(text or "").strip()
         if not text:
             return []
@@ -261,7 +267,9 @@ class GraphRAGIntegrator:
     def _classify_entity(self, value: str) -> str:
         if re.match(r"^R\d+(?:-\d+)+$", value):
             return "rule"
-        if any(token in value for token in ["Department", "Office", "Board", "Commission", "Agency"]):
+        if any(
+            token in value for token in ["Department", "Office", "Board", "Commission", "Agency"]
+        ):
             return "organization"
         if len(value.split()) >= 2 and value.split()[0][0].isupper():
             return "named_entity"
@@ -292,7 +300,9 @@ class GraphRAGIntegrator:
             )
         return relationships
 
-    def _extract_chunk_relationships(self, chunk: Any, chunk_entities: List[Entity]) -> List[Relationship]:
+    def _extract_chunk_relationships(
+        self, chunk: Any, chunk_entities: List[Entity]
+    ) -> List[Relationship]:
         return self._extract_relationships(
             chunk_entities,
             _coerce_chunk_text(chunk),
@@ -309,7 +319,9 @@ class GraphRAGIntegrator:
             return "references"
         return "related_to"
 
-    def _extract_cross_chunk_relationships(self, chunks: List[Any], entities: List[Entity]) -> List[Relationship]:
+    def _extract_cross_chunk_relationships(
+        self, chunks: List[Any], entities: List[Entity]
+    ) -> List[Relationship]:
         by_chunk: Dict[str, List[Entity]] = {}
         for entity in entities:
             if entity.source_chunk is None:
@@ -319,7 +331,9 @@ class GraphRAGIntegrator:
         relationships: List[Relationship] = []
         for index, chunk in enumerate(chunks):
             chunk_id = _coerce_chunk_id(chunk, index)
-            relationships.extend(self._extract_chunk_relationships(chunk, by_chunk.get(chunk_id, [])))
+            relationships.extend(
+                self._extract_chunk_relationships(chunk, by_chunk.get(chunk_id, []))
+            )
 
         sequences = self._find_chunk_sequences(chunks)
         for left_chunk_id, right_chunk_id in zip(sequences, sequences[1:]):
@@ -357,7 +371,9 @@ class GraphRAGIntegrator:
 
     def _merge_into_global_graph(self, knowledge_graph: KnowledgeGraph) -> None:
         for entity in knowledge_graph.entities:
-            self.global_graph.add_node(entity.id, **entity.to_dict(), document_id=knowledge_graph.document_id)
+            self.global_graph.add_node(
+                entity.id, **entity.to_dict(), document_id=knowledge_graph.document_id
+            )
             self.global_entities.setdefault(entity.text.lower(), []).append(entity.id)
         for relationship in knowledge_graph.relationships:
             self.global_graph.add_edge(
@@ -369,7 +385,9 @@ class GraphRAGIntegrator:
                 document_id=knowledge_graph.document_id,
             )
 
-    def _discover_cross_document_relationships(self, knowledge_graph: KnowledgeGraph) -> List[Dict[str, Any]]:
+    def _discover_cross_document_relationships(
+        self, knowledge_graph: KnowledgeGraph
+    ) -> List[Dict[str, Any]]:
         discovered: List[Dict[str, Any]] = []
         for entity in knowledge_graph.entities:
             existing_ids = self.global_entities.get(entity.text.lower(), [])
@@ -390,12 +408,15 @@ class GraphRAGIntegrator:
                     discovered.append(record)
         return discovered
 
-    def _find_similar_entities(self, entity: Entity, candidates: Optional[Iterable[Entity]] = None) -> List[Entity]:
+    def _find_similar_entities(
+        self, entity: Entity, candidates: Optional[Iterable[Entity]] = None
+    ) -> List[Entity]:
         pool = list(candidates or self.iter_entities())
         return [
             candidate
             for candidate in pool
-            if candidate.id != entity.id and self.compute_entity_similarity(entity, candidate) >= self.similarity_threshold
+            if candidate.id != entity.id
+            and self.compute_entity_similarity(entity, candidate) >= self.similarity_threshold
         ]
 
     def _calculate_text_similarity(self, left: str, right: str) -> float:
@@ -445,7 +466,8 @@ class GraphRAGIntegrator:
     def analyze_cross_document_relationships(self, document_ids: List[str]) -> List[Dict[str, Any]]:
         wanted = set(document_ids)
         return [
-            rel for rel in self.cross_document_relationships
+            rel
+            for rel in self.cross_document_relationships
             if rel.get("source_document_id") in wanted or rel.get("target_document_id") in wanted
         ]
 
@@ -502,7 +524,9 @@ class GraphRAGIntegrator:
     def extract_entities(self, text: str) -> List[Entity]:
         return self._extract_entities_from_text(text)
 
-    def discover_relationships(self, entities: List[Entity], context: str = "") -> List[Relationship]:
+    def discover_relationships(
+        self, entities: List[Entity], context: str = ""
+    ) -> List[Relationship]:
         return self._extract_relationships(entities, context)
 
     def iter_entities(self) -> Iterable[Entity]:

@@ -81,8 +81,12 @@ def test_capability_profiles_classify_administrative_formula_families():
     assert [record["formula"] for record in capability_records] == [
         formula for _, formula, _ in examples
     ]
-    assert all(record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records)
-    assert all(record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records)
+    assert all(
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
+    )
+    assert all(
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
+    )
     assert all(record["missing_slots"] == [] for record in capability_records)
     assert all(record["ungrounded_slots"] == [] for record in capability_records)
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
@@ -130,15 +134,13 @@ def test_capability_profiles_classify_document_authentication_duties():
         element = extract_normative_elements(text)[0]
         norm = LegalNormIR.from_parser_element(element)
         formula_record = build_deontic_formula_record_from_ir(norm)
-        prover_records = [
-            target.to_dict() for target in validate_ir_with_provers(norm).targets
-        ]
+        prover_records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
         action_span = element["field_spans"]["action"]
         norms.append(norm)
 
         assert norm.modality == "O"
         assert norm.support_span == norm.source_span
-        assert element["text"][action_span[0]:action_span[1]] == norm.action
+        assert element["text"][action_span[0] : action_span[1]] == norm.action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert formula_record["formula"] == expected_formula
         assert formula_record["proof_ready"] is True
@@ -147,8 +149,7 @@ def test_capability_profiles_classify_document_authentication_duties():
         assert len(prover_records) == 5
         assert all(record["syntax_valid"] is True for record in prover_records)
         assert all(
-            expected_symbol in record["exported_formula_symbols"]
-            for record in prover_records
+            expected_symbol in record["exported_formula_symbols"] for record in prover_records
         )
 
     capability_records = build_deterministic_parser_capability_profile_records(norms)
@@ -165,12 +166,10 @@ def test_capability_profiles_classify_document_authentication_duties():
         formula for _, formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["decoder_slot_grounding_complete"] is True for record in capability_records)
@@ -230,7 +229,7 @@ def test_capability_profiles_classify_public_access_records_duties():
 
         assert norm.modality == "O"
         assert norm.action == action
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert formula_record["formula"] == expected_formula
         assert rejected_symbol not in expected_formula
@@ -255,12 +254,10 @@ def test_capability_profiles_classify_public_access_records_duties():
         formula for _, _, formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["decoder_slot_grounding_complete"] is True for record in capability_records)
@@ -315,15 +312,13 @@ def test_capability_profiles_classify_dispute_resolution_duties_across_prover_ta
         element = extract_normative_elements(text)[0]
         norm = LegalNormIR.from_parser_element(element)
         formula_record = build_deontic_formula_record_from_ir(norm)
-        prover_records = [
-            target.to_dict() for target in validate_ir_with_provers(norm).targets
-        ]
+        prover_records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
         action_span = element["field_spans"]["action"]
         norms.append(norm)
 
         assert norm.modality == "O"
         assert norm.action == action
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert formula_record["formula"] == expected_formula
         assert formula_record["proof_ready"] is True
@@ -333,12 +328,10 @@ def test_capability_profiles_classify_dispute_resolution_duties_across_prover_ta
         assert all(record["syntax_valid"] is True for record in prover_records)
         assert all(record["proof_ready"] is True for record in prover_records)
         assert all(
-            expected_symbol in record["exported_formula_symbols"]
-            for record in prover_records
+            expected_symbol in record["exported_formula_symbols"] for record in prover_records
         )
         assert all(
-            record["target_components"]["semantic_formula_family"]
-            == "dispute_resolution_duty"
+            record["target_components"]["semantic_formula_family"] == "dispute_resolution_duty"
             for record in prover_records
         )
 
@@ -355,12 +348,10 @@ def test_capability_profiles_classify_dispute_resolution_duties_across_prover_ta
         formula for _, _, formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["decoder_slot_grounding_complete"] is True for record in capability_records)
@@ -421,15 +412,13 @@ def test_capability_profiles_classify_financial_assurance_duties():
         element = extract_normative_elements(text)[0]
         norm = LegalNormIR.from_parser_element(element)
         formula_record = build_deontic_formula_record_from_ir(norm)
-        prover_records = [
-            target.to_dict() for target in validate_ir_with_provers(norm).targets
-        ]
+        prover_records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
         action_span = element["field_spans"]["action"]
         norms.append(norm)
 
         assert norm.modality == "O"
         assert norm.action == action
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert formula_record["formula"] == expected_formula
         assert rejected_symbol not in expected_formula
@@ -454,12 +443,10 @@ def test_capability_profiles_classify_financial_assurance_duties():
         formula for _, _, formula, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["missing_slots"] == [] for record in capability_records)
     assert all(record["ungrounded_slots"] == [] for record in capability_records)
@@ -528,15 +515,13 @@ def test_capability_profiles_classify_legal_recordkeeping_duties():
         element = extract_normative_elements(text)[0]
         norm = LegalNormIR.from_parser_element(element)
         formula_record = build_deontic_formula_record_from_ir(norm)
-        prover_records = [
-            target.to_dict() for target in validate_ir_with_provers(norm).targets
-        ]
+        prover_records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
         action_span = element["field_spans"]["action"]
         norms.append(norm)
 
         assert norm.modality == "O"
         assert norm.action == action
-        assert element["text"][action_span[0]:action_span[1]] == action
+        assert element["text"][action_span[0] : action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert formula_record["formula"] == expected_formula
         assert rejected_symbol not in expected_formula
@@ -547,8 +532,7 @@ def test_capability_profiles_classify_legal_recordkeeping_duties():
         assert all(record["syntax_valid"] is True for record in prover_records)
         assert all(record["proof_ready"] is True for record in prover_records)
         assert all(
-            expected_symbol in record["exported_formula_symbols"]
-            for record in prover_records
+            expected_symbol in record["exported_formula_symbols"] for record in prover_records
         )
 
     capability_records = build_deterministic_parser_capability_profile_records(norms)
@@ -565,12 +549,10 @@ def test_capability_profiles_classify_legal_recordkeeping_duties():
         formula for _, _, formula, _, _ in examples
     ]
     assert all(
-        record["checked_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(
-        record["grounded_slots"] == ["actor", "modality", "action"]
-        for record in capability_records
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
     )
     assert all(record["missing_slots"] == [] for record in capability_records)
     assert all(record["ungrounded_slots"] == [] for record in capability_records)
@@ -638,15 +620,11 @@ def test_capability_profiles_include_decoder_reconstruction_slot_coverage():
         slots for _, _, _, slots in examples
     ]
     assert all(
-        record["grounded_decoded_slots"] == record["decoded_slots"]
-        for record in capability_records
+        record["grounded_decoded_slots"] == record["decoded_slots"] for record in capability_records
     )
     assert all(record["missing_decoded_slots"] == [] for record in capability_records)
     assert all(record["ungrounded_decoded_slots"] == [] for record in capability_records)
-    assert all(
-        record["decoder_slot_grounding_complete"] is True
-        for record in capability_records
-    )
+    assert all(record["decoder_slot_grounding_complete"] is True for record in capability_records)
     assert all(record["decoder_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["decoder_grounded_phrase_rate"] == 1.0 for record in capability_records)
     assert all(record["decoder_requires_validation"] is False for record in capability_records)
@@ -703,8 +681,12 @@ def test_capability_profiles_disambiguate_waiver_families_from_ir_action():
     assert [record["capability_family"] for record in capability_records] == [
         family for _, _, family, _ in examples
     ]
-    assert all(record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records)
-    assert all(record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records)
+    assert all(
+        record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records
+    )
+    assert all(
+        record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records
+    )
     assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
     assert all(record["requires_validation"] is False for record in capability_records)
     assert all(record["repair_required"] is False for record in capability_records)
@@ -735,9 +717,7 @@ def test_capability_profile_slice_preserves_unresolved_numbered_exception_gate()
         "exceptions",
         "cross_references",
     ]
-    assert blocked_records[0]["grounded_decoded_slots"] == blocked_records[0][
-        "decoded_slots"
-    ]
+    assert blocked_records[0]["grounded_decoded_slots"] == blocked_records[0]["decoded_slots"]
     assert blocked_records[0]["missing_decoded_slots"] == []
     assert blocked_records[0]["decoder_slot_grounding_complete"] is True
     assert blocked_records[0]["decoder_requires_validation"] is True

@@ -29,14 +29,18 @@ sys.path.insert(0, str(_REPO_ROOT))
 # Tiny approx helper
 # ---------------------------------------------------------------------------
 
+
 def pytest_approx(value, rel=1e-6):
     class _Approx:
         def __init__(self, v):
             self.v = v
+
         def __eq__(self, other):
             return abs(other - self.v) <= rel * max(abs(self.v), abs(other), 1e-12)
+
         def __repr__(self):
             return f"approx({self.v})"
+
     return _Approx(value)
 
 
@@ -66,12 +70,17 @@ import time as _time
 # Helper to build a fresh DelegationManager with tokens
 # ---------------------------------------------------------------------------
 
+
 def _make_manager(path: str = ":memory:") -> DelegationManager:
     return DelegationManager(path)
 
 
-def _make_token(resource: str = "res1", ability: str = "read",
-                audience: str = "did:key:alice", nonce: str | None = None) -> DelegationToken:
+def _make_token(
+    resource: str = "res1",
+    ability: str = "read",
+    audience: str = "did:key:alice",
+    nonce: str | None = None,
+) -> DelegationToken:
     if nonce is None:
         nonce = str(uuid.uuid4())
     return DelegationToken(
@@ -86,9 +95,11 @@ def _make_token(resource: str = "res1", ability: str = "read",
 def _make_conflict_report(data: dict) -> I18NConflictReport:
     """Build a synthetic report without running actual parsers."""
     r = I18NConflictReport()
+
     # Use mock conflict objects — just need len() to work
     class _Conflict:
         pass
+
     for lang, n in data.items():
         r.by_language[lang] = [_Conflict() for _ in range(n)]
     return r
@@ -98,8 +109,8 @@ def _make_conflict_report(data: dict) -> I18NConflictReport:
 # FM227 – languages_above_threshold(n) + conflict_density() combined
 # ===========================================================================
 
-class TestFM227ThresholdDensityCombined:
 
+class TestFM227ThresholdDensityCombined:
     def test_above_threshold_consistent_with_density_above_zero(self):
         report = _make_conflict_report({"fr": 3, "es": 1, "de": 0, "en": 2})
         dense = report.conflict_density()  # (3+1+0+2) / 4 = 1.5
@@ -138,8 +149,8 @@ class TestFM227ThresholdDensityCombined:
 # FN228 – active_tokens_by_actor() + active_tokens_by_resource() combined
 # ===========================================================================
 
-class TestFN228ByActorAndByResourceCombined:
 
+class TestFN228ByActorAndByResourceCombined:
     def test_actor_subset_of_resource_results(self):
         mgr = _make_manager()
         t1 = _make_token(resource="doc", ability="read", audience="did:key:alice")
@@ -196,8 +207,8 @@ class TestFN228ByActorAndByResourceCombined:
 # FO229 – ComplianceMergeResult.from_dict() + to_dict() round-trip
 # ===========================================================================
 
-class TestFO229ComplianceMergeResultRoundTrip:
 
+class TestFO229ComplianceMergeResultRoundTrip:
     def test_round_trip_identity(self):
         r = ComplianceMergeResult(added=3, skipped_protected=1, skipped_duplicate=2)
         r2 = ComplianceMergeResult.from_dict(r.to_dict())
@@ -239,8 +250,8 @@ class TestFO229ComplianceMergeResultRoundTrip:
 # FP230 – Korean text → detect_all_languages(text)["ko"] non-empty E2E
 # ===========================================================================
 
-class TestFP230KoreanTextE2E:
 
+class TestFP230KoreanTextE2E:
     def test_ko_slot_present(self):
         text = "할 수 있다"
         report = detect_all_languages(text)
@@ -275,8 +286,8 @@ class TestFP230KoreanTextE2E:
 # FQ231 – Arabic text → detect_all_languages(text)["ar"] non-empty E2E
 # ===========================================================================
 
-class TestFQ231ArabicTextE2E:
 
+class TestFQ231ArabicTextE2E:
     def test_ar_slot_present(self):
         report = detect_all_languages("يجوز لك ذلك")
         assert "ar" in report.by_language
@@ -307,8 +318,8 @@ class TestFQ231ArabicTextE2E:
 # FR232 – detect_all_languages() all 13 slots + conflict_density() over 13
 # ===========================================================================
 
-class TestFR232AllThirteenLanguagesAndDensity:
 
+class TestFR232AllThirteenLanguagesAndDensity:
     def test_detect_all_has_13_slots(self):
         report = detect_all_languages("test text")
         assert len(report.by_language) >= 13
@@ -348,8 +359,8 @@ class TestFR232AllThirteenLanguagesAndDensity:
 # FS233 – languages_above_threshold(0) == sorted languages_with_conflicts
 # ===========================================================================
 
-class TestFS233AboveThresholdEqualsWithConflicts:
 
+class TestFS233AboveThresholdEqualsWithConflicts:
     def test_invariant_basic(self):
         report = _make_conflict_report({"fr": 2, "es": 0, "de": 1})
         assert report.languages_above_threshold(0) == sorted(report.languages_with_conflicts)
@@ -382,13 +393,15 @@ class TestFS233AboveThresholdEqualsWithConflicts:
 # FT234 – active_tokens_by_actor() combined with merge_and_publish()
 # ===========================================================================
 
-class TestFT234ByActorAfterMergePublish:
 
+class TestFT234ByActorAfterMergePublish:
     def _make_pubsub(self):
         class _Pub:
             events = []
+
             def publish(self, topic, payload):
                 self.events.append((topic, payload))
+
         return _Pub()
 
     def test_merged_tokens_visible_by_actor(self):
@@ -455,8 +468,8 @@ class TestFT234ByActorAfterMergePublish:
 # FU235 – Swedish ("sv") keyword table → 12 languages
 # ===========================================================================
 
-class TestFU235SwedishKeywords:
 
+class TestFU235SwedishKeywords:
     def test_load_sv_keywords_returns_dict(self):
         kw = _load_i18n_keywords("sv")
         assert isinstance(kw, dict)
@@ -494,8 +507,8 @@ class TestFU235SwedishKeywords:
 # FV236 – Russian ("ru") keyword table → 13 languages
 # ===========================================================================
 
-class TestFV236RussianKeywords:
 
+class TestFV236RussianKeywords:
     def test_load_ru_keywords_returns_dict(self):
         kw = _load_i18n_keywords("ru")
         assert isinstance(kw, dict)

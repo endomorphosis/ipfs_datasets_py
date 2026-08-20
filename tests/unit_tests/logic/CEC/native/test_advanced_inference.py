@@ -53,7 +53,7 @@ from ipfs_datasets_py.logic.CEC.native.dcec_namespace import DCECNamespace
 
 class TestModalLogicRules:
     """Test modal logic inference rules."""
-    
+
     def test_modal_k_axiom(self):
         """
         GIVEN a formula K(agent, p→q) (agent knows p implies q)
@@ -65,28 +65,28 @@ class TestModalLogicRules:
         agent = Sort("Agent")
         p_pred = namespace.add_predicate("P", [])
         q_pred = namespace.add_predicate("Q", [])
-        
+
         p = AtomicFormula(p_pred, [])
         q = AtomicFormula(q_pred, [])
-        
+
         # p → q
         impl = ConnectiveFormula(LogicalConnective.IMPLIES, [p, q])
-        
+
         # K(agent, p→q)
         k_impl = CognitiveFormula(CognitiveOperator.KNOWLEDGE, agent, impl)
-        
+
         # WHEN
         rule = ModalKAxiom()
         assert rule.can_apply([k_impl])
         results = rule.apply([k_impl])
-        
+
         # THEN
         assert len(results) > 0
         # Result should be K(agent,p) → K(agent,q)
         result = results[0]
         assert isinstance(result, ConnectiveFormula)
         assert result.connective == LogicalConnective.IMPLIES
-    
+
     def test_modal_t_axiom(self):
         """
         GIVEN a formula K(agent, p) (agent knows p)
@@ -98,20 +98,20 @@ class TestModalLogicRules:
         agent = Sort("Agent")
         p_pred = namespace.add_predicate("P", [])
         p = AtomicFormula(p_pred, [])
-        
+
         # K(agent, p)
         k_p = CognitiveFormula(CognitiveOperator.KNOWLEDGE, agent, p)
-        
+
         # WHEN
         rule = ModalTAxiom()
         assert rule.can_apply([k_p])
         results = rule.apply([k_p])
-        
+
         # THEN
         assert len(results) > 0
         # Result should be p
         assert results[0].to_string() == p.to_string()
-    
+
     def test_modal_s4_axiom(self):
         """
         GIVEN a formula K(agent, p)
@@ -123,22 +123,22 @@ class TestModalLogicRules:
         agent = Sort("Agent")
         p_pred = namespace.add_predicate("P", [])
         p = AtomicFormula(p_pred, [])
-        
+
         # K(agent, p)
         k_p = CognitiveFormula(CognitiveOperator.KNOWLEDGE, agent, p)
-        
+
         # WHEN
         rule = ModalS4Axiom()
         assert rule.can_apply([k_p])
         results = rule.apply([k_p])
-        
+
         # THEN
         assert len(results) > 0
         # Result should be K(agent, K(agent, p))
         result = results[0]
         assert isinstance(result, CognitiveFormula)
         assert result.operator == CognitiveOperator.KNOWLEDGE
-    
+
     def test_necessitation_rule(self):
         """
         GIVEN a proven formula p
@@ -149,12 +149,12 @@ class TestModalLogicRules:
         namespace = DCECNamespace()
         p_pred = namespace.add_predicate("P", [])
         p = AtomicFormula(p_pred, [])
-        
+
         # WHEN
         rule = ModalNecassitation()
         assert rule.can_apply([p])
         results = rule.apply([p])
-        
+
         # THEN
         assert len(results) > 0
         # Result should be K(system, p)
@@ -165,7 +165,7 @@ class TestModalLogicRules:
 
 class TestTemporalReasoningRules:
     """Test temporal reasoning inference rules."""
-    
+
     def test_temporal_induction(self):
         """
         GIVEN a base case p and inductive step p→q
@@ -176,25 +176,25 @@ class TestTemporalReasoningRules:
         namespace = DCECNamespace()
         p_pred = namespace.add_predicate("P", [])
         q_pred = namespace.add_predicate("Q", [])
-        
+
         p = AtomicFormula(p_pred, [])
         q = AtomicFormula(q_pred, [])
-        
+
         # p → q
         impl = ConnectiveFormula(LogicalConnective.IMPLIES, [p, q])
-        
+
         formulas = [p, impl]
-        
+
         # WHEN
         rule = TemporalInduction()
         assert rule.can_apply(formulas)
         results = rule.apply(formulas)
-        
+
         # THEN
         assert len(results) > 0
         # Should derive some consequence
         assert any(r.to_string() for r in results)
-    
+
     def test_frame_axiom(self):
         """
         GIVEN an atomic property p
@@ -205,17 +205,17 @@ class TestTemporalReasoningRules:
         namespace = DCECNamespace()
         p_pred = namespace.add_predicate("P", [])
         p = AtomicFormula(p_pred, [])
-        
+
         # WHEN
         rule = FrameAxiom()
         assert rule.can_apply([p])
         results = rule.apply([p])
-        
+
         # THEN
         assert len(results) > 0
         # Property persists
         assert any(r.to_string() == p.to_string() for r in results)
-    
+
     def test_frame_axiom_persistence(self):
         """
         GIVEN multiple atomic properties
@@ -226,16 +226,16 @@ class TestTemporalReasoningRules:
         namespace = DCECNamespace()
         p_pred = namespace.add_predicate("P", [])
         q_pred = namespace.add_predicate("Q", [])
-        
+
         p = AtomicFormula(p_pred, [])
         q = AtomicFormula(q_pred, [])
-        
+
         formulas = [p, q]
-        
+
         # WHEN
         rule = FrameAxiom()
         results = rule.apply(formulas)
-        
+
         # THEN
         assert len(results) > 0
         # Properties persist
@@ -243,7 +243,7 @@ class TestTemporalReasoningRules:
 
 class TestDeonticLogicRules:
     """Test deontic logic inference rules."""
-    
+
     def test_deontic_d_axiom(self):
         """
         GIVEN O(agent, p) (agent obligated to p)
@@ -255,22 +255,22 @@ class TestDeonticLogicRules:
         agent = Sort("Agent")
         p_pred = namespace.add_predicate("P", [])
         p = AtomicFormula(p_pred, [])
-        
+
         # O(agent, p)
         o_p = DeonticFormula(DeonticOperator.OBLIGATION, agent, p)
-        
+
         # WHEN
         rule = DeonticDRule()
         assert rule.can_apply([o_p])
         results = rule.apply([o_p])
-        
+
         # THEN
         assert len(results) > 0
         # Result should be ¬O(agent, ¬p)
         result = results[0]
         assert isinstance(result, ConnectiveFormula)
         assert result.connective == LogicalConnective.NOT
-    
+
     def test_permission_obligation_duality(self):
         """
         GIVEN P(agent, p) (agent permitted to p)
@@ -282,22 +282,22 @@ class TestDeonticLogicRules:
         agent = Sort("Agent")
         p_pred = namespace.add_predicate("P", [])
         p = AtomicFormula(p_pred, [])
-        
+
         # P(agent, p)
         p_p = DeonticFormula(DeonticOperator.PERMISSION, p, agent)
-        
+
         # WHEN
         rule = DeonticPermissionObligation()
         assert rule.can_apply([p_p])
         results = rule.apply([p_p])
-        
+
         # THEN
         assert len(results) > 0
         # Result should be ¬O(agent, ¬p)
         result = results[0]
         assert isinstance(result, ConnectiveFormula)
         assert result.connective == LogicalConnective.NOT
-    
+
     def test_deontic_distribution(self):
         """
         GIVEN O(agent, p∧q)
@@ -309,28 +309,28 @@ class TestDeonticLogicRules:
         agent = Sort("Agent")
         p_pred = namespace.add_predicate("P", [])
         q_pred = namespace.add_predicate("Q", [])
-        
+
         p = AtomicFormula(p_pred, [])
         q = AtomicFormula(q_pred, [])
-        
+
         # p ∧ q
         conj = ConnectiveFormula(LogicalConnective.AND, [p, q])
-        
+
         # O(agent, p∧q)
         o_conj = DeonticFormula(DeonticOperator.OBLIGATION, conj, agent)
-        
+
         # WHEN
         rule = DeonticDistribution()
         assert rule.can_apply([o_conj])
         results = rule.apply([o_conj])
-        
+
         # THEN
         assert len(results) > 0
         # Result should be O(agent, p) ∧ O(agent, q)
         result = results[0]
         assert isinstance(result, ConnectiveFormula)
         assert result.connective == LogicalConnective.AND
-    
+
     def test_deontic_obligation_prohibition(self):
         """
         GIVEN O(agent, ¬p) (obligated not to do p)
@@ -342,17 +342,17 @@ class TestDeonticLogicRules:
         agent = Sort("Agent")
         p_pred = namespace.add_predicate("P", [])
         p = AtomicFormula(p_pred, [])
-        
+
         # ¬p
         not_p = ConnectiveFormula(LogicalConnective.NOT, [p])
-        
+
         # O(agent, ¬p) - equivalent to F(agent, p)
         o_not_p = DeonticFormula(DeonticOperator.OBLIGATION, not_p, agent)
-        
+
         # WHEN
         rule = DeonticDRule()
         results = rule.apply([o_not_p])
-        
+
         # THEN
         assert isinstance(o_not_p, DeonticFormula)
         assert o_not_p.operator == DeonticOperator.OBLIGATION
@@ -360,7 +360,7 @@ class TestDeonticLogicRules:
 
 class TestCombinedRules:
     """Test combined modal-temporal-deontic rules."""
-    
+
     def test_knowledge_obligation_interaction(self):
         """
         GIVEN K(agent, O(agent2, p))
@@ -373,24 +373,24 @@ class TestCombinedRules:
         agent2 = Sort("Agent2")
         p_pred = namespace.add_predicate("P", [])
         p = AtomicFormula(p_pred, [])
-        
+
         # O(agent2, p)
         o_p = DeonticFormula(DeonticOperator.OBLIGATION, p, agent2)
-        
+
         # K(agent1, O(agent2, p))
         k_o_p = CognitiveFormula(CognitiveOperator.KNOWLEDGE, agent1, o_p)
-        
+
         # WHEN
         rule = KnowledgeObligation()
         assert rule.can_apply([k_o_p])
         results = rule.apply([k_o_p])
-        
+
         # THEN
         assert len(results) > 0
         # Should derive some epistemic-deontic formula
         result = results[0]
         assert isinstance(result, DeonticFormula)
-    
+
     def test_temporal_obligation_interaction(self):
         """
         GIVEN O(agent, p) (temporal obligation)
@@ -402,20 +402,20 @@ class TestCombinedRules:
         agent = Sort("Agent")
         p_pred = namespace.add_predicate("P", [])
         p = AtomicFormula(p_pred, [])
-        
+
         # O(agent, p)
         o_p = DeonticFormula(DeonticOperator.OBLIGATION, p, agent)
-        
+
         # WHEN
         rule = TemporalObligation()
         assert rule.can_apply([o_p])
         results = rule.apply([o_p])
-        
+
         # THEN
         assert len(results) > 0
         # Obligation persists
         assert any(isinstance(r, DeonticFormula) for r in results)
-    
+
     def test_nested_modal_operators(self):
         """
         GIVEN nested modal operators K(agent, O(agent, p))
@@ -427,17 +427,17 @@ class TestCombinedRules:
         agent = Sort("Agent")
         p_pred = namespace.add_predicate("P", [])
         p = AtomicFormula(p_pred, [])
-        
+
         # O(agent, p)
         o_p = DeonticFormula(DeonticOperator.OBLIGATION, p, agent)
-        
+
         # K(agent, O(agent, p))
         k_o_p = CognitiveFormula(CognitiveOperator.KNOWLEDGE, agent, o_p)
-        
+
         # WHEN - Apply T axiom
         t_rule = ModalTAxiom()
         t_results = t_rule.apply([k_o_p])
-        
+
         # THEN
         assert len(t_results) > 0
         # Should derive O(agent, p)
@@ -446,7 +446,7 @@ class TestCombinedRules:
 
 class TestRuleCollections:
     """Test rule collection helper functions."""
-    
+
     def test_get_all_rules(self):
         """
         GIVEN rule collection functions
@@ -458,15 +458,15 @@ class TestRuleCollections:
         modal_rules = get_modal_rules()
         temporal_rules = get_temporal_rules()
         deontic_rules = get_deontic_rules()
-        
+
         # THEN
         assert len(all_rules) == 11  # 4 modal + 2 temporal + 3 deontic + 2 combined
         assert len(modal_rules) == 4
         assert len(temporal_rules) == 2
         assert len(deontic_rules) == 3
-        
+
         # Verify all are InferenceRule instances
         for rule in all_rules:
-            assert hasattr(rule, 'name')
-            assert hasattr(rule, 'can_apply')
-            assert hasattr(rule, 'apply')
+            assert hasattr(rule, "name")
+            assert hasattr(rule, "can_apply")
+            assert hasattr(rule, "apply")

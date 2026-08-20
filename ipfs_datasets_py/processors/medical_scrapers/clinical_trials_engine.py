@@ -80,9 +80,7 @@ class ClinicalTrialsScraper:
                 "title": id_module.get("officialTitle", id_module.get("briefTitle", "")),
                 "brief_summary": id_module.get("briefSummary", ""),
                 "conditions": conditions_module.get("conditions", []),
-                "interventions": [
-                    i.get("name", "") for i in arms_module.get("interventions", [])
-                ],
+                "interventions": [i.get("name", "") for i in arms_module.get("interventions", [])],
                 "phase": (
                     design_module.get("phases", ["Unknown"])[0]
                     if design_module.get("phases")
@@ -92,9 +90,7 @@ class ClinicalTrialsScraper:
                 "enrollment": status_module.get("enrollmentInfo", {}).get("count", 0),
                 "start_date": status_module.get("startDateStruct", {}).get("date", ""),
                 "completion_date": status_module.get("completionDateStruct", {}).get("date", ""),
-                "locations": self._extract_locations(
-                    protocol.get("contactsLocationsModule", {})
-                ),
+                "locations": self._extract_locations(protocol.get("contactsLocationsModule", {})),
                 "source": "clinicaltrials_api",
                 "scraped_at": datetime.now().isoformat(),
             }
@@ -115,8 +111,8 @@ class ClinicalTrialsScraper:
     def _parse_adverse_events(self, adverse_events: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Parse adverse events data."""
         events = []
-        for event in (
-            adverse_events.get("seriousEvents", []) + adverse_events.get("otherEvents", [])
+        for event in adverse_events.get("seriousEvents", []) + adverse_events.get(
+            "otherEvents", []
         ):
             events.append(
                 {
@@ -124,9 +120,7 @@ class ClinicalTrialsScraper:
                     "organ_system": event.get("organSystem", ""),
                     "assessment_type": event.get("assessmentType", ""),
                     "frequency": (
-                        event.get("stats", [{}])[0].get("numEvents", 0)
-                        if event.get("stats")
-                        else 0
+                        event.get("stats", [{}])[0].get("numEvents", 0) if event.get("stats") else 0
                     ),
                 }
             )
@@ -243,9 +237,7 @@ class ClinicalTrialsScraper:
             requests.RequestException: If API request fails and fallback is disabled.
         """
         try:
-            return self._search_via_api(
-                query, condition, intervention, phase, status, max_results
-            )
+            return self._search_via_api(query, condition, intervention, phase, status, max_results)
         except Exception as exc:
             logger.error("ClinicalTrials.gov API search failed: %s", exc)
             if self.use_fallback:

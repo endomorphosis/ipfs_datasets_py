@@ -12,6 +12,7 @@ Tests cover:
 After Phase E refactoring, all engine classes live in ipfs_datasets_py package modules.
 The mcp_server/tools/*_engine.py files are now thin re-export shims.
 """
+
 import importlib.util
 import sys
 from pathlib import Path
@@ -170,10 +171,20 @@ class TestDataIngestionEngine:
     def test_build_sitemap_helper(self):
         """_build_sitemap constructs correct structure."""
         pages = [
-            {"url": "https://example.com/", "depth": 0, "title": "Home",
-             "status": "processed", "content_length": 1000},
-            {"url": "https://example.com/about", "depth": 1, "title": "About",
-             "status": "processed", "content_length": 500},
+            {
+                "url": "https://example.com/",
+                "depth": 0,
+                "title": "Home",
+                "status": "processed",
+                "content_length": 1000,
+            },
+            {
+                "url": "https://example.com/about",
+                "depth": 1,
+                "title": "About",
+                "status": "processed",
+                "content_length": 500,
+            },
         ]
         sitemap = self.engine._build_sitemap(pages, max_depth=2)
         assert "root" in sitemap
@@ -214,9 +225,13 @@ class TestGeospatialAnalysisEngine:
     def test_query_geographic_context(self):
         """query_geographic_context returns results with correct shape."""
         entities = [
-            {"entity": "London", "entity_type": "LOCATION",
-             "coordinates": (51.5074, -0.1278), "confidence": 0.9,
-             "context_snippet": "Meeting in London"},
+            {
+                "entity": "London",
+                "entity_type": "LOCATION",
+                "coordinates": (51.5074, -0.1278),
+                "confidence": 0.9,
+                "context_snippet": "Meeting in London",
+            },
         ]
         result = self.engine.query_geographic_context("london meeting", entities)
         assert "total_results" in result
@@ -248,39 +263,50 @@ class TestVectorStoreEngine:
 
     def test_create_index(self):
         """create_index stores index with correct config."""
+
         async def _run():
             return await self.service.create_index("test_idx", {"dimension": 128})
+
         result = anyio.run(_run)
         assert result["status"] == "created"
         assert "test_idx" in self.service.indexes
 
     def test_add_and_search_vectors(self):
         """add_vectors and search_vectors work end-to-end."""
+
         async def _run():
             await self.service.create_index("col1", {"dimension": 3})
-            await self.service.add_vectors("col1", [
-                {"id": "v1", "vector": [0.1, 0.2, 0.3], "metadata": {"label": "a"}},
-                {"id": "v2", "vector": [0.4, 0.5, 0.6], "metadata": {"label": "b"}},
-            ])
+            await self.service.add_vectors(
+                "col1",
+                [
+                    {"id": "v1", "vector": [0.1, 0.2, 0.3], "metadata": {"label": "a"}},
+                    {"id": "v2", "vector": [0.4, 0.5, 0.6], "metadata": {"label": "b"}},
+                ],
+            )
             return await self.service.search_vectors("col1", [0.1, 0.2, 0.3], top_k=2)
+
         result = anyio.run(_run)
         assert len(result["results"]) == 2
         assert result["results"][0]["id"] == "v1"
 
     def test_delete_index(self):
         """delete_index removes the index from the service."""
+
         async def _run():
             await self.service.create_index("del_idx", {})
             return await self.service.delete_index("del_idx")
+
         result = anyio.run(_run)
         assert result["status"] == "deleted"
         assert "del_idx" not in self.service.indexes
 
     def test_awaitable_dict(self):
         """_AwaitableDict can be awaited to return itself."""
+
         async def _run():
             d = _AwaitableDict({"key": "value"})
             return await d
+
         result = anyio.run(_run)
         assert result["key"] == "value"
 
@@ -354,9 +380,14 @@ class TestStorageEngine:
     def test_collection_dataclass(self):
         """Collection dataclass instantiates correctly."""
         from datetime import datetime
+
         c = Collection(
-            name="test", description="desc", items=[], metadata={},
-            created_at=datetime.now(), updated_at=datetime.now()
+            name="test",
+            description="desc",
+            items=[],
+            metadata={},
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
         )
         assert c.name == "test"
         assert c.items == []
@@ -376,7 +407,6 @@ class TestStorageEngine:
         assert retrieved["id"] == item.id
         assert retrieved["tags"] == ["test"]
         assert retrieved["storage_type"] == "memory"
-
 
 
 # ---------------------------------------------------------------------------
@@ -422,6 +452,7 @@ class TestCodebaseSearchEngine:
     def test_format_results_json(self, tmp_path):
         """format_results with json returns valid JSON string."""
         import json
+
         (tmp_path / "code.py").write_text("x = 42\n")
         result = self.engine.search_codebase("42", path=str(tmp_path))
         output = self.engine.format_results(result, format_type="json")
@@ -456,6 +487,7 @@ VectorStoreManager = _vsm_eng.VectorStoreManager
 class TestVectorStoreManagementEngine:
     def setup_method(self, tmp_path=None):
         import tempfile
+
         self.tmp_dir = tempfile.mkdtemp()
         self.manager = VectorStoreManager(indexes_dir=self.tmp_dir)
 

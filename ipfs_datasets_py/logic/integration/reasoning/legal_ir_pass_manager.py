@@ -172,9 +172,7 @@ class LegalIRProtectedMutationJustification:
         }
 
     @classmethod
-    def from_dict(
-        cls, data: Mapping[str, Any]
-    ) -> "LegalIRProtectedMutationJustification":
+    def from_dict(cls, data: Mapping[str, Any]) -> "LegalIRProtectedMutationJustification":
         return cls(
             field_path=str(data.get("field_path") or ""),
             reason=str(data.get("reason") or ""),
@@ -241,7 +239,9 @@ class LegalIRSchemaMigrationSpec:
     @property
     def registered(self) -> bool:
         registry = legal_ir_schema_version_registry()
-        return registry.migration(self.source_schema_version, self.target_schema_version) is not None
+        return (
+            registry.migration(self.source_schema_version, self.target_schema_version) is not None
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -329,9 +329,7 @@ class LegalIRPassSpec:
     schema_migrations: tuple[LegalIRSchemaMigrationSpec, ...] = ()
     hammer_obligations: tuple[LegalIRHammerObligationSpec, ...] = ()
     protected_fields: tuple[str, ...] = DEFAULT_LEGAL_IR_PROTECTED_FIELD_PATHS
-    protected_mutation_justifications: tuple[
-        LegalIRProtectedMutationJustification, ...
-    ] = ()
+    protected_mutation_justifications: tuple[LegalIRProtectedMutationJustification, ...] = ()
     deterministic: bool = True
     depends_on: tuple[str, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
@@ -367,7 +365,10 @@ class LegalIRPassSpec:
         object.__setattr__(
             self,
             "hammer_obligations",
-            tuple(_hammer_obligation_spec(item, pass_id=self.pass_id) for item in self.hammer_obligations),
+            tuple(
+                _hammer_obligation_spec(item, pass_id=self.pass_id)
+                for item in self.hammer_obligations
+            ),
         )
         object.__setattr__(
             self,
@@ -400,9 +401,7 @@ class LegalIRPassSpec:
             "declared_outputs": list(self.declared_outputs),
             "depends_on": list(self.depends_on),
             "deterministic": bool(self.deterministic),
-            "hammer_obligations": [
-                obligation.to_dict() for obligation in self.hammer_obligations
-            ],
+            "hammer_obligations": [obligation.to_dict() for obligation in self.hammer_obligations],
             "invalidation_rules": [rule.to_dict() for rule in self.invalidation_rules],
             "kind": self.kind.value,
             "metadata": _json_ready(self.metadata),
@@ -413,9 +412,7 @@ class LegalIRPassSpec:
             "protected_mutation_justifications": [
                 item.to_dict() for item in self.protected_mutation_justifications
             ],
-            "schema_migrations": [
-                migration.to_dict() for migration in self.schema_migrations
-            ],
+            "schema_migrations": [migration.to_dict() for migration in self.schema_migrations],
             "source_map_inputs": list(self.source_map_inputs),
             "source_map_outputs": list(self.source_map_outputs),
             "title": self.title,
@@ -617,9 +614,7 @@ class LegalIRPassManager:
         return {item.pass_id: item for item in self._passes}
 
     def ordered_passes(self) -> tuple[LegalIRPassSpec, ...]:
-        return tuple(
-            sorted(self._passes, key=lambda item: (int(item.order), item.pass_id))
-        )
+        return tuple(sorted(self._passes, key=lambda item: (int(item.order), item.pass_id)))
 
     def manifest(self) -> dict[str, Any]:
         validation = self.validate().to_dict()
@@ -664,10 +659,7 @@ class LegalIRPassManager:
                     diagnostics.append(
                         _diagnostic(
                             "pass_dependency_order_invalid",
-                            (
-                                f"Dependency {dependency!r} must run before "
-                                f"{item.pass_id!r}."
-                            ),
+                            (f"Dependency {dependency!r} must run before {item.pass_id!r}."),
                             pass_id=item.pass_id,
                             field_path="depends_on",
                         )
@@ -734,7 +726,9 @@ class LegalIRPassManager:
     ) -> LegalIRPassRun:
         """Re-run a pass pipeline and reject nondeterministic replay."""
 
-        expected_payload = expected.to_dict() if isinstance(expected, LegalIRPassRun) else dict(expected)
+        expected_payload = (
+            expected.to_dict() if isinstance(expected, LegalIRPassRun) else dict(expected)
+        )
         actual = self.run(initial_state, pass_functions, fail_fast=True)
         expected_digest = str(expected_payload.get("replay_digest") or "")
         if expected_digest and actual.replay_digest != expected_digest:
@@ -846,7 +840,9 @@ class LegalIRPassManager:
         )
         diagnostics: list[LegalIRPassDiagnostic] = []
         for path in protected:
-            if not spec.authorizes_protected_path(path) and not _state_has_explicit_diagnostic(after, spec.pass_id, path):
+            if not spec.authorizes_protected_path(path) and not _state_has_explicit_diagnostic(
+                after, spec.pass_id, path
+            ):
                 diagnostics.append(
                     _diagnostic(
                         "protected_field_mutation_rejected",
@@ -1094,7 +1090,11 @@ def default_legal_ir_passes() -> tuple[LegalIRPassSpec, ...]:
             kind=LegalIRPassKind.HAMMER,
             order=80,
             declared_inputs=("lowered_views", "view_contracts", "source_map"),
-            declared_outputs=("proof_obligations", "proof_obligation_ids", "hammer_obligation_manifest"),
+            declared_outputs=(
+                "proof_obligations",
+                "proof_obligation_ids",
+                "hammer_obligation_manifest",
+            ),
             invalidation_rules=(
                 LegalIRInvalidationRule(
                     invalidates=("hammer_receipts", "coverage_report"),
@@ -1310,7 +1310,10 @@ def _check_schema_migrations(
     before_schema = str(before.get("schema_version") or "")
     after_schema = str(after.get("schema_version") or "")
     for migration in spec.schema_migrations:
-        if before_schema == migration.source_schema_version and after_schema == migration.target_schema_version:
+        if (
+            before_schema == migration.source_schema_version
+            and after_schema == migration.target_schema_version
+        ):
             compatibility = validate_legal_ir_schema_compatibility(
                 after,
                 artifact_family=migration.artifact_family or None,
@@ -1349,7 +1352,11 @@ def _source_map_node_ids(value: Any) -> tuple[str, ...]:
     if isinstance(value, LegalIRSourceMap):
         return tuple(node.node_id for node in value.nodes)
     payload = _mapping(value)
-    return tuple(str(_mapping(node).get("node_id") or "") for node in _sequence(payload.get("nodes")) if str(_mapping(node).get("node_id") or ""))
+    return tuple(
+        str(_mapping(node).get("node_id") or "")
+        for node in _sequence(payload.get("nodes"))
+        if str(_mapping(node).get("node_id") or "")
+    )
 
 
 def _state_has_explicit_diagnostic(
@@ -1366,8 +1373,10 @@ def _state_has_explicit_diagnostic(
         diag_pass = str(diagnostic.get("pass_id") or diagnostic.get("source_pass_id") or "")
         diag_field = str(diagnostic.get("field_path") or diagnostic.get("target_field") or "")
         code = str(diagnostic.get("code") or diagnostic.get("diagnostic_type") or "")
-        if code and (not diag_pass or diag_pass == pass_id) and (
-            not diag_field or _path_matches(field_path, diag_field)
+        if (
+            code
+            and (not diag_pass or diag_pass == pass_id)
+            and (not diag_field or _path_matches(field_path, diag_field))
         ):
             return True
     return False
@@ -1376,11 +1385,7 @@ def _state_has_explicit_diagnostic(
 def _changed_fields(before: Mapping[str, Any], after: Mapping[str, Any]) -> tuple[str, ...]:
     left = _flatten(_json_ready(before))
     right = _flatten(_json_ready(after))
-    changed = [
-        path
-        for path in sorted(set(left) | set(right))
-        if left.get(path) != right.get(path)
-    ]
+    changed = [path for path in sorted(set(left) | set(right)) if left.get(path) != right.get(path)]
     return tuple(_collapse_changed_paths(changed))
 
 

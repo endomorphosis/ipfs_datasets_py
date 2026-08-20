@@ -93,14 +93,12 @@ from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers import (
     scrape_clinical_trials,
     discover_protein_binders,
     discover_enzyme_inhibitors,
-    discover_biomolecules_rag
+    discover_biomolecules_rag,
 )
 
 # Scrape PubMed
 result = scrape_pubmed_medical_research(
-    query="COVID-19 treatment",
-    max_results=100,
-    email="user@example.com"
+    query="COVID-19 treatment", max_results=100, email="user@example.com"
 )
 
 # Discover protein binders
@@ -108,15 +106,11 @@ candidates = discover_protein_binders(
     target_protein="SARS-CoV-2 spike",
     interaction_type="binding",
     min_confidence=0.7,
-    max_results=50
+    max_results=50,
 )
 
 # Scrape clinical trials
-trials = scrape_clinical_trials(
-    condition="diabetes",
-    intervention="metformin",
-    max_results=50
-)
+trials = scrape_clinical_trials(condition="diabetes", intervention="metformin", max_results=50)
 ```
 
 ### 3. MCP Server / Dashboard (JavaScript SDK)
@@ -189,15 +183,16 @@ All three access methods ultimately call the same MCP tool functions:
 # - Dashboard (via MCP Client SDK)
 # - Python imports (direct call)
 
+
 def scrape_pubmed_medical_research(
     query: str,
     max_results: int = 100,
     email: Optional[str] = None,
-    research_type: Optional[str] = None
+    research_type: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Scrape medical research from PubMed.
-    
+
     This function is the single source of truth for PubMed scraping,
     called by all access methods.
     """
@@ -218,11 +213,13 @@ def scrape_pubmed_medical_research(
 The dashboard API routes are wrappers that call MCP tool functions:
 
 ```python
-@app.route('/api/mcp/medicine/scrape/pubmed', methods=['POST'])
+@app.route("/api/mcp/medicine/scrape/pubmed", methods=["POST"])
 def api_scrape_pubmed():
     """Dashboard API endpoint - calls MCP tool function."""
-    from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import scrape_pubmed_medical_research
-    
+    from .mcp_server.tools.medical_research_scrapers.medical_research_mcp_tools import (
+        scrape_pubmed_medical_research,
+    )
+
     data = request.json
     # Call the MCP tool function (same code path as CLI and Python API)
     result = scrape_pubmed_medical_research(**data)
@@ -232,7 +229,7 @@ def api_scrape_pubmed():
 Generic MCP router also available:
 
 ```python
-@app.route('/api/mcp/<category>/<tool_name>', methods=['POST'])
+@app.route("/api/mcp/<category>/<tool_name>", methods=["POST"])
 def api_call_mcp_tool(category, tool_name):
     """Generic MCP tool router - dynamically calls any tool."""
     # Dynamically import and call tool function
@@ -295,20 +292,30 @@ All three access methods can be tested to ensure they produce identical results:
 
 ```python
 # Test CLI
-cli_result = subprocess.run([
-    'mcp_cli.py', 'medical_research_scrapers', 'scrape_pubmed_medical_research',
-    '--query', 'test', '--max-results', '10'
-], capture_output=True)
+cli_result = subprocess.run(
+    [
+        "mcp_cli.py",
+        "medical_research_scrapers",
+        "scrape_pubmed_medical_research",
+        "--query",
+        "test",
+        "--max-results",
+        "10",
+    ],
+    capture_output=True,
+)
 
 # Test Python import
-from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers import scrape_pubmed_medical_research
-python_result = scrape_pubmed_medical_research(query='test', max_results=10)
+from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers import (
+    scrape_pubmed_medical_research,
+)
+
+python_result = scrape_pubmed_medical_research(query="test", max_results=10)
 
 # Test API/Dashboard
-api_result = requests.post('/api/mcp/medicine/scrape/pubmed', json={
-    'query': 'test',
-    'max_results': 10
-})
+api_result = requests.post(
+    "/api/mcp/medicine/scrape/pubmed", json={"query": "test", "max_results": 10}
+)
 
 # All three should produce identical results
 assert cli_result == python_result == api_result.json()

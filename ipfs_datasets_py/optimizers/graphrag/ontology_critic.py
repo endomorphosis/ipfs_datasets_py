@@ -28,18 +28,18 @@ Example:
     ...     OntologyCritic,
     ...     OntologyGenerationContext
     ... )
-    >>> 
+    >>>
     >>> critic = OntologyCritic(backend_config={
     ...     'model': 'gpt-4',
     ...     'temperature': 0.3
     ... })
-    >>> 
+    >>>
     >>> score = critic.evaluate_ontology(
     ...     ontology=ontology,
     ...     context=context,
     ...     source_data=data
     ... )
-    >>> 
+    >>>
     >>> print(f"Overall: {score.overall}, Completeness: {score.completeness}")
 
 References:
@@ -86,12 +86,12 @@ logger = logging.getLogger(__name__)
 
 # Evaluation dimension weights (must sum to 1.0)
 DIMENSION_WEIGHTS = {
-    'completeness': 0.22,
-    'consistency': 0.22,
-    'clarity': 0.14,
-    'granularity': 0.14,
-    'relationship_coherence': 0.13,
-    'domain_alignment': 0.15,
+    "completeness": 0.22,
+    "consistency": 0.22,
+    "clarity": 0.14,
+    "granularity": 0.14,
+    "relationship_coherence": 0.13,
+    "domain_alignment": 0.15,
 }
 
 
@@ -145,10 +145,10 @@ class BackendConfig:
 class CriticScore:
     """
     Structured ontology quality score.
-    
+
     Provides a comprehensive evaluation of an ontology across multiple dimensions,
     with weighted overall score and actionable feedback.
-    
+
     Attributes:
         overall: Overall quality score (0.0 to 1.0), weighted average of dimensions
         completeness: Coverage of key concepts and relationships (0.0 to 1.0)
@@ -161,7 +161,7 @@ class CriticScore:
         weaknesses: List of ontology weaknesses
         recommendations: Actionable recommendations for improvement
         metadata: Additional evaluation metadata
-        
+
     Example:
         >>> score = CriticScore(
         ...     completeness=0.85,
@@ -173,7 +173,7 @@ class CriticScore:
         ... )
         >>> print(f"Overall: {score.overall:.2f}")
     """
-    
+
     completeness: float
     consistency: float
     clarity: float
@@ -184,46 +184,46 @@ class CriticScore:
     weaknesses: List[str] = field(default_factory=list)
     recommendations: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     @property
     def overall(self) -> float:
         """
         Calculate weighted overall score.
-        
+
         Returns:
             Overall score as weighted average of dimension scores
         """
         return (
-            DIMENSION_WEIGHTS['completeness'] * self.completeness +
-            DIMENSION_WEIGHTS['consistency'] * self.consistency +
-            DIMENSION_WEIGHTS['clarity'] * self.clarity +
-            DIMENSION_WEIGHTS['granularity'] * self.granularity +
-            DIMENSION_WEIGHTS['relationship_coherence'] * self.relationship_coherence +
-            DIMENSION_WEIGHTS['domain_alignment'] * self.domain_alignment
+            DIMENSION_WEIGHTS["completeness"] * self.completeness
+            + DIMENSION_WEIGHTS["consistency"] * self.consistency
+            + DIMENSION_WEIGHTS["clarity"] * self.clarity
+            + DIMENSION_WEIGHTS["granularity"] * self.granularity
+            + DIMENSION_WEIGHTS["relationship_coherence"] * self.relationship_coherence
+            + DIMENSION_WEIGHTS["domain_alignment"] * self.domain_alignment
         )
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert score to dictionary representation.
-        
+
         Returns:
             Dictionary with all score components and feedback
         """
         return {
-            'overall': self.overall,
-            'dimensions': {
-                'completeness': self.completeness,
-                'consistency': self.consistency,
-                'clarity': self.clarity,
-                'granularity': self.granularity,
-                'relationship_coherence': self.relationship_coherence,
-                'domain_alignment': self.domain_alignment,
+            "overall": self.overall,
+            "dimensions": {
+                "completeness": self.completeness,
+                "consistency": self.consistency,
+                "clarity": self.clarity,
+                "granularity": self.granularity,
+                "relationship_coherence": self.relationship_coherence,
+                "domain_alignment": self.domain_alignment,
             },
-            'weights': DIMENSION_WEIGHTS,
-            'strengths': self.strengths,
-            'weaknesses': self.weaknesses,
-            'recommendations': self.recommendations,
-            'metadata': self.metadata,
+            "weights": DIMENSION_WEIGHTS,
+            "strengths": self.strengths,
+            "weaknesses": self.weaknesses,
+            "recommendations": self.recommendations,
+            "metadata": self.metadata,
         }
 
     def to_list(self) -> List[float]:
@@ -347,7 +347,14 @@ class CriticScore:
             >>> list(zip(data["axes"], data["values"]))
             [('completeness', 0.8), ('consistency', 0.9), ...]
         """
-        axes = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
+        axes = [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        ]
         return {
             "axes": axes,
             "values": [getattr(self, ax) for ax in axes],
@@ -371,7 +378,14 @@ class CriticScore:
         Raises:
             ValueError: If *weights* sums to zero or is empty after filtering.
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
+        dims = [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        ]
         filtered = {k: v for k, v in weights.items() if k in dims and v > 0}
         if not filtered:
             raise ValueError("weights must contain at least one positive standard dimension")
@@ -402,11 +416,12 @@ class CriticScore:
             ("Overall", self.overall),
         ]
         rows = "\n".join(
-            f"  <tr><td>{label}</td><td>{score:.4f}</td></tr>"
-            for label, score in _DIMS
+            f"  <tr><td>{label}</td><td>{score:.4f}</td></tr>" for label, score in _DIMS
         )
         recs_html = "".join(f"<li>{r}</li>" for r in self.recommendations)
-        recs_section = f"<ul>{recs_html}</ul>" if self.recommendations else "<p>No recommendations.</p>"
+        recs_section = (
+            f"<ul>{recs_html}</ul>" if self.recommendations else "<p>No recommendations.</p>"
+        )
         return (
             "<div class='critic-report'>\n"
             f"<table>\n<tr><th>Dimension</th><th>Score</th></tr>\n{rows}\n</table>\n"
@@ -416,13 +431,13 @@ class CriticScore:
 
     def __eq__(self, other: object) -> bool:
         """Check equality based on overall score within tolerance.
-        
+
         Two :class:`CriticScore` instances are considered equal if their
         overall scores differ by less than 0.0001 (tolerance for floating point).
-        
+
         Args:
             other: The object to compare with.
-            
+
         Returns:
             ``True`` if both are ``CriticScore`` instances with equal overall
             scores (within tolerance).
@@ -433,13 +448,13 @@ class CriticScore:
 
     def __lt__(self, other: "CriticScore") -> bool:
         """Compare based on overall score (less than).
-        
+
         Args:
             other: The :class:`CriticScore` to compare with.
-            
+
         Returns:
             ``True`` if this score's overall is less than the other's.
-            
+
         Raises:
             TypeError: If *other* is not a :class:`CriticScore`.
         """
@@ -449,13 +464,13 @@ class CriticScore:
 
     def __le__(self, other: "CriticScore") -> bool:
         """Compare based on overall score (less than or equal).
-        
+
         Args:
             other: The :class:`CriticScore` to compare with.
-            
+
         Returns:
             ``True`` if this score's overall is less than or equal to the other's.
-            
+
         Raises:
             TypeError: If *other* is not a :class:`CriticScore`.
         """
@@ -465,13 +480,13 @@ class CriticScore:
 
     def __gt__(self, other: "CriticScore") -> bool:
         """Compare based on overall score (greater than).
-        
+
         Args:
             other: The :class:`CriticScore` to compare with.
-            
+
         Returns:
             ``True`` if this score's overall is greater than the other's.
-            
+
         Raises:
             TypeError: If *other* is not a :class:`CriticScore`.
         """
@@ -481,13 +496,13 @@ class CriticScore:
 
     def __ge__(self, other: "CriticScore") -> bool:
         """Compare based on overall score (greater than or equal).
-        
+
         Args:
             other: The :class:`CriticScore` to compare with.
-            
+
         Returns:
             ``True`` if this score's overall is greater than or equal to the other's.
-            
+
         Raises:
             TypeError: If *other* is not a :class:`CriticScore`.
         """
@@ -497,10 +512,10 @@ class CriticScore:
 
     def __ne__(self, other: object) -> bool:
         """Check inequality based on overall score.
-        
+
         Args:
             other: The object to compare with.
-            
+
         Returns:
             ``True`` if the objects differ in overall score (or type).
         """
@@ -511,57 +526,65 @@ class CriticScore:
 
     def __repr__(self) -> str:
         """Return a readable string representation of this score.
-        
+
         Shows dimensions and overall score in a compact format suitable for
         REPL inspection and logging.
-        
+
         Returns:
             A string like ``CriticScore(overall=0.8210, C:0.80 Co:0.85 Cl:0.75 G:0.80 RC:0.82 DA:0.88)``
         """
         dim_abbr = {
-            'completeness': 'C',
-            'consistency': 'Co', 
-            'clarity': 'Cl',
-            'granularity': 'G',
-            'relationship_coherence': 'RC',
-            'domain_alignment': 'DA'
+            "completeness": "C",
+            "consistency": "Co",
+            "clarity": "Cl",
+            "granularity": "G",
+            "relationship_coherence": "RC",
+            "domain_alignment": "DA",
         }
-        dims_str = ' '.join(
+        dims_str = " ".join(
             f"{dim_abbr[dim]}:{getattr(self, dim):.2f}"
-            for dim in ['completeness', 'consistency', 'clarity', 'granularity', 'relationship_coherence', 'domain_alignment']
+            for dim in [
+                "completeness",
+                "consistency",
+                "clarity",
+                "granularity",
+                "relationship_coherence",
+                "domain_alignment",
+            ]
         )
         return f"CriticScore(overall={self.overall:.4f}, {dims_str})"
-    
+
     def to_json(self) -> str:
         """Return JSON representation of this score.
-        
+
         Useful for structured logging and programmatic result handling.
         The JSON contains all dimension scores, weights, strengths, weaknesses,
         recommendations, and metadata.
-        
+
         Returns:
             JSON string representation of the score
-        
+
         Example:
             >>> score.to_json()
             '{"overall": 0.821, "dimensions": {...}, ...}'
         """
         import json
+
         return json.dumps(self.to_dict(), default=str, indent=None)
 
     def __hash__(self) -> int:
         """Compute hash based on dimension scores.
-        
+
         Hash is based on the six dimension scores (completeness, consistency,
         clarity, granularity, relationship_coherence, domain_alignment).
-        
+
         Note: This assumes dimension scores are effectively immutable after
         creation. Modifying dimension scores after using the object as a dict
         key or in a set may lead to unexpected behavior.
-        
+
         Returns:
             Hash of dimension tuple.
-            
+
         Example:
             >>> scores = {CriticScore(completeness=0.8, consistency=0.9,
             ...                       clarity=0.7, granularity=0.6,
@@ -570,14 +593,16 @@ class CriticScore:
             >>> len(scores)
             1
         """
-        return hash((
-            self.completeness,
-            self.consistency,
-            self.clarity,
-            self.granularity,
-            self.relationship_coherence,
-            self.domain_alignment,
-        ))
+        return hash(
+            (
+                self.completeness,
+                self.consistency,
+                self.clarity,
+                self.granularity,
+                self.relationship_coherence,
+                self.domain_alignment,
+            )
+        )
 
 
 class OntologyCritic(BaseCritic):
@@ -596,7 +621,7 @@ class OntologyCritic(BaseCritic):
         ...     'model': 'gpt-4',
         ...     'temperature': 0.3
         ... })
-        >>> 
+        >>>
         >>> score = critic.evaluate_ontology(ontology, context, data)
         >>> if score.overall < 0.7:
         ...     print("Needs improvement:", score.recommendations)
@@ -612,7 +637,7 @@ class OntologyCritic(BaseCritic):
     # Shared across all instances -- survives instance teardown / recreation.
     _SHARED_EVAL_CACHE: Dict[str, "CriticScore"] = {}
     _SHARED_EVAL_CACHE_MAX: int = 256
-    
+
     def __init__(
         self,
         backend_config: Optional[Union[Dict[str, Any], BackendConfig]] = None,
@@ -621,7 +646,7 @@ class OntologyCritic(BaseCritic):
     ):
         """
         Initialize the ontology critic.
-        
+
         Args:
             backend_config: Configuration for LLM backend. Accepts either a
                 ``BackendConfig`` instance or a plain dict with keys 'provider',
@@ -630,11 +655,12 @@ class OntologyCritic(BaseCritic):
                 rule-based heuristics.
             logger: Optional :class:`logging.Logger` to use instead of the
                 module-level logger.  Useful for dependency injection in tests.
-                
+
         Raises:
             ImportError: If LLM backend is required but not available
         """
         import logging as _logging
+
         self._log = logger or _logging.getLogger(__name__)
         if backend_config is None:
             self.backend_config: BackendConfig = BackendConfig()
@@ -644,7 +670,7 @@ class OntologyCritic(BaseCritic):
             self.backend_config = backend_config
         self.use_llm = use_llm
         self._llm_client = None
-        
+
         if use_llm:
             try:
                 # Try to import LLM backend
@@ -654,8 +680,7 @@ class OntologyCritic(BaseCritic):
                 self._log.info("LLM backend not configured; using rule-based evaluation")
             except ImportError as e:
                 self._log.warning(
-                    f"LLM backend not available: {e}. "
-                    "Falling back to rule-based evaluation."
+                    f"LLM backend not available: {e}. Falling back to rule-based evaluation."
                 )
                 self._llm_available = False
                 self.use_llm = False
@@ -721,6 +746,7 @@ class OntologyCritic(BaseCritic):
 
         # Validate output path
         from pathlib import Path as _Path
+
         base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
         safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
 
@@ -730,7 +756,7 @@ class OntologyCritic(BaseCritic):
             _os.makedirs(directory, exist_ok=True)
 
         # Write to file
-        with open(safe_filepath, 'w', encoding='utf-8') as f:
+        with open(safe_filepath, "w", encoding="utf-8") as f:
             _json.dump(serializable_cache, f, indent=2, sort_keys=True)
 
     @classmethod
@@ -766,7 +792,7 @@ class OntologyCritic(BaseCritic):
         safe_filepath = validate_input_path(filepath, must_exist=True, base_dir=base_dir)
 
         # Load cache data
-        with open(safe_filepath, 'r', encoding='utf-8') as f:
+        with open(safe_filepath, "r", encoding="utf-8") as f:
             cache_data = _json.load(f)
 
         if not isinstance(cache_data, dict):
@@ -786,9 +812,8 @@ class OntologyCritic(BaseCritic):
             except (TypeError, ValueError, KeyError, AttributeError) as e:
                 # Skip invalid entries but log the error if logger available
                 import logging as _logging
-                _logging.getLogger(__name__).warning(
-                    f"Skipping invalid cache entry {key}: {e}"
-                )
+
+                _logging.getLogger(__name__).warning(f"Skipping invalid cache entry {key}: {e}")
 
         return loaded_count
 
@@ -802,6 +827,7 @@ class OntologyCritic(BaseCritic):
             Dict mapping each dimension name to a one-sentence explanation
             that interprets the numeric score in plain English.
         """
+
         def _band(v: float) -> str:
             if v >= 0.85:
                 return "excellent"
@@ -830,13 +856,10 @@ class OntologyCritic(BaseCritic):
                 else "logical contradictions or inconsistencies were detected."
             )
         )
-        explanations["clarity"] = (
-            f"Clarity is {_band(score.clarity)} ({score.clarity:.0%}): "
-            + (
-                "entity definitions and relationship labels are clear and unambiguous."
-                if score.clarity >= 0.7
-                else "some entities lack definitions or have ambiguous labels."
-            )
+        explanations["clarity"] = f"Clarity is {_band(score.clarity)} ({score.clarity:.0%}): " + (
+            "entity definitions and relationship labels are clear and unambiguous."
+            if score.clarity >= 0.7
+            else "some entities lack definitions or have ambiguous labels."
         )
         explanations["granularity"] = (
             f"Granularity is {_band(score.granularity)} ({score.granularity:.0%}): "
@@ -935,12 +958,12 @@ class OntologyCritic(BaseCritic):
             score=score_obj.overall,
             feedback=list(score_obj.recommendations),
             dimensions={
-                'completeness': score_obj.completeness,
-                'consistency': score_obj.consistency,
-                'clarity': score_obj.clarity,
-                'granularity': score_obj.granularity,
-                'relationship_coherence': score_obj.relationship_coherence,
-                'domain_alignment': score_obj.domain_alignment,
+                "completeness": score_obj.completeness,
+                "consistency": score_obj.consistency,
+                "clarity": score_obj.clarity,
+                "granularity": score_obj.granularity,
+                "relationship_coherence": score_obj.relationship_coherence,
+                "domain_alignment": score_obj.domain_alignment,
             },
             strengths=list(score_obj.strengths),
             weaknesses=list(score_obj.weaknesses),
@@ -957,11 +980,11 @@ class OntologyCritic(BaseCritic):
     ) -> CriticScore:
         """
         Evaluate ontology across all quality dimensions.
-        
+
         Performs comprehensive evaluation of an ontology, analyzing completeness,
         consistency, clarity, granularity, and domain alignment. Returns a
         structured score with actionable recommendations.
-        
+
         Args:
             ontology: Ontology to evaluate (dictionary format)
             context: Context with domain and configuration information
@@ -972,13 +995,13 @@ class OntologyCritic(BaseCritic):
             on_evaluation_complete: Optional callback invoked with the
                 :class:`CriticScore` immediately before returning.  Use this
                 for dashboard updates, logging, or real-time monitoring.
-            
+
         Returns:
             CriticScore with evaluation results and recommendations
-            
+
         Raises:
             TimeoutError: If *timeout* is set and evaluation exceeds it.
-            
+
         Example:
             >>> score = critic.evaluate_ontology(
             ...     ontology={'entities': [...], 'relationships': [...]},
@@ -991,16 +1014,13 @@ class OntologyCritic(BaseCritic):
         """
         if timeout is not None:
             import concurrent.futures as _cf
+
             with _cf.ThreadPoolExecutor(max_workers=1) as _ex:
-                _fut = _ex.submit(
-                    self._evaluate_ontology_impl, ontology, context, source_data
-                )
+                _fut = _ex.submit(self._evaluate_ontology_impl, ontology, context, source_data)
                 try:
                     return _fut.result(timeout=timeout)
                 except _cf.TimeoutError:
-                    raise TimeoutError(
-                        f"evaluate_ontology() exceeded timeout of {timeout}s"
-                    )
+                    raise TimeoutError(f"evaluate_ontology() exceeded timeout of {timeout}s")
         return self._evaluate_ontology_impl(ontology, context, source_data, on_evaluation_complete)
 
     def _evaluate_ontology_impl(
@@ -1011,33 +1031,38 @@ class OntologyCritic(BaseCritic):
         on_evaluation_complete: Optional[Callable[[CriticScore], None]] = None,
     ) -> CriticScore:
         import time as _time
+
         _start_ms = _time.perf_counter() * 1000.0
-        
+
         # LRU-style cache keyed on ontology content hash (skipped when source_data provided)
         if source_data is None:
             _cache_key = self._compute_eval_cache_key(ontology)
             # Check instance-local cache first, then shared class-level cache
             if _cache_key is not None:
-                if not hasattr(self, '_eval_cache'):
+                if not hasattr(self, "_eval_cache"):
                     self._eval_cache: dict = {}
                 if _cache_key in self._eval_cache:
                     self._log.debug("OntologyCritic instance cache hit")
                     _cached = self._eval_cache[_cache_key]
                     # Update timing for cached result
-                    _cached.metadata['timing_ms'] = round((_time.perf_counter() * 1000.0) - _start_ms, 2)
+                    _cached.metadata["timing_ms"] = round(
+                        (_time.perf_counter() * 1000.0) - _start_ms, 2
+                    )
                     return _cached
                 if _cache_key in OntologyCritic._SHARED_EVAL_CACHE:
                     self._log.debug("OntologyCritic shared cache hit")
                     cached = OntologyCritic._SHARED_EVAL_CACHE[_cache_key]
                     self._eval_cache[_cache_key] = cached
                     # Update timing for cached result
-                    cached.metadata['timing_ms'] = round((_time.perf_counter() * 1000.0) - _start_ms, 2)
+                    cached.metadata["timing_ms"] = round(
+                        (_time.perf_counter() * 1000.0) - _start_ms, 2
+                    )
                     return cached
         else:
             _cache_key = None
 
         self._log.info("Evaluating ontology quality")
-        
+
         # Evaluate each dimension
         completeness = self._evaluate_completeness(ontology, context, source_data)
         consistency = self._evaluate_consistency(ontology, context)
@@ -1045,25 +1070,41 @@ class OntologyCritic(BaseCritic):
         granularity = self._evaluate_granularity(ontology, context)
         relationship_coherence = self._evaluate_relationship_coherence(ontology, context)
         domain_alignment = self._evaluate_domain_alignment(ontology, context)
-        
+
         # Identify strengths and weaknesses
         strengths = self._identify_strengths(
-            completeness, consistency, clarity, granularity, relationship_coherence, domain_alignment
+            completeness,
+            consistency,
+            clarity,
+            granularity,
+            relationship_coherence,
+            domain_alignment,
         )
         weaknesses = self._identify_weaknesses(
-            completeness, consistency, clarity, granularity, relationship_coherence, domain_alignment
+            completeness,
+            consistency,
+            clarity,
+            granularity,
+            relationship_coherence,
+            domain_alignment,
         )
-        
+
         # Generate recommendations
         recommendations = self._generate_recommendations(
-            ontology, context, completeness, consistency, clarity,
-            granularity, relationship_coherence, domain_alignment
+            ontology,
+            context,
+            completeness,
+            consistency,
+            clarity,
+            granularity,
+            relationship_coherence,
+            domain_alignment,
         )
-        
+
         # Create score
         # Compute per-entity-type completeness breakdown for metadata
         _ent_type_counts: Dict[str, int] = {}
-        for _ent in (ontology.get("entities") or []):
+        for _ent in ontology.get("entities") or []:
             if isinstance(_ent, dict):
                 _etype = str(_ent.get("type", "Unknown"))
             else:
@@ -1083,19 +1124,19 @@ class OntologyCritic(BaseCritic):
             weaknesses=weaknesses,
             recommendations=recommendations,
             metadata={
-                'evaluator': 'OntologyCritic',
-                'use_llm': self.use_llm,
-                'domain': getattr(context, 'domain', 'unknown'),
-                'entity_type_counts': _ent_type_counts,
-                'entity_type_fractions': _ent_type_fractions,
-                'provenance_score': self._evaluate_provenance(ontology),
-                'timing_ms': round((_time.perf_counter() * 1000.0) - _start_ms, 2),
-            }
+                "evaluator": "OntologyCritic",
+                "use_llm": self.use_llm,
+                "domain": getattr(context, "domain", "unknown"),
+                "entity_type_counts": _ent_type_counts,
+                "entity_type_fractions": _ent_type_fractions,
+                "provenance_score": self._evaluate_provenance(ontology),
+                "timing_ms": round((_time.perf_counter() * 1000.0) - _start_ms, 2),
+            },
         )
 
         # Optional LLM fallback for ambiguous rule-based evaluations.
         score = self._apply_llm_fallback_if_ambiguous(ontology, context, score)
-        
+
         self._log.info(f"Evaluation complete. Overall score: {score.overall:.2f}")
         if _cache_key is not None:
             # Populate both instance-local and shared class-level cache
@@ -1104,14 +1145,14 @@ class OntologyCritic(BaseCritic):
             self._eval_cache[_cache_key] = score
             if len(OntologyCritic._SHARED_EVAL_CACHE) >= OntologyCritic._SHARED_EVAL_CACHE_MAX:
                 OntologyCritic._SHARED_EVAL_CACHE.clear()
-            OntologyCritic._SHARED_EVAL_CACHE[_cache_key] = score        
+            OntologyCritic._SHARED_EVAL_CACHE[_cache_key] = score
         # Invoke completion callback for dashboard updates, logging, etc.
         if on_evaluation_complete is not None:
             try:
                 on_evaluation_complete(score)
             except (AttributeError, RuntimeError, TypeError, ValueError) as _e:
                 self._log.warning(f"on_evaluation_complete callback raised: {_e}")
-        
+
         return score
 
     def _is_score_ambiguous(self, score: CriticScore) -> bool:
@@ -1266,7 +1307,7 @@ class OntologyCritic(BaseCritic):
             "max_overall": max(overalls),
             "count": len(scores),
         }
-    
+
     def evaluate_batch_parallel(
         self,
         ontologies: List[Dict[str, Any]],
@@ -1319,7 +1360,7 @@ class OntologyCritic(BaseCritic):
 
         # Pre-fill cache hits and dedupe repeated ontologies (cache only when source_data is None).
         if source_data is None:
-            if not hasattr(self, '_eval_cache'):
+            if not hasattr(self, "_eval_cache"):
                 self._eval_cache = {}
             for idx, ontology in enumerate(ontologies):
                 cache_key = self._compute_eval_cache_key(ontology)
@@ -1346,9 +1387,7 @@ class OntologyCritic(BaseCritic):
                     try:
                         progress_callback(idx, total, score)
                     except (AttributeError, RuntimeError, TypeError, ValueError) as e:
-                        self._log.warning(
-                            f"Progress callback failed at index {idx}: {e}"
-                        )
+                        self._log.warning(f"Progress callback failed at index {idx}: {e}")
         else:
             pending = [(idx, ontology, None) for idx, ontology in enumerate(ontologies)]
 
@@ -1356,16 +1395,12 @@ class OntologyCritic(BaseCritic):
             """Evaluate single ontology and return (index, score, cache_key) pair."""
             idx, ontology, cache_key = idx_ontology_pair
             try:
-                score = self.evaluate_ontology(
-                    ontology, context, source_data=source_data
-                )
+                score = self.evaluate_ontology(ontology, context, source_data=source_data)
                 if progress_callback is not None:
                     try:
                         progress_callback(idx, total, score)
                     except (AttributeError, RuntimeError, TypeError, ValueError) as e:
-                        self._log.warning(
-                            f"Progress callback failed at index {idx}: {e}"
-                        )
+                        self._log.warning(f"Progress callback failed at index {idx}: {e}")
                 return (idx, score, cache_key)
             except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 self._log.error(f"Evaluation failed for ontology {idx}: {e}")
@@ -1410,7 +1445,7 @@ class OntologyCritic(BaseCritic):
             "max_overall": max(overalls),
             "count": len(valid_scores),
         }
-    
+
     def calibrate_thresholds(
         self,
         scores: List["CriticScore"],
@@ -1445,7 +1480,14 @@ class OntologyCritic(BaseCritic):
         if not (0 < percentile <= 100):
             raise ValueError(f"percentile must be in (0, 100]; got {percentile}")
 
-        _DIMS = ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment")
+        _DIMS = (
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        )
 
         def _pct(values: List[float], p: float) -> float:
             sorted_vals = sorted(values)
@@ -1455,8 +1497,7 @@ class OntologyCritic(BaseCritic):
             return sorted_vals[lo] * (1 - frac) + sorted_vals[hi] * frac
 
         thresholds = {
-            dim: round(_pct([getattr(s, dim) for s in scores], percentile), 6)
-            for dim in _DIMS
+            dim: round(_pct([getattr(s, dim) for s in scores], percentile), 6) for dim in _DIMS
         }
         self._calibrated_thresholds = thresholds
         return thresholds
@@ -1578,8 +1619,7 @@ class OntologyCritic(BaseCritic):
         comparator = OntologyComparator()
         comparison = comparator.compare_pair({}, current, {}, baseline_score)
         dimension_deltas = {
-            dim: round(val, 6)
-            for dim, val in comparison.get("dimension_deltas", {}).items()
+            dim: round(val, 6) for dim, val in comparison.get("dimension_deltas", {}).items()
         }
         delta = round(current.overall - baseline_score.overall, 6)
         return {
@@ -1616,6 +1656,7 @@ class OntologyCritic(BaseCritic):
             from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
                 OntologyGenerationContext,
             )
+
             context = OntologyGenerationContext(
                 data_source="batch", data_type="text", domain="general"
             )
@@ -1708,8 +1749,17 @@ class OntologyCritic(BaseCritic):
             >>> w = {"completeness": 1.0, "consistency": 1.0}
             >>> val = critic.weighted_overall(score, w)
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
-        effective = dict(DIMENSION_WEIGHTS) if weights is None else {d: weights.get(d, 0.0) for d in dims}
+        dims = [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        ]
+        effective = (
+            dict(DIMENSION_WEIGHTS) if weights is None else {d: weights.get(d, 0.0) for d in dims}
+        )
         total_weight = sum(effective.values())
         if total_weight == 0:
             raise ValueError("All dimension weights are zero — cannot compute weighted overall.")
@@ -1749,27 +1799,34 @@ class OntologyCritic(BaseCritic):
             >>> rubric = {"completeness": 0.5, "consistency": 0.5}
             >>> score = critic.evaluate_with_rubric(ontology, ctx, rubric)
         """
-        _DIMS = ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment")
+        _DIMS = (
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        )
         base = self.evaluate_ontology(ontology, context, source_data=source_data)
 
         filtered = {k: float(v) for k, v in rubric.items() if k in _DIMS and float(v) > 0}
         if not filtered:
-            raise ValueError("rubric must contain at least one recognised dimension with a positive weight")
+            raise ValueError(
+                "rubric must contain at least one recognised dimension with a positive weight"
+            )
 
         total_w = sum(filtered.values())
         weighted = sum(getattr(base, dim) * w for dim, w in filtered.items()) / total_w
 
         import dataclasses as _dc
+
         updated_metadata = dict(base.metadata)
         updated_metadata["rubric_overall"] = round(weighted, 6)
         updated_metadata["rubric"] = dict(filtered)
         return _dc.replace(base, metadata=updated_metadata)
 
     def compare_ontologies(
-        self,
-        ontology1: Dict[str, Any],
-        ontology2: Dict[str, Any],
-        context: Optional[Any] = None
+        self, ontology1: Dict[str, Any], ontology2: Dict[str, Any], context: Optional[Any] = None
     ) -> Dict[str, Any]:
         """
         Compare two ontologies and identify improvements.
@@ -1777,12 +1834,12 @@ class OntologyCritic(BaseCritic):
         Evaluates both ontologies and provides a comparative analysis,
         highlighting which ontology performs better in each dimension
         and identifying specific improvements.
-        
+
         Args:
             ontology1: First ontology to compare
             ontology2: Second ontology to compare
             context: Optional context for evaluation
-            
+
         Returns:
             Dictionary with comparative analysis:
                 - 'score1': Score for ontology1
@@ -1790,7 +1847,7 @@ class OntologyCritic(BaseCritic):
                 - 'better': Which ontology is better overall
                 - 'improvements': List of specific improvements in better ontology
                 - 'regressions': List of specific regressions
-                
+
         Example:
             >>> comparison = critic.compare_ontologies(old_ontology, new_ontology)
             >>> if comparison['better'] == 'ontology2':
@@ -1798,26 +1855,28 @@ class OntologyCritic(BaseCritic):
             ...     print("Improvements:", comparison['improvements'])
         """
         self._log.info("Comparing two ontologies")
-        
+
         # Evaluate both ontologies
         score1 = self.evaluate_ontology(ontology1, context) if context else None
         score2 = self.evaluate_ontology(ontology2, context) if context else None
-        
+
         # Determine which is better
-        better = 'ontology2' if (score2 and score1 and score2.overall > score1.overall) else 'ontology1'
-        
+        better = (
+            "ontology2" if (score2 and score1 and score2.overall > score1.overall) else "ontology1"
+        )
+
         # Identify improvements and regressions
         improvements = []
         regressions = []
-        
+
         if score1 and score2:
             dimensions = [
-                'completeness',
-                'consistency',
-                'clarity',
-                'granularity',
-                'relationship_coherence',
-                'domain_alignment',
+                "completeness",
+                "consistency",
+                "clarity",
+                "granularity",
+                "relationship_coherence",
+                "domain_alignment",
             ]
             for dim in dimensions:
                 val1 = getattr(score1, dim)
@@ -1826,13 +1885,13 @@ class OntologyCritic(BaseCritic):
                     improvements.append(f"{dim}: {val1:.2f} -> {val2:.2f}")
                 elif val2 < val1:
                     regressions.append(f"{dim}: {val1:.2f} -> {val2:.2f}")
-        
+
         return {
-            'score1': score1.to_dict() if score1 else None,
-            'score2': score2.to_dict() if score2 else None,
-            'better': better,
-            'improvements': improvements,
-            'regressions': regressions,
+            "score1": score1.to_dict() if score1 else None,
+            "score2": score2.to_dict() if score2 else None,
+            "better": better,
+            "improvements": improvements,
+            "regressions": regressions,
         }
 
     def compare_versions(
@@ -1858,7 +1917,14 @@ class OntologyCritic(BaseCritic):
         """
         result = self.compare_ontologies(v1, v2, context)
         if result.get("score1") and result.get("score2"):
-            dims = ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment")
+            dims = (
+                "completeness",
+                "consistency",
+                "clarity",
+                "granularity",
+                "relationship_coherence",
+                "domain_alignment",
+            )
             for dim in dims:
                 result[f"delta_{dim}"] = round(
                     result["score2"].get(dim, 0.0) - result["score1"].get(dim, 0.0), 4
@@ -1869,43 +1935,24 @@ class OntologyCritic(BaseCritic):
         return result
 
     def _evaluate_completeness(
-        self,
-        ontology: Dict[str, Any],
-        context: Any,
-        source_data: Optional[Any]
+        self, ontology: Dict[str, Any], context: Any, source_data: Optional[Any]
     ) -> float:
         """Evaluate completeness of ontology."""
         return evaluate_completeness(ontology, context, source_data)
 
-    def _evaluate_consistency(
-        self,
-        ontology: Dict[str, Any],
-        context: Any
-    ) -> float:
+    def _evaluate_consistency(self, ontology: Dict[str, Any], context: Any) -> float:
         """Evaluate internal logical consistency."""
         return evaluate_consistency(ontology, context)
 
-    def _evaluate_clarity(
-        self,
-        ontology: Dict[str, Any],
-        context: Any
-    ) -> float:
+    def _evaluate_clarity(self, ontology: Dict[str, Any], context: Any) -> float:
         """Evaluate clarity of entity definitions and naming conventions."""
         return evaluate_clarity(ontology, context)
 
-    def _evaluate_granularity(
-        self,
-        ontology: Dict[str, Any],
-        context: Any
-    ) -> float:
+    def _evaluate_granularity(self, ontology: Dict[str, Any], context: Any) -> float:
         """Evaluate appropriateness of detail level."""
         return evaluate_granularity(ontology, context)
 
-    def _evaluate_domain_alignment(
-        self,
-        ontology: Dict[str, Any],
-        context: Any
-    ) -> float:
+    def _evaluate_domain_alignment(self, ontology: Dict[str, Any], context: Any) -> float:
         """Evaluate how well entity types and relationship types align with domain vocabulary."""
         return evaluate_domain_alignment(ontology, context)
 
@@ -1932,7 +1979,8 @@ class OntologyCritic(BaseCritic):
 
         _provenance_keys = {"source_span", "span", "source", "source_doc_index", "provenance"}
         annotated = sum(
-            1 for ent in entities
+            1
+            for ent in entities
             if (
                 _provenance_keys & set(ent.keys())
                 or _provenance_keys & set((ent.get("properties") or {}).keys())
@@ -1940,11 +1988,7 @@ class OntologyCritic(BaseCritic):
         )
         return round(annotated / len(entities), 4)
 
-    def _evaluate_relationship_coherence(
-        self,
-        ontology: Dict[str, Any],
-        context: Any
-    ) -> float:
+    def _evaluate_relationship_coherence(self, ontology: Dict[str, Any], context: Any) -> float:
         """Evaluate the semantic coherence and quality of relationships."""
         return evaluate_relationship_coherence(ontology, context)
 
@@ -1955,13 +1999,13 @@ class OntologyCritic(BaseCritic):
         clarity: float,
         granularity: float,
         relationship_coherence: float,
-        domain_alignment: float
+        domain_alignment: float,
     ) -> List[str]:
         """Identify ontology strengths based on dimension scores."""
         strengths = []
-        
+
         threshold = 0.8
-        
+
         if completeness >= threshold:
             strengths.append("Comprehensive entity and relationship coverage")
         if consistency >= threshold:
@@ -1974,9 +2018,9 @@ class OntologyCritic(BaseCritic):
             strengths.append("High-quality, semantically coherent relationships")
         if domain_alignment >= threshold:
             strengths.append("Good adherence to domain conventions")
-        
+
         return strengths
-    
+
     def _identify_weaknesses(
         self,
         completeness: float,
@@ -1984,13 +2028,13 @@ class OntologyCritic(BaseCritic):
         clarity: float,
         granularity: float,
         relationship_coherence: float,
-        domain_alignment: float
+        domain_alignment: float,
     ) -> List[str]:
         """Identify ontology weaknesses based on dimension scores."""
         weaknesses = []
-        
+
         threshold = 0.6
-        
+
         if completeness < threshold:
             weaknesses.append("Incomplete coverage of key concepts")
         if consistency < threshold:
@@ -2003,7 +2047,7 @@ class OntologyCritic(BaseCritic):
             weaknesses.append("Poor relationship quality or semantic incoherence")
         if domain_alignment < threshold:
             weaknesses.append("Poor alignment with domain conventions")
-        
+
         return weaknesses
 
     def score_batch_summary(self, scores: List["CriticScore"]) -> Dict[str, Any]:
@@ -2031,6 +2075,7 @@ class OntologyCritic(BaseCritic):
         mean = sum(overalls) / count
         variance = sum((x - mean) ** 2 for x in overalls) / count
         import math as _math
+
         return {
             "count": count,
             "mean_overall": round(mean, 6),
@@ -2085,7 +2130,15 @@ class OntologyCritic(BaseCritic):
             >>> delta["overall"] > 0  # improvement
             True
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment", "overall"]
+        dims = [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+            "overall",
+        ]
         return {d: round(getattr(score_b, d) - getattr(score_a, d), 6) for d in dims}
 
     def critical_weaknesses(
@@ -2109,7 +2162,14 @@ class OntologyCritic(BaseCritic):
             >>> all(v < 0.5 for v in weak.values())
             True
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
+        dims = [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        ]
         return {d: getattr(score, d) for d in dims if getattr(score, d) < threshold}
 
     def top_dimension(self, score: "CriticScore") -> str:
@@ -2126,7 +2186,14 @@ class OntologyCritic(BaseCritic):
             >>> critic.top_dimension(score)
             'domain_alignment'
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
+        dims = [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        ]
         return max(dims, key=lambda d: getattr(score, d))
 
     def bottom_dimension(self, score: "CriticScore") -> str:
@@ -2142,7 +2209,14 @@ class OntologyCritic(BaseCritic):
             >>> critic.bottom_dimension(score)
             'granularity'
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
+        dims = [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        ]
         return min(dims, key=lambda d: getattr(score, d))
 
     def score_range(
@@ -2204,7 +2278,14 @@ class OntologyCritic(BaseCritic):
             >>> all(v >= 0 for v in gaps.values())
             True
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
+        dims = [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        ]
         return {d: round(target - getattr(score, d), 6) for d in dims}
 
     def dimension_z_scores(self, score: "CriticScore") -> Dict[str, float]:
@@ -2229,10 +2310,17 @@ class OntologyCritic(BaseCritic):
             >>> z_scores['completeness']
             1.0
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
+        dims = [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        ]
         nominal = 0.5  # nominal center (0 to 1 scale)
         std_dev = 0.2  # approximate std dev zone
-        
+
         z_scores = {}
         for dim in dims:
             val = getattr(score, dim, 0.5)
@@ -2240,7 +2328,7 @@ class OntologyCritic(BaseCritic):
                 z_scores[dim] = round((val - nominal) / std_dev, 4)
             else:
                 z_scores[dim] = 0.0
-        
+
         return z_scores
 
     def worst_score(self, scores: List["CriticScore"]) -> Optional["CriticScore"]:
@@ -2309,6 +2397,7 @@ class OntologyCritic(BaseCritic):
         if len(scores) < 2:
             return 0.0
         import math as _math
+
         mean = sum(s.overall for s in scores) / len(scores)
         variance = sum((s.overall - mean) ** 2 for s in scores) / len(scores)
         return _math.sqrt(variance)
@@ -2754,6 +2843,7 @@ class OntologyCritic(BaseCritic):
             overall values are identical.
         """
         import dataclasses as _dc
+
         if len(scores) < 2:
             return list(scores)
         overalls = [s.overall for s in scores]
@@ -2777,9 +2867,7 @@ class OntologyCritic(BaseCritic):
             )
         return new_scores
 
-    def compare_runs(
-        self, score_a: "CriticScore", score_b: "CriticScore"
-    ) -> Dict[str, Any]:
+    def compare_runs(self, score_a: "CriticScore", score_b: "CriticScore") -> Dict[str, Any]:
         """Return a comparison dict showing how *score_b* differs from *score_a*.
 
         Args:
@@ -2793,7 +2881,14 @@ class OntologyCritic(BaseCritic):
             - ``'improved'`` (bool) — ``True`` when overall_delta > 0
             - ``'dim_deltas'`` (dict) — per-dimension deltas (positive = improved)
         """
-        dims = ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment")
+        dims = (
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        )
         dim_deltas = {d: getattr(score_b, d) - getattr(score_a, d) for d in dims}
         overall_delta = score_b.overall - score_a.overall
         return {
@@ -2941,7 +3036,7 @@ class OntologyCritic(BaseCritic):
         clarity: float,
         granularity: float,
         relationship_coherence: float,
-        domain_alignment: float
+        domain_alignment: float,
     ) -> List[str]:
         """Generate specific, actionable recommendations for improvement.
 
@@ -2951,9 +3046,9 @@ class OntologyCritic(BaseCritic):
         """
         recommendations: List[str] = []
 
-        entities = ontology.get('entities', [])
-        relationships = ontology.get('relationships', [])
-        entity_ids = {e.get('id') for e in entities if isinstance(e, dict) and e.get('id')}
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+        entity_ids = {e.get("id") for e in entities if isinstance(e, dict) and e.get("id")}
 
         # -- Completeness recommendations -------------------------------------
         if completeness < 0.7:
@@ -2980,7 +3075,7 @@ class OntologyCritic(BaseCritic):
                     "Aim for at least one relationship per entity."
                 )
 
-            types = {e.get('type') for e in entities if isinstance(e, dict) and e.get('type')}
+            types = {e.get("type") for e in entities if isinstance(e, dict) and e.get("type")}
             if len(types) < 2:
                 recommendations.append(
                     "All entities share the same type. "
@@ -2990,19 +3085,20 @@ class OntologyCritic(BaseCritic):
         # -- Consistency recommendations ---------------------------------------
         if consistency < 0.7:
             dangling = [
-                r for r in relationships
+                r
+                for r in relationships
                 if isinstance(r, dict)
-                and (r.get('source_id') not in entity_ids or r.get('target_id') not in entity_ids)
+                and (r.get("source_id") not in entity_ids or r.get("target_id") not in entity_ids)
             ]
             if dangling:
-                rel_ids = [r.get('id', '?') for r in dangling[:3]]
+                rel_ids = [r.get("id", "?") for r in dangling[:3]]
                 recommendations.append(
                     f"{len(dangling)} relationship(s) have dangling references "
                     f"(e.g. {', '.join(str(r) for r in rel_ids)}). "
                     "Ensure all source_id / target_id values match existing entity IDs."
                 )
 
-            all_ids = [e.get('id') for e in entities if isinstance(e, dict) and e.get('id')]
+            all_ids = [e.get("id") for e in entities if isinstance(e, dict) and e.get("id")]
             dupes = len(all_ids) - len(set(all_ids))
             if dupes > 0:
                 recommendations.append(
@@ -3012,14 +3108,14 @@ class OntologyCritic(BaseCritic):
 
         # -- Clarity recommendations -------------------------------------------
         if clarity < 0.7:
-            no_props = [e for e in entities if isinstance(e, dict) and not e.get('properties')]
+            no_props = [e for e in entities if isinstance(e, dict) and not e.get("properties")]
             if len(no_props) > len(entities) * 0.5:
                 recommendations.append(
                     f"{len(no_props)} of {len(entities)} entities lack properties. "
                     "Add descriptive properties (e.g. role, description, domain) to improve interpretability."
                 )
 
-            no_text = [e for e in entities if isinstance(e, dict) and not e.get('text')]
+            no_text = [e for e in entities if isinstance(e, dict) and not e.get("text")]
             if no_text:
                 recommendations.append(
                     f"{len(no_text)} entit{'y' if len(no_text) == 1 else 'ies'} missing the 'text' field. "
@@ -3027,8 +3123,9 @@ class OntologyCritic(BaseCritic):
                 )
 
             short = [
-                e for e in entities
-                if isinstance(e, dict) and len((e.get('text') or '').strip()) < 3
+                e
+                for e in entities
+                if isinstance(e, dict) and len((e.get("text") or "").strip()) < 3
             ]
             if short:
                 recommendations.append(
@@ -3038,7 +3135,7 @@ class OntologyCritic(BaseCritic):
 
         # -- Granularity recommendations ---------------------------------------
         if granularity < 0.7:
-            prop_counts = [len(e.get('properties', {})) for e in entities if isinstance(e, dict)]
+            prop_counts = [len(e.get("properties", {})) for e in entities if isinstance(e, dict)]
             avg_props = sum(prop_counts) / max(len(prop_counts), 1)
             if avg_props < 1.0:
                 recommendations.append(
@@ -3056,23 +3153,23 @@ class OntologyCritic(BaseCritic):
 
         # -- Relationship coherence recommendations ----------------------------
         if relationship_coherence < 0.7:
-            _GENERIC_RELS = {'relates_to', 'related_to', 'links', 'connected', 'associated', 'rel'}
-            rel_types = [r.get('type', '') for r in relationships if isinstance(r, dict)]
+            _GENERIC_RELS = {"relates_to", "related_to", "links", "connected", "associated", "rel"}
+            rel_types = [r.get("type", "") for r in relationships if isinstance(r, dict)]
             generic_count = sum(1 for rt in rel_types if rt.lower() in _GENERIC_RELS)
-            
+
             if generic_count > len(rel_types) * 0.3:
                 recommendations.append(
                     f"{generic_count} of {len(rel_types)} relationships use generic types "
                     "(e.g. 'relates_to', 'connected'). Replace with specific verbs like 'manages', 'causes', 'implements'."
                 )
-            
+
             unique_types = set(rt for rt in rel_types if rt)
             if len(unique_types) == 1 and len(relationships) > 5:
                 recommendations.append(
                     "All relationships use the same type. Add variety by using domain-specific relationship types."
                 )
-            
-            no_type = [r for r in relationships if isinstance(r, dict) and not r.get('type')]
+
+            no_type = [r for r in relationships if isinstance(r, dict) and not r.get("type")]
             if no_type:
                 recommendations.append(
                     f"{len(no_type)} relationship(s) missing type field. "
@@ -3081,7 +3178,7 @@ class OntologyCritic(BaseCritic):
 
         # -- Domain alignment recommendations ---------------------------------
         if domain_alignment < 0.7:
-            domain = (getattr(context, 'domain', None) or ontology.get('domain', 'general')).lower()
+            domain = (getattr(context, "domain", None) or ontology.get("domain", "general")).lower()
             recommendations.append(
                 f"Many entity/relationship types don't align with '{domain}' domain vocabulary. "
                 "Review type names and replace generic labels with domain-specific terms."
@@ -3189,11 +3286,7 @@ class OntologyCritic(BaseCritic):
         result[last] += sum(1 for s in scores if s.overall == 1.0)
         return result
 
-    def log_evaluation_json(
-        self, 
-        score: CriticScore, 
-        log_level: str = "INFO"
-    ) -> None:
+    def log_evaluation_json(self, score: CriticScore, log_level: str = "INFO") -> None:
         """Log evaluation result as structured JSON.
 
         Outputs the evaluation score as a single JSON line to the class logger,
@@ -3267,8 +3360,14 @@ class OntologyCritic(BaseCritic):
         mean_b = sum(b_vals) / n
         return sum((a_vals[i] - mean_a) * (b_vals[i] - mean_b) for i in range(n)) / (n - 1)
 
-    _DIMENSIONS = ("completeness", "consistency", "clarity", "granularity",
-                   "relationship_coherence", "domain_alignment")
+    _DIMENSIONS = (
+        "completeness",
+        "consistency",
+        "clarity",
+        "granularity",
+        "relationship_coherence",
+        "domain_alignment",
+    )
 
     def top_improving_dimension(self, before: "CriticScore", after: "CriticScore") -> str:
         """Return the dimension with the largest improvement between two scores.
@@ -3281,8 +3380,7 @@ class OntologyCritic(BaseCritic):
             Name of the dimension whose ``after - before`` delta is largest.
             If all deltas are equal (or zero) returns the first dimension.
         """
-        deltas = {d: getattr(after, d, 0.0) - getattr(before, d, 0.0)
-                  for d in self._DIMENSIONS}
+        deltas = {d: getattr(after, d, 0.0) - getattr(before, d, 0.0) for d in self._DIMENSIONS}
         return max(deltas, key=lambda d: deltas[d])
 
     def critic_dimension_rank(self, score) -> list:
@@ -3339,8 +3437,7 @@ class OntologyCritic(BaseCritic):
         Returns:
             Dict mapping dimension name → ``after_dim - before_dim`` float delta.
         """
-        return {d: getattr(after, d, 0.0) - getattr(before, d, 0.0)
-                for d in self._DIMENSIONS}
+        return {d: getattr(after, d, 0.0) - getattr(before, d, 0.0) for d in self._DIMENSIONS}
 
     def all_dimensions_above(self, score, threshold: float = 0.5) -> bool:
         """Return True if all dimensions of *score* exceed *threshold*.
@@ -3354,7 +3451,6 @@ class OntologyCritic(BaseCritic):
             *threshold*; ``False`` otherwise.
         """
         return all(getattr(score, d, 0.0) > threshold for d in self._DIMENSIONS)
-
 
     def dimension_ratio(self, score) -> dict:
         """Return each dimension score as a fraction of the total score sum.
@@ -3421,7 +3517,7 @@ class OntologyCritic(BaseCritic):
         vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
         mean = sum(vals) / len(vals)
         variance = sum((v - mean) ** 2 for v in vals) / len(vals)
-        return variance ** 0.5
+        return variance**0.5
 
     def dimension_improvement_mask(self, before, after) -> dict:
         """Return a bool dict indicating which dimensions improved.
@@ -3434,10 +3530,7 @@ class OntologyCritic(BaseCritic):
             Dict mapping dimension name → ``True`` if ``after > before``,
             ``False`` otherwise.
         """
-        return {
-            d: getattr(after, d, 0.0) > getattr(before, d, 0.0)
-            for d in self._DIMENSIONS
-        }
+        return {d: getattr(after, d, 0.0) > getattr(before, d, 0.0) for d in self._DIMENSIONS}
 
     def passing_dimensions(self, score, threshold: float = 0.5) -> list:
         """Return list of dimension names strictly above *threshold*.
@@ -3474,7 +3567,9 @@ class OntologyCritic(BaseCritic):
             return 0.0
         return total_s / total_w
 
-    def dimension_correlation(self, scores_a: list, scores_b: list, dimension: str = "completeness") -> float:
+    def dimension_correlation(
+        self, scores_a: list, scores_b: list, dimension: str = "completeness"
+    ) -> float:
         """Return Pearson correlation for *dimension* across two score lists.
 
         Args:
@@ -3514,6 +3609,7 @@ class OntologyCritic(BaseCritic):
             Float entropy in bits; ``0.0`` when all dims are zero or equal.
         """
         import math
+
         vals = [max(getattr(score, d, 0.0), 0.0) for d in self._DIMENSIONS]
         total = sum(vals)
         if total == 0.0:
@@ -3536,8 +3632,7 @@ class OntologyCritic(BaseCritic):
             Dict with dimension names as keys (float diffs) plus
             ``"overall"`` key showing after.overall - before.overall.
         """
-        diffs = {d: getattr(after, d, 0.0) - getattr(before, d, 0.0)
-                 for d in self._DIMENSIONS}
+        diffs = {d: getattr(after, d, 0.0) - getattr(before, d, 0.0) for d in self._DIMENSIONS}
         diffs["overall"] = getattr(after, "overall", 0.0) - getattr(before, "overall", 0.0)
         return diffs
 
@@ -3571,9 +3666,7 @@ class OntologyCritic(BaseCritic):
         k = max(0, min(k, len(dims_sorted)))
         return [d for d, _ in dims_sorted[:k]]
 
-    def dimension_improvement_rate(
-        self, before: "CriticScore", after: "CriticScore"
-    ) -> float:
+    def dimension_improvement_rate(self, before: "CriticScore", after: "CriticScore") -> float:
         """Return the fraction of dimensions that improved from *before* to *after*.
 
         Args:
@@ -3584,14 +3677,11 @@ class OntologyCritic(BaseCritic):
             Float in [0, 1]; 0.0 when no dimensions improved.
         """
         improved = sum(
-            1 for d in self._DIMENSIONS
-            if getattr(after, d, 0.0) > getattr(before, d, 0.0)
+            1 for d in self._DIMENSIONS if getattr(after, d, 0.0) > getattr(before, d, 0.0)
         )
         return improved / len(self._DIMENSIONS)
 
-    def dimension_weighted_sum(
-        self, score: "CriticScore", weights: dict = None
-    ) -> float:
+    def dimension_weighted_sum(self, score: "CriticScore", weights: dict = None) -> float:
         """Return a weighted sum of all dimension scores.
 
         Args:
@@ -3657,12 +3747,10 @@ class OntologyCritic(BaseCritic):
         overalls = [getattr(s, "overall", 0.0) for s in scores]
         mean = sum(overalls) / len(overalls)
         variance = sum((v - mean) ** 2 for v in overalls) / len(overalls)
-        std = variance ** 0.5
+        std = variance**0.5
         return max(0.0, min(1.0, 1.0 - std))
 
-    def dimensions_above_count(
-        self, score: "CriticScore", threshold: float = 0.5
-    ) -> int:
+    def dimensions_above_count(self, score: "CriticScore", threshold: float = 0.5) -> int:
         """Return the number of dimensions strictly above *threshold*.
 
         Args:
@@ -3720,7 +3808,7 @@ class OntologyCritic(BaseCritic):
         if mean == 0.0:
             return 0.0
         variance = sum((v - mean) ** 2 for v in vals) / n
-        return (variance ** 0.5) / mean
+        return (variance**0.5) / mean
 
     def dimensions_at_max_count(self, score: "CriticScore", threshold: float = 0.9) -> int:  # type: ignore[name-defined]
         """Return the number of dimensions at or above *threshold*.
@@ -3732,10 +3820,7 @@ class OntologyCritic(BaseCritic):
         Returns:
             Integer count in range [0, 6].
         """
-        return sum(
-            1 for d in self._DIMENSIONS
-            if getattr(score, d, 0.0) >= threshold
-        )
+        return sum(1 for d in self._DIMENSIONS if getattr(score, d, 0.0) >= threshold)
 
     def dimension_harmonic_mean(self, score: "CriticScore") -> float:  # type: ignore[name-defined]
         """Return the harmonic mean of the six dimension values.
@@ -3781,10 +3866,7 @@ class OntologyCritic(BaseCritic):
         Returns:
             Integer count in range [0, 6].
         """
-        return sum(
-            1 for d in self._DIMENSIONS
-            if getattr(score, d, 0.0) < threshold
-        )
+        return sum(1 for d in self._DIMENSIONS if getattr(score, d, 0.0) < threshold)
 
     def dimension_spread(self, score: "CriticScore") -> float:  # type: ignore[name-defined]
         """Return max - min of the six dimension values.
@@ -3898,7 +3980,6 @@ class OntologyCritic(BaseCritic):
         """
         return sorted(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0), reverse=True)
 
-
     def dimension_normalized_vector(self, score: "CriticScore") -> list:  # type: ignore[name-defined]
         """Return dimension values normalized to a unit vector (L2).
 
@@ -3909,7 +3990,7 @@ class OntologyCritic(BaseCritic):
             List of 6 floats; all zeros when the vector magnitude is 0.
         """
         vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
-        magnitude = sum(v ** 2 for v in vals) ** 0.5
+        magnitude = sum(v**2 for v in vals) ** 0.5
         if magnitude == 0.0:
             return [0.0] * len(vals)
         return [v / magnitude for v in vals]
@@ -3947,8 +4028,8 @@ class OntologyCritic(BaseCritic):
         v1 = [getattr(score1, d, 0.0) for d in self._DIMENSIONS]
         v2 = [getattr(score2, d, 0.0) for d in self._DIMENSIONS]
         dot = sum(a * b for a, b in zip(v1, v2))
-        mag1 = sum(a ** 2 for a in v1) ** 0.5
-        mag2 = sum(b ** 2 for b in v2) ** 0.5
+        mag1 = sum(a**2 for a in v1) ** 0.5
+        mag2 = sum(b**2 for b in v2) ** 0.5
         if mag1 == 0.0 or mag2 == 0.0:
             return 0.0
         return dot / (mag1 * mag2)
@@ -3963,7 +4044,10 @@ class OntologyCritic(BaseCritic):
         Returns:
             Float; 0.0 when scores are identical.
         """
-        return sum((getattr(score1, d, 0.0) - getattr(score2, d, 0.0)) ** 2 for d in self._DIMENSIONS) ** 0.5
+        return (
+            sum((getattr(score1, d, 0.0) - getattr(score2, d, 0.0)) ** 2 for d in self._DIMENSIONS)
+            ** 0.5
+        )
 
     def dimension_percentile(self, score: "CriticScore", p: float = 50.0) -> float:
         """Return the p-th percentile of dimension values in a CriticScore.
@@ -4148,7 +4232,7 @@ class OntologyCritic(BaseCritic):
         """
         dims = [(d, getattr(score, d, 0.0)) for d in self._DIMENSIONS]
         if not dims:
-            return 'unknown'
+            return "unknown"
         return min(dims, key=lambda x: x[1])[0]
 
     def strongest_dimension(self, score: "CriticScore") -> str:
@@ -4162,7 +4246,7 @@ class OntologyCritic(BaseCritic):
         """
         dims = [(d, getattr(score, d, 0.0)) for d in self._DIMENSIONS]
         if not dims:
-            return 'unknown'
+            return "unknown"
         return max(dims, key=lambda x: x[1])[0]
 
     def score_balance_ratio(self, score: "CriticScore") -> float:
@@ -4227,7 +4311,7 @@ class OntologyCritic(BaseCritic):
         if mean_val == 0.0:
             return 0.0
         variance = sum((v - mean_val) ** 2 for v in dims) / len(dims)
-        std_dev = variance ** 0.5
+        std_dev = variance**0.5
         return std_dev / mean_val
 
     def recommendation_density(self, score: "CriticScore") -> float:
@@ -4278,7 +4362,7 @@ class OntologyCritic(BaseCritic):
         if mean_val == 0.0:
             return 0.0
         variance = sum((v - mean_val) ** 2 for v in vals) / len(vals)
-        return variance ** 0.5 / mean_val
+        return variance**0.5 / mean_val
 
     def dimension_skewness(self, score: "CriticScore") -> float:
         """Return the skewness of the 6 evaluation dimension values.
@@ -4299,8 +4383,8 @@ class OntologyCritic(BaseCritic):
         variance = sum((v - mean_val) ** 2 for v in vals) / n
         if variance == 0.0:
             return 0.0
-        std = variance ** 0.5
-        return sum((v - mean_val) ** 3 for v in vals) / (n * std ** 3)
+        std = variance**0.5
+        return sum((v - mean_val) ** 3 for v in vals) / (n * std**3)
 
     def dimensions_above_mean(self, score: "CriticScore") -> int:
         """Return the number of dimension values strictly above the collective mean.
@@ -4388,10 +4472,7 @@ class OntologyCritic(BaseCritic):
         Returns:
             Dict mapping dimension name → float delta (positive = improving).
         """
-        return {
-            d: getattr(score, d, 0.0) - getattr(prev_score, d, 0.0)
-            for d in self._DIMENSIONS
-        }
+        return {d: getattr(score, d, 0.0) - getattr(prev_score, d, 0.0) for d in self._DIMENSIONS}
 
     def min_max_dimension_ratio(self, score: "CriticScore") -> float:
         """Return the ratio of the minimum dimension value to the maximum.
@@ -4458,7 +4539,7 @@ class OntologyCritic(BaseCritic):
         norm_w = [w / total_w for w in weights]
         wmean = sum(w * v for w, v in zip(norm_w, vals))
         wvar = sum(w * (v - wmean) ** 2 for w, v in zip(norm_w, vals))
-        return wvar ** 0.5
+        return wvar**0.5
 
     def dimension_percentile_rank(self, score: "CriticScore", dim: str) -> float:
         """Return the percentile rank of a named dimension within a CriticScore.
@@ -4518,6 +4599,7 @@ class OntologyCritic(BaseCritic):
             1.791...
         """
         import math
+
         dims = self._DIMENSIONS
         vals = [max(0.0, getattr(score, d, 0.0)) for d in dims]
         total = sum(vals)
@@ -4590,7 +4672,7 @@ class OntologyCritic(BaseCritic):
         if variance == 0.0:
             return 0.0
         m4 = sum((v - mean) ** 4 for v in vals) / n
-        return m4 / (variance ** 2) - 3.0
+        return m4 / (variance**2) - 3.0
 
     def score_dimension_skewness(self, score: "CriticScore") -> float:
         """Return the population skewness of the six CriticScore dimension values.
@@ -4624,9 +4706,9 @@ class OntologyCritic(BaseCritic):
         variance = sum((v - mean) ** 2 for v in vals) / n
         if variance == 0.0:
             return 0.0
-        std = variance ** 0.5
+        std = variance**0.5
         m3 = sum((v - mean) ** 3 for v in vals) / n
-        return m3 / (std ** 3)
+        return m3 / (std**3)
 
     def score_dimension_range_ratio(self, score: "CriticScore") -> float:
         """Return the range ratio of the six CriticScore dimension values.
@@ -4709,8 +4791,12 @@ class OntologyCritic(BaseCritic):
             2.236...  # sqrt(5) — one extreme outlier among 6 values
         """
         dims = [
-            "completeness", "consistency", "clarity",
-            "granularity", "relationship_coherence", "domain_alignment",
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
         ]
         vals = [getattr(score, d, 0.0) for d in dims]
         n = len(vals)
@@ -4718,7 +4804,7 @@ class OntologyCritic(BaseCritic):
         variance = sum((v - mean) ** 2 for v in vals) / n
         if variance == 0.0:
             return 0.0
-        std = variance ** 0.5
+        std = variance**0.5
         return max(abs((v - mean) / std) for v in vals)
 
     def score_dimension_min_z(self, score: "CriticScore") -> float:
@@ -4749,8 +4835,12 @@ class OntologyCritic(BaseCritic):
             0.0  # five dims at 0.0 have z=0 — closest to mean
         """
         dims = [
-            "completeness", "consistency", "clarity",
-            "granularity", "relationship_coherence", "domain_alignment",
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
         ]
         vals = [getattr(score, d, 0.0) for d in dims]
         n = len(vals)
@@ -4758,7 +4848,7 @@ class OntologyCritic(BaseCritic):
         variance = sum((v - mean) ** 2 for v in vals) / n
         if variance == 0.0:
             return 0.0
-        std = variance ** 0.5
+        std = variance**0.5
         return min(abs((v - mean) / std) for v in vals)
 
     def score_dimension_mean_abs_deviation(self, score: "CriticScore") -> float:
@@ -4782,8 +4872,12 @@ class OntologyCritic(BaseCritic):
             0.0  # all dims equal
         """
         dims = [
-            "completeness", "consistency", "clarity",
-            "granularity", "relationship_coherence", "domain_alignment",
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
         ]
         vals = [getattr(score, d, 0.0) for d in dims]
         mean = sum(vals) / len(vals)
@@ -4808,8 +4902,12 @@ class OntologyCritic(BaseCritic):
             0.5
         """
         dims = [
-            "completeness", "consistency", "clarity",
-            "granularity", "relationship_coherence", "domain_alignment",
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
         ]
         vals = sorted(getattr(score, d, 0.0) for d in dims)
         median = (vals[2] + vals[3]) / 2.0
@@ -4817,10 +4915,9 @@ class OntologyCritic(BaseCritic):
         return (deviations[2] + deviations[3]) / 2.0
 
 
-
 # Export public API
 __all__ = [
-    'OntologyCritic',
-    'CriticScore',
-    'DIMENSION_WEIGHTS',
+    "OntologyCritic",
+    "CriticScore",
+    "DIMENSION_WEIGHTS",
 ]

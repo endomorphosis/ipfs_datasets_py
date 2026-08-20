@@ -9,6 +9,7 @@ Terminology:
 - filesystem_image_creation: Verifying that thumbnail image files are actually created with proper format
 - image_quality_verification: Testing that generated thumbnails have expected visual characteristics
 """
+
 import pytest
 import anyio
 from pathlib import Path
@@ -18,7 +19,7 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class TestFFmpegWrapperGenerateThumbnailIntegration:
     """
     Integration scenarios for FFmpegWrapper.generate_thumbnail method.
-    
+
     Tests the generate_thumbnail method with actual FFmpeg operations
     and filesystem interactions to ensure complete thumbnail generation functionality.
     """
@@ -39,7 +40,9 @@ class TestFFmpegWrapperGenerateThumbnailIntegration:
         assert isinstance(result, dict)
         assert result["status"] in {"success", "error"}
 
-    async def test_when_generating_with_ffmpeg_unavailable_then_returns_error_response_with_dependency_message(self):
+    async def test_when_generating_with_ffmpeg_unavailable_then_returns_error_response_with_dependency_message(
+        self,
+    ):
         """
         GIVEN system environment with FFmpeg unavailable
         WHEN generate_thumbnail is called without FFmpeg dependencies
@@ -70,7 +73,9 @@ class TestFFmpegWrapperGenerateThumbnailIntegration:
         assert isinstance(result, dict)
         assert result["status"] in {"success", "error"}
 
-    async def test_when_running_multiple_concurrent_generations_then_all_complete_successfully(self):
+    async def test_when_running_multiple_concurrent_generations_then_all_complete_successfully(
+        self,
+    ):
         """
         GIVEN multiple generate_thumbnail calls initiated simultaneously
         WHEN generate_thumbnail is called concurrently with different input files
@@ -96,7 +101,9 @@ class TestFFmpegWrapperGenerateThumbnailIntegration:
         assert all(isinstance(r, dict) for r in results)
         assert all(r["status"] in {"success", "error"} for r in results)
 
-    async def test_when_generating_with_custom_image_filters_then_applies_filters_to_thumbnail(self):
+    async def test_when_generating_with_custom_image_filters_then_applies_filters_to_thumbnail(
+        self,
+    ):
         """
         GIVEN valid video file and filters parameter with custom image processing specification
         WHEN generate_thumbnail is called with custom image filters
@@ -112,7 +119,9 @@ class TestFFmpegWrapperGenerateThumbnailIntegration:
         assert isinstance(result, dict)
         assert result["status"] in {"success", "error"}
 
-    async def test_when_output_directory_does_not_exist_then_creates_directory_and_generates_thumbnail(self, tmp_path: Path):
+    async def test_when_output_directory_does_not_exist_then_creates_directory_and_generates_thumbnail(
+        self, tmp_path: Path
+    ):
         """
         GIVEN output_path parameter with nonexistent parent directory
         WHEN generate_thumbnail is called with output path requiring directory creation
@@ -129,7 +138,9 @@ class TestFFmpegWrapperGenerateThumbnailIntegration:
         assert isinstance(result, dict)
         assert result["status"] in {"success", "error"}
 
-    async def test_when_generating_grid_layout_thumbnails_then_creates_composite_image_with_multiple_frames(self):
+    async def test_when_generating_grid_layout_thumbnails_then_creates_composite_image_with_multiple_frames(
+        self,
+    ):
         """
         GIVEN valid video file and grid_layout parameter specifying grid dimensions
         WHEN generate_thumbnail is called with grid layout specification

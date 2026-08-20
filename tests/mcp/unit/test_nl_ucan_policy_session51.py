@@ -37,6 +37,7 @@ from ipfs_datasets_py.mcp_server.temporal_policy import PolicyClause, PolicyObje
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_intent(tool: str = "repo.status") -> IntentObject:
     return IntentObject(interface_cid="bafy-test", tool=tool, input_cid="bafy-input")
 
@@ -44,6 +45,7 @@ def _make_intent(tool: str = "repo.status") -> IntentObject:
 # ---------------------------------------------------------------------------
 # _make_policy_cid
 # ---------------------------------------------------------------------------
+
 
 class TestMakePolicyCid:
     def test_deterministic(self):
@@ -64,6 +66,7 @@ class TestMakePolicyCid:
 # ---------------------------------------------------------------------------
 # NLPolicySource
 # ---------------------------------------------------------------------------
+
 
 class TestNLPolicySource:
     def test_source_cid_set_at_init(self):
@@ -86,6 +89,7 @@ class TestNLPolicySource:
 # ---------------------------------------------------------------------------
 # _fallback_parse_nl_policy
 # ---------------------------------------------------------------------------
+
 
 class TestFallbackParser:
     # --- Permissions ---
@@ -170,10 +174,7 @@ class TestFallbackParser:
         assert isinstance(clauses, list)
 
     def test_multi_sentence(self):
-        text = (
-            "Only admin may call admin_tools. "
-            "guest shall not access delete_tool."
-        )
+        text = "Only admin may call admin_tools. guest shall not access delete_tool."
         clauses = _fallback_parse_nl_policy(text)
         types = {c.clause_type for c in clauses}
         # Should have at least permission and/or prohibition
@@ -188,6 +189,7 @@ class TestFallbackParser:
 # ---------------------------------------------------------------------------
 # CompiledUCANPolicy
 # ---------------------------------------------------------------------------
+
 
 class TestCompiledUCANPolicy:
     def _make_compiled(self):
@@ -223,6 +225,7 @@ class TestCompiledUCANPolicy:
 # ---------------------------------------------------------------------------
 # NLUCANPolicyCompiler
 # ---------------------------------------------------------------------------
+
 
 class TestNLUCANPolicyCompiler:
     def _compiler(self) -> NLUCANPolicyCompiler:
@@ -310,6 +313,7 @@ class TestNLUCANPolicyCompiler:
 # PolicyRegistry
 # ---------------------------------------------------------------------------
 
+
 class TestPolicyRegistry:
     def _registry(self) -> PolicyRegistry:
         compiler = NLUCANPolicyCompiler(use_logic_module=False)
@@ -382,6 +386,7 @@ class TestPolicyRegistry:
 # get_policy_registry singleton
 # ---------------------------------------------------------------------------
 
+
 class TestGetPolicyRegistry:
     def test_returns_registry_instance(self):
         reg = get_policy_registry()
@@ -396,6 +401,7 @@ class TestGetPolicyRegistry:
 # ---------------------------------------------------------------------------
 # UCANPolicyGate
 # ---------------------------------------------------------------------------
+
 
 class TestUCANPolicyGate:
     def _gate(self) -> UCANPolicyGate:
@@ -504,11 +510,10 @@ class TestUCANPolicyGate:
 # compile_nl_policy convenience function
 # ---------------------------------------------------------------------------
 
+
 class TestCompileNlPolicy:
     def test_returns_compiled_policy(self):
-        result = compile_nl_policy(
-            "alice may read_data", use_logic_module=False
-        )
+        result = compile_nl_policy("alice may read_data", use_logic_module=False)
         assert isinstance(result, CompiledUCANPolicy)
 
     def test_description_stored(self):
@@ -529,11 +534,13 @@ class TestCompileNlPolicy:
 # temporal_policy.get_policy_registry re-export
 # ---------------------------------------------------------------------------
 
+
 class TestTemporalPolicyReExport:
     def test_get_policy_registry_importable_from_temporal_policy(self):
         from ipfs_datasets_py.mcp_server.temporal_policy import (
             get_policy_registry as gpr,
         )
+
         reg = gpr()
         assert isinstance(reg, PolicyRegistry)
 
@@ -541,6 +548,7 @@ class TestTemporalPolicyReExport:
         from ipfs_datasets_py.mcp_server.temporal_policy import (
             get_policy_registry as tp_gpr,
         )
+
         tp_reg = tp_gpr()
         nl_reg = get_policy_registry()
         assert tp_reg is nl_reg

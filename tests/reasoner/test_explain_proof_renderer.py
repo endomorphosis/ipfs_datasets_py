@@ -31,7 +31,9 @@ def _build_reasoner(sentence: str, jurisdiction: str) -> tuple[HybridLawReasoner
 
 def test_explain_proof_nl_renderer_contract_and_fixture_content() -> None:
     case = _load_cases()[0]
-    reasoner, actor_ref, frame_ref = _build_reasoner(case["sentence"], case.get("jurisdiction", "us/federal"))
+    reasoner, actor_ref, frame_ref = _build_reasoner(
+        case["sentence"], case.get("jurisdiction", "us/federal")
+    )
 
     result = reasoner.check_compliance(
         {

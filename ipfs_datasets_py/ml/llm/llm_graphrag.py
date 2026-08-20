@@ -26,14 +26,16 @@ from typing import Dict, List, Optional, Any, Tuple, Callable, TYPE_CHECKING
 import numpy as np
 
 from ipfs_datasets_py.ml.llm.llm_interface import (
-    LLMInterface, 
-    LLMInterfaceFactory, 
+    LLMInterface,
+    LLMInterfaceFactory,
     GraphRAGPromptTemplates,
-    PromptLibrary, 
-    AdaptivePrompting, 
+    PromptLibrary,
+    AdaptivePrompting,
 )
-from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndex # Added import
-from ipfs_datasets_py.processors.storage.ipld.knowledge_graph import IPLDKnowledgeGraph # Added import
+from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndex  # Added import
+from ipfs_datasets_py.processors.storage.ipld.knowledge_graph import (
+    IPLDKnowledgeGraph,
+)  # Added import
 
 # Import UnifiedGraphRAGQueryOptimizer conditionally to avoid circular imports
 if TYPE_CHECKING:
@@ -71,7 +73,7 @@ class GraphRAGPerformanceMonitor:
         latency: float,
         success: bool,
         error_msg: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Record an LLM interaction.
@@ -96,7 +98,7 @@ class GraphRAGPerformanceMonitor:
             "latency": latency,
             "success": success,
             "error_msg": error_msg,
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         # Add to history
@@ -111,7 +113,7 @@ class GraphRAGPerformanceMonitor:
                 "success_count": 0,
                 "total_tokens": 0,
                 "total_latency": 0,
-                "error_count": 0
+                "error_count": 0,
             }
 
         self._task_metrics[task]["count"] += 1
@@ -130,7 +132,7 @@ class GraphRAGPerformanceMonitor:
                 "success_count": 0,
                 "total_tokens": 0,
                 "total_latency": 0,
-                "error_count": 0
+                "error_count": 0,
             }
 
         self._model_metrics[model]["count"] += 1
@@ -174,16 +176,13 @@ class GraphRAGPerformanceMonitor:
 
             metrics = self._task_metrics[task].copy()
             metrics["success_rate"] = (
-                metrics["success_count"] / metrics["count"]
-                if metrics["count"] > 0 else 0
+                metrics["success_count"] / metrics["count"] if metrics["count"] > 0 else 0
             )
             metrics["avg_tokens"] = (
-                metrics["total_tokens"] / metrics["count"]
-                if metrics["count"] > 0 else 0
+                metrics["total_tokens"] / metrics["count"] if metrics["count"] > 0 else 0
             )
             metrics["avg_latency"] = (
-                metrics["total_latency"] / metrics["count"]
-                if metrics["count"] > 0 else 0
+                metrics["total_latency"] / metrics["count"] if metrics["count"] > 0 else 0
             )
 
             return metrics
@@ -194,15 +193,18 @@ class GraphRAGPerformanceMonitor:
                 task_result = metrics.copy()
                 task_result["success_rate"] = (
                     task_result["success_count"] / task_result["count"]
-                    if task_result["count"] > 0 else 0
+                    if task_result["count"] > 0
+                    else 0
                 )
                 task_result["avg_tokens"] = (
                     task_result["total_tokens"] / task_result["count"]
-                    if task_result["count"] > 0 else 0
+                    if task_result["count"] > 0
+                    else 0
                 )
                 task_result["avg_latency"] = (
                     task_result["total_latency"] / task_result["count"]
-                    if task_result["count"] > 0 else 0
+                    if task_result["count"] > 0
+                    else 0
                 )
 
                 result[task_name] = task_result
@@ -225,16 +227,13 @@ class GraphRAGPerformanceMonitor:
 
             metrics = self._model_metrics[model].copy()
             metrics["success_rate"] = (
-                metrics["success_count"] / metrics["count"]
-                if metrics["count"] > 0 else 0
+                metrics["success_count"] / metrics["count"] if metrics["count"] > 0 else 0
             )
             metrics["avg_tokens"] = (
-                metrics["total_tokens"] / metrics["count"]
-                if metrics["count"] > 0 else 0
+                metrics["total_tokens"] / metrics["count"] if metrics["count"] > 0 else 0
             )
             metrics["avg_latency"] = (
-                metrics["total_latency"] / metrics["count"]
-                if metrics["count"] > 0 else 0
+                metrics["total_latency"] / metrics["count"] if metrics["count"] > 0 else 0
             )
 
             return metrics
@@ -245,22 +244,27 @@ class GraphRAGPerformanceMonitor:
                 model_result = metrics.copy()
                 model_result["success_rate"] = (
                     model_result["success_count"] / model_result["count"]
-                    if model_result["count"] > 0 else 0
+                    if model_result["count"] > 0
+                    else 0
                 )
                 model_result["avg_tokens"] = (
                     model_result["total_tokens"] / model_result["count"]
-                    if model_result["count"] > 0 else 0
+                    if model_result["count"] > 0
+                    else 0
                 )
                 model_result["avg_latency"] = (
                     model_result["total_latency"] / model_result["count"]
-                    if model_result["count"] > 0 else 0
+                    if model_result["count"] > 0
+                    else 0
                 )
 
                 result[model_name] = model_result
 
             return result
 
-    def get_recent_interactions(self, count: int = 10, task: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_recent_interactions(
+        self, count: int = 10, task: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
         Get recent interactions.
 
@@ -287,9 +291,7 @@ class GraphRAGPerformanceMonitor:
         return self._error_tracker.copy()
 
     def get_latency_percentiles(
-        self,
-        model: Optional[str] = None,
-        task: Optional[str] = None
+        self, model: Optional[str] = None, task: Optional[str] = None
     ) -> Dict[str, float]:
         """
         Get latency percentiles.
@@ -331,7 +333,7 @@ class GraphRAGPerformanceMonitor:
             "p99": latencies[int(n * 0.99)] if n > 0 else 0,
             "min": latencies[0] if n > 0 else 0,
             "max": latencies[-1] if n > 0 else 0,
-            "mean": sum(latencies) / n if n > 0 else 0
+            "mean": sum(latencies) / n if n > 0 else 0,
         }
 
 
@@ -349,35 +351,37 @@ class DomainSpecificProcessor:
         "academic": {
             "entity_types": ["paper", "author", "concept", "methodology", "finding"],
             "relationship_types": ["authored_by", "cites", "uses", "confirms", "contradicts"],
-            "prompt_tags": ["academic", "research"]
+            "prompt_tags": ["academic", "research"],
         },
         "medical": {
             "entity_types": ["condition", "treatment", "medication", "procedure", "symptom"],
             "relationship_types": ["treats", "causes", "diagnoses", "prevents", "indicates"],
-            "prompt_tags": ["medical", "healthcare"]
+            "prompt_tags": ["medical", "healthcare"],
         },
         "legal": {
             "entity_types": ["case", "statute", "regulation", "court", "party"],
             "relationship_types": ["cites", "overturns", "interprets", "applies", "rules_on"],
-            "prompt_tags": ["legal", "judicial"]
+            "prompt_tags": ["legal", "judicial"],
         },
         "financial": {
             "entity_types": ["company", "stock", "market", "report", "metric"],
-            "relationship_types": ["reports", "competes_with", "acquired", "invests_in", "correlates_with"],
-            "prompt_tags": ["financial", "business"]
+            "relationship_types": [
+                "reports",
+                "competes_with",
+                "acquired",
+                "invests_in",
+                "correlates_with",
+            ],
+            "prompt_tags": ["financial", "business"],
         },
         "technical": {
             "entity_types": ["component", "system", "function", "module", "interface"],
             "relationship_types": ["depends_on", "implements", "extends", "calls", "configures"],
-            "prompt_tags": ["technical", "software"]
-        }
+            "prompt_tags": ["technical", "software"],
+        },
     }
 
-    def __init__(
-        self,
-        adaptive_prompting: AdaptivePrompting,
-        default_domain: str = "academic"
-    ):
+    def __init__(self, adaptive_prompting: AdaptivePrompting, default_domain: str = "academic"):
         """
         Initialize domain-specific processor.
 
@@ -406,13 +410,11 @@ class DomainSpecificProcessor:
                 name=f"domain_{domain}",
                 condition=lambda ctx, d=domain: self._is_domain_applicable(ctx, d),
                 template_selector=selector,
-                priority=10  # Domain rules have high priority
+                priority=10,  # Domain rules have high priority
             )
 
     def _create_domain_detector(
-        self,
-        domain: str,
-        info: Dict[str, Any]
+        self, domain: str, info: Dict[str, Any]
     ) -> Callable[[Dict[str, Any]], float]:
         """
         Create domain detection function.
@@ -424,60 +426,61 @@ class DomainSpecificProcessor:
         Returns:
             Function that detects domain applicability
         """
+
         def detector(context: Dict[str, Any]) -> float:
             """Detect domain applicability."""
-            if 'graph_info' not in context:
+            if "graph_info" not in context:
                 return 0.0
 
-            graph_info = context['graph_info']
+            graph_info = context["graph_info"]
 
             # Check entity types
             entity_score = 0.0
-            if 'entity_types' in graph_info:
-                domain_types = set(info['entity_types'])
-                graph_types = set(graph_info['entity_types'])
+            if "entity_types" in graph_info:
+                domain_types = set(info["entity_types"])
+                graph_types = set(graph_info["entity_types"])
                 if domain_types & graph_types:  # Intersection
                     entity_score = len(domain_types & graph_types) / len(domain_types)
 
             # Check relationship types
             relation_score = 0.0
-            if 'relationship_types' in graph_info:
-                domain_relations = set(info['relationship_types'])
-                graph_relations = set(graph_info['relationship_types'])
+            if "relationship_types" in graph_info:
+                domain_relations = set(info["relationship_types"])
+                graph_relations = set(graph_info["relationship_types"])
                 if domain_relations & graph_relations:  # Intersection
                     relation_score = len(domain_relations & graph_relations) / len(domain_relations)
 
             # Check document metadata
             metadata_score = 0.0
-            if 'document_metadata' in graph_info:
-                metadata = graph_info['document_metadata']
+            if "document_metadata" in graph_info:
+                metadata = graph_info["document_metadata"]
                 if domain.lower() in str(metadata).lower():
                     metadata_score = 0.5
 
             # Check query content
             query_score = 0.0
-            if 'query' in context:
-                query = context['query'].lower()
+            if "query" in context:
+                query = context["query"].lower()
                 if domain.lower() in query:
                     query_score = 0.5
-                for entity_type in info['entity_types']:
+                for entity_type in info["entity_types"]:
                     if entity_type.lower() in query:
                         query_score += 0.1
-                for relation_type in info['relationship_types']:
-                    if relation_type.lower().replace('_', ' ') in query:
+                for relation_type in info["relationship_types"]:
+                    if relation_type.lower().replace("_", " ") in query:
                         query_score += 0.1
                 query_score = min(query_score, 1.0)
 
             # Combine scores
-            combined_score = 0.4 * entity_score + 0.3 * relation_score + 0.2 * metadata_score + 0.1 * query_score
+            combined_score = (
+                0.4 * entity_score + 0.3 * relation_score + 0.2 * metadata_score + 0.1 * query_score
+            )
             return combined_score
 
         return detector
 
     def _create_template_selector(
-        self,
-        domain: str,
-        info: Dict[str, Any]
+        self, domain: str, info: Dict[str, Any]
     ) -> Callable[[Dict[str, Any]], Tuple[str, Optional[str]]]:
         """
         Create template selection function.
@@ -489,18 +492,19 @@ class DomainSpecificProcessor:
         Returns:
             Function that selects templates based on domain
         """
+
         def selector(context: Dict[str, Any]) -> Tuple[str, Optional[str]]:
             """Select template based on domain."""
-            task = context.get('task', '')
+            task = context.get("task", "")
 
             # Try to find template with domain-specific tag
-            domain_tags = info.get('prompt_tags', [])
+            domain_tags = info.get("prompt_tags", [])
 
-            if task == 'cross_document_reasoning':
-                if 'academic' in domain_tags:
-                    return ('cross_document_reasoning', '1.1.0')  # Academic version
+            if task == "cross_document_reasoning":
+                if "academic" in domain_tags:
+                    return ("cross_document_reasoning", "1.1.0")  # Academic version
                 else:
-                    return ('cross_document_reasoning', None)  # Latest version
+                    return ("cross_document_reasoning", None)  # Latest version
 
             # For other tasks, return task name and latest version
             return (task, None)
@@ -537,10 +541,7 @@ class DomainSpecificProcessor:
         Returns:
             Detected domain or default domain
         """
-        scores = {
-            domain: detector(context)
-            for domain, detector in self._domain_detectors.items()
-        }
+        scores = {domain: detector(context) for domain, detector in self._domain_detectors.items()}
 
         if not scores:
             return self.default_domain
@@ -565,9 +566,7 @@ class DomainSpecificProcessor:
         return self.DOMAINS.get(domain, self.DOMAINS[self.default_domain])
 
     def enhance_context_with_domain(
-        self,
-        context: Dict[str, Any],
-        domain: Optional[str] = None
+        self, context: Dict[str, Any], domain: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Enhance context with domain-specific information.
@@ -586,8 +585,8 @@ class DomainSpecificProcessor:
 
         # Create enhanced context
         enhanced = context.copy()
-        enhanced['domain'] = domain
-        enhanced['domain_info'] = domain_info
+        enhanced["domain"] = domain
+        enhanced["domain_info"] = domain_info
 
         return enhanced
 
@@ -606,7 +605,7 @@ class GraphRAGLLMProcessor:
         llm_interface: Optional[LLMInterface] = None,
         prompt_library: Optional[PromptLibrary] = None,
         performance_monitor: Optional[GraphRAGPerformanceMonitor] = None,
-        query_optimizer: Optional['UnifiedGraphRAGQueryOptimizer'] = None
+        query_optimizer: Optional["UnifiedGraphRAGQueryOptimizer"] = None,
     ):
         """
         Initialize GraphRAG LLM processor.
@@ -653,7 +652,9 @@ class GraphRAGLLMProcessor:
 
     # --- Retrieval Methods (Implementations based on Optimizer requirements) ---
 
-    def search_by_vector(self, vector: np.ndarray, top_k: int = 5, min_score: float = 0.5, **kwargs) -> List[Dict[str, Any]]:
+    def search_by_vector(
+        self, vector: np.ndarray, top_k: int = 5, min_score: float = 0.5, **kwargs
+    ) -> List[Dict[str, Any]]:
         """Perform vector search using the initialized vector store."""
         if not self.vector_store:
             logging.error("Vector store not initialized in GraphRAGLLMProcessor.")
@@ -666,26 +667,36 @@ class GraphRAGLLMProcessor:
             # Filter by min_score and format
             formatted_results = []
             for result in search_results:
-                 if result.score >= min_score:
-                     formatted_results.append({
-                         "id": result.id, # Assuming result has 'id'
-                         "score": result.score, # Assuming result has 'score'
-                         "metadata": result.metadata, # Assuming result has 'metadata'
-                         "source": "vector" # Mark source for ranking
-                     })
+                if result.score >= min_score:
+                    formatted_results.append(
+                        {
+                            "id": result.id,  # Assuming result has 'id'
+                            "score": result.score,  # Assuming result has 'score'
+                            "metadata": result.metadata,  # Assuming result has 'metadata'
+                            "source": "vector",  # Mark source for ranking
+                        }
+                    )
             return formatted_results
         except AttributeError:
-             logging.error(f"Vector store ({type(self.vector_store)}) does not have a 'search' method.")
-             return []
+            logging.error(
+                f"Vector store ({type(self.vector_store)}) does not have a 'search' method."
+            )
+            return []
         except Exception as e:
             logging.error(f"Error during vector search: {e}")
             return []
 
-    def expand_by_graph(self, entities: List[Dict[str, Any]], max_depth: int = 2, edge_types: Optional[List[str]] = None, **kwargs) -> List[Dict[str, Any]]:
+    def expand_by_graph(
+        self,
+        entities: List[Dict[str, Any]],
+        max_depth: int = 2,
+        edge_types: Optional[List[str]] = None,
+        **kwargs,
+    ) -> List[Dict[str, Any]]:
         """Perform graph expansion using the initialized graph store."""
         if not self.graph_store:
             logging.error("Graph store not initialized in GraphRAGLLMProcessor.")
-            return entities # Return original entities if no graph store
+            return entities  # Return original entities if no graph store
 
         if not entities:
             return []
@@ -693,42 +704,54 @@ class GraphRAGLLMProcessor:
         try:
             # Assuming graph_store has a method like traverse_from_entities
             # Need to adapt input/output based on actual graph store implementation
-            seed_entities_info = [{"id": e["id"], "metadata": e.get("metadata", {})} for e in entities if "id" in e]
+            seed_entities_info = [
+                {"id": e["id"], "metadata": e.get("metadata", {})} for e in entities if "id" in e
+            ]
 
             # Call graph traversal (adjust parameters as needed for the actual method)
             traversed_entities = self.graph_store.traverse_from_entities(
-                entities=seed_entities_info, # Pass necessary info
+                entities=seed_entities_info,  # Pass necessary info
                 relationship_types=edge_types,
-                max_depth=max_depth
+                max_depth=max_depth,
             )
 
             # Combine original entities with traversed ones, marking source
             # Need a strategy to handle duplicates and combine info/scores
-            combined_results = entities[:] # Start with original vector results
+            combined_results = entities[:]  # Start with original vector results
             existing_ids = {e["id"] for e in entities}
 
             for trav_entity in traversed_entities:
-                 # Assuming traversed_entity is a dict with 'id', 'properties', etc.
-                 entity_id = trav_entity.get("id")
-                 if entity_id and entity_id not in existing_ids:
-                     combined_results.append({
-                         "id": entity_id,
-                         "score": 0.5, # Assign a default graph score or derive one
-                         "metadata": trav_entity.get("properties", {}),
-                         "source": "graph" # Mark source
-                     })
-                     existing_ids.add(entity_id)
-                 # TODO: Add logic to potentially update existing entities if found via graph
+                # Assuming traversed_entity is a dict with 'id', 'properties', etc.
+                entity_id = trav_entity.get("id")
+                if entity_id and entity_id not in existing_ids:
+                    combined_results.append(
+                        {
+                            "id": entity_id,
+                            "score": 0.5,  # Assign a default graph score or derive one
+                            "metadata": trav_entity.get("properties", {}),
+                            "source": "graph",  # Mark source
+                        }
+                    )
+                    existing_ids.add(entity_id)
+                # TODO: Add logic to potentially update existing entities if found via graph
 
             return combined_results
         except AttributeError:
-             logging.error(f"Graph store ({type(self.graph_store)}) does not have a 'traverse_from_entities' method.")
-             return entities # Return original entities
+            logging.error(
+                f"Graph store ({type(self.graph_store)}) does not have a 'traverse_from_entities' method."
+            )
+            return entities  # Return original entities
         except Exception as e:
             logging.error(f"Error during graph expansion: {e}")
-            return entities # Return original entities on error
+            return entities  # Return original entities on error
 
-    def rank_results(self, results: List[Dict[str, Any]], vector_weight: float = 0.7, graph_weight: float = 0.3, **kwargs) -> List[Dict[str, Any]]:
+    def rank_results(
+        self,
+        results: List[Dict[str, Any]],
+        vector_weight: float = 0.7,
+        graph_weight: float = 0.3,
+        **kwargs,
+    ) -> List[Dict[str, Any]]:
         """Rank combined results from vector search and graph expansion."""
         """Rank combined results from vector search and graph expansion."""
 
@@ -746,7 +769,8 @@ class GraphRAGLLMProcessor:
         min_vec_score = min(vector_scores) if vector_scores else 0.0
         max_vec_score = max(vector_scores) if vector_scores else 1.0
         range_vec = max_vec_score - min_vec_score
-        if range_vec == 0: range_vec = 1.0 # Avoid division by zero
+        if range_vec == 0:
+            range_vec = 1.0  # Avoid division by zero
 
         for r in vector_results:
             r["normalized_score"] = (r.get("score", 0.0) - min_vec_score) / range_vec
@@ -757,15 +781,16 @@ class GraphRAGLLMProcessor:
         min_graph_score = min(graph_scores) if graph_scores else 0.0
         max_graph_score = max(graph_scores) if graph_scores else 1.0
         range_graph = max_graph_score - min_graph_score
-        if range_graph == 0: range_graph = 1.0 # Avoid division by zero
+        if range_graph == 0:
+            range_graph = 1.0  # Avoid division by zero
 
         for r in graph_results:
-             # Assuming higher score is better for graph results too
+            # Assuming higher score is better for graph results too
             r["normalized_score"] = (r.get("score", 0.0) - min_graph_score) / range_graph
 
         # Assign default normalized score for others
         for r in other_results:
-            r["normalized_score"] = r.get("score", 0.0) # Or assign a fixed low score like 0.1
+            r["normalized_score"] = r.get("score", 0.0)  # Or assign a fixed low score like 0.1
 
         # --- Weighted Combination ---
         combined_results = vector_results + graph_results + other_results
@@ -779,7 +804,7 @@ class GraphRAGLLMProcessor:
             elif source == "graph":
                 final_score = norm_score * graph_weight
             else:
-                final_score = norm_score * 0.1 # Lower weight for unknown sources
+                final_score = norm_score * 0.1  # Lower weight for unknown sources
 
             result["final_score"] = final_score
             final_ranked_results.append(result)
@@ -796,7 +821,7 @@ class GraphRAGLLMProcessor:
         entity: Dict[str, Any],
         doc1_context: str,
         doc2_context: str,
-        graph_info: Optional[Dict[str, Any]] = None
+        graph_info: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Analyze evidence chain between two documents connected by an entity.
@@ -826,15 +851,17 @@ class GraphRAGLLMProcessor:
             "doc1": doc1,
             "doc2": doc2,
             "entity": entity,
-            "graph_info": graph_info or {}
+            "graph_info": graph_info or {},
         }
 
         # Create a query to help with domain detection
-        entity_name = entity.get('name', entity['id'])
-        entity_type = entity.get('type', 'Entity')
-        doc1_title = doc1.get('title', f"Document {doc1['id']}")
-        doc2_title = doc2.get('title', f"Document {doc2['id']}")
-        context["query"] = f"Analyze the connection between {doc1_title} and {doc2_title} through the {entity_type} {entity_name}"
+        entity_name = entity.get("name", entity["id"])
+        entity_type = entity.get("type", "Entity")
+        doc1_title = doc1.get("title", f"Document {doc1['id']}")
+        doc2_title = doc2.get("title", f"Document {doc2['id']}")
+        context["query"] = (
+            f"Analyze the connection between {doc1_title} and {doc2_title} through the {entity_type} {entity_name}"
+        )
 
         # Detect domain and enhance context
         enhanced_context = self.domain_processor.enhance_context_with_domain(context)
@@ -844,8 +871,7 @@ class GraphRAGLLMProcessor:
 
         # Get the appropriate template using adaptive prompting
         template = self.adaptive_prompting.select_prompt(
-            task="evidence_chain_analysis",
-            default_template="evidence_chain_analysis"
+            task="evidence_chain_analysis", default_template="evidence_chain_analysis"
         )
 
         # Log parameters for performance monitoring
@@ -854,12 +880,12 @@ class GraphRAGLLMProcessor:
         try:
             # Format prompt
             prompt = template.format(
-                doc1=doc1.get('title', f"Document {doc1['id']}"),
-                doc2=doc2.get('title', f"Document {doc2['id']}"),
-                entity=entity.get('name', entity['id']),
-                entity_type=entity.get('type', 'Entity'),
+                doc1=doc1.get("title", f"Document {doc1['id']}"),
+                doc2=doc2.get("title", f"Document {doc2['id']}"),
+                entity=entity.get("name", entity["id"]),
+                entity_type=entity.get("type", "Entity"),
                 doc1_context=doc1_context,
-                doc2_context=doc2_context
+                doc2_context=doc2_context,
             )
 
             # Get schema based on domain
@@ -882,8 +908,8 @@ class GraphRAGLLMProcessor:
                     "domain": domain,
                     "doc1_id": doc1.get("id", "unknown"),
                     "doc2_id": doc2.get("id", "unknown"),
-                    "entity_id": entity.get("id", "unknown")
-                }
+                    "entity_id": entity.get("id", "unknown"),
+                },
             )
 
             # Cache result
@@ -907,8 +933,8 @@ class GraphRAGLLMProcessor:
                     "domain": enhanced_context.get("domain", "unknown"),
                     "doc1_id": doc1.get("id", "unknown"),
                     "doc2_id": doc2.get("id", "unknown"),
-                    "entity_id": entity.get("id", "unknown")
-                }
+                    "entity_id": entity.get("id", "unknown"),
+                },
             )
 
             # Log error
@@ -920,7 +946,7 @@ class GraphRAGLLMProcessor:
                 "relationship_type": "unknown",
                 "explanation": f"Error analyzing evidence chain: {error_msg}",
                 "inference": "Unable to generate inference due to error",
-                "confidence": 0.0
+                "confidence": 0.0,
             }
 
     def _get_evidence_chain_schema(self, domain: str) -> Dict[str, Any]:
@@ -939,13 +965,13 @@ class GraphRAGLLMProcessor:
             "properties": {
                 "relationship_type": {
                     "type": "string",
-                    "enum": ["complementary", "contradictory", "identical", "unrelated"]
+                    "enum": ["complementary", "contradictory", "identical", "unrelated"],
                 },
                 "explanation": {"type": "string"},
                 "inference": {"type": "string"},
-                "confidence": {"type": "number"}
+                "confidence": {"type": "number"},
             },
-            "required": ["relationship_type", "explanation", "inference", "confidence"]
+            "required": ["relationship_type", "explanation", "inference", "confidence"],
         }
 
         # Domain-specific enhancements
@@ -954,9 +980,15 @@ class GraphRAGLLMProcessor:
             base_schema["properties"]["research_implications"] = {"type": "string"}
         elif domain == "medical":
             base_schema["properties"]["clinical_relevance"] = {"type": "string"}
-            base_schema["properties"]["certainty_level"] = {"type": "string", "enum": ["high", "moderate", "low", "inconclusive"]}
+            base_schema["properties"]["certainty_level"] = {
+                "type": "string",
+                "enum": ["high", "moderate", "low", "inconclusive"],
+            }
         elif domain == "legal":
-            base_schema["properties"]["precedent_relationship"] = {"type": "string", "enum": ["controlling", "persuasive", "distinguishable", "not_applicable"]}
+            base_schema["properties"]["precedent_relationship"] = {
+                "type": "string",
+                "enum": ["controlling", "persuasive", "distinguishable", "not_applicable"],
+            }
             base_schema["properties"]["legal_significance"] = {"type": "string"}
         elif domain == "financial":
             base_schema["properties"]["market_implications"] = {"type": "string"}
@@ -968,10 +1000,7 @@ class GraphRAGLLMProcessor:
         return base_schema
 
     def identify_knowledge_gaps(
-        self,
-        entity: Dict[str, Any],
-        doc1_info: str,
-        doc2_info: str
+        self, entity: Dict[str, Any], doc1_info: str, doc2_info: str
     ) -> Dict[str, Any]:
         """
         Identify knowledge gaps between documents about an entity.
@@ -985,7 +1014,7 @@ class GraphRAGLLMProcessor:
             Identified knowledge gaps
         """
         # Create cache key
-        entity_info = f'{entity["id"]}:{doc1_info[:50]}:{doc2_info[:50]}'
+        entity_info = f"{entity['id']}:{doc1_info[:50]}:{doc2_info[:50]}"
         cache_key = f"knowledge_gaps:{hash(entity_info)}"
 
         # Check cache
@@ -994,26 +1023,18 @@ class GraphRAGLLMProcessor:
 
         # Format prompt
         prompt = self.templates.KNOWLEDGE_GAP_IDENTIFICATION.format(
-            entity=entity.get('name', entity['id']),
-            doc1_info=doc1_info,
-            doc2_info=doc2_info
+            entity=entity.get("name", entity["id"]), doc1_info=doc1_info, doc2_info=doc2_info
         )
 
         # Get structured output
         schema = {
             "type": "object",
             "properties": {
-                "gaps_doc1_to_doc2": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                },
-                "gaps_doc2_to_doc1": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                },
-                "summary": {"type": "string"}
+                "gaps_doc1_to_doc2": {"type": "array", "items": {"type": "string"}},
+                "gaps_doc2_to_doc1": {"type": "array", "items": {"type": "string"}},
+                "summary": {"type": "string"},
             },
-            "required": ["gaps_doc1_to_doc2", "gaps_doc2_to_doc1", "summary"]
+            "required": ["gaps_doc1_to_doc2", "gaps_doc2_to_doc1", "summary"],
         }
 
         result = self.llm.generate_with_structured_output(prompt, schema)
@@ -1031,7 +1052,7 @@ class GraphRAGLLMProcessor:
         doc1_info: str,
         doc2_info: str,
         relation_type: str,
-        knowledge_gaps: Dict[str, Any]
+        knowledge_gaps: Dict[str, Any],
     ) -> Dict[str, Any]:
         """
         Generate deep inferences from document relationships.
@@ -1049,7 +1070,7 @@ class GraphRAGLLMProcessor:
             Generated inferences
         """
         # Create cache key
-        entity_info = f'{entity["id"]}:{doc1["id"]}:{doc2["id"]}:{relation_type}'
+        entity_info = f"{entity['id']}:{doc1['id']}:{doc2['id']}:{relation_type}"
         cache_key = f"deep_inference:{hash(entity_info)}"
 
         # Check cache
@@ -1058,32 +1079,26 @@ class GraphRAGLLMProcessor:
 
         # Format prompt
         prompt = self.templates.DEEP_INFERENCE.format(
-            entity_name=entity.get('name', entity['id']),
-            entity_type=entity.get('type', 'Entity'),
-            doc1_title=doc1.get('title', f"Document {doc1['id']}"),
+            entity_name=entity.get("name", entity["id"]),
+            entity_type=entity.get("type", "Entity"),
+            doc1_title=doc1.get("title", f"Document {doc1['id']}"),
             doc1_info=doc1_info,
-            doc2_title=doc2.get('title', f"Document {doc2['id']}"),
+            doc2_title=doc2.get("title", f"Document {doc2['id']}"),
             doc2_info=doc2_info,
             relation_type=relation_type,
-            knowledge_gaps=knowledge_gaps.get('summary', 'Not available')
+            knowledge_gaps=knowledge_gaps.get("summary", "Not available"),
         )
 
         # Get structured output
         schema = {
             "type": "object",
             "properties": {
-                "inferences": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                },
-                "implications": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                },
+                "inferences": {"type": "array", "items": {"type": "string"}},
+                "implications": {"type": "array", "items": {"type": "string"}},
                 "confidence": {"type": "number"},
-                "explanation": {"type": "string"}
+                "explanation": {"type": "string"},
             },
-            "required": ["inferences", "confidence", "explanation"]
+            "required": ["inferences", "confidence", "explanation"],
         }
 
         result = self.llm.generate_with_structured_output(prompt, schema)
@@ -1093,10 +1108,7 @@ class GraphRAGLLMProcessor:
 
         return result
 
-    def analyze_transitive_relationships(
-        self,
-        relationship_chain: str
-    ) -> Dict[str, Any]:
+    def analyze_transitive_relationships(self, relationship_chain: str) -> Dict[str, Any]:
         """
         Analyze transitive relationships in an entity chain.
 
@@ -1114,26 +1126,18 @@ class GraphRAGLLMProcessor:
             return self._response_cache[cache_key]
 
         # Format prompt
-        prompt = self.templates.TRANSITIVE_ANALYSIS.format(
-            relationship_chain=relationship_chain
-        )
+        prompt = self.templates.TRANSITIVE_ANALYSIS.format(relationship_chain=relationship_chain)
 
         # Get structured output
         schema = {
             "type": "object",
             "properties": {
-                "transitive_relationships": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                },
-                "implications": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                },
+                "transitive_relationships": {"type": "array", "items": {"type": "string"}},
+                "implications": {"type": "array", "items": {"type": "string"}},
                 "confidence": {"type": "number"},
-                "explanation": {"type": "string"}
+                "explanation": {"type": "string"},
             },
-            "required": ["transitive_relationships", "confidence", "explanation"]
+            "required": ["transitive_relationships", "confidence", "explanation"],
         }
 
         result = self.llm.generate_with_structured_output(prompt, schema)
@@ -1152,8 +1156,8 @@ class GraphRAGLLMProcessor:
         graph_info: Optional[Dict[str, Any]] = None,
         query_vector: Optional[np.ndarray] = None,
         doc_trace_ids: Optional[List[str]] = None,
-            root_cids: Optional[List[str]] = None,
-            skip_cache: bool = False # Added skip_cache parameter
+        root_cids: Optional[List[str]] = None,
+        skip_cache: bool = False,  # Added skip_cache parameter
     ) -> Dict[str, Any]:
         """
         Synthesize information across documents to answer a query, potentially using query optimization.
@@ -1197,11 +1201,12 @@ class GraphRAGLLMProcessor:
         context = {
             "task": "cross_document_reasoning",
             "query": query,
-            "graph_info": graph_info or {
+            "graph_info": graph_info
+            or {
                 "entity_types": list(entity_types),
                 "relationship_types": list(relationship_types),
-                "document_metadata": document_metadata
-            }
+                "document_metadata": document_metadata,
+            },
         }
 
         # Start timing for statistics recording (if optimizer exists)
@@ -1222,8 +1227,8 @@ class GraphRAGLLMProcessor:
                     "doc_trace_ids": doc_trace_ids,
                     "root_cids": root_cids,
                     # Add other potential parameters the optimizer might use
-                    "max_vector_results": 10, # Example default
-                    "max_traversal_depth": 2, # Example default
+                    "max_vector_results": 10,  # Example default
+                    "max_traversal_depth": 2,  # Example default
                 }
 
                 # Use the optimizer's execute_query method for retrieval & budget tracking
@@ -1231,12 +1236,12 @@ class GraphRAGLLMProcessor:
                 retrieved_context, execution_info = self.query_optimizer.execute_query(
                     processor=self,
                     query=optimizer_query,
-                    priority="normal", # Or determine priority based on context
-                    skip_cache=skip_cache
+                    priority="normal",  # Or determine priority based on context
+                    skip_cache=skip_cache,
                 )
                 # Add optimizer plan to context for adaptive prompting
                 if "plan" in execution_info:
-                     context["optimized_plan"] = execution_info["plan"]
+                    context["optimized_plan"] = execution_info["plan"]
 
             except Exception as e:
                 logging.error(f"Error during optimized query execution: {str(e)}")
@@ -1249,11 +1254,13 @@ class GraphRAGLLMProcessor:
             # For now, just use the initially provided documents as context
             # TODO: Implement a basic retrieval fallback if needed
             logging.warning("Query optimizer not used. Using provided documents as context.")
-            retrieved_context = documents # Use input documents directly
+            retrieved_context = documents  # Use input documents directly
 
         # --- LLM Synthesis Step ---
         # Detect domain and enhance context (using potentially optimized context)
-        context["retrieved_context"] = retrieved_context # Add retrieved context for domain detection
+        context["retrieved_context"] = (
+            retrieved_context  # Add retrieved context for domain detection
+        )
         enhanced_context = self.domain_processor.enhance_context_with_domain(context)
         domain = enhanced_context.get("domain", "academic")
 
@@ -1262,8 +1269,7 @@ class GraphRAGLLMProcessor:
 
         # Get the appropriate template using adaptive prompting
         template = self.adaptive_prompting.select_prompt(
-            task="cross_document_reasoning",
-            default_template="cross_document_reasoning"
+            task="cross_document_reasoning", default_template="cross_document_reasoning"
         )
         # Format retrieved context for prompt
         # Use retrieved_context instead of the original documents list
@@ -1281,7 +1287,7 @@ class GraphRAGLLMProcessor:
                 query=query,
                 documents=doc_text,
                 connections=enhanced_connections,
-                reasoning_depth=reasoning_depth
+                reasoning_depth=reasoning_depth,
             )
 
             # Get domain-specific schema
@@ -1302,10 +1308,10 @@ class GraphRAGLLMProcessor:
                 metadata={
                     "domain": domain,
                     "reasoning_depth": reasoning_depth,
-                    "num_documents": len(retrieved_context), # Use count of retrieved docs
+                    "num_documents": len(retrieved_context),  # Use count of retrieved docs
                     "optimizer_used": optimizer_used,
-                    "execution_info": execution_info # Include optimizer execution info
-                }
+                    "execution_info": execution_info,  # Include optimizer execution info
+                },
             )
 
             # Enhance result with domain-specific post-processing
@@ -1334,10 +1340,10 @@ class GraphRAGLLMProcessor:
                 metadata={
                     "domain": domain,
                     "reasoning_depth": reasoning_depth,
-                    "num_documents": len(retrieved_context), # Use count of retrieved docs
+                    "num_documents": len(retrieved_context),  # Use count of retrieved docs
                     "optimizer_used": optimizer_used,
-                    "execution_info": execution_info # Include optimizer execution info
-                }
+                    "execution_info": execution_info,  # Include optimizer execution info
+                },
             )
 
             # Log error
@@ -1349,15 +1355,11 @@ class GraphRAGLLMProcessor:
                 "answer": f"Error synthesizing information: {error_msg}",
                 "reasoning": "Unable to synthesize information due to error",
                 "confidence": 0.0,
-                "execution_info": execution_info # Include execution info even on error
+                "execution_info": execution_info,  # Include execution info even on error
             }
         # Note: The overall query time recording was moved to the optimizer's execute_query method
 
-    def _format_documents_for_domain(
-        self,
-        documents: List[Dict[str, Any]],
-        domain: str
-    ) -> str:
+    def _format_documents_for_domain(self, documents: List[Dict[str, Any]], domain: str) -> str:
         """
         Format documents based on domain.
 
@@ -1372,12 +1374,12 @@ class GraphRAGLLMProcessor:
         if domain == "academic":
             paper_texts = []
             for i, doc in enumerate(documents):
-                title = doc.get('title', f'Document {doc.get("id", i)}')
-                authors = doc.get('authors', 'Unknown')
-                year = doc.get('year', 'Unknown')
-                abstract = doc.get('abstract', doc.get('content', 'No content'))
+                title = doc.get("title", f"Document {doc.get('id', i)}")
+                authors = doc.get("authors", "Unknown")
+                year = doc.get("year", "Unknown")
+                abstract = doc.get("abstract", doc.get("content", "No content"))
 
-                paper_text = f"PAPER {i+1}: {title}\n"
+                paper_text = f"PAPER {i + 1}: {title}\n"
                 paper_text += f"AUTHORS: {authors}\n"
                 paper_text += f"YEAR: {year}\n"
                 paper_text += f"ABSTRACT: {abstract}"
@@ -1387,12 +1389,12 @@ class GraphRAGLLMProcessor:
         elif domain == "medical":
             med_texts = []
             for i, doc in enumerate(documents):
-                title = doc.get('title', f'Document {doc.get("id", i)}')
-                date = doc.get('date', 'Unknown')
-                source = doc.get('source', 'Unknown')
-                content = doc.get('content', 'No content')
+                title = doc.get("title", f"Document {doc.get('id', i)}")
+                date = doc.get("date", "Unknown")
+                source = doc.get("source", "Unknown")
+                content = doc.get("content", "No content")
 
-                med_text = f"CLINICAL DOCUMENT {i+1}: {title}\n"
+                med_text = f"CLINICAL DOCUMENT {i + 1}: {title}\n"
                 med_text += f"DATE: {date}\n"
                 med_text += f"SOURCE: {source}\n"
                 med_text += f"CONTENT: {content}"
@@ -1402,12 +1404,12 @@ class GraphRAGLLMProcessor:
         elif domain == "legal":
             legal_texts = []
             for i, doc in enumerate(documents):
-                title = doc.get('title', f'Document {doc.get("id", i)}')
-                jurisdiction = doc.get('jurisdiction', 'Unknown')
-                date = doc.get('date', 'Unknown')
-                content = doc.get('content', 'No content')
+                title = doc.get("title", f"Document {doc.get('id', i)}")
+                jurisdiction = doc.get("jurisdiction", "Unknown")
+                date = doc.get("date", "Unknown")
+                content = doc.get("content", "No content")
 
-                legal_text = f"LEGAL DOCUMENT {i+1}: {title}\n"
+                legal_text = f"LEGAL DOCUMENT {i + 1}: {title}\n"
                 legal_text += f"JURISDICTION: {jurisdiction}\n"
                 legal_text += f"DATE: {date}\n"
                 legal_text += f"CONTENT: {content}"
@@ -1417,12 +1419,12 @@ class GraphRAGLLMProcessor:
         elif domain == "financial":
             financial_texts = []
             for i, doc in enumerate(documents):
-                title = doc.get('title', f'Document {doc.get("id", i)}')
-                company = doc.get('company', 'Unknown')
-                period = doc.get('period', 'Unknown')
-                content = doc.get('content', 'No content')
+                title = doc.get("title", f"Document {doc.get('id', i)}")
+                company = doc.get("company", "Unknown")
+                period = doc.get("period", "Unknown")
+                content = doc.get("content", "No content")
 
-                financial_text = f"FINANCIAL DOCUMENT {i+1}: {title}\n"
+                financial_text = f"FINANCIAL DOCUMENT {i + 1}: {title}\n"
                 financial_text += f"COMPANY: {company}\n"
                 financial_text += f"PERIOD: {period}\n"
                 financial_text += f"CONTENT: {content}"
@@ -1432,12 +1434,12 @@ class GraphRAGLLMProcessor:
         elif domain == "technical":
             tech_texts = []
             for i, doc in enumerate(documents):
-                title = doc.get('title', f'Document {doc.get("id", i)}')
-                component = doc.get('component', 'Unknown')
-                version = doc.get('version', 'Unknown')
-                content = doc.get('content', 'No content')
+                title = doc.get("title", f"Document {doc.get('id', i)}")
+                component = doc.get("component", "Unknown")
+                version = doc.get("version", "Unknown")
+                content = doc.get("content", "No content")
 
-                tech_text = f"TECHNICAL DOCUMENT {i+1}: {title}\n"
+                tech_text = f"TECHNICAL DOCUMENT {i + 1}: {title}\n"
                 tech_text += f"COMPONENT: {component}\n"
                 tech_text += f"VERSION: {version}\n"
                 tech_text += f"CONTENT: {content}"
@@ -1448,18 +1450,16 @@ class GraphRAGLLMProcessor:
             # Generic formatting for other domains
             generic_texts = []
             for i, doc in enumerate(documents):
-                title = doc.get('title', f'Document {doc.get("id", i)}')
-                content = doc.get('content', 'No content')
+                title = doc.get("title", f"Document {doc.get('id', i)}")
+                content = doc.get("content", "No content")
 
-                generic_text = f"DOCUMENT {i+1}: {title}\n{content}"
+                generic_text = f"DOCUMENT {i + 1}: {title}\n{content}"
                 generic_texts.append(generic_text)
 
             return "\n\n".join(generic_texts)
 
     def _get_cross_document_reasoning_schema(
-        self,
-        domain: str,
-        reasoning_depth: str
+        self, domain: str, reasoning_depth: str
     ) -> Dict[str, Any]:
         """
         Get cross document reasoning schema for a specific domain and reasoning depth.
@@ -1478,33 +1478,27 @@ class GraphRAGLLMProcessor:
                 "answer": {"type": "string"},
                 "reasoning": {"type": "string"},
                 "confidence": {"type": "number"},
-                "references": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                },
-                "knowledge_gaps": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                }
+                "references": {"type": "array", "items": {"type": "string"}},
+                "knowledge_gaps": {"type": "array", "items": {"type": "string"}},
             },
-            "required": ["answer", "reasoning", "confidence"]
+            "required": ["answer", "reasoning", "confidence"],
         }
 
         # Add depth-specific properties
         if reasoning_depth in ["moderate", "deep"]:
             base_schema["properties"]["evidence_strength"] = {
                 "type": "string",
-                "enum": ["strong", "moderate", "weak", "inconclusive"]
+                "enum": ["strong", "moderate", "weak", "inconclusive"],
             }
 
             if reasoning_depth == "deep":
                 base_schema["properties"]["alternative_interpretations"] = {
                     "type": "array",
-                    "items": {"type": "string"}
+                    "items": {"type": "string"},
                 }
                 base_schema["properties"]["implications"] = {
                     "type": "array",
-                    "items": {"type": "string"}
+                    "items": {"type": "string"},
                 }
 
         # Add domain-specific properties
@@ -1512,40 +1506,37 @@ class GraphRAGLLMProcessor:
             base_schema["properties"]["research_implications"] = {"type": "string"}
             base_schema["properties"]["future_research_directions"] = {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {"type": "string"},
             }
         elif domain == "medical":
             base_schema["properties"]["clinical_significance"] = {"type": "string"}
             base_schema["properties"]["certainty_level"] = {
                 "type": "string",
-                "enum": ["high", "moderate", "low", "inconclusive"]
+                "enum": ["high", "moderate", "low", "inconclusive"],
             }
         elif domain == "legal":
             base_schema["properties"]["legal_principle"] = {"type": "string"}
             base_schema["properties"]["precedent_value"] = {
                 "type": "string",
-                "enum": ["binding", "persuasive", "distinguishable", "not_applicable"]
+                "enum": ["binding", "persuasive", "distinguishable", "not_applicable"],
             }
         elif domain == "financial":
             base_schema["properties"]["market_impact"] = {"type": "string"}
             base_schema["properties"]["risk_assessment"] = {
                 "type": "string",
-                "enum": ["high", "moderate", "low", "negligible"]
+                "enum": ["high", "moderate", "low", "negligible"],
             }
         elif domain == "technical":
             base_schema["properties"]["technical_implications"] = {"type": "string"}
             base_schema["properties"]["implementation_considerations"] = {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {"type": "string"},
             }
 
         return base_schema
 
     def _enhance_result_for_domain(
-        self,
-        result: Dict[str, Any],
-        domain: str,
-        reasoning_depth: str
+        self, result: Dict[str, Any], domain: str, reasoning_depth: str
     ) -> Dict[str, Any]:
         """
         Enhance result based on domain and reasoning depth.
@@ -1595,7 +1586,7 @@ class ReasoningEnhancer:
         self,
         llm_processor: Optional[GraphRAGLLMProcessor] = None,
         performance_recorder: Optional[Callable[[str, Dict[str, Any]], None]] = None,
-        query_optimizer: Optional['UnifiedGraphRAGQueryOptimizer'] = None
+        query_optimizer: Optional["UnifiedGraphRAGQueryOptimizer"] = None,
     ):
         """
         Initialize reasoning enhancer.
@@ -1609,9 +1600,7 @@ class ReasoningEnhancer:
         self.query_optimizer = query_optimizer
 
         # Create LLM processor with the query optimizer
-        self.processor = llm_processor or GraphRAGLLMProcessor(
-            query_optimizer=query_optimizer
-        )
+        self.processor = llm_processor or GraphRAGLLMProcessor(query_optimizer=query_optimizer)
 
         self.performance_recorder = performance_recorder
 
@@ -1623,7 +1612,7 @@ class ReasoningEnhancer:
         doc1_context: str,
         doc2_context: str,
         reasoning_depth: str,
-        graph_info: Optional[Dict[str, Any]] = None
+        graph_info: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Enhance document connection analysis with LLM reasoning.
@@ -1655,19 +1644,22 @@ class ReasoningEnhancer:
                     "explanation": evidence_analysis["explanation"],
                     "inference": evidence_analysis["inference"],
                     "confidence": evidence_analysis["confidence"],
-                    "reasoning_depth": reasoning_depth
+                    "reasoning_depth": reasoning_depth,
                 }
 
                 # Record performance if recorder is provided
                 if self.performance_recorder:
-                    self.performance_recorder("enhance_document_connections", {
-                        "reasoning_depth": reasoning_depth,
-                        "duration": time.time() - start_time,
-                        "success": True,
-                        "doc1_id": doc1.get("id", "unknown"),
-                        "doc2_id": doc2.get("id", "unknown"),
-                        "entity_id": entity.get("id", "unknown")
-                    })
+                    self.performance_recorder(
+                        "enhance_document_connections",
+                        {
+                            "reasoning_depth": reasoning_depth,
+                            "duration": time.time() - start_time,
+                            "success": True,
+                            "doc1_id": doc1.get("id", "unknown"),
+                            "doc2_id": doc2.get("id", "unknown"),
+                            "entity_id": entity.get("id", "unknown"),
+                        },
+                    )
 
                 return result
 
@@ -1684,9 +1676,9 @@ class ReasoningEnhancer:
                 "knowledge_gaps": knowledge_gaps["summary"],
                 "specific_gaps": {
                     "doc1_to_doc2": knowledge_gaps["gaps_doc1_to_doc2"],
-                    "doc2_to_doc1": knowledge_gaps["gaps_doc2_to_doc1"]
+                    "doc2_to_doc1": knowledge_gaps["gaps_doc2_to_doc1"],
                 },
-                "reasoning_depth": reasoning_depth
+                "reasoning_depth": reasoning_depth,
             }
 
             # Get domain-specific fields if present
@@ -1697,27 +1689,37 @@ class ReasoningEnhancer:
             # For deep reasoning, add additional inference generation
             if reasoning_depth == "deep":
                 deep_inference = self.processor.generate_deep_inference(
-                    entity, doc1, doc2, doc1_context, doc2_context,
-                    evidence_analysis["relationship_type"], knowledge_gaps
+                    entity,
+                    doc1,
+                    doc2,
+                    doc1_context,
+                    doc2_context,
+                    evidence_analysis["relationship_type"],
+                    knowledge_gaps,
                 )
 
-                result.update({
-                    "deep_inferences": deep_inference["inferences"],
-                    "implications": deep_inference.get("implications", []),
-                    "deep_explanation": deep_inference["explanation"],
-                    "deep_confidence": deep_inference["confidence"]
-                })
+                result.update(
+                    {
+                        "deep_inferences": deep_inference["inferences"],
+                        "implications": deep_inference.get("implications", []),
+                        "deep_explanation": deep_inference["explanation"],
+                        "deep_confidence": deep_inference["confidence"],
+                    }
+                )
 
             # Record performance if recorder is provided
             if self.performance_recorder:
-                self.performance_recorder("enhance_document_connections", {
-                    "reasoning_depth": reasoning_depth,
-                    "duration": time.time() - start_time,
-                    "success": True,
-                    "doc1_id": doc1.get("id", "unknown"),
-                    "doc2_id": doc2.get("id", "unknown"),
-                    "entity_id": entity.get("id", "unknown")
-                })
+                self.performance_recorder(
+                    "enhance_document_connections",
+                    {
+                        "reasoning_depth": reasoning_depth,
+                        "duration": time.time() - start_time,
+                        "success": True,
+                        "doc1_id": doc1.get("id", "unknown"),
+                        "doc2_id": doc2.get("id", "unknown"),
+                        "entity_id": entity.get("id", "unknown"),
+                    },
+                )
 
             return result
 
@@ -1728,15 +1730,18 @@ class ReasoningEnhancer:
 
             # Record failure if recorder is provided
             if self.performance_recorder:
-                self.performance_recorder("enhance_document_connections", {
-                    "reasoning_depth": reasoning_depth,
-                    "duration": time.time() - start_time,
-                    "success": False,
-                    "error": str(e),
-                    "doc1_id": doc1.get("id", "unknown"),
-                    "doc2_id": doc2.get("id", "unknown"),
-                    "entity_id": entity.get("id", "unknown")
-                })
+                self.performance_recorder(
+                    "enhance_document_connections",
+                    {
+                        "reasoning_depth": reasoning_depth,
+                        "duration": time.time() - start_time,
+                        "success": False,
+                        "error": str(e),
+                        "doc1_id": doc1.get("id", "unknown"),
+                        "doc2_id": doc2.get("id", "unknown"),
+                        "entity_id": entity.get("id", "unknown"),
+                    },
+                )
 
             # Return basic result on error
             return {
@@ -1745,7 +1750,7 @@ class ReasoningEnhancer:
                 "inference": "Unable to generate inference due to error",
                 "confidence": 0.0,
                 "reasoning_depth": reasoning_depth,
-                "error": str(e)
+                "error": str(e),
             }
 
     def enhance_cross_document_reasoning(
@@ -1757,7 +1762,7 @@ class ReasoningEnhancer:
         graph_info: Optional[Dict[str, Any]] = None,
         query_vector: Optional[np.ndarray] = None,
         doc_trace_ids: Optional[List[str]] = None,
-        root_cids: Optional[List[str]] = None
+        root_cids: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Enhance cross-document reasoning results with LLM synthesis.
@@ -1793,10 +1798,9 @@ class ReasoningEnhancer:
 
             # Enhance graph_info with connection information
             enhanced_graph_info = graph_info or {}
-            enhanced_graph_info.update({
-                "entity_types": list(entity_types),
-                "relationship_types": list(relationship_types)
-            })
+            enhanced_graph_info.update(
+                {"entity_types": list(entity_types), "relationship_types": list(relationship_types)}
+            )
 
             # Get LLM synthesis with optimizer integration
             synthesis = self.processor.synthesize_cross_document_reasoning(
@@ -1807,7 +1811,7 @@ class ReasoningEnhancer:
                 graph_info=enhanced_graph_info,
                 query_vector=query_vector,
                 doc_trace_ids=doc_trace_ids,
-                root_cids=root_cids
+                root_cids=root_cids,
             )
 
             # Format final result
@@ -1819,7 +1823,7 @@ class ReasoningEnhancer:
                 "knowledge_gaps": synthesis.get("knowledge_gaps", []),
                 "raw_connections": connections,
                 "reasoning_depth": reasoning_depth,
-                "domain": synthesis.get("domain", "general")
+                "domain": synthesis.get("domain", "general"),
             }
 
             # Add optimizer information if available
@@ -1849,15 +1853,18 @@ class ReasoningEnhancer:
 
             # Record performance if recorder is provided
             if self.performance_recorder:
-                self.performance_recorder("enhance_cross_document_reasoning", {
-                    "reasoning_depth": reasoning_depth,
-                    "duration": time.time() - start_time,
-                    "success": True,
-                    "num_documents": len(documents),
-                    "num_connections": len(connections),
-                    "domain": result.get("domain", "general"),
-                    "optimizer_used": "optimizer_info" in synthesis
-                })
+                self.performance_recorder(
+                    "enhance_cross_document_reasoning",
+                    {
+                        "reasoning_depth": reasoning_depth,
+                        "duration": time.time() - start_time,
+                        "success": True,
+                        "num_documents": len(documents),
+                        "num_connections": len(connections),
+                        "domain": result.get("domain", "general"),
+                        "optimizer_used": "optimizer_info" in synthesis,
+                    },
+                )
 
             return result
 
@@ -1868,14 +1875,17 @@ class ReasoningEnhancer:
 
             # Record failure if recorder is provided
             if self.performance_recorder:
-                self.performance_recorder("enhance_cross_document_reasoning", {
-                    "reasoning_depth": reasoning_depth,
-                    "duration": time.time() - start_time,
-                    "success": False,
-                    "error": str(e),
-                    "num_documents": len(documents),
-                    "num_connections": len(connections) if connections else 0
-                })
+                self.performance_recorder(
+                    "enhance_cross_document_reasoning",
+                    {
+                        "reasoning_depth": reasoning_depth,
+                        "duration": time.time() - start_time,
+                        "success": False,
+                        "error": str(e),
+                        "num_documents": len(documents),
+                        "num_connections": len(connections) if connections else 0,
+                    },
+                )
 
             # Return basic result on error
             return {
@@ -1886,7 +1896,7 @@ class ReasoningEnhancer:
                 "knowledge_gaps": [],
                 "raw_connections": connections,
                 "reasoning_depth": reasoning_depth,
-                "error": str(e)
+                "error": str(e),
             }
 
     def optimize_and_reason(
@@ -1898,7 +1908,7 @@ class ReasoningEnhancer:
         reasoning_depth: str = "moderate",
         graph_info: Optional[Dict[str, Any]] = None,
         doc_trace_ids: Optional[List[str]] = None,
-        root_cids: Optional[List[str]] = None
+        root_cids: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Perform optimized cross-document reasoning using both query optimization and LLM synthesis.
@@ -1926,7 +1936,7 @@ class ReasoningEnhancer:
                 documents=documents,
                 connections=connections,
                 reasoning_depth=reasoning_depth,
-                graph_info=graph_info
+                graph_info=graph_info,
             )
 
         # Use the optimized reasoning method with the query vector and CIDs
@@ -1938,13 +1948,11 @@ class ReasoningEnhancer:
             graph_info=graph_info,
             query_vector=query_vector,
             doc_trace_ids=doc_trace_ids,
-            root_cids=root_cids
+            root_cids=root_cids,
         )
 
     def _format_connections_for_llm(
-        self,
-        connections: List[Dict[str, Any]],
-        reasoning_depth: str
+        self, connections: List[Dict[str, Any]], reasoning_depth: str
     ) -> str:
         """
         Format document connections for LLM prompt.
@@ -1961,15 +1969,15 @@ class ReasoningEnhancer:
 
         formatted = []
         for i, conn in enumerate(connections):
-            conn_str = f"CONNECTION {i+1}:\n"
+            conn_str = f"CONNECTION {i + 1}:\n"
 
             # Extract document titles or IDs
-            doc1_title = conn['doc1'].get('title', f"Document {conn['doc1'].get('id', 'unknown')}")
-            doc2_title = conn['doc2'].get('title', f"Document {conn['doc2'].get('id', 'unknown')}")
+            doc1_title = conn["doc1"].get("title", f"Document {conn['doc1'].get('id', 'unknown')}")
+            doc2_title = conn["doc2"].get("title", f"Document {conn['doc2'].get('id', 'unknown')}")
 
             # Extract entity name, type, and other basic info
-            entity_name = conn['entity'].get('name', conn['entity'].get('id', 'unknown'))
-            entity_type = conn['entity'].get('type', 'Entity')
+            entity_name = conn["entity"].get("name", conn["entity"].get("id", "unknown"))
+            entity_type = conn["entity"].get("type", "Entity")
 
             # Format based on reasoning depth
             if reasoning_depth == "basic":

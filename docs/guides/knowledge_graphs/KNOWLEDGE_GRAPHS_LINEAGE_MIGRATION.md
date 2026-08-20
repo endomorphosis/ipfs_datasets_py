@@ -50,7 +50,7 @@ knowledge_graphs/
 ```python
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
     CrossDocumentLineageTracker,
-    CrossDocumentLineageGraph
+    CrossDocumentLineageGraph,
 )
 
 tracker = CrossDocumentLineageTracker()
@@ -59,10 +59,7 @@ graph = CrossDocumentLineageGraph()
 
 **New Code (Recommended):**
 ```python
-from ipfs_datasets_py.knowledge_graphs.lineage import (
-    LineageTracker,
-    LineageGraph
-)
+from ipfs_datasets_py.knowledge_graphs.lineage import LineageTracker, LineageGraph
 
 tracker = LineageTracker()
 graph = LineageGraph()
@@ -74,7 +71,7 @@ graph = LineageGraph()
 ```python
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced import (
     EnhancedLineageTracker,
-    SemanticAnalyzer
+    SemanticAnalyzer,
 )
 
 tracker = EnhancedLineageTracker()
@@ -83,10 +80,7 @@ analyzer = SemanticAnalyzer()
 
 **New Code (Recommended):**
 ```python
-from ipfs_datasets_py.knowledge_graphs.lineage import (
-    EnhancedLineageTracker,
-    SemanticAnalyzer
-)
+from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker, SemanticAnalyzer
 
 tracker = EnhancedLineageTracker()
 analyzer = SemanticAnalyzer()
@@ -99,7 +93,7 @@ analyzer = SemanticAnalyzer()
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
     LineageNode,
     LineageLink,
-    LineageTransformationDetail
+    LineageTransformationDetail,
 )
 ```
 
@@ -108,7 +102,7 @@ from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
 from ipfs_datasets_py.knowledge_graphs.lineage import (
     LineageNode,
     LineageLink,
-    LineageTransformationDetail
+    LineageTransformationDetail,
 )
 ```
 
@@ -116,9 +110,7 @@ from ipfs_datasets_py.knowledge_graphs.lineage import (
 
 **Old Code (Deprecated):**
 ```python
-from ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced import (
-    LineageVisualizer
-)
+from ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced import LineageVisualizer
 ```
 
 **New Code (Recommended):**
@@ -133,7 +125,7 @@ from ipfs_datasets_py.knowledge_graphs.lineage import LineageVisualizer
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced import (
     LineageMetrics,
     ImpactAnalyzer,
-    DependencyAnalyzer
+    DependencyAnalyzer,
 )
 ```
 
@@ -142,7 +134,7 @@ from ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced import (
 from ipfs_datasets_py.knowledge_graphs.lineage import (
     LineageMetrics,
     ImpactAnalyzer,
-    DependencyAnalyzer
+    DependencyAnalyzer,
 )
 ```
 
@@ -188,26 +180,28 @@ import os
 import re
 from pathlib import Path
 
+
 def migrate_imports(directory):
     """Migrate all Python files in directory."""
-    for py_file in Path(directory).rglob('*.py'):
+    for py_file in Path(directory).rglob("*.py"):
         content = py_file.read_text()
-        
+
         # Replace imports
         content = content.replace(
-            'from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import',
-            'from ipfs_datasets_py.knowledge_graphs.lineage import'
+            "from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import",
+            "from ipfs_datasets_py.knowledge_graphs.lineage import",
         )
         content = content.replace(
-            'from ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced import',
-            'from ipfs_datasets_py.knowledge_graphs.lineage import'
+            "from ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced import",
+            "from ipfs_datasets_py.knowledge_graphs.lineage import",
         )
-        
+
         py_file.write_text(content)
         print(f"Migrated: {py_file}")
 
+
 # Usage
-migrate_imports('your_project_directory')
+migrate_imports("your_project_directory")
 ```
 
 ---
@@ -238,7 +232,8 @@ migrate_imports('your_project_directory')
 ### Step 1: Enable Deprecation Warnings
 ```python
 import warnings
-warnings.simplefilter('always', DeprecationWarning)
+
+warnings.simplefilter("always", DeprecationWarning)
 
 # Your code here - warnings will show up
 ```

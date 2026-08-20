@@ -22,11 +22,7 @@ A powerful search tool for finding patterns in code.
 from ipfs_datasets_py.mcp_server.tools.development_tools.codebase_search import codebase_search
 
 results = codebase_search(
-    pattern="def my_function",
-    path="./src",
-    max_depth=3,
-    format="json",
-    regex=True
+    pattern="def my_function", path="./src", max_depth=3, format="json", regex=True
 )
 ```
 
@@ -48,12 +44,11 @@ Generates comprehensive documentation from source code.
 
 **Usage Example:**
 ```python
-from ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator import documentation_generator
-
-docs = documentation_generator(
-    input_path="./src/my_module.py",
-    format_type="markdown"
+from ipfs_datasets_py.mcp_server.tools.development_tools.documentation_generator import (
+    documentation_generator,
 )
+
+docs = documentation_generator(input_path="./src/my_module.py", format_type="markdown")
 ```
 
 **VS Code Copilot Chat Usage:**
@@ -76,10 +71,7 @@ Comprehensive code analysis and linting for Python codebases.
 ```python
 from ipfs_datasets_py.mcp_server.tools.development_tools.linting_tools import lint_python_codebase
 
-lint_results = lint_python_codebase(
-    path="./src",
-    fix=False
-)
+lint_results = lint_python_codebase(path="./src", fix=False)
 ```
 
 **VS Code Copilot Chat Usage:**
@@ -110,16 +102,16 @@ test_spec = {
         {
             "name": "test_function",
             "description": "Test the main function",
-            "assertions": ["assert result == expected"]
+            "assertions": ["assert result == expected"],
         }
-    ]
+    ],
 }
 
 test_code = test_generator(
     name="test_my_module",
     description="Tests for my_module.py",
     test_specification=json.dumps(test_spec),
-    harness="pytest"
+    harness="pytest",
 )
 ```
 
@@ -150,7 +142,7 @@ test_results = run_comprehensive_tests(
     run_linting=True,
     test_framework="pytest",
     coverage=True,
-    output_formats=["json", "markdown"]
+    output_formats=["json", "markdown"],
 )
 ```
 

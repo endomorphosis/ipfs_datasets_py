@@ -29,8 +29,10 @@ from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_collector(enabled: bool = True):
     from ipfs_datasets_py.mcp_server.monitoring import EnhancedMetricsCollector
+
     return EnhancedMetricsCollector(enabled=enabled)
 
 
@@ -43,6 +45,7 @@ def _run(coro):
 # _start_monitoring — already-started guard (line 130)
 # ---------------------------------------------------------------------------
 
+
 class TestStartMonitoringAlreadyStarted:
     """_start_monitoring() should be a no-op if _monitoring_started is True."""
 
@@ -54,7 +57,9 @@ class TestStartMonitoringAlreadyStarted:
         """
         mc = _make_collector()
         mc._monitoring_started = True
-        with patch("ipfs_datasets_py.mcp_server.monitoring.spawn_system_task", create=True) as mock_spawn:
+        with patch(
+            "ipfs_datasets_py.mcp_server.monitoring.spawn_system_task", create=True
+        ) as mock_spawn:
             mc._start_monitoring()
             mock_spawn.assert_not_called()
 
@@ -62,6 +67,7 @@ class TestStartMonitoringAlreadyStarted:
 # ---------------------------------------------------------------------------
 # _start_monitoring — in_async_context True (lines 138–142)
 # ---------------------------------------------------------------------------
+
 
 class TestStartMonitoringInAsyncContext:
     """_start_monitoring() spawns tasks when in_async_context() is True."""
@@ -83,10 +89,14 @@ class TestStartMonitoringInAsyncContext:
         mock_anyio_lowlevel.spawn_system_task = fake_spawn
 
         import sys
-        with patch(
-            "ipfs_datasets_py.utils.anyio_compat.in_async_context",
-            return_value=True,
-        ), patch.dict(sys.modules, {"anyio.lowlevel": mock_anyio_lowlevel}):
+
+        with (
+            patch(
+                "ipfs_datasets_py.utils.anyio_compat.in_async_context",
+                return_value=True,
+            ),
+            patch.dict(sys.modules, {"anyio.lowlevel": mock_anyio_lowlevel}),
+        ):
             mc._start_monitoring()
 
         assert mc._monitoring_started is True
@@ -96,6 +106,7 @@ class TestStartMonitoringInAsyncContext:
 # ---------------------------------------------------------------------------
 # _collect_system_metrics — psutil path (lines 219–277)
 # ---------------------------------------------------------------------------
+
 
 class TestCollectSystemMetricsPsutil:
     """_collect_system_metrics() with psutil available."""
@@ -108,19 +119,20 @@ class TestCollectSystemMetricsPsutil:
         THEN: A PerformanceSnapshot is appended with psutil-sourced values
         """
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
+
         mc = _make_collector()
 
         mock_psutil = MagicMock()
         mock_psutil.cpu_percent.return_value = 42.0
         vm = MagicMock()
         vm.percent = 55.0
-        vm.used = 4 * 1024 ** 3
-        vm.available = 4 * 1024 ** 3
+        vm.used = 4 * 1024**3
+        vm.available = 4 * 1024**3
         mock_psutil.virtual_memory.return_value = vm
         disk = MagicMock()
         disk.percent = 30.0
-        disk.used = 100 * 1024 ** 3
-        disk.free = 900 * 1024 ** 3
+        disk.used = 100 * 1024**3
+        disk.free = 900 * 1024**3
         mock_psutil.disk_usage.return_value = disk
         net = MagicMock()
         net.bytes_sent = 1000
@@ -128,15 +140,16 @@ class TestCollectSystemMetricsPsutil:
         mock_psutil.net_io_counters.return_value = net
         proc = MagicMock()
         mem_info = MagicMock()
-        mem_info.rss = 256 * 1024 ** 2
+        mem_info.rss = 256 * 1024**2
         proc.memory_info.return_value = mem_info
         proc.cpu_percent.return_value = 5.0
         proc.open_files.return_value = []
         proc.num_threads.return_value = 4
         mock_psutil.Process.return_value = proc
 
-        with patch.object(mon_mod, "HAVE_PSUTIL", True), patch.object(
-            mon_mod, "psutil", mock_psutil
+        with (
+            patch.object(mon_mod, "HAVE_PSUTIL", True),
+            patch.object(mon_mod, "psutil", mock_psutil),
         ):
             await mc._collect_system_metrics()
 
@@ -155,13 +168,15 @@ class TestCollectSystemMetricsPsutil:
         """
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
         from ipfs_datasets_py.mcp_server.exceptions import MetricsCollectionError
+
         mc = _make_collector()
 
         mock_psutil = MagicMock()
         mock_psutil.cpu_percent.side_effect = OSError("no cpu")
 
-        with patch.object(mon_mod, "HAVE_PSUTIL", True), patch.object(
-            mon_mod, "psutil", mock_psutil
+        with (
+            patch.object(mon_mod, "HAVE_PSUTIL", True),
+            patch.object(mon_mod, "psutil", mock_psutil),
         ):
             with pytest.raises(MetricsCollectionError):
                 await mc._collect_system_metrics()
@@ -175,13 +190,15 @@ class TestCollectSystemMetricsPsutil:
         """
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
         from ipfs_datasets_py.mcp_server.exceptions import MetricsCollectionError
+
         mc = _make_collector()
 
         mock_psutil = MagicMock()
         mock_psutil.cpu_percent.side_effect = RuntimeError("unexpected")
 
-        with patch.object(mon_mod, "HAVE_PSUTIL", True), patch.object(
-            mon_mod, "psutil", mock_psutil
+        with (
+            patch.object(mon_mod, "HAVE_PSUTIL", True),
+            patch.object(mon_mod, "psutil", mock_psutil),
         ):
             with pytest.raises(MetricsCollectionError):
                 await mc._collect_system_metrics()
@@ -190,6 +207,7 @@ class TestCollectSystemMetricsPsutil:
 # ---------------------------------------------------------------------------
 # track_request — exception task_id paths (lines 320–324)
 # ---------------------------------------------------------------------------
+
 
 class TestTrackRequestTaskIdFallbacks:
     """track_request() falls back to 'sync' for AttributeError and generic Exception."""
@@ -202,6 +220,7 @@ class TestTrackRequestTaskIdFallbacks:
         THEN: No exception is raised; request is tracked and removed after
         """
         import anyio
+
         mc = _make_collector()
 
         with patch.object(anyio, "get_current_task", side_effect=AttributeError("no task")):
@@ -218,6 +237,7 @@ class TestTrackRequestTaskIdFallbacks:
         THEN: No exception is raised; request is tracked
         """
         import anyio
+
         mc = _make_collector()
 
         with patch.object(anyio, "get_current_task", side_effect=RuntimeError("fail")):
@@ -231,6 +251,7 @@ class TestTrackRequestTaskIdFallbacks:
 # _check_health — sync awaitable return path (line 539)
 # ---------------------------------------------------------------------------
 
+
 class TestCheckHealthAwaitableSync:
     """_check_health() handles a sync function returning an awaitable."""
 
@@ -242,6 +263,7 @@ class TestCheckHealthAwaitableSync:
         THEN: The coroutine is awaited and its result stored
         """
         from ipfs_datasets_py.mcp_server.monitoring import HealthCheckResult
+
         mc = _make_collector()
 
         async def _inner():
@@ -261,6 +283,7 @@ class TestCheckHealthAwaitableSync:
 # _cleanup_old_data — alerts eviction (lines 672–673)
 # ---------------------------------------------------------------------------
 
+
 class TestCleanupOldDataAlerts:
     """_cleanup_old_data() evicts old alerts."""
 
@@ -273,13 +296,16 @@ class TestCleanupOldDataAlerts:
         """
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
         from collections import deque
+
         mc = _make_collector()
         mc.retention_hours = 1
 
         old_ts = datetime.utcnow() - timedelta(hours=2)
-        mc.alerts = deque([
-            {"timestamp": old_ts, "type": "warning", "message": "old"},
-        ])
+        mc.alerts = deque(
+            [
+                {"timestamp": old_ts, "type": "warning", "message": "old"},
+            ]
+        )
 
         await mc._cleanup_old_data()
 
@@ -307,6 +333,7 @@ class TestCleanupOldDataAlerts:
 # shutdown() (lines 1007–1019)
 # ---------------------------------------------------------------------------
 
+
 class TestShutdown:
     """shutdown() cancels monitoring and cleanup tasks if present."""
 
@@ -332,6 +359,7 @@ class TestShutdown:
         mc = _make_collector()
         mock_task = AsyncMock()
         import anyio
+
         mock_task.__await__ = lambda self: iter([])
         mock_task.cancel = MagicMock()
         # Make awaiting the task raise CancelledError
@@ -367,6 +395,7 @@ class TestShutdown:
         THEN: cancel() is invoked on both
         """
         import anyio
+
         mc = _make_collector()
         cancelled_exc = anyio.get_cancelled_exc_class()
 
@@ -385,6 +414,7 @@ class TestShutdown:
 # P2PMetricsCollector — collect_delegation_metrics (lines 1816–1817)
 # ---------------------------------------------------------------------------
 
+
 class TestP2PDelegationMetrics:
     """P2PMetricsCollector._record_delegation_metrics() gracefully handles errors."""
 
@@ -395,6 +425,7 @@ class TestP2PDelegationMetrics:
         THEN: No exception is raised (exception is swallowed with debug log)
         """
         from ipfs_datasets_py.mcp_server.monitoring import P2PMetricsCollector
+
         collector = P2PMetricsCollector()
 
         with patch.dict("sys.modules", {"ipfs_datasets_py.mcp_server.ucan_delegation": None}):
@@ -407,6 +438,7 @@ class TestP2PDelegationMetrics:
         THEN: record_delegation_metrics is invoked with the manager and base_collector
         """
         from ipfs_datasets_py.mcp_server.monitoring import P2PMetricsCollector
+
         collector = P2PMetricsCollector()
 
         mock_mgr = MagicMock()
@@ -417,6 +449,7 @@ class TestP2PDelegationMetrics:
         mock_ucan_mod.record_delegation_metrics = mock_record
 
         import sys
+
         orig = sys.modules.get("ipfs_datasets_py.mcp_server.ucan_delegation")
         sys.modules["ipfs_datasets_py.mcp_server.ucan_delegation"] = mock_ucan_mod
         try:
@@ -433,6 +466,7 @@ class TestP2PDelegationMetrics:
 # Global singleton lazy init (lines 1884, 1894)
 # ---------------------------------------------------------------------------
 
+
 class TestGlobalSingletonLazyInit:
     """get_metrics_collector() and get_p2p_metrics_collector() create on first call."""
 
@@ -447,6 +481,7 @@ class TestGlobalSingletonLazyInit:
             EnhancedMetricsCollector,
             get_metrics_collector,
         )
+
         orig = mon_mod.metrics_collector
         try:
             mon_mod.metrics_collector = None
@@ -468,6 +503,7 @@ class TestGlobalSingletonLazyInit:
             P2PMetricsCollector,
             get_p2p_metrics_collector,
         )
+
         orig = mon_mod.p2p_metrics_collector
         try:
             mon_mod.p2p_metrics_collector = None

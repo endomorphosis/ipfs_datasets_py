@@ -240,16 +240,19 @@ def test_public_inputs_contain_required_fields(provekit_bridge):
     assert len(records) >= 1
 
     required_keys = {
-        "theorem", "theorem_hash", "axioms_commitment",
-        "circuit_ref", "circuit_version", "ruleset_id",
-        "attestation_ref", "attestation_view_version",
+        "theorem",
+        "theorem_hash",
+        "axioms_commitment",
+        "circuit_ref",
+        "circuit_version",
+        "ruleset_id",
+        "attestation_ref",
+        "attestation_view_version",
     }
     for rec in records:
         pi = rec.get("public_inputs") or {}
         missing = required_keys - pi.keys()
-        assert not missing, (
-            f"Public inputs missing keys: {missing}. Got: {list(pi.keys())}"
-        )
+        assert not missing, f"Public inputs missing keys: {missing}. Got: {list(pi.keys())}"
 
 
 def test_public_inputs_theorem_hash_is_deterministic(provekit_bridge):
@@ -263,9 +266,7 @@ def test_public_inputs_theorem_hash_is_deterministic(provekit_bridge):
         pi = rec["public_inputs"]
         theorem = pi["theorem"]
         expected_hash = theorem_hash_hex(theorem)
-        assert pi["theorem_hash"] == expected_hash, (
-            f"theorem_hash mismatch for theorem={theorem!r}"
-        )
+        assert pi["theorem_hash"] == expected_hash, f"theorem_hash mismatch for theorem={theorem!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -397,6 +398,7 @@ def test_frame_logic_view_is_present(provekit_bridge):
 
 def test_provekit_bridge_output_has_same_view_names_as_simulated(monkeypatch):
     """ProveKit and simulated bridges expose identical top-level view name sets."""
+
     def _fake_generate_proof(self, theorem, private_axioms, metadata):
         return _build_provekit_proof(theorem, list(private_axioms or []))
 
@@ -481,10 +483,7 @@ def test_private_axioms_do_not_appear_in_serialized_bridge_output(provekit_bridg
 
 def test_multiple_formulas_produce_multiple_attestations(provekit_bridge):
     """Multi-formula input produces one attestation record per formula."""
-    multi_text = (
-        "All persons are equal before the law. "
-        "No person shall be denied equal protection."
-    )
+    multi_text = "All persons are equal before the law. No person shall be denied equal protection."
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         ir_doc, context = provekit_bridge.encode(multi_text)

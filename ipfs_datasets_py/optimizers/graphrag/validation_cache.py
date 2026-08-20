@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class CacheStatsDict(TypedDict, total=False):
     """Statistics dictionary for cache performance.
-    
+
     Fields:
         hits: Number of cache hits
         misses: Number of cache misses
@@ -36,6 +36,7 @@ class CacheStatsDict(TypedDict, total=False):
         total_requests: Total number of requests
         total_size_mb: Total cache size in megabytes
     """
+
     hits: int
     misses: int
     evictions: int
@@ -47,39 +48,41 @@ class CacheStatsDict(TypedDict, total=False):
 
 class MultiLayerCacheStatsDict(TypedDict, total=False):
     """Combined statistics for multi-layer cache.
-    
+
     Fields:
         tdfol_cache: Stats dict for TDFOL cache layer
         consistency_cache: Stats dict for consistency cache layer
         incremental_cache: Stats dict for incremental cache layer
         total_hit_rate: Combined hit rate across all layers (0-1)
     """
+
     tdfol_cache: CacheStatsDict
     consistency_cache: CacheStatsDict
     incremental_cache: CacheStatsDict
     total_hit_rate: float
 
+
 @dataclass
 class CacheStats:
     """Statistics for cache performance monitoring."""
-    
+
     hits: int = 0
     misses: int = 0
     evictions: int = 0
     writes: int = 0
     total_size_bytes: int = 0
-    
+
     @property
     def hit_rate(self) -> float:
         """Calculate cache hit rate (0.0 to 1.0)."""
         total = self.hits + self.misses
         return self.hits / total if total > 0 else 0.0
-    
+
     @property
     def total_requests(self) -> int:
         """Total number of cache requests."""
         return self.hits + self.misses
-    
+
     def to_dict(self) -> CacheStatsDict:
         """Convert to dictionary for JSON serialization."""
         return {
@@ -96,17 +99,17 @@ class CacheStats:
 class LRUCache:
     """
     Least-Recently-Used cache with size limits and eviction.
-    
+
     This cache evicts the least recently used items when capacity is reached.
     Supports persistence to disk and statistical monitoring.
-    
+
     Example:
         >>> cache = LRUCache(max_size=100, max_memory_mb=50)
         >>> cache.set("key1", {"result": "value"})
         >>> result = cache.get("key1")
         >>> print(cache.stats.hit_rate)
     """
-    
+
     def __init__(
         self,
         max_size: int = 1000,
@@ -116,7 +119,7 @@ class LRUCache:
     ):
         """
         Initialize LRU cache.
-        
+
         Args:
             max_size: Maximum number of entries
             max_memory_mb: Maximum memory usage in MB
@@ -129,24 +132,24 @@ class LRUCache:
         self.persistence_path = persistence_path or (
             Path.home() / ".cache" / "ontology_validator" / "logic_cache.json"
         )
-        
+
         # OrderedDict maintains insertion order
         self._cache: OrderedDict[str, Tuple[Any, int, float]] = OrderedDict()
         # Format: {key: (value, size_bytes, timestamp)}
-        
+
         self.stats = CacheStats()
-        
+
         # Load from disk if persistence enabled
         if self.enable_persistence:
             self._load_from_disk()
-    
+
     def get(self, key: str) -> Optional[Any]:
         """
         Get value from cache.
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             Cached value or None if not found
         """
@@ -161,64 +164,64 @@ class LRUCache:
             self.stats.misses += 1
             logger.debug(f"Cache miss: {key[:12]}... (hit rate: {self.stats.hit_rate:.2%})")
             return None
-    
+
     def set(self, key: str, value: Any) -> None:
         """
         Set value in cache.
-        
+
         Args:
             key: Cache key
             value: Value to cache
         """
         # Estimate size
         size_bytes = len(json.dumps(value).encode())
-        
+
         # Remove old entry if exists
         if key in self._cache:
             old_value, old_size, old_timestamp = self._cache.pop(key)
             self.stats.total_size_bytes -= old_size
-        
+
         # Evict entries if needed
         while (
             len(self._cache) >= self.max_size
             or self.stats.total_size_bytes + size_bytes > self.max_memory_bytes
         ):
             self._evict_lru()
-        
+
         # Add new entry
         self._cache[key] = (value, size_bytes, time.time())
         self.stats.total_size_bytes += size_bytes
         self.stats.writes += 1
-        
+
         logger.debug(
             f"Cache set: {key[:12]}... "
             f"(size: {len(self._cache)}/{self.max_size}, "
-            f"mem: {self.stats.total_size_bytes / (1024*1024):.2f}MB)"
+            f"mem: {self.stats.total_size_bytes / (1024 * 1024):.2f}MB)"
         )
-    
+
     def _evict_lru(self) -> None:
         """Evict least recently used entry."""
         if not self._cache:
             return
-        
+
         # Pop first item (LRU)
         key, (value, size, timestamp) = self._cache.popitem(last=False)
         self.stats.total_size_bytes -= size
         self.stats.evictions += 1
         logger.debug(f"Evicted LRU entry: {key[:12]}...")
-    
+
     def clear(self) -> None:
         """Clear all cache entries."""
         self._cache.clear()
         self.stats.total_size_bytes = 0
         logger.info("Cache cleared")
-    
+
     def _load_from_disk(self) -> None:
         """Load cache from disk."""
         if not self.persistence_path.exists():
             logger.debug("No cache file found, starting fresh")
             return
-        
+
         try:
             base_dir = self.persistence_path.parent if self.persistence_path.is_absolute() else None
             safe_path = validate_input_path(
@@ -226,9 +229,9 @@ class LRUCache:
                 must_exist=True,
                 base_dir=base_dir,
             )
-            with open(safe_path, 'r') as f:
+            with open(safe_path, "r") as f:
                 data = json.load(f)
-            
+
             # Restore cache entries
             for key, entry in data.get("entries", {}).items():
                 value = entry["value"]
@@ -236,19 +239,19 @@ class LRUCache:
                 timestamp = entry.get("timestamp", time.time())
                 self._cache[key] = (value, size, timestamp)
                 self.stats.total_size_bytes += size
-            
+
             logger.info(f"Loaded {len(self._cache)} entries from cache file")
         except (OSError, json.JSONDecodeError, TypeError, ValueError, PathValidationError) as e:
             logger.warning(f"Failed to load cache from disk: {e}")
-    
+
     def _save_to_disk(self) -> None:
         """Save cache to disk."""
         if not self.enable_persistence:
             return
-        
+
         try:
             self.persistence_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             data = {
                 "version": "1.0",
                 "entries": {
@@ -261,20 +264,20 @@ class LRUCache:
                 },
                 "stats": self.stats.to_dict(),
             }
-            
+
             base_dir = self.persistence_path.parent if self.persistence_path.is_absolute() else None
             safe_path = validate_output_path(
                 self.persistence_path,
                 allow_overwrite=True,
                 base_dir=base_dir,
             )
-            with open(safe_path, 'w') as f:
+            with open(safe_path, "w") as f:
                 json.dump(data, f, indent=2)
-            
+
             logger.debug(f"Saved cache to {self.persistence_path}")
         except (OSError, TypeError, ValueError, PathValidationError) as e:
             logger.warning(f"Failed to save cache to disk: {e}")
-    
+
     def __del__(self):
         """Save cache on destruction."""
         if self.enable_persistence:
@@ -284,18 +287,18 @@ class LRUCache:
 class ValidationCache:
     """
     Specialized cache for logic validation results.
-    
+
     Provides multiple cache layers:
     - TDFOL formula cache (keyed by ontology hash)
     - Consistency check cache (keyed by formula hash)
     - Incremental validation cache (keyed by entity/relationship IDs)
-    
+
     Example:
         >>> cache = ValidationCache(max_size=500)
         >>> cache.set_tdfol(ontology_hash, formulas)
         >>> formulas = cache.get_tdfol(ontology_hash)
     """
-    
+
     def __init__(
         self,
         max_size: int = 1000,
@@ -304,7 +307,7 @@ class ValidationCache:
     ):
         """
         Initialize validation cache.
-        
+
         Args:
             max_size: Maximum entries per cache layer
             max_memory_mb: Maximum memory per cache layer
@@ -316,54 +319,60 @@ class ValidationCache:
             enable_persistence=enable_persistence,
             persistence_path=Path.home() / ".cache" / "ontology_validator" / "tdfol_cache.json",
         )
-        
+
         self.consistency_cache = LRUCache(
             max_size=max_size,
             max_memory_mb=max_memory_mb,
             enable_persistence=enable_persistence,
-            persistence_path=Path.home() / ".cache" / "ontology_validator" / "consistency_cache.json",
+            persistence_path=Path.home()
+            / ".cache"
+            / "ontology_validator"
+            / "consistency_cache.json",
         )
-        
+
         self.incremental_cache = LRUCache(
             max_size=max_size * 10,  # More entries for incremental cache
             max_memory_mb=max_memory_mb * 2,
             enable_persistence=enable_persistence,
-            persistence_path=Path.home() / ".cache" / "ontology_validator" / "incremental_cache.json",
+            persistence_path=Path.home()
+            / ".cache"
+            / "ontology_validator"
+            / "incremental_cache.json",
         )
-    
+
     def get_tdfol(self, key: str) -> Optional[List[Any]]:
         """Get TDFOL formulas from cache."""
         return self.tdfol_cache.get(f"tdfol:{key}")
-    
+
     def set_tdfol(self, key: str, formulas: List[Any]) -> None:
         """Set TDFOL formulas in cache."""
         self.tdfol_cache.set(f"tdfol:{key}", formulas)
-    
+
     def get_consistency(self, key: str) -> Optional[Dict[str, Any]]:
         """Get consistency check result from cache."""
         return self.consistency_cache.get(f"consistency:{key}")
-    
+
     def set_consistency(self, key: str, result: Dict[str, Any]) -> None:
         """Set consistency check result in cache."""
         self.consistency_cache.set(f"consistency:{key}", result)
-    
+
     def get_incremental(self, entity_ids: List[str]) -> Optional[Dict[str, Any]]:
         """Get incremental validation result from cache."""
         key = self._incremental_key(entity_ids)
         return self.incremental_cache.get(f"incremental:{key}")
-    
+
     def set_incremental(self, entity_ids: List[str], result: Dict[str, Any]) -> None:
         """Set incremental validation result in cache."""
         key = self._incremental_key(entity_ids)
         self.incremental_cache.set(f"incremental:{key}", result)
-    
+
     def _incremental_key(self, entity_ids: List[str]) -> str:
         """Generate cache key for incremental validation."""
         # Sort IDs for deterministic key
         sorted_ids = sorted(entity_ids)
         id_str = ",".join(sorted_ids)
         return hashlib.sha256(id_str.encode()).hexdigest()
-    
+
     def get_stats(self) -> MultiLayerCacheStatsDict:
         """Get combined statistics for all cache layers."""
         return {
@@ -385,7 +394,7 @@ class ValidationCache:
                 4,
             ),
         }
-    
+
     def clear_all(self) -> None:
         """Clear all cache layers."""
         self.tdfol_cache.clear()

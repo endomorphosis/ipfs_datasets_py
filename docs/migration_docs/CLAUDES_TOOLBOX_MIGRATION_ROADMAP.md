@@ -209,28 +209,27 @@ import json
 from ipfs_datasets_py.mcp_server.tools.base_tool import BaseTool
 from ipfs_datasets_py.audit_log import audit_log
 
+
 class ExampleTool(BaseTool):
     """Development tool for [specific purpose]."""
-    
+
     def __init__(self):
         super().__init__(
             name="example_tool",
             description="Description of what the tool does",
-            category="development"
+            category="development",
         )
-    
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute the tool with given parameters."""
         # Audit logging
         await audit_log(
-            action="development.tool.execute",
-            resource_id=self.name,
-            details={"parameters": kwargs}
+            action="development.tool.execute", resource_id=self.name, details={"parameters": kwargs}
         )
-        
+
         # Tool implementation
         result = self._perform_operation(**kwargs)
-        
+
         # Return standardized result
         return {
             "success": True,
@@ -238,9 +237,10 @@ class ExampleTool(BaseTool):
             "metadata": {
                 "tool": self.name,
                 "timestamp": self._get_timestamp(),
-                "parameters": kwargs
-            }
+                "parameters": kwargs,
+            },
         }
+
 
 # MCP tool registration function
 def register_example_tool():
@@ -258,31 +258,32 @@ Create unified configuration for all tools:
 from dataclasses import dataclass
 from typing import List, Dict, Optional
 
+
 @dataclass
 class DevelopmentToolsConfig:
     """Configuration for development tools."""
-    
+
     # Test Generator Settings
     test_generator_output_dir: str = "tests"
     test_generator_harness: str = "unittest"
-    
+
     # Documentation Generator Settings
     docs_output_dir: str = "docs"
     docs_style: str = "google"
     docs_inheritance: bool = True
-    
+
     # Linting Settings
     lint_patterns: List[str] = None
     lint_exclude: List[str] = None
-    
+
     # Test Runner Settings
     test_runner_check_all: bool = False
     test_runner_respect_gitignore: bool = True
-    
+
     # Search Settings
     search_max_depth: Optional[int] = None
     search_context: int = 0
-    
+
     def __post_init__(self):
         if self.lint_patterns is None:
             self.lint_patterns = ["**/*.py"]
@@ -302,9 +303,10 @@ from functools import wraps
 
 logger = logging.getLogger(__name__)
 
+
 def development_tool_error_handler(func):
     """Decorator for consistent error handling in development tools."""
-    
+
     @wraps(func)
     async def wrapper(*args, **kwargs):
         try:
@@ -312,26 +314,14 @@ def development_tool_error_handler(func):
             return result
         except FileNotFoundError as e:
             logger.error(f"File not found in {func.__name__}: {e}")
-            return {
-                "success": False,
-                "error": "file_not_found",
-                "message": str(e)
-            }
+            return {"success": False, "error": "file_not_found", "message": str(e)}
         except PermissionError as e:
             logger.error(f"Permission denied in {func.__name__}: {e}")
-            return {
-                "success": False,
-                "error": "permission_denied",
-                "message": str(e)
-            }
+            return {"success": False, "error": "permission_denied", "message": str(e)}
         except Exception as e:
             logger.error(f"Unexpected error in {func.__name__}: {e}")
-            return {
-                "success": False,
-                "error": "unexpected_error",
-                "message": str(e)
-            }
-    
+            return {"success": False, "error": "unexpected_error", "message": str(e)}
+
     return wrapper
 ```
 

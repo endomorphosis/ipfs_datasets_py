@@ -42,6 +42,7 @@ return asyncio.run(download_from_url(...))
 class DeprecationWarning(UserWarning):
     """Custom warning for deprecated features."""
 
+
 # After (unique name):
 class FileConverterDeprecationWarning(UserWarning):
     """Custom warning for deprecated file converter features."""
@@ -211,19 +212,16 @@ from ipfs_datasets_py.processors.file_converter import (
     UniversalKnowledgeGraphPipeline,
     TextSummarizationPipeline,
     VectorEmbeddingPipeline,
-    IPFSAcceleratedConverter
+    IPFSAcceleratedConverter,
 )
 
 # Works with all 57+ formats
-converter = IPFSAcceleratedConverter(
-    enable_ipfs=True,
-    enable_acceleration=True
-)
+converter = IPFSAcceleratedConverter(enable_ipfs=True, enable_acceleration=True)
 
-result = await converter.convert('document.pdf')
-kg = await kg_pipeline.process('image.png')
-summary = await summary_pipeline.summarize('audio.mp3')
-embeddings = await vector_pipeline.process('video.mp4')
+result = await converter.convert("document.pdf")
+kg = await kg_pipeline.process("image.png")
+summary = await summary_pipeline.summarize("audio.mp3")
+embeddings = await vector_pipeline.process("video.mp4")
 ```
 
 ### 2. CLI Interface ✅

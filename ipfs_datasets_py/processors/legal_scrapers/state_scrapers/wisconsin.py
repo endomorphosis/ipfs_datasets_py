@@ -22,19 +22,21 @@ class WisconsinScraper(BaseStateScraper):
             if self._WI_SECTION_URL_RE.search(source):
                 filtered.append(statute)
         return filtered
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Wisconsin's legislative website."""
         return "https://docs.legis.wisconsin.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Wisconsin."""
-        return [{
-            "name": "Wisconsin Statutes",
-            "url": f"{self.get_base_url()}/statutes/statutes",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Wisconsin Statutes",
+                "url": f"{self.get_base_url()}/statutes/statutes",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -42,11 +44,11 @@ class WisconsinScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Wisconsin's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -122,7 +124,11 @@ class WisconsinScraper(BaseStateScraper):
             ("939.50", f"{self.get_base_url()}/document/statutes/939.50"),
             ("940.01", f"{self.get_base_url()}/document/statutes/940.01"),
         ]
-        return await self._scrape_section_urls(code_name, [(url, section_number) for section_number, url in section_urls], max_statutes=max_statutes)
+        return await self._scrape_section_urls(
+            code_name,
+            [(url, section_number) for section_number, url in section_urls],
+            max_statutes=max_statutes,
+        )
 
     async def _scrape_official_index(
         self,
@@ -130,7 +136,9 @@ class WisconsinScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         chapter_links = await self._discover_chapter_links()
-        self.logger.info("Wisconsin official index: discovered %s chapter links", len(chapter_links))
+        self.logger.info(
+            "Wisconsin official index: discovered %s chapter links", len(chapter_links)
+        )
         statutes: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         for chapter_index, (chapter_url, chapter_label) in enumerate(chapter_links, start=1):
@@ -161,7 +169,9 @@ class WisconsinScraper(BaseStateScraper):
             return []
 
         index_url = f"{self.get_base_url()}/statutes/statutes"
-        payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=20)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            index_url, timeout_seconds=20
+        )
         if not payload:
             return []
         soup = BeautifulSoup(payload, "html.parser")
@@ -186,7 +196,9 @@ class WisconsinScraper(BaseStateScraper):
 
         chapter_match = re.search(r"/document/statutes/([0-9]+)/?$", chapter_url, re.IGNORECASE)
         chapter_number = chapter_match.group(1) if chapter_match else ""
-        payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            chapter_url, timeout_seconds=20
+        )
         if not payload:
             return []
         soup = BeautifulSoup(payload, "html.parser")
@@ -223,7 +235,9 @@ class WisconsinScraper(BaseStateScraper):
         for source_url, section_number in section_urls:
             if limit is not None and len(statutes) >= limit:
                 break
-            payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=15)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                source_url, timeout_seconds=15
+            )
             if not payload:
                 continue
             section_number = str(section_number or source_url.rsplit("/", 1)[-1]).strip()
@@ -246,7 +260,9 @@ class WisconsinScraper(BaseStateScraper):
             text = self._normalize_legal_text(" ".join(text_parts))
             if not section_name:
                 title = soup.find("title")
-                section_name = title.get_text(" ", strip=True) if title else f"Section {section_number}"
+                section_name = (
+                    title.get_text(" ", strip=True) if title else f"Section {section_number}"
+                )
             if len(text) < 240:
                 continue
             statutes.append(
@@ -262,7 +278,10 @@ class WisconsinScraper(BaseStateScraper):
                     source_url=source_url,
                     official_cite=f"Wis. Stat. § {section_number}",
                     metadata=StatuteMetadata(),
-                    structured_data={"source_kind": "official_wisconsin_statutes_html", "skip_hydrate": True},
+                    structured_data={
+                        "source_kind": "official_wisconsin_statutes_html",
+                        "skip_hydrate": True,
+                    },
                 )
             )
         return statutes

@@ -197,8 +197,7 @@ for mutation in survivors:
 ```python
 generator = MutationGenerator()
 generator.disable_operators(
-    MutationOperator.COMPARISON_REPLACE,
-    MutationOperator.RETURN_VALUE_REPLACE
+    MutationOperator.COMPARISON_REPLACE, MutationOperator.RETURN_VALUE_REPLACE
 )
 mutations = generate_mutations(target, generator)
 ```

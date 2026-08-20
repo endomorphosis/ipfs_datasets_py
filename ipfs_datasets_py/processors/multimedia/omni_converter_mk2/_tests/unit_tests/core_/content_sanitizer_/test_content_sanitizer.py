@@ -17,9 +17,8 @@ from configs import configs
 from core.content_sanitizer import ContentSanitizer, SanitizedContent
 
 
-
 def make_constants_resources():
-    constants_resources = { # NOTE: Since these are constants, we can directly use them without mocking.
+    constants_resources = {  # NOTE: Since these are constants, we can directly use them without mocking.
         "dangerous_patterns": Constants.ContentSanitizer.DANGEROUS_PATTERNS_REGEX,
         "executable_extensions": Constants.ContentSanitizer.EXECUTABLE_EXTENSIONS,
         "file_size_limits_in_bytes": Constants.ContentSanitizer.FILE_SIZE_LIMITS_IN_BYTES,
@@ -40,25 +39,25 @@ class TestContentSanitizer(unittest.TestCase):
         """Set up test fixtures."""
         # Create a temp directory for test files
         self.temp_dir = tempfile.mkdtemp()
-        
+
         # Create test files
         self.test_file_path = os.path.join(self.temp_dir, "test_file.txt")
-        with open(self.test_file_path, 'w') as f:
+        with open(self.test_file_path, "w") as f:
             f.write("Test content")
-        
+
         self.large_file_path = os.path.join(self.temp_dir, "large_file.txt")
-        with open(self.large_file_path, 'w') as f:
+        with open(self.large_file_path, "w") as f:
             f.write("A" * (15 * 1024 * 1024))  # 15 MB file (exceeds text limit)
-        
+
         self.executable_file_path = os.path.join(self.temp_dir, "test_script.sh")
-        with open(self.executable_file_path, 'w') as f:
+        with open(self.executable_file_path, "w") as f:
             f.write("#!/bin/sh\necho 'Hello, world!'")
 
         # Make it executable
         os.chmod(self.executable_file_path, 0o755)
 
         # Check if the file is executable
-        if os.name == 'nt':
+        if os.name == "nt":
             pass
         else:
             # On Unix-like systems, we can check if the file is executable
@@ -77,7 +76,10 @@ class TestContentSanitizer(unittest.TestCase):
 
         self._mock_sanitized_content = MagicMock(spec=SanitizedContent)
         self._mock_sanitized_content.content = self._mock_content
-        self._mock_sanitized_content.sanitization_applied = ["remove_scripts", "remove_personal_data"]
+        self._mock_sanitized_content.sanitization_applied = [
+            "remove_scripts",
+            "remove_personal_data",
+        ]
         self._mock_sanitized_content.removed_content = {"scripts": 2, "personal_data": 3}
 
         self._mock_resources = {
@@ -87,27 +89,27 @@ class TestContentSanitizer(unittest.TestCase):
         }
 
         # Create a security manager
-        self.content_sanitizer = ContentSanitizer(resources=self._mock_resources, configs=self.mock_configs)
-
+        self.content_sanitizer = ContentSanitizer(
+            resources=self._mock_resources, configs=self.mock_configs
+        )
 
     def tearDown(self):
         """Clean up test fixtures."""
         # Remove temp directory
         shutil.rmtree(self.temp_dir)
 
-
     def test_sanitize_content_with_scripts(self):
         """Test sanitizing content with scripts.
-        
+
         This test validates the content sanitization functionality of the SecurityMonitor,
         specifically addressing the "Security Effectiveness" criteria for script removal.
         It verifies that:
-        
+
         1. The security manager detects and removes potentially dangerous script tags
         2. JavaScript protocol URLs are identified and removed
         3. The sanitization process maintains the integrity of the document structure
         4. The system tracks which sanitization methods were applied to the content
-        
+
         This test directly supports the 100% prevention of code execution target by
         ensuring all script content that could potentially execute is removed from
         the processed content while preserving the valuable text content for LLM training.
@@ -127,7 +129,7 @@ class TestContentSanitizer(unittest.TestCase):
         </html>
         """
         # Write the HTML content to a file
-        with open(self.test_file_path, 'w') as f:
+        with open(self.test_file_path, "w") as f:
             f.write(html_with_scripts)
 
         mock_content = Content(
@@ -135,18 +137,18 @@ class TestContentSanitizer(unittest.TestCase):
             metadata={"format": "html"},
             sections=[{"title": "Test Page", "content": "This is a test."}],
             source_format="html",
-            source_path=self.test_file_path
+            source_path=self.test_file_path,
         )
-        
+
         # Sanitize content
         sanitized = self.content_sanitizer.sanitize(mock_content)
-        
+
         # Check that scripts were removed
         self.assertNotIn("<script>", sanitized.content.text)
         self.assertNotIn("javascript:", sanitized.content.text)
         self.assertIn("sanitization_applied", sanitized.to_dict())
         self.assertIn("remove_scripts", sanitized.sanitization_applied)
-    
+
     def test_sanitize_content_with_active_content(self):
         """Test sanitizing content with active content."""
         # Create content with active content
@@ -165,23 +167,19 @@ class TestContentSanitizer(unittest.TestCase):
         </body>
         </html>
         """
-        
-        content = Content(
-            text=html_with_active,
-            metadata={"format": "html"},
-            source_format="html"
-        )
-        
+
+        content = Content(text=html_with_active, metadata={"format": "html"}, source_format="html")
+
         # Sanitize content
         sanitized = self.content_sanitizer.sanitize(content)
-        
+
         # Check that active content was removed
         self.assertNotIn("<iframe", sanitized.content.text)
         self.assertNotIn("<object", sanitized.content.text)
         self.assertNotIn("<embed", sanitized.content.text)
         self.assertNotIn("<form", sanitized.content.text)
         self.assertIn("remove_active_content", sanitized.sanitization_applied)
-    
+
     def test_sanitize_content_with_personal_data(self):
         """Test sanitizing content with personal data."""
         # Create content with personal data
@@ -191,23 +189,21 @@ class TestContentSanitizer(unittest.TestCase):
         Credit card: 4111-1111-1111-1111
         Visit our website at https://example.com
         """
-        
+
         content = Content(
-            text=text_with_personal,
-            metadata={"format": "plain"},
-            source_format="plain"
+            text=text_with_personal, metadata={"format": "plain"}, source_format="plain"
         )
-        
+
         # Sanitize content
         sanitized = self.content_sanitizer.sanitize(content)
-        
+
         # Check that personal data was removed
         self.assertNotIn("user@example.com", sanitized.content.text)
         self.assertNotIn("555-123-4567", sanitized.content.text)
         self.assertNotIn("123-45-6789", sanitized.content.text)
         self.assertNotIn("4111-1111-1111-1111", sanitized.content.text)
         self.assertIn("remove_personal_data", sanitized.sanitization_applied)
-    
+
     def test_sanitize_content_with_metadata(self):
         """Test sanitizing content with sensitive metadata."""
         # Create content with sensitive metadata
@@ -219,22 +215,24 @@ class TestContentSanitizer(unittest.TestCase):
                     "author": "John Doe",
                     "email": "john@example.com",
                     "company": "Acme Inc.",
-                    "safe_key": "safe_value"
+                    "safe_key": "safe_value",
                 },
-                source_format="plain"
+                source_format="plain",
             )
-            
+
             # Configure security manager to remove metadata
             self.content_sanitizer.set_sanitization_rules({"remove_metadata": True})
-            
+
             # Sanitize content
             sanitized = self.content_sanitizer.sanitize(content)
-            
+
             # Check that sensitive metadata was removed
             self.assertNotIn("author", sanitized.content.metadata)
             self.assertNotIn("email", sanitized.content.metadata)
             self.assertNotIn("company", sanitized.content.metadata)
-            self.assertIn("format", sanitized.content.metadata)  # Should keep non-sensitive metadata
+            self.assertIn(
+                "format", sanitized.content.metadata
+            )  # Should keep non-sensitive metadata
             # It seems the current implementation removes all keys matching any sensitive keys,
             # not just those exact keys. Adjust our expectation.
             # self.assertIn("safe_key", sanitized.content.metadata)
@@ -258,17 +256,15 @@ class TestContentSanitizer(unittest.TestCase):
         """
         try:
             content = Content(
-                text=html_with_scripts,
-                metadata={"format": "html"},
-                source_format="html"
+                text=html_with_scripts, metadata={"format": "html"}, source_format="html"
             )
-            
+
             # Disable sanitization
             self.content_sanitizer.set_sanitization_rules({"sanitize_content": False})
-            
+
             # Sanitize content
             sanitized = self.content_sanitizer.sanitize(content)
-            
+
             # Content should be unchanged
             self.assertEqual(sanitized.content.text, html_with_scripts)
             self.assertIn("sanitization_applied", sanitized.to_dict())

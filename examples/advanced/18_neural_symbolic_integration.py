@@ -19,14 +19,14 @@ import asyncio
 
 async def demo_llm_guided_theorem_proving():
     """Use LLMs to guide theorem proving."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 1: LLM-Guided Theorem Proving")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🤖+🔬 LLM-Guided Proving")
     print("   Use neural networks to guide symbolic provers")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.logic import LLMGuidedProver
 
 prover = LLMGuidedProver(
@@ -71,21 +71,21 @@ if result.proved:
 else:
     print(f"\\n❌ Could not prove theorem")
     print(f"Reason: {result.failure_reason}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_neural_constraint_learning():
     """Learn constraints from examples."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 2: Neural Constraint Learning")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📚 Learn Constraints")
     print("   Extract logical rules from neural network patterns")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.logic import NeuralConstraintLearner
 
 learner = NeuralConstraintLearner(
@@ -127,20 +127,20 @@ for example in new_examples:
     print(f"\\n{example}")
     print(f"  Valid: {validation.is_valid}")
     print(f"  Violated constraints: {validation.violations}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_symbolic_attention():
     """Add symbolic attention to neural models."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 3: Symbolic Attention Mechanisms")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🎯 Symbolic Attention")
     print("   Guide neural attention with logical constraints")
-    
+
     example_code = '''
 from ipfs_datasets_py.ml import SymbolicAttentionModel
 
@@ -184,20 +184,20 @@ for constraint in constraints:
     satisfaction = result.constraint_satisfaction[constraint]
     print(f"  {constraint}: {satisfaction:.2f}")
     '''
-    
+
     print(example_code)
 
 
 async def demo_logic_enhanced_generation():
     """Generate text with logical constraints."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 4: Logic-Enhanced Text Generation")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n✍️  Constrained Generation")
     print("   Generate text that satisfies logical constraints")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.ml import LogicEnhancedGenerator
 
 generator = LogicEnhancedGenerator(
@@ -233,20 +233,20 @@ for constraint in constraints:
 if not result.all_constraints_satisfied:
     print("\\nRetries needed:", result.retry_count)
     print("Violations fixed:", result.violations_fixed)
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_neuro_symbolic_reasoning():
     """Combine neural and symbolic for complex reasoning."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 5: Neuro-Symbolic Reasoning")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🧠+🔬 Hybrid Reasoning")
     print("   Best of both approaches for complex problems")
-    
+
     example_code = '''
 from ipfs_datasets_py.logic import NeuroSymbolicReasoner
 
@@ -292,19 +292,19 @@ print("Certainty:", result.certainty)
 print("\\nExplanation:")
 print(result.explanation)
     '''
-    
+
     print(example_code)
 
 
 async def demo_verifiable_neural_outputs():
     """Verify neural network outputs with logic."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 6: Verifiable Neural Outputs")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n✓ Output Verification")
     print("   Ensure neural outputs are logically consistent")
-    
+
     example_code = '''
 from ipfs_datasets_py.ml import VerifiableNeuralModel
 
@@ -352,20 +352,20 @@ if not result.all_verified:
         print(f"  Rule: {failure.violated_rule}")
         print(f"  Suggested fix: {failure.suggestion}")
     '''
-    
+
     print(example_code)
 
 
 async def demo_concept_learning():
     """Learn symbolic concepts from neural representations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 7: Symbolic Concept Learning")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n💡 Concept Learning")
     print("   Extract symbolic concepts from neural embeddings")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.logic import ConceptLearner
 
 learner = ConceptLearner(
@@ -412,65 +412,65 @@ rules = await learner.export_as_rules(concepts)
 print("\\nExtracted rules:")
 for rule in rules:
     print(f"  {rule}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 def show_tips():
     """Show tips for neural-symbolic integration."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TIPS FOR NEURAL-SYMBOLIC INTEGRATION")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n1. When to Integrate:")
     print("   - Need both learning and reasoning")
     print("   - Require explainable decisions")
     print("   - Working with structured + unstructured data")
     print("   - Need to enforce hard constraints")
-    
+
     print("\n2. Integration Strategies:")
     print("   - Cascaded: Neural → Symbolic or vice versa")
     print("   - Parallel: Both systems run independently")
     print("   - Hierarchical: Nested integration")
     print("   - Hybrid: Tight coupling throughout")
-    
+
     print("\n3. Neural Components:")
     print("   - LLMs for text understanding")
     print("   - Embeddings for similarity")
     print("   - Neural attention for focus")
     print("   - Generative models for synthesis")
-    
+
     print("\n4. Symbolic Components:")
     print("   - FOL for general reasoning")
     print("   - Temporal logic for time")
     print("   - Deontic logic for rules/policies")
     print("   - Theorem provers for verification")
-    
+
     print("\n5. Common Patterns:")
     print("   - Neural extraction → Symbolic verification")
     print("   - Symbolic constraints → Neural generation")
     print("   - Neural similarity → Symbolic rules")
     print("   - LLM guidance → Theorem proving")
-    
+
     print("\n6. Verification:")
     print("   - Always verify neural outputs")
     print("   - Use symbolic systems for validation")
     print("   - Implement retry mechanisms")
     print("   - Log verification failures")
-    
+
     print("\n7. Performance:")
     print("   - Neural steps are fast but approximate")
     print("   - Symbolic steps are slow but exact")
     print("   - Cache symbolic verifications")
     print("   - Use approximate reasoning when possible")
-    
+
     print("\n8. Explainability:")
     print("   - Symbolic reasoning is inherently explainable")
     print("   - Generate natural language from proofs")
     print("   - Show which rules were applied")
     print("   - Trace neural-symbolic interactions")
-    
+
     print("\n9. Next Steps:")
     print("   - See 13_logic_reasoning.py for logic basics")
     print("   - See 16_logic_enhanced_rag.py for RAG integration")
@@ -478,10 +478,10 @@ def show_tips():
 
 async def main():
     """Run all neural-symbolic integration demonstrations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("IPFS DATASETS PYTHON - NEURAL-SYMBOLIC INTEGRATION")
-    print("="*70)
-    
+    print("=" * 70)
+
     await demo_llm_guided_theorem_proving()
     await demo_neural_constraint_learning()
     await demo_symbolic_attention()
@@ -489,12 +489,12 @@ async def main():
     await demo_neuro_symbolic_reasoning()
     await demo_verifiable_neural_outputs()
     await demo_concept_learning()
-    
+
     show_tips()
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("✅ NEURAL-SYMBOLIC INTEGRATION EXAMPLES COMPLETE")
-    print("="*70)
+    print("=" * 70)
 
 
 if __name__ == "__main__":

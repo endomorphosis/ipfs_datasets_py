@@ -26,7 +26,7 @@ from ipfs_datasets_py.logic.CEC.nl.german_parser import (
     get_german_articles,
     get_german_modal_particles,
     get_german_deontic_keywords,
-    get_german_compound_words
+    get_german_compound_words,
 )
 from ipfs_datasets_py.logic.CEC.native.dcec_core import (
     DeonticFormula,
@@ -36,14 +36,14 @@ from ipfs_datasets_py.logic.CEC.native.dcec_core import (
     DeonticOperator,
     CognitiveOperator,
     TemporalOperator,
-    LogicalConnective
+    LogicalConnective,
 )
 from ipfs_datasets_py.logic.CEC.native.dcec_namespace import DCECNamespace
 
 
 class TestParserInitialization:
     """Test German parser initialization."""
-    
+
     def test_parser_creation(self):
         """
         GIVEN GermanParser class
@@ -55,7 +55,7 @@ class TestParserInitialization:
         assert parser.confidence_threshold == 0.5
         assert parser.namespace is not None
         assert parser.matcher is not None
-    
+
     def test_parser_custom_threshold(self):
         """
         GIVEN custom confidence threshold
@@ -64,7 +64,7 @@ class TestParserInitialization:
         """
         parser = GermanParser(confidence_threshold=0.7)
         assert parser.confidence_threshold == 0.7
-    
+
     def test_parser_supported_operators(self):
         """
         GIVEN GermanParser
@@ -73,15 +73,15 @@ class TestParserInitialization:
         """
         parser = GermanParser()
         operators = parser.get_supported_operators()
-        assert 'muss' in operators
-        assert 'darf' in operators
-        assert 'weiß' in operators
-        assert 'immer' in operators
+        assert "muss" in operators
+        assert "darf" in operators
+        assert "weiß" in operators
+        assert "immer" in operators
 
 
 class TestDeonticObligationGerman:
     """Test German deontic obligation parsing."""
-    
+
     def test_parse_muss_simple(self):
         """
         GIVEN German obligation with 'muss'
@@ -93,7 +93,7 @@ class TestDeonticObligationGerman:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.OBLIGATION
-    
+
     def test_parse_ist_verpflichtet(self):
         """
         GIVEN German obligation with 'ist verpflichtet'
@@ -104,7 +104,7 @@ class TestDeonticObligationGerman:
         result = parser.parse("Der Agent ist verpflichtet zu melden")
         # Should parse obligation
         assert result.formula is not None
-    
+
     def test_parse_hat_die_pflicht(self):
         """
         GIVEN German obligation with 'hat die Pflicht'
@@ -115,7 +115,7 @@ class TestDeonticObligationGerman:
         result = parser.parse("Der Agent hat die Pflicht zu überprüfen")
         # Should parse obligation
         assert result.formula is not None
-    
+
     def test_parse_es_ist_erforderlich(self):
         """
         GIVEN German obligation with 'es ist erforderlich'
@@ -126,7 +126,7 @@ class TestDeonticObligationGerman:
         result = parser.parse("Es ist erforderlich zu genehmigen")
         # Should parse obligation
         assert result.formula is not None
-    
+
     def test_parse_soll(self):
         """
         GIVEN German obligation with 'soll'
@@ -138,7 +138,7 @@ class TestDeonticObligationGerman:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.OBLIGATION
-    
+
     def test_parse_obligation_plural(self):
         """
         GIVEN German obligation with plural 'müssen'
@@ -150,7 +150,7 @@ class TestDeonticObligationGerman:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.OBLIGATION
-    
+
     def test_parse_sind_verpflichtet(self):
         """
         GIVEN German obligation with 'sind verpflichtet'
@@ -161,7 +161,7 @@ class TestDeonticObligationGerman:
         result = parser.parse("Die Agenten sind verpflichtet zu berichten")
         # Should parse obligation
         assert result.formula is not None
-    
+
     def test_parse_haben_die_pflicht(self):
         """
         GIVEN German obligation with 'haben die Pflicht'
@@ -172,7 +172,7 @@ class TestDeonticObligationGerman:
         result = parser.parse("Die Benutzer haben die Pflicht zu respektieren")
         # Should parse obligation
         assert result.formula is not None
-    
+
     def test_parse_obligation_compound(self):
         """
         GIVEN German obligation with compound word
@@ -183,7 +183,7 @@ class TestDeonticObligationGerman:
         result = parser.parse("Der Agent muss die Vorschriften einhalten")
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
-    
+
     def test_parse_obligation_confidence(self):
         """
         GIVEN clear German obligation
@@ -198,7 +198,7 @@ class TestDeonticObligationGerman:
 
 class TestDeonticPermissionGerman:
     """Test German deontic permission parsing."""
-    
+
     def test_parse_darf_simple(self):
         """
         GIVEN German permission with 'darf'
@@ -210,7 +210,7 @@ class TestDeonticPermissionGerman:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PERMISSION
-    
+
     def test_parse_kann_simple(self):
         """
         GIVEN German permission with 'kann'
@@ -222,7 +222,7 @@ class TestDeonticPermissionGerman:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PERMISSION
-    
+
     def test_parse_ist_erlaubt(self):
         """
         GIVEN German permission with 'ist erlaubt'
@@ -233,7 +233,7 @@ class TestDeonticPermissionGerman:
         result = parser.parse("Es ist erlaubt zu teilnehmen")
         # Should parse permission
         assert result.formula is not None
-    
+
     def test_parse_hat_das_recht(self):
         """
         GIVEN German permission with 'hat das Recht'
@@ -244,7 +244,7 @@ class TestDeonticPermissionGerman:
         result = parser.parse("Der Agent hat das Recht zu beginnen")
         # Should parse permission
         assert result.formula is not None
-    
+
     def test_parse_man_darf(self):
         """
         GIVEN German permission with 'man darf'
@@ -255,7 +255,7 @@ class TestDeonticPermissionGerman:
         result = parser.parse("Man darf ändern")
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
-    
+
     def test_parse_permission_plural(self):
         """
         GIVEN German permission with plural 'dürfen'
@@ -267,7 +267,7 @@ class TestDeonticPermissionGerman:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PERMISSION
-    
+
     def test_parse_sind_erlaubt(self):
         """
         GIVEN German permission with 'sind erlaubt'
@@ -278,7 +278,7 @@ class TestDeonticPermissionGerman:
         result = parser.parse("Die Agenten sind erlaubt zu fortfahren")
         # Should parse permission
         assert result.formula is not None
-    
+
     def test_parse_haben_das_recht(self):
         """
         GIVEN German permission with 'haben das Recht'
@@ -289,7 +289,7 @@ class TestDeonticPermissionGerman:
         result = parser.parse("Die Agenten haben das Recht zu weitermachen")
         # Should parse permission
         assert result.formula is not None
-    
+
     def test_parse_permission_conditional(self):
         """
         GIVEN German permission with conditional
@@ -301,7 +301,7 @@ class TestDeonticPermissionGerman:
         assert result.success
         # Should at least extract permission part
         assert result.formula is not None
-    
+
     def test_parse_permission_confidence(self):
         """
         GIVEN clear German permission
@@ -316,7 +316,7 @@ class TestDeonticPermissionGerman:
 
 class TestDeonticProhibitionGerman:
     """Test German deontic prohibition parsing."""
-    
+
     def test_parse_nicht_darf(self):
         """
         GIVEN German prohibition with 'nicht darf'
@@ -328,7 +328,7 @@ class TestDeonticProhibitionGerman:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PROHIBITION
-    
+
     def test_parse_darf_nicht(self):
         """
         GIVEN German prohibition with 'darf nicht'
@@ -340,7 +340,7 @@ class TestDeonticProhibitionGerman:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PROHIBITION
-    
+
     def test_parse_verboten(self):
         """
         GIVEN German prohibition with 'verboten'
@@ -351,7 +351,7 @@ class TestDeonticProhibitionGerman:
         result = parser.parse("Verboten zu zugreifen")
         # Should parse prohibition
         assert result.formula is not None
-    
+
     def test_parse_ist_verboten(self):
         """
         GIVEN German prohibition with 'ist verboten'
@@ -362,7 +362,7 @@ class TestDeonticProhibitionGerman:
         result = parser.parse("Es ist verboten zu ändern")
         # Should parse prohibition
         assert result.formula is not None
-    
+
     def test_parse_muss_nicht(self):
         """
         GIVEN German prohibition with 'muss nicht'
@@ -374,7 +374,7 @@ class TestDeonticProhibitionGerman:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PROHIBITION
-    
+
     def test_parse_dürfen_nicht(self):
         """
         GIVEN German prohibition with plural 'dürfen nicht'
@@ -386,7 +386,7 @@ class TestDeonticProhibitionGerman:
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
         assert result.formula.operator == DeonticOperator.PROHIBITION
-    
+
     def test_parse_prohibition_formal(self):
         """
         GIVEN formal German prohibition
@@ -397,7 +397,7 @@ class TestDeonticProhibitionGerman:
         result = parser.parse("Es ist untersagt zu zugreifen")
         # Should at least create formula
         assert result.formula is not None
-    
+
     def test_parse_prohibition_compound(self):
         """
         GIVEN German prohibition with compound expression
@@ -408,7 +408,7 @@ class TestDeonticProhibitionGerman:
         result = parser.parse("Der Agent darf nicht vertrauliche Informationen offenlegen")
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
-    
+
     def test_parse_prohibition_separable_verb(self):
         """
         GIVEN German prohibition with separable verb
@@ -419,7 +419,7 @@ class TestDeonticProhibitionGerman:
         result = parser.parse("Der Agent darf nicht weitergeben")
         assert result.success
         assert isinstance(result.formula, DeonticFormula)
-    
+
     def test_parse_prohibition_confidence(self):
         """
         GIVEN clear German prohibition
@@ -434,7 +434,7 @@ class TestDeonticProhibitionGerman:
 
 class TestCognitiveOperatorsGerman:
     """Test German cognitive operator parsing."""
-    
+
     def test_parse_weiss_dass(self):
         """
         GIVEN German knowledge statement with 'weiß dass'
@@ -446,7 +446,7 @@ class TestCognitiveOperatorsGerman:
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
         assert result.formula.operator == CognitiveOperator.KNOWLEDGE
-    
+
     def test_parse_glaubt_dass(self):
         """
         GIVEN German belief statement with 'glaubt dass'
@@ -458,7 +458,7 @@ class TestCognitiveOperatorsGerman:
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
         assert result.formula.operator == CognitiveOperator.BELIEF
-    
+
     def test_parse_denkt_dass(self):
         """
         GIVEN German belief statement with 'denkt dass'
@@ -469,7 +469,7 @@ class TestCognitiveOperatorsGerman:
         result = parser.parse("Der Agent denkt dass es funktioniert")
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
-    
+
     def test_parse_will(self):
         """
         GIVEN German desire statement with 'will'
@@ -481,7 +481,7 @@ class TestCognitiveOperatorsGerman:
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
         assert result.formula.operator == CognitiveOperator.DESIRE
-    
+
     def test_parse_moechte(self):
         """
         GIVEN German desire statement with 'möchte'
@@ -492,7 +492,7 @@ class TestCognitiveOperatorsGerman:
         result = parser.parse("Der Agent möchte fortsetzen")
         assert result.success
         assert isinstance(result.formula, CognitiveFormula)
-    
+
     def test_parse_beabsichtigt(self):
         """
         GIVEN German intention statement with 'beabsichtigt'
@@ -503,7 +503,7 @@ class TestCognitiveOperatorsGerman:
         result = parser.parse("Der Agent beabsichtigt zu lösen")
         # Should parse intention
         assert result.formula is not None
-    
+
     def test_parse_plant(self):
         """
         GIVEN German intention statement with 'plant'
@@ -514,7 +514,7 @@ class TestCognitiveOperatorsGerman:
         result = parser.parse("Der Agent plant zu verbessern")
         # Should parse intention
         assert result.formula is not None
-    
+
     def test_parse_hat_das_ziel(self):
         """
         GIVEN German goal statement with 'hat das Ziel'
@@ -525,7 +525,7 @@ class TestCognitiveOperatorsGerman:
         result = parser.parse("Der Agent hat das Ziel zu vervollständigen")
         # Should parse goal
         assert result.formula is not None
-    
+
     def test_parse_cognitive_nested(self):
         """
         GIVEN nested German cognitive statement
@@ -537,7 +537,7 @@ class TestCognitiveOperatorsGerman:
         assert result.success
         # Should parse outer cognitive operator
         assert result.formula is not None
-    
+
     def test_parse_cognitive_confidence(self):
         """
         GIVEN German cognitive statement
@@ -552,7 +552,7 @@ class TestCognitiveOperatorsGerman:
 
 class TestTemporalOperatorsGerman:
     """Test German temporal operator parsing."""
-    
+
     def test_parse_immer(self):
         """
         GIVEN German always statement with 'immer'
@@ -564,7 +564,7 @@ class TestTemporalOperatorsGerman:
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
         assert result.formula.operator == TemporalOperator.ALWAYS
-    
+
     def test_parse_schliesslich(self):
         """
         GIVEN German eventually statement with 'schließlich'
@@ -576,7 +576,7 @@ class TestTemporalOperatorsGerman:
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
         assert result.formula.operator == TemporalOperator.EVENTUALLY
-    
+
     def test_parse_irgendwann(self):
         """
         GIVEN German eventually statement with 'irgendwann'
@@ -587,7 +587,7 @@ class TestTemporalOperatorsGerman:
         result = parser.parse("Irgendwann der Prozess endet")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_dann(self):
         """
         GIVEN German next statement with 'dann'
@@ -599,7 +599,7 @@ class TestTemporalOperatorsGerman:
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
         assert result.formula.operator == TemporalOperator.NEXT
-    
+
     def test_parse_danach(self):
         """
         GIVEN German next statement with 'danach'
@@ -610,7 +610,7 @@ class TestTemporalOperatorsGerman:
         result = parser.parse("Danach der Agent fortsetzt")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_jederzeit(self):
         """
         GIVEN German always with 'jederzeit'
@@ -621,7 +621,7 @@ class TestTemporalOperatorsGerman:
         result = parser.parse("Jederzeit das System überwacht")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_am_ende(self):
         """
         GIVEN German eventually with 'am Ende'
@@ -632,7 +632,7 @@ class TestTemporalOperatorsGerman:
         result = parser.parse("Am Ende der Agent erreicht das Ziel")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_bis(self):
         """
         GIVEN German until statement with 'bis'
@@ -643,7 +643,7 @@ class TestTemporalOperatorsGerman:
         result = parser.parse("Der Agent wartet bis beendet")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_seit(self):
         """
         GIVEN German since statement with 'seit'
@@ -654,7 +654,7 @@ class TestTemporalOperatorsGerman:
         result = parser.parse("Der Agent handelt seit begonnen")
         assert result.success
         assert isinstance(result.formula, TemporalFormula)
-    
+
     def test_parse_temporal_confidence(self):
         """
         GIVEN German temporal statement
@@ -669,7 +669,7 @@ class TestTemporalOperatorsGerman:
 
 class TestLogicalConnectivesGerman:
     """Test German logical connective parsing."""
-    
+
     def test_parse_und_conjunction(self):
         """
         GIVEN German conjunction with 'und'
@@ -681,7 +681,7 @@ class TestLogicalConnectivesGerman:
         assert result.success
         assert isinstance(result.formula, ConnectiveFormula)
         assert result.formula.connective == LogicalConnective.AND
-    
+
     def test_parse_oder_disjunction(self):
         """
         GIVEN German disjunction with 'oder'
@@ -693,7 +693,7 @@ class TestLogicalConnectivesGerman:
         assert result.success
         assert isinstance(result.formula, ConnectiveFormula)
         assert result.formula.connective == LogicalConnective.OR
-    
+
     def test_parse_wenn_dann(self):
         """
         GIVEN German implication with 'wenn...dann'
@@ -705,7 +705,7 @@ class TestLogicalConnectivesGerman:
         assert result.success
         assert isinstance(result.formula, ConnectiveFormula)
         assert result.formula.connective == LogicalConnective.IMPLIES
-    
+
     def test_parse_falls_dann(self):
         """
         GIVEN German implication with 'falls...dann'
@@ -716,7 +716,7 @@ class TestLogicalConnectivesGerman:
         result = parser.parse("Falls der Agent überprüft dann kann fortfahren")
         assert result.success
         assert isinstance(result.formula, ConnectiveFormula)
-    
+
     def test_parse_complex_connectives(self):
         """
         GIVEN German text with multiple connectives
@@ -727,7 +727,7 @@ class TestLogicalConnectivesGerman:
         result = parser.parse("Der Agent muss einhalten und der Agent kann überprüfen")
         assert result.success
         assert result.formula is not None
-    
+
     def test_parse_nested_connectives(self):
         """
         GIVEN German text with nested connectives
@@ -735,10 +735,12 @@ class TestLogicalConnectivesGerman:
         THEN should handle nesting
         """
         parser = GermanParser()
-        result = parser.parse("Wenn der Agent muss einhalten und der Agent kann handeln dann geht weiter")
+        result = parser.parse(
+            "Wenn der Agent muss einhalten und der Agent kann handeln dann geht weiter"
+        )
         # Complex parsing - should at least produce formula
         assert result.formula is not None
-    
+
     def test_parse_und_multiple(self):
         """
         GIVEN German text with multiple 'und'
@@ -748,7 +750,7 @@ class TestLogicalConnectivesGerman:
         parser = GermanParser()
         result = parser.parse("Der Agent muss A und muss B und muss C")
         assert result.formula is not None
-    
+
     def test_parse_oder_multiple(self):
         """
         GIVEN German text with multiple 'oder'
@@ -758,7 +760,7 @@ class TestLogicalConnectivesGerman:
         parser = GermanParser()
         result = parser.parse("Der Agent kann A oder kann B oder kann C")
         assert result.formula is not None
-    
+
     def test_parse_mixed_connectives(self):
         """
         GIVEN German text with mixed connectives
@@ -768,7 +770,7 @@ class TestLogicalConnectivesGerman:
         parser = GermanParser()
         result = parser.parse("Wenn der Agent muss A oder muss B dann kann C")
         assert result.formula is not None
-    
+
     def test_parse_connectives_confidence(self):
         """
         GIVEN German text with connectives
@@ -783,7 +785,7 @@ class TestLogicalConnectivesGerman:
 
 class TestVerbConjugations:
     """Test German verb conjugation handling."""
-    
+
     def test_get_verb_conjugations(self):
         """
         GIVEN German verb conjugation function
@@ -791,13 +793,13 @@ class TestVerbConjugations:
         THEN should return conjugation tables
         """
         conjugations = get_german_verb_conjugations()
-        assert 'müssen' in conjugations
-        assert 'können' in conjugations
-        assert 'dürfen' in conjugations
-        assert 'wissen' in conjugations
-        assert conjugations['müssen']['present']['er/sie/es'] == 'muss'
-        assert conjugations['dürfen']['present']['er/sie/es'] == 'darf'
-    
+        assert "müssen" in conjugations
+        assert "können" in conjugations
+        assert "dürfen" in conjugations
+        assert "wissen" in conjugations
+        assert conjugations["müssen"]["present"]["er/sie/es"] == "muss"
+        assert conjugations["dürfen"]["present"]["er/sie/es"] == "darf"
+
     def test_parse_different_conjugations(self):
         """
         GIVEN German text with various conjugations
@@ -805,15 +807,15 @@ class TestVerbConjugations:
         THEN should handle different forms
         """
         parser = GermanParser()
-        
+
         # muss (3rd person singular)
         result1 = parser.parse("Der Agent muss handeln")
         assert result1.success
-        
+
         # müssen (plural)
         result2 = parser.parse("Die Agenten müssen einhalten")
         assert result2.success
-    
+
     def test_articles_function(self):
         """
         GIVEN get_german_articles function
@@ -821,12 +823,12 @@ class TestVerbConjugations:
         THEN should return articles by case and gender
         """
         articles = get_german_articles()
-        assert 'definite' in articles
-        assert 'indefinite' in articles
-        assert 'nominative' in articles['definite']
-        assert 'der' in articles['definite']['nominative']
-        assert 'ein' in articles['indefinite']['nominative']
-    
+        assert "definite" in articles
+        assert "indefinite" in articles
+        assert "nominative" in articles["definite"]
+        assert "der" in articles["definite"]["nominative"]
+        assert "ein" in articles["indefinite"]["nominative"]
+
     def test_parse_preterite_tense(self):
         """
         GIVEN German text with preterite tense
@@ -841,7 +843,7 @@ class TestVerbConjugations:
 
 class TestGermanSpecificFeatures:
     """Test German-specific language features."""
-    
+
     def test_modal_particles_function(self):
         """
         GIVEN get_german_modal_particles function
@@ -849,11 +851,11 @@ class TestGermanSpecificFeatures:
         THEN should return modal particles
         """
         particles = get_german_modal_particles()
-        assert 'doch' in particles
-        assert 'mal' in particles
-        assert 'ja' in particles
-        assert 'denn' in particles
-    
+        assert "doch" in particles
+        assert "mal" in particles
+        assert "ja" in particles
+        assert "denn" in particles
+
     def test_deontic_keywords_function(self):
         """
         GIVEN get_german_deontic_keywords function
@@ -861,13 +863,13 @@ class TestGermanSpecificFeatures:
         THEN should return categorized keywords
         """
         keywords = get_german_deontic_keywords()
-        assert 'obligation' in keywords
-        assert 'permission' in keywords
-        assert 'prohibition' in keywords
-        assert 'muss' in keywords['obligation']
-        assert 'darf' in keywords['permission']
-        assert 'verboten' in keywords['prohibition']
-    
+        assert "obligation" in keywords
+        assert "permission" in keywords
+        assert "prohibition" in keywords
+        assert "muss" in keywords["obligation"]
+        assert "darf" in keywords["permission"]
+        assert "verboten" in keywords["prohibition"]
+
     def test_compound_words_function(self):
         """
         GIVEN get_german_compound_words function
@@ -875,7 +877,7 @@ class TestGermanSpecificFeatures:
         THEN should return compound word mappings
         """
         compounds = get_german_compound_words()
-        assert 'Handlungspflicht' in compounds
-        assert 'Handlungserlaubnis' in compounds
-        assert 'Verpflichtung' in compounds
-        assert compounds['Handlungspflicht'] == 'action obligation'
+        assert "Handlungspflicht" in compounds
+        assert "Handlungserlaubnis" in compounds
+        assert "Verpflichtung" in compounds
+        assert compounds["Handlungspflicht"] == "action obligation"

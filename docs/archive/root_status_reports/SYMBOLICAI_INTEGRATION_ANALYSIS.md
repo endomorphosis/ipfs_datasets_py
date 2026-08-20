@@ -36,7 +36,7 @@ tests/
 
 ```python
 # In setup.py
-'symbolicai>=0.13.1'  # Included in extras_require
+"symbolicai>=0.13.1"  # Included in extras_require
 ```
 
 ### Current Features:
@@ -172,24 +172,21 @@ tests/
 
 ```python
 from symai import Symbol, Expression
-from ipfs_datasets_py.logic.TDFOL import (
-    Formula, parse_tdfol, TDFOLProver
-)
-from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import (
-    SymbolicFOLBridge
-)
+from ipfs_datasets_py.logic.TDFOL import Formula, parse_tdfol, TDFOLProver
+from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import SymbolicFOLBridge
+
 
 class SymaiTDFOLBridge:
     """Bridge SymbolicAI semantic parsing to TDFOL formulas."""
-    
+
     def __init__(self):
         self.fol_bridge = SymbolicFOLBridge()
         self.prover = TDFOLProver()
-    
+
     def parse_with_semantics(self, text: str) -> Formula:
         """
         Parse natural language to TDFOL using semantic understanding.
-        
+
         Process:
         1. Use SymbolicAI for semantic analysis
         2. Extract logical components (predicates, quantifiers, modals)
@@ -198,7 +195,7 @@ class SymaiTDFOLBridge:
         """
         # Use Symbol for semantic analysis
         sym = Symbol(text, semantic=True)
-        
+
         # Query for logical structure
         structure = sym.query("""
         Analyze this text and extract:
@@ -207,18 +204,18 @@ class SymaiTDFOLBridge:
         3. Logical operators (and, or, not, implies)
         4. Modal operators (obligation, permission, always, eventually)
         5. Temporal relationships
-        
+
         Format as: {quantifiers: [...], predicates: [...], ...}
         """)
-        
+
         # Convert to TDFOL formula
         formula = self._build_tdfol_from_structure(structure)
-        
+
         # Validate
         if not self._validate_formula(formula):
             # Fallback to pattern-based parsing
             return parse_tdfol(text)
-        
+
         return formula
 ```
 
@@ -236,15 +233,13 @@ class SymaiTDFOLBridge:
 ```python
 class SymaiProofGuide:
     """Use SymbolicAI to guide proof search."""
-    
+
     def select_rule(
-        self, 
-        current_state: Formula,
-        available_rules: List[InferenceRule]
+        self, current_state: Formula, available_rules: List[InferenceRule]
     ) -> InferenceRule:
         """
         Use LLM to select most promising inference rule.
-        
+
         Advantages over pure neural:
         - Symbolic reasoning about rule applicability
         - Natural language explanation of choices
@@ -252,28 +247,28 @@ class SymaiProofGuide:
         """
         # Create symbolic representation
         state_sym = Symbol(current_state.to_string(), semantic=True)
-        
+
         # Query for best rule
         rule_names = [r.name for r in available_rules]
         selection = state_sym.query(f"""
         Given the current formula state, which inference rule
         is most likely to help prove the goal?
-        
+
         Available rules: {rule_names}
-        
+
         Consider:
         - Formula structure
         - Rule preconditions
         - Proof strategy (forward vs backward chaining)
-        
+
         Return: rule name only
         """)
-        
+
         # Find and return selected rule
         for rule in available_rules:
             if rule.name in selection:
                 return rule
-        
+
         # Fallback to heuristic selection
         return self._heuristic_selection(current_state, available_rules)
 ```
@@ -292,7 +287,7 @@ class SymaiProofGuide:
 ```python
 class SymaiFormulaEmbedder:
     """Generate semantic embeddings for TDFOL formulas."""
-    
+
     def embed(self, formula: Formula) -> np.ndarray:
         """
         Create embedding combining:
@@ -302,32 +297,29 @@ class SymaiFormulaEmbedder:
         """
         # Convert to natural language description
         nl_description = self._formula_to_natural_language(formula)
-        
+
         # Get semantic embedding via SymbolicAI
         sym = Symbol(nl_description, semantic=True)
         semantic_emb = sym.embed()  # Uses underlying LLM embeddings
-        
+
         # Combine with structural features
         structural_emb = self._extract_structural_features(formula)
-        
+
         # Weighted fusion (80% semantic, 20% structural)
         return 0.8 * semantic_emb + 0.2 * structural_emb
-    
+
     def similar_formulas(
-        self, 
-        query: Formula, 
-        formula_bank: List[Formula],
-        top_k: int = 5
+        self, query: Formula, formula_bank: List[Formula], top_k: int = 5
     ) -> List[Tuple[Formula, float]]:
         """Find similar formulas using semantic similarity."""
         query_emb = self.embed(query)
-        
+
         similarities = []
         for formula in formula_bank:
             formula_emb = self.embed(formula)
             sim = cosine_similarity(query_emb, formula_emb)
             similarities.append((formula, sim))
-        
+
         return sorted(similarities, key=lambda x: x[1], reverse=True)[:top_k]
 ```
 
@@ -388,18 +380,18 @@ class TDFOLContract:
 ```python
 class SymaiGraphBuilder:
     """Build logic-aware knowledge graphs using SymbolicAI."""
-    
+
     def extract_logical_entities(self, text: str) -> List[LogicalEntity]:
         """
         Extract entities with logical types using semantic understanding.
-        
+
         Advantages:
         - Better entity recognition via LLM context
         - Automatic type annotation (Agent, Action, Event, etc.)
         - Relationship extraction with logical properties
         """
         sym = Symbol(text, semantic=True)
-        
+
         entities = sym.query("""
         Extract entities and classify them using these logical types:
         - Agent: entities that can perform actions
@@ -407,45 +399,42 @@ class SymaiGraphBuilder:
         - Event: occurrences in time
         - Proposition: statements that can be true/false
         - State: conditions or properties
-        
+
         For each entity, also extract:
         - Relationships to other entities
         - Temporal properties (when it occurs/exists)
         - Deontic properties (obligations, permissions)
-        
+
         Format as JSON
         """)
-        
+
         return self._parse_logical_entities(entities)
-    
-    def build_theorem_graph(
-        self, 
-        theorems: List[Formula]
-    ) -> KnowledgeGraph:
+
+    def build_theorem_graph(self, theorems: List[Formula]) -> KnowledgeGraph:
         """
         Build knowledge graph from TDFOL theorems.
-        
+
         Nodes: Formulas, predicates, entities
         Edges: Implications, dependencies, similarities
         """
         graph = KnowledgeGraph()
-        
+
         for theorem in theorems:
             # Add theorem as node
             node_id = graph.add_node(theorem)
-            
+
             # Extract predicates and add as nodes
             predicates = theorem.get_predicates()
             for pred in predicates:
                 pred_id = graph.add_node(pred)
                 graph.add_edge(node_id, pred_id, "contains")
-            
+
             # Find semantic similarities using SymbolicAI
             similar = self._find_similar_theorems(theorem, theorems)
             for sim_theorem, score in similar:
                 sim_id = graph.get_node_id(sim_theorem)
                 graph.add_edge(node_id, sim_id, "similar_to", weight=score)
-        
+
         return graph
 ```
 
@@ -609,8 +598,8 @@ graph_builder.add_theorem(formula)
 ```python
 # setup.py
 extras_require = {
-    'symbolic': [
-        'symbolicai>=0.13.1',
+    "symbolic": [
+        "symbolicai>=0.13.1",
     ],
 }
 ```
@@ -619,13 +608,13 @@ extras_require = {
 ```python
 # setup.py
 extras_require = {
-    'symbolic': [
-        'symbolicai>=0.13.1',  # Keep current version
+    "symbolic": [
+        "symbolicai>=0.13.1",  # Keep current version
     ],
-    'neurosymbolic': [
-        'symbolicai>=0.13.1',  # Same package, new features
-        'sentence-transformers>=2.0.0',  # For embeddings
-        'faiss-cpu>=1.7.0',  # For similarity search
+    "neurosymbolic": [
+        "symbolicai>=0.13.1",  # Same package, new features
+        "sentence-transformers>=2.0.0",  # For embeddings
+        "faiss-cpu>=1.7.0",  # For similarity search
     ],
 }
 ```

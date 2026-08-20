@@ -47,9 +47,9 @@ Implemented a comprehensive query caching system with the following components:
 **Configuration:**
 ```python
 cli = GitHubCLI(
-    enable_cache=True,    # Default
-    cache_maxsize=100,    # Default
-    cache_ttl=300         # Default (5 minutes)
+    enable_cache=True,  # Default
+    cache_maxsize=100,  # Default
+    cache_ttl=300,  # Default (5 minutes)
 )
 ```
 
@@ -70,7 +70,7 @@ cli = GitHubCLI(
 copilot = CopilotCLI(
     enable_cache=True,
     cache_maxsize=100,
-    cache_ttl=600         # 10 minutes for AI responses
+    cache_ttl=600,  # 10 minutes for AI responses
 )
 ```
 
@@ -250,19 +250,19 @@ Based on typical usage patterns:
 
 ### Development
 ```python
-cache_maxsize=50     # Smaller cache
-cache_ttl=60         # 1 minute (rapid iteration)
+cache_maxsize = 50  # Smaller cache
+cache_ttl = 60  # 1 minute (rapid iteration)
 ```
 
 ### Production
 ```python
-cache_maxsize=200    # Larger cache
-cache_ttl=600        # 10 minutes (efficiency)
+cache_maxsize = 200  # Larger cache
+cache_ttl = 600  # 10 minutes (efficiency)
 ```
 
 ### CI/CD
 ```python
-enable_cache=False   # Disable for fresh data
+enable_cache = False  # Disable for fresh data
 ```
 
 ## Monitoring

@@ -71,21 +71,18 @@ from ipfs_datasets_py.p2p_workflow_scheduler import (
     P2PWorkflowScheduler,
     WorkflowDefinition,
     WorkflowTag,
-    get_scheduler
+    get_scheduler,
 )
 
 # Initialize scheduler
-scheduler = P2PWorkflowScheduler(
-    peer_id="my-peer",
-    peers=["peer2", "peer3"]
-)
+scheduler = P2PWorkflowScheduler(peer_id="my-peer", peers=["peer2", "peer3"])
 
 # Create a workflow
 workflow = WorkflowDefinition(
     workflow_id="wf1",
     name="Web Scraping Task",
     tags=[WorkflowTag.P2P_ELIGIBLE, WorkflowTag.WEB_SCRAPE],
-    priority=2.0
+    priority=2.0,
 )
 
 # Schedule the workflow
@@ -93,7 +90,7 @@ result = scheduler.schedule_workflow(workflow)
 print(f"Assigned to: {result['assigned_peer']}")
 
 # Get next workflow from queue (if assigned to this peer)
-if result['is_local']:
+if result["is_local"]:
     next_wf = scheduler.get_next_workflow()
     print(f"Processing: {next_wf.workflow_id}")
 ```
@@ -138,7 +135,7 @@ from ipfs_datasets_py.mcp_server.tools.p2p_workflow_tools import (
     initialize_p2p_scheduler,
     schedule_p2p_workflow,
     get_next_p2p_workflow,
-    get_p2p_scheduler_status
+    get_p2p_scheduler_status,
 )
 
 # Initialize
@@ -146,10 +143,7 @@ result = await initialize_p2p_scheduler(peer_id="my-peer")
 
 # Schedule
 result = await schedule_p2p_workflow(
-    workflow_id="wf1",
-    name="Test",
-    tags=["p2p_eligible"],
-    priority=1.0
+    workflow_id="wf1", name="Test", tags=["p2p_eligible"], priority=1.0
 )
 
 # Get status
@@ -194,11 +188,7 @@ workflow = WorkflowDefinition(
     name="Generate API Documentation",
     tags=[WorkflowTag.P2P_ONLY, WorkflowTag.CODE_GEN],
     priority=1.5,
-    metadata={
-        "source": "src/",
-        "output": "docs/api/",
-        "format": "markdown"
-    }
+    metadata={"source": "src/", "output": "docs/api/", "format": "markdown"},
 )
 ```
 
@@ -210,11 +200,7 @@ workflow = WorkflowDefinition(
     name="Legal Document Scraping",
     tags=[WorkflowTag.P2P_ELIGIBLE, WorkflowTag.WEB_SCRAPE],
     priority=2.0,
-    metadata={
-        "url": "https://example.com/legal",
-        "selector": ".document",
-        "output": "data/legal/"
-    }
+    metadata={"url": "https://example.com/legal", "selector": ".document", "output": "data/legal/"},
 )
 ```
 
@@ -226,11 +212,7 @@ workflow = WorkflowDefinition(
     name="Dataset Transformation",
     tags=[WorkflowTag.P2P_ELIGIBLE, WorkflowTag.DATA_PROCESSING],
     priority=3.0,
-    metadata={
-        "input": "data/raw/",
-        "output": "data/processed/",
-        "format": "parquet"
-    }
+    metadata={"input": "data/raw/", "output": "data/processed/", "format": "parquet"},
 )
 ```
 

@@ -28,6 +28,7 @@ try:
         GraphRAGEntityExtractor,
         ExtractionStrategy,
     )
+
     ENTITY_EXTRACTION_AVAILABLE = True
 except ImportError:
     ENTITY_EXTRACTION_AVAILABLE = False
@@ -37,6 +38,7 @@ try:
         EntityDeduplicator,
         DeduplicationStrategy,
     )
+
     DEDUPLICATION_AVAILABLE = True
 except ImportError:
     DEDUPLICATION_AVAILABLE = False
@@ -46,6 +48,7 @@ try:
         GraphTraversal,
         TraversalStrategy,
     )
+
     TRAVERSAL_AVAILABLE = True
 except ImportError:
     TRAVERSAL_AVAILABLE = False
@@ -54,6 +57,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Test fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def small_document() -> str:
@@ -167,25 +171,31 @@ def entity_list_large() -> List[Dict[str, Any]]:
     entities = []
     # Add base entities
     for i in range(100):
-        entities.append({
-            "name": f"Entity_{i}",
-            "type": "base",
-            "id": i,
-        })
+        entities.append(
+            {
+                "name": f"Entity_{i}",
+                "type": "base",
+                "id": i,
+            }
+        )
     # Add duplicates with variations
     for i in range(50):
-        entities.append({
-            "name": f"entity_{i}",  # case variation
-            "type": "base",
-            "id": i,
-        })
+        entities.append(
+            {
+                "name": f"entity_{i}",  # case variation
+                "type": "base",
+                "id": i,
+            }
+        )
     # Add near-duplicates
     for i in range(50):
-        entities.append({
-            "name": f"Entity {i}",  # space variation
-            "type": "base",
-            "id": i,
-        })
+        entities.append(
+            {
+                "name": f"Entity {i}",  # space variation
+                "type": "base",
+                "id": i,
+            }
+        )
     return entities
 
 
@@ -225,9 +235,9 @@ def complex_graph() -> Dict[str, List[str]]:
 # Entity Extraction Benchmarks
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.skipif(
-    not ENTITY_EXTRACTION_AVAILABLE,
-    reason="GraphRAG entity extraction not available"
+    not ENTITY_EXTRACTION_AVAILABLE, reason="GraphRAG entity extraction not available"
 )
 class TestEntityExtractionBenchmarks:
     """Benchmarks for entity extraction at various scales."""
@@ -235,9 +245,9 @@ class TestEntityExtractionBenchmarks:
     def test_extraction_small_document(self, small_document, benchmark):
         """Benchmark entity extraction on small document (~100 tokens)."""
         extractor = GraphRAGEntityExtractor(strategy=ExtractionStrategy.REGEX)
-        
+
         result = benchmark(extractor.extract, small_document)
-        
+
         assert isinstance(result, list)
         # Should extract at least treaty name and location
         assert len(result) >= 2
@@ -245,9 +255,9 @@ class TestEntityExtractionBenchmarks:
     def test_extraction_medium_document(self, medium_document, benchmark):
         """Benchmark entity extraction on medium document (~500 tokens)."""
         extractor = GraphRAGEntityExtractor(strategy=ExtractionStrategy.REGEX)
-        
+
         result = benchmark(extractor.extract, medium_document)
-        
+
         assert isinstance(result, list)
         assert len(result) >= 10  # Multiple entities across paragraphs
 
@@ -255,36 +265,38 @@ class TestEntityExtractionBenchmarks:
     def test_extraction_large_document(self, large_document, benchmark):
         """Benchmark entity extraction on large document (~2000 tokens)."""
         extractor = GraphRAGEntityExtractor(strategy=ExtractionStrategy.REGEX)
-        
+
         result = benchmark(extractor.extract, large_document)
-        
+
         assert isinstance(result, list)
         assert len(result) >= 30
 
     def test_extraction_scaling(self, medium_document):
         """Test extraction performance scaling with document size."""
         extractor = GraphRAGEntityExtractor(strategy=ExtractionStrategy.REGEX)
-        
+
         timings = []
         sizes = [1, 2, 4, 8]
-        
+
         for multiplier in sizes:
             doc = medium_document * multiplier
             start = time.perf_counter()
             result = extractor.extract(doc)
             elapsed = time.perf_counter() - start
-            
-            timings.append({
-                "multiplier": multiplier,
-                "tokens": len(doc.split()),
-                "entities": len(result),
-                "time_ms": elapsed * 1000,
-            })
-        
+
+            timings.append(
+                {
+                    "multiplier": multiplier,
+                    "tokens": len(doc.split()),
+                    "entities": len(result),
+                    "time_ms": elapsed * 1000,
+                }
+            )
+
         # Verify near-linear scaling (allowing for overhead)
         for i in range(1, len(timings)):
-            ratio = timings[i]["time_ms"] / timings[i-1]["time_ms"]
-            expected_ratio = sizes[i] / sizes[i-1]
+            ratio = timings[i]["time_ms"] / timings[i - 1]["time_ms"]
+            expected_ratio = sizes[i] / sizes[i - 1]
             # Should scale within 2x of expected (allowing for constant overhead)
             assert ratio < expected_ratio * 2
 
@@ -293,9 +305,9 @@ class TestEntityExtractionBenchmarks:
 # Entity Deduplication Benchmarks
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.skipif(
-    not DEDUPLICATION_AVAILABLE,
-    reason="GraphRAG entity deduplication not available"
+    not DEDUPLICATION_AVAILABLE, reason="GraphRAG entity deduplication not available"
 )
 class TestEntityDeduplicationBenchmarks:
     """Benchmarks for entity deduplication algorithms."""
@@ -303,9 +315,9 @@ class TestEntityDeduplicationBenchmarks:
     def test_exact_dedup_small(self, entity_list_small, benchmark):
         """Benchmark exact deduplication on small entity list."""
         deduper = EntityDeduplicator(strategy=DeduplicationStrategy.EXACT)
-        
+
         result = benchmark(deduper.deduplicate, entity_list_small)
-        
+
         assert isinstance(result, list)
         # Should have fewer entities after deduplication
         assert len(result) < len(entity_list_small)
@@ -313,9 +325,9 @@ class TestEntityDeduplicationBenchmarks:
     def test_fuzzy_dedup_small(self, entity_list_small, benchmark):
         """Benchmark fuzzy deduplication on small entity list."""
         deduper = EntityDeduplicator(strategy=DeduplicationStrategy.FUZZY)
-        
+
         result = benchmark(deduper.deduplicate, entity_list_small)
-        
+
         assert isinstance(result, list)
         assert len(result) <= len(entity_list_small)
 
@@ -323,9 +335,9 @@ class TestEntityDeduplicationBenchmarks:
     def test_exact_dedup_large(self, entity_list_large, benchmark):
         """Benchmark exact deduplication on large entity list."""
         deduper = EntityDeduplicator(strategy=DeduplicationStrategy.EXACT)
-        
+
         result = benchmark(deduper.deduplicate, entity_list_large)
-        
+
         assert isinstance(result, list)
         # Should significantly reduce duplicates
         assert len(result) < len(entity_list_large) * 0.7
@@ -336,10 +348,10 @@ class TestEntityDeduplicationBenchmarks:
         sizes = [50, 100, 200]
         timings_naive = []
         timings_optimized = []
-        
+
         for size in sizes:
             entities = entity_list_large[:size]
-            
+
             # Naive O(n²) approach
             start = time.perf_counter()
             # Simulate pairwise comparison
@@ -348,21 +360,21 @@ class TestEntityDeduplicationBenchmarks:
                     _ = entities[i]["name"] == entities[j]["name"]
             elapsed_naive = time.perf_counter() - start
             timings_naive.append(elapsed_naive)
-            
+
             # Optimized O(n) approach (bucketing)
             start = time.perf_counter()
             deduper = EntityDeduplicator(strategy=DeduplicationStrategy.EXACT)
             _ = deduper.deduplicate(entities)
             elapsed_opt = time.perf_counter() - start
             timings_optimized.append(elapsed_opt)
-        
+
         # Verify optimized approach scales better
         # Naive should grow quadratically, optimized linearly
         for i in range(1, len(sizes)):
-            naive_ratio = timings_naive[i] / timings_naive[i-1]
-            opt_ratio = timings_optimized[i] / timings_optimized[i-1]
-            size_ratio = sizes[i] / sizes[i-1]
-            
+            naive_ratio = timings_naive[i] / timings_naive[i - 1]
+            opt_ratio = timings_optimized[i] / timings_optimized[i - 1]
+            size_ratio = sizes[i] / sizes[i - 1]
+
             # Naive should grow faster than size_ratio²/2 (due to overhead)
             # Optimized should grow slower than naive
             assert opt_ratio < naive_ratio
@@ -372,19 +384,17 @@ class TestEntityDeduplicationBenchmarks:
 # Graph Traversal Benchmarks
 # ---------------------------------------------------------------------------
 
-@pytest.mark.skipif(
-    not TRAVERSAL_AVAILABLE,
-    reason="GraphRAG graph traversal not available"
-)
+
+@pytest.mark.skipif(not TRAVERSAL_AVAILABLE, reason="GraphRAG graph traversal not available")
 class TestGraphTraversalBenchmarks:
     """Benchmarks for graph traversal and path finding."""
 
     def test_bfs_simple_graph(self, simple_graph, benchmark):
         """Benchmark BFS traversal on simple graph."""
         traversal = GraphTraversal(graph=simple_graph, strategy=TraversalStrategy.BFS)
-        
+
         result = benchmark(traversal.traverse, start="A", target="F")
-        
+
         assert isinstance(result, list)
         assert result[0] == "A"
         assert result[-1] == "F"
@@ -392,9 +402,9 @@ class TestGraphTraversalBenchmarks:
     def test_dfs_simple_graph(self, simple_graph, benchmark):
         """Benchmark DFS traversal on simple graph."""
         traversal = GraphTraversal(graph=simple_graph, strategy=TraversalStrategy.DFS)
-        
+
         result = benchmark(traversal.traverse, start="A", target="F")
-        
+
         assert isinstance(result, list)
         assert result[0] == "A"
         assert result[-1] == "F"
@@ -402,9 +412,9 @@ class TestGraphTraversalBenchmarks:
     def test_shortest_path_complex_graph(self, complex_graph, benchmark):
         """Benchmark shortest path finding on complex graph."""
         traversal = GraphTraversal(graph=complex_graph, strategy=TraversalStrategy.BFS)
-        
+
         result = benchmark(traversal.traverse, start="A", target="L")
-        
+
         assert isinstance(result, list)
         assert result[0] == "A"
         assert result[-1] == "L"
@@ -414,7 +424,7 @@ class TestGraphTraversalBenchmarks:
     def test_multi_hop_traversal(self, complex_graph):
         """Test multi-hop traversal performance."""
         traversal = GraphTraversal(graph=complex_graph, strategy=TraversalStrategy.BFS)
-        
+
         # Test various path lengths
         test_cases = [
             ("A", "B", 2),  # 1 hop
@@ -422,12 +432,12 @@ class TestGraphTraversalBenchmarks:
             ("A", "I", 4),  # 3 hops
             ("A", "L", 4),  # 3-4 hops (multiple paths)
         ]
-        
+
         for start, target, max_hops in test_cases:
             start_time = time.perf_counter()
             path = traversal.traverse(start=start, target=target)
             elapsed = time.perf_counter() - start_time
-            
+
             assert len(path) <= max_hops
             assert elapsed < 0.1  # Should be fast for small graphs
 
@@ -436,67 +446,70 @@ class TestGraphTraversalBenchmarks:
 # End-to-End Query Benchmarks
 # ---------------------------------------------------------------------------
 
+
 class TestEndToEndQueryBenchmarks:
     """Benchmarks for complete query workflows."""
 
     @pytest.mark.skipif(
         not all([ENTITY_EXTRACTION_AVAILABLE, DEDUPLICATION_AVAILABLE, TRAVERSAL_AVAILABLE]),
-        reason="GraphRAG components not fully available"
+        reason="GraphRAG components not fully available",
     )
     def test_simple_query_flow(self, small_document, benchmark):
         """Benchmark simple query: extract → deduplicate → respond."""
+
         def query_flow():
             # Extract entities
             extractor = GraphRAGEntityExtractor(strategy=ExtractionStrategy.REGEX)
             entities = extractor.extract(small_document)
-            
+
             # Deduplicate
             deduper = EntityDeduplicator(strategy=DeduplicationStrategy.EXACT)
             unique_entities = deduper.deduplicate(entities)
-            
+
             # Build simple response
             return {
                 "entities": unique_entities,
                 "count": len(unique_entities),
                 "document_length": len(small_document.split()),
             }
-        
+
         result = benchmark(query_flow)
-        
+
         assert "entities" in result
         assert result["count"] > 0
 
     @pytest.mark.skipif(
         not all([ENTITY_EXTRACTION_AVAILABLE, DEDUPLICATION_AVAILABLE]),
-        reason="GraphRAG components not fully available"
+        reason="GraphRAG components not fully available",
     )
     @pytest.mark.slow
     def test_complex_query_flow(self, large_document, benchmark):
         """Benchmark complex query: extract → deduplicate → analyze."""
+
         def complex_query():
             # Extract entities
             extractor = GraphRAGEntityExtractor(strategy=ExtractionStrategy.REGEX)
             entities = extractor.extract(large_document)
-            
+
             # Deduplicate with fuzzy matching
             deduper = EntityDeduplicator(strategy=DeduplicationStrategy.FUZZY)
             unique_entities = deduper.deduplicate(entities)
-            
+
             # Analyze entity types
             type_counts = {}
             for entity in unique_entities:
                 etype = entity.get("type", "unknown")
                 type_counts[etype] = type_counts.get(etype, 0) + 1
-            
+
             return {
                 "total_entities": len(entities),
                 "unique_entities": len(unique_entities),
                 "dedup_ratio": len(unique_entities) / max(len(entities), 1),
                 "type_distribution": type_counts,
             }
-        
+
         result = benchmark(complex_query)
-        
+
         assert result["total_entities"] > 0
         assert result["dedup_ratio"] <= 1.0
 
@@ -504,23 +517,23 @@ class TestEndToEndQueryBenchmarks:
         """Test query latency distribution over multiple runs."""
         if not ENTITY_EXTRACTION_AVAILABLE:
             pytest.skip("Entity extraction not available")
-        
+
         extractor = GraphRAGEntityExtractor(strategy=ExtractionStrategy.REGEX)
-        
+
         latencies = []
         for _ in range(100):
             start = time.perf_counter()
             _ = extractor.extract(medium_document)
             elapsed = time.perf_counter() - start
             latencies.append(elapsed * 1000)  # Convert to ms
-        
+
         # Statistical analysis
         mean_latency = sum(latencies) / len(latencies)
         latencies_sorted = sorted(latencies)
         p50 = latencies_sorted[len(latencies) // 2]
         p95 = latencies_sorted[int(len(latencies) * 0.95)]
         p99 = latencies_sorted[int(len(latencies) * 0.99)]
-        
+
         # Sanity checks
         assert mean_latency > 0
         assert p50 < p95 < p99
@@ -532,37 +545,32 @@ class TestEndToEndQueryBenchmarks:
 # Performance Regression Tests
 # ---------------------------------------------------------------------------
 
+
 class TestPerformanceRegressions:
     """Tests to catch performance regressions."""
 
-    @pytest.mark.skipif(
-        not ENTITY_EXTRACTION_AVAILABLE,
-        reason="Entity extraction not available"
-    )
+    @pytest.mark.skipif(not ENTITY_EXTRACTION_AVAILABLE, reason="Entity extraction not available")
     def test_extraction_baseline(self, medium_document):
         """Baseline: entity extraction should complete in <100ms for 500 tokens."""
         extractor = GraphRAGEntityExtractor(strategy=ExtractionStrategy.REGEX)
-        
+
         start = time.perf_counter()
         result = extractor.extract(medium_document)
         elapsed = time.perf_counter() - start
-        
+
         assert len(result) > 0
         # Baseline: should be fast for regex-based extraction
         assert elapsed < 0.1, f"Extraction took {elapsed:.3f}s, expected <0.1s"
 
-    @pytest.mark.skipif(
-        not DEDUPLICATION_AVAILABLE,
-        reason="Deduplication not available"
-    )
+    @pytest.mark.skipif(not DEDUPLICATION_AVAILABLE, reason="Deduplication not available")
     def test_dedup_baseline(self, entity_list_large):
         """Baseline: deduplication of 200 entities should complete in <50ms."""
         deduper = EntityDeduplicator(strategy=DeduplicationStrategy.EXACT)
-        
+
         start = time.perf_counter()
         result = deduper.deduplicate(entity_list_large)
         elapsed = time.perf_counter() - start
-        
+
         assert len(result) > 0
         # Baseline: exact dedup should be fast
         assert elapsed < 0.05, f"Deduplication took {elapsed:.3f}s, expected <0.05s"

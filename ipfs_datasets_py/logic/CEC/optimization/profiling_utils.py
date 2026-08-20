@@ -17,7 +17,7 @@ import sys
 class ProfilingResult:
     """
     Result of a profiling operation.
-    
+
     Attributes:
         operation: Name of the operation profiled
         execution_time: Time taken in seconds
@@ -28,6 +28,7 @@ class ProfilingResult:
         error: Error message if operation failed
         metadata: Additional profiling metadata
     """
+
     operation: str
     execution_time: float
     memory_used: int
@@ -36,7 +37,7 @@ class ProfilingResult:
     success: bool = True
     error: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def __str__(self) -> str:
         """String representation of profiling result."""
         status = "✓" if self.success else "✗"
@@ -53,7 +54,7 @@ class ProfilingResult:
 class Bottleneck:
     """
     Represents a performance bottleneck.
-    
+
     Attributes:
         location: Where the bottleneck occurs
         severity: Severity level (1-10)
@@ -61,12 +62,13 @@ class Bottleneck:
         memory_impact: Memory impact
         recommendation: Optimization recommendation
     """
+
     location: str
     severity: int
     execution_time: float
     memory_impact: int
     recommendation: str
-    
+
     def __str__(self) -> str:
         """String representation of bottleneck."""
         return (
@@ -80,20 +82,20 @@ class Bottleneck:
 class FormulaProfiler:
     """
     Profiler for CEC formula operations.
-    
+
     Profiles parsing, proving, and translation operations to identify
     performance bottlenecks.
     """
-    
+
     def __init__(self):
         """Initialize the formula profiler."""
         self.results: List[ProfilingResult] = []
         self._active_profiles: Dict[str, Tuple[float, int]] = {}
-    
+
     def start_profiling(self, operation: str) -> None:
         """
         Start profiling an operation.
-        
+
         Args:
             operation: Name of the operation to profile
         """
@@ -101,34 +103,34 @@ class FormulaProfiler:
         start_time = time.perf_counter()
         start_memory = tracemalloc.get_traced_memory()[0]
         self._active_profiles[operation] = (start_time, start_memory)
-    
+
     def stop_profiling(
-        self, 
+        self,
         operation: str,
         success: bool = True,
         error: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> ProfilingResult:
         """
         Stop profiling an operation and record results.
-        
+
         Args:
             operation: Name of the operation
             success: Whether operation succeeded
             error: Error message if failed
             metadata: Additional metadata
-            
+
         Returns:
             ProfilingResult with performance data
         """
         if operation not in self._active_profiles:
             raise ValueError(f"No active profile for operation: {operation}")
-        
+
         start_time, start_memory = self._active_profiles[operation]
         end_time = time.perf_counter()
         current_memory, peak_memory = tracemalloc.get_traced_memory()
         tracemalloc.stop()
-        
+
         result = ProfilingResult(
             operation=operation,
             execution_time=end_time - start_time,
@@ -136,60 +138,52 @@ class FormulaProfiler:
             peak_memory=peak_memory,
             success=success,
             error=error,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
-        
+
         self.results.append(result)
         del self._active_profiles[operation]
-        
+
         return result
-    
+
     def profile_function(
-        self,
-        func: Callable,
-        *args,
-        operation_name: Optional[str] = None,
-        **kwargs
+        self, func: Callable, *args, operation_name: Optional[str] = None, **kwargs
     ) -> Tuple[Any, ProfilingResult]:
         """
         Profile a function call.
-        
+
         Args:
             func: Function to profile
             *args: Function arguments
             operation_name: Name for the operation
             **kwargs: Function keyword arguments
-            
+
         Returns:
             Tuple of (function result, profiling result)
         """
         op_name = operation_name or func.__name__
         self.start_profiling(op_name)
-        
+
         try:
             result = func(*args, **kwargs)
             prof_result = self.stop_profiling(op_name, success=True)
             return result, prof_result
         except Exception as e:
-            prof_result = self.stop_profiling(
-                op_name,
-                success=False,
-                error=str(e)
-            )
+            prof_result = self.stop_profiling(op_name, success=False, error=str(e))
             raise
-    
+
     def get_results(self) -> List[ProfilingResult]:
         """Get all profiling results."""
         return self.results
-    
+
     def clear_results(self) -> None:
         """Clear all profiling results."""
         self.results.clear()
-    
+
     def get_summary(self) -> Dict[str, Any]:
         """
         Get summary statistics of profiling results.
-        
+
         Returns:
             Dictionary with summary statistics
         """
@@ -198,13 +192,13 @@ class FormulaProfiler:
                 "total_operations": 0,
                 "total_time": 0.0,
                 "total_memory": 0,
-                "success_rate": 0.0
+                "success_rate": 0.0,
             }
-        
+
         total_time = sum(r.execution_time for r in self.results)
         total_memory = sum(r.memory_used for r in self.results)
         successes = sum(1 for r in self.results if r.success)
-        
+
         return {
             "total_operations": len(self.results),
             "total_time": total_time,
@@ -213,25 +207,25 @@ class FormulaProfiler:
             "average_memory": total_memory / len(self.results),
             "peak_memory": max(r.peak_memory for r in self.results),
             "success_rate": successes / len(self.results),
-            "failed_operations": len(self.results) - successes
+            "failed_operations": len(self.results) - successes,
         }
 
 
 class BottleneckAnalyzer:
     """
     Analyzer for identifying performance bottlenecks.
-    
+
     Analyzes profiling results to identify and categorize bottlenecks.
     """
-    
+
     def __init__(
         self,
         time_threshold: float = 0.1,
-        memory_threshold: int = 1024 * 1024  # 1MB
+        memory_threshold: int = 1024 * 1024,  # 1MB
     ):
         """
         Initialize the bottleneck analyzer.
-        
+
         Args:
             time_threshold: Execution time threshold in seconds
             memory_threshold: Memory threshold in bytes
@@ -239,45 +233,49 @@ class BottleneckAnalyzer:
         self.time_threshold = time_threshold
         self.memory_threshold = memory_threshold
         self.bottlenecks: List[Bottleneck] = []
-    
+
     def analyze(self, results: List[ProfilingResult]) -> List[Bottleneck]:
         """
         Analyze profiling results for bottlenecks.
-        
+
         Args:
             results: List of profiling results
-            
+
         Returns:
             List of identified bottlenecks
         """
         self.bottlenecks.clear()
-        
+
         for result in results:
             if result.execution_time > self.time_threshold:
                 severity = min(10, int(result.execution_time / self.time_threshold))
-                self.bottlenecks.append(Bottleneck(
-                    location=result.operation,
-                    severity=severity,
-                    execution_time=result.execution_time,
-                    memory_impact=result.memory_used,
-                    recommendation=self._get_time_recommendation(result)
-                ))
-            
+                self.bottlenecks.append(
+                    Bottleneck(
+                        location=result.operation,
+                        severity=severity,
+                        execution_time=result.execution_time,
+                        memory_impact=result.memory_used,
+                        recommendation=self._get_time_recommendation(result),
+                    )
+                )
+
             if result.memory_used > self.memory_threshold:
                 severity = min(10, int(result.memory_used / self.memory_threshold))
-                self.bottlenecks.append(Bottleneck(
-                    location=result.operation,
-                    severity=severity,
-                    execution_time=result.execution_time,
-                    memory_impact=result.memory_used,
-                    recommendation=self._get_memory_recommendation(result)
-                ))
-        
+                self.bottlenecks.append(
+                    Bottleneck(
+                        location=result.operation,
+                        severity=severity,
+                        execution_time=result.execution_time,
+                        memory_impact=result.memory_used,
+                        recommendation=self._get_memory_recommendation(result),
+                    )
+                )
+
         # Sort by severity
         self.bottlenecks.sort(key=lambda b: b.severity, reverse=True)
-        
+
         return self.bottlenecks
-    
+
     def _get_time_recommendation(self, result: ProfilingResult) -> str:
         """Get recommendation for time bottleneck."""
         if "parse" in result.operation.lower():
@@ -288,7 +286,7 @@ class BottleneckAnalyzer:
             return "Consider formula interning or translation caching"
         else:
             return "Consider algorithm optimization or parallel processing"
-    
+
     def _get_memory_recommendation(self, result: ProfilingResult) -> str:
         """Get recommendation for memory bottleneck."""
         if "parse" in result.operation.lower():
@@ -297,14 +295,14 @@ class BottleneckAnalyzer:
             return "Consider limiting proof depth or using memory pooling"
         else:
             return "Consider using generators or streaming processing"
-    
+
     def get_critical_bottlenecks(self, min_severity: int = 7) -> List[Bottleneck]:
         """
         Get critical bottlenecks above severity threshold.
-        
+
         Args:
             min_severity: Minimum severity level (1-10)
-            
+
         Returns:
             List of critical bottlenecks
         """
@@ -314,22 +312,21 @@ class BottleneckAnalyzer:
 class ProfilingReporter:
     """
     Reporter for generating profiling reports.
-    
+
     Generates human-readable reports from profiling data.
     """
-    
+
     @staticmethod
     def generate_report(
-        profiler: FormulaProfiler,
-        analyzer: Optional[BottleneckAnalyzer] = None
+        profiler: FormulaProfiler, analyzer: Optional[BottleneckAnalyzer] = None
     ) -> str:
         """
         Generate a comprehensive profiling report.
-        
+
         Args:
             profiler: FormulaProfiler with results
             analyzer: Optional BottleneckAnalyzer
-            
+
         Returns:
             Formatted report string
         """
@@ -338,7 +335,7 @@ class ProfilingReporter:
         lines.append("CEC Performance Profiling Report")
         lines.append("=" * 70)
         lines.append("")
-        
+
         # Summary statistics
         summary = profiler.get_summary()
         lines.append("Summary Statistics:")
@@ -350,7 +347,7 @@ class ProfilingReporter:
         lines.append(f"  Peak Memory: {summary.get('peak_memory', 0) / 1024:.2f}KB")
         lines.append(f"  Success Rate: {summary['success_rate'] * 100:.1f}%")
         lines.append("")
-        
+
         # Individual results
         results = profiler.get_results()
         if results:
@@ -358,29 +355,30 @@ class ProfilingReporter:
             for result in results:
                 lines.append(f"  {result}")
             lines.append("")
-        
+
         # Bottlenecks
         if analyzer and analyzer.bottlenecks:
             lines.append("Identified Bottlenecks:")
             for bottleneck in analyzer.bottlenecks:
                 lines.append(f"  {bottleneck}")
                 lines.append("")
-        
+
         lines.append("=" * 70)
-        
+
         return "\n".join(lines)
 
 
 def profile_decorator(operation_name: Optional[str] = None):
     """
     Decorator for profiling functions.
-    
+
     Args:
         operation_name: Optional name for the operation
-        
+
     Returns:
         Decorated function
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -389,5 +387,7 @@ def profile_decorator(operation_name: Optional[str] = None):
             result, prof_result = profiler.profile_function(func, *args, **kwargs)
             print(f"Profile: {prof_result}")
             return result
+
         return wrapper
+
     return decorator

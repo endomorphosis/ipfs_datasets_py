@@ -27,11 +27,7 @@ from ipfs_datasets_py.logic.ir_core.identity import cid_v1
 
 
 FIXTURE_MANIFEST = (
-    Path(__file__).parents[3]
-    / "fixtures"
-    / "intent_ir"
-    / "skillcenter"
-    / "manifest.json"
+    Path(__file__).parents[3] / "fixtures" / "intent_ir" / "skillcenter" / "manifest.json"
 )
 REVISION = "f9dd4fec3c86d85ebf116c7408ac5ce602c418a1"
 
@@ -232,13 +228,9 @@ def test_committed_manifest_pins_exact_two_small_bundle_hashes() -> None:
         "github-lite",
     }
     assert all(len(item.expected_sha256) == 64 for item in manifest.bundles)
-    assert manifest.expansion_policy.prohibited_repository_files == (
-        GITHUB_ALL_FILENAME,
-    )
+    assert manifest.expansion_policy.prohibited_repository_files == (GITHUB_ALL_FILENAME,)
     assert (
-        SkillCenterPilotManifest.from_json(
-            json.dumps(manifest.to_dict())
-        ).manifest_sha256
+        SkillCenterPilotManifest.from_json(json.dumps(manifest.to_dict())).manifest_sha256
         == manifest.manifest_sha256
     )
 
@@ -278,10 +270,7 @@ def test_sample_then_full_reports_reproducible_policy_and_grounding(
         assert bundle.policy_decision_counts["quarantined_unknown"] == 1
         assert bundle.grounding.grounded_statement_count > 0
         assert bundle.grounding.grounded_action_count == 2
-        assert (
-            bundle.grounding.source_ref_count
-            == bundle.grounding.source_span_count
-        )
+        assert bundle.grounding.source_ref_count == bundle.grounding.source_span_count
         assert bundle.corpus_graph_digest.startswith("sha256:")
         assert bundle.corpus_graph_cid
         assert bundle.semantic_graph_digests
@@ -306,9 +295,7 @@ def test_manifest_rejects_github_all_even_when_hash_and_size_are_pinned(
     offline_pilot: tuple[SkillCenterPilot, SkillCenterPilotManifest],
 ) -> None:
     _pilot, manifest = offline_pilot
-    github_lite = next(
-        item for item in manifest.bundles if item.profile == "github-lite"
-    )
+    github_lite = next(item for item in manifest.bundles if item.profile == "github-lite")
 
     with pytest.raises(SkillCenterPilotManifestError, match="GitHub-all"):
         replace(github_lite, repository_file=GITHUB_ALL_FILENAME)

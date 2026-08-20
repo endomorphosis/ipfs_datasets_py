@@ -27,11 +27,13 @@ try:
     import numpy as np
     import pandas as pd
     import matplotlib
-    matplotlib.use('Agg')  # Non-interactive backend for server environments
+
+    matplotlib.use("Agg")  # Non-interactive backend for server environments
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
     from matplotlib.figure import Figure
     import seaborn as sns
+
     VISUALIZATION_LIBS_AVAILABLE = True
 except ImportError:
     VISUALIZATION_LIBS_AVAILABLE = False
@@ -41,6 +43,7 @@ try:
     import plotly.express as px
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
+
     INTERACTIVE_LIBS_AVAILABLE = True
 except ImportError:
     INTERACTIVE_LIBS_AVAILABLE = False
@@ -48,6 +51,7 @@ except ImportError:
 # Import existing visualization components
 from ipfs_datasets_py.dashboards.rag.query_visualization import EnhancedQueryVisualizer
 from ipfs_datasets_py.optimizers.graphrag.query_optimizer import QueryMetricsCollector
+
 
 class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
     """
@@ -65,7 +69,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
         show_plot: bool = True,
         output_file: Optional[str] = None,
         interactive: bool = False,
-        figsize: Tuple[int, int] = (14, 8)
+        figsize: Tuple[int, int] = (14, 8),
     ) -> Optional[Union["Figure", Dict[str, Any]]]:
         """
         Visualize the relationship between RAG query performance and audit/security events.
@@ -83,7 +87,9 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
             matplotlib.figure.Figure, plotly figure dict, or None
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
-            logging.warning("Visualization libraries not available. Install matplotlib and seaborn.")
+            logging.warning(
+                "Visualization libraries not available. Install matplotlib and seaborn."
+            )
             return None
 
         if interactive and not INTERACTIVE_LIBS_AVAILABLE:
@@ -109,7 +115,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
         audit_events = audit_metrics_aggregator.get_recent_events(
             hours_back=time_window // 3600 if time_window else 24,
             include_details=True,
-            max_events=1000  # Limit to prevent memory issues with very large datasets
+            max_events=1000,  # Limit to prevent memory issues with very large datasets
         )
 
         if not audit_events:
@@ -133,7 +139,9 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
             metrics_list = [metrics_list[i] for i in sample_indices]
 
         # Extract time series data for queries
-        query_timestamps = [datetime.datetime.fromtimestamp(m.get("start_time", 0)) for m in metrics_list]
+        query_timestamps = [
+            datetime.datetime.fromtimestamp(m.get("start_time", 0)) for m in metrics_list
+        ]
         query_durations = [m.get("duration", 0) for m in metrics_list]
         query_ids = [m.get("query_id", f"q{i}") for i, m in enumerate(metrics_list)]
 
@@ -141,7 +149,9 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
         if audit_events:
             # Sample audit events if there are too many
             if len(audit_events) > MAX_DATAPOINTS:
-                logging.info(f"Sampling large audit dataset: {len(audit_events)} -> {MAX_DATAPOINTS} points")
+                logging.info(
+                    f"Sampling large audit dataset: {len(audit_events)} -> {MAX_DATAPOINTS} points"
+                )
                 # Preserve critical and error events, then sample the rest
                 critical_events = [e for e in audit_events if e["level"] in ("CRITICAL", "ERROR")]
                 other_events = [e for e in audit_events if e["level"] not in ("CRITICAL", "ERROR")]
@@ -150,9 +160,9 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 remaining_slots = MAX_DATAPOINTS - len(critical_events)
                 if remaining_slots > 0 and other_events:
                     # Sample from regular events
-                    sample_indices = np.linspace(0, len(other_events) - 1,
-                                                min(remaining_slots, len(other_events)),
-                                                dtype=int)
+                    sample_indices = np.linspace(
+                        0, len(other_events) - 1, min(remaining_slots, len(other_events)), dtype=int
+                    )
                     sampled_other_events = [other_events[i] for i in sample_indices]
                     audit_events = critical_events + sampled_other_events
                 else:
@@ -162,7 +172,9 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 # Sort events by timestamp again after sampling
                 audit_events.sort(key=lambda e: e["timestamp"])
 
-            audit_timestamps = [datetime.datetime.fromtimestamp(e["timestamp"]) for e in audit_events]
+            audit_timestamps = [
+                datetime.datetime.fromtimestamp(e["timestamp"]) for e in audit_events
+            ]
             audit_levels = [e["level"] for e in audit_events]
             audit_categories = [e["category"] for e in audit_events]
             audit_messages = [e["message"] for e in audit_events]
@@ -192,17 +204,18 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
             "WARNING": "#FF9800",  # Orange
             "ERROR": "#F44336",  # Red
             "CRITICAL": "#9C27B0",  # Purple
-            "DEBUG": "#2196F3"  # Blue
+            "DEBUG": "#2196F3",  # Blue
         }
 
         if interactive:
             # Create interactive visualization with plotly
             fig = make_subplots(
-                rows=2, cols=1,
+                rows=2,
+                cols=1,
                 shared_xaxes=True,
                 subplot_titles=("Query Duration", "Audit Events"),
                 vertical_spacing=0.1,
-                row_heights=[0.6, 0.4]
+                row_heights=[0.6, 0.4],
             )
 
             # Add query duration scatter plot
@@ -210,17 +223,18 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 go.Scatter(
                     x=query_timestamps,
                     y=query_durations,
-                    mode='lines+markers',
-                    name='Query Duration (s)',
+                    mode="lines+markers",
+                    name="Query Duration (s)",
                     marker=dict(
                         size=8,
                         color=self.colors["vector_search"],
-                        line=dict(width=1, color=self.colors["text"])
+                        line=dict(width=1, color=self.colors["text"]),
                     ),
-                    hovertemplate='<b>Query ID:</b> %{text}<br>Time: %{x}<br>Duration: %{y:.3f}s',
-                    text=query_ids
+                    hovertemplate="<b>Query ID:</b> %{text}<br>Time: %{x}<br>Duration: %{y:.3f}s",
+                    text=query_ids,
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
             # Add audit events scatter plot with color coding by level
@@ -233,19 +247,22 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                     go.Scatter(
                         x=[audit_timestamps[i] for i in indices],
                         y=[1] * len(indices),  # All at same y level
-                        mode='markers',
-                        name=f'{level} Events',
+                        mode="markers",
+                        name=f"{level} Events",
                         marker=dict(
-                            symbol='diamond',
+                            symbol="diamond",
                             size=12,
                             color=level_colors.get(level, "#777777"),
-                            line=dict(width=1, color=self.colors["text"])
+                            line=dict(width=1, color=self.colors["text"]),
                         ),
-                        hovertemplate='<b>%{text}</b><br>Time: %{x}<br>Level: ' + level + '<br>Category: %{customdata}',
+                        hovertemplate="<b>%{text}</b><br>Time: %{x}<br>Level: "
+                        + level
+                        + "<br>Category: %{customdata}",
                         text=[audit_messages[i] for i in indices],
-                        customdata=[audit_categories[i] for i in indices]
+                        customdata=[audit_categories[i] for i in indices],
                     ),
-                    row=2, col=1
+                    row=2,
+                    col=1,
                 )
 
             # Add category-based stacked area chart
@@ -267,7 +284,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 for category in unique_categories:
                     counts = []
                     # Create mask for this category
-                    category_mask = (categories_array == category)
+                    category_mask = categories_array == category
                     category_timestamps = timestamps_array[category_mask]
 
                     for t in time_points_ts:
@@ -284,12 +301,13 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                         go.Scatter(
                             x=time_points,
                             y=counts,
-                            mode='lines',
-                            name=f'{category} Events',
+                            mode="lines",
+                            name=f"{category} Events",
                             line=dict(width=0.5),
-                            stackgroup='categories'
+                            stackgroup="categories",
                         ),
-                        row=2, col=1
+                        row=2,
+                        col=1,
                     )
 
             # Update layout
@@ -298,20 +316,10 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 height=800,
                 width=1200,
                 showlegend=True,
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1
-                ),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                 paper_bgcolor=self.colors["background"],
                 plot_bgcolor=self.colors["background"],
-                font=dict(
-                    family="Arial, sans-serif",
-                    size=12,
-                    color=self.colors["text"]
-                )
+                font=dict(family="Arial, sans-serif", size=12, color=self.colors["text"]),
             )
 
             # Configure y-axes
@@ -323,14 +331,14 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 showgrid=True,
                 gridwidth=1,
                 gridcolor=self.colors["grid"],
-                linecolor=self.colors["text"]
+                linecolor=self.colors["text"],
             )
 
             fig.update_yaxes(
                 showgrid=True,
                 gridwidth=1,
                 gridcolor=self.colors["grid"],
-                linecolor=self.colors["text"]
+                linecolor=self.colors["text"],
             )
 
             # Save if output file specified
@@ -348,16 +356,28 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
 
         else:
             # Create static visualization with matplotlib
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=figsize, gridspec_kw={'height_ratios': [3, 2]}, sharex=True)
+            fig, (ax1, ax2) = plt.subplots(
+                2, 1, figsize=figsize, gridspec_kw={"height_ratios": [3, 2]}, sharex=True
+            )
 
             # Set style
-            plt.style.use('seaborn-v0_8-darkgrid' if self.theme == 'dark' else 'seaborn-v0_8-whitegrid')
+            plt.style.use(
+                "seaborn-v0_8-darkgrid" if self.theme == "dark" else "seaborn-v0_8-whitegrid"
+            )
 
             # Plot query durations on top subplot
-            ax1.plot(query_timestamps, query_durations, 'o-', color=self.colors["vector_search"], linewidth=2, markersize=6, label="Query Duration")
-            ax1.set_ylabel('Duration (s)')
-            ax1.set_title('Query Performance')
-            ax1.grid(True, linestyle='--', alpha=0.7)
+            ax1.plot(
+                query_timestamps,
+                query_durations,
+                "o-",
+                color=self.colors["vector_search"],
+                linewidth=2,
+                markersize=6,
+                label="Query Duration",
+            )
+            ax1.set_ylabel("Duration (s)")
+            ax1.set_title("Query Performance")
+            ax1.grid(True, linestyle="--", alpha=0.7)
 
             # Handle audit events on bottom subplot
             if audit_events:
@@ -370,12 +390,12 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                     ax2.scatter(
                         [audit_timestamps[i] for i in indices],
                         [1] * len(indices),  # All at same y level
-                        marker='D',  # Diamond marker
+                        marker="D",  # Diamond marker
                         s=100,  # Size
                         color=level_colors.get(level, "#777777"),
-                        label=f'{level} Events',
+                        label=f"{level} Events",
                         alpha=0.7,
-                        zorder=5  # To ensure markers are on top
+                        zorder=5,  # To ensure markers are on top
                     )
 
                 # Generate stacked area chart of event categories - optimized for large datasets
@@ -396,7 +416,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                     for category in unique_categories:
                         counts = []
                         # Create mask for this category
-                        category_mask = (categories_array == category)
+                        category_mask = categories_array == category
                         category_timestamps = timestamps_array[category_mask]
 
                         for t in time_points_ts:
@@ -412,37 +432,45 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                         time_points,
                         category_counts.values(),
                         labels=category_counts.keys(),
-                        alpha=0.4
+                        alpha=0.4,
                     )
 
-                ax2.set_ylabel('Event Count')
-                ax2.set_title('Audit Events by Category')
-                ax2.grid(True, linestyle='--', alpha=0.7)
-                ax2.legend(loc='upper right', fontsize='small')
+                ax2.set_ylabel("Event Count")
+                ax2.set_title("Audit Events by Category")
+                ax2.grid(True, linestyle="--", alpha=0.7)
+                ax2.legend(loc="upper right", fontsize="small")
             else:
-                ax2.text(0.5, 0.5, "No audit events available",
-                         ha='center', va='center', transform=ax2.transAxes,
-                         fontsize=12, color=self.colors["text"])
+                ax2.text(
+                    0.5,
+                    0.5,
+                    "No audit events available",
+                    ha="center",
+                    va="center",
+                    transform=ax2.transAxes,
+                    fontsize=12,
+                    color=self.colors["text"],
+                )
 
             # Format x-axis with date formatter
-            ax2.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
+            ax2.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d %H:%M"))
             fig.autofmt_xdate()  # Rotate date labels
 
             # Add annotations for significant events
             if audit_events:
                 # Find high-severity events
-                high_events = [i for i, level in enumerate(audit_levels)
-                               if level in ('ERROR', 'CRITICAL')]
+                high_events = [
+                    i for i, level in enumerate(audit_levels) if level in ("ERROR", "CRITICAL")
+                ]
 
                 for i in high_events[:5]:  # Limit to prevent overcrowding
                     ax2.annotate(
                         f"{audit_levels[i]}: {audit_categories[i]}",
                         xy=(audit_timestamps[i], 1),
                         xytext=(0, 20),
-                        textcoords='offset points',
+                        textcoords="offset points",
                         arrowprops=dict(arrowstyle="->", color=self.colors["text"]),
                         fontsize=8,
-                        color=level_colors.get(audit_levels[i], "#777777")
+                        color=level_colors.get(audit_levels[i], "#777777"),
                     )
 
             # Set main title
@@ -454,7 +482,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
 
             # Save if output file specified
             if output_file:
-                plt.savefig(output_file, dpi=300, bbox_inches='tight')
+                plt.savefig(output_file, dpi=300, bbox_inches="tight")
 
             # Show plot if requested
             if show_plot:
@@ -472,7 +500,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
         show_plot: bool = True,
         output_file: Optional[str] = None,
         interactive: bool = False,
-        figsize: Tuple[int, int] = (14, 10)
+        figsize: Tuple[int, int] = (14, 10),
     ) -> Optional[Union["Figure", Dict[str, Any], Dict[str, float]]]:
         """
         Analyze correlation between RAG query performance and audit events.
@@ -494,7 +522,9 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
             matplotlib.figure.Figure, plotly figure dict, Dict of correlation stats, or None
         """
         if not VISUALIZATION_LIBS_AVAILABLE:
-            logging.warning("Visualization libraries not available. Install matplotlib and seaborn.")
+            logging.warning(
+                "Visualization libraries not available. Install matplotlib and seaborn."
+            )
             return None
 
         if interactive and not INTERACTIVE_LIBS_AVAILABLE:
@@ -520,7 +550,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
         audit_events = audit_metrics_aggregator.get_recent_events(
             hours_back=time_window // 3600 if time_window else 24,
             include_details=True,
-            max_events=1000  # Limit to prevent memory issues with very large datasets
+            max_events=1000,  # Limit to prevent memory issues with very large datasets
         )
 
         if not audit_events:
@@ -546,7 +576,9 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
         audit_timestamps = [e["timestamp"] for e in audit_events]
 
         # Split audit events by severity
-        error_timestamps = [e["timestamp"] for e in audit_events if e["level"] in ("ERROR", "CRITICAL")]
+        error_timestamps = [
+            e["timestamp"] for e in audit_events if e["level"] in ("ERROR", "CRITICAL")
+        ]
         warning_timestamps = [e["timestamp"] for e in audit_events if e["level"] == "WARNING"]
 
         # Compute time-based metrics
@@ -586,7 +618,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
             results = binned_query_results[bin_idx]
             qualities = binned_query_quality[bin_idx]
 
-            bin_centers.append((bin_edges[bin_idx] + bin_edges[bin_idx+1]) / 2)
+            bin_centers.append((bin_edges[bin_idx] + bin_edges[bin_idx + 1]) / 2)
             bin_avg_duration.append(np.mean(durations) if durations else None)
             bin_avg_results.append(np.mean(results) if results else None)
             bin_avg_quality.append(np.mean(qualities) if qualities else None)
@@ -624,13 +656,32 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
         # Calculate correlations if we have enough data points
         correlations = {}
         if len(valid_durations) >= 3:
-            correlations["duration_error_correlation"] = np.corrcoef(valid_durations, valid_errors)[0, 1]
-            correlations["duration_warning_correlation"] = np.corrcoef(valid_durations, valid_warnings)[0, 1]
+            correlations["duration_error_correlation"] = np.corrcoef(valid_durations, valid_errors)[
+                0, 1
+            ]
+            correlations["duration_warning_correlation"] = np.corrcoef(
+                valid_durations, valid_warnings
+            )[0, 1]
 
             # Create normalized versions for plotting
-            norm_durations = (valid_durations - np.min(valid_durations)) / (np.max(valid_durations) - np.min(valid_durations)) if np.max(valid_durations) > np.min(valid_durations) else valid_durations
-            norm_errors = (valid_errors - np.min(valid_errors)) / (np.max(valid_errors) - np.min(valid_errors)) if np.max(valid_errors) > np.min(valid_errors) else valid_errors
-            norm_warnings = (valid_warnings - np.min(valid_warnings)) / (np.max(valid_warnings) - np.min(valid_warnings)) if np.max(valid_warnings) > np.min(valid_warnings) else valid_warnings
+            norm_durations = (
+                (valid_durations - np.min(valid_durations))
+                / (np.max(valid_durations) - np.min(valid_durations))
+                if np.max(valid_durations) > np.min(valid_durations)
+                else valid_durations
+            )
+            norm_errors = (
+                (valid_errors - np.min(valid_errors))
+                / (np.max(valid_errors) - np.min(valid_errors))
+                if np.max(valid_errors) > np.min(valid_errors)
+                else valid_errors
+            )
+            norm_warnings = (
+                (valid_warnings - np.min(valid_warnings))
+                / (np.max(valid_warnings) - np.min(valid_warnings))
+                if np.max(valid_warnings) > np.min(valid_warnings)
+                else valid_warnings
+            )
         else:
             correlations["duration_error_correlation"] = None
             correlations["duration_warning_correlation"] = None
@@ -652,7 +703,9 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
 
             if lag_correlations:
                 # Find the lag with maximum correlation
-                max_lag, max_corr = max(lag_correlations, key=lambda x: abs(x[1]) if not np.isnan(x[1]) else 0)
+                max_lag, max_corr = max(
+                    lag_correlations, key=lambda x: abs(x[1]) if not np.isnan(x[1]) else 0
+                )
                 correlations["max_lag_correlation"] = max_corr
                 correlations["max_lag_bins"] = max_lag
                 correlations["max_lag_time"] = max_lag * BIN_SIZE  # Convert to seconds
@@ -661,19 +714,17 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
         if interactive:
             # Create interactive correlation visualization with plotly
             fig = make_subplots(
-                rows=2, cols=2,
+                rows=2,
+                cols=2,
                 subplot_titles=(
                     "Performance & Security Events Timeline",
                     "Correlation Analysis",
                     "Performance Metrics Distribution",
-                    "Lag Correlation Analysis"
+                    "Lag Correlation Analysis",
                 ),
-                specs=[
-                    [{"colspan": 2}, None],
-                    [{"type": "xy"}, {"type": "xy"}]
-                ],
+                specs=[[{"colspan": 2}, None], [{"type": "xy"}, {"type": "xy"}]],
                 vertical_spacing=0.1,
-                horizontal_spacing=0.05
+                horizontal_spacing=0.05,
             )
 
             # Add performance timeline (top plot)
@@ -685,12 +736,13 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 go.Scatter(
                     x=bin_center_dates,
                     y=bin_avg_duration,
-                    mode='lines+markers',
-                    name='Query Duration (s)',
+                    mode="lines+markers",
+                    name="Query Duration (s)",
                     line=dict(color=self.colors["vector_search"], width=2),
-                    hovertemplate='Time: %{x}<br>Avg Duration: %{y:.3f}s'
+                    hovertemplate="Time: %{x}<br>Avg Duration: %{y:.3f}s",
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
             # Add error events bars
@@ -698,11 +750,12 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 go.Bar(
                     x=bin_center_dates,
                     y=binned_error_events,
-                    name='Error Events',
+                    name="Error Events",
                     marker_color=self.colors["error"],
-                    hovertemplate='Time: %{x}<br>Error Events: %{y}'
+                    hovertemplate="Time: %{x}<br>Error Events: %{y}",
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
             # Add warning events bars
@@ -710,11 +763,12 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 go.Bar(
                     x=bin_center_dates,
                     y=binned_warning_events,
-                    name='Warning Events',
-                    marker_color='orange',
-                    hovertemplate='Time: %{x}<br>Warning Events: %{y}'
+                    name="Warning Events",
+                    marker_color="orange",
+                    hovertemplate="Time: %{x}<br>Warning Events: %{y}",
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
             # Add scatter plot of errors vs duration (correlation plot)
@@ -722,20 +776,21 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 go.Scatter(
                     x=valid_errors,
                     y=valid_durations,
-                    mode='markers',
-                    name='Error-Duration Correlation',
-                    marker=dict(
-                        size=10,
-                        color=self.colors["error"],
-                        opacity=0.7
-                    ),
-                    hovertemplate='Errors: %{x}<br>Duration: %{y:.3f}s'
+                    mode="markers",
+                    name="Error-Duration Correlation",
+                    marker=dict(size=10, color=self.colors["error"], opacity=0.7),
+                    hovertemplate="Errors: %{x}<br>Duration: %{y:.3f}s",
                 ),
-                row=2, col=1
+                row=2,
+                col=1,
             )
 
             # Add regression line if we have correlation
-            if len(valid_durations) >= 3 and 'duration_error_correlation' in correlations and correlations['duration_error_correlation'] is not None:
+            if (
+                len(valid_durations) >= 3
+                and "duration_error_correlation" in correlations
+                and correlations["duration_error_correlation"] is not None
+            ):
                 # Compute regression line
                 z = np.polyfit(valid_errors, valid_durations, 1)
                 p = np.poly1d(z)
@@ -745,39 +800,49 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                     go.Scatter(
                         x=x_range,
                         y=p(x_range),
-                        mode='lines',
-                        line=dict(color='red', width=2, dash='dash'),
-                        name=f'Correlation: {correlations["duration_error_correlation"]:.2f}',
-                        hoverinfo='skip'
+                        mode="lines",
+                        line=dict(color="red", width=2, dash="dash"),
+                        name=f"Correlation: {correlations['duration_error_correlation']:.2f}",
+                        hoverinfo="skip",
                     ),
-                    row=2, col=1
+                    row=2,
+                    col=1,
                 )
 
             # Add lag correlation analysis if available
-            if 'max_lag_correlation' in correlations and correlations['max_lag_correlation'] is not None:
-                lag_labels = [f"Lag {i} ({i*BIN_SIZE/60:.1f}min)" for i in range(1, LAG_STEPS + 1)]
+            if (
+                "max_lag_correlation" in correlations
+                and correlations["max_lag_correlation"] is not None
+            ):
+                lag_labels = [
+                    f"Lag {i} ({i * BIN_SIZE / 60:.1f}min)" for i in range(1, LAG_STEPS + 1)
+                ]
                 lag_values = [corr for _, corr in lag_correlations]
 
                 fig.add_trace(
                     go.Bar(
                         x=lag_labels,
                         y=lag_values,
-                        name='Lag Correlations',
+                        name="Lag Correlations",
                         marker_color=[
-                            'red' if val < -0.3 else
-                            'orange' if val < 0 else
-                            'green' if val > 0.3 else
-                            'lightgreen'
+                            "red"
+                            if val < -0.3
+                            else "orange"
+                            if val < 0
+                            else "green"
+                            if val > 0.3
+                            else "lightgreen"
                             for val in lag_values
                         ],
-                        hovertemplate='%{x}<br>Correlation: %{y:.3f}'
+                        hovertemplate="%{x}<br>Correlation: %{y:.3f}",
                     ),
-                    row=2, col=2
+                    row=2,
+                    col=2,
                 )
 
                 # Highlight the strongest correlation
                 fig.add_annotation(
-                    x=lag_labels[max_lag-1],
+                    x=lag_labels[max_lag - 1],
                     y=max_corr,
                     text=f"Max: {max_corr:.2f}",
                     showarrow=True,
@@ -785,7 +850,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                     ax=0,
                     ay=-40,
                     row=2,
-                    col=2
+                    col=2,
                 )
             else:
                 fig.add_annotation(
@@ -796,7 +861,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                     xref="paper",
                     yref="paper",
                     row=2,
-                    col=2
+                    col=2,
                 )
 
             # Update layout
@@ -805,21 +870,11 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 height=800,
                 width=1200,
                 showlegend=True,
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1
-                ),
-                barmode='overlay',
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                barmode="overlay",
                 paper_bgcolor=self.colors["background"],
                 plot_bgcolor=self.colors["background"],
-                font=dict(
-                    family="Arial, sans-serif",
-                    size=12,
-                    color=self.colors["text"]
-                )
+                font=dict(family="Arial, sans-serif", size=12, color=self.colors["text"]),
             )
 
             # Update axis labels
@@ -835,14 +890,14 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 showgrid=True,
                 gridwidth=1,
                 gridcolor=self.colors["grid"],
-                linecolor=self.colors["text"]
+                linecolor=self.colors["text"],
             )
 
             fig.update_yaxes(
                 showgrid=True,
                 gridwidth=1,
                 gridcolor=self.colors["grid"],
-                linecolor=self.colors["text"]
+                linecolor=self.colors["text"],
             )
 
             # Save if output file specified
@@ -857,10 +912,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 fig.show()
 
             # Return the figure and correlation stats
-            return {
-                "figure": fig,
-                "correlations": correlations
-            }
+            return {"figure": fig, "correlations": correlations}
 
         else:
             # Create static correlation visualization with matplotlib
@@ -873,56 +925,82 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
             ax3 = fig.add_subplot(gs[1, 1])  # Lag correlation
 
             # Set style
-            plt.style.use('seaborn-v0_8-darkgrid' if self.theme == 'dark' else 'seaborn-v0_8-whitegrid')
+            plt.style.use(
+                "seaborn-v0_8-darkgrid" if self.theme == "dark" else "seaborn-v0_8-whitegrid"
+            )
 
             # Plot timeline on top subplot
             bin_center_dates = [datetime.datetime.fromtimestamp(t) for t in bin_centers]
 
             # Query duration line
-            duration_line = ax1.plot(bin_center_dates, bin_avg_duration, 'o-',
-                              color=self.colors["vector_search"],
-                              linewidth=2,
-                              label="Query Duration (s)")
+            duration_line = ax1.plot(
+                bin_center_dates,
+                bin_avg_duration,
+                "o-",
+                color=self.colors["vector_search"],
+                linewidth=2,
+                label="Query Duration (s)",
+            )
 
             # Create secondary y-axis for event counts
             ax1_events = ax1.twinx()
-            error_bars = ax1_events.bar(bin_center_dates, binned_error_events,
-                             color=self.colors["error"], alpha=0.5,
-                             label="Error Events", width=datetime.timedelta(seconds=BIN_SIZE*0.4))
-            warning_bars = ax1_events.bar(bin_center_dates, binned_warning_events,
-                               color='orange', alpha=0.5,
-                               label="Warning Events", width=datetime.timedelta(seconds=BIN_SIZE*0.4))
+            error_bars = ax1_events.bar(
+                bin_center_dates,
+                binned_error_events,
+                color=self.colors["error"],
+                alpha=0.5,
+                label="Error Events",
+                width=datetime.timedelta(seconds=BIN_SIZE * 0.4),
+            )
+            warning_bars = ax1_events.bar(
+                bin_center_dates,
+                binned_warning_events,
+                color="orange",
+                alpha=0.5,
+                label="Warning Events",
+                width=datetime.timedelta(seconds=BIN_SIZE * 0.4),
+            )
 
             # Set labels
-            ax1.set_ylabel('Query Duration (s)')
-            ax1_events.set_ylabel('Event Count')
-            ax1.set_title('Performance & Security Events Timeline')
+            ax1.set_ylabel("Query Duration (s)")
+            ax1_events.set_ylabel("Event Count")
+            ax1.set_title("Performance & Security Events Timeline")
 
             # Combine legends from both y-axes
             handles1, labels1 = ax1.get_legend_handles_labels()
             handles2, labels2 = ax1_events.get_legend_handles_labels()
-            ax1.legend(handles1 + handles2, labels1 + labels2, loc='upper right')
+            ax1.legend(handles1 + handles2, labels1 + labels2, loc="upper right")
 
             # Format x-axis
-            ax1.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
-            ax1.tick_params(axis='x', rotation=30)
+            ax1.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d %H:%M"))
+            ax1.tick_params(axis="x", rotation=30)
 
             # Correlation plot in bottom-left
             if len(valid_durations) >= 3:
-                ax2.scatter(valid_errors, valid_durations, color=self.colors["error"],
-                           alpha=0.7, s=80, label="Data Points")
+                ax2.scatter(
+                    valid_errors,
+                    valid_durations,
+                    color=self.colors["error"],
+                    alpha=0.7,
+                    s=80,
+                    label="Data Points",
+                )
 
                 # Add correlation coefficient
-                if 'duration_error_correlation' in correlations and correlations['duration_error_correlation'] is not None:
-                    corr = correlations['duration_error_correlation']
+                if (
+                    "duration_error_correlation" in correlations
+                    and correlations["duration_error_correlation"] is not None
+                ):
+                    corr = correlations["duration_error_correlation"]
 
                     # Add regression line
                     z = np.polyfit(valid_errors, valid_durations, 1)
                     p = np.poly1d(z)
                     x_range = np.linspace(min(valid_errors), max(valid_errors), 100)
 
-                    ax2.plot(x_range, p(x_range), 'r--', linewidth=2,
-                            label=f"Correlation: {corr:.2f}")
+                    ax2.plot(
+                        x_range, p(x_range), "r--", linewidth=2, label=f"Correlation: {corr:.2f}"
+                    )
 
                     # Correlation strength text
                     if abs(corr) > 0.7:
@@ -934,65 +1012,114 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
 
                     direction_text = "positive" if corr > 0 else "negative"
                     corr_text = f"{strength_text}{direction_text} correlation"
-                    ax2.text(0.05, 0.95, corr_text, transform=ax2.transAxes,
-                            ha='left', va='top', fontsize=10)
+                    ax2.text(
+                        0.05,
+                        0.95,
+                        corr_text,
+                        transform=ax2.transAxes,
+                        ha="left",
+                        va="top",
+                        fontsize=10,
+                    )
             else:
-                ax2.text(0.5, 0.5, "Insufficient data for correlation analysis",
-                        transform=ax2.transAxes, ha='center', va='center')
+                ax2.text(
+                    0.5,
+                    0.5,
+                    "Insufficient data for correlation analysis",
+                    transform=ax2.transAxes,
+                    ha="center",
+                    va="center",
+                )
 
-            ax2.set_xlabel('Error Events')
-            ax2.set_ylabel('Query Duration (s)')
-            ax2.set_title('Correlation Analysis')
-            ax2.legend(loc='upper left')
+            ax2.set_xlabel("Error Events")
+            ax2.set_ylabel("Query Duration (s)")
+            ax2.set_title("Correlation Analysis")
+            ax2.legend(loc="upper left")
 
             # Lag correlation plot in bottom-right
-            if 'max_lag_correlation' in correlations and correlations['max_lag_correlation'] is not None:
-                lag_labels = [f"Lag {i}\n({i*BIN_SIZE/60:.1f}min)" for i in range(1, LAG_STEPS + 1)]
+            if (
+                "max_lag_correlation" in correlations
+                and correlations["max_lag_correlation"] is not None
+            ):
+                lag_labels = [
+                    f"Lag {i}\n({i * BIN_SIZE / 60:.1f}min)" for i in range(1, LAG_STEPS + 1)
+                ]
                 lag_values = [corr for _, corr in lag_correlations]
 
                 # Color bars based on correlation strength
                 colors = [
-                    'red' if val < -0.3 else
-                    'orange' if val < 0 else
-                    'green' if val > 0.3 else
-                    'lightgreen'
+                    "red"
+                    if val < -0.3
+                    else "orange"
+                    if val < 0
+                    else "green"
+                    if val > 0.3
+                    else "lightgreen"
                     for val in lag_values
                 ]
 
                 ax3.bar(lag_labels, lag_values, color=colors)
 
                 # Mark the maximum correlation
-                max_lag, max_corr = max(lag_correlations, key=lambda x: abs(x[1]) if not np.isnan(x[1]) else 0)
-                ax3.annotate(f"Max: {max_corr:.2f}",
-                            xy=(lag_labels[max_lag-1], max_corr),
-                            xytext=(0, 10), textcoords='offset points',
-                            ha='center', va='bottom',
-                            arrowprops=dict(arrowstyle="->", color=self.colors["text"]))
+                max_lag, max_corr = max(
+                    lag_correlations, key=lambda x: abs(x[1]) if not np.isnan(x[1]) else 0
+                )
+                ax3.annotate(
+                    f"Max: {max_corr:.2f}",
+                    xy=(lag_labels[max_lag - 1], max_corr),
+                    xytext=(0, 10),
+                    textcoords="offset points",
+                    ha="center",
+                    va="bottom",
+                    arrowprops=dict(arrowstyle="->", color=self.colors["text"]),
+                )
 
-                ax3.set_ylabel('Correlation Strength')
-                ax3.set_title('Lag Correlation Analysis')
+                ax3.set_ylabel("Correlation Strength")
+                ax3.set_title("Lag Correlation Analysis")
 
                 # Add horizontal line at zero
-                ax3.axhline(y=0, color='gray', linestyle='-', linewidth=1)
+                ax3.axhline(y=0, color="gray", linestyle="-", linewidth=1)
 
                 # Set y limits with padding
                 y_max = max(abs(min(lag_values)), abs(max(lag_values))) * 1.2
                 ax3.set_ylim(-y_max, y_max)
             else:
-                ax3.text(0.5, 0.5, "Insufficient data for lag analysis",
-                        transform=ax3.transAxes, ha='center', va='center')
+                ax3.text(
+                    0.5,
+                    0.5,
+                    "Insufficient data for lag analysis",
+                    transform=ax3.transAxes,
+                    ha="center",
+                    va="center",
+                )
 
             # Add correlation statistics as text
             corr_text = "Correlation Statistics:\n"
-            if 'duration_error_correlation' in correlations and correlations['duration_error_correlation'] is not None:
+            if (
+                "duration_error_correlation" in correlations
+                and correlations["duration_error_correlation"] is not None
+            ):
                 corr_text += f"• Error-Duration: {correlations['duration_error_correlation']:.2f}\n"
-            if 'duration_warning_correlation' in correlations and correlations['duration_warning_correlation'] is not None:
-                corr_text += f"• Warning-Duration: {correlations['duration_warning_correlation']:.2f}\n"
-            if 'max_lag_correlation' in correlations and correlations['max_lag_correlation'] is not None:
-                corr_text += f"• Max Lag Correlation: {correlations['max_lag_correlation']:.2f} at {correlations['max_lag_time']/60:.1f} minutes"
+            if (
+                "duration_warning_correlation" in correlations
+                and correlations["duration_warning_correlation"] is not None
+            ):
+                corr_text += (
+                    f"• Warning-Duration: {correlations['duration_warning_correlation']:.2f}\n"
+                )
+            if (
+                "max_lag_correlation" in correlations
+                and correlations["max_lag_correlation"] is not None
+            ):
+                corr_text += f"• Max Lag Correlation: {correlations['max_lag_correlation']:.2f} at {correlations['max_lag_time'] / 60:.1f} minutes"
 
-            fig.text(0.02, 0.01, corr_text, fontsize=9,
-                    bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.5'))
+            fig.text(
+                0.02,
+                0.01,
+                corr_text,
+                fontsize=9,
+                bbox=dict(facecolor="white", alpha=0.8, boxstyle="round,pad=0.5"),
+            )
 
             # Set main title
             fig.suptitle(title, fontsize=14)
@@ -1003,7 +1130,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
 
             # Save if output file specified
             if output_file:
-                plt.savefig(output_file, dpi=300, bbox_inches='tight')
+                plt.savefig(output_file, dpi=300, bbox_inches="tight")
 
             # Show plot if requested
             if show_plot:
@@ -1012,10 +1139,8 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
                 plt.close(fig)
 
             # Return the figure and correlation stats
-            return {
-                "figure": fig,
-                "correlations": correlations
-            }
+            return {"figure": fig, "correlations": correlations}
+
 
 # For testing
 if __name__ == "__main__":
@@ -1030,15 +1155,14 @@ if __name__ == "__main__":
 
     # Create visualizer
     visualizer = EnhancedQueryAuditVisualizer(
-        metrics_collector=metrics_collector,
-        dashboard_dir=temp_dir
+        metrics_collector=metrics_collector, dashboard_dir=temp_dir
     )
 
     print("Created visualizer with methods:")
-    print([method for method in dir(visualizer) if not method.startswith('_')])
+    print([method for method in dir(visualizer) if not method.startswith("_")])
 
     # Check if our method exists
-    if hasattr(visualizer, 'visualize_query_audit_metrics'):
+    if hasattr(visualizer, "visualize_query_audit_metrics"):
         print("visualize_query_audit_metrics method exists!")
     else:
         print("visualize_query_audit_metrics method not found!")

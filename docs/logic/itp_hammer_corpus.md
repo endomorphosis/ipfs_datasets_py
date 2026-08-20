@@ -120,14 +120,17 @@ single, fixed statement:
   different statement, a different upstream corpus, or a different ITP.
 
 ```python
-manifest.add_theorem(theorem_id="Nat.add_comm", corpus_id="mathlib4",
-                      statement="forall a b : Nat, a + b = b + a")
+manifest.add_theorem(
+    theorem_id="Nat.add_comm", corpus_id="mathlib4", statement="forall a b : Nat, a + b = b + a"
+)
 # Re-ingesting the identical statement (even with different whitespace) is a no-op:
-manifest.add_theorem(theorem_id="Nat.add_comm", corpus_id="mathlib4",
-                      statement="forall a b : Nat,   a + b = b + a  ")
+manifest.add_theorem(
+    theorem_id="Nat.add_comm", corpus_id="mathlib4", statement="forall a b : Nat,   a + b = b + a  "
+)
 # Ingesting a different statement under the same identity raises:
-manifest.add_theorem(theorem_id="Nat.add_comm", corpus_id="mathlib4",
-                      statement="forall a b : Nat, a * b = b * a")
+manifest.add_theorem(
+    theorem_id="Nat.add_comm", corpus_id="mathlib4", statement="forall a b : Nat, a * b = b * a"
+)
 # -> DuplicateTheoremIdentityError
 ```
 
@@ -165,12 +168,18 @@ every `HammerRequest` and `HammerResult` from HAMMER-001:
 
 ```python
 manifest = CorpusManifest(manifest_id="itp-hammer-corpus")
-manifest.register_source(CorpusSource(
-    corpus_id="mathlib4", name="Mathlib4", source_itp=ITPKind.LEAN,
-    version_ref="<pinned commit>", license_id="Apache-2.0",
-))
-manifest.add_theorem(theorem_id="Nat.add_comm", corpus_id="mathlib4",
-                      statement="forall a b : Nat, a + b = b + a")
+manifest.register_source(
+    CorpusSource(
+        corpus_id="mathlib4",
+        name="Mathlib4",
+        source_itp=ITPKind.LEAN,
+        version_ref="<pinned commit>",
+        license_id="Apache-2.0",
+    )
+)
+manifest.add_theorem(
+    theorem_id="Nat.add_comm", corpus_id="mathlib4", statement="forall a b : Nat, a + b = b + a"
+)
 
 request = HammerRequest(..., corpus_revision=manifest.revision)
 ```

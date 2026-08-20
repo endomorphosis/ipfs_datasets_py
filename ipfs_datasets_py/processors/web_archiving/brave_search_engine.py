@@ -47,7 +47,12 @@ class BraveSearchAPI:
         self.api_key = (
             resolve_brave_search_api_key(api_key)
             if resolve_brave_search_api_key is not None
-            else (api_key or os.environ.get("BRAVE_SEARCH_API_KEY") or os.environ.get("BRAVE_API_KEY") or "")
+            else (
+                api_key
+                or os.environ.get("BRAVE_SEARCH_API_KEY")
+                or os.environ.get("BRAVE_API_KEY")
+                or ""
+            )
         )
         self.queue: List[Dict[str, Any]] = []
         self.config: Dict[str, Any] = {
@@ -194,9 +199,7 @@ class BraveSearchAPI:
         return {
             "queue_length": len(self.queue),
             "queued_operations": self.queue,
-            "operations_pending": len(
-                [item for item in self.queue if item["status"] == "queued"]
-            ),
+            "operations_pending": len([item for item in self.queue if item["status"] == "queued"]),
         }
 
     def clear_queue(self) -> Dict[str, Any]:
@@ -251,6 +254,7 @@ try:
         clear_brave_search_cache as _clear_brave_search_cache,
         resolve_brave_search_api_key as _resolve_brave_search_api_key,
     )
+
     _HAVE_CACHE_CLIENT = True
 except ImportError:
     _brave_search_cache_stats = None  # type: ignore[assignment]
@@ -266,8 +270,8 @@ async def search_brave(
     offset: int = 0,
     search_lang: str = "en",
     country: str = "US",
-    safesearch: Literal['off', 'moderate', 'strict'] = "moderate",
-    freshness: Optional[Literal['pd', 'pw', 'pm', 'py']] = None,
+    safesearch: Literal["off", "moderate", "strict"] = "moderate",
+    freshness: Optional[Literal["pd", "pw", "pm", "py"]] = None,
     text_decorations: bool = True,
     spellcheck: bool = True,
     result_filter: Optional[str] = None,
@@ -322,7 +326,10 @@ async def search_brave(
         try:
             import aiohttp
         except ImportError:
-            return {"status": "error", "error": "aiohttp required. Install with: pip install aiohttp"}
+            return {
+                "status": "error",
+                "error": "aiohttp required. Install with: pip install aiohttp",
+            }
 
         url = "https://api.search.brave.com/res/v1/web/search"
         params: Dict[str, Any] = {
@@ -395,8 +402,8 @@ async def search_brave_news(
     offset: int = 0,
     search_lang: str = "en",
     country: str = "US",
-    safesearch: Literal['off', 'moderate', 'strict'] = "moderate",
-    freshness: Optional[Literal['pd', 'pw', 'pm', 'py']] = None,
+    safesearch: Literal["off", "moderate", "strict"] = "moderate",
+    freshness: Optional[Literal["pd", "pw", "pm", "py"]] = None,
 ) -> Dict[str, Any]:
     """Search news using Brave Search API."""
     return await search_brave(
@@ -419,7 +426,7 @@ async def search_brave_images(
     offset: int = 0,
     search_lang: str = "en",
     country: str = "US",
-    safesearch: Literal['off', 'moderate', 'strict'] = "moderate",
+    safesearch: Literal["off", "moderate", "strict"] = "moderate",
 ) -> Dict[str, Any]:
     """Search images using Brave Search API."""
     try:

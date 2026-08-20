@@ -272,7 +272,10 @@ def test_compile_proof_decompile_diff_source_maps_and_reproducibility(
     exported = export_legal_ir_artifact(proof_carrying_payload)
     assert exported.exit_code == LegalIRCompilerExitCode.OK.value
     assert exported.payload["artifact_kind"] == "proof_carrying"
-    assert exported.payload["artifact"]["schema_version"] == LEGAL_IR_PROOF_CARRYING_ARTIFACT_SCHEMA_VERSION
+    assert (
+        exported.payload["artifact"]["schema_version"]
+        == LEGAL_IR_PROOF_CARRYING_ARTIFACT_SCHEMA_VERSION
+    )
 
     modified = {
         "obligations": [
@@ -569,7 +572,10 @@ def test_backend_conformance_gate_accepts_full_suite_and_blocks_hard_negatives()
     }
     hard_negative = legal_ir_backend_conformance_gate(blocked, obligations=obligations)
     assert hard_negative["promotion_allowed"] is False
-    assert "silent_obligation_drop:decompiler:obligation_preservation:po-kg" in hard_negative["block_reasons"]
+    assert (
+        "silent_obligation_drop:decompiler:obligation_preservation:po-kg"
+        in hard_negative["block_reasons"]
+    )
 
 
 def test_cli_and_api_surfaces_have_identical_json_contracts(
@@ -601,7 +607,9 @@ def test_cli_and_api_surfaces_have_identical_json_contracts(
     assert cli_payload["schema_version"] == LEGAL_IR_COMPILER_API_SCHEMA_VERSION
     assert cli_payload["operation"] == "compile"
     assert cli_payload["payload"]["compiled"] == compiled_artifact["payload"]["compiled"]
-    assert cli_payload["metadata"]["compile_digest"] == compiled_artifact["metadata"]["compile_digest"]
+    assert (
+        cli_payload["metadata"]["compile_digest"] == compiled_artifact["metadata"]["compile_digest"]
+    )
 
     validation_path = tmp_path / "validation.json"
     completed = subprocess.run(
@@ -663,7 +671,10 @@ def test_conformance_report_publishes_capability_matrix() -> None:
     for capability in REQUIRED_CAPABILITIES:
         assert capability in text
     assert "No failed capabilities are recorded" in text
-    assert "python -m pytest tests/conformance/legal_ir/test_legal_ir_compiler_conformance.py -q" in text
+    assert (
+        "python -m pytest tests/conformance/legal_ir/test_legal_ir_compiler_conformance.py -q"
+        in text
+    )
 
 
 def test_conformance_suite_rejects_untracked_pass_mutation() -> None:

@@ -17,6 +17,7 @@ bulk_process_caselaw
 add_theorem
     Add an individual temporal deontic logic theorem.
 """
+
 from __future__ import annotations
 
 import logging
@@ -53,6 +54,7 @@ async def check_document_consistency(
         from ipfs_datasets_py.logic.integration.temporal_deontic_api import (
             check_document_consistency_from_parameters,
         )
+
         parameters = {
             "document_text": document_text,
             "document_id": document_id,
@@ -60,7 +62,9 @@ async def check_document_consistency(
             "legal_domain": legal_domain,
             "temporal_context": temporal_context,
         }
-        return await check_document_consistency_from_parameters(parameters, tool_version=TOOL_VERSION)
+        return await check_document_consistency_from_parameters(
+            parameters, tool_version=TOOL_VERSION
+        )
     except ImportError:
         return {
             "success": False,
@@ -94,6 +98,7 @@ async def query_theorems(
         from ipfs_datasets_py.logic.integration.temporal_deontic_api import (
             query_theorems_from_parameters,
         )
+
         parameters = {
             "query": query,
             "operator_filter": operator_filter,
@@ -140,6 +145,7 @@ async def bulk_process_caselaw(
         from ipfs_datasets_py.logic.integration.temporal_deontic_api import (
             bulk_process_caselaw_from_parameters,
         )
+
         parameters: Dict[str, Any] = {
             "caselaw_directories": caselaw_directories or [],
             "output_directory": output_directory,
@@ -192,6 +198,7 @@ async def add_theorem(
         from ipfs_datasets_py.logic.integration.temporal_deontic_api import (
             add_theorem_from_parameters,
         )
+
         parameters: Dict[str, Any] = {
             "operator": operator,
             "proposition": proposition,

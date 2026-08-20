@@ -13,6 +13,7 @@ and monitoring capabilities for the IPFS Datasets Python library, enabling:
 The monitoring system is designed to be lightweight yet powerful, with minimal
 performance impact when enabled, and zero overhead when disabled.
 """
+
 import anyio
 import sys
 import json
@@ -32,12 +33,14 @@ import socket
 # Optional dependencies will be imported as needed
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
 
 try:
     import prometheus_client  # type: ignore[import-not-found]
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -55,9 +58,10 @@ DEFAULT_LOG_ROTATION_COUNT = 5
 
 # ===== TypedDict Definitions for Return Types =====
 
+
 class MetricsDictRepr(TypedDict, total=False):
     """Dictionary representation of metrics object."""
-    
+
     name: str
     timestamp: float
     value: Any
@@ -67,7 +71,7 @@ class MetricsDictRepr(TypedDict, total=False):
 
 class HealthCheckDict(TypedDict, total=False):
     """Health check result structure."""
-    
+
     status: str
     timestamp: float
     checks: Dict[str, Any]
@@ -76,7 +80,7 @@ class HealthCheckDict(TypedDict, total=False):
 
 class MetricsExportDict(TypedDict, total=False):
     """Exported metrics structure."""
-    
+
     metrics: List[Dict[str, Any]]
     timestamp: float
     export_format: str
@@ -84,6 +88,7 @@ class MetricsExportDict(TypedDict, total=False):
 
 class LogLevel(Enum):
     """Log levels for the monitoring system."""
+
     DEBUG = logging.DEBUG
     INFO = logging.INFO
     WARNING = logging.WARNING
@@ -93,17 +98,19 @@ class LogLevel(Enum):
 
 class MetricType(Enum):
     """Types of metrics that can be collected."""
-    COUNTER = "counter"      # Monotonically increasing counter
-    GAUGE = "gauge"          # Value that can go up and down
+
+    COUNTER = "counter"  # Monotonically increasing counter
+    GAUGE = "gauge"  # Value that can go up and down
     HISTOGRAM = "histogram"  # Distribution of values
-    SUMMARY = "summary"      # Similar to histogram but with quantiles
-    TIMER = "timer"          # Specialized for timing operations
-    EVENT = "event"          # Record of a specific event
+    SUMMARY = "summary"  # Similar to histogram but with quantiles
+    TIMER = "timer"  # Specialized for timing operations
+    EVENT = "event"  # Record of a specific event
 
 
 @dataclass
 class LoggerConfig:
     """Configuration for the logger."""
+
     name: str = "ipfs_datasets"
     level: LogLevel = LogLevel.INFO
     format: str = DEFAULT_LOG_FORMAT
@@ -122,6 +129,7 @@ class LoggerConfig:
 @dataclass
 class MetricsConfig:
     """Configuration for metrics collection."""
+
     enabled: bool = True
     collect_interval: int = DEFAULT_METRICS_INTERVAL
     output_file: Optional[str] = None
@@ -139,6 +147,7 @@ class MetricsConfig:
 @dataclass
 class MonitoringConfig:
     """Overall configuration for the monitoring system."""
+
     enabled: bool = True
     logger: LoggerConfig = field(default_factory=LoggerConfig)
     metrics: MetricsConfig = field(default_factory=MetricsConfig)
@@ -152,6 +161,7 @@ class MonitoringConfig:
 @dataclass
 class MetricValue:
     """Value of a metric."""
+
     name: str
     type: MetricType
     value: Any
@@ -167,13 +177,14 @@ class MetricValue:
             "value": self.value,
             "timestamp": self.timestamp,
             "labels": self.labels,
-            "description": self.description
+            "description": self.description,
         }
 
 
 @dataclass
 class OperationMetrics:
     """Metrics for a specific operation."""
+
     operation_id: str
     operation_type: str
     start_time: float
@@ -208,12 +219,13 @@ class OperationMetrics:
             "error": self.error,
             "labels": self.labels,
             "sub_operations": self.sub_operations,
-            "metrics": self.metrics
+            "metrics": self.metrics,
         }
 
 
 class LogContext:
     """Context for structured logging."""
+
     _context_data = threading.local()
 
     @classmethod
@@ -263,13 +275,13 @@ class ContextAdapter(logging.LoggerAdapter):
         """Process the log record by adding context data."""
         # Add context data to the extra dict
         kwargs = kwargs.copy()
-        extra = kwargs.get('extra', {}).copy()
+        extra = kwargs.get("extra", {}).copy()
         context = LogContext.get_current()
 
         if context:
             extra.update(context)
 
-        kwargs['extra'] = extra
+        kwargs["extra"] = extra
         return msg, kwargs
 
 
@@ -305,8 +317,7 @@ class MetricsRegistry:
         # Start the HTTP server for Prometheus scraping
         try:
             prometheus_client.start_http_server(
-                port=self.config.prometheus_port,
-                registry=self.prometheus_registry
+                port=self.config.prometheus_port, registry=self.prometheus_registry
             )
         except OSError as e:
             if "Address already in use" in str(e):
@@ -315,7 +326,9 @@ class MetricsRegistry:
             else:
                 raise
 
-    def _get_prometheus_metric(self, name: str, metric_type: MetricType, description: str = "", labels: List[str] = None):
+    def _get_prometheus_metric(
+        self, name: str, metric_type: MetricType, description: str = "", labels: List[str] = None
+    ):
         """Get or create a Prometheus metric."""
         if not PROMETHEUS_AVAILABLE:
             return None
@@ -373,10 +386,7 @@ class MetricsRegistry:
 
         # Get the Prometheus metric
         prom_metric = self._get_prometheus_metric(
-            metric.name,
-            metric.type,
-            metric.description or "",
-            list(metric.labels.keys())
+            metric.name, metric.type, metric.description or "", list(metric.labels.keys())
         )
 
         if not prom_metric:
@@ -406,9 +416,14 @@ class MetricsRegistry:
             else:
                 labeled.set(metric.value)
 
-    def record(self, name: str, value: Any, metric_type: MetricType,
-              labels: Optional[Dict[str, str]] = None,
-              description: Optional[str] = None) -> MetricValue:
+    def record(
+        self,
+        name: str,
+        value: Any,
+        metric_type: MetricType,
+        labels: Optional[Dict[str, str]] = None,
+        description: Optional[str] = None,
+    ) -> MetricValue:
         """
         Record a metric value.
 
@@ -423,8 +438,13 @@ class MetricsRegistry:
             MetricValue: The recorded metric value
         """
         if not self.config.enabled:
-            return MetricValue(name=name, type=metric_type, value=value,
-                              labels=labels or {}, description=description)
+            return MetricValue(
+                name=name,
+                type=metric_type,
+                value=value,
+                labels=labels or {},
+                description=description,
+            )
 
         with self.lock:
             # Create metric value
@@ -433,7 +453,7 @@ class MetricsRegistry:
                 type=metric_type,
                 value=value,
                 labels=labels or {},
-                description=description
+                description=description,
             )
 
             # Store in memory
@@ -449,8 +469,13 @@ class MetricsRegistry:
 
             return metric
 
-    def increment(self, name: str, value: float = 1.0, labels: Optional[Dict[str, str]] = None,
-                 description: Optional[str] = None) -> MetricValue:
+    def increment(
+        self,
+        name: str,
+        value: float = 1.0,
+        labels: Optional[Dict[str, str]] = None,
+        description: Optional[str] = None,
+    ) -> MetricValue:
         """
         Increment a counter metric.
 
@@ -482,11 +507,16 @@ class MetricsRegistry:
                 value=new_value,
                 metric_type=MetricType.COUNTER,
                 labels=labels,
-                description=description
+                description=description,
             )
 
-    def gauge(self, name: str, value: float, labels: Optional[Dict[str, str]] = None,
-             description: Optional[str] = None) -> MetricValue:
+    def gauge(
+        self,
+        name: str,
+        value: float,
+        labels: Optional[Dict[str, str]] = None,
+        description: Optional[str] = None,
+    ) -> MetricValue:
         """
         Record a gauge metric.
 
@@ -504,11 +534,16 @@ class MetricsRegistry:
             value=value,
             metric_type=MetricType.GAUGE,
             labels=labels,
-            description=description
+            description=description,
         )
 
-    def histogram(self, name: str, value: float, labels: Optional[Dict[str, str]] = None,
-                 description: Optional[str] = None) -> MetricValue:
+    def histogram(
+        self,
+        name: str,
+        value: float,
+        labels: Optional[Dict[str, str]] = None,
+        description: Optional[str] = None,
+    ) -> MetricValue:
         """
         Record a histogram metric.
 
@@ -526,11 +561,16 @@ class MetricsRegistry:
             value=value,
             metric_type=MetricType.HISTOGRAM,
             labels=labels,
-            description=description
+            description=description,
         )
 
-    def timer(self, name: str, duration_ms: float, labels: Optional[Dict[str, str]] = None,
-             description: Optional[str] = None) -> MetricValue:
+    def timer(
+        self,
+        name: str,
+        duration_ms: float,
+        labels: Optional[Dict[str, str]] = None,
+        description: Optional[str] = None,
+    ) -> MetricValue:
         """
         Record a timer metric.
 
@@ -548,11 +588,16 @@ class MetricsRegistry:
             value=duration_ms,
             metric_type=MetricType.TIMER,
             labels=labels,
-            description=description
+            description=description,
         )
 
-    def event(self, name: str, data: Any, labels: Optional[Dict[str, str]] = None,
-             description: Optional[str] = None) -> MetricValue:
+    def event(
+        self,
+        name: str,
+        data: Any,
+        labels: Optional[Dict[str, str]] = None,
+        description: Optional[str] = None,
+    ) -> MetricValue:
         """
         Record an event metric.
 
@@ -570,10 +615,12 @@ class MetricsRegistry:
             value=data,
             metric_type=MetricType.EVENT,
             labels=labels,
-            description=description
+            description=description,
         )
 
-    def start_operation(self, operation_type: str, labels: Optional[Dict[str, str]] = None) -> OperationMetrics:
+    def start_operation(
+        self, operation_type: str, labels: Optional[Dict[str, str]] = None
+    ) -> OperationMetrics:
         """
         Start tracking an operation.
 
@@ -590,7 +637,7 @@ class MetricsRegistry:
                 operation_id=f"op_{int(time.time())}",
                 operation_type=operation_type,
                 start_time=time.time(),
-                labels=labels or {}
+                labels=labels or {},
             )
 
         with self.lock:
@@ -602,7 +649,7 @@ class MetricsRegistry:
                 operation_id=operation_id,
                 operation_type=operation_type,
                 start_time=time.time(),
-                labels=labels or {}
+                labels=labels or {},
             )
 
             # Store operation
@@ -614,15 +661,16 @@ class MetricsRegistry:
                 data={
                     "operation_id": operation_id,
                     "operation_type": operation_type,
-                    "start_time": operation.start_time
+                    "start_time": operation.start_time,
                 },
-                labels=labels
+                labels=labels,
             )
 
             return operation
 
-    def complete_operation(self, operation: OperationMetrics, success: bool = True,
-                          error: Optional[str] = None) -> OperationMetrics:
+    def complete_operation(
+        self, operation: OperationMetrics, success: bool = True, error: Optional[str] = None
+    ) -> OperationMetrics:
         """
         Complete an operation.
 
@@ -650,21 +698,19 @@ class MetricsRegistry:
             self.timer(
                 name=f"{operation.operation_type}_duration",
                 duration_ms=operation.duration_ms,
-                labels=operation.labels
+                labels=operation.labels,
             )
 
             # Record success/failure
             self.increment(
                 name=f"{operation.operation_type}_count",
                 value=1,
-                labels={**operation.labels, "status": operation.status}
+                labels={**operation.labels, "status": operation.status},
             )
 
             # Record event
             self.event(
-                name="operation_completed",
-                data=operation.to_dict(),
-                labels=operation.labels
+                name="operation_completed", data=operation.to_dict(), labels=operation.labels
             )
 
             return operation
@@ -706,31 +752,63 @@ class MetricsRegistry:
 
                 # System memory
                 sys_memory = psutil.virtual_memory()
-                self.gauge("system_memory_total", sys_memory.total, description="Total system memory")
-                self.gauge("system_memory_available", sys_memory.available, description="Available system memory")
+                self.gauge(
+                    "system_memory_total", sys_memory.total, description="Total system memory"
+                )
+                self.gauge(
+                    "system_memory_available",
+                    sys_memory.available,
+                    description="Available system memory",
+                )
                 self.gauge("system_memory_used", sys_memory.used, description="Used system memory")
-                self.gauge("system_memory_percent", sys_memory.percent, description="System memory usage percentage")
+                self.gauge(
+                    "system_memory_percent",
+                    sys_memory.percent,
+                    description="System memory usage percentage",
+                )
 
             # Network usage
             if self.config.network_metrics:
                 net_io = psutil.net_io_counters()
-                self.gauge("network_bytes_sent", net_io.bytes_sent, description="Network bytes sent")
-                self.gauge("network_bytes_recv", net_io.bytes_recv, description="Network bytes received")
-                self.gauge("network_packets_sent", net_io.packets_sent, description="Network packets sent")
-                self.gauge("network_packets_recv", net_io.packets_recv, description="Network packets received")
+                self.gauge(
+                    "network_bytes_sent", net_io.bytes_sent, description="Network bytes sent"
+                )
+                self.gauge(
+                    "network_bytes_recv", net_io.bytes_recv, description="Network bytes received"
+                )
+                self.gauge(
+                    "network_packets_sent", net_io.packets_sent, description="Network packets sent"
+                )
+                self.gauge(
+                    "network_packets_recv",
+                    net_io.packets_recv,
+                    description="Network packets received",
+                )
 
             # Disk usage
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             self.gauge("disk_total", disk.total, description="Total disk space")
             self.gauge("disk_used", disk.used, description="Used disk space")
             self.gauge("disk_free", disk.free, description="Free disk space")
             self.gauge("disk_percent", disk.percent, description="Disk usage percentage")
 
             # Process info
-            self.gauge("process_cpu_percent", process.cpu_percent(interval=0.1), description="Process CPU usage percentage")
-            self.gauge("process_threads", process.num_threads(), description="Number of process threads")
-            self.gauge("process_open_files", len(process.open_files()), description="Number of open files")
-            self.gauge("process_connections", len(process.connections()), description="Number of network connections")
+            self.gauge(
+                "process_cpu_percent",
+                process.cpu_percent(interval=0.1),
+                description="Process CPU usage percentage",
+            )
+            self.gauge(
+                "process_threads", process.num_threads(), description="Number of process threads"
+            )
+            self.gauge(
+                "process_open_files", len(process.open_files()), description="Number of open files"
+            )
+            self.gauge(
+                "process_connections",
+                len(process.connections()),
+                description="Number of network connections",
+            )
 
         except Exception as e:
             # Don't let metric collection failures affect the application
@@ -744,18 +822,27 @@ class MetricsRegistry:
             # Garbage collection stats
             gc_counts = gc.get_count()
             for i, count in enumerate(gc_counts):
-                self.gauge(f"gc_count_gen{i}", count, description=f"GC collection count for generation {i}")
+                self.gauge(
+                    f"gc_count_gen{i}", count, description=f"GC collection count for generation {i}"
+                )
 
             # Object counts
-            self.gauge("gc_objects", len(gc.get_objects()), description="Number of objects tracked by GC")
+            self.gauge(
+                "gc_objects", len(gc.get_objects()), description="Number of objects tracked by GC"
+            )
 
             # Thread count
-            self.gauge("thread_count", threading.active_count(), description="Number of active threads")
+            self.gauge(
+                "thread_count", threading.active_count(), description="Number of active threads"
+            )
 
             # Python version
             version_info = sys.version_info
-            self.gauge("python_version", float(f"{version_info.major}.{version_info.minor}"),
-                      description="Python version")
+            self.gauge(
+                "python_version",
+                float(f"{version_info.major}.{version_info.minor}"),
+                description="Python version",
+            )
 
         except Exception as e:
             logging.warning(f"Error collecting runtime metrics: {str(e)}")
@@ -790,9 +877,7 @@ class MetricsRegistry:
 
         self.running = True
         self.collection_thread = threading.Thread(
-            target=self._collection_loop,
-            name="MetricsCollector",
-            daemon=True
+            target=self._collection_loop, name="MetricsCollector", daemon=True
         )
         self.collection_thread.start()
 
@@ -836,11 +921,11 @@ class MetricsRegistry:
                 "operations": operations_data,
                 "timestamp": time.time(),
                 "hostname": self.hostname,
-                "uptime": time.time() - self.start_time
+                "uptime": time.time() - self.start_time,
             }
 
             # Write to file
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 json.dump(data, f, indent=2)
 
             return True
@@ -857,7 +942,9 @@ class MetricsRegistry:
 
 
 @contextlib.contextmanager
-def timed_operation(name: str, metrics_registry: 'MetricsRegistry', labels: Optional[Dict[str, str]] = None):
+def timed_operation(
+    name: str, metrics_registry: "MetricsRegistry", labels: Optional[Dict[str, str]] = None
+):
     """
     Context manager for timing an operation.
 
@@ -886,6 +973,7 @@ def timed(func=None, *, metric_name=None, registry=None, include_args=False):
         registry: Metrics registry to use
         include_args: Whether to include function arguments in labels
     """
+
     def decorator(fn):
         fn_name = metric_name or fn.__name__
 
@@ -1061,7 +1149,7 @@ class MonitoringSystem:
     Usage Examples:
         # Initialize monitoring system with default configuration
         monitoring = MonitoringSystem.initialize()
-        
+
         # Custom configuration for production environment
         config = MonitoringConfig(
             logger_config=LoggerConfig(
@@ -1079,21 +1167,21 @@ class MonitoringSystem:
             enable_health_checks=True
         )
         monitoring = MonitoringSystem.initialize(config)
-        
+
         # Structured logging with context
         logger = monitoring.get_logger(__name__)
         logger.info("Dataset processing started", extra={
             "dataset_id": "ds_12345",
             "operation": "embedding_generation"
         })
-        
+
         # Performance metrics recording
         monitoring.record_metric(
             name="dataset_processing_duration",
             value=45.2,
             labels={"dataset_type": "text", "model": "bert-base"}
         )
-        
+
         # Distributed operation tracing
         trace_id = monitoring.start_operation_trace("ipfs_content_retrieval")
         # ... perform IPFS operations ...
@@ -1109,7 +1197,7 @@ class MonitoringSystem:
         - logging: Python standard library for structured logging
         - threading: Concurrent execution for background metrics collection
         - json: Data serialization for structured logging and metrics export
-        
+
         Optional:
         - psutil: System resource monitoring and performance metrics
         - prometheus_client: Prometheus metrics export for cloud monitoring
@@ -1129,14 +1217,14 @@ class MonitoringSystem:
     _instance = None
 
     @classmethod
-    def get_instance(cls) -> 'MonitoringSystem':
+    def get_instance(cls) -> "MonitoringSystem":
         """Get the singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @classmethod
-    def initialize(cls, config: Optional[MonitoringConfig] = None) -> 'MonitoringSystem':
+    def initialize(cls, config: Optional[MonitoringConfig] = None) -> "MonitoringSystem":
         """
         Initialize the monitoring system.
 
@@ -1193,8 +1281,8 @@ class MonitoringSystem:
             extra={
                 "component": self.config.component_name,
                 "environment": self.config.environment,
-                "version": self.config.version
-            }
+                "version": self.config.version,
+            },
         )
 
     def _configure_logger(self) -> None:
@@ -1226,10 +1314,11 @@ class MonitoringSystem:
                 # Use rotating file handler
                 if logger_config.rotate_logs:
                     from logging.handlers import RotatingFileHandler
+
                     file_handler = RotatingFileHandler(
                         logger_config.file_path,
                         maxBytes=logger_config.max_file_size,
-                        backupCount=logger_config.backup_count
+                        backupCount=logger_config.backup_count,
                     )
                 else:
                     file_handler = logging.FileHandler(logger_config.file_path)
@@ -1359,7 +1448,7 @@ class MonitoringSystem:
         self.logger.error(
             f"Exception: {exc_type.__name__}: {str(exc_value)}",
             exc_info=exc_info,
-            extra={"traceback": tb_str, **kwargs}
+            extra={"traceback": tb_str, **kwargs},
         )
 
     @contextlib.contextmanager
@@ -1384,14 +1473,9 @@ class MonitoringSystem:
             except Exception as e:
                 registry.complete_operation(operation, success=False, error=str(e))
                 MonitoringSystem.get_instance().log_exception(
-                    operation=operation_name,
-                    error=str(e),
-                    **kwargs
+                    operation=operation_name, error=str(e), **kwargs
                 )
                 raise
-
-
-
 
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:
@@ -1455,9 +1539,7 @@ def monitor_context(**kwargs):
         except Exception as e:
             registry.complete_operation(operation, success=False, error=str(e))
             MonitoringSystem.get_instance().log_exception(
-                operation=operation_name,
-                error=str(e),
-                **kwargs
+                operation=operation_name, error=str(e), **kwargs
             )
             raise
 
@@ -1465,13 +1547,16 @@ def monitor_context(**kwargs):
 # Initialize with default configuration only if explicitly requested
 # MonitoringSystem.initialize()  # Commented out to prevent auto-initialization
 
+
 def demonstration_main():
     # Simple demonstration
-    configure_monitoring(MonitoringConfig(
-        enabled=True,
-        logger=LoggerConfig(level=LogLevel.DEBUG, console=True),
-        metrics=MetricsConfig(enabled=True, system_metrics=True)
-    ))
+    configure_monitoring(
+        MonitoringConfig(
+            enabled=True,
+            logger=LoggerConfig(level=LogLevel.DEBUG, console=True),
+            metrics=MetricsConfig(enabled=True, system_metrics=True),
+        )
+    )
 
     logger = get_logger()
     registry = get_metrics_registry()

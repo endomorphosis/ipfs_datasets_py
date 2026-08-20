@@ -16,26 +16,33 @@ import warnings
 
 try:
     from ipfs_datasets_py.mcp_server.ucan_delegation import (
-        DelegationManager, MergeResult, Delegation, Capability,
+        DelegationManager,
+        MergeResult,
+        Delegation,
+        Capability,
     )
+
     _UCAN_OK = True
 except Exception:
     _UCAN_OK = False
 
 try:
     from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
     _IPFS_OK = True
 except Exception:
     _IPFS_OK = False
 
 try:
     from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus, PubSubEventType
+
     _PUBSUB_OK = True
 except Exception:
     _PUBSUB_OK = False
 
 try:
     from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
     _COMPLIANCE_OK = True
 except Exception:
     _COMPLIANCE_OK = False
@@ -45,13 +52,15 @@ except Exception:
 # 1. MergeResult.to_dict()
 # ===========================================================================
 
+
 @unittest.skipUnless(_UCAN_OK, "ucan_delegation not importable")
 class TestMergeResultToDict(unittest.TestCase):
     """MergeResult.to_dict() produces a serialisable snapshot."""
 
     def _result(self, added=0, conflict=0, revocations=0):
-        return MergeResult(added_count=added, conflict_count=conflict,
-                           revocations_copied=revocations)
+        return MergeResult(
+            added_count=added, conflict_count=conflict, revocations_copied=revocations
+        )
 
     def test_keys_present(self):
         d = self._result().to_dict()
@@ -108,6 +117,7 @@ class TestMergeResultToDict(unittest.TestCase):
 # ===========================================================================
 # 2. IPFSReloadResult.to_dict()
 # ===========================================================================
+
 
 @unittest.skipUnless(_IPFS_OK, "nl_ucan_policy not importable")
 class TestIPFSReloadResultToDict(unittest.TestCase):
@@ -168,6 +178,7 @@ class TestIPFSReloadResultToDict(unittest.TestCase):
 # ===========================================================================
 # 3. PubSubBus.clear_all()
 # ===========================================================================
+
 
 @unittest.skipUnless(_PUBSUB_OK, "mcp_p2p_transport not importable")
 class TestPubSubBusClearAll(unittest.TestCase):
@@ -239,6 +250,7 @@ class TestPubSubBusClearAll(unittest.TestCase):
 # 4. ComplianceChecker.backup_exists_any(path)
 # ===========================================================================
 
+
 @unittest.skipUnless(_COMPLIANCE_OK, "compliance_checker not importable")
 class TestComplianceCheckerBackupExistsAny(unittest.TestCase):
     """ComplianceChecker.backup_exists_any() returns bool."""
@@ -249,6 +261,7 @@ class TestComplianceCheckerBackupExistsAny(unittest.TestCase):
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def _touch(self, path):
@@ -294,6 +307,7 @@ class TestComplianceCheckerBackupExistsAny(unittest.TestCase):
 # 5. E2E combined regression
 # ===========================================================================
 
+
 @unittest.skipUnless(
     _UCAN_OK and _IPFS_OK and _PUBSUB_OK and _COMPLIANCE_OK,
     "one or more modules not importable",
@@ -306,6 +320,7 @@ class TestE2ESession75(unittest.TestCase):
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_merge_result_to_dict_json_round_trip(self):
@@ -321,9 +336,7 @@ class TestE2ESession75(unittest.TestCase):
         self.assertAlmostEqual(decoded["import_rate"], 1.0)
 
     def test_reload_result_to_dict_json_round_trip(self):
-        r = IPFSReloadResult(count=3, pin_results={
-            "a": "cid:a", "b": None, "c": "cid:c"
-        })
+        r = IPFSReloadResult(count=3, pin_results={"a": "cid:a", "b": None, "c": "cid:c"})
         encoded = json.dumps(r.to_dict())
         decoded = json.loads(encoded)
         self.assertEqual(decoded["count"], 3)

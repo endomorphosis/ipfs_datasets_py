@@ -7,8 +7,12 @@ from pathlib import Path
 
 def _load_runner_module():
     repo_root = Path(__file__).resolve().parents[3]
-    script_path = repo_root / "scripts" / "ops" / "legal_data" / "run_all_state_legal_corpora_agentic.py"
-    spec = importlib.util.spec_from_file_location("run_all_state_legal_corpora_agentic", script_path)
+    script_path = (
+        repo_root / "scripts" / "ops" / "legal_data" / "run_all_state_legal_corpora_agentic.py"
+    )
+    spec = importlib.util.spec_from_file_location(
+        "run_all_state_legal_corpora_agentic", script_path
+    )
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)

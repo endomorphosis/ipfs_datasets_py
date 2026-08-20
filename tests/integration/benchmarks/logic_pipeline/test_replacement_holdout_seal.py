@@ -41,9 +41,7 @@ def _authorization(
     payload = {
         "schema": G232_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA,
         "goal_id": "HSSL-G232",
-        "pilot_artifact_cid": cid_for_dag_json(
-            {"synthetic_complete_pilot": True}
-        ),
+        "pilot_artifact_cid": cid_for_dag_json({"synthetic_complete_pilot": True}),
         "seal_contract_cid": seal.seal_contract_cid,
         "sealed_manifest_cid": seal.sealed_manifest_cid,
         "protocol_cids": {
@@ -120,8 +118,7 @@ class _SyntheticCustodian:
             and grant.receipt_cid == access_grant_receipt_cid
             and grant.seal_contract_cid == seal_contract_cid
             and grant.authorization_cid == authorization_cid
-            and grant.g241_release_receipt_cid
-            == g241_release_receipt_cid
+            and grant.g241_release_receipt_cid == g241_release_receipt_cid
             and sealed_manifest_path.is_absolute()
         )
         return self.opaque_block
@@ -170,16 +167,15 @@ def test_public_seal_exposes_only_opaque_metadata_and_cids() -> None:
         "outcomes",
         "path",
     } & set(record)
-    assert validate_cid(
-        seal.sealed_manifest_cid, codecs=("raw",)
-    ) == seal.sealed_manifest_cid
-    assert validate_cid(
-        seal.seal_contract_cid, codecs=("dag-json",)
-    ) == seal.seal_contract_cid
-    assert validate_cid(
-        seal.access_ledger_authority_cid,
-        codecs=("dag-json",),
-    ) == seal.access_ledger_authority_cid
+    assert validate_cid(seal.sealed_manifest_cid, codecs=("raw",)) == seal.sealed_manifest_cid
+    assert validate_cid(seal.seal_contract_cid, codecs=("dag-json",)) == seal.seal_contract_cid
+    assert (
+        validate_cid(
+            seal.access_ledger_authority_cid,
+            codecs=("dag-json",),
+        )
+        == seal.access_ledger_authority_cid
+    )
     assert ReplacementHoldoutSeal.from_dict(record) == seal
 
     invalid = dict(record)
@@ -195,10 +191,13 @@ def test_external_path_boundary_rejects_tuning_files_and_symlinks(
     tmp_path: Path,
 ) -> None:
     tuning_worktree, sealed_path = _private_external_file(tmp_path)
-    assert validate_replacement_holdout_external_path(
-        sealed_path,
-        tuning_worktree=tuning_worktree,
-    ) == sealed_path
+    assert (
+        validate_replacement_holdout_external_path(
+            sealed_path,
+            tuning_worktree=tuning_worktree,
+        )
+        == sealed_path
+    )
 
     in_tree = tuning_worktree / "forbidden.seal"
     in_tree.write_bytes(OPAQUE_SYNTHETIC_BLOCK)
@@ -243,19 +242,13 @@ def test_premature_request_appends_invalidation_and_never_calls_custodian(
     assert receipts[0].event == "premature_access"
     assert receipts[0].invalidates_seal is True
     assert receipts[0].access_authorized is False
-    assert validate_cid(
-        receipts[0].receipt_cid, codecs=("dag-json",)
-    ) == receipts[0].receipt_cid
+    assert validate_cid(receipts[0].receipt_cid, codecs=("dag-json",)) == receipts[0].receipt_cid
     assert custodian.calls == 0
 
     integer_flag = receipts[0].to_dict()
     integer_flag["access_authorized"] = 0
     integer_flag["receipt_cid"] = cid_for_dag_json(
-        {
-            key: value
-            for key, value in integer_flag.items()
-            if key != "receipt_cid"
-        }
+        {key: value for key, value in integer_flag.items() if key != "receipt_cid"}
     )
     with pytest.raises(HoldoutExecutionError, match="event flags"):
         ReplacementHoldoutAccessReceipt.from_dict(integer_flag)
@@ -313,11 +306,7 @@ def test_exact_g232_proposal_alone_is_non_authorizing(
         }
     )
     forged_grant["receipt_cid"] = cid_for_dag_json(
-        {
-            key: value
-            for key, value in forged_grant.items()
-            if key != "receipt_cid"
-        }
+        {key: value for key, value in forged_grant.items() if key != "receipt_cid"}
     )
     with pytest.raises(HoldoutExecutionError, match="event flags"):
         ReplacementHoldoutAccessReceipt.from_dict(forged_grant)
@@ -361,9 +350,7 @@ def test_stale_g232_seal_binding_invalidates_without_release(
     other_protocols["semantic"] = cid_for_dag_json(
         {"synthetic_protocol": "semantic", "revision": 999}
     )
-    stale_authorization = _authorization(
-        _seal(protocol_cids=other_protocols, ledger_path=ledger)
-    )
+    stale_authorization = _authorization(_seal(protocol_cids=other_protocols, ledger_path=ledger))
     custodian = _SyntheticCustodian(OPAQUE_SYNTHETIC_BLOCK, ledger)
 
     with pytest.raises(HoldoutExecutionError, match="premature"):
@@ -379,9 +366,7 @@ def test_stale_g232_seal_binding_invalidates_without_release(
 
     receipts = load_replacement_holdout_access_receipts(ledger)
     assert [item.event for item in receipts] == ["premature_access"]
-    assert receipts[0].authorization_cid == (
-        stale_authorization.authorization_cid
-    )
+    assert receipts[0].authorization_cid == (stale_authorization.authorization_cid)
     assert custodian.calls == 0
 
 
@@ -416,9 +401,7 @@ def test_seal_invalidation_cannot_be_bypassed_with_a_fresh_ledger(
     tmp_path: Path,
 ) -> None:
     tuning_worktree, sealed_path = _private_external_file(tmp_path)
-    canonical_ledger = (
-        tmp_path / "receipts" / "canonical-replacement-access.jsonl"
-    )
+    canonical_ledger = tmp_path / "receipts" / "canonical-replacement-access.jsonl"
     fresh_ledger = tmp_path / "receipts" / "fresh-bypass.jsonl"
     seal = _seal(ledger_path=canonical_ledger)
     authorization = _authorization(seal)

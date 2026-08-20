@@ -56,7 +56,10 @@ class TestCoreTypesModule:
         gs: GraphStats = {"node_count": 5, "relationship_count": 3}
         nr: NodeRecord = {"id": "n1", "labels": ["Person"], "properties": {"name": "Alice"}}
         rr: RelationshipRecord = {
-            "id": "r1", "type": "KNOWS", "start_node": "n1", "end_node": "n2",
+            "id": "r1",
+            "type": "KNOWS",
+            "start_node": "n1",
+            "end_node": "n2",
             "properties": {},
         }
         ws: WALStats = {"head_cid": None, "entry_count": 0, "needs_compaction": False}
@@ -244,6 +247,7 @@ class TestEntityHelpersExtraction:
         THEN: File has fewer than 1700 lines (was 1760; target ≤ 1700)
         """
         import importlib.util, os
+
         spec = importlib.util.find_spec("ipfs_datasets_py.knowledge_graphs.extraction.extractor")
         assert spec is not None
         path = spec.origin
@@ -262,6 +266,7 @@ class TestLegacyGraphEngineExtraction:
         THEN: Class is importable and instantiable
         """
         from ipfs_datasets_py.knowledge_graphs.core._legacy_graph_engine import _LegacyGraphEngine
+
         engine = _LegacyGraphEngine()
         assert engine is not None
 
@@ -272,6 +277,7 @@ class TestLegacyGraphEngineExtraction:
         THEN: Same class is accessible
         """
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import _LegacyGraphEngine
+
         engine = _LegacyGraphEngine()
         assert engine is not None
 
@@ -287,6 +293,7 @@ class TestLegacyGraphEngineExtraction:
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import (
             _LegacyGraphEngine as B,
         )
+
         assert A is B
 
     def test_query_executor_file_size_reduced(self):
@@ -296,6 +303,7 @@ class TestLegacyGraphEngineExtraction:
         THEN: File has fewer than 600 lines (was 1189; target ≤ 600)
         """
         import importlib.util
+
         spec = importlib.util.find_spec("ipfs_datasets_py.knowledge_graphs.core.query_executor")
         assert spec is not None
         path = spec.origin
@@ -310,6 +318,7 @@ class TestLegacyGraphEngineExtraction:
         THEN: Returns a Node with correct labels and properties
         """
         from ipfs_datasets_py.knowledge_graphs.core._legacy_graph_engine import _LegacyGraphEngine
+
         engine = _LegacyGraphEngine()
         node = engine.create_node(labels=["Person"], properties={"name": "Alice"})
         assert "Person" in node.labels
@@ -322,6 +331,7 @@ class TestLegacyGraphEngineExtraction:
         THEN: Returns only matching nodes
         """
         from ipfs_datasets_py.knowledge_graphs.core._legacy_graph_engine import _LegacyGraphEngine
+
         engine = _LegacyGraphEngine()
         engine.create_node(labels=["Person"], properties={"name": "Alice"})
         engine.create_node(labels=["Person"], properties={"name": "Bob"})
@@ -362,6 +372,7 @@ class TestQueryModuleNamingGuide:
             HybridSearchEngine,
             BudgetManager,
         )
+
         assert callable(UnifiedQueryEngine)
         assert callable(HybridSearchEngine)
         assert callable(BudgetManager)
@@ -429,8 +440,14 @@ class TestCrossDocumentTypesExtraction:
         )
 
         expected = {
-            "COMPLEMENTARY", "SUPPORTING", "CONTRADICTING", "ELABORATING",
-            "PREREQUISITE", "CONSEQUENCE", "ALTERNATIVE", "UNCLEAR",
+            "COMPLEMENTARY",
+            "SUPPORTING",
+            "CONTRADICTING",
+            "ELABORATING",
+            "PREREQUISITE",
+            "CONSEQUENCE",
+            "ALTERNATIVE",
+            "UNCLEAR",
         }
         actual = {m.name for m in InformationRelationType}
         assert actual == expected

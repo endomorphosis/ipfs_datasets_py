@@ -63,16 +63,13 @@ HOLDOUT_EXECUTION_RECEIPT_FILE: Final = "holdout-execution-receipt.json"
 HOLDOUT_ACCESS_AUDITS_FILE: Final = "holdout-access-audits.json"
 MAX_SHORTLIST_SIZE: Final = 4
 G232_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g232-replacement-holdout-authorization.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.g232-replacement-holdout-authorization.v2"
 )
 REPLACEMENT_HOLDOUT_ACCESS_RECEIPT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "replacement-holdout-access-receipt.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.replacement-holdout-access-receipt.v2"
 )
 REPLACEMENT_HOLDOUT_ACCESS_LEDGER_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "replacement-holdout-access-ledger.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.replacement-holdout-access-ledger.v2"
 )
 REPLACEMENT_HOLDOUT_AUTHORIZED_PROTOCOL_KEYS: Final = frozenset(
     {"causal_proof", "holdout_execution", "semantic"}
@@ -112,9 +109,7 @@ def _digest(value: object, field: str) -> str:
 
 def _commit(value: object, field: str) -> str:
     if not isinstance(value, str) or not _COMMIT.fullmatch(value):
-        raise HoldoutExecutionError(
-            f"{field} must be a full lowercase Git commit id"
-        )
+        raise HoldoutExecutionError(f"{field} must be a full lowercase Git commit id")
     return value
 
 
@@ -125,22 +120,16 @@ def _safe_id(value: object, field: str) -> str:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise HoldoutExecutionError(f"{field} must be an object with string keys")
     return value
 
 
-def _exact(
-    value: Mapping[str, object], expected: set[str], field: str
-) -> None:
+def _exact(value: Mapping[str, object], expected: set[str], field: str) -> None:
     if set(value) != expected:
         missing = sorted(expected - set(value))
         extra = sorted(set(value) - expected)
-        raise HoldoutExecutionError(
-            f"{field} fields changed (missing={missing}, extra={extra})"
-        )
+        raise HoldoutExecutionError(f"{field} fields changed (missing={missing}, extra={extra})")
 
 
 def _sha(value: object) -> str:
@@ -157,8 +146,7 @@ def _cid(
         return validate_cid(value, codecs=codecs)
     except (TypeError, ValueError) as exc:
         raise HoldoutExecutionError(
-            f"{field} must be a canonical CIDv1/base32/sha2-256 "
-            f"using one of {codecs!r}"
+            f"{field} must be a canonical CIDv1/base32/sha2-256 using one of {codecs!r}"
         ) from exc
 
 
@@ -255,26 +243,19 @@ class PilotAuthorizationReceipt:
         ):
             _digest(getattr(self, name), name)
         if self.protocol_sha256 != DEFAULT_PROTOCOL_SHA256:
-            raise HoldoutExecutionError(
-                "authorization does not bind frozen protocol revision 1"
-            )
+            raise HoldoutExecutionError("authorization does not bind frozen protocol revision 1")
         shortlist = tuple(self.shortlist_variant_ids)
         if (
             not shortlist
             or len(shortlist) > MAX_SHORTLIST_SIZE
             or len(shortlist) != len(set(shortlist))
-            or any(
-                item not in VARIANT_REGISTRY or item in {"A0", "S1"}
-                for item in shortlist
-            )
+            or any(item not in VARIANT_REGISTRY or item in {"A0", "S1"} for item in shortlist)
         ):
             raise HoldoutExecutionError(
                 "shortlist must contain one to four distinct candidate arms"
             )
         object.__setattr__(self, "shortlist_variant_ids", shortlist)
-        configurations = _mapping(
-            self.configuration_sha256s, "configuration_sha256s"
-        )
+        configurations = _mapping(self.configuration_sha256s, "configuration_sha256s")
         expected_variants = {"A0", *shortlist}
         if set(configurations) != expected_variants:
             raise HoldoutExecutionError(
@@ -284,9 +265,7 @@ class PilotAuthorizationReceipt:
         for variant_id, value in configurations.items():
             digest = _digest(value, f"configuration_sha256s.{variant_id}")
             if digest != get_variant_definition(variant_id).digest:
-                raise HoldoutExecutionError(
-                    f"frozen configuration drifted for {variant_id}"
-                )
+                raise HoldoutExecutionError(f"frozen configuration drifted for {variant_id}")
             normalized[variant_id] = digest
         object.__setattr__(
             self,
@@ -301,13 +280,9 @@ class PilotAuthorizationReceipt:
             ("tuning_permitted", False),
         ):
             if getattr(self, name) is not expected:
-                raise HoldoutExecutionError(
-                    f"pilot authorization requires {name}={expected!r}"
-                )
+                raise HoldoutExecutionError(f"pilot authorization requires {name}={expected!r}")
         if self.authorization_sha256 != _sha(self.identity_payload()):
-            raise HoldoutExecutionError(
-                "authorization_sha256 does not match authorization content"
-            )
+            raise HoldoutExecutionError("authorization_sha256 does not match authorization content")
 
     def identity_payload(self) -> dict[str, object]:
         return _authorization_payload(
@@ -410,9 +385,7 @@ class PilotAuthorizationReceipt:
             corpus_manifest_sha256=data["corpus_manifest_sha256"],  # type: ignore[arg-type]
             holdout_split_sha256=data["holdout_split_sha256"],  # type: ignore[arg-type]
             shortlist_variant_ids=tuple(shortlist),  # type: ignore[arg-type]
-            configuration_sha256s=_mapping(
-                data["configuration_sha256s"], "configuration_sha256s"
-            ),  # type: ignore[arg-type]
+            configuration_sha256s=_mapping(data["configuration_sha256s"], "configuration_sha256s"),  # type: ignore[arg-type]
             prompts_sha256=data["prompts_sha256"],  # type: ignore[arg-type]
             policy_sha256=data["policy_sha256"],  # type: ignore[arg-type]
             model_identities_sha256=data["model_identities_sha256"],  # type: ignore[arg-type]
@@ -456,9 +429,7 @@ class G232ReplacementHoldoutAuthorization:
 
     def __post_init__(self) -> None:
         if self.schema != G232_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA:
-            raise HoldoutExecutionError(
-                "unsupported G232 replacement-holdout authorization schema"
-            )
+            raise HoldoutExecutionError("unsupported G232 replacement-holdout authorization schema")
         if self.goal_id != "HSSL-G232":
             raise HoldoutExecutionError(
                 "replacement-holdout authorization must come from HSSL-G232"
@@ -516,8 +487,7 @@ class G232ReplacementHoldoutAuthorization:
         )
 
         variants = tuple(
-            _safe_id(value, "authorized_variant_ids[]")
-            for value in self.authorized_variant_ids
+            _safe_id(value, "authorized_variant_ids[]") for value in self.authorized_variant_ids
         )
         candidates = variants[1:] if variants else ()
         if (
@@ -527,8 +497,7 @@ class G232ReplacementHoldoutAuthorization:
             or len(candidates) > MAX_SHORTLIST_SIZE
             or len(variants) != len(set(variants))
             or any(
-                variant_id not in VARIANT_REGISTRY
-                or variant_id in {"A0", "S1"}
+                variant_id not in VARIANT_REGISTRY or variant_id in {"A0", "S1"}
                 for variant_id in candidates
             )
         ):
@@ -539,9 +508,7 @@ class G232ReplacementHoldoutAuthorization:
         object.__setattr__(self, "authorized_variant_ids", variants)
         cache_modes = tuple(self.cache_modes)
         if cache_modes != ("cold", "warm"):
-            raise HoldoutExecutionError(
-                "G232 authorization must preserve exact cold/warm pairing"
-            )
+            raise HoldoutExecutionError("G232 authorization must preserve exact cold/warm pairing")
         object.__setattr__(self, "cache_modes", cache_modes)
         for name, expected in (
             ("passed", True),
@@ -552,9 +519,7 @@ class G232ReplacementHoldoutAuthorization:
             ("tuning_permitted", False),
         ):
             if getattr(self, name) is not expected:
-                raise HoldoutExecutionError(
-                    f"G232 authorization requires {name}={expected!r}"
-                )
+                raise HoldoutExecutionError(f"G232 authorization requires {name}={expected!r}")
         object.__setattr__(
             self,
             "authorization_cid",
@@ -564,9 +529,7 @@ class G232ReplacementHoldoutAuthorization:
                 codecs=("dag-json",),
             ),
         )
-        if self.authorization_cid != cid_for_dag_json(
-            self.identity_payload()
-        ):
+        if self.authorization_cid != cid_for_dag_json(self.identity_payload()):
             raise HoldoutExecutionError(
                 "authorization_cid does not match G232 authorization content"
             )
@@ -598,9 +561,7 @@ class G232ReplacementHoldoutAuthorization:
 
     def validate_against(self, seal: ReplacementHoldoutSeal) -> None:
         if not isinstance(seal, ReplacementHoldoutSeal):
-            raise HoldoutExecutionError(
-                "G232 authorization requires a replacement holdout seal"
-            )
+            raise HoldoutExecutionError("G232 authorization requires a replacement holdout seal")
         if (
             self.seal_contract_cid != seal.seal_contract_cid
             or self.sealed_manifest_cid != seal.sealed_manifest_cid
@@ -610,8 +571,7 @@ class G232ReplacementHoldoutAuthorization:
             )
         ):
             raise HoldoutExecutionError(
-                "G232 authorization does not bind the exact replacement seal "
-                "and frozen protocols"
+                "G232 authorization does not bind the exact replacement seal and frozen protocols"
             )
 
     @classmethod
@@ -625,18 +585,14 @@ class G232ReplacementHoldoutAuthorization:
         variants = data["authorized_variant_ids"]
         cache_modes = data["cache_modes"]
         if not isinstance(variants, list) or not isinstance(cache_modes, list):
-            raise HoldoutExecutionError(
-                "G232 authorized variants and cache modes must be arrays"
-            )
+            raise HoldoutExecutionError("G232 authorized variants and cache modes must be arrays")
         return cls(
             schema=data["schema"],  # type: ignore[arg-type]
             goal_id=data["goal_id"],  # type: ignore[arg-type]
             pilot_artifact_cid=data["pilot_artifact_cid"],  # type: ignore[arg-type]
             seal_contract_cid=data["seal_contract_cid"],  # type: ignore[arg-type]
             sealed_manifest_cid=data["sealed_manifest_cid"],  # type: ignore[arg-type]
-            protocol_cids=_mapping(
-                data["protocol_cids"], "protocol_cids"
-            ),  # type: ignore[arg-type]
+            protocol_cids=_mapping(data["protocol_cids"], "protocol_cids"),  # type: ignore[arg-type]
             source_commit=data["source_commit"],  # type: ignore[arg-type]
             authorized_variant_ids=tuple(variants),  # type: ignore[arg-type]
             cache_modes=tuple(cache_modes),  # type: ignore[arg-type]
@@ -672,17 +628,13 @@ class ReplacementHoldoutAccessReceipt:
 
     def __post_init__(self) -> None:
         if self.schema != REPLACEMENT_HOLDOUT_ACCESS_RECEIPT_SCHEMA:
-            raise HoldoutExecutionError(
-                "unsupported replacement-holdout access receipt schema"
-            )
+            raise HoldoutExecutionError("unsupported replacement-holdout access receipt schema")
         if (
             isinstance(self.sequence, bool)
             or not isinstance(self.sequence, int)
             or self.sequence < 0
         ):
-            raise HoldoutExecutionError(
-                "replacement access sequence must be a nonnegative integer"
-            )
+            raise HoldoutExecutionError("replacement access sequence must be a nonnegative integer")
         if self.sequence == 0:
             if self.previous_receipt_cid is not None:
                 raise HoldoutExecutionError(
@@ -699,9 +651,7 @@ class ReplacementHoldoutAccessReceipt:
                 ),
             )
         if self.event not in REPLACEMENT_HOLDOUT_ACCESS_EVENTS:
-            raise HoldoutExecutionError(
-                "unsupported replacement-holdout access event"
-            )
+            raise HoldoutExecutionError("unsupported replacement-holdout access event")
         object.__setattr__(
             self,
             "seal_contract_cid",
@@ -720,9 +670,7 @@ class ReplacementHoldoutAccessReceipt:
                 codecs=("raw",),
             ),
         )
-        if (self.authorization_cid is None) != (
-            self.pilot_artifact_cid is None
-        ):
+        if (self.authorization_cid is None) != (self.pilot_artifact_cid is None):
             raise HoldoutExecutionError(
                 "authorization and pilot CIDs must be both present or absent"
             )
@@ -747,9 +695,7 @@ class ReplacementHoldoutAccessReceipt:
             )
         if self.g241_release_receipt_cid is not None:
             if self.authorization_cid is None:
-                raise HoldoutExecutionError(
-                    "G241 release receipt requires its G232 authorization"
-                )
+                raise HoldoutExecutionError("G241 release receipt requires its G232 authorization")
             object.__setattr__(
                 self,
                 "g241_release_receipt_cid",
@@ -760,9 +706,7 @@ class ReplacementHoldoutAccessReceipt:
                 ),
             )
         if self.purpose not in {"evaluation", "replay"}:
-            raise HoldoutExecutionError(
-                "replacement holdout purpose must be evaluation or replay"
-            )
+            raise HoldoutExecutionError("replacement holdout purpose must be evaluation or replay")
         _safe_id(self.executor_id, "executor_id")
         expected_flags = {
             "access_granted": (True, False, False),
@@ -781,15 +725,10 @@ class ReplacementHoldoutAccessReceipt:
             or actual_flags != expected_flags
             or (
                 self.event != "premature_access"
-                and (
-                    self.authorization_cid is None
-                    or self.g241_release_receipt_cid is None
-                )
+                and (self.authorization_cid is None or self.g241_release_receipt_cid is None)
             )
         ):
-            raise HoldoutExecutionError(
-                "replacement access event flags are inconsistent"
-            )
+            raise HoldoutExecutionError("replacement access event flags are inconsistent")
         object.__setattr__(
             self,
             "receipt_cid",
@@ -800,9 +739,7 @@ class ReplacementHoldoutAccessReceipt:
             ),
         )
         if self.receipt_cid != cid_for_dag_json(self.identity_payload()):
-            raise HoldoutExecutionError(
-                "receipt_cid does not match replacement access event"
-            )
+            raise HoldoutExecutionError("receipt_cid does not match replacement access event")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -834,10 +771,7 @@ class ReplacementHoldoutAccessReceipt:
             "replacement-holdout access receipt",
         )
         return cls(
-            **{
-                name: data[name]
-                for name in cls.__dataclass_fields__
-            }  # type: ignore[arg-type]
+            **{name: data[name] for name in cls.__dataclass_fields__}  # type: ignore[arg-type]
         )
 
 
@@ -883,32 +817,19 @@ class AuthorizedReplacementHoldoutPayload:
                 codecs=("dag-json",),
             ),
         )
+        if not isinstance(self.sealed_manifest_bytes, bytes) or not self.sealed_manifest_bytes:
+            raise HoldoutExecutionError("authorized replacement payload must contain opaque bytes")
         if (
-            not isinstance(self.sealed_manifest_bytes, bytes)
-            or not self.sealed_manifest_bytes
-        ):
-            raise HoldoutExecutionError(
-                "authorized replacement payload must contain opaque bytes"
-            )
-        if (
-            not isinstance(
-                self.grant_receipt, ReplacementHoldoutAccessReceipt
-            )
+            not isinstance(self.grant_receipt, ReplacementHoldoutAccessReceipt)
             or self.grant_receipt.event != "access_granted"
-            or not isinstance(
-                self.release_receipt, ReplacementHoldoutAccessReceipt
-            )
+            or not isinstance(self.release_receipt, ReplacementHoldoutAccessReceipt)
             or self.release_receipt.event != "manifest_released"
-            or self.release_receipt.previous_receipt_cid
-            != self.grant_receipt.receipt_cid
-            or self.g241_release_receipt_cid
-            != self.grant_receipt.g241_release_receipt_cid
-            or self.g241_release_receipt_cid
-            != self.release_receipt.g241_release_receipt_cid
+            or self.release_receipt.previous_receipt_cid != self.grant_receipt.receipt_cid
+            or self.g241_release_receipt_cid != self.grant_receipt.g241_release_receipt_cid
+            or self.g241_release_receipt_cid != self.release_receipt.g241_release_receipt_cid
         ):
             raise HoldoutExecutionError(
-                "authorized replacement payload requires a linked grant and "
-                "release receipt"
+                "authorized replacement payload requires a linked grant and release receipt"
             )
 
 
@@ -919,9 +840,7 @@ def _strict_ledger_json(text: str) -> object:
         result: dict[str, object] = {}
         for key, value in pairs:
             if key in result:
-                raise HoldoutExecutionError(
-                    f"duplicate access-ledger JSON key: {key}"
-                )
+                raise HoldoutExecutionError(f"duplicate access-ledger JSON key: {key}")
             result[key] = value
         return result
 
@@ -930,9 +849,7 @@ def _strict_ledger_json(text: str) -> object:
     except HoldoutExecutionError:
         raise
     except (json.JSONDecodeError, ValueError) as exc:
-        raise HoldoutExecutionError(
-            "replacement access ledger contains invalid JSON"
-        ) from exc
+        raise HoldoutExecutionError("replacement access ledger contains invalid JSON") from exc
 
 
 def _parse_replacement_access_ledger(
@@ -951,9 +868,7 @@ def _parse_replacement_access_ledger(
         try:
             text = line[:-1].decode("utf-8")
         except UnicodeDecodeError as exc:
-            raise HoldoutExecutionError(
-                "replacement access ledger must be UTF-8"
-            ) from exc
+            raise HoldoutExecutionError("replacement access ledger must be UTF-8") from exc
         value = _mapping(
             _strict_ledger_json(text),
             f"replacement access ledger line {line_number}",
@@ -964,9 +879,7 @@ def _parse_replacement_access_ledger(
             f"replacement access ledger line {line_number}",
         )
         if value["schema"] != REPLACEMENT_HOLDOUT_ACCESS_LEDGER_SCHEMA:
-            raise HoldoutExecutionError(
-                "replacement access ledger schema changed"
-            )
+            raise HoldoutExecutionError("replacement access ledger schema changed")
         receipt = ReplacementHoldoutAccessReceipt.from_dict(value["receipt"])
         wrapper = {
             "schema": REPLACEMENT_HOLDOUT_ACCESS_LEDGER_SCHEMA,
@@ -980,34 +893,19 @@ def _parse_replacement_access_ledger(
 
     receipt_cids = tuple(item.receipt_cid for item in records)
     if len(receipt_cids) != len(set(receipt_cids)):
-        raise HoldoutExecutionError(
-            "replacement access ledger contains duplicate receipt CIDs"
-        )
+        raise HoldoutExecutionError("replacement access ledger contains duplicate receipt CIDs")
     invalidated = False
     for sequence, receipt in enumerate(records):
-        expected_previous = (
-            None if sequence == 0 else records[sequence - 1].receipt_cid
-        )
-        if (
-            receipt.sequence != sequence
-            or receipt.previous_receipt_cid != expected_previous
-        ):
-            raise HoldoutExecutionError(
-                "replacement access ledger chain is broken"
-            )
+        expected_previous = None if sequence == 0 else records[sequence - 1].receipt_cid
+        if receipt.sequence != sequence or receipt.previous_receipt_cid != expected_previous:
+            raise HoldoutExecutionError("replacement access ledger chain is broken")
         if sequence and (
-            receipt.seal_contract_cid
-            != records[0].seal_contract_cid
-            or receipt.sealed_manifest_cid
-            != records[0].sealed_manifest_cid
+            receipt.seal_contract_cid != records[0].seal_contract_cid
+            or receipt.sealed_manifest_cid != records[0].sealed_manifest_cid
         ):
-            raise HoldoutExecutionError(
-                "replacement access ledger mixes distinct seals"
-            )
+            raise HoldoutExecutionError("replacement access ledger mixes distinct seals")
         if invalidated and receipt.event != "premature_access":
-            raise HoldoutExecutionError(
-                "replacement seal was used after permanent invalidation"
-            )
+            raise HoldoutExecutionError("replacement seal was used after permanent invalidation")
         if (
             sequence
             and records[sequence - 1].event == "access_granted"
@@ -1019,8 +917,7 @@ def _parse_replacement_access_ledger(
             }
         ):
             raise HoldoutExecutionError(
-                "unresolved access grant is not followed by its custody "
-                "outcome"
+                "unresolved access grant is not followed by its custody outcome"
             )
         if receipt.event in {
             "custody_integrity_failure",
@@ -1028,31 +925,21 @@ def _parse_replacement_access_ledger(
             "manifest_released",
         }:
             if sequence == 0:
-                raise HoldoutExecutionError(
-                    "custody outcome has no preceding access grant"
-                )
+                raise HoldoutExecutionError("custody outcome has no preceding access grant")
             grant = records[sequence - 1]
             if (
                 grant.event != "access_granted"
                 or grant.authorization_cid != receipt.authorization_cid
                 or grant.pilot_artifact_cid != receipt.pilot_artifact_cid
-                or grant.g241_release_receipt_cid
-                != receipt.g241_release_receipt_cid
+                or grant.g241_release_receipt_cid != receipt.g241_release_receipt_cid
                 or grant.purpose != receipt.purpose
                 or grant.executor_id != receipt.executor_id
             ):
-                raise HoldoutExecutionError(
-                    "custody outcome is not linked to its access grant"
-                )
+                raise HoldoutExecutionError("custody outcome is not linked to its access grant")
         invalidated = invalidated or receipt.invalidates_seal
-    if (
-        records
-        and records[-1].event == "access_granted"
-        and not allow_pending_grant
-    ):
+    if records and records[-1].event == "access_granted" and not allow_pending_grant:
         raise HoldoutExecutionError(
-            "replacement access ledger ends in an unresolved access grant; "
-            "the seal is fail-closed"
+            "replacement access ledger ends in an unresolved access grant; the seal is fail-closed"
         )
     return tuple(records)
 
@@ -1073,52 +960,37 @@ def load_replacement_holdout_access_receipts(
 
     path = Path(ledger_path)
     if not isinstance(allow_pending_grant, bool):
-        raise HoldoutExecutionError(
-            "allow_pending_grant must be boolean"
-        )
+        raise HoldoutExecutionError("allow_pending_grant must be boolean")
     if not path.is_absolute():
-        raise HoldoutExecutionError(
-            "replacement access ledger path must be absolute"
-        )
+        raise HoldoutExecutionError("replacement access ledger path must be absolute")
     if seal is not None:
         try:
             canonical_seal = ReplacementHoldoutSeal.from_dict(seal.to_dict())
-            expected_authority_cid = (
-                replacement_holdout_ledger_authority_cid(
-                    canonical_seal.sealed_manifest_cid,
-                    path,
-                )
+            expected_authority_cid = replacement_holdout_ledger_authority_cid(
+                canonical_seal.sealed_manifest_cid,
+                path,
             )
         except (AttributeError, TypeError, ValueError) as exc:
             raise HoldoutExecutionError(
                 "replacement access ledger seal authority is invalid"
             ) from exc
-        if (
-            canonical_seal.access_ledger_authority_cid
-            != expected_authority_cid
-        ):
+        if canonical_seal.access_ledger_authority_cid != expected_authority_cid:
             raise HoldoutExecutionError(
-                "replacement access ledger path does not match the "
-                "seal-bound ledger authority"
+                "replacement access ledger path does not match the seal-bound ledger authority"
             )
     if not path.exists():
         return ()
     if path.is_symlink() or not path.is_file():
-        raise HoldoutExecutionError(
-            "replacement access ledger must be a regular non-symlink file"
-        )
+        raise HoldoutExecutionError("replacement access ledger must be a regular non-symlink file")
     try:
         metadata = path.stat()
         if metadata.st_nlink != 1 or metadata.st_mode & 0o077:
             raise HoldoutExecutionError(
-                "replacement access ledger must be private and have no "
-                "hard-link aliases"
+                "replacement access ledger must be private and have no hard-link aliases"
             )
         raw = path.read_bytes()
     except OSError as exc:
-        raise HoldoutExecutionError(
-            "replacement access ledger cannot be read"
-        ) from exc
+        raise HoldoutExecutionError("replacement access ledger cannot be read") from exc
     return _parse_replacement_access_ledger(
         raw,
         allow_pending_grant=allow_pending_grant,
@@ -1137,27 +1009,20 @@ def _append_replacement_access_event(
 ) -> ReplacementHoldoutAccessReceipt:
     path = Path(ledger_path)
     if not path.is_absolute():
-        raise HoldoutExecutionError(
-            "replacement access ledger path must be absolute"
-        )
+        raise HoldoutExecutionError("replacement access ledger path must be absolute")
     try:
         expected_authority_cid = replacement_holdout_ledger_authority_cid(
             seal.sealed_manifest_cid,
             path,
         )
     except (AttributeError, TypeError, ValueError) as exc:
-        raise HoldoutExecutionError(
-            "replacement access ledger authority is invalid"
-        ) from exc
+        raise HoldoutExecutionError("replacement access ledger authority is invalid") from exc
     if seal.access_ledger_authority_cid != expected_authority_cid:
         raise HoldoutExecutionError(
-            "replacement access ledger path does not match the seal-bound "
-            "ledger authority"
+            "replacement access ledger path does not match the seal-bound ledger authority"
         )
     if path.is_symlink():
-        raise HoldoutExecutionError(
-            "replacement access ledger must not be a symbolic link"
-        )
+        raise HoldoutExecutionError("replacement access ledger must not be a symbolic link")
     if any(parent.is_symlink() for parent in path.parents):
         raise HoldoutExecutionError(
             "replacement access ledger path must not traverse symbolic links"
@@ -1182,8 +1047,7 @@ def _append_replacement_access_event(
             metadata = os.fstat(handle.fileno())
             if metadata.st_nlink != 1 or metadata.st_mode & 0o077:
                 raise HoldoutExecutionError(
-                    "replacement access ledger must be private and have no "
-                    "hard-link aliases"
+                    "replacement access ledger must be private and have no hard-link aliases"
                 )
             handle.seek(0)
             records = _parse_replacement_access_ledger(
@@ -1195,30 +1059,20 @@ def _append_replacement_access_event(
                     "validated G241 release is already consumed; replacement "
                     "holdout access is single-use"
                 )
-            if (
-                event != "premature_access"
-                and any(item.invalidates_seal for item in records)
-            ):
-                raise HoldoutExecutionError(
-                    "replacement holdout seal is permanently invalidated"
-                )
+            if event != "premature_access" and any(item.invalidates_seal for item in records):
+                raise HoldoutExecutionError("replacement holdout seal is permanently invalidated")
             if records and (
                 records[0].seal_contract_cid != seal.seal_contract_cid
-                or records[0].sealed_manifest_cid
-                != seal.sealed_manifest_cid
+                or records[0].sealed_manifest_cid != seal.sealed_manifest_cid
             ):
-                raise HoldoutExecutionError(
-                    "replacement access ledger is bound to another seal"
-                )
+                raise HoldoutExecutionError("replacement access ledger is bound to another seal")
             custody_outcomes = {
                 "custody_integrity_failure",
                 "custody_release_failed",
                 "manifest_released",
             }
             pending_grant = (
-                records[-1]
-                if records and records[-1].event == "access_granted"
-                else None
+                records[-1] if records and records[-1].event == "access_granted" else None
             )
             if pending_grant is not None:
                 if event not in custody_outcomes:
@@ -1227,32 +1081,23 @@ def _append_replacement_access_event(
                         "grant; a new access attempt is forbidden"
                     )
                 authorization_cid = (
-                    None
-                    if authorization is None
-                    else authorization.authorization_cid
+                    None if authorization is None else authorization.authorization_cid
                 )
                 pilot_artifact_cid = (
-                    None
-                    if authorization is None
-                    else authorization.pilot_artifact_cid
+                    None if authorization is None else authorization.pilot_artifact_cid
                 )
                 if (
                     pending_grant.authorization_cid != authorization_cid
-                    or pending_grant.pilot_artifact_cid
-                    != pilot_artifact_cid
-                    or pending_grant.g241_release_receipt_cid
-                    != g241_release_receipt_cid
+                    or pending_grant.pilot_artifact_cid != pilot_artifact_cid
+                    or pending_grant.g241_release_receipt_cid != g241_release_receipt_cid
                     or pending_grant.purpose != purpose
                     or pending_grant.executor_id != executor_id
                 ):
                     raise HoldoutExecutionError(
-                        "custody outcome does not match the unresolved access "
-                        "grant"
+                        "custody outcome does not match the unresolved access grant"
                     )
             elif event in custody_outcomes:
-                raise HoldoutExecutionError(
-                    "custody outcome requires an unresolved access grant"
-                )
+                raise HoldoutExecutionError("custody outcome requires an unresolved access grant")
             sequence = len(records)
             previous = records[-1].receipt_cid if records else None
             flag_values = {
@@ -1263,13 +1108,9 @@ def _append_replacement_access_event(
                 "premature_access": (False, False, True),
             }
             try:
-                access_authorized, manifest_released, invalidates_seal = (
-                    flag_values[event]
-                )
+                access_authorized, manifest_released, invalidates_seal = flag_values[event]
             except KeyError as exc:
-                raise HoldoutExecutionError(
-                    "unsupported replacement access event"
-                ) from exc
+                raise HoldoutExecutionError("unsupported replacement access event") from exc
             payload = {
                 "schema": REPLACEMENT_HOLDOUT_ACCESS_RECEIPT_SCHEMA,
                 "sequence": sequence,
@@ -1278,14 +1119,10 @@ def _append_replacement_access_event(
                 "seal_contract_cid": seal.seal_contract_cid,
                 "sealed_manifest_cid": seal.sealed_manifest_cid,
                 "authorization_cid": (
-                    None
-                    if authorization is None
-                    else authorization.authorization_cid
+                    None if authorization is None else authorization.authorization_cid
                 ),
                 "pilot_artifact_cid": (
-                    None
-                    if authorization is None
-                    else authorization.pilot_artifact_cid
+                    None if authorization is None else authorization.pilot_artifact_cid
                 ),
                 "g241_release_receipt_cid": g241_release_receipt_cid,
                 "purpose": purpose,
@@ -1307,9 +1144,7 @@ def _append_replacement_access_event(
             handle.flush()
             os.fsync(handle.fileno())
             if not ledger_existed:
-                directory_flags = os.O_RDONLY | getattr(
-                    os, "O_DIRECTORY", 0
-                )
+                directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
                 directory_flags |= getattr(os, "O_CLOEXEC", 0)
                 directory_descriptor = os.open(
                     path.parent,
@@ -1362,27 +1197,17 @@ def load_authorized_replacement_holdout(
     try:
         canonical_seal = ReplacementHoldoutSeal.from_dict(seal.to_dict())
     except (AttributeError, TypeError, ValueError) as exc:
-        raise HoldoutExecutionError(
-            "replacement holdout seal metadata is invalid"
-        ) from exc
+        raise HoldoutExecutionError("replacement holdout seal metadata is invalid") from exc
     _safe_id(executor_id, "executor_id")
     if purpose not in {"evaluation", "replay"}:
-        raise HoldoutExecutionError(
-            "replacement holdout purpose must be evaluation or replay"
-        )
+        raise HoldoutExecutionError("replacement holdout purpose must be evaluation or replay")
 
     canonical_authorization: G232ReplacementHoldoutAuthorization | None = None
     try:
-        if not isinstance(
-            authorization, G232ReplacementHoldoutAuthorization
-        ):
-            raise HoldoutExecutionError(
-                "exact HSSL-G232 authorization is required"
-            )
-        canonical_authorization = (
-            G232ReplacementHoldoutAuthorization.from_dict(
-                authorization.to_dict()
-            )
+        if not isinstance(authorization, G232ReplacementHoldoutAuthorization):
+            raise HoldoutExecutionError("exact HSSL-G232 authorization is required")
+        canonical_authorization = G232ReplacementHoldoutAuthorization.from_dict(
+            authorization.to_dict()
         )
         canonical_authorization.validate_against(canonical_seal)
     except (AttributeError, TypeError, ValueError) as exc:
@@ -1396,8 +1221,7 @@ def load_authorized_replacement_holdout(
             executor_id=executor_id,
         )
         raise HoldoutExecutionError(
-            "premature replacement-holdout access permanently invalidated "
-            "the seal"
+            "premature replacement-holdout access permanently invalidated the seal"
         ) from exc
 
     transaction: object | None = None
@@ -1408,36 +1232,21 @@ def load_authorized_replacement_holdout(
             "g241_release_ledger_path": g241_release_ledger_path,
             "g241_authority_path": g241_authority_path,
             "trusted_g241_authority_cid": trusted_g241_authority_cid,
-            "g241_validator_attestation_path": (
-                g241_validator_attestation_path
-            ),
-            "trusted_g241_validator_attestation_cid": (
-                trusted_g241_validator_attestation_cid
-            ),
-            "g241_custodian_trust_root_path": (
-                g241_custodian_trust_root_path
-            ),
-            "trusted_g241_custodian_trust_root_cid": (
-                trusted_g241_custodian_trust_root_cid
-            ),
+            "g241_validator_attestation_path": (g241_validator_attestation_path),
+            "trusted_g241_validator_attestation_cid": (trusted_g241_validator_attestation_cid),
+            "g241_custodian_trust_root_path": (g241_custodian_trust_root_path),
+            "trusted_g241_custodian_trust_root_cid": (trusted_g241_custodian_trust_root_cid),
             "repo_root": repo_root,
         }
-        missing = sorted(
-            name
-            for name, value in required_g241_inputs.items()
-            if value is None
-        )
+        missing = sorted(name for name, value in required_g241_inputs.items() if value is None)
         if missing:
             raise HoldoutExecutionError(
                 "validated ledger-backed HSSL-G241 release evidence is "
                 f"required (missing={missing})"
             )
-        if Path(repo_root).resolve(strict=True) != Path(
-            tuning_worktree
-        ).resolve(strict=True):
+        if Path(repo_root).resolve(strict=True) != Path(tuning_worktree).resolve(strict=True):
             raise HoldoutExecutionError(
-                "G241 source checkout must be the exact holdout execution "
-                "worktree"
+                "G241 source checkout must be the exact holdout execution worktree"
             )
         from .custodian_release import (
             G241CustodyAccessTransactionV1,
@@ -1472,22 +1281,16 @@ def load_authorized_replacement_holdout(
             executor_id=executor_id,
         ) as locked_transaction:
             transaction = locked_transaction
-            if not isinstance(
-                locked_transaction, G241CustodyAccessTransactionV1
-            ):
+            if not isinstance(locked_transaction, G241CustodyAccessTransactionV1):
                 raise HoldoutExecutionError(
                     "G241 consumer returned an unsupported custody transaction"
                 )
-            validated_g241_receipt = (
-                locked_transaction.release_receipt
-            )
+            validated_g241_receipt = locked_transaction.release_receipt
             if not isinstance(
                 validated_g241_receipt,
                 G241ExternallyGovernedCustodianReleaseReceiptV1,
             ):
-                raise HoldoutExecutionError(
-                    "G241 consumer returned an unsupported release receipt"
-                )
+                raise HoldoutExecutionError("G241 consumer returned an unsupported release receipt")
             validated_g241_receipt_cid = _cid(
                 validated_g241_receipt.receipt_cid,
                 "g241_release_receipt_cid",
@@ -1506,14 +1309,11 @@ def load_authorized_replacement_holdout(
                 validated_g241_receipt_cid != g241_release_receipt_cid
                 or validated_g241_receipt.g232_authorization_cid
                 != canonical_authorization.authorization_cid
-                or validated_g241_receipt.seal_contract_cid
-                != canonical_seal.seal_contract_cid
-                or validated_g241_receipt.sealed_manifest_cid
-                != canonical_seal.sealed_manifest_cid
+                or validated_g241_receipt.seal_contract_cid != canonical_seal.seal_contract_cid
+                or validated_g241_receipt.sealed_manifest_cid != canonical_seal.sealed_manifest_cid
                 or tuple(validated_g241_receipt.authorized_variant_ids)
                 != canonical_authorization.authorized_variant_ids
-                or validated_g241_receipt.custodian_id
-                != actual_custodian_id
+                or validated_g241_receipt.custodian_id != actual_custodian_id
                 or validated_g241_receipt.executor_id != executor_id
             ):
                 raise HoldoutExecutionError(
@@ -1528,9 +1328,7 @@ def load_authorized_replacement_holdout(
                     tuning_worktree=tuning_worktree,
                 )
             except (TypeError, ValueError) as exc:
-                locked_transaction.record_custody_failure(
-                    integrity_failure=True
-                )
+                locked_transaction.record_custody_failure(integrity_failure=True)
                 raise HoldoutExecutionError(
                     "unsafe replacement-holdout path invalidated the seal"
                 ) from exc
@@ -1540,15 +1338,9 @@ def load_authorized_replacement_holdout(
                 opaque_bytes = release(
                     external_path,
                     seal_contract_cid=canonical_seal.seal_contract_cid,
-                    authorization_cid=(
-                        canonical_authorization.authorization_cid
-                    ),
-                    g241_release_receipt_cid=(
-                        validated_g241_receipt_cid
-                    ),
-                    access_grant_receipt_cid=(
-                        locked_transaction.grant_receipt.receipt_cid
-                    ),
+                    authorization_cid=(canonical_authorization.authorization_cid),
+                    g241_release_receipt_cid=(validated_g241_receipt_cid),
+                    access_grant_receipt_cid=(locked_transaction.grant_receipt.receipt_cid),
                 )
             except Exception as exc:
                 locked_transaction.record_custody_failure()
@@ -1558,12 +1350,9 @@ def load_authorized_replacement_holdout(
             if (
                 not isinstance(opaque_bytes, bytes)
                 or not opaque_bytes
-                or cid_for_bytes(opaque_bytes, codec="raw")
-                != canonical_seal.sealed_manifest_cid
+                or cid_for_bytes(opaque_bytes, codec="raw") != canonical_seal.sealed_manifest_cid
             ):
-                locked_transaction.record_custody_failure(
-                    integrity_failure=True
-                )
+                locked_transaction.record_custody_failure(integrity_failure=True)
                 raise HoldoutExecutionError(
                     "custodian returned a block outside the sealed CID; the "
                     "replacement seal is invalidated"
@@ -1588,9 +1377,7 @@ def load_authorized_replacement_holdout(
             ) from exc
         if isinstance(exc, HoldoutExecutionError):
             raise
-        raise HoldoutExecutionError(
-            "locked G241 custody transaction failed closed"
-        ) from exc
+        raise HoldoutExecutionError("locked G241 custody transaction failed closed") from exc
 
     return AuthorizedReplacementHoldoutPayload(
         sealed_manifest_bytes=opaque_bytes,
@@ -1612,25 +1399,18 @@ def build_authorized_holdout_plan(
     """Build the exact A0/shortlist cold/warm holdout schedule."""
 
     if not isinstance(authorization, PilotAuthorizationReceipt):
-        raise HoldoutExecutionError(
-            "authorization must be a PilotAuthorizationReceipt"
-        )
+        raise HoldoutExecutionError("authorization must be a PilotAuthorizationReceipt")
     if not isinstance(corpus, ReviewedCorpus):
         raise HoldoutExecutionError("corpus must be a ReviewedCorpus")
     _safe_id(access_ledger_id, "access_ledger_id")
     integrity = build_split_integrity_manifest(corpus)
     if (
         corpus.manifest_sha256 != authorization.corpus_manifest_sha256
-        or integrity.holdout.split_sha256
-        != authorization.holdout_split_sha256
+        or integrity.holdout.split_sha256 != authorization.holdout_split_sha256
     ):
-        raise HoldoutExecutionError(
-            "authorization corpus or holdout split identity is stale"
-        )
+        raise HoldoutExecutionError("authorization corpus or holdout split identity is stale")
     positions = {case.case_id: case for case in corpus.cases}
-    holdout_cases = tuple(
-        positions[case_id] for case_id in integrity.holdout.case_ids
-    )
+    holdout_cases = tuple(positions[case_id] for case_id in integrity.holdout.case_ids)
     return build_ablation_plan(
         run_id,
         holdout_cases,
@@ -1684,52 +1464,35 @@ def validate_holdout_access_audits(
     """Revalidate canonical audits against corpus, plan, and frozen inputs."""
 
     try:
-        authorization = PilotAuthorizationReceipt.from_dict(
-            authorization.to_dict()
-        )
+        authorization = PilotAuthorizationReceipt.from_dict(authorization.to_dict())
     except (AttributeError, TypeError, ValueError) as exc:
         raise HoldoutExecutionError("pilot authorization is invalid") from exc
     if not isinstance(corpus, ReviewedCorpus):
         raise HoldoutExecutionError("corpus must be a ReviewedCorpus")
     if not isinstance(plan, AblationPlan) or plan.split is not Split.HOLDOUT:
-        raise HoldoutExecutionError(
-            "access-audit validation requires a holdout plan"
-        )
+        raise HoldoutExecutionError("access-audit validation requires a holdout plan")
     integrity = build_split_integrity_manifest(corpus)
     if (
         corpus.manifest_sha256 != authorization.corpus_manifest_sha256
-        or integrity.holdout.split_sha256
-        != authorization.holdout_split_sha256
+        or integrity.holdout.split_sha256 != authorization.holdout_split_sha256
         or plan.case_manifest_sha256 != corpus.manifest_sha256
         or plan.protocol_sha256 != authorization.protocol_sha256
         or plan.environment_sha256 != authorization.environment_sha256
         or plan.case_ids != integrity.holdout.case_ids
-        or plan.variant_ids
-        != ("A0", *authorization.shortlist_variant_ids)
+        or plan.variant_ids != ("A0", *authorization.shortlist_variant_ids)
         or plan.cache_modes != (CacheMode.COLD, CacheMode.WARM)
         or plan.holdout_access_log_id is None
     ):
-        raise HoldoutExecutionError(
-            "access audits do not bind the authorized holdout plan"
-        )
+        raise HoldoutExecutionError("access audits do not bind the authorized holdout plan")
     contracts = plan.run_contracts
     try:
-        audits = tuple(
-            HoldoutAccessAudit.from_dict(item.to_dict())
-            for item in access_audits
-        )
+        audits = tuple(HoldoutAccessAudit.from_dict(item.to_dict()) for item in access_audits)
         validate_holdout_access_log(corpus, audits)
     except (AttributeError, TypeError, ValueError) as exc:
-        raise HoldoutExecutionError(
-            "holdout access audit log is invalid"
-        ) from exc
+        raise HoldoutExecutionError("holdout access audit log is invalid") from exc
     if len(audits) != len(contracts):
-        raise HoldoutExecutionError(
-            "one holdout access audit is required per run contract"
-        )
-    for sequence, (contract, audit) in enumerate(
-        zip(contracts, audits, strict=True)
-    ):
+        raise HoldoutExecutionError("one holdout access audit is required per run contract")
+    for sequence, (contract, audit) in enumerate(zip(contracts, audits, strict=True)):
         expected_run_digest = _sha(contract.to_dict())
         if (
             audit.sequence != sequence
@@ -1743,20 +1506,15 @@ def validate_holdout_access_audits(
             or audit.cache_mode != contract.cache_mode.value
             or audit.configuration_sha256 != contract.configuration_sha256
             or audit.configuration_sha256
-            != authorization.configuration_sha256s[
-                contract.requested_variant_id
-            ]
+            != authorization.configuration_sha256s[contract.requested_variant_id]
             or audit.prompts_sha256 != authorization.prompts_sha256
             or audit.policy_sha256 != authorization.policy_sha256
-            or audit.model_identities_sha256
-            != authorization.model_identities_sha256
+            or audit.model_identities_sha256 != authorization.model_identities_sha256
             or audit.thresholds_sha256 != authorization.thresholds_sha256
             or audit.accessed_case_ids != integrity.holdout.case_ids
             or audit.tuning_permitted is not False
         ):
-            raise HoldoutExecutionError(
-                "holdout access audit differs from its frozen run contract"
-            )
+            raise HoldoutExecutionError("holdout access audit differs from its frozen run contract")
     return audits
 
 
@@ -1774,9 +1532,7 @@ def _validate_execution_boundary(
     """Validate the complete boundary without causing filesystem side effects."""
 
     try:
-        authorization = PilotAuthorizationReceipt.from_dict(
-            authorization.to_dict()
-        )
+        authorization = PilotAuthorizationReceipt.from_dict(authorization.to_dict())
     except (AttributeError, TypeError, ValueError) as exc:
         raise HoldoutExecutionError("pilot authorization is invalid") from exc
     if not isinstance(corpus, ReviewedCorpus):
@@ -1787,33 +1543,25 @@ def _validate_execution_boundary(
         raise HoldoutExecutionError("authorized execution requires a holdout plan")
     if (
         _commit(source_commit, "source_commit") != authorization.source_commit
-        or _digest(environment_sha256, "environment_sha256")
-        != authorization.environment_sha256
+        or _digest(environment_sha256, "environment_sha256") != authorization.environment_sha256
         or plan.environment_sha256 != authorization.environment_sha256
         or plan.protocol_sha256 != authorization.protocol_sha256
         or plan.case_manifest_sha256 != authorization.corpus_manifest_sha256
     ):
-        raise HoldoutExecutionError(
-            "source, environment, protocol, or corpus identity drifted"
-        )
+        raise HoldoutExecutionError("source, environment, protocol, or corpus identity drifted")
     integrity = build_split_integrity_manifest(corpus)
     if (
         corpus.manifest_sha256 != authorization.corpus_manifest_sha256
-        or integrity.holdout.split_sha256
-        != authorization.holdout_split_sha256
+        or integrity.holdout.split_sha256 != authorization.holdout_split_sha256
         or plan.case_ids != integrity.holdout.case_ids
     ):
         raise HoldoutExecutionError(
             "plan does not use the complete frozen holdout manifest in order"
         )
     if plan.variant_ids != ("A0", *authorization.shortlist_variant_ids):
-        raise HoldoutExecutionError(
-            "plan must schedule only A0 and the exact frozen shortlist"
-        )
+        raise HoldoutExecutionError("plan must schedule only A0 and the exact frozen shortlist")
     if plan.cache_modes != (CacheMode.COLD, CacheMode.WARM):
-        raise HoldoutExecutionError(
-            "holdout must keep complete, separate cold and warm pairs"
-        )
+        raise HoldoutExecutionError("holdout must keep complete, separate cold and warm pairs")
     if plan.holdout_access_log_id is None:
         raise HoldoutExecutionError("holdout plan has no access ledger identity")
 
@@ -1829,9 +1577,7 @@ def _validate_execution_boundary(
     if isinstance(output_root, str) and not output_root.strip():
         raise HoldoutExecutionError("output_root must not be empty")
     if root.exists() or root.is_symlink():
-        raise HoldoutExecutionError(
-            "holdout output namespace must be fresh; resume is forbidden"
-        )
+        raise HoldoutExecutionError("holdout output namespace must be fresh; resume is forbidden")
     return audits
 
 
@@ -1872,8 +1618,7 @@ class HoldoutExecutionReceipt:
         for name in ("access_audit_sha256s", "result_sha256s"):
             values = tuple(getattr(self, name))
             if not values or any(
-                not isinstance(value, str) or not _DIGEST.fullmatch(value)
-                for value in values
+                not isinstance(value, str) or not _DIGEST.fullmatch(value) for value in values
             ):
                 raise HoldoutExecutionError(f"{name} must contain SHA-256 digests")
             object.__setattr__(self, name, values)
@@ -1929,9 +1674,7 @@ class HoldoutExecutionReceipt:
                 raise HoldoutExecutionError(f"{name} must be an array")
         return cls(
             **{
-                name: (
-                    tuple(data[name]) if isinstance(data[name], list) else data[name]
-                )
+                name: (tuple(data[name]) if isinstance(data[name], list) else data[name])
                 for name in cls.__dataclass_fields__
             }  # type: ignore[arg-type]
         )
@@ -1947,19 +1690,11 @@ class AuthorizedHoldoutRun:
 
     def __post_init__(self) -> None:
         audits = tuple(self.access_audits)
-        if not audits or any(
-            not isinstance(item, HoldoutAccessAudit) for item in audits
-        ):
-            raise HoldoutExecutionError(
-                "authorized holdout run requires canonical access audits"
-            )
+        if not audits or any(not isinstance(item, HoldoutAccessAudit) for item in audits):
+            raise HoldoutExecutionError("authorized holdout run requires canonical access audits")
         if not isinstance(self.receipt, HoldoutExecutionReceipt):
-            raise HoldoutExecutionError(
-                "authorized holdout run requires an execution receipt"
-            )
-        if tuple(
-            item.audit_sha256 for item in audits
-        ) != self.receipt.access_audit_sha256s:
+            raise HoldoutExecutionError("authorized holdout run requires an execution receipt")
+        if tuple(item.audit_sha256 for item in audits) != self.receipt.access_audit_sha256s:
             raise HoldoutExecutionError(
                 "authorized holdout receipt does not bind its access audits"
             )
@@ -1996,12 +1731,8 @@ def execute_authorized_holdout(
 
     if not isinstance(adapters, Mapping):
         raise HoldoutExecutionError("adapters must be a mapping")
-    if resource_scheduler is not None and not isinstance(
-        resource_scheduler, ResourceScheduler
-    ):
-        raise HoldoutExecutionError(
-            "resource_scheduler must be a ResourceScheduler"
-        )
+    if resource_scheduler is not None and not isinstance(resource_scheduler, ResourceScheduler):
+        raise HoldoutExecutionError("resource_scheduler must be a ResourceScheduler")
     audits = _validate_execution_boundary(
         authorization,
         corpus,
@@ -2030,10 +1761,7 @@ def execute_authorized_holdout(
     _write_once(
         root / "state" / HOLDOUT_ACCESS_AUDITS_FILE,
         {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "holdout-access-ledger.v1"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.holdout-access-ledger.v1"),
             "evidence": HSSLEV1167A17(),
             "run_id": plan.run_id,
             "plan_sha256": plan.digest,
@@ -2058,13 +1786,9 @@ def execute_authorized_holdout(
         "authorization_sha256": authorization.authorization_sha256,
         "pilot_gate_sha256": authorization.pilot_gate_sha256,
         "plan_sha256": plan.digest,
-        "access_audit_sha256s": tuple(
-            item.audit_sha256 for item in audits
-        ),
+        "access_audit_sha256s": tuple(item.audit_sha256 for item in audits),
         "result_sha256s": tuple(item.digest for item in execution.results),
-        "cache_namespaces": tuple(
-            contract.cache_namespace for contract in execution.contracts
-        ),
+        "cache_namespaces": tuple(contract.cache_namespace for contract in execution.contracts),
         "executed_job_ids": execution.executed_job_ids,
         "complete": execution.complete,
     }

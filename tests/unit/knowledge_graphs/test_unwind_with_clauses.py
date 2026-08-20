@@ -27,6 +27,7 @@ from ipfs_datasets_py.knowledge_graphs.cypher.ast import UnwindClause, WithClaus
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def fresh_executor():
     """Return a new QueryExecutor with an empty GraphEngine."""
@@ -45,6 +46,7 @@ def people_executor():
 # ---------------------------------------------------------------------------
 # AST / Parser
 # ---------------------------------------------------------------------------
+
 
 class TestUnwindParsing:
     """Parser correctly produces UnwindClause nodes."""
@@ -116,6 +118,7 @@ class TestWithParsing:
 # Compiler
 # ---------------------------------------------------------------------------
 
+
 class TestUnwindCompilation:
     """Compiler emits correct IR for UNWIND."""
 
@@ -186,6 +189,7 @@ class TestWithCompilation:
 # Execution: UNWIND
 # ---------------------------------------------------------------------------
 
+
 class TestUnwindExecution:
     """End-to-end execution tests for UNWIND."""
 
@@ -224,9 +228,7 @@ class TestUnwindExecution:
         THEN: Returns one row per tag
         """
         # GIVEN
-        fresh_executor.graph_engine.create_node(
-            labels=["Post"], properties={"tags": ["a", "b"]}
-        )
+        fresh_executor.graph_engine.create_node(labels=["Post"], properties={"tags": ["a", "b"]})
 
         # WHEN
         results = list(fresh_executor.execute("MATCH (p:Post) UNWIND p.tags AS tag RETURN tag"))
@@ -254,6 +256,7 @@ class TestUnwindExecution:
 # Execution: WITH
 # ---------------------------------------------------------------------------
 
+
 class TestWithExecution:
     """End-to-end execution tests for WITH."""
 
@@ -266,9 +269,7 @@ class TestWithExecution:
         # GIVEN (fixture)
 
         # WHEN
-        results = list(people_executor.execute(
-            "MATCH (n:Person) WITH n.name AS name RETURN name"
-        ))
+        results = list(people_executor.execute("MATCH (n:Person) WITH n.name AS name RETURN name"))
 
         # THEN
         assert len(results) == 2
@@ -284,9 +285,11 @@ class TestWithExecution:
         # GIVEN (fixture)
 
         # WHEN
-        results = list(people_executor.execute(
-            "MATCH (n:Person) WITH n.name AS name, n.age AS age WHERE age > 30 RETURN name"
-        ))
+        results = list(
+            people_executor.execute(
+                "MATCH (n:Person) WITH n.name AS name, n.age AS age WHERE age > 30 RETURN name"
+            )
+        )
 
         # THEN
         assert len(results) == 1
@@ -301,9 +304,7 @@ class TestWithExecution:
         # GIVEN (fixture)
 
         # WHEN
-        results = list(people_executor.execute(
-            "MATCH (n:Person) WITH n.name AS name RETURN name"
-        ))
+        results = list(people_executor.execute("MATCH (n:Person) WITH n.name AS name RETURN name"))
 
         # THEN
         assert len(results) == 2
@@ -317,9 +318,9 @@ class TestWithExecution:
         # GIVEN (fixture)
 
         # WHEN
-        results = list(people_executor.execute(
-            "MATCH (n:Person) WITH n.name AS nm, n.age AS ag RETURN nm, ag"
-        ))
+        results = list(
+            people_executor.execute("MATCH (n:Person) WITH n.name AS nm, n.age AS ag RETURN nm, ag")
+        )
 
         # THEN
         assert len(results) == 2
@@ -331,6 +332,7 @@ class TestWithExecution:
 # ---------------------------------------------------------------------------
 # Async execute
 # ---------------------------------------------------------------------------
+
 
 class TestAsyncExecute:
     """Tests for UnifiedQueryEngine.execute_async()."""
@@ -357,7 +359,8 @@ class TestAsyncExecute:
         """
         # GIVEN
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import (
-            UnifiedQueryEngine, QueryResult,
+            UnifiedQueryEngine,
+            QueryResult,
         )
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import GraphEngine
 
@@ -372,9 +375,7 @@ class TestAsyncExecute:
         engine.execute_query = fake_execute_query  # type: ignore[method-assign]
 
         # WHEN
-        result = asyncio.run(
-            engine.execute_async("MATCH (n) RETURN n", params={"k": "v"})
-        )
+        result = asyncio.run(engine.execute_async("MATCH (n) RETURN n", params={"k": "v"}))
 
         # THEN
         assert result is fake_result
@@ -388,7 +389,8 @@ class TestAsyncExecute:
         """
         # GIVEN
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import (
-            UnifiedQueryEngine, QueryResult,
+            UnifiedQueryEngine,
+            QueryResult,
         )
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import GraphEngine
 

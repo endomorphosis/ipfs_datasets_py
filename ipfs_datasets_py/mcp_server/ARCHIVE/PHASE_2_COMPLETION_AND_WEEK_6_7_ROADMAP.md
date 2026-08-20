@@ -81,6 +81,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .mcp_interfaces import MCPServerProtocol
 
+
 def use_server(server: MCPServerProtocol | Any):
     # No runtime import, type hints preserved
     pass

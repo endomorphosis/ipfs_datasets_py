@@ -1,4 +1,5 @@
 import anyio
+
 """
 Test stubs for Vector MCP tools.
 
@@ -20,13 +21,13 @@ from ipfs_datasets_py.mcp_server.tools.vector_tools.vector_store_management impo
     _create_elasticsearch_index,
     _search_faiss_index,
     list_vector_indexes,
-    delete_vector_index, 
+    delete_vector_index,
 )
 
 
 class TestCreateVectorIndex:
     """Test the create_vector_index MCP tool."""
-    
+
     @pytest.mark.asyncio
     async def test_create_vector_index_with_valid_name_and_documents(self):
         """
@@ -42,17 +43,23 @@ class TestCreateVectorIndex:
         # GIVEN
         index_name = "test_document_index"
         documents = [
-            {"text": "This is a test document about machine learning.", "metadata": {"type": "research", "author": "Alice"}},
-            {"text": "Another document discussing neural networks.", "metadata": {"type": "technical", "author": "Bob"}},
-            {"text": "A third document about artificial intelligence.", "metadata": {"type": "overview", "author": "Charlie"}}
+            {
+                "text": "This is a test document about machine learning.",
+                "metadata": {"type": "research", "author": "Alice"},
+            },
+            {
+                "text": "Another document discussing neural networks.",
+                "metadata": {"type": "technical", "author": "Bob"},
+            },
+            {
+                "text": "A third document about artificial intelligence.",
+                "metadata": {"type": "overview", "author": "Charlie"},
+            },
         ]
-        
+
         # WHEN
-        result = await create_vector_index(
-            index_name=index_name,
-            documents=documents
-        )
-        
+        result = await create_vector_index(index_name=index_name, documents=documents)
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
@@ -81,17 +88,15 @@ class TestCreateVectorIndex:
         index_name = "custom_embedding_index"
         documents = [
             {"text": "Document with custom embeddings.", "metadata": {"id": 1}},
-            {"text": "Another document for embedding testing.", "metadata": {"id": 2}}
+            {"text": "Another document for embedding testing.", "metadata": {"id": 2}},
         ]
         embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
-        
+
         # WHEN
         result = await create_vector_index(
-            index_name=index_name,
-            documents=documents,
-            embedding_model=embedding_model
+            index_name=index_name, documents=documents, embedding_model=embedding_model
         )
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
@@ -117,17 +122,15 @@ class TestCreateVectorIndex:
         index_name = "qdrant_index"
         documents = [
             {"text": "Test document for Qdrant store.", "metadata": {"category": "test"}},
-            {"text": "Another test document.", "metadata": {"category": "validation"}}
+            {"text": "Another test document.", "metadata": {"category": "validation"}},
         ]
         vector_store = "qdrant"
-        
+
         # WHEN
         result = await create_vector_index(
-            index_name=index_name,
-            documents=documents,
-            vector_store=vector_store
+            index_name=index_name, documents=documents, vector_store=vector_store
         )
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
@@ -152,20 +155,27 @@ class TestCreateVectorIndex:
         # GIVEN
         index_name = "chunked_index"
         documents = [
-            {"text": "This is a very long document that should be chunked into smaller pieces for better vector processing. " * 10, "metadata": {"length": "long"}},
-            {"text": "Another long document for chunking testing. " * 8, "metadata": {"length": "medium"}}
+            {
+                "text": "This is a very long document that should be chunked into smaller pieces for better vector processing. "
+                * 10,
+                "metadata": {"length": "long"},
+            },
+            {
+                "text": "Another long document for chunking testing. " * 8,
+                "metadata": {"length": "medium"},
+            },
         ]
         chunk_size = 512
         chunk_overlap = 50
-        
+
         # WHEN
         result = await create_vector_index(
             index_name=index_name,
             documents=documents,
             chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap
+            chunk_overlap=chunk_overlap,
         )
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
@@ -192,18 +202,32 @@ class TestCreateVectorIndex:
         # GIVEN
         index_name = "metadata_filtered_index"
         documents = [
-            {"text": "Document with rich metadata.", "metadata": {"author": "Alice", "category": "research", "timestamp": "2025-01-01", "extra": "ignored"}},
-            {"text": "Another documented item.", "metadata": {"author": "Bob", "category": "technical", "timestamp": "2025-01-02", "version": "2.0"}}
+            {
+                "text": "Document with rich metadata.",
+                "metadata": {
+                    "author": "Alice",
+                    "category": "research",
+                    "timestamp": "2025-01-01",
+                    "extra": "ignored",
+                },
+            },
+            {
+                "text": "Another documented item.",
+                "metadata": {
+                    "author": "Bob",
+                    "category": "technical",
+                    "timestamp": "2025-01-02",
+                    "version": "2.0",
+                },
+            },
         ]
         metadata_fields = ["author", "category", "timestamp"]
-        
+
         # WHEN
         result = await create_vector_index(
-            index_name=index_name,
-            documents=documents,
-            metadata_fields=metadata_fields
+            index_name=index_name, documents=documents, metadata_fields=metadata_fields
         )
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
@@ -211,7 +235,9 @@ class TestCreateVectorIndex:
             assert "index_metadata" in result
             # Should contain metadata field configuration
             metadata = result["index_metadata"]
-            assert "metadata_fields" in metadata or any(field in str(metadata) for field in metadata_fields)
+            assert "metadata_fields" in metadata or any(
+                field in str(metadata) for field in metadata_fields
+            )
         else:
             assert "message" in result
 
@@ -226,16 +252,11 @@ class TestCreateVectorIndex:
         """
         # GIVEN
         index_name = None
-        documents = [
-            {"text": "Test document.", "metadata": {"id": 1}}
-        ]
-        
+        documents = [{"text": "Test document.", "metadata": {"id": 1}}]
+
         # WHEN
-        result = await create_vector_index(
-            index_name=index_name,
-            documents=documents
-        )
-        
+        result = await create_vector_index(index_name=index_name, documents=documents)
+
         # THEN
         assert isinstance(result, dict)
         assert result["status"] == "error"
@@ -253,21 +274,20 @@ class TestCreateVectorIndex:
         """
         # GIVEN
         index_name = ""
-        documents = [
-            {"text": "Test document.", "metadata": {"id": 1}}
-        ]
-        
+        documents = [{"text": "Test document.", "metadata": {"id": 1}}]
+
         # WHEN
-        result = await create_vector_index(
-            index_name=index_name,
-            documents=documents
-        )
-        
+        result = await create_vector_index(index_name=index_name, documents=documents)
+
         # THEN
         assert isinstance(result, dict)
         assert result["status"] == "error"
         assert "message" in result
-        assert "index" in result["message"].lower() or "name" in result["message"].lower() or "empty" in result["message"].lower()
+        assert (
+            "index" in result["message"].lower()
+            or "name" in result["message"].lower()
+            or "empty" in result["message"].lower()
+        )
 
     @pytest.mark.asyncio
     async def test_create_vector_index_with_none_documents(self):
@@ -282,13 +302,10 @@ class TestCreateVectorIndex:
         # GIVEN
         index_name = "test_index"
         documents = None
-        
+
         # WHEN
-        result = await create_vector_index(
-            index_name=index_name,
-            documents=documents
-        )
-        
+        result = await create_vector_index(index_name=index_name, documents=documents)
+
         # THEN
         assert isinstance(result, dict)
         assert result["status"] == "error"
@@ -308,18 +325,19 @@ class TestCreateVectorIndex:
         # GIVEN
         index_name = "test_index"
         documents = []
-        
+
         # WHEN
-        result = await create_vector_index(
-            index_name=index_name,
-            documents=documents
-        )
-        
+        result = await create_vector_index(index_name=index_name, documents=documents)
+
         # THEN
         assert isinstance(result, dict)
         assert result["status"] == "error"
         assert "message" in result
-        assert "document" in result["message"].lower() or "empty" in result["message"].lower() or "no" in result["message"].lower()
+        assert (
+            "document" in result["message"].lower()
+            or "empty" in result["message"].lower()
+            or "no" in result["message"].lower()
+        )
 
     @pytest.mark.asyncio
     async def test_create_vector_index_with_existing_index_name(self):
@@ -334,28 +352,24 @@ class TestCreateVectorIndex:
         """
         # GIVEN
         index_name = "duplicate_index"
-        documents = [
-            {"text": "First document.", "metadata": {"id": 1}}
-        ]
-        
+        documents = [{"text": "First document.", "metadata": {"id": 1}}]
+
         # First, create an index
-        await create_vector_index(
-            index_name=index_name,
-            documents=documents
-        )
-        
+        await create_vector_index(index_name=index_name, documents=documents)
+
         # WHEN - Try to create the same index again
-        result = await create_vector_index(
-            index_name=index_name,
-            documents=documents
-        )
-        
+        result = await create_vector_index(index_name=index_name, documents=documents)
+
         # THEN
         assert isinstance(result, dict)
         # Should either error due to existing index or handle gracefully
         if result["status"] == "error":
             assert "message" in result
-            assert "exist" in result["message"].lower() or "already" in result["message"].lower() or "duplicate" in result["message"].lower()
+            assert (
+                "exist" in result["message"].lower()
+                or "already" in result["message"].lower()
+                or "duplicate" in result["message"].lower()
+            )
         else:
             # Some implementations may overwrite or append
             assert result["status"] == "success"
@@ -377,20 +391,21 @@ class TestCreateVectorIndex:
             {"not_text": "Missing text field", "metadata": {"id": 1}},
             {"text": "Valid text", "not_metadata": "Wrong field"},
             "not_a_dict_at_all",
-            {"text": ""}  # Empty text
+            {"text": ""},  # Empty text
         ]
-        
+
         # WHEN
-        result = await create_vector_index(
-            index_name=index_name,
-            documents=invalid_documents
-        )
-        
+        result = await create_vector_index(index_name=index_name, documents=invalid_documents)
+
         # THEN
         assert isinstance(result, dict)
         assert result["status"] == "error"
         assert "message" in result
-        assert "document" in result["message"].lower() or "format" in result["message"].lower() or "invalid" in result["message"].lower()
+        assert (
+            "document" in result["message"].lower()
+            or "format" in result["message"].lower()
+            or "invalid" in result["message"].lower()
+        )
 
     @pytest.mark.asyncio
     async def test_create_vector_index_with_embedding_model_not_available(self):
@@ -405,25 +420,25 @@ class TestCreateVectorIndex:
         """
         # GIVEN
         index_name = "unavailable_model_index"
-        documents = [
-            {"text": "Test document.", "metadata": {"id": 1}}
-        ]
+        documents = [{"text": "Test document.", "metadata": {"id": 1}}]
         # Use a model that definitely doesn't exist
         embedding_model = "nonexistent/fake-model-xyz-123"
-        
+
         # WHEN
         result = await create_vector_index(
-            index_name=index_name,
-            documents=documents,
-            embedding_model=embedding_model
+            index_name=index_name, documents=documents, embedding_model=embedding_model
         )
-        
+
         # THEN
         assert isinstance(result, dict)
         # Should either error due to unavailable model or fall back to default
         if result["status"] == "error":
             assert "message" in result
-            assert "model" in result["message"].lower() or "embedding" in result["message"].lower() or "available" in result["message"].lower()
+            assert (
+                "model" in result["message"].lower()
+                or "embedding" in result["message"].lower()
+                or "available" in result["message"].lower()
+            )
         else:
             # Some implementations may fall back to default model
             assert result["status"] == "success"
@@ -441,25 +456,25 @@ class TestCreateVectorIndex:
         """
         # GIVEN
         index_name = "unavailable_store_index"
-        documents = [
-            {"text": "Test document.", "metadata": {"id": 1}}
-        ]
+        documents = [{"text": "Test document.", "metadata": {"id": 1}}]
         # Use a vector store that might not be available
         vector_store = "nonexistent_vector_store_xyz"
-        
+
         # WHEN
         result = await create_vector_index(
-            index_name=index_name,
-            documents=documents,
-            vector_store=vector_store
+            index_name=index_name, documents=documents, vector_store=vector_store
         )
-        
+
         # THEN
         assert isinstance(result, dict)
         # Should either error due to unavailable store or fall back to default
         if result["status"] == "error":
             assert "message" in result
-            assert "store" in result["message"].lower() or "vector" in result["message"].lower() or "available" in result["message"].lower()
+            assert (
+                "store" in result["message"].lower()
+                or "vector" in result["message"].lower()
+                or "available" in result["message"].lower()
+            )
         else:
             # Some implementations may fall back to default store
             assert result["status"] == "success"
@@ -467,7 +482,7 @@ class TestCreateVectorIndex:
 
 class TestSearchVectorIndex:
     """Test the search_vector_index MCP tool."""
-    
+
     @pytest.mark.asyncio
     async def test_search_vector_index_with_valid_query_and_default_params(self):
         """
@@ -484,13 +499,10 @@ class TestSearchVectorIndex:
         # GIVEN
         index_id = "test_index"
         query_vector = [0.1, 0.2, 0.3, 0.4, 0.5]
-        
+
         # WHEN
-        result = await search_vector_index(
-            index_id=index_id,
-            query_vector=query_vector
-        )
-        
+        result = await search_vector_index(index_id=index_id, query_vector=query_vector)
+
         # THEN
         assert isinstance(result, dict)
         assert result["status"] == "success"
@@ -513,14 +525,12 @@ class TestSearchVectorIndex:
         index_id = "test_index"
         query_vector = [0.1, 0.2, 0.3, 0.4, 0.5]
         top_k = 10
-        
+
         # WHEN
         result = await search_vector_index(
-            index_id=index_id,
-            query_vector=query_vector,
-            top_k=top_k
+            index_id=index_id, query_vector=query_vector, top_k=top_k
         )
-        
+
         # THEN
         assert result["status"] == "success"
         assert result["top_k"] == top_k
@@ -540,14 +550,12 @@ class TestSearchVectorIndex:
         # GIVEN
         index_id = "test_index"
         query_vector = [0.1, 0.2, 0.3, 0.4, 0.5]
-        
+
         # WHEN - test with include_distances to see distance values
         result = await search_vector_index(
-            index_id=index_id,
-            query_vector=query_vector,
-            include_distances=True
+            index_id=index_id, query_vector=query_vector, include_distances=True
         )
-        
+
         # THEN
         assert result["status"] == "success"
         # All results should have distance information
@@ -568,14 +576,12 @@ class TestSearchVectorIndex:
         # GIVEN
         index_id = "test_index"
         query_vector = [0.1, 0.2, 0.3, 0.4, 0.5]
-        
+
         # WHEN
         result = await search_vector_index(
-            index_id=index_id,
-            query_vector=query_vector,
-            include_metadata=True
+            index_id=index_id, query_vector=query_vector, include_metadata=True
         )
-        
+
         # THEN
         assert result["status"] == "success"
         # Check that results may include metadata when available
@@ -598,14 +604,12 @@ class TestSearchVectorIndex:
         index_id = "test_index"
         query_vector = [0.1, 0.2, 0.3, 0.4, 0.5]
         metadata_filters = {"author": "John Doe", "category": "research"}
-        
+
         # WHEN
         result = await search_vector_index(
-            index_id=index_id,
-            query_vector=query_vector,
-            filter_metadata=metadata_filters
+            index_id=index_id, query_vector=query_vector, filter_metadata=metadata_filters
         )
-        
+
         # THEN
         assert result["status"] == "success"
         # Filtering functionality depends on implementation
@@ -624,13 +628,10 @@ class TestSearchVectorIndex:
         # GIVEN
         index_id = None
         query_vector = [0.1, 0.2, 0.3, 0.4, 0.5]
-        
+
         # WHEN
-        result = await search_vector_index(
-            index_id=index_id,
-            query_vector=query_vector
-        )
-        
+        result = await search_vector_index(index_id=index_id, query_vector=query_vector)
+
         # THEN
         assert result["status"] == "error"
         assert "message" in result
@@ -648,13 +649,10 @@ class TestSearchVectorIndex:
         # GIVEN
         index_id = ""
         query_vector = [0.1, 0.2, 0.3, 0.4, 0.5]
-        
+
         # WHEN
-        result = await search_vector_index(
-            index_id=index_id,
-            query_vector=query_vector
-        )
-        
+        result = await search_vector_index(index_id=index_id, query_vector=query_vector)
+
         # THEN
         # Empty string might be handled by creating a test index
         # The implementation shows it creates a test index if not found
@@ -674,13 +672,10 @@ class TestSearchVectorIndex:
         # GIVEN
         index_id = "test_index"
         query_vector = None
-        
+
         # WHEN
-        result = await search_vector_index(
-            index_id=index_id,
-            query_vector=query_vector
-        )
-        
+        result = await search_vector_index(index_id=index_id, query_vector=query_vector)
+
         # THEN
         assert result["status"] == "error"
         assert "message" in result
@@ -698,13 +693,10 @@ class TestSearchVectorIndex:
         # GIVEN
         index_id = "test_index"
         query_vector = []
-        
+
         # WHEN
-        result = await search_vector_index(
-            index_id=index_id,
-            query_vector=query_vector
-        )
-        
+        result = await search_vector_index(index_id=index_id, query_vector=query_vector)
+
         # THEN
         assert result["status"] == "error"
         assert "message" in result
@@ -723,13 +715,10 @@ class TestSearchVectorIndex:
         # GIVEN
         index_id = "nonexistent_index_12345"
         query_vector = [0.1, 0.2, 0.3, 0.4, 0.5]
-        
+
         # WHEN
-        result = await search_vector_index(
-            index_id=index_id,
-            query_vector=query_vector
-        )
-        
+        result = await search_vector_index(index_id=index_id, query_vector=query_vector)
+
         # THEN
         # The implementation creates a test index if not found
         # So this should actually succeed
@@ -752,14 +741,12 @@ class TestSearchVectorIndex:
         # Use a very different query vector that shouldn't match well
         query_vector = [1.0, 1.0, 1.0, 1.0, 1.0]
         top_k = 0  # Request 0 results
-        
+
         # WHEN
         result = await search_vector_index(
-            index_id=index_id,
-            query_vector=query_vector,
-            top_k=top_k
+            index_id=index_id, query_vector=query_vector, top_k=top_k
         )
-        
+
         # THEN
         assert result["status"] == "success"
         assert result["top_k"] == 0
@@ -769,7 +756,7 @@ class TestSearchVectorIndex:
 
 class TestListVectorStores:
     """Test the list_vector_indexes MCP tool."""
-    
+
     @pytest.mark.asyncio
     async def test_list_vector_indexes_with_default_params(self):
         """
@@ -781,15 +768,15 @@ class TestListVectorStores:
         """
         # GIVEN
         # No specific parameters needed for default call
-        
+
         # WHEN
         result = await list_vector_indexes()
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
         assert result["status"] in ["success", "error"]
-        
+
         if result["status"] == "success":
             assert "stores" in result
             assert isinstance(result["stores"], list)
@@ -811,15 +798,15 @@ class TestListVectorStores:
         """
         # GIVEN
         include_metadata = True
-        
+
         # WHEN
         result = await list_vector_indexes(include_metadata=include_metadata)
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
         assert result["status"] in ["success", "error"]
-        
+
         if result["status"] == "success":
             assert "stores" in result
             assert isinstance(result["stores"], list)
@@ -845,15 +832,15 @@ class TestListVectorStores:
         """
         # GIVEN
         store_type = "faiss"
-        
+
         # WHEN
         result = await list_vector_indexes(store_type=store_type)
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
         assert result["status"] in ["success", "error"]
-        
+
         if result["status"] == "success":
             assert "stores" in result
             assert isinstance(result["stores"], list)
@@ -879,15 +866,15 @@ class TestListVectorStores:
         # GIVEN
         # This test simulates a state where no stores exist
         # The function should handle this gracefully
-        
+
         # WHEN
         result = await list_vector_indexes()
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
         assert result["status"] in ["success", "error"]
-        
+
         if result["status"] == "success":
             assert "stores" in result
             assert isinstance(result["stores"], list)
@@ -904,7 +891,7 @@ class TestListVectorStores:
 
 class TestDeleteVectorStore:
     """Test the delete_vector_index MCP tool."""
-    
+
     @pytest.mark.asyncio
     async def test_delete_vector_index_with_valid_name(self):
         """
@@ -917,22 +904,26 @@ class TestDeleteVectorStore:
         """
         # GIVEN
         store_name = "test_store_to_delete"
-        
+
         # WHEN
         result = await delete_vector_index(store_name=store_name)
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
         assert result["status"] in ["success", "error"]
         assert "message" in result
-        
+
         if result["status"] == "success":
             assert "deleted_store" in result
             assert result["deleted_store"] == store_name
         else:
             # Error case might be store not found or deletion failed
-            assert "error" in result["message"].lower() or "not found" in result["message"].lower() or "failed" in result["message"].lower()
+            assert (
+                "error" in result["message"].lower()
+                or "not found" in result["message"].lower()
+                or "failed" in result["message"].lower()
+            )
 
     @pytest.mark.asyncio
     async def test_delete_vector_index_with_force_option(self):
@@ -947,16 +938,16 @@ class TestDeleteVectorStore:
         # GIVEN
         store_name = "test_store_force_delete"
         force = True
-        
+
         # WHEN
         result = await delete_vector_index(store_name=store_name, force=force)
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
         assert result["status"] in ["success", "error"]
         assert "message" in result
-        
+
         if result["status"] == "success":
             assert "deleted_store" in result
             assert result["deleted_store"] == store_name
@@ -964,7 +955,11 @@ class TestDeleteVectorStore:
             assert "force" in result["message"].lower() or "forced" in result["message"].lower()
         else:
             # Error case might be store not found or deletion failed
-            assert "error" in result["message"].lower() or "not found" in result["message"].lower() or "failed" in result["message"].lower()
+            assert (
+                "error" in result["message"].lower()
+                or "not found" in result["message"].lower()
+                or "failed" in result["message"].lower()
+            )
 
     @pytest.mark.asyncio
     async def test_delete_vector_index_with_none_name(self):
@@ -977,16 +972,20 @@ class TestDeleteVectorStore:
         """
         # GIVEN
         store_name = None
-        
+
         # WHEN
         result = await delete_vector_index(store_name=store_name)
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
         assert result["status"] == "error"
         assert "message" in result
-        assert "invalid" in result["message"].lower() or "name" in result["message"].lower() or "none" in result["message"].lower()
+        assert (
+            "invalid" in result["message"].lower()
+            or "name" in result["message"].lower()
+            or "none" in result["message"].lower()
+        )
 
     @pytest.mark.asyncio
     async def test_delete_vector_index_with_empty_name(self):
@@ -999,16 +998,20 @@ class TestDeleteVectorStore:
         """
         # GIVEN
         store_name = ""
-        
+
         # WHEN
         result = await delete_vector_index(store_name=store_name)
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
         assert result["status"] == "error"
         assert "message" in result
-        assert "invalid" in result["message"].lower() or "empty" in result["message"].lower() or "name" in result["message"].lower()
+        assert (
+            "invalid" in result["message"].lower()
+            or "empty" in result["message"].lower()
+            or "name" in result["message"].lower()
+        )
 
     @pytest.mark.asyncio
     async def test_delete_vector_index_with_nonexistent_name(self):
@@ -1022,16 +1025,20 @@ class TestDeleteVectorStore:
         """
         # GIVEN
         store_name = "nonexistent_store_xyz_123"
-        
+
         # WHEN
         result = await delete_vector_index(store_name=store_name)
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "status" in result
         assert result["status"] == "error"
         assert "message" in result
-        assert "not found" in result["message"].lower() or "exist" in result["message"].lower() or "missing" in result["message"].lower()
+        assert (
+            "not found" in result["message"].lower()
+            or "exist" in result["message"].lower()
+            or "missing" in result["message"].lower()
+        )
 
 
 if __name__ == "__main__":

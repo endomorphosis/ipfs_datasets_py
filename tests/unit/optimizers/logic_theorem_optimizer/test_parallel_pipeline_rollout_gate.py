@@ -11,6 +11,12 @@ from typing import Any, Callable
 
 import pytest
 
+_DATASETS_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(_DATASETS_ROOT))
+for _name in list(sys.modules):
+    if _name == "scripts" or _name.startswith("scripts."):
+        sys.modules.pop(_name, None)
+
 from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import (
     LEGAL_IR_VIEW_FAMILIES,
     STAGED_ROLLOUT_STAGES,
@@ -126,9 +132,10 @@ def _failure_has(result: Any, prefix: str) -> bool:
 def test_staged_rollout_contract_has_strict_order_and_durations() -> None:
     assert isinstance(STAGED_ROLLOUT_STAGES, tuple)
     assert all(isinstance(stage, RolloutStageSpec) for stage in STAGED_ROLLOUT_STAGES)
-    assert tuple(
-        (stage.name, stage.duration_seconds) for stage in STAGED_ROLLOUT_STAGES
-    ) == EXPECTED_STAGES
+    assert (
+        tuple((stage.name, stage.duration_seconds) for stage in STAGED_ROLLOUT_STAGES)
+        == EXPECTED_STAGES
+    )
 
 
 def test_staged_rollout_accepts_complete_non_regressing_sequence() -> None:
@@ -140,9 +147,7 @@ def test_staged_rollout_accepts_complete_non_regressing_sequence() -> None:
     assert result.metrics["accepted_patches_per_hour"] == pytest.approx(
         {name: 12.0 for name, _ in EXPECTED_STAGES}
     )
-    assert set(result.metrics["rollback_evidence"]) == {
-        name for name, _ in EXPECTED_STAGES
-    }
+    assert set(result.metrics["rollback_evidence"]) == {name for name, _ in EXPECTED_STAGES}
     assert result.metrics["trusted_feedback_reached_autoencoder"] is True
 
 
@@ -333,9 +338,9 @@ def test_observed_queue_lag_regression_is_a_hard_failure() -> None:
             "promotion_lineage_incomplete:eight_hour_canary:output_digest",
         ),
         (
-            lambda snapshots: snapshots[3]["promotion_thresholds"][
-                "projection_p95_seconds"
-            ].update(candidate=61.0),
+            lambda snapshots: snapshots[3]["promotion_thresholds"]["projection_p95_seconds"].update(
+                candidate=61.0
+            ),
             "projection_p95_reduction_below_threshold:twenty_four_hour_production",
         ),
         (

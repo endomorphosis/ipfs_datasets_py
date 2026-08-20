@@ -54,8 +54,11 @@ def _text(name: str, value: str) -> str:
 def _path(value: str) -> str:
     value = _text("path", value)
     parsed = PurePosixPath(value)
-    if "\\" in value or parsed.is_absolute() or parsed.as_posix() != value or any(
-        part in {"", ".", ".."} for part in parsed.parts
+    if (
+        "\\" in value
+        or parsed.is_absolute()
+        or parsed.as_posix() != value
+        or any(part in {"", ".", ".."} for part in parsed.parts)
     ):
         raise ValueError("legacy audio paths must be normalized root-relative POSIX paths")
     return value
@@ -184,10 +187,7 @@ class LegacyAudioReconciliation:
         if len(audio_ids) != len(set(audio_ids)):
             raise ValueError("linked legacy audio IDs must be unique")
         provenance_ids = {item.provenance_id for item in provenance}
-        if any(
-            set(item.provenance_ids) - provenance_ids
-            for item in linked
-        ):
+        if any(set(item.provenance_ids) - provenance_ids for item in linked):
             raise ValueError("linked legacy audio has missing provenance")
         refs = [item.source_ref for item in dispositions]
         if len(refs) != len(set(refs)):
@@ -214,7 +214,8 @@ class LegacyAudioReconciliation:
     @property
     def review_quarantine(self) -> tuple[LegacyAudioDisposition, ...]:
         return tuple(
-            item for item in self.dispositions
+            item
+            for item in self.dispositions
             if item.status in {LegacyDispositionStatus.REVIEW, LegacyDispositionStatus.QUARANTINED}
         )
 
@@ -313,6 +314,7 @@ def reconcile_legacy_audio_candidates(
     dispositions: dict[str, LegacyAudioDisposition] = {}
     linked: list[AbbyVoiceAudio] = []
     provenance: list[AbbyVoiceProvenance] = []
+
     def candidate_disposition(
         candidate: LegacyAudioCandidate,
         status: LegacyDispositionStatus,
@@ -335,22 +337,38 @@ def reconcile_legacy_audio_candidates(
     for candidate in candidate_rows:
         subject = subject_map.get(candidate.subject_id)
         if subject is None:
-            candidate_disposition(candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.UNKNOWN_SUBJECT)
+            candidate_disposition(
+                candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.UNKNOWN_SUBJECT
+            )
             continue
         _, subject_text, locale, subject_kind, license_id, consent_status = subject
         candidate_identity = _spoken_identity(candidate.spoken_text)
         subject_identity = _spoken_identity(subject_text)
         if not candidate_identity or not subject_identity:
-            candidate_disposition(candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.TEXT_IDENTITY_MISMATCH)
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.REVIEW,
+                LegacyDispositionReason.TEXT_IDENTITY_MISMATCH,
+            )
             continue
         if candidate_identity != subject_identity:
-            candidate_disposition(candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.FUZZY_MATCH_REVIEW_REQUIRED)
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.REVIEW,
+                LegacyDispositionReason.FUZZY_MATCH_REVIEW_REQUIRED,
+            )
             continue
         if candidate.locale != locale:
-            candidate_disposition(candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.LOCALE_MISMATCH)
+            candidate_disposition(
+                candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.LOCALE_MISMATCH
+            )
             continue
         if len(candidate.paths) != 1 or candidate.candidate_id in ambiguous_candidate_ids:
-            candidate_disposition(candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.AMBIGUOUS_PATH_REVIEW_REQUIRED)
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.REVIEW,
+                LegacyDispositionReason.AMBIGUOUS_PATH_REVIEW_REQUIRED,
+            )
             continue
         path = candidate.paths[0]
         item = objects.get(path)
@@ -368,16 +386,42 @@ def reconcile_legacy_audio_candidates(
                     path=path,
                 )
             else:
-                candidate_disposition(candidate, LegacyDispositionStatus.QUARANTINED, LegacyDispositionReason.INVENTORY_OBJECT_MISSING, path=path)
+                candidate_disposition(
+                    candidate,
+                    LegacyDispositionStatus.QUARANTINED,
+                    LegacyDispositionReason.INVENTORY_OBJECT_MISSING,
+                    path=path,
+                )
             continue
-        if not _SHA256_RE.fullmatch(candidate.expected_sha256) or candidate.expected_sha256 != item.sha256:
-            candidate_disposition(candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.FUZZY_MATCH_REVIEW_REQUIRED, path=path)
+        if (
+            not _SHA256_RE.fullmatch(candidate.expected_sha256)
+            or candidate.expected_sha256 != item.sha256
+        ):
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.REVIEW,
+                LegacyDispositionReason.FUZZY_MATCH_REVIEW_REQUIRED,
+                path=path,
+            )
             continue
         if item.media_type not in _ALLOWED_MEDIA or candidate.media_type not in _ALLOWED_MEDIA:
-            candidate_disposition(candidate, LegacyDispositionStatus.QUARANTINED, LegacyDispositionReason.UNSUPPORTED_MEDIA, path=path)
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.QUARANTINED,
+                LegacyDispositionReason.UNSUPPORTED_MEDIA,
+                path=path,
+            )
             continue
-        if candidate.media_type != item.media_type and {candidate.media_type, item.media_type} != {"audio/wav", "audio/x-wav"}:
-            candidate_disposition(candidate, LegacyDispositionStatus.QUARANTINED, LegacyDispositionReason.MEDIA_MISMATCH, path=path)
+        if candidate.media_type != item.media_type and {candidate.media_type, item.media_type} != {
+            "audio/wav",
+            "audio/x-wav",
+        }:
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.QUARANTINED,
+                LegacyDispositionReason.MEDIA_MISMATCH,
+                path=path,
+            )
             continue
         try:
             resolved = byte_resolver(path)
@@ -385,20 +429,41 @@ def reconcile_legacy_audio_candidates(
         except Exception:
             payload = b""
         if not payload:
-            candidate_disposition(candidate, LegacyDispositionStatus.QUARANTINED, LegacyDispositionReason.BYTES_UNAVAILABLE, path=path)
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.QUARANTINED,
+                LegacyDispositionReason.BYTES_UNAVAILABLE,
+                path=path,
+            )
             continue
         digest = sha256(payload).hexdigest()
         if digest != item.sha256:
-            candidate_disposition(candidate, LegacyDispositionStatus.QUARANTINED, LegacyDispositionReason.SHA256_MISMATCH, path=path)
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.QUARANTINED,
+                LegacyDispositionReason.SHA256_MISMATCH,
+                path=path,
+            )
             continue
         if len(payload) != item.size_bytes:
-            candidate_disposition(candidate, LegacyDispositionStatus.QUARANTINED, LegacyDispositionReason.SIZE_MISMATCH, path=path)
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.QUARANTINED,
+                LegacyDispositionReason.SIZE_MISMATCH,
+                path=path,
+            )
             continue
         detected = _detected_media(payload)
         if detected is None or (
-            detected != item.media_type and {detected, item.media_type} != {"audio/wav", "audio/x-wav"}
+            detected != item.media_type
+            and {detected, item.media_type} != {"audio/wav", "audio/x-wav"}
         ):
-            candidate_disposition(candidate, LegacyDispositionStatus.QUARANTINED, LegacyDispositionReason.MEDIA_MISMATCH, path=path)
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.QUARANTINED,
+                LegacyDispositionReason.MEDIA_MISMATCH,
+                path=path,
+            )
             continue
         if decode_validator is None:
             candidate_disposition(
@@ -413,7 +478,12 @@ def reconcile_legacy_audio_candidates(
         except Exception:
             decoded = False
         if decoded is not True:
-            candidate_disposition(candidate, LegacyDispositionStatus.QUARANTINED, LegacyDispositionReason.DECODE_FAILED, path=path)
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.QUARANTINED,
+                LegacyDispositionReason.DECODE_FAILED,
+                path=path,
+            )
             continue
         kwargs = {
             "spoken_text": subject_text,
@@ -456,14 +526,24 @@ def reconcile_legacy_audio_candidates(
         provenance.append(provenance_row)
         linked.append(audio)
         candidate_disposition(
-            candidate, LegacyDispositionStatus.LINKED,
-            LegacyDispositionReason.EXACT_VERIFIED_LINK, path=path, audio_id=audio.audio_id,
+            candidate,
+            LegacyDispositionStatus.LINKED,
+            LegacyDispositionReason.EXACT_VERIFIED_LINK,
+            path=path,
+            audio_id=audio.audio_id,
         )
 
-    by_path_status: dict[str, tuple[LegacyDispositionStatus, LegacyDispositionReason, str, str]] = {}
+    by_path_status: dict[
+        str, tuple[LegacyDispositionStatus, LegacyDispositionReason, str, str]
+    ] = {}
     for item in dispositions.values():
         if item.inventory_path:
-            by_path_status[item.inventory_path] = (item.status, item.reason, item.candidate_id, item.audio_id)
+            by_path_status[item.inventory_path] = (
+                item.status,
+                item.reason,
+                item.candidate_id,
+                item.audio_id,
+            )
     for item in inventory.objects:
         ref = _inventory_ref(inventory, item)
         if item.path in by_path_status:

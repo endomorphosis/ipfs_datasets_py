@@ -110,9 +110,7 @@ _EXPORTS: Final[dict[str, tuple[str, ...]]] = {
 }
 
 _EXPORT_MODULE: Final[dict[str, str]] = {
-    name: module_name
-    for module_name, names in _EXPORTS.items()
-    for name in names
+    name: module_name for module_name, names in _EXPORTS.items() for name in names
 }
 
 if len(_EXPORT_MODULE) != sum(len(names) for names in _EXPORTS.values()):

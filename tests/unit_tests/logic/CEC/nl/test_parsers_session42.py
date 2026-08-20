@@ -20,6 +20,7 @@ Coverage focuses on:
   get_vocabulary_terms unknown domain (line 416), without language (line 421),
   enhance_text body (lines 449-465)
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch, PropertyMock
@@ -57,6 +58,7 @@ from ipfs_datasets_py.logic.CEC.native.dcec_namespace import DCECNamespace
 # Helper factories
 # ---------------------------------------------------------------------------
 
+
 def _make_french_matcher() -> FrenchPatternMatcher:
     return FrenchPatternMatcher(DCECNamespace())
 
@@ -78,6 +80,7 @@ def _make_atomic(namespace: DCECNamespace, pred_name: str = "action") -> AtomicF
 # ===========================================================================
 # FRENCH PARSER — missing coverage
 # ===========================================================================
+
 
 class TestFrenchExtractAgentNone:
     """Line 176 — _extract_agent returns None when no word chars in text."""
@@ -153,8 +156,10 @@ class TestFrenchCreatePredicateValueError:
                 return None  # First check: not found
             return existing_pred  # Second check (in except): found
 
-        with patch.object(ns, "get_predicate", side_effect=mock_get), \
-             patch.object(ns, "add_predicate", side_effect=ValueError("duplicate")):
+        with (
+            patch.object(ns, "get_predicate", side_effect=mock_get),
+            patch.object(ns, "add_predicate", side_effect=ValueError("duplicate")),
+        ):
             result = matcher._create_simple_predicate("racecond")
 
         assert result is existing_pred
@@ -181,8 +186,10 @@ class TestFrenchCreateAgentVariableValueError:
                 return None
             return existing_var
 
-        with patch.object(ns, "get_variable", side_effect=mock_get), \
-             patch.object(ns, "add_variable", side_effect=ValueError("duplicate")):
+        with (
+            patch.object(ns, "get_variable", side_effect=mock_get),
+            patch.object(ns, "add_variable", side_effect=ValueError("duplicate")),
+        ):
             result = matcher._create_agent_variable("racecond_agent")
 
         assert result is existing_var
@@ -293,6 +300,7 @@ class TestFrenchParseImplNoBranches:
 # GERMAN PARSER — missing coverage
 # ===========================================================================
 
+
 class TestGermanExtractAgentNone:
     """Line 180 — _extract_agent returns None."""
 
@@ -353,8 +361,10 @@ class TestGermanCreatePredicateValueError:
                 return None
             return existing_pred
 
-        with patch.object(ns, "get_predicate", side_effect=mock_get), \
-             patch.object(ns, "add_predicate", side_effect=ValueError("duplicate")):
+        with (
+            patch.object(ns, "get_predicate", side_effect=mock_get),
+            patch.object(ns, "add_predicate", side_effect=ValueError("duplicate")),
+        ):
             result = matcher._create_simple_predicate("german_racecond")
 
         assert result is existing_pred
@@ -381,8 +391,10 @@ class TestGermanCreateAgentVariableValueError:
                 return None
             return existing_var
 
-        with patch.object(ns, "get_variable", side_effect=mock_get), \
-             patch.object(ns, "add_variable", side_effect=ValueError("duplicate")):
+        with (
+            patch.object(ns, "get_variable", side_effect=mock_get),
+            patch.object(ns, "add_variable", side_effect=ValueError("duplicate")),
+        ):
             result = matcher._create_agent_variable("german_agent")
 
         assert result is existing_var
@@ -474,6 +486,7 @@ class TestGermanParseImplNoBranches:
 # SPANISH PARSER — missing coverage
 # ===========================================================================
 
+
 class TestSpanishExtractAgentNone:
     """Line 176 — _extract_agent returns None."""
 
@@ -534,8 +547,10 @@ class TestSpanishCreatePredicateValueError:
                 return None
             return existing_pred
 
-        with patch.object(ns, "get_predicate", side_effect=mock_get), \
-             patch.object(ns, "add_predicate", side_effect=ValueError("duplicate")):
+        with (
+            patch.object(ns, "get_predicate", side_effect=mock_get),
+            patch.object(ns, "add_predicate", side_effect=ValueError("duplicate")),
+        ):
             result = matcher._create_simple_predicate("spanish_racecond")
 
         assert result is existing_pred
@@ -562,8 +577,10 @@ class TestSpanishCreateAgentVariableValueError:
                 return None
             return existing_var
 
-        with patch.object(ns, "get_variable", side_effect=mock_get), \
-             patch.object(ns, "add_variable", side_effect=ValueError("duplicate")):
+        with (
+            patch.object(ns, "get_variable", side_effect=mock_get),
+            patch.object(ns, "add_variable", side_effect=ValueError("duplicate")),
+        ):
             result = matcher._create_agent_variable("spanish_agent")
 
         assert result is existing_var
@@ -627,6 +644,7 @@ class TestSpanishParseImplNoBranches:
 # DOMAIN VOCAB — missing coverage
 # ===========================================================================
 
+
 class TestDomainVocab:
     """domain_vocab.py missing lines: 144, 416, 421, 449-465."""
 
@@ -639,6 +657,7 @@ class TestDomainVocab:
         from ipfs_datasets_py.logic.CEC.nl.domain_vocabularies.domain_vocab import (
             LegalVocabulary,
         )
+
         vocab = LegalVocabulary()
         all_terms = vocab.get_all_terms()  # no category filter → line 144
         assert len(all_terms) > 0
@@ -652,6 +671,7 @@ class TestDomainVocab:
         from ipfs_datasets_py.logic.CEC.nl.domain_vocabularies.domain_vocab import (
             DomainVocabularyManager,
         )
+
         manager = DomainVocabularyManager()
         result = manager.get_vocabulary_terms("nonexistent_domain_xyz")
         assert result == {}
@@ -666,6 +686,7 @@ class TestDomainVocab:
             DomainVocabularyManager,
             LegalVocabulary,
         )
+
         manager = DomainVocabularyManager()
         manager.add_vocabulary(LegalVocabulary())
         result = manager.get_vocabulary_terms("legal")  # no language → line 421
@@ -681,6 +702,7 @@ class TestDomainVocab:
         from ipfs_datasets_py.logic.CEC.nl.domain_vocabularies.domain_vocab import (
             DomainVocabularyManager,
         )
+
         manager = DomainVocabularyManager()
         text = "The agent must comply with regulations"
         result = manager.enhance_text(text, "nonexistent_domain_xyz", "en")
@@ -696,6 +718,7 @@ class TestDomainVocab:
             DomainVocabularyManager,
             LegalVocabulary,
         )
+
         manager = DomainVocabularyManager()
         manager.add_vocabulary(LegalVocabulary())
         text = "obligation permission"

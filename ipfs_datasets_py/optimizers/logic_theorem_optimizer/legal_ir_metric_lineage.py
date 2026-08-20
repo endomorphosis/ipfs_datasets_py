@@ -23,8 +23,25 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cac
 LEGAL_IR_METRIC_LINEAGE_SCHEMA_VERSION: Final = "legal-ir-metric-lineage-v1"
 LEARNED_IR_METRIC_PATH: Final = "learned_ir"
 DETERMINISTIC_COMPILER_IR_METRIC_PATH: Final = "deterministic_compiler_ir"
+LATENT_DIAGNOSTIC_METRIC_SCHEMA: Final = "legal-ir-latent-diagnostics-v1"
+CALIBRATION_INSTRUMENTATION_METRIC_SCHEMA: Final = "legal-ir-calibration-instrumentation-v1"
+LATENT_DIAGNOSTIC_SPLIT_IDENTITY: Final = "development/calibration"
 VALID_LEGAL_IR_METRIC_PATHS: Final = frozenset(
     {LEARNED_IR_METRIC_PATH, DETERMINISTIC_COMPILER_IR_METRIC_PATH}
+)
+LATENT_DIAGNOSTIC_ALLOWED_SPLITS: Final = frozenset(
+    {"development", "calibration", "dev", "validation"}
+)
+LATENT_DIAGNOSTIC_PROHIBITED_SPLITS: Final = frozenset(
+    {
+        "train",
+        "test",
+        "hidden",
+        "hidden_test",
+        "holdout",
+        "canary",
+        "external_test",
+    }
 )
 
 
@@ -68,11 +85,7 @@ def _json_value(value: Any) -> Any:
         return _json_value(value.to_dict())
     if hasattr(value, "__dict__"):
         return _json_value(
-            {
-                key: item
-                for key, item in vars(value).items()
-                if not str(key).startswith("_")
-            }
+            {key: item for key, item in vars(value).items() if not str(key).startswith("_")}
         )
     return repr(value)
 
@@ -139,7 +152,9 @@ class LegalIRMetricLineage:
         path = str(self.path or "").strip()
         if path not in VALID_LEGAL_IR_METRIC_PATHS:
             raise ValueError(f"path must be one of {sorted(VALID_LEGAL_IR_METRIC_PATHS)}")
-        sample_hashes = tuple(str(value).strip() for value in self.sample_hashes if str(value).strip())
+        sample_hashes = tuple(
+            str(value).strip() for value in self.sample_hashes if str(value).strip()
+        )
         if not sample_hashes:
             raise ValueError("sample_hashes must be non-empty")
         object.__setattr__(self, "path", path)
@@ -323,6 +338,109 @@ def build_compiler_ir_metric_lineage(
         cache_namespace=str(cache_namespace or "compiler_ir_metric_block"),
         cache_key=str(cache_key or "not-cached"),
         config_hash=_digest(config_payload),
+    )
+
+
+def representation_content_digest(records: Sequence[Any]) -> str:
+    """Digest frozen representation vectors and stratum labels, never source text."""
+
+    rows: list[dict[str, Any]] = []
+    for record in records or ():
+        payload = record.to_dict() if hasattr(record, "to_dict") and callable(record.to_dict) else record
+        if not isinstance(payload, Mapping):
+            payload = {
+                name: getattr(record, name, None)
+                for name in (
+                    "sample_id",
+                    "vector",
+                    "family",
+                    "domain",
+                    "jurisdiction",
+                    "length_bin",
+                    "duplicate_group",
+                    "split",
+                    "ood",
+                    "success",
+                    "confidence",
+                    "latent_used",
+                    "semantic_class",
+                )
+                if hasattr(record, name)
+            }
+        rows.append(
+            {
+                "confidence": payload.get("confidence"),
+                "domain": str(payload.get("domain") or ""),
+                "duplicate_group": str(payload.get("duplicate_group") or ""),
+                "family": str(payload.get("family") or ""),
+                "jurisdiction": str(payload.get("jurisdiction") or ""),
+                "latent_used": bool(payload.get("latent_used", True)),
+                "length_bin": str(payload.get("length_bin") or ""),
+                "ood": bool(payload.get("ood", False)),
+                "sample_id": str(payload.get("sample_id") or ""),
+                "semantic_class": str(payload.get("semantic_class") or ""),
+                "split": str(payload.get("split") or "development"),
+                "success": payload.get("success"),
+                "vector": [float(value) for value in payload.get("vector", ()) or ()],
+            }
+        )
+    rows.sort(key=lambda item: (item["sample_id"], _canonical_json(item["vector"])))
+    return _digest({"records": rows, "schema": LATENT_DIAGNOSTIC_METRIC_SCHEMA})
+
+
+def build_latent_diagnostic_metric_lineage(
+    records: Sequence[Any],
+    *,
+    state_hash: str = "",
+    compiler_commit: str = "compiler-independent",
+    metric_schema: str = LATENT_DIAGNOSTIC_METRIC_SCHEMA,
+    target_hash: str = "",
+    cache_namespace: str = "latent_diagnostic_metric_block",
+    cache_key: str = "not-cached",
+    config_hash: str = "",
+    checkpoint_identity: str = "",
+    split_identity: str = LATENT_DIAGNOSTIC_SPLIT_IDENTITY,
+    config_payload: Optional[Mapping[str, Any]] = None,
+) -> LegalIRMetricLineage:
+    """Bind a diagnostic/calibration report to frozen representations and config."""
+
+    representation_digest = representation_content_digest(records)
+    sample_ids = []
+    for record in records or ():
+        if isinstance(record, Mapping):
+            sample_id = str(record.get("sample_id") or "")
+        else:
+            sample_id = str(getattr(record, "sample_id", "") or "")
+        if sample_id:
+            sample_ids.append(sample_id)
+    state_payload = {
+        "checkpoint_identity": str(checkpoint_identity or ""),
+        "representation_digest": representation_digest,
+        "sample_ids": sample_ids,
+        "split_identity": str(split_identity or LATENT_DIAGNOSTIC_SPLIT_IDENTITY),
+    }
+    target_payload = {
+        "metric_schema": str(metric_schema or LATENT_DIAGNOSTIC_METRIC_SCHEMA),
+        "representation_digest": representation_digest,
+        "sample_count": len(tuple(records or ())),
+    }
+    resolved_config = {
+        "checkpoint_identity": str(checkpoint_identity or ""),
+        "evaluation_kind": "latent_diagnostics_and_calibration",
+        "hidden_test_tuning": False,
+        "split_identity": str(split_identity or LATENT_DIAGNOSTIC_SPLIT_IDENTITY),
+        **dict(config_payload or {}),
+    }
+    return LegalIRMetricLineage(
+        path=LEARNED_IR_METRIC_PATH,
+        sample_hashes=_sample_hashes(records, {"sample_ids": sample_ids}),
+        state_hash=_non_empty_hash(state_hash, fallback_payload=state_payload),
+        compiler_commit=str(compiler_commit or "compiler-independent"),
+        metric_schema=str(metric_schema or LATENT_DIAGNOSTIC_METRIC_SCHEMA),
+        target_hash=_non_empty_hash(target_hash, fallback_payload=target_payload),
+        cache_namespace=str(cache_namespace or "latent_diagnostic_metric_block"),
+        cache_key=str(cache_key or "not-cached"),
+        config_hash=_non_empty_hash(config_hash, fallback_payload=resolved_config),
     )
 
 

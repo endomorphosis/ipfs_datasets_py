@@ -30,12 +30,30 @@ SUBSEC_TOKEN_RE = re.compile(r"\(([0-9]+|[A-Za-z]{1,6})\)")
 ROMAN_LOWER_RE = re.compile(r"^[ivxlcdm]+$")
 ROMAN_UPPER_RE = re.compile(r"^[IVXLCDM]+$")
 COMMON_ROMAN_LOWER = {
-    "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii", "xiii", "xiv", "xv"
+    "i",
+    "ii",
+    "iii",
+    "iv",
+    "v",
+    "vi",
+    "vii",
+    "viii",
+    "ix",
+    "x",
+    "xi",
+    "xii",
+    "xiii",
+    "xiv",
+    "xv",
 }
 COMMON_ROMAN_UPPER = {token.upper() for token in COMMON_ROMAN_LOWER}
 
-USC_CITATION_RE = re.compile(r"\b\d+\s+U\.?\s*S\.?\s*C\.?\s*(?:§+\s*|sec(?:tion)?\.?\s*)?\d[\w\-\.()]*", re.IGNORECASE)
-PUBLIC_LAW_CITATION_RE = re.compile(r"Pub\.?\s*L\.?\s*(?:No\.?\s*)?\d+\s*[–—−‑-]\s*\d+", re.IGNORECASE)
+USC_CITATION_RE = re.compile(
+    r"\b\d+\s+U\.?\s*S\.?\s*C\.?\s*(?:§+\s*|sec(?:tion)?\.?\s*)?\d[\w\-\.()]*", re.IGNORECASE
+)
+PUBLIC_LAW_CITATION_RE = re.compile(
+    r"Pub\.?\s*L\.?\s*(?:No\.?\s*)?\d+\s*[–—−‑-]\s*\d+", re.IGNORECASE
+)
 STAT_CITATION_RE = re.compile(r"\b\d+\s+Stat\.?\s+\d+\b", re.IGNORECASE)
 SECTION_REF_RE = re.compile(r"\b(?:section|sec\.?|§{1,2})\s+[\w\-.(),\sand]+\b", re.IGNORECASE)
 
@@ -130,6 +148,7 @@ def _env_int(name: str, default: int = 0) -> int:
 @dataclass
 class StatuteMetadata:
     """Metadata for a statute."""
+
     effective_date: Optional[str] = None
     last_amended: Optional[str] = None
     enacted_year: Optional[str] = None
@@ -138,7 +157,7 @@ class StatuteMetadata:
     legislative_session: Optional[str] = None
     bill_number: Optional[str] = None
     history: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
@@ -147,15 +166,16 @@ class StatuteMetadata:
 @dataclass
 class NormalizedStatute:
     """Normalized representation of a state statute.
-    
+
     This schema is consistent across all states, allowing for easy
     comparison and analysis of laws from different jurisdictions.
     """
+
     # Identification
     state_code: str  # e.g., "CA", "NY"
     state_name: str  # e.g., "California", "New York"
     statute_id: str  # Unique identifier within the state (e.g., "Penal Code § 187")
-    
+
     # Hierarchy (for organizing statutes)
     code_name: Optional[str] = None  # e.g., "Penal Code", "Vehicle Code"
     title_number: Optional[str] = None  # Title or Part number
@@ -164,34 +184,34 @@ class NormalizedStatute:
     chapter_name: Optional[str] = None
     section_number: Optional[str] = None
     section_name: Optional[str] = None
-    
+
     # Content
     short_title: Optional[str] = None
     full_text: Optional[str] = None  # The actual text of the statute
     summary: Optional[str] = None
-    
+
     # Classification
     legal_area: Optional[str] = None  # e.g., "criminal", "civil", "family"
     topics: List[str] = field(default_factory=list)  # e.g., ["murder", "homicide"]
     keywords: List[str] = field(default_factory=list)
-    
+
     # Source information
     source_url: str = ""  # URL to official source
     official_cite: Optional[str] = None  # Official citation format
-    
+
     # Metadata
     metadata: Optional[StatuteMetadata] = None
     structured_data: Dict[str, Any] = field(default_factory=dict)
-    
+
     # Scraping metadata
     scraped_at: str = field(default_factory=lambda: datetime.now().isoformat())
     scraper_version: str = "1.0"
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         data = asdict(self)
         if self.metadata:
-            data['metadata'] = self.metadata.to_dict()
+            data["metadata"] = self.metadata.to_dict()
         return data
 
     def __getitem__(self, key: str) -> Any:
@@ -222,11 +242,17 @@ class NormalizedStatute:
             return self.short_title or self.section_name or self.statute_id
         if key == "url":
             return self.source_url
-        if key in {"subsections", "preamble", "citations", "legislative_history", "parser_warnings"}:
+        if key in {
+            "subsections",
+            "preamble",
+            "citations",
+            "legislative_history",
+            "parser_warnings",
+        }:
             return (self.structured_data or {}).get(key)
 
         raise KeyError(key)
-    
+
     def get_citation(self) -> str:
         """Get a standardized citation for this statute."""
         parts = []
@@ -241,14 +267,14 @@ class NormalizedStatute:
 
 class BaseStateScraper(ABC):
     """Base class for state-specific law scrapers.
-    
+
     Each state scraper inherits from this class and implements
     state-specific parsing logic while outputting normalized data.
     """
-    
+
     def __init__(self, state_code: str, state_name: str):
         """Initialize the scraper.
-        
+
         Args:
             state_code: Two-letter state code (e.g., "CA")
             state_name: Full state name (e.g., "California")
@@ -337,7 +363,12 @@ class BaseStateScraper(ABC):
         bounded = _env_int("STATE_SCRAPER_MAX_STATUTES", 0)
         if bounded > 0:
             return max(1, min(int(default), bounded))
-        if str(os.getenv("STATE_SCRAPER_FULL_CORPUS", "")).strip().lower() in {"1", "true", "yes", "on"}:
+        if str(os.getenv("STATE_SCRAPER_FULL_CORPUS", "")).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
             return 1000000
         return int(default)
 
@@ -395,13 +426,11 @@ class BaseStateScraper(ABC):
         if not isinstance(row, dict):
             return None
         field_names = set(getattr(NormalizedStatute, "__dataclass_fields__", {}).keys())
-        kwargs: Dict[str, Any] = {
-            key: row.get(key)
-            for key in field_names
-            if key in row
-        }
+        kwargs: Dict[str, Any] = {key: row.get(key) for key in field_names if key in row}
         kwargs["state_code"] = str(kwargs.get("state_code") or self.state_code).upper()
-        kwargs["state_name"] = str(kwargs.get("state_name") or self.state_name).strip() or self.state_name
+        kwargs["state_name"] = (
+            str(kwargs.get("state_name") or self.state_name).strip() or self.state_name
+        )
         kwargs["code_name"] = str(kwargs.get("code_name") or code_name).strip() or code_name
         kwargs["statute_id"] = str(kwargs.get("statute_id") or "").strip()
         kwargs["source_url"] = str(kwargs.get("source_url") or "").strip()
@@ -430,9 +459,7 @@ class BaseStateScraper(ABC):
         if isinstance(metadata_payload, dict):
             metadata_fields = set(getattr(StatuteMetadata, "__dataclass_fields__", {}).keys())
             metadata_kwargs = {
-                key: metadata_payload.get(key)
-                for key in metadata_fields
-                if key in metadata_payload
+                key: metadata_payload.get(key) for key in metadata_fields if key in metadata_payload
             }
             history = metadata_kwargs.get("history")
             if history is None:
@@ -723,12 +750,18 @@ class BaseStateScraper(ABC):
             self.logger.debug("Fetch cache read failed for %s: %s", url, exc)
             return b""
         if data:
-            self._fetch_analytics["fetch_cache_hits"] = int(self._fetch_analytics.get("fetch_cache_hits", 0) or 0) + 1
-            self._fetch_analytics["cache_hits"] = int(self._fetch_analytics.get("cache_hits", 0) or 0) + 1
+            self._fetch_analytics["fetch_cache_hits"] = (
+                int(self._fetch_analytics.get("fetch_cache_hits", 0) or 0) + 1
+            )
+            self._fetch_analytics["cache_hits"] = (
+                int(self._fetch_analytics.get("cache_hits", 0) or 0) + 1
+            )
             return data
         return b""
 
-    async def _store_page_bytes_in_fetch_cache(self, *, url: str, payload: bytes, provider: str) -> None:
+    async def _store_page_bytes_in_fetch_cache(
+        self, *, url: str, payload: bytes, provider: str
+    ) -> None:
         if not self._fetch_cache_enabled or not payload:
             return
         object_path, meta_path = self._fetch_cache_paths(url)
@@ -753,12 +786,18 @@ class BaseStateScraper(ABC):
                 + "\n",
                 encoding="utf-8",
             )
-            self._fetch_analytics["fetch_cache_writes"] = int(self._fetch_analytics.get("fetch_cache_writes", 0) or 0) + 1
-            self._fetch_analytics["cache_writes"] = int(self._fetch_analytics.get("cache_writes", 0) or 0) + 1
+            self._fetch_analytics["fetch_cache_writes"] = (
+                int(self._fetch_analytics.get("fetch_cache_writes", 0) or 0) + 1
+            )
+            self._fetch_analytics["cache_writes"] = (
+                int(self._fetch_analytics.get("cache_writes", 0) or 0) + 1
+            )
         except Exception as exc:
             self.logger.debug("Fetch cache write failed for %s: %s", url, exc)
 
-    async def _cache_successful_page_fetch(self, *, url: str, payload: bytes, provider: str) -> None:
+    async def _cache_successful_page_fetch(
+        self, *, url: str, payload: bytes, provider: str
+    ) -> None:
         await self._store_page_bytes_in_fetch_cache(url=url, payload=payload, provider=provider)
         await self._store_page_bytes_in_ipfs_cache(url=url, payload=payload, provider=provider)
 
@@ -770,7 +809,9 @@ class BaseStateScraper(ABC):
         cached_bytes = await self._load_page_bytes_from_ipfs_cache(url)
         if cached_bytes:
             self._record_fetch_event(provider="ipfs_page_cache", success=True)
-            await self._store_page_bytes_in_fetch_cache(url=url, payload=cached_bytes, provider="ipfs_page_cache")
+            await self._store_page_bytes_in_fetch_cache(
+                url=url, payload=cached_bytes, provider="ipfs_page_cache"
+            )
             return cached_bytes
         return b""
 
@@ -809,7 +850,9 @@ class BaseStateScraper(ABC):
             return b""
 
         if isinstance(data, bytes) and data:
-            self._fetch_analytics["cache_hits"] = int(self._fetch_analytics.get("cache_hits", 0) or 0) + 1
+            self._fetch_analytics["cache_hits"] = (
+                int(self._fetch_analytics.get("cache_hits", 0) or 0) + 1
+            )
             return data
         return b""
 
@@ -853,40 +896,42 @@ class BaseStateScraper(ABC):
             "state_code": self.state_code,
         }
         self._save_ipfs_page_cache_index()
-        self._fetch_analytics["cache_writes"] = int(self._fetch_analytics.get("cache_writes", 0) or 0) + 1
+        self._fetch_analytics["cache_writes"] = (
+            int(self._fetch_analytics.get("cache_writes", 0) or 0) + 1
+        )
         return str(cid)
-    
+
     @abstractmethod
     def get_base_url(self) -> str:
         """Get the base URL for the state's legislative website.
-        
+
         Returns:
             Base URL string
         """
         pass
-    
+
     @abstractmethod
     def get_code_list(self) -> List[Dict[str, str]]:
         """Get list of available codes/titles for this state.
-        
+
         Returns:
             List of dicts with 'name', 'url', and optionally 'code_type' keys
         """
         pass
-    
+
     @abstractmethod
     async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
         """Scrape a specific code (e.g., Penal Code, Vehicle Code).
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL to the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
         pass
-    
+
     async def scrape_all(
         self,
         legal_areas: Optional[List[str]] = None,
@@ -895,21 +940,21 @@ class BaseStateScraper(ABC):
         hydrate_statute_text: bool = True,
     ) -> List[NormalizedStatute]:
         """Scrape all available codes for this state.
-        
+
         Args:
             legal_areas: Filter by legal areas
             max_statutes: Maximum number of statutes to scrape
             rate_limit_delay: Delay between requests in seconds
-            
+
         Returns:
             List of NormalizedStatute objects
         """
         import time
-        
+
         all_statutes = []
         code_errors: List[str] = []
         codes = self.get_code_list()
-        
+
         self.logger.info(f"Scraping {len(codes)} codes for {self.state_name}")
         self._write_partial_checkpoint(
             all_statutes,
@@ -918,20 +963,20 @@ class BaseStateScraper(ABC):
             force=True,
             extra={"codes_total": len(codes), "codes_completed": 0},
         )
-        
+
         for code_index, code_info in enumerate(codes, start=1):
             if max_statutes and len(all_statutes) >= max_statutes:
                 break
-            
-            code_name = code_info['name']
-            code_url = code_info['url']
-            
+
+            code_name = code_info["name"]
+            code_url = code_info["url"]
+
             # Filter by legal area if specified
             if legal_areas:
                 code_area = self._identify_legal_area(code_name)
                 if code_area not in legal_areas:
                     continue
-            
+
             try:
                 self.logger.info(f"Scraping {code_name}...")
                 if max_statutes:
@@ -982,7 +1027,7 @@ class BaseStateScraper(ABC):
                             continue
                         enriched_statutes.append(self._enrich_statute_structure(statute))
                 statutes = enriched_statutes
-                
+
                 all_statutes.extend(statutes)
                 self.logger.info(f"Scraped {len(statutes)} statutes from {code_name}")
                 self._write_partial_checkpoint(
@@ -996,7 +1041,7 @@ class BaseStateScraper(ABC):
                         "latest_code_statutes": len(statutes),
                     },
                 )
-                
+
             except Exception as e:
                 self.logger.error(f"Failed to scrape {code_name}: {e}")
                 code_errors.append(f"{code_name}: {e}")
@@ -1013,7 +1058,7 @@ class BaseStateScraper(ABC):
                         "latest_error": str(e),
                     },
                 )
-            
+
             # Rate limiting
             time.sleep(rate_limit_delay)
 
@@ -1036,18 +1081,18 @@ class BaseStateScraper(ABC):
             extra={"codes_total": len(codes), "codes_completed": len(codes)},
         )
         return all_statutes
-    
+
     def _identify_legal_area(self, text: str) -> str:
         """Identify legal area from text.
-        
+
         Args:
             text: Text to analyze
-            
+
         Returns:
             Legal area string
         """
         text_lower = text.lower()
-        
+
         area_keywords = {
             "administrative": [
                 "administrative",
@@ -1074,41 +1119,41 @@ class BaseStateScraper(ABC):
             "traffic": ["traffic", "vehicle", "motor", "driving"],
             "probate": ["probate", "estate", "will", "trust"],
         }
-        
+
         for area, keywords in area_keywords.items():
             if any(keyword in text_lower for keyword in keywords):
                 return area
-        
+
         return "general"
-    
+
     def _extract_section_number(self, text: str) -> Optional[str]:
         """Extract section number from text.
-        
+
         Args:
             text: Text containing section reference
-            
+
         Returns:
             Section number or None
         """
         import re
-        
+
         # Common patterns: "Section 123", "§ 123", "§123", "Sec. 123"
         # Also support chapter/title labels and dot-prefixed identifiers (e.g., ".010").
         patterns = [
-            r'§\s*(\d+[\.\-\w]*)',
-            r'Section\s+(\d+[\.\-\w]*)',
-            r'Sec\.\s*(\d+[\.\-\w]*)',
-            r'^\s*\.(\d+[\.\-\w]*)\b',
-            r'\b(\d+\-\d+[A-Za-z]?(?:\.\d+)*)\b',
-            r'Title\s+(\d+[A-Za-z]?(?:\.\d+)?)\b',
-            r'Chapter\s+(\d+[A-Za-z]?(?:\.\d+)?)\b',
+            r"§\s*(\d+[\.\-\w]*)",
+            r"Section\s+(\d+[\.\-\w]*)",
+            r"Sec\.\s*(\d+[\.\-\w]*)",
+            r"^\s*\.(\d+[\.\-\w]*)\b",
+            r"\b(\d+\-\d+[A-Za-z]?(?:\.\d+)*)\b",
+            r"Title\s+(\d+[A-Za-z]?(?:\.\d+)?)\b",
+            r"Chapter\s+(\d+[A-Za-z]?(?:\.\d+)?)\b",
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                return str(match.group(1)).strip().rstrip('.')
-        
+                return str(match.group(1)).strip().rstrip(".")
+
         return None
 
     def _extract_legislative_history(self, text: str) -> Dict[str, Any]:
@@ -1132,7 +1177,9 @@ class BaseStateScraper(ABC):
             return True
 
         # Many state scrapers currently seed text as "Section X: <link text>".
-        if re.match(r"^(section|sec\.?|title|chapter)\s+[\w\-.]+\s*:\s*", normalized, flags=re.IGNORECASE):
+        if re.match(
+            r"^(section|sec\.?|title|chapter)\s+[\w\-.]+\s*:\s*", normalized, flags=re.IGNORECASE
+        ):
             return True
 
         return False
@@ -1201,14 +1248,28 @@ class BaseStateScraper(ABC):
             # unless they contain section-like signals in URL structure.
             tail = path.rstrip("/").split("/")[-1] if path else ""
             generic_tails = {
-                "law", "laws", "statute", "statutes", "code", "codes",
-                "constitution", "rules", "home", "index", "default.aspx",
+                "law",
+                "laws",
+                "statute",
+                "statutes",
+                "code",
+                "codes",
+                "constitution",
+                "rules",
+                "home",
+                "index",
+                "default.aspx",
             }
-            has_structured_query = any(token in url_value for token in ("section=", "sec=", "cite=", "docname=", "law.aspx?d="))
+            has_structured_query = any(
+                token in url_value
+                for token in ("section=", "sec=", "cite=", "docname=", "law.aspx?d=")
+            )
             has_numeric_path = bool(re.search(r"\d", path or ""))
             path_depth = len([part for part in (path or "").split("/") if part])
 
-            if (tail in generic_tails) and not (has_structured_query or has_numeric_path or path_depth >= 4):
+            if (tail in generic_tails) and not (
+                has_structured_query or has_numeric_path or path_depth >= 4
+            ):
                 return False
             return True
 
@@ -1229,7 +1290,9 @@ class BaseStateScraper(ABC):
             or self._contains_statute_signals(full_text)
             or any(hint in source_url.lower() for hint in _STATUTE_URL_HINTS)
         )
-        nav_like = self._looks_like_navigation_text(section_name) or self._looks_like_navigation_text(full_text)
+        nav_like = self._looks_like_navigation_text(
+            section_name
+        ) or self._looks_like_navigation_text(full_text)
         nav_url_like = any(hint in source_url.lower() for hint in _NAV_URL_HINTS)
 
         if _SCAFFOLD_SECTION_TEXT_RE.match(full_text):
@@ -1295,11 +1358,15 @@ class BaseStateScraper(ABC):
             if re.match(r"^\d+[A-Za-z]?\.\d+\.\d+[A-Za-z]?$", candidate):
                 return candidate
 
-        wi_match = re.search(r"/document/statutes/([0-9]+(?:\.[0-9A-Za-z]+)+)$", parsed.path, flags=re.IGNORECASE)
+        wi_match = re.search(
+            r"/document/statutes/([0-9]+(?:\.[0-9A-Za-z]+)+)$", parsed.path, flags=re.IGNORECASE
+        )
         if wi_match:
             return wi_match.group(1)
 
-        mn_match = re.search(r"/statutes/cite/([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)+)$", parsed.path, flags=re.IGNORECASE)
+        mn_match = re.search(
+            r"/statutes/cite/([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)+)$", parsed.path, flags=re.IGNORECASE
+        )
         if mn_match:
             return mn_match.group(1)
 
@@ -1366,11 +1433,13 @@ class BaseStateScraper(ABC):
 
         anchors: List[str] = []
         if section_number:
-            anchors.extend([
-                f"section {section_number}",
-                f"§ {section_number}",
-                section_number,
-            ])
+            anchors.extend(
+                [
+                    f"section {section_number}",
+                    f"§ {section_number}",
+                    section_number,
+                ]
+            )
         if section_name and section_name != section_number and len(section_name) >= 6:
             anchors.append(section_name)
 
@@ -1408,7 +1477,9 @@ class BaseStateScraper(ABC):
 
         return trimmed or value
 
-    async def _fetch_page_content_with_archival_fallback(self, url: str, timeout_seconds: int = 25) -> bytes:
+    async def _fetch_page_content_with_archival_fallback(
+        self, url: str, timeout_seconds: int = 25
+    ) -> bytes:
         """Fetch HTML bytes using direct + archival fallback chain.
 
         This keeps Common Crawl/Wayback/Archive.is logic inside state scrapers,
@@ -1487,7 +1558,9 @@ class BaseStateScraper(ABC):
             if direct_only in {"1", "true", "yes", "on"}:
                 return b""
 
-        unified_enabled = str(os.getenv("STATE_SCRAPER_UNIFIED_FETCH_ENABLED", "1")).strip().lower() not in {"0", "false", "no", "off"}
+        unified_enabled = str(
+            os.getenv("STATE_SCRAPER_UNIFIED_FETCH_ENABLED", "1")
+        ).strip().lower() not in {"0", "false", "no", "off"}
         # Very small hydration timeouts are usually smoke-test budgets. Avoid
         # non-cancellable background fetch workers in that mode.
         if original_timeout_seconds <= 5 and bounded_fetch_timeout <= 0:
@@ -1508,7 +1581,9 @@ class BaseStateScraper(ABC):
                     )
                     return unified_bytes
 
-        archival_enabled = str(os.getenv("STATE_SCRAPER_ARCHIVAL_FETCH_ENABLED", "1")).strip().lower() not in {"0", "false", "no", "off"}
+        archival_enabled = str(
+            os.getenv("STATE_SCRAPER_ARCHIVAL_FETCH_ENABLED", "1")
+        ).strip().lower() not in {"0", "false", "no", "off"}
         if original_timeout_seconds <= 5 and bounded_fetch_timeout <= 0:
             archival_enabled = False
         if archival_enabled:
@@ -1521,7 +1596,9 @@ class BaseStateScraper(ABC):
                 )
                 fetched = await client.fetch_with_fallback(fetch_url)
                 self._record_fetch_event(
-                    provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
+                    provider=str(
+                        getattr(fetched, "source", "archival_fallback") or "archival_fallback"
+                    ),
                     success=bool(getattr(fetched, "content", b"")),
                 )
                 content = bytes(fetched.content or b"")
@@ -1529,11 +1606,15 @@ class BaseStateScraper(ABC):
                     await self._cache_successful_page_fetch(
                         url=fetch_url,
                         payload=content,
-                        provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
+                        provider=str(
+                            getattr(fetched, "source", "archival_fallback") or "archival_fallback"
+                        ),
                     )
                     return content
             except Exception as exc:
-                self._record_fetch_event(provider="archival_fallback", success=False, error=str(exc))
+                self._record_fetch_event(
+                    provider="archival_fallback", success=False, error=str(exc)
+                )
                 pass
 
         return await _try_requests_direct()
@@ -1573,8 +1654,12 @@ class BaseStateScraper(ABC):
                 flags=re.IGNORECASE,
             )
             _add(canonical)
-            _add(re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1if_/\2", canonical, count=1))
-            _add(re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1id_/\2", canonical, count=1))
+            _add(
+                re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1if_/\2", canonical, count=1)
+            )
+            _add(
+                re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1id_/\2", canonical, count=1)
+            )
 
         # Try scheme-alternate variants last for flaky mirrors.
         seed = list(out)
@@ -1586,7 +1671,9 @@ class BaseStateScraper(ABC):
 
         return out
 
-    async def _fetch_page_content_with_unified_api(self, url: str, timeout_seconds: int = 25) -> bytes:
+    async def _fetch_page_content_with_unified_api(
+        self, url: str, timeout_seconds: int = 25
+    ) -> bytes:
         try:
             from ....web_archiving.contracts import OperationMode, UnifiedFetchRequest
             from ....web_archiving.unified_api import UnifiedWebArchivingAPI
@@ -1596,7 +1683,9 @@ class BaseStateScraper(ABC):
                     OperationMode,
                     UnifiedFetchRequest,
                 )
-                from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
+                from ipfs_datasets_py.processors.web_archiving.unified_api import (
+                    UnifiedWebArchivingAPI,
+                )
             except Exception:
                 return b""
 
@@ -1614,7 +1703,9 @@ class BaseStateScraper(ABC):
                 timeout=max(1, int(timeout_seconds or 25)),
             )
         except asyncio.TimeoutError:
-            self._record_fetch_event(provider="unified_api", success=False, error="unified_api_fetch_timeout")
+            self._record_fetch_event(
+                provider="unified_api", success=False, error="unified_api_fetch_timeout"
+            )
             return b""
         except Exception as exc:
             self._record_fetch_event(provider="unified_api", success=False, error=str(exc))
@@ -1624,9 +1715,9 @@ class BaseStateScraper(ABC):
         provider = str(getattr(trace, "provider_selected", None) or "unified_api")
         if trace is not None:
             try:
-                self._fetch_analytics["fallback_count"] = int(self._fetch_analytics.get("fallback_count", 0) or 0) + int(
-                    getattr(trace, "fallback_count", 0) or 0
-                )
+                self._fetch_analytics["fallback_count"] = int(
+                    self._fetch_analytics.get("fallback_count", 0) or 0
+                ) + int(getattr(trace, "fallback_count", 0) or 0)
             except Exception:
                 pass
 
@@ -1662,7 +1753,9 @@ class BaseStateScraper(ABC):
         self._record_fetch_event(provider=provider, success=False)
         return b""
 
-    def _record_fetch_event(self, *, provider: str, success: bool, error: Optional[str] = None) -> None:
+    def _record_fetch_event(
+        self, *, provider: str, success: bool, error: Optional[str] = None
+    ) -> None:
         self._fetch_analytics["attempted"] = int(self._fetch_analytics.get("attempted", 0) or 0) + 1
         if success:
             self._fetch_analytics["success"] = int(self._fetch_analytics.get("success", 0) or 0) + 1
@@ -1717,8 +1810,12 @@ class BaseStateScraper(ABC):
         if not self._looks_like_shallow_stub_text(base_text):
             return
 
-        hydrate_timeout = max(1, int(float(os.getenv("STATE_SCRAPER_HYDRATE_TIMEOUT_SECONDS", "25") or 25)))
-        raw_bytes = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=hydrate_timeout)
+        hydrate_timeout = max(
+            1, int(float(os.getenv("STATE_SCRAPER_HYDRATE_TIMEOUT_SECONDS", "25") or 25))
+        )
+        raw_bytes = await self._fetch_page_content_with_archival_fallback(
+            source_url, timeout_seconds=hydrate_timeout
+        )
         if not raw_bytes:
             return
 
@@ -1734,10 +1831,16 @@ class BaseStateScraper(ABC):
                 statute.full_text = fetched_text
                 if not statute.section_name:
                     statute.section_name = fetched_text[:200]
-                structured_update = statute.structured_data if isinstance(statute.structured_data, dict) else {}
+                structured_update = (
+                    statute.structured_data if isinstance(statute.structured_data, dict) else {}
+                )
                 structured_update = dict(structured_update)
-                structured_update["method_used"] = str(document_extraction.get("method") or "document_processor")
-                structured_update["source_content_type"] = str(document_extraction.get("content_type") or "")
+                structured_update["method_used"] = str(
+                    document_extraction.get("method") or "document_processor"
+                )
+                structured_update["source_content_type"] = str(
+                    document_extraction.get("content_type") or ""
+                )
                 statute.structured_data = structured_update
                 return
 
@@ -1753,7 +1856,9 @@ class BaseStateScraper(ABC):
             return
 
         # Avoid replacing stub text with navigation/event boilerplate content.
-        if self._looks_like_navigation_text(fetched_text) and not self._contains_statute_signals(fetched_text):
+        if self._looks_like_navigation_text(fetched_text) and not self._contains_statute_signals(
+            fetched_text
+        ):
             return
 
         statute.full_text = fetched_text
@@ -1776,8 +1881,12 @@ class BaseStateScraper(ABC):
         is_rtf_payload = bool(_RTF_HEADER_RE.search(byte_prefix))
         pdf_url_candidate = lowered_url.endswith(".pdf") or ".pdf?" in lowered_url
         rtf_url_candidate = lowered_url.endswith(".rtf") or ".rtf?" in lowered_url
-        pdf_candidate = (pdf_url_candidate or is_pdf_payload) and is_pdf_payload and not is_html_payload
-        rtf_candidate = (rtf_url_candidate or is_rtf_payload) and is_rtf_payload and not is_html_payload
+        pdf_candidate = (
+            (pdf_url_candidate or is_pdf_payload) and is_pdf_payload and not is_html_payload
+        )
+        rtf_candidate = (
+            (rtf_url_candidate or is_rtf_payload) and is_rtf_payload and not is_html_payload
+        )
         if not (pdf_candidate or rtf_candidate):
             if (pdf_url_candidate or rtf_url_candidate) and is_html_payload:
                 self.logger.debug(
@@ -1804,7 +1913,9 @@ class BaseStateScraper(ABC):
                 }
 
             try:
-                from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import UnifiedWebScraper
+                from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
+                    UnifiedWebScraper,
+                )
             except Exception:
                 return None
 
@@ -1822,7 +1933,9 @@ class BaseStateScraper(ABC):
 
         if rtf_candidate:
             try:
-                from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import UnifiedWebScraper
+                from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
+                    UnifiedWebScraper,
+                )
             except Exception:
                 return None
 
@@ -1869,7 +1982,11 @@ class BaseStateScraper(ABC):
             return "numeric"
 
         if token.islower():
-            if token in COMMON_ROMAN_LOWER and prev_kind in {"alpha_upper", "roman_lower", "roman_upper"}:
+            if token in COMMON_ROMAN_LOWER and prev_kind in {
+                "alpha_upper",
+                "roman_lower",
+                "roman_upper",
+            }:
                 return "roman_lower"
             if len(token) > 1 and ROMAN_LOWER_RE.match(token):
                 return "roman_lower"
@@ -1989,7 +2106,9 @@ class BaseStateScraper(ABC):
 
         return roots
 
-    def _fallback_subsections_from_text(self, text: str, *, max_nodes: int = 8) -> List[Dict[str, Any]]:
+    def _fallback_subsections_from_text(
+        self, text: str, *, max_nodes: int = 8
+    ) -> List[Dict[str, Any]]:
         """Build coarse subsection nodes when marker parsing yields nothing.
 
         Some state sources flatten formatting and omit explicit `(a)`/`(1)` labels.
@@ -2013,13 +2132,15 @@ class BaseStateScraper(ABC):
 
         if not clauses:
             # Last resort: represent long narrative text as a single subsection.
-            return [{
-                "label": "(1)",
-                "token": "1",
-                "kind": "numeric",
-                "text": normalized,
-                "subsections": [],
-            }]
+            return [
+                {
+                    "label": "(1)",
+                    "token": "1",
+                    "kind": "numeric",
+                    "text": normalized,
+                    "subsections": [],
+                }
+            ]
 
         nodes: List[Dict[str, Any]] = []
         for index, clause in enumerate(clauses[:max_nodes], start=1):
@@ -2077,7 +2198,9 @@ class BaseStateScraper(ABC):
 
         return citations
 
-    def _validate_subsection_tree(self, nodes: List[Dict[str, Any]], *, max_depth: int = 6) -> List[str]:
+    def _validate_subsection_tree(
+        self, nodes: List[Dict[str, Any]], *, max_depth: int = 6
+    ) -> List[str]:
         issues: List[str] = []
 
         def walk(siblings: List[Dict[str, Any]], depth: int, path: str) -> None:
@@ -2097,10 +2220,19 @@ class BaseStateScraper(ABC):
                         issues.append(f"duplicate sibling label {label} at {path or 'root'}")
 
                 if not text and not children:
-                    issues.append(f"empty leaf node {label or '#'+str(index)} at {path or 'root'}")
+                    issues.append(
+                        f"empty leaf node {label or '#' + str(index)} at {path or 'root'}"
+                    )
 
-                if kind not in {"numeric", "alpha_lower", "alpha_upper", "roman_lower", "roman_upper", "other"}:
-                    issues.append(f"unknown kind {kind} for {label or '#'+str(index)}")
+                if kind not in {
+                    "numeric",
+                    "alpha_lower",
+                    "alpha_upper",
+                    "roman_lower",
+                    "roman_upper",
+                    "other",
+                }:
+                    issues.append(f"unknown kind {kind} for {label or '#' + str(index)}")
 
                 child_path = f"{path}/{label}" if path else label
                 if isinstance(children, list) and children:
@@ -2125,7 +2257,10 @@ class BaseStateScraper(ABC):
         section_number = str(statute.section_number or "")
         year_value = getattr(statute.metadata, "enacted_year", None) if statute.metadata else None
         chapter_obj = {
-            "chapter_label": statute.chapter_number or statute.title_number or statute.code_name or "",
+            "chapter_label": statute.chapter_number
+            or statute.title_number
+            or statute.code_name
+            or "",
             "chapter_name": statute.chapter_name or statute.title_name or statute.code_name or "",
             "chapter_inferred": True,
         }
@@ -2180,7 +2315,9 @@ class BaseStateScraper(ABC):
         if not isinstance(legislative_history, dict):
             legislative_history = self._extract_legislative_history(source_text)
 
-        cleaned_text = self._normalize_legal_text(str(legislative_history.get("cleaned_text") or source_text))
+        cleaned_text = self._normalize_legal_text(
+            str(legislative_history.get("cleaned_text") or source_text)
+        )
         preamble = existing.get("preamble")
         if not isinstance(preamble, str):
             preamble = self._extract_preamble(cleaned_text)
@@ -2221,26 +2358,22 @@ class BaseStateScraper(ABC):
             "jsonld": jsonld_payload,
         }
         return statute
-    
+
     async def _generic_scrape(
-        self,
-        code_name: str,
-        code_url: str,
-        citation_format: str,
-        max_sections: int = 100
+        self, code_name: str, code_url: str, citation_format: str, max_sections: int = 100
     ) -> List[NormalizedStatute]:
         """Generic scraper implementation that can be used by most states.
-        
+
         This method provides a common scraping pattern that works for many
         state legislative websites. Individual scrapers can override scrape_code()
         for more sophisticated parsing.
-        
+
         Args:
             code_name: Name of the code (e.g., "Penal Code")
             code_url: URL to scrape
             citation_format: Citation format (e.g., "Cal. Penal Code")
             max_sections: Maximum number of sections to scrape
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -2252,7 +2385,10 @@ class BaseStateScraper(ABC):
 
         bounded_max_sections = _env_int("STATE_SCRAPER_MAX_STATUTES", 0)
         if bounded_max_sections > 0:
-            scan_limit = max(bounded_max_sections, min(int(max_sections or bounded_max_sections), bounded_max_sections * 10))
+            scan_limit = max(
+                bounded_max_sections,
+                min(int(max_sections or bounded_max_sections), bounded_max_sections * 10),
+            )
             max_sections = max(1, scan_limit)
         elif self._full_corpus_enabled():
             max_sections = None
@@ -2286,7 +2422,7 @@ class BaseStateScraper(ABC):
 
         def _extract_statutes_from_soup(soup, page_url: str, *, pages_scanned: int) -> int:
             """Extract probable statute anchors from one page soup into `statutes`."""
-            section_links = soup.find_all('a', href=True)
+            section_links = soup.find_all("a", href=True)
             section_count = 0
 
             for link in section_links:
@@ -2294,15 +2430,16 @@ class BaseStateScraper(ABC):
                     break
 
                 link_text = link.get_text(strip=True)
-                link_url = link.get('href', '')
+                link_url = link.get("href", "")
 
                 if not link_text or len(link_text) < 3:
                     continue
 
-                if not link_url.startswith('http'):
+                if not link_url.startswith("http"):
                     from urllib.parse import urljoin
+
                     link_url = urljoin(page_url, link_url)
-                if not link_url.startswith('http'):
+                if not link_url.startswith("http"):
                     continue
 
                 link_url = self._canonicalize_statute_url(link_url)
@@ -2330,7 +2467,7 @@ class BaseStateScraper(ABC):
                     legal_area=legal_area,
                     source_url=link_url,
                     official_cite=f"{citation_format} § {section_number}",
-                    metadata=StatuteMetadata()
+                    metadata=StatuteMetadata(),
                 )
 
                 statutes.append(statute)
@@ -2394,13 +2531,15 @@ class BaseStateScraper(ABC):
                 discovery_seen.add(abs_url)
                 discovery_urls.append(abs_url)
             return discovery_urls
-        
+
         try:
-            page_bytes = await self._fetch_page_content_with_archival_fallback(code_url, timeout_seconds=45)
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                code_url, timeout_seconds=45
+            )
             if not page_bytes:
                 raise RuntimeError(f"Failed to retrieve code page: {code_url}")
 
-            soup = BeautifulSoup(page_bytes, 'html.parser')
+            soup = BeautifulSoup(page_bytes, "html.parser")
             pages_scanned = 1
             visited_pages = {self._canonicalize_statute_url(code_url)}
             section_count = _extract_statutes_from_soup(
@@ -2518,20 +2657,21 @@ class BaseStateScraper(ABC):
                 },
             )
             self.logger.info(f"Scraped {len(statutes)} sections from {code_name}")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to scrape {code_name}: {e}")
-        
+
         return statutes
-    
+
     def has_playwright(self) -> bool:
         """Check if Playwright is available."""
         try:
             from playwright.async_api import async_playwright
+
             return True
         except ImportError:
             return False
-    
+
     async def _playwright_scrape(
         self,
         code_name: str,
@@ -2543,10 +2683,10 @@ class BaseStateScraper(ABC):
         wait_until: str = "networkidle",
     ) -> List[NormalizedStatute]:
         """Scrape using Playwright for JavaScript-rendered content.
-        
+
         This method uses Playwright to render JavaScript content before scraping.
         It's useful for states with dynamic/modern web interfaces.
-        
+
         Args:
             code_name: Name of the code being scraped
             code_url: URL of the code index page
@@ -2556,7 +2696,7 @@ class BaseStateScraper(ABC):
             timeout: Timeout in milliseconds (default: 30000)
             wait_until: Playwright navigation completion mode (e.g.,
                 "networkidle", "domcontentloaded", "load")
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -2564,22 +2704,27 @@ class BaseStateScraper(ABC):
 
         bounded_max_sections = _env_int("STATE_SCRAPER_MAX_STATUTES", 0)
         if bounded_max_sections > 0:
-            scan_limit = max(bounded_max_sections, min(int(max_sections or bounded_max_sections), bounded_max_sections * 10))
+            scan_limit = max(
+                bounded_max_sections,
+                min(int(max_sections or bounded_max_sections), bounded_max_sections * 10),
+            )
             max_sections = max(1, scan_limit)
         elif self._full_corpus_enabled():
             max_sections = None
-        
+
         if not self.has_playwright():
-            self.logger.warning(f"Playwright not available, falling back to generic scrape for {code_name}")
+            self.logger.warning(
+                f"Playwright not available, falling back to generic scrape for {code_name}"
+            )
             return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
-        
+
         try:
             from playwright.async_api import async_playwright
             from bs4 import BeautifulSoup
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
             return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
-        
+
         full_corpus_mode = self._full_corpus_enabled() and max_sections is None
         progress_log_every = max(10, _env_int("STATE_SCRAPER_PROGRESS_LOG_EVERY", 25))
         statutes: List[NormalizedStatute] = []
@@ -2605,14 +2750,14 @@ class BaseStateScraper(ABC):
                     self.state_code,
                     len(statutes),
                 )
-        
+
         try:
             async with acquire_playwright_slot():
                 async with async_playwright() as p:
                     # Launch browser
                     browser = await p.chromium.launch(headless=True)
                     page = await browser.new_page()
-                
+
                     try:
                         # Navigate to page
                         await page.goto(code_url, wait_until=wait_until, timeout=timeout)
@@ -2621,19 +2766,21 @@ class BaseStateScraper(ABC):
                         try:
                             await page.wait_for_selector(wait_for_selector, timeout=timeout)
                         except Exception:
-                            self.logger.warning(f"Timeout waiting for selector '{wait_for_selector}' on {code_url}")
+                            self.logger.warning(
+                                f"Timeout waiting for selector '{wait_for_selector}' on {code_url}"
+                            )
 
                         # Get page content after JavaScript execution
                         content = await page.content()
 
                         # Parse with BeautifulSoup
-                        soup = BeautifulSoup(content, 'html.parser')
+                        soup = BeautifulSoup(content, "html.parser")
 
                         # Extract legal area
                         legal_area = self._identify_legal_area(code_name)
 
                         # Scan all anchors, then stop once enough probable statute links are collected.
-                        section_links = soup.find_all('a', href=True)
+                        section_links = soup.find_all("a", href=True)
 
                         section_count = 0
                         for link in section_links:
@@ -2641,16 +2788,16 @@ class BaseStateScraper(ABC):
                                 break
 
                             link_text = link.get_text(strip=True)
-                            link_url = link.get('href', '')
+                            link_url = link.get("href", "")
 
                             # Skip if link doesn't look useful
                             if not link_text or len(link_text) < 3:
                                 continue
 
                             # Make URL absolute (handles '/x' and 'x/y').
-                            if not link_url.startswith('http'):
+                            if not link_url.startswith("http"):
                                 link_url = urljoin(code_url, link_url)
-                            if not link_url.startswith('http'):
+                            if not link_url.startswith("http"):
                                 continue
 
                             link_url = self._canonicalize_statute_url(link_url)
@@ -2679,7 +2826,7 @@ class BaseStateScraper(ABC):
                                 legal_area=legal_area,
                                 source_url=link_url,
                                 official_cite=f"{citation_format} § {section_number}",
-                                metadata=StatuteMetadata()
+                                metadata=StatuteMetadata(),
                             )
 
                             statutes.append(statute)
@@ -2697,7 +2844,10 @@ class BaseStateScraper(ABC):
                                     statutes,
                                     code_name=code_name,
                                     stage_label="playwright:progress",
-                                    extra={"source_url": code_url, "sections_extracted": section_count},
+                                    extra={
+                                        "source_url": code_url,
+                                        "sections_extracted": section_count,
+                                    },
                                 )
 
                         self._write_partial_checkpoint(
@@ -2708,44 +2858,44 @@ class BaseStateScraper(ABC):
                             extra={"source_url": code_url, "sections_extracted": section_count},
                         )
 
-                        self.logger.info(f"Scraped {len(statutes)} sections using Playwright from {code_name}")
+                        self.logger.info(
+                            f"Scraped {len(statutes)} sections using Playwright from {code_name}"
+                        )
 
                     finally:
                         try:
                             await page.close()
                         finally:
                             await browser.close()
-            
+
         except Exception as e:
             self.logger.error(f"Error in Playwright scrape for {code_name}: {str(e)}")
             # Try fallback to generic scrape
             self.logger.info(f"Falling back to generic scrape for {code_name}")
             return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
-        
+
         return statutes
-    
+
     # ========================================================================
     # Common Crawl Integration Methods (Phase 11 Task 11.3)
     # ========================================================================
-    
+
     async def scrape_from_common_crawl(
-        self,
-        url: str,
-        dataset_name: Optional[str] = None
+        self, url: str, dataset_name: Optional[str] = None
     ) -> Optional[str]:
         """
         Scrape content from Common Crawl archives via HuggingFace datasets.
-        
+
         This method queries Common Crawl indexes to find archived versions
         of legal websites, then fetches the content from WARC files.
-        
+
         Args:
             url: URL to scrape from Common Crawl
             dataset_name: HuggingFace dataset name (e.g., "endomorphosis/common_crawl_state_index")
-            
+
         Returns:
             Scraped content or None if not found
-            
+
         Example:
             content = await scraper.scrape_from_common_crawl(
                 "https://legislature.example.gov/code.html",
@@ -2755,24 +2905,24 @@ class BaseStateScraper(ABC):
         try:
             # Import Common Crawl scraper
             from ..common_crawl_scraper import CommonCrawlLegalScraper
-            
+
             # Create scraper instance
             cc_scraper = CommonCrawlLegalScraper()
-            
+
             # Scrape the URL using Common Crawl
             result = await cc_scraper.scrape_url(
                 url,
                 extract_rules=False,  # Just get content
-                feed_to_logic=False
+                feed_to_logic=False,
             )
-            
+
             if result.success and result.content:
                 self.logger.info(f"Retrieved content from Common Crawl for: {url}")
                 return result.content
             else:
                 self.logger.warning(f"No Common Crawl content found for: {url}")
                 return None
-                
+
         except Exception as e:
             self.logger.error(f"Error scraping from Common Crawl: {e}")
             return None
@@ -2828,7 +2978,9 @@ class BaseStateScraper(ABC):
                 max_results=max_results,
             )
         except Exception as e:
-            self.logger.warning("State Common Crawl index query failed for %s: %s", self.state_code, e)
+            self.logger.warning(
+                "State Common Crawl index query failed for %s: %s", self.state_code, e
+            )
             return []
 
     async def _scrape_state_common_crawl_candidates(
@@ -2898,30 +3050,27 @@ class BaseStateScraper(ABC):
                     }
                 )
             except Exception as e:
-                self.logger.debug("Common Crawl state candidate fetch failed for %s: %s", record.get("url"), e)
+                self.logger.debug(
+                    "Common Crawl state candidate fetch failed for %s: %s", record.get("url"), e
+                )
                 continue
         return out
-    
-    async def query_warc_file(
-        self,
-        warc_url: str,
-        offset: int,
-        length: int
-    ) -> Optional[str]:
+
+    async def query_warc_file(self, warc_url: str, offset: int, length: int) -> Optional[str]:
         """
         Query a WARC file directly using offset and range.
-        
+
         This method retrieves content from a Common Crawl WARC file
         using byte offset and length for efficient partial file access.
-        
+
         Args:
             warc_url: S3 URL to WARC file
             offset: Byte offset in file
             length: Number of bytes to read
-            
+
         Returns:
             WARC record content or None
-            
+
         Example:
             content = await scraper.query_warc_file(
                 "s3://commoncrawl/crawl-data/CC-MAIN-2024-10/segments/.../warc.gz",
@@ -2932,10 +3081,10 @@ class BaseStateScraper(ABC):
         try:
             from ...web_archiving.common_crawl_integration import CommonCrawlSearchEngine
             from urllib.parse import urlparse
-            
+
             # Create engine instance
             engine = CommonCrawlSearchEngine()
-            
+
             parsed = urlparse(str(warc_url or ""))
             warc_filename = parsed.path.lstrip("/") if parsed.scheme else str(warc_url or "")
 
@@ -2952,41 +3101,35 @@ class BaseStateScraper(ABC):
                     content = str(raw_content or "")
             else:
                 fetch_warc_segment = getattr(engine, "fetch_warc_segment")
-                content = await fetch_warc_segment(
-                    warc_url=warc_url,
-                    offset=offset,
-                    length=length
-                )
-            
+                content = await fetch_warc_segment(warc_url=warc_url, offset=offset, length=length)
+
             if content:
                 self.logger.info(f"Retrieved WARC content (offset={offset}, length={length})")
                 return content
             else:
                 self.logger.warning("Empty WARC content retrieved")
                 return None
-                
+
         except Exception as e:
             self.logger.error(f"Error querying WARC file: {e}")
             return None
-    
+
     async def extract_with_graphrag(
-        self,
-        content: str,
-        extract_rules: bool = True
+        self, content: str, extract_rules: bool = True
     ) -> Dict[str, Any]:
         """
         Extract structured data from legal content using GraphRAG.
-        
+
         This method uses GraphRAG to extract entities, relationships,
         and legal rules from raw legal text content.
-        
+
         Args:
             content: Raw HTML or text content
             extract_rules: Whether to extract legal rules
-            
+
         Returns:
             Dictionary with extracted data (entities, relationships, rules)
-            
+
         Example:
             results = await scraper.extract_with_graphrag(
                 html_content,
@@ -2996,70 +3139,75 @@ class BaseStateScraper(ABC):
         """
         try:
             from ...specialized.graphrag import UnifiedGraphRAGProcessor
-            
+
             # Create GraphRAG processor
             graphrag = UnifiedGraphRAGProcessor()
-            
+
             # Use process_website which is the primary API
             # We pass the content as if it's from a URL
             extraction_result = await graphrag.process_website(
                 url="inline://content",  # Dummy URL for inline content
-                content_override=content  # Pass content directly
+                content_override=content,  # Pass content directly
             )
-            
+
             result = {
-                'entities': extraction_result.entities if hasattr(extraction_result, 'entities') else [],
-                'relationships': extraction_result.relationships if hasattr(extraction_result, 'relationships') else [],
-                'rules': []
+                "entities": extraction_result.entities
+                if hasattr(extraction_result, "entities")
+                else [],
+                "relationships": extraction_result.relationships
+                if hasattr(extraction_result, "relationships")
+                else [],
+                "rules": [],
             }
-            
+
             # Extract legal rules from knowledge graph if available
-            if extract_rules and hasattr(extraction_result, 'knowledge_graph'):
+            if extract_rules and hasattr(extraction_result, "knowledge_graph"):
                 # Simple rule extraction: look for entities that represent rules/statutes
                 kg = extraction_result.knowledge_graph
-                if kg and hasattr(kg, 'entities'):
+                if kg and hasattr(kg, "entities"):
                     for entity in kg.entities.values():
-                        if entity.type.lower() in ['rule', 'statute', 'law', 'regulation']:
-                            result['rules'].append({
-                                'text': entity.name,
-                                'type': entity.type,
-                                'attributes': entity.attributes if hasattr(entity, 'attributes') else {}
-                            })
-            
+                        if entity.type.lower() in ["rule", "statute", "law", "regulation"]:
+                            result["rules"].append(
+                                {
+                                    "text": entity.name,
+                                    "type": entity.type,
+                                    "attributes": entity.attributes
+                                    if hasattr(entity, "attributes")
+                                    else {},
+                                }
+                            )
+
             self.logger.info(
                 f"Extracted {len(result['entities'])} entities, "
                 f"{len(result['relationships'])} relationships, "
                 f"{len(result['rules'])} rules"
             )
-            
+
             return result
-            
+
         except Exception as e:
             self.logger.error(f"Error extracting with GraphRAG: {e}")
-            return {'entities': [], 'relationships': [], 'rules': []}
-    
+            return {"entities": [], "relationships": [], "rules": []}
+
     async def scrape_with_fallbacks(
-        self,
-        url: str,
-        use_common_crawl: bool = True,
-        use_graphrag: bool = False
+        self, url: str, use_common_crawl: bool = True, use_graphrag: bool = False
     ) -> Optional[NormalizedStatute]:
         """
         Scrape a statute with graceful fallbacks through multiple methods.
-        
+
         This method attempts to scrape using the following fallback chain:
         1. Common Crawl (if enabled)
         2. Direct HTTP request
         3. Playwright (if available)
-        
+
         Args:
             url: URL to scrape
             use_common_crawl: Whether to try Common Crawl first
             use_graphrag: Whether to use GraphRAG for extraction
-            
+
         Returns:
             NormalizedStatute or None
-            
+
         Example:
             statute = await scraper.scrape_with_fallbacks(
                 "https://legislature.example.gov/statute.html",
@@ -3069,7 +3217,7 @@ class BaseStateScraper(ABC):
         """
         content = None
         method_used = None
-        
+
         # Try 1: Common Crawl
         if use_common_crawl:
             try:
@@ -3078,11 +3226,12 @@ class BaseStateScraper(ABC):
                     method_used = "common_crawl"
             except Exception as e:
                 self.logger.warning(f"Common Crawl failed: {e}")
-        
+
         # Try 2: Direct HTTP
         if not content:
             try:
                 import httpx
+
                 async with httpx.AsyncClient(timeout=30.0) as client:
                     response = await client.get(url)
                     if response.status_code == 200:
@@ -3090,11 +3239,12 @@ class BaseStateScraper(ABC):
                         method_used = "http"
             except Exception as e:
                 self.logger.warning(f"HTTP request failed: {e}")
-        
+
         # Try 3: Playwright (if available)
         if not content:
             try:
                 from playwright.async_api import async_playwright
+
                 async with acquire_playwright_slot():
                     async with async_playwright() as p:
                         browser = await p.chromium.launch()
@@ -3110,41 +3260,44 @@ class BaseStateScraper(ABC):
                                 await browser.close()
             except Exception as e:
                 self.logger.warning(f"Playwright failed: {e}")
-        
+
         if not content:
             self.logger.error(f"All fallback methods failed for: {url}")
             return None
-        
+
         # Extract with GraphRAG if requested
         extracted_data = {}
         if use_graphrag:
             extracted_data = await self.extract_with_graphrag(content)
-        
+
         # Parse content to create NormalizedStatute
         # This is a simplified parser - real implementation would be more sophisticated
         from bs4 import BeautifulSoup
-        soup = BeautifulSoup(content, 'html.parser')
-        
+
+        soup = BeautifulSoup(content, "html.parser")
+
         # Extract basic information
-        title = soup.find('title')
+        title = soup.find("title")
         title_text = title.get_text().strip() if title else "Unknown"
-        
+
         # Try to extract section number from URL or title
-        section_number = self._extract_section_number(url) or self._extract_section_number(title_text)
-        
+        section_number = self._extract_section_number(url) or self._extract_section_number(
+            title_text
+        )
+
         # Create normalized statute
         statute = NormalizedStatute(
             state_code=self.state_code,
             state_name=self.state_name,
-            statute_id=section_number or url.split('/')[-1],
+            statute_id=section_number or url.split("/")[-1],
             section_number=section_number,
             short_title=title_text,
             full_text=soup.get_text()[:10000],  # Limit text length
             source_url=url,
             legal_area=self._identify_legal_area(title_text),
-            metadata=StatuteMetadata()
+            metadata=StatuteMetadata(),
         )
-        
+
         self.logger.info(f"Scraped statute using {method_used}: {statute.statute_id}")
 
         return self._enrich_statute_structure(statute)

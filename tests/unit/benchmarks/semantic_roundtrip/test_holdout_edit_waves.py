@@ -63,9 +63,7 @@ RESIDUAL_CATALOG_PATH = (
     / "semantic-roundtrip-compositions"
     / "holdout_residual_catalog.json"
 )
-HOLDOUT_CASES_PATH = (
-    ROOT / "tests" / "fixtures" / "semantic_roundtrip" / "holdout_cases.json"
-)
+HOLDOUT_CASES_PATH = ROOT / "tests" / "fixtures" / "semantic_roundtrip" / "holdout_cases.json"
 
 # Sealed holdout residual-catalog priors (PLAT2-010 activation subset).
 PRIOR_BY_CASE = {
@@ -99,9 +97,7 @@ def _holdout_cases() -> dict[str, object]:
 
 
 def test_receipts_exist_for_every_sealed_nonzero_holdout_case() -> None:
-    catalog = load_holdout_residual_catalog(
-        RESIDUAL_CATALOG_PATH, repo_root=ROOT
-    )
+    catalog = load_holdout_residual_catalog(RESIDUAL_CATALOG_PATH, repo_root=ROOT)
     nonzero = list(catalog["nonzero_case_ids"])  # type: ignore[arg-type]
     assert set(nonzero) == set(NONZERO_HOLDOUT_CASES)
     for case_id in nonzero:
@@ -158,9 +154,7 @@ def test_mean_pilot_forward_remains_zero() -> None:
     losses: list[float] = []
     for case in load_pilot_matrix_cases():
         l1 = construct_baseline_l1(case)
-        losses.append(
-            float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"])
-        )
+        losses.append(float(compare_semantic_ir(case.gold_ir, l1)["semantic_loss"]))
     mean_forward = sum(losses) / len(losses)
     assert mean_forward <= BASELINE_E2E_MEAN + 1e-9
     assert mean_forward == pytest.approx(0.0, abs=1e-9)
@@ -198,9 +192,7 @@ def test_structured_condition_mapping_rejects_bare_requested() -> None:
         "normalized_text": "if requested",
         "value": "if requested",
     }
-    atoms_full, _ = _map_structured_qualifiers_scored(
-        (full,), vocab.qualifiers, facet="conditions"
-    )
+    atoms_full, _ = _map_structured_qualifiers_scored((full,), vocab.qualifiers, facet="conditions")
     assert atoms_full == ("if_requested",)
 
 
@@ -220,9 +212,7 @@ def test_exception_clause_type_prefixes_unless_atoms() -> None:
     }
     text = _structured_clause_match_text(clause, facet="exceptions")
     assert "unless" in text.lower()
-    atoms, _ = _map_structured_qualifiers_scored(
-        (clause,), vocab.qualifiers, facet="exceptions"
-    )
+    atoms, _ = _map_structured_qualifiers_scored((clause,), vocab.qualifiers, facet="exceptions")
     assert atoms == ("unless_required_by_law",)
 
 
@@ -323,9 +313,7 @@ def test_projection_collapses_of_dual_norms_unit() -> None:
             }
         ),
     ]
-    ir, _diagnostics = project_legal_norms_with_diagnostics(
-        norms, vocabulary, source_text=source
-    )
+    ir, _diagnostics = project_legal_norms_with_diagnostics(norms, vocabulary, source_text=source)
     assert len(ir.rules) == 1
     rule = ir.rules[0]
     assert rule.modality == "F"
@@ -352,10 +340,7 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion(
 
     packet_cids = receipt["packet_cids"]
     assert isinstance(packet_cids, list) and packet_cids
-    assert all(
-        isinstance(item, str) and item.startswith("baguqeera")
-        for item in packet_cids
-    )
+    assert all(isinstance(item, str) and item.startswith("baguqeera") for item in packet_cids)
     packet_ids = receipt["packet_ids"]
     assert isinstance(packet_ids, list) and packet_ids
     assert any("plat2-050" in str(item) for item in packet_ids)
@@ -363,24 +348,14 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion(
     assert receipt["residual_catalog_cid"] == catalog["catalog_cid"]
     prior = receipt["prior_scores"]
     assert isinstance(prior, dict)
-    assert float(prior[f"{case_id}_forward_loss"]) == pytest.approx(
-        prior_meta["forward"], abs=1e-8
-    )
-    assert float(prior[f"{case_id}_end_to_end_loss"]) == pytest.approx(
-        prior_meta["e2e"], abs=1e-8
-    )
+    assert float(prior[f"{case_id}_forward_loss"]) == pytest.approx(prior_meta["forward"], abs=1e-8)
+    assert float(prior[f"{case_id}_end_to_end_loss"]) == pytest.approx(prior_meta["e2e"], abs=1e-8)
 
     post = receipt["post_scores"]
     assert isinstance(post, dict)
-    assert float(post[f"{case_id}_forward_loss"]) <= float(
-        prior[f"{case_id}_forward_loss"]
-    ) + 1e-9
-    assert float(post[f"{case_id}_forward_loss"]) == pytest.approx(
-        0.0, abs=1e-9
-    )
-    assert float(post["mean_pilot_forward_loss"]) == pytest.approx(
-        0.0, abs=1e-9
-    )
+    assert float(post[f"{case_id}_forward_loss"]) <= float(prior[f"{case_id}_forward_loss"]) + 1e-9
+    assert float(post[f"{case_id}_forward_loss"]) == pytest.approx(0.0, abs=1e-9)
+    assert float(post["mean_pilot_forward_loss"]) == pytest.approx(0.0, abs=1e-9)
 
     assert receipt["optional_runtimes_promoted"] == []
     assert receipt["production_constructor_identity"] == (
@@ -388,9 +363,7 @@ def test_edit_wave_receipt_cites_packet_and_forbids_optional_promotion(
     )
     assert receipt["production_runtime_unchanged"] is True
     assert "modal_spacy" not in str(receipt.get("production_composition", ""))
-    assert "leanstral" not in str(
-        receipt.get("production_composition", "")
-    ).lower()
+    assert "leanstral" not in str(receipt.get("production_composition", "")).lower()
 
     changes = receipt["deterministic_changes"]
     assert isinstance(changes, list) and changes
@@ -414,9 +387,9 @@ def test_structural_constraint_names_still_declared() -> None:
 def test_constructor_identity_unchanged_and_no_llm_dependency() -> None:
     constructor = TypedDeonticCanonicalConstructor()
     assert constructor.identity == TYPED_DEONTIC_CANONICAL_CONSTRUCTOR_INTERFACE
-    source = (
-        ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py"
-    ).read_text(encoding="utf-8")
+    source = (ROOT / "benchmarks/semantic_roundtrip/constructors/typed_deontic.py").read_text(
+        encoding="utf-8"
+    )
     lowered = source.lower()
     for banned in (
         "openai",

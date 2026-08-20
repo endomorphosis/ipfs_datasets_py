@@ -69,13 +69,7 @@ ipfs-datasets dataset validate --path /data --json
 ### MCP Tool Structure
 
 ```python
-{
-    "tool": "category/tool_name",
-    "parameters": {
-        "param1": "value1",
-        "param2": "value2"
-    }
-}
+{"tool": "category/tool_name", "parameters": {"param1": "value1", "param2": "value2"}}
 ```
 
 **Example**:
@@ -649,15 +643,12 @@ ipfs-datasets search basic "query" --json | jq '.results | length'
 def validate_dataset(path):
     if not os.path.exists(path):
         raise ValueError(f"Path not found: {path}")
-    
-    result = mcp_client.invoke_tool(
-        "dataset_tools/validate_dataset",
-        {"path": path}
-    )
-    
+
+    result = mcp_client.invoke_tool("dataset_tools/validate_dataset", {"path": path})
+
     if result.get("error"):
         raise RuntimeError(result["error"])
-    
+
     return result
 ```
 

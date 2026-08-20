@@ -18,7 +18,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -31,8 +31,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimize
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
@@ -40,11 +44,11 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     TextProcessor,
     LLMChunk,
     LLMDocument,
-    LLMChunkMetadata
+    LLMChunkMetadata,
 )
 
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
-    LLMDocumentTestDataFactory
+    LLMDocumentTestDataFactory,
 )
 
 
@@ -82,10 +86,6 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
-
-
-
 class TestLLMDocumentAttributeAccess:
     """Test LLMDocument attribute access and modification."""
 
@@ -93,7 +93,7 @@ class TestLLMDocumentAttributeAccess:
     def metadata(self) -> MagicMock:
         """
         Fixture to create a mock LLMChunkMetadata instance for testing.
-        
+
         Returns:
             MagicMock: Mocked LLMChunkMetadata instance.
         """
@@ -106,10 +106,8 @@ class TestLLMDocumentAttributeAccess:
         THEN expect correct document_id value returned
         """
         # Given
-        document = LLMDocumentTestDataFactory.create_document_instance(
-            document_id="doc_test_123"
-        )
-        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_id="doc_test_123")
+
         # When/Then
         assert document.document_id == "doc_test_123"
 
@@ -123,10 +121,9 @@ class TestLLMDocumentAttributeAccess:
         document = LLMDocumentTestDataFactory.create_document_instance(
             title="Advanced Document Processing Analysis"
         )
-        
+
         # When/Then
         assert document.title == "Advanced Document Processing Analysis"
-
 
     def test_chunks_attribute_access(self):
         """
@@ -138,36 +135,31 @@ class TestLLMDocumentAttributeAccess:
             - List order preserved
         """
         from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
-            LLMChunkTestDataFactory
+            LLMChunkTestDataFactory,
         )
-        
+
         # Given
         chunks = [
             LLMChunkTestDataFactory.create_chunk_instance(
-                content="First chunk content",
-                chunk_id="chunk_0001",
-                source_page=1
+                content="First chunk content", chunk_id="chunk_0001", source_page=1
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk content",
                 chunk_id="chunk_0002",
                 source_page=1,
-                relationships=["chunk_0001"]
-            )
+                relationships=["chunk_0001"],
+            ),
         ]
-        
+
         document = LLMDocumentTestDataFactory.create_document_instance(
-            title="Multi-chunk Document",
-            chunks=chunks,
-            summary="Document with multiple chunks"
+            title="Multi-chunk Document", chunks=chunks, summary="Document with multiple chunks"
         )
-        
+
         # When/Then
         assert isinstance(document.chunks, list)
         assert len(document.chunks) == 2
         assert all(isinstance(chunk, LLMChunk) for chunk in document.chunks)
         assert document.chunks == chunks  # Order preserved and validates chunk_ids
-
 
     def test_summary_attribute_access(self):
         """
@@ -177,15 +169,11 @@ class TestLLMDocumentAttributeAccess:
         """
         # Given
         summary_text = "This document analyzes advanced machine learning techniques for document processing and optimization."
-        
-        document = LLMDocumentTestDataFactory.create_document_instance(
-            summary=summary_text
-        )
-        
+
+        document = LLMDocumentTestDataFactory.create_document_instance(summary=summary_text)
+
         # When/Then
         assert document.summary == summary_text
-
-
 
     def test_key_entities_attribute_access(self):
         """
@@ -200,27 +188,26 @@ class TestLLMDocumentAttributeAccess:
         key_entities = [
             {"type": "PERSON", "value": "John Doe", "confidence": 0.95},
             {"type": "ORG", "value": "OpenAI", "confidence": 0.92},
-            {"type": "GPE", "value": "San Francisco", "confidence": 0.88}
+            {"type": "GPE", "value": "San Francisco", "confidence": 0.88},
         ]
-        
+
         document = LLMDocumentTestDataFactory.create_document_instance(
             title="Entity Rich Document",
             summary="Document with multiple entities",
-            key_entities=key_entities
+            key_entities=key_entities,
         )
-        
+
         # When/Then
         assert isinstance(document.key_entities, list)
         assert len(document.key_entities) == 3
         assert all(isinstance(entity, dict) for entity in document.key_entities)
         assert document.key_entities == key_entities
-        
+
         # Verify specific entity access
         assert document.key_entities[0]["type"] == "PERSON"
         assert document.key_entities[0]["value"] == "John Doe"
         assert document.key_entities[1]["type"] == "ORG"
         assert document.key_entities[2]["type"] == "GPE"
-
 
     def test_processing_metadata_attribute_access(self):
         """
@@ -239,24 +226,23 @@ class TestLLMDocumentAttributeAccess:
             "token_total": 150,
             "entities_found": 3,
             "confidence_avg": 0.89,
-            "timestamp": "2024-01-01T12:00:00Z"
+            "timestamp": "2024-01-01T12:00:00Z",
         }
-        
+
         document = LLMDocumentTestDataFactory.create_document_instance(
             processing_metadata=processing_metadata
         )
-        
+
         # When/Then
         assert isinstance(document.processing_metadata, dict)
         assert document.processing_metadata == processing_metadata
         assert len(document.processing_metadata) == 8
-        
+
         # Verify specific metadata access
         assert document.processing_metadata["processing_time"] == 2.45
         assert document.processing_metadata["model"] == "advanced_optimizer_v2"
         assert document.processing_metadata["chunk_count"] == 5
         assert "timestamp" in document.processing_metadata
-
 
     def test_document_embedding_attribute_access_none(self):
         """
@@ -265,13 +251,10 @@ class TestLLMDocumentAttributeAccess:
         THEN expect None returned
         """
         # Given
-        document = LLMDocumentTestDataFactory.create_document_instance(
-            document_embedding=None
-        )
-        
+        document = LLMDocumentTestDataFactory.create_document_instance(document_embedding=None)
+
         # When/Then
         assert document.document_embedding is None
-
 
     def test_document_embedding_attribute_access_array(self):
         """
@@ -284,18 +267,17 @@ class TestLLMDocumentAttributeAccess:
         """
         # Given
         document_embedding = np.array([0.15, 0.25, 0.35, 0.45, 0.55], dtype=np.float32)
-        
+
         document = LLMDocumentTestDataFactory.create_document_instance(
             document_embedding=document_embedding
         )
-        
+
         # When/Then
         assert isinstance(document.document_embedding, np.ndarray)
         assert document.document_embedding.shape == (5,)
         assert document.document_embedding.dtype == np.float32
         assert np.array_equal(document.document_embedding, document_embedding)
         assert np.allclose(document.document_embedding, [0.15, 0.25, 0.35, 0.45, 0.55])
-
 
 
 if __name__ == "__main__":

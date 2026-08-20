@@ -20,7 +20,7 @@ Usage:
     from ipfs_datasets_py.logic.CEC.provers import (
         ProverManager, ProverStrategy
     )
-    
+
     # Automatic prover selection
     manager = ProverManager()
     result = manager.prove(
@@ -28,10 +28,10 @@ Usage:
         axioms=[axiom1, axiom2],
         strategy=ProverStrategy.AUTO
     )
-    
+
     # Or use specific prover
     from ipfs_datasets_py.logic.CEC.provers import Z3Adapter
-    
+
     z3 = Z3Adapter()
     result = z3.prove(formula, axioms)
 """
@@ -97,27 +97,27 @@ class TPTPConverter:
 
 __all__ = [
     # Z3
-    'Z3Adapter',
-    'ProofStatus',
-    'Z3ProofResult',
+    "Z3Adapter",
+    "ProofStatus",
+    "Z3ProofResult",
     # TPTP
-    'TPTPConverter',
-    'TPTPFormula',
-    'formula_to_tptp',
-    'create_tptp_problem',
+    "TPTPConverter",
+    "TPTPFormula",
+    "formula_to_tptp",
+    "create_tptp_problem",
     # Vampire
-    'VampireAdapter',
-    'VampireProofResult',
-    'VampireResult',  # compat alias
+    "VampireAdapter",
+    "VampireProofResult",
+    "VampireResult",  # compat alias
     # E Prover
-    'EProverAdapter',
-    'EProverProofResult',
-    'EProverResult',  # compat alias
+    "EProverAdapter",
+    "EProverProofResult",
+    "EProverResult",  # compat alias
     # Manager
-    'ProverManager',
-    'ProverStrategy',
-    'ProverConfig',
-    'ProverType',
-    'UnifiedProofResult',
-    'ProverResult',  # compat alias
+    "ProverManager",
+    "ProverStrategy",
+    "ProverConfig",
+    "ProverType",
+    "UnifiedProofResult",
+    "ProverResult",  # compat alias
 ]

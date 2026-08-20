@@ -119,7 +119,11 @@ class ModalFrameLogicBridgeAdapter:
             if statutory_scaffold_calibrated
             else 1.0
         )
-        status = "ok" if ir_document.has_frame_logic and graph_result.graph_failure_penalty == 0.0 else "partial"
+        status = (
+            "ok"
+            if ir_document.has_frame_logic and graph_result.graph_failure_penalty == 0.0
+            else "partial"
+        )
         if should_prove and not proof_gate.compiles:
             status = "partial"
         target_metric_vector = _target_metric_vector(
@@ -221,9 +225,7 @@ class ModalFrameLogicBridgeAdapter:
                 source_component="knowledge_graphs.neo4j_compat",
                 payload=graph_payload,
                 metadata={
-                    **_graph_view_alignment_metadata(
-                        getattr(graph_data, "metadata", {}) or {}
-                    ),
+                    **_graph_view_alignment_metadata(getattr(graph_data, "metadata", {}) or {}),
                     "node_count": getattr(graph_data, "node_count", 0),
                     "relationship_count": getattr(graph_data, "relationship_count", 0),
                 },
@@ -340,11 +342,7 @@ def _graph_view_alignment_metadata(metadata: Mapping[str, Any]) -> dict[str, Any
         "legal_ir_graph_projection_signal_ratio",
         "neo4j_compatible",
     }
-    return {
-        str(key): value
-        for key, value in dict(metadata or {}).items()
-        if str(key) in allowed
-    }
+    return {str(key): value for key, value in dict(metadata or {}).items() if str(key) in allowed}
 
 
 def _frame_ontology_audit_metadata(subject: Any) -> dict[str, Any]:
@@ -379,11 +377,7 @@ def _frame_ontology_audit_metadata(subject: Any) -> dict[str, Any]:
         "frame_ontology_terms_from_triples",
         "frame_ontology_terms_from_triples_count",
     }
-    return {
-        str(key): value
-        for key, value in metadata.items()
-        if str(key) in allowed
-    }
+    return {str(key): value for key, value in metadata.items() if str(key) in allowed}
 
 
 def _target_metric_vector(
@@ -517,8 +511,7 @@ def _calibrate_round_trip_for_sparse_citation(
     scaled_cosine_distance = cosine_distance * scale
     scaled_cosine_similarity = max(-1.0, min(1.0, 1.0 - scaled_cosine_distance))
     scaled_extra_losses = {
-        str(name): _float(value) * scale
-        for name, value in round_trip.extra_losses.items()
+        str(name): _float(value) * scale for name, value in round_trip.extra_losses.items()
     }
     return (
         RoundTripMetrics(
@@ -526,8 +519,7 @@ def _calibrate_round_trip_for_sparse_citation(
             cosine_loss=scaled_cosine_distance,
             cross_entropy_loss=max(0.0, _float(round_trip.cross_entropy_loss)) * scale,
             reconstruction_loss=max(0.0, _float(round_trip.reconstruction_loss)) * scale,
-            text_reconstruction_loss=max(0.0, _float(round_trip.text_reconstruction_loss))
-            * scale,
+            text_reconstruction_loss=max(0.0, _float(round_trip.text_reconstruction_loss)) * scale,
             frame_ranking_loss=max(0.0, _float(round_trip.frame_ranking_loss)) * scale,
             flogic_similarity_score=max(-1.0, min(1.0, 1.0 - scaled_cosine_distance)),
             flogic_similarity_loss=scaled_cosine_distance,
@@ -553,8 +545,7 @@ def _calibrate_round_trip_for_statutory_scaffold(
     scaled_cosine_distance = cosine_distance * scale
     scaled_cosine_similarity = max(-1.0, min(1.0, 1.0 - scaled_cosine_distance))
     scaled_extra_losses = {
-        str(name): _float(value) * scale
-        for name, value in round_trip.extra_losses.items()
+        str(name): _float(value) * scale for name, value in round_trip.extra_losses.items()
     }
     return (
         RoundTripMetrics(
@@ -562,12 +553,10 @@ def _calibrate_round_trip_for_statutory_scaffold(
             cosine_loss=max(0.0, _float(round_trip.cosine_loss)) * scale,
             cross_entropy_loss=max(0.0, _float(round_trip.cross_entropy_loss)) * scale,
             reconstruction_loss=max(0.0, _float(round_trip.reconstruction_loss)) * scale,
-            text_reconstruction_loss=max(0.0, _float(round_trip.text_reconstruction_loss))
-            * scale,
+            text_reconstruction_loss=max(0.0, _float(round_trip.text_reconstruction_loss)) * scale,
             frame_ranking_loss=max(0.0, _float(round_trip.frame_ranking_loss)) * scale,
             flogic_similarity_score=max(-1.0, min(1.0, 1.0 - scaled_cosine_distance)),
-            flogic_similarity_loss=max(0.0, _float(round_trip.flogic_similarity_loss))
-            * scale,
+            flogic_similarity_loss=max(0.0, _float(round_trip.flogic_similarity_loss)) * scale,
             ontology_violation_count=max(0.0, _float(round_trip.ontology_violation_count)),
             symbolic_validity_penalty=max(0.0, _float(round_trip.symbolic_validity_penalty)),
             extra_losses=scaled_extra_losses,
@@ -608,9 +597,7 @@ def _is_statutory_scaffold_text(text: str, *, citation: Optional[str]) -> bool:
     if not has_us_code_citation:
         return False
 
-    scaffold_markers = sum(
-        1 for _match in _STATUTORY_SCAFFOLD_MARKER_RE.finditer(normalized_text)
-    )
+    scaffold_markers = sum(1 for _match in _STATUTORY_SCAFFOLD_MARKER_RE.finditer(normalized_text))
     structure_markers = sum(
         1 for _match in _STATUTORY_STRUCTURE_MARKER_RE.finditer(normalized_text)
     )

@@ -117,9 +117,7 @@ def _manifest(
     examples = (IntentSplitExample.from_sample(document),) + tuple(
         IntentSplitExample.from_sample(
             item,
-            content_digests=tuple(
-                source.content_sha256 for source in item.sources
-            ),
+            content_digests=tuple(source.content_sha256 for source in item.sources),
             near_duplicate_signature=(),
         )
         for item, _ in extra
@@ -154,16 +152,10 @@ def _observation(
             IntentBenchmarkArm.LEGAL_ENCODER_TRANSFER: 300,
         }[arm],
         cost=IntentBenchmarkCost(
-            input_tokens=0
-            if arm is IntentBenchmarkArm.DETERMINISTIC_ONLY
-            else 10,
-            output_tokens=0
-            if arm is IntentBenchmarkArm.DETERMINISTIC_ONLY
-            else 5,
+            input_tokens=0 if arm is IntentBenchmarkArm.DETERMINISTIC_ONLY else 10,
+            output_tokens=0 if arm is IntentBenchmarkArm.DETERMINISTIC_ONLY else 5,
             compute_seconds=0.01,
-            estimated_usd=0.0
-            if arm is IntentBenchmarkArm.DETERMINISTIC_ONLY
-            else 0.001,
+            estimated_usd=0.0 if arm is IntentBenchmarkArm.DETERMINISTIC_ONLY else 0.001,
         ),
         **changes,
     )
@@ -188,9 +180,7 @@ def test_paired_receipt_reports_every_required_quality_and_resource_metric() -> 
     example = IntentBenchmarkExample(document=document)
     harness = IntentFormalizationBenchmark([example], _manifest(document))
     observations = [
-        _observation(
-            arm, document, artifact, proof_execution=execution
-        )
+        _observation(arm, document, artifact, proof_execution=execution)
         for arm in IntentBenchmarkArm
     ]
 
@@ -240,11 +230,7 @@ def test_paired_receipt_reports_every_required_quality_and_resource_metric() -> 
         "peak_memory_bytes",
         "cost",
     }
-    assert required <= set(
-        wire["metrics_by_arm"][
-            IntentBenchmarkArm.DETERMINISTIC_ONLY.value
-        ]
-    )
+    assert required <= set(wire["metrics_by_arm"][IntentBenchmarkArm.DETERMINISTIC_ONLY.value])
     assert json.loads(report.to_json())["report_digest"] == report.digest
     assert set(report.paired_deltas) == {
         IntentBenchmarkArm.INTENT_FROM_SCRATCH,
@@ -255,17 +241,13 @@ def test_paired_receipt_reports_every_required_quality_and_resource_metric() -> 
 def test_semantic_mutation_changes_modality_f1_and_round_trip() -> None:
     document = _document()
     artifact = IntentFormalizationCompiler().compile(document)
-    modal = next(
-        item for item in artifact.formulas if item.view_id == INTENT_MODAL_VIEW_ID
-    )
+    modal = next(item for item in artifact.formulas if item.view_id == INTENT_MODAL_VIEW_ID)
     expression = dict(modal.expression)
     expression["operator"] = IntentModality.PROHIBITED.value
     mutated = replace(
         artifact,
         formulas=tuple(
-            replace(item, expression=expression)
-            if item.formula_id == modal.formula_id
-            else item
+            replace(item, expression=expression) if item.formula_id == modal.formula_id else item
             for item in artifact.formulas
         ),
     )
@@ -276,9 +258,7 @@ def test_semantic_mutation_changes_modality_f1_and_round_trip() -> None:
         _observation(
             arm,
             document,
-            mutated
-            if arm is IntentBenchmarkArm.INTENT_FROM_SCRATCH
-            else artifact,
+            mutated if arm is IntentBenchmarkArm.INTENT_FROM_SCRATCH else artifact,
         )
         for arm in IntentBenchmarkArm
     ]
@@ -290,10 +270,7 @@ def test_semantic_mutation_changes_modality_f1_and_round_trip() -> None:
     assert candidate.semantic_mutation_rate == 1.0
     assert candidate.round_trip_accuracy == 0.0
     assert (
-        report.paired_deltas[
-            IntentBenchmarkArm.INTENT_FROM_SCRATCH
-        ].semantic_mutation_rate
-        == 1.0
+        report.paired_deltas[IntentBenchmarkArm.INTENT_FROM_SCRATCH].semantic_mutation_rate == 1.0
     )
 
 
@@ -304,16 +281,10 @@ def test_cross_partition_retrieval_and_authority_claims_fail_promotion() -> None
         source_id="training-source",
         content="b",
     )
-    manifest = _manifest(
-        document, extra=((training_document, TRAIN_PARTITION),)
-    )
+    manifest = _manifest(document, extra=((training_document, TRAIN_PARTITION),))
     artifact = IntentFormalizationCompiler().compile(document)
-    harness = IntentFormalizationBenchmark(
-        [IntentBenchmarkExample(document=document)], manifest
-    )
-    observations = [
-        _observation(arm, document, artifact) for arm in IntentBenchmarkArm
-    ]
+    harness = IntentFormalizationBenchmark([IntentBenchmarkExample(document=document)], manifest)
+    observations = [_observation(arm, document, artifact) for arm in IntentBenchmarkArm]
     observations[1] = replace(
         observations[1],
         retrieved_sample_ids=(training_document.document_id,),
@@ -356,9 +327,7 @@ def test_source_family_leakage_is_rejected_before_any_runner_executes() -> None:
     )
 
     with pytest.raises(IntentBenchmarkIntegrityError, match="source-family"):
-        IntentFormalizationBenchmark(
-            [IntentBenchmarkExample(document=document)], leaked_manifest
-        )
+        IntentFormalizationBenchmark([IntentBenchmarkExample(document=document)], leaked_manifest)
 
 
 def test_exact_paired_matrix_is_required() -> None:
@@ -405,7 +374,6 @@ def test_runner_api_measures_telemetry_without_live_models() -> None:
     assert len(calls) == len(IntentBenchmarkArm)
     assert report.promotion_eligible
     assert all(
-        metrics.mean_latency_ms > 0.0
-        and metrics.peak_memory_bytes > 0
+        metrics.mean_latency_ms > 0.0 and metrics.peak_memory_bytes > 0
         for metrics in report.metrics_by_arm.values()
     )

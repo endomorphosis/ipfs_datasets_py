@@ -36,6 +36,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 @dataclass
 class TimingResult:
     """Result of a single timing measurement."""
+
     method: str
     entity_count: int
     relationship_count: int
@@ -62,22 +63,21 @@ class TestInferRelationshipsPerformance:
             window_size=200,  # Matches infer_relationships sliding window
         )
         return OntologyGenerationContext(
-            data_source="test_data",
-            data_type="text",
-            domain="general",
-            config=config
+            data_source="test_data", data_type="text", domain="general", config=config
         )
 
     def _create_entities(self, count: int, base_text: str = "Entity") -> List[Entity]:
         """Create test entities with predictable positions in text."""
         entities = []
         for i in range(count):
-            entities.append(Entity(
-                id=f"e_{i:04d}",
-                text=f"{base_text}_{i}",
-                type="Agent" if i % 3 == 0 else "Action" if i % 3 == 1 else "Concept",
-                confidence=0.75,
-            ))
+            entities.append(
+                Entity(
+                    id=f"e_{i:04d}",
+                    text=f"{base_text}_{i}",
+                    type="Agent" if i % 3 == 0 else "Action" if i % 3 == 1 else "Concept",
+                    confidence=0.75,
+                )
+            )
         return entities
 
     def _create_test_text(self, entities: List[Entity]) -> str:
@@ -87,7 +87,7 @@ class TestInferRelationshipsPerformance:
         for i, ent in enumerate(entities):
             parts.append(ent.text)
             if i % 5 == 4:  # Add contextual phrase every 5 entities
-                parts.append(f"{ent.text} must pay {entities[(i+1) % len(entities)].text}.")
+                parts.append(f"{ent.text} must pay {entities[(i + 1) % len(entities)].text}.")
         return " ".join(parts)
 
     def test_infer_relationships_10_entities(self, generator, context):
@@ -190,8 +190,8 @@ class TestInferRelationshipsPerformance:
         # Linear = 1.0, Quadratic = 2.0, between = good
         ratios = []
         for i in range(1, len(timings)):
-            size_ratio = timings[i][0] / timings[i-1][0]
-            time_ratio = timings[i][1] / timings[i-1][1]
+            size_ratio = timings[i][0] / timings[i - 1][0]
+            time_ratio = timings[i][1] / timings[i - 1][1]
             if time_ratio > 0:  # Skip zero divisions
                 ratios.append(time_ratio / size_ratio)
 
@@ -227,7 +227,7 @@ class TestInferRelationshipsPerformance:
             # Add contextual phrases to create verb relationships
             if i % 2 == 0 and i < len(entities) - 1:
                 parts.append(f" must ")
-                parts.append(entities[(i+1) % len(entities)].text)
+                parts.append(entities[(i + 1) % len(entities)].text)
 
         text = " ".join(parts)
 
@@ -249,8 +249,15 @@ class TestInferRelationshipsPerformance:
 
         # Types should be from expected set
         valid_types = {
-            'related_to', 'obligates', 'owns', 'employs', 'manages',
-            'causes', 'is_a', 'part_of', 'agrees_with'
+            "related_to",
+            "obligates",
+            "owns",
+            "employs",
+            "manages",
+            "causes",
+            "is_a",
+            "part_of",
+            "agrees_with",
         }
 
         for rel in relationships:
@@ -265,8 +272,8 @@ class TestInferRelationshipsPerformance:
 
         for rel in relationships:
             assert 0 <= rel.confidence <= 1, f"Confidence out of range: {rel.confidence}"
-            assert 'type_confidence' in rel.properties
-            assert 0 <= rel.properties['type_confidence'] <= 1
+            assert "type_confidence" in rel.properties
+            assert 0 <= rel.properties["type_confidence"] <= 1
 
     def test_infer_relationships_empty_entities(self, generator, context):
         """Edge case: Empty entity list should return empty relationships."""
@@ -325,7 +332,7 @@ class TestInferRelationshipsPerformanceBenchmark:
     def test_performance_benchmark_summary(self):
         """
         Summary benchmark: profile across multiple scenarios.
-        
+
         This test demonstrates the performance characteristics of the optimized
         infer_relationships() implementation and validates that it meets the
         estimated 10-15% improvement target from Batch 198 optimizations.
@@ -333,10 +340,7 @@ class TestInferRelationshipsPerformanceBenchmark:
         generator = OntologyGenerator()
         config = ExtractionConfig(window_size=200)
         context = OntologyGenerationContext(
-            data_source="benchmark",
-            data_type="text",
-            domain="general",
-            config=config
+            data_source="benchmark", data_type="text", domain="general", config=config
         )
 
         scenarios = [
@@ -368,7 +372,7 @@ class TestInferRelationshipsPerformanceBenchmark:
             for i, ent in enumerate(entities):
                 parts.append(ent.text)
                 if i % 5 == 0:
-                    parts.append(f"{ent.text} must pay {entities[(i+1) % len(entities)].text}.")
+                    parts.append(f"{ent.text} must pay {entities[(i + 1) % len(entities)].text}.")
 
             text = " ".join(parts)
 
@@ -384,13 +388,15 @@ class TestInferRelationshipsPerformanceBenchmark:
             rel_count = len(rels)
             rels_per_sec = (rel_count / median_time * 1000) if median_time > 0 else 0
 
-            results.append({
-                'scenario': label,
-                'entities': entity_count,
-                'relationships': rel_count,
-                'time_ms': median_time,
-                'rels_per_sec': rels_per_sec,
-            })
+            results.append(
+                {
+                    "scenario": label,
+                    "entities": entity_count,
+                    "relationships": rel_count,
+                    "time_ms": median_time,
+                    "rels_per_sec": rels_per_sec,
+                }
+            )
 
             print(
                 f"\n{label}:\n"
@@ -401,8 +407,8 @@ class TestInferRelationshipsPerformanceBenchmark:
             )
 
         # Validate scaling
-        small_time = results[0]['time_ms']
-        large_time = results[2]['time_ms']
+        small_time = results[0]["time_ms"]
+        large_time = results[2]["time_ms"]
         size_ratio = 200 / 10  # 20x larger
         time_ratio = large_time / small_time
 
@@ -420,7 +426,7 @@ class TestInferRelationshipsPerformanceBenchmark:
         print("=" * 70)
 
         # Assertions
-        assert all(r['time_ms'] < 2000 for r in results), "Some scenarios exceeded 2s limit"
+        assert all(r["time_ms"] < 2000 for r in results), "Some scenarios exceeded 2s limit"
         # Note: Scaling factor may be high for very small tests due to timing variance
         # The important metric is that time_ms is reasonable for each scenario
         if small_time > 0:

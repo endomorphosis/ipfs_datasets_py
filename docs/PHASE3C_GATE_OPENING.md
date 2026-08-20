@@ -172,12 +172,12 @@ Implement REAL zero-knowledge proofs using Groth16 zkSNARKs, replacing simulated
 ```python
 # MVPWitness - IMMUTABLE
 witness = MVPWitness(
-    private_axioms=["P", "P -> Q"],      # Secret axioms
-    theorem="Q",                          # Public statement
-    axioms_commitment_hex="03b7...",      # SHA256 mod r
-    theorem_hash_hex="4ae8...",           # SHA256 mod r
-    circuit_version=1,                    # Versioning support
-    ruleset_id="TDFOL_v1",                # System identifier
+    private_axioms=["P", "P -> Q"],  # Secret axioms
+    theorem="Q",  # Public statement
+    axioms_commitment_hex="03b7...",  # SHA256 mod r
+    theorem_hash_hex="4ae8...",  # SHA256 mod r
+    circuit_version=1,  # Versioning support
+    ruleset_id="TDFOL_v1",  # System identifier
 )
 
 # Validation - REQUIRED before Phase 3C proof generation

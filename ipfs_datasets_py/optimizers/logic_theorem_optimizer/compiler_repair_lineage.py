@@ -22,9 +22,7 @@ from typing import Any, Final, Optional
 
 
 COMPILER_REPAIR_LINEAGE_SCHEMA_VERSION: Final = "legal-ir-compiler-repair-lineage-v1"
-COMPILER_REPAIR_PRIORITIZATION_SCHEMA_VERSION: Final = (
-    "legal-ir-compiler-repair-prioritization-v1"
-)
+COMPILER_REPAIR_PRIORITIZATION_SCHEMA_VERSION: Final = "legal-ir-compiler-repair-prioritization-v1"
 
 STATE_SNAPSHOT = "state_snapshot"
 METRIC_GAP = "metric_gap"
@@ -49,9 +47,7 @@ REQUIRED_REPAIR_EVIDENCE_KINDS: Final[tuple[str, ...]] = (
     MERGE,
     NEXT_CYCLE_OBSERVATION,
 )
-VALID_REPAIR_EVIDENCE_KINDS: Final[frozenset[str]] = frozenset(
-    REQUIRED_REPAIR_EVIDENCE_KINDS
-)
+VALID_REPAIR_EVIDENCE_KINDS: Final[frozenset[str]] = frozenset(REQUIRED_REPAIR_EVIDENCE_KINDS)
 
 DETERMINISTIC_EVIDENCE_DEFAULTS: Final[frozenset[str]] = frozenset(
     {
@@ -158,7 +154,9 @@ class CompilerRepairOutcome(str, Enum):
             return cls(normalized)
         except ValueError as exc:
             expected = ", ".join(outcome.value for outcome in cls)
-            raise ValueError(f"unsupported compiler repair outcome {value!r}; expected {expected}") from exc
+            raise ValueError(
+                f"unsupported compiler repair outcome {value!r}; expected {expected}"
+            ) from exc
 
 
 def _utc_now() -> str:
@@ -203,11 +201,7 @@ def _json_value(value: Any) -> Any:
         return _json_value(to_dict())
     if hasattr(value, "__dict__"):
         return _json_value(
-            {
-                str(key): item
-                for key, item in vars(value).items()
-                if not str(key).startswith("_")
-            }
+            {str(key): item for key, item in vars(value).items() if not str(key).startswith("_")}
         )
     return str(value)
 
@@ -461,15 +455,11 @@ class CompilerRepairEvidenceRef:
     def __post_init__(self) -> None:
         kind = _atom(self.kind, name="kind")
         if kind not in VALID_REPAIR_EVIDENCE_KINDS:
-            raise CompilerRepairLineageValidationError(
-                f"unsupported repair evidence kind {kind!r}"
-            )
+            raise CompilerRepairLineageValidationError(f"unsupported repair evidence kind {kind!r}")
         stable_id = _atom(self.stable_id, name="stable_id")
         payload = self.payload if isinstance(self.payload, Mapping) else {}
         frozen_payload = _freeze_mapping(payload)
-        payload_digest = str(self.payload_digest or "").strip() or _stable_digest(
-            frozen_payload
-        )
+        payload_digest = str(self.payload_digest or "").strip() or _stable_digest(frozen_payload)
         object.__setattr__(self, "kind", kind)
         object.__setattr__(self, "stable_id", stable_id)
         object.__setattr__(
@@ -570,15 +560,18 @@ class CompilerRepairLineageLink:
 
     @property
     def stable_id(self) -> str:
-        return "repair-link:" + _stable_digest(
-            {
-                "relation": self.relation,
-                "source_id": self.source_id,
-                "source_kind": self.source_kind,
-                "target_id": self.target_id,
-                "target_kind": self.target_kind,
-            }
-        )[:24]
+        return (
+            "repair-link:"
+            + _stable_digest(
+                {
+                    "relation": self.relation,
+                    "source_id": self.source_id,
+                    "source_kind": self.source_kind,
+                    "target_id": self.target_id,
+                    "target_kind": self.target_kind,
+                }
+            )[:24]
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -749,22 +742,25 @@ class CompilerRepairLineage:
 
     @property
     def stable_id(self) -> str:
-        return "compiler-repair-lineage:" + _stable_digest(
-            {
-                "attempt": self.attempt,
-                "evidence": [
-                    {
-                        "kind": ref.kind,
-                        "observed_at": ref.observed_at,
-                        "payload_digest": ref.payload_digest,
-                        "stable_id": ref.stable_id,
-                    }
-                    for ref in self.evidence_refs
-                ],
-                "schema_version": self.schema_version,
-                "task_id": self.task_id,
-            }
-        )[:32]
+        return (
+            "compiler-repair-lineage:"
+            + _stable_digest(
+                {
+                    "attempt": self.attempt,
+                    "evidence": [
+                        {
+                            "kind": ref.kind,
+                            "observed_at": ref.observed_at,
+                            "payload_digest": ref.payload_digest,
+                            "stable_id": ref.stable_id,
+                        }
+                        for ref in self.evidence_refs
+                    ],
+                    "schema_version": self.schema_version,
+                    "task_id": self.task_id,
+                }
+            )[:32]
+        )
 
     @property
     def evidence_by_kind(self) -> Mapping[str, CompilerRepairEvidenceRef]:
@@ -1041,9 +1037,7 @@ def _has_stale_evidence(refs: Mapping[str, CompilerRepairEvidenceRef]) -> bool:
         or ""
     ).strip()
     observed_source_state = str(
-        next_payload.get("source_state_hash")
-        or next_payload.get("expected_state_hash")
-        or ""
+        next_payload.get("source_state_hash") or next_payload.get("expected_state_hash") or ""
     ).strip()
     if state_hash and observed_source_state and state_hash != observed_source_state:
         return True
@@ -1064,7 +1058,9 @@ def _operational_failure(refs: Mapping[str, CompilerRepairEvidenceRef]) -> bool:
     codex_statuses = _status_tokens(refs[CODEX_ATTEMPT].payload)
     if any(status in _OPERATIONAL_FAILURE_STATUSES for status in codex_statuses):
         return True
-    if codex_statuses and not any(status in _PASSED_OR_ACCEPTED_STATUSES for status in codex_statuses):
+    if codex_statuses and not any(
+        status in _PASSED_OR_ACCEPTED_STATUSES for status in codex_statuses
+    ):
         return True
 
     merge_statuses = _status_tokens(refs[MERGE].payload)

@@ -68,7 +68,8 @@ python demo_functionality.py
 ### Basic Usage
 ```python
 import os
-os.environ['IPFS_DATASETS_AUTO_INSTALL'] = 'false'
+
+os.environ["IPFS_DATASETS_AUTO_INSTALL"] = "false"
 
 # Import core components
 from ipfs_datasets_py.dataset_manager import DatasetManager

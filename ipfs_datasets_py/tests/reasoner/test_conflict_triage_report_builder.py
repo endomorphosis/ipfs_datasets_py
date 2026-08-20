@@ -1,4 +1,5 @@
 """Tests for WS12-05: Conflict Triage Report Builder (JSON + Markdown)."""
+
 from __future__ import annotations
 
 import json
@@ -34,6 +35,7 @@ from reasoner.hybrid_v2_blueprint import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_frame(key: str) -> FrameV2:
     return FrameV2(
@@ -72,6 +74,7 @@ def _empty_ir() -> LegalIRV2:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestBuildConflictTriageReport:
     def test_required_keys_present(self):

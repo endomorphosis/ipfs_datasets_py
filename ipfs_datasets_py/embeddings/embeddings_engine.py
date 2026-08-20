@@ -9,6 +9,7 @@ All heavy lifting delegates to :mod:`ipfs_datasets_py.embeddings.generation_engi
 for embedding generation, and falls back to simple stubs when optional ML
 dependencies (torch / transformers) are not installed.
 """
+
 from __future__ import annotations
 
 import logging
@@ -29,9 +30,11 @@ logger = logging.getLogger(__name__)
 # Configuration dataclasses
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class EmbeddingConfig:
     """Configuration for embedding generation."""
+
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
     max_length: int = 512
     batch_size: int = 32
@@ -43,16 +46,18 @@ class EmbeddingConfig:
 @dataclass
 class ChunkingConfig:
     """Configuration for text chunking before embedding."""
+
     chunk_size: int = 512
     chunk_overlap: int = 50
-    method: str = "fixed"       # fixed | semantic | sliding_window
-    n_sentences: int = 8        # sentences per chunk (semantic method)
-    step_size: int = 256        # step for sliding window
+    method: str = "fixed"  # fixed | semantic | sliding_window
+    n_sentences: int = 8  # sentences per chunk (semantic method)
+    step_size: int = 256  # step for sliding window
 
 
 # ---------------------------------------------------------------------------
 # AdvancedIPFSEmbeddings
 # ---------------------------------------------------------------------------
+
 
 class AdvancedIPFSEmbeddings:
     """
@@ -195,6 +200,7 @@ class AdvancedIPFSEmbeddings:
 
         else:  # semantic – sentence-based, simplistic fallback
             import re
+
             sentences = re.split(r"(?<=[.!?])\s+", text)
             n = cfg.n_sentences
             for i in range(0, len(sentences), max(n // 2, 1)):
@@ -219,7 +225,9 @@ class AdvancedIPFSEmbeddings:
     def add_libp2p_endpoint(self, model: str, endpoint: str, context_length: int = 512) -> None:
         self._libp2p_endpoints.setdefault(model, []).append((endpoint, context_length))
 
-    def add_local_endpoint(self, model: str, device: str = "cpu", context_length: int = 512) -> None:
+    def add_local_endpoint(
+        self, model: str, device: str = "cpu", context_length: int = 512
+    ) -> None:
         self._local_endpoints.setdefault(model, []).append((device, context_length))
 
     async def test_endpoint(self, endpoint: str, model: str) -> bool:

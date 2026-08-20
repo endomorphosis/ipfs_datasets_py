@@ -6,12 +6,14 @@ Methods under test:
   - OntologyLearningAdapter.best_domain()
   - OntologyOptimizer.score_momentum_delta(window)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -25,11 +27,13 @@ def _push_run(p, overall):
 
 def _make_entity(eid, etype="Person"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=etype, text=eid)
 
 
 def _make_result(entities):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=[], confidence=1.0, metadata={}, errors=[]
     )
@@ -37,11 +41,15 @@ def _make_result(entities):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -54,6 +62,7 @@ def _push_feedback(a, score, domain=None):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -70,6 +79,7 @@ def _push_opt(o, avg):
 # ---------------------------------------------------------------------------
 # OntologyPipeline.scores_above_mean
 # ---------------------------------------------------------------------------
+
 
 class TestScoresAboveMean:
     @pytest.mark.parametrize(
@@ -93,6 +103,7 @@ class TestScoresAboveMean:
 # OntologyGenerator.entity_count_by_type
 # ---------------------------------------------------------------------------
 
+
 class TestEntityCountByType:
     @pytest.mark.parametrize(
         "entities,predicate",
@@ -103,7 +114,11 @@ class TestEntityCountByType:
                 lambda counts: counts == {"Person": 2},
             ),
             (
-                [_make_entity("e1", "Person"), _make_entity("e2", "Org"), _make_entity("e3", "Person")],
+                [
+                    _make_entity("e1", "Person"),
+                    _make_entity("e2", "Org"),
+                    _make_entity("e3", "Person"),
+                ],
                 lambda counts: counts["Person"] == 2 and counts["Org"] == 1,
             ),
             (
@@ -121,6 +136,7 @@ class TestEntityCountByType:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.best_domain
 # ---------------------------------------------------------------------------
+
 
 class TestBestDomain:
     @pytest.mark.parametrize(
@@ -142,6 +158,7 @@ class TestBestDomain:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_momentum_delta
 # ---------------------------------------------------------------------------
+
 
 class TestScoreMomentumDelta:
     @pytest.mark.parametrize(

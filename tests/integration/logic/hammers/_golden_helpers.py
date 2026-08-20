@@ -480,9 +480,7 @@ def build_unavailable_solver_case(manifest: CorpusManifest) -> Tuple[HammerResul
     )
     assert translation.status is TranslationStatus.SUPPORTED
 
-    policy = PortfolioPolicy(
-        hammer_policy=request.policy, executable_overrides={}
-    )
+    policy = PortfolioPolicy(hammer_policy=request.policy, executable_overrides={})
     portfolio = SolverPortfolio(policy)
     with mock.patch.object(policy_module.shutil, "which", return_value=None):
         permitted, denied = portfolio.resolve_attempts(
@@ -613,7 +611,9 @@ def build_verified_lean_case(manifest: CorpusManifest):
     assert normalized.recommended_status is HammerResultStatus.CANDIDATE
     candidate = build_proof_candidate_record(
         normalized,
-        candidate_id=compute_content_digest({"case": "verified-lean", "attempt": attempt.attempt_id}),
+        candidate_id=compute_content_digest(
+            {"case": "verified-lean", "attempt": attempt.attempt_id}
+        ),
         request_id=request.request_id,
         solver_attempt_id=attempt.attempt_id,
     )
@@ -786,9 +786,7 @@ def _real_kernel_case_entry(case_id: str, result: HammerResult, evidence) -> dic
         "corpus_revision": result.corpus_revision,
         "itp": result.request.itp.value,
         "kernel_accepted": reconstruction.kernel_accepted,
-        "kernel_command_executable_basename": (
-            Path(command[0]).name if command else None
-        ),
+        "kernel_command_executable_basename": (Path(command[0]).name if command else None),
     }
 
 

@@ -176,14 +176,14 @@ print(df.info())
 print(df.head())
 
 # Inspect specific columns
-print(df[['statute_id', 'official_cite', 'legal_area']])
+print(df[["statute_id", "official_cite", "legal_area"]])
 
 # Filter by legal area
-criminal = df[df['legal_area'] == 'criminal']
+criminal = df[df["legal_area"] == "criminal"]
 print(f"Criminal statutes: {len(criminal)}")
 
 # View full text of a statute
-print(df.iloc[0]['full_text'])
+print(df.iloc[0]["full_text"])
 ```
 
 ### Using JSON Files

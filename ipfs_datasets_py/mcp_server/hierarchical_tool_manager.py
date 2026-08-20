@@ -39,10 +39,12 @@ logger = logging.getLogger(__name__)
 # Phase F3: Circuit Breaker
 # ---------------------------------------------------------------------------
 
+
 class CircuitState:
     """Circuit breaker states."""
-    CLOSED = "closed"        # Normal operation — calls pass through.
-    OPEN = "open"            # Failing — calls are rejected immediately.
+
+    CLOSED = "closed"  # Normal operation — calls pass through.
+    OPEN = "open"  # Failing — calls are rejected immediately.
     HALF_OPEN = "half_open"  # Recovery probe — one call is allowed through.
 
 
@@ -169,9 +171,7 @@ class CircuitBreaker:
 
     def _on_success(self) -> None:
         if self._state == CircuitState.HALF_OPEN:
-            logger.info(
-                "CircuitBreaker[%s]: HALF_OPEN → CLOSED (success)", self.name
-            )
+            logger.info("CircuitBreaker[%s]: HALF_OPEN → CLOSED (success)", self.name)
         self._state = CircuitState.CLOSED
         self._failure_count = 0
         self._opened_at = None
@@ -179,8 +179,7 @@ class CircuitBreaker:
     def _on_failure(self) -> None:
         self._failure_count += 1
         if self._state == CircuitState.HALF_OPEN or (
-            self._state == CircuitState.CLOSED
-            and self._failure_count >= self.failure_threshold
+            self._state == CircuitState.CLOSED and self._failure_count >= self.failure_threshold
         ):
             self._state = CircuitState.OPEN
             self._opened_at = time.monotonic()
@@ -193,7 +192,7 @@ class CircuitBreaker:
 
 class ToolCategory:
     """Represents a category of tools."""
-    
+
     def __init__(self, name: str, path: Path, description: str = "") -> None:
         """Initialise a tool category backed by a directory on disk.
 
@@ -212,34 +211,34 @@ class ToolCategory:
         self._schema_cache: Dict[str, Dict[str, Any]] = {}
         self._cache_hits: int = 0
         self._cache_misses: int = 0
-    
+
     def discover_tools(self) -> None:
         """Discover all tools in this category."""
         if self._discovered:
             return
-        
+
         if not self.path.exists():
             logger.warning(f"Category path does not exist: {self.path}")
             return
-        
+
         # Import tools from Python files in this directory
         for tool_file in self.path.glob("*.py"):
-            if tool_file.name.startswith('_') or tool_file.name == "__init__.py":
+            if tool_file.name.startswith("_") or tool_file.name == "__init__.py":
                 continue
-            
+
             tool_name = tool_file.stem
             module_path = self._get_module_path(tool_file)
-            
+
             try:
                 module = importlib.import_module(module_path)
-                
+
                 # Find callable functions in the module
                 for name, obj in inspect.getmembers(module):
                     if not inspect.isfunction(obj):
                         continue
-                    if name.startswith('_'):
+                    if name.startswith("_"):
                         continue
-                    
+
                     # Use the tool name or the function that matches the file name
                     if name == tool_name or tool_name in name:
                         self._tools[name] = obj
@@ -256,56 +255,58 @@ class ToolCategory:
                             "deprecation_message": getattr(_obj_meta, "deprecation_message", ""),
                         }
                         logger.debug(f"Discovered tool: {self.name}.{name}")
-                
+
             except (ImportError, ModuleNotFoundError) as e:
                 logger.warning(f"Failed to import tool from {tool_file}: {e}")
             except (SyntaxError, AttributeError) as e:
                 logger.warning(f"Tool file has errors {tool_file}: {e}")
             except Exception as e:
                 logger.warning(f"Failed to load tool from {tool_file}: {e}")
-        
+
         self._discovered = True
         logger.info(f"Discovered {len(self._tools)} tools in category '{self.name}'")
-    
+
     def _get_module_path(self, file_path: Path) -> str:
         """Get the Python module path for a file."""
         # Convert file path to module path
         # e.g., /path/to/ipfs_datasets_py/mcp_server/tools/dataset_tools/load_dataset.py
         # -> ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset
-        
+
         parts = file_path.parts
         # Use the last package segment to avoid duplicated import paths in
         # workspaces where both repo and package directories are named
         # ``ipfs_datasets_py``.
         try:
-            idx = max(i for i, part in enumerate(parts) if part == 'ipfs_datasets_py')
+            idx = max(i for i, part in enumerate(parts) if part == "ipfs_datasets_py")
             module_parts = parts[idx:]
-            module_path = '.'.join(module_parts[:-1] + (file_path.stem,))
+            module_path = ".".join(module_parts[:-1] + (file_path.stem,))
             return module_path
         except (ValueError, StopIteration):
             # Fallback: use relative import
             return f"ipfs_datasets_py.mcp_server.tools.{self.name}.{file_path.stem}"
-    
+
     def list_tools(self) -> List[Dict[str, Any]]:
         """List all tools in this category with minimal metadata."""
         if not self._discovered:
             self.discover_tools()
-        
+
         return [
             {
                 "name": name,
-                "description": (metadata["description"].split('\n')[0] if metadata["description"] else "")[:100]
+                "description": (
+                    metadata["description"].split("\n")[0] if metadata["description"] else ""
+                )[:100],
             }
             for name, metadata in self._tool_metadata.items()
         ]
-    
+
     def get_tool(self, tool_name: str) -> Optional[Callable]:
         """Get a tool function by name."""
         if not self._discovered:
             self.discover_tools()
-        
+
         return self._tools.get(tool_name)
-    
+
     def get_tool_schema(self, tool_name: str) -> Optional[Dict[str, Any]]:
         """Get the full schema for a tool, returning a cached result when possible.
 
@@ -387,38 +388,38 @@ class ToolCategory:
 
 class HierarchicalToolManager:
     """Manages tools in a hierarchical structure to reduce context window usage.
-    
+
     This manager organizes tools into categories and provides dynamic loading
     and dispatch capabilities. Instead of registering hundreds of tools with
     the MCP server, we register only 4 meta-tools that handle category listing,
     tool listing, schema retrieval, and tool dispatch.
-    
+
     Usage:
         manager = HierarchicalToolManager()
-        
+
         # List categories
         categories = await manager.list_categories()
-        
+
         # List tools in a category
         tools = await manager.list_tools("dataset_tools")
-        
+
         # Get tool schema
         schema = await manager.get_tool_schema("dataset_tools", "load_dataset")
-        
+
         # Dispatch to a tool
-        result = await manager.dispatch("dataset_tools", "load_dataset", 
+        result = await manager.dispatch("dataset_tools", "load_dataset",
                                        source="squad")
     """
-    
+
     def __init__(self, tools_root: Optional[Path] = None) -> None:
         """Initialize the hierarchical tool manager.
-        
+
         Args:
             tools_root: Root directory for tools. If None, uses default location.
         """
         if tools_root is None:
             tools_root = Path(__file__).parent / "tools"
-        
+
         self.tools_root = tools_root
         self.categories: Dict[str, ToolCategory] = {}
         self._category_metadata: Dict[str, Dict[str, Any]] = {}
@@ -433,7 +434,7 @@ class HierarchicalToolManager:
 
         # Load category metadata
         self._load_category_metadata()
-    
+
     def _load_category_metadata(self) -> None:
         """Load metadata for all categories."""
         # This could be from JSON files, but for now we'll use defaults
@@ -460,6 +461,7 @@ class HierarchicalToolManager:
                 MemoryCacheBackend,
                 EvictionPolicy,
             )
+
             # max_size=512: maximum number of distinct tool-result entries kept
             # in memory at once.  LRU eviction removes the least-recently-used
             # entry when the limit is reached.  512 is a conservative default
@@ -479,19 +481,19 @@ class HierarchicalToolManager:
         """Discover all tool categories."""
         if self._discovered_categories:
             return
-        
+
         if not self.tools_root.exists():
             logger.warning(f"Tools root does not exist: {self.tools_root}")
             return
-        
+
         for category_dir in self.tools_root.iterdir():
             if not category_dir.is_dir():
                 continue
-            if category_dir.name.startswith('_'):
+            if category_dir.name.startswith("_"):
                 continue
-            
+
             category_name = category_dir.name
-            
+
             # Check for category metadata file
             metadata_file = category_dir / "category.json"
             description = ""
@@ -506,22 +508,20 @@ class HierarchicalToolManager:
                     logger.warning(f"Invalid JSON in metadata for {category_name}: {e}")
                 except Exception as e:
                     logger.warning(f"Failed to load metadata for {category_name}: {e}")
-            
+
             # Create category
             category = ToolCategory(category_name, category_dir, description)
             self.categories[category_name] = category
             self._category_metadata[category_name] = {
                 "name": category_name,
                 "description": description,
-                "path": str(category_dir)
+                "path": str(category_dir),
             }
-        
+
         self._discovered_categories = True
         logger.info(f"Discovered {len(self.categories)} tool categories")
-    
-    def lazy_register_category(
-        self, name: str, loader: Callable[[], ToolCategory]
-    ) -> None:
+
+    def lazy_register_category(self, name: str, loader: Callable[[], ToolCategory]) -> None:
         """Register a category whose ``ToolCategory`` object is created on demand.
 
         The *loader* callable is invoked the first time the category is accessed
@@ -543,7 +543,9 @@ class HierarchicalToolManager:
         self._lazy_loaders[name] = loader
         # Register minimal metadata so the category appears in listings.
         # Only set metadata if no richer entry (from _load_category_metadata) exists.
-        if name not in self._category_metadata or not self._category_metadata[name].get("description"):
+        if name not in self._category_metadata or not self._category_metadata[name].get(
+            "description"
+        ):
             self._category_metadata[name] = {"name": name, "description": "", "path": ""}
 
     def get_category(self, name: str) -> Optional[ToolCategory]:
@@ -572,16 +574,16 @@ class HierarchicalToolManager:
 
     async def list_categories(self, include_count: bool = False) -> List[Dict[str, Any]]:
         """List all available tool categories.
-        
+
         Args:
             include_count: Whether to include tool count for each category.
-        
+
         Returns:
             List of category metadata dictionaries.
         """
         if not self._discovered_categories:
             self.discover_categories()
-        
+
         result = []
         # Merge discovered categories AND lazily registered ones
         all_names = set(self._category_metadata.keys()) | set(self._lazy_loaders.keys())
@@ -592,48 +594,48 @@ class HierarchicalToolManager:
                 "description": metadata["description"],
                 "lazy": name in self._lazy_loaders,
             }
-            
+
             if include_count:
                 category = self.get_category(name)
                 if category is not None:
                     if not category._discovered:
                         category.discover_tools()
                     cat_info["tool_count"] = len(category._tools)
-            
+
             result.append(cat_info)
-        
+
         return sorted(result, key=lambda x: x["name"])
-    
+
     async def list_tools(self, category: str) -> Dict[str, Any]:
         """List all tools in a category.
-        
+
         Args:
             category: Name of the category.
-        
+
         Returns:
             Dict with category info and list of tools.
         """
         if not self._discovered_categories:
             self.discover_categories()
-        
+
         cat = self.get_category(category)
         if cat is None:
             return {
                 "status": "error",
                 "error": f"Category '{category}' not found",
-                "available_categories": list(self.categories.keys())
+                "available_categories": list(self.categories.keys()),
             }
-        
+
         tools = cat.list_tools()
-        
+
         return {
             "status": "success",
             "category": category,
             "description": cat.description,
             "tool_count": len(tools),
-            "tools": tools
+            "tools": tools,
         }
-    
+
     async def get_tool_schema_cid(self, category: str, tool: str) -> str:
         """Return a CID for the given tool's schema (Profile A: MCP-IDL alignment).
 
@@ -690,7 +692,10 @@ class HierarchicalToolManager:
         """
         try:
             from .cid_artifacts import (
-                ExecutionEnvelope, IntentObject, ReceiptObject, artifact_cid,
+                ExecutionEnvelope,
+                IntentObject,
+                ReceiptObject,
+                artifact_cid,
             )
         except ImportError:
             return await self.dispatch(category, tool, params)
@@ -725,50 +730,38 @@ class HierarchicalToolManager:
 
     async def get_tool_schema(self, category: str, tool: str) -> Dict[str, Any]:
         """Get the full schema for a specific tool.
-        
+
         Args:
             category: Name of the category.
             tool: Name of the tool.
-        
+
         Returns:
             Dict with tool schema or error.
         """
         if not self._discovered_categories:
             self.discover_categories()
-        
+
         cat = self.get_category(category)
         if cat is None:
-            return {
-                "status": "error",
-                "error": f"Category '{category}' not found"
-            }
-        
+            return {"status": "error", "error": f"Category '{category}' not found"}
+
         schema = cat.get_tool_schema(tool)
-        
+
         if schema is None:
-            return {
-                "status": "error",
-                "error": f"Tool '{tool}' not found in category '{category}'"
-            }
-        
-        return {
-            "status": "success",
-            "schema": schema
-        }
-    
+            return {"status": "error", "error": f"Tool '{tool}' not found in category '{category}'"}
+
+        return {"status": "success", "schema": schema}
+
     async def dispatch(
-        self,
-        category: str,
-        tool: str,
-        params: Optional[Dict[str, Any]] = None
+        self, category: str, tool: str, params: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Dispatch to a specific tool.
-        
+
         Args:
             category: Name of the category.
             tool: Name of the tool.
             params: Parameters to pass to the tool.
-        
+
         Returns:
             Tool execution result.  On success the dict always contains a
             ``request_id`` key (Phase C1 structured logging).
@@ -789,12 +782,13 @@ class HierarchicalToolManager:
         request_id = str(uuid.uuid4())
         _t0 = time.monotonic()
         tool_path = f"{category}/{tool}"
-        
+
         cat = self.get_category(category)
         if cat is None:
             logger.warning(
                 "dispatch: category_not_found request_id=%s tool=%s",
-                request_id, tool_path,
+                request_id,
+                tool_path,
             )
             return {
                 "status": "error",
@@ -802,14 +796,15 @@ class HierarchicalToolManager:
                 "available_categories": list(self.categories.keys()),
                 "request_id": request_id,
             }
-        
+
         tool_func = cat.get_tool(tool)
-        
+
         if tool_func is None:
             available_tools = [t["name"] for t in cat.list_tools()]
             logger.warning(
                 "dispatch: tool_not_found request_id=%s tool=%s",
-                request_id, tool_path,
+                request_id,
+                tool_path,
             )
             return {
                 "status": "error",
@@ -824,13 +819,15 @@ class HierarchicalToolManager:
             _dep_msg = getattr(meta, "deprecation_message", "") or "No replacement specified."
             logger.warning(
                 "dispatch: deprecated_tool_called request_id=%s tool=%s message=%s",
-                request_id, tool_path, _dep_msg,
+                request_id,
+                tool_path,
+                _dep_msg,
             )
-        
+
         try:
             # Get function signature
             sig = inspect.signature(tool_func)
-            
+
             # Filter params to match function parameters
             filtered_params = {}
             for param_name in sig.parameters:
@@ -851,20 +848,21 @@ class HierarchicalToolManager:
                         if _cached is not None:
                             logger.debug(
                                 "dispatch: cache_hit request_id=%s tool=%s",
-                                request_id, tool_path,
+                                request_id,
+                                tool_path,
                             )
                             _cached.setdefault("request_id", request_id)
                             _cached["_cached"] = True
                             return _cached
                     except Exception:
                         pass  # Cache failure is non-fatal; fall through to live call.
-            
+
             # Call the tool
             if inspect.iscoroutinefunction(tool_func):
                 result = await tool_func(**filtered_params)
             else:
                 result = tool_func(**filtered_params)
-            
+
             # Ensure result is a dict
             if not isinstance(result, dict):
                 result = {"status": "success", "result": str(result)}
@@ -887,11 +885,13 @@ class HierarchicalToolManager:
             # Phase C1: structured success log.
             logger.info(
                 "dispatch: success request_id=%s tool=%s duration_ms=%.2f",
-                request_id, tool_path, _duration_ms,
+                request_id,
+                tool_path,
+                _duration_ms,
             )
             result.setdefault("request_id", request_id)
             return result
-            
+
         except ToolNotFoundError:
             raise
         except ToolExecutionError:
@@ -900,7 +900,10 @@ class HierarchicalToolManager:
             _duration_ms = (time.monotonic() - _t0) * 1000
             logger.error(
                 "dispatch: invalid_params request_id=%s tool=%s duration_ms=%.2f error=%s",
-                request_id, tool_path, _duration_ms, e,
+                request_id,
+                tool_path,
+                _duration_ms,
+                e,
                 exc_info=True,
             )
             return {
@@ -914,7 +917,10 @@ class HierarchicalToolManager:
             _duration_ms = (time.monotonic() - _t0) * 1000
             logger.error(
                 "dispatch: error request_id=%s tool=%s duration_ms=%.2f error=%s",
-                request_id, tool_path, _duration_ms, e,
+                request_id,
+                tool_path,
+                _duration_ms,
+                e,
                 exc_info=True,
             )
             return {
@@ -1005,7 +1011,7 @@ class HierarchicalToolManager:
         else:
             # Adaptive batching: process in windows of *max_concurrent*.
             for batch_start in range(0, n, max_concurrent):
-                batch = calls[batch_start: batch_start + max_concurrent]
+                batch = calls[batch_start : batch_start + max_concurrent]
                 async with anyio.create_task_group() as tg:
                     for j, call in enumerate(batch):
                         tg.start_soon(_run_one, batch_start + j, call)
@@ -1169,7 +1175,9 @@ class HierarchicalToolManager:
                 # Yield control so other tasks can finish.
                 await anyio.sleep(0)
         except TimeoutError:
-            logger.warning("HierarchicalToolManager: graceful shutdown timed out after %.1fs", timeout)
+            logger.warning(
+                "HierarchicalToolManager: graceful shutdown timed out after %.1fs", timeout
+            )
             status = "timeout"
         else:
             status = "ok"
@@ -1184,7 +1192,9 @@ class HierarchicalToolManager:
         self._discovered_categories = False
         self._shutting_down = False
 
-        logger.info("HierarchicalToolManager: shutdown complete (%d categories cleared)", categories_cleared)
+        logger.info(
+            "HierarchicalToolManager: shutdown complete (%d categories cleared)", categories_cleared
+        )
         return {"status": status, "categories_cleared": categories_cleared}
 
 
@@ -1195,30 +1205,30 @@ _global_manager: Optional[HierarchicalToolManager] = None
 
 def get_tool_manager(context: Optional["ServerContext"] = None) -> HierarchicalToolManager:
     """Get the hierarchical tool manager instance.
-    
+
     Args:
         context: Optional ServerContext. If provided, returns the context's
                 tool_manager. Otherwise, falls back to the global instance
                 for backward compatibility.
-    
+
     Returns:
         HierarchicalToolManager instance
-        
+
     Note:
         The global instance is deprecated. New code should use ServerContext.
-        
+
     Example:
         >>> # New code (recommended):
         >>> with ServerContext() as ctx:
         ...     manager = get_tool_manager(ctx)
-        
+
         >>> # Legacy code (still works):
         >>> manager = get_tool_manager()
     """
     # If context provided, use it (new pattern)
     if context is not None:
         return context.tool_manager
-    
+
     # Fallback to global for backward compatibility (deprecated)
     global _global_manager
     if _global_manager is None:
@@ -1228,36 +1238,33 @@ def get_tool_manager(context: Optional["ServerContext"] = None) -> HierarchicalT
 
 # MCP tool wrappers for registration with FastMCP
 
+
 async def tools_list_categories(include_count: bool = False) -> Dict[str, Any]:
     """List all available tool categories.
-    
+
     This meta-tool provides access to the hierarchical tool system.
     Use this to discover what categories of tools are available.
-    
+
     Args:
         include_count: Include tool count for each category.
-    
+
     Returns:
         Dict with list of categories and their metadata.
     """
     manager = get_tool_manager()
     categories = await manager.list_categories(include_count=include_count)
-    return {
-        "status": "success",
-        "category_count": len(categories),
-        "categories": categories
-    }
+    return {"status": "success", "category_count": len(categories), "categories": categories}
 
 
 async def tools_list_tools(category: str) -> Dict[str, Any]:
     """List all tools in a specific category.
-    
+
     After discovering categories with tools_list_categories, use this
     to see what tools are available in a specific category.
-    
+
     Args:
         category: Name of the category to list tools from.
-    
+
     Returns:
         Dict with tools in the category.
     """
@@ -1267,14 +1274,14 @@ async def tools_list_tools(category: str) -> Dict[str, Any]:
 
 async def tools_get_schema(category: str, tool: str) -> Dict[str, Any]:
     """Get the full schema for a specific tool.
-    
+
     Use this to get detailed information about a tool's parameters,
     return type, and documentation before calling it.
-    
+
     Args:
         category: Category containing the tool.
         tool: Name of the tool.
-    
+
     Returns:
         Dict with tool schema.
     """
@@ -1283,20 +1290,18 @@ async def tools_get_schema(category: str, tool: str) -> Dict[str, Any]:
 
 
 async def tools_dispatch(
-    category: str,
-    tool: str,
-    params: Optional[Dict[str, Any]] = None
+    category: str, tool: str, params: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Execute a tool by category and name.
-    
+
     This is the main entry point for executing tools in the hierarchical
     tool system. Provide the category, tool name, and parameters.
-    
+
     Args:
         category: Category containing the tool.
         tool: Name of the tool to execute.
         params: Parameters to pass to the tool (optional).
-    
+
     Returns:
         Tool execution result.
     """

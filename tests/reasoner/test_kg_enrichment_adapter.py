@@ -11,7 +11,9 @@ from ipfs_datasets_py.processors.legal_data.reasoner.kg_enrichment import (
 
 
 def test_entity_link_adapter_is_deterministic_and_confidence_scored() -> None:
-    ir = parse_cnl_sentence("Company A shall file report within 30 days.", jurisdiction="us/federal")
+    ir = parse_cnl_sentence(
+        "Company A shall file report within 30 days.", jurisdiction="us/federal"
+    )
 
     out_a = build_entity_link_adapter(ir, kg_namespace="kg", confidence_floor=0.0)
     out_b = build_entity_link_adapter(ir, kg_namespace="kg", confidence_floor=0.0)
@@ -23,7 +25,9 @@ def test_entity_link_adapter_is_deterministic_and_confidence_scored() -> None:
 
 
 def test_relation_enrichment_adapter_links_frame_roles_to_kg_entities() -> None:
-    ir = parse_cnl_sentence("Company A shall file report within 30 days.", jurisdiction="us/federal")
+    ir = parse_cnl_sentence(
+        "Company A shall file report within 30 days.", jurisdiction="us/federal"
+    )
     entity_adapter = build_entity_link_adapter(ir, confidence_floor=0.0)
 
     rel_adapter = build_relation_enrichment_adapter(ir, entity_adapter, confidence_floor=0.0)
@@ -36,7 +40,9 @@ def test_relation_enrichment_adapter_links_frame_roles_to_kg_entities() -> None:
 
 
 def test_apply_and_rollback_kg_enrichment_is_reversible() -> None:
-    ir = parse_cnl_sentence("Company A shall file report within 30 days.", jurisdiction="us/federal")
+    ir = parse_cnl_sentence(
+        "Company A shall file report within 30 days.", jurisdiction="us/federal"
+    )
     entity_adapter = build_entity_link_adapter(ir, confidence_floor=0.0)
     rel_adapter = build_relation_enrichment_adapter(ir, entity_adapter, confidence_floor=0.0)
 
@@ -63,7 +69,9 @@ def test_apply_and_rollback_kg_enrichment_is_reversible() -> None:
 
 
 def test_kg_drift_assessment_passes_for_stable_growth() -> None:
-    ir = parse_cnl_sentence("Company A shall file report within 30 days.", jurisdiction="us/federal")
+    ir = parse_cnl_sentence(
+        "Company A shall file report within 30 days.", jurisdiction="us/federal"
+    )
     entity_adapter = build_entity_link_adapter(ir, confidence_floor=0.0)
     rel_adapter = build_relation_enrichment_adapter(ir, entity_adapter, confidence_floor=0.0)
 
@@ -83,7 +91,14 @@ def test_kg_drift_assessment_fails_for_relation_explosion() -> None:
     synthetic_adapter = {
         "summary": {"frame_count": 2},
         "relations": [
-            {"frame_ref": f"frm:{i}", "relation_id": f"kg:relation:{i}", "confidence": 0.9, "role_links": {"agent": {"kg_id": "kg:entity:x", "confidence": 0.9, "entity_ref": "ent:x"}}}
+            {
+                "frame_ref": f"frm:{i}",
+                "relation_id": f"kg:relation:{i}",
+                "confidence": 0.9,
+                "role_links": {
+                    "agent": {"kg_id": "kg:entity:x", "confidence": 0.9, "entity_ref": "ent:x"}
+                },
+            }
             for i in range(20)
         ],
     }
@@ -98,4 +113,6 @@ def test_kg_drift_assessment_fails_for_relation_explosion() -> None:
 
     assert out["summary"]["drift_safe"] is False
     assert out["summary"]["failure_count"] >= 1
-    assert any(c["type"] == "relation_growth_factor" and c["passed"] is False for c in out["checks"])
+    assert any(
+        c["type"] == "relation_growth_factor" and c["passed"] is False for c in out["checks"]
+    )

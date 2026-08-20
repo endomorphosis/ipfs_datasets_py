@@ -8,6 +8,7 @@ Methods under test:
   - OntologyGenerator.remove_entity(result, entity_id)
   - OntologyGenerator.type_diversity(result)
 """
+
 import pytest
 
 
@@ -15,23 +16,28 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_gen():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _entity(eid, etype="Person", text="Alice", confidence=0.9):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=etype, text=text, confidence=confidence)
 
 
 def _relationship(rid, src, tgt, rtype="knows"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
     return Relationship(id=rid, source_id=src, target_id=tgt, type=rtype)
 
 
 def _result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -42,6 +48,7 @@ def _result(entities=None, relationships=None):
 # ---------------------------------------------------------------------------
 # OntologyGenerator.validate_result
 # ---------------------------------------------------------------------------
+
 
 class TestValidateResult:
     def test_empty_result_no_issues(self):
@@ -57,6 +64,7 @@ class TestValidateResult:
     def test_blank_text_flagged(self):
         gen = _make_gen()
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
         bad = Entity(id="e-bad", type="T", text="   ", confidence=0.8)
         r = _result([bad])
         issues = gen.validate_result(r)
@@ -66,6 +74,7 @@ class TestValidateResult:
     def test_out_of_range_confidence_flagged(self):
         gen = _make_gen()
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
         bad = Entity(id="e-bad", type="T", text="X", confidence=1.5)
         r = _result([bad])
         issues = gen.validate_result(r)
@@ -99,6 +108,7 @@ class TestValidateResult:
 # OntologyGenerator.confidence_stats
 # ---------------------------------------------------------------------------
 
+
 class TestConfidenceStats:
     @pytest.mark.parametrize(
         "entities,expected_count,expected_mean",
@@ -115,10 +125,12 @@ class TestConfidenceStats:
 
     def test_multiple_entities(self):
         gen = _make_gen()
-        r = _result([
-            _entity("e1", confidence=0.4),
-            _entity("e2", confidence=0.8),
-        ])
+        r = _result(
+            [
+                _entity("e1", confidence=0.4),
+                _entity("e2", confidence=0.8),
+            ]
+        )
         stats = gen.confidence_stats(r)
         assert stats["count"] == 2.0
         assert stats["mean"] == pytest.approx(0.6)
@@ -137,6 +149,7 @@ class TestConfidenceStats:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.clone_result
 # ---------------------------------------------------------------------------
+
 
 class TestCloneResult:
     def test_clone_is_equal(self):
@@ -166,6 +179,7 @@ class TestCloneResult:
 # OntologyGenerator.add_entity
 # ---------------------------------------------------------------------------
 
+
 class TestAddEntity:
     def test_adds_entity(self):
         gen = _make_gen()
@@ -191,6 +205,7 @@ class TestAddEntity:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.remove_entity
 # ---------------------------------------------------------------------------
+
 
 class TestRemoveEntity:
     def test_removes_entity(self):
@@ -230,6 +245,7 @@ class TestRemoveEntity:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.type_diversity
 # ---------------------------------------------------------------------------
+
 
 class TestTypeDiversity:
     @pytest.mark.parametrize(

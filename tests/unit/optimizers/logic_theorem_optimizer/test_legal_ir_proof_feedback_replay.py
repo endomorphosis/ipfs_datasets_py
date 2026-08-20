@@ -151,9 +151,7 @@ def test_inventory_content_addresses_and_deduplicates_without_importing_trust(tm
     assert inventory.duplicate_occurrence_count == 1
     assert inventory.historically_trusted_count == 0
     assert inventory.obligations[0].occurrence_count == 2
-    assert inventory.obligations[0].content_address.startswith(
-        "historical-hammer-obligation-"
-    )
+    assert inventory.obligations[0].content_address.startswith("historical-hammer-obligation-")
     assert RAW_STATEMENT not in payload
     assert RAW_DECODED not in payload
     assert RAW_PROOF not in payload
@@ -277,8 +275,7 @@ def test_replay_is_resumable_and_cache_does_not_persist_source(tmp_path):
     assert first.outcomes[0].cache_hit is False
     assert second.outcomes[0].cache_hit is True
     cache_text = "\n".join(
-        path.read_text(encoding="utf-8")
-        for path in (tmp_path / "state" / "cache").rglob("*.json")
+        path.read_text(encoding="utf-8") for path in (tmp_path / "state" / "cache").rglob("*.json")
     )
     assert RAW_STATEMENT not in cache_text
     assert RAW_DECODED not in cache_text
@@ -425,8 +422,7 @@ def test_jsonl_inputs_are_supported_and_malformed_input_fails_closed(tmp_path):
     source = tmp_path / "cycles.jsonl"
     source.write_text(
         "\n".join(
-            json.dumps({"proof_obligations": [_obligation(f"old-{index}")]})
-            for index in range(2)
+            json.dumps({"proof_obligations": [_obligation(f"old-{index}")]}) for index in range(2)
         )
         + "\n",
         encoding="utf-8",

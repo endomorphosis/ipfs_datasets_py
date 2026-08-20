@@ -61,9 +61,7 @@ def _full_projection_payloads() -> dict[str, dict[str, object]]:
         LegalIRBackendTarget.DEONTIC.value: {
             "proof_obligation_ids": obligation_semantics,
             "semantics": {
-                LegalIRBackendFeature.DEONTIC.value: [
-                    "O(agency,provide_notice,within_30_days)"
-                ],
+                LegalIRBackendFeature.DEONTIC.value: ["O(agency,provide_notice,within_30_days)"],
                 LegalIRBackendFeature.EXCEPTION_SCOPE.value: ["unless:emergency"],
                 LegalIRBackendFeature.OBLIGATION_PRESERVATION.value: obligation_semantics,
                 LegalIRBackendFeature.PROVENANCE.value: provenance,
@@ -72,18 +70,14 @@ def _full_projection_payloads() -> dict[str, dict[str, object]]:
         LegalIRBackendTarget.TDFOL.value: {
             "proof_obligation_ids": obligation_semantics,
             "semantics": {
-                LegalIRBackendFeature.TDFOL.value: [
-                    "deadline(provide_notice,within_30_days)"
-                ],
+                LegalIRBackendFeature.TDFOL.value: ["deadline(provide_notice,within_30_days)"],
                 LegalIRBackendFeature.OBLIGATION_PRESERVATION.value: obligation_semantics,
             },
         },
         LegalIRBackendTarget.KG.value: {
             "proof_obligation_ids": obligation_semantics,
             "semantics": {
-                LegalIRBackendFeature.KNOWLEDGE_GRAPH.value: [
-                    "agency|must_provide|notice"
-                ],
+                LegalIRBackendFeature.KNOWLEDGE_GRAPH.value: ["agency|must_provide|notice"],
                 LegalIRBackendFeature.OBLIGATION_PRESERVATION.value: obligation_semantics,
                 LegalIRBackendFeature.PROVENANCE.value: provenance,
             },
@@ -107,9 +101,7 @@ def _full_projection_payloads() -> dict[str, dict[str, object]]:
         LegalIRBackendTarget.DECOMPILER.value: {
             "proof_obligation_ids": obligation_semantics,
             "semantics": {
-                LegalIRBackendFeature.DECOMPILER_ROUND_TRIP.value: [
-                    "round_trip:preserved"
-                ],
+                LegalIRBackendFeature.DECOMPILER_ROUND_TRIP.value: ["round_trip:preserved"],
                 LegalIRBackendFeature.OBLIGATION_PRESERVATION.value: obligation_semantics,
                 LegalIRBackendFeature.PROVENANCE.value: provenance,
             },
@@ -133,9 +125,7 @@ def test_backend_conformance_accepts_full_suite_with_shared_obligation_semantics
     assert payload["coverage_by_feature"]["obligation_preservation"][
         "supporting_backend_count"
     ] == len(DEFAULT_LEGAL_IR_BACKEND_TARGETS)
-    assert payload["coverage_by_feature"]["deontic"]["emitted_backends"] == [
-        "deontic"
-    ]
+    assert payload["coverage_by_feature"]["deontic"]["emitted_backends"] == ["deontic"]
 
 
 def test_backend_capability_manifest_records_all_required_targets_and_features() -> None:
@@ -246,7 +236,12 @@ def test_dictionary_gate_reports_missing_required_backend_and_can_scope_policy()
         obligations=_obligations(),
         config=LegalIRBackendConformanceConfig(
             required_backends=("deontic",),
-            required_features=("deontic", "exception_scope", "obligation_preservation", "provenance"),
+            required_features=(
+                "deontic",
+                "exception_scope",
+                "obligation_preservation",
+                "provenance",
+            ),
         ),
     )
 

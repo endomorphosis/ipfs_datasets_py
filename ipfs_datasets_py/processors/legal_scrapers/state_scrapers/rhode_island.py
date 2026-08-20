@@ -12,26 +12,30 @@ from .registry import StateScraperRegistry
 
 _TITLE_INDEX_URL_TEMPLATE = "https://webserver.rilegislature.gov/Statutes/TITLE{title}/INDEX.HTM"
 _TITLE_LINK_RE = re.compile(r"/Statutes/TITLE(\d+)/(\d+(?:-\d+)+)/INDEX\.htm$", re.IGNORECASE)
-_SECTION_LINK_RE = re.compile(r"/Statutes/TITLE(\d+)/(\d+(?:-\d+)+)/([\dA-Za-z._-]+)\.htm$", re.IGNORECASE)
+_SECTION_LINK_RE = re.compile(
+    r"/Statutes/TITLE(\d+)/(\d+(?:-\d+)+)/([\dA-Za-z._-]+)\.htm$", re.IGNORECASE
+)
 _SECTION_NUMBER_RE = re.compile(r"§\s*([0-9A-Za-z.-]+)")
 _SECTION_HEADING_RE = re.compile(r"§\s*([0-9A-Za-z.-]+)\.\s*(.+)")
 
 
 class RhodeIslandScraper(BaseStateScraper):
     """Scraper for Rhode Island state laws from http://webserver.rilin.state.ri.us"""
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Rhode Island's legislative website."""
         return "https://webserver.rilegislature.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Rhode Island."""
-        return [{
-            "name": "Rhode Island General Laws",
-            "url": _TITLE_INDEX_URL_TEMPLATE.format(title=1),
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Rhode Island General Laws",
+                "url": _TITLE_INDEX_URL_TEMPLATE.format(title=1),
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -39,11 +43,11 @@ class RhodeIslandScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Rhode Island's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -55,13 +59,9 @@ class RhodeIslandScraper(BaseStateScraper):
             "R.I. Gen. Laws",
             max_sections=max_sections,
         )
-    
+
     async def _custom_scrape_rhode_island(
-        self,
-        code_name: str,
-        code_url: str,
-        citation_format: str,
-        max_sections: int = 100
+        self, code_name: str, code_url: str, citation_format: str, max_sections: int = 100
     ) -> List[NormalizedStatute]:
         """Custom scraper for Rhode Island's legislative website."""
         try:
@@ -99,14 +99,20 @@ class RhodeIslandScraper(BaseStateScraper):
                 "Rhode Island custom scraper: resumed %s statutes from partial checkpoint",
                 len(statutes),
             )
-        section_concurrency = max(1, int(self._env_int("STATE_SCRAPER_RI_SECTION_CONCURRENCY", default=10)))
+        section_concurrency = max(
+            1, int(self._env_int("STATE_SCRAPER_RI_SECTION_CONCURRENCY", default=10))
+        )
         section_sem = asyncio.Semaphore(section_concurrency)
         resume_titles_scanned = max(0, int(checkpoint_progress.get("titles_scanned") or 0))
         resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
         resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
-        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        resume_discovered_sections = max(
+            0, int(checkpoint_progress.get("discovered_sections") or 0)
+        )
         title_rewind = max(0, int(self._env_int("STATE_SCRAPER_RI_RESUME_TITLE_REWIND", default=1)))
-        chapter_rewind = max(0, int(self._env_int("STATE_SCRAPER_RI_RESUME_CHAPTER_REWIND", default=20)))
+        chapter_rewind = max(
+            0, int(self._env_int("STATE_SCRAPER_RI_RESUME_CHAPTER_REWIND", default=20))
+        )
         resume_title_floor = max(1, resume_titles_scanned - title_rewind)
         resume_chapter_floor = max(0, resume_chapters_scanned - chapter_rewind)
         chapters_scanned_total = int(resume_chapters_scanned)
@@ -141,7 +147,9 @@ class RhodeIslandScraper(BaseStateScraper):
                     continue
 
                 title_url = _TITLE_INDEX_URL_TEMPLATE.format(title=title_num)
-                title_bytes = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=30)
+                title_bytes = await self._fetch_page_content_with_archival_fallback(
+                    title_url, timeout_seconds=30
+                )
                 title_html = title_bytes.decode("utf-8", errors="replace") if title_bytes else ""
                 if not title_html or "Document Moved" in title_html or "404" in title_html[:200]:
                     consecutive_missing_titles += 1
@@ -181,7 +189,9 @@ class RhodeIslandScraper(BaseStateScraper):
                     if chapter_visit_index < resume_chapter_floor:
                         continue
                     chapters_scanned_total += 1
-                    chapter_bytes = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=30)
+                    chapter_bytes = await self._fetch_page_content_with_archival_fallback(
+                        chapter_url, timeout_seconds=30
+                    )
                     if not chapter_bytes:
                         continue
                     chapter_soup = BeautifulSoup(chapter_bytes, "html.parser")
@@ -215,9 +225,15 @@ class RhodeIslandScraper(BaseStateScraper):
                                 section_url,
                                 timeout_seconds=30,
                             )
-                        section_html = section_bytes.decode("utf-8", errors="replace") if section_bytes else ""
-                        full_text, extracted_name = self._extract_ri_section_text_and_name(section_html)
-                        section_name = (extracted_name or section_label or f"Section {section_number}")[:200]
+                        section_html = (
+                            section_bytes.decode("utf-8", errors="replace") if section_bytes else ""
+                        )
+                        full_text, extracted_name = self._extract_ri_section_text_and_name(
+                            section_html
+                        )
+                        section_name = (
+                            extracted_name or section_label or f"Section {section_number}"
+                        )[:200]
                         if not full_text:
                             full_text = f"Section {section_number}: {section_name}"
                         return NormalizedStatute(
@@ -242,7 +258,9 @@ class RhodeIslandScraper(BaseStateScraper):
                         )
 
                     tasks = [
-                        asyncio.create_task(_parse_section(section_url, section_label, section_number))
+                        asyncio.create_task(
+                            _parse_section(section_url, section_label, section_number)
+                        )
                         for section_url, section_label, section_number in section_candidates
                     ]
                     scanned_sections = 0
@@ -320,8 +338,12 @@ class RhodeIslandScraper(BaseStateScraper):
                 },
             )
             if not statutes:
-                self.logger.info("Rhode Island custom scraper found no data, falling back to generic scraper")
-                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+                self.logger.info(
+                    "Rhode Island custom scraper found no data, falling back to generic scraper"
+                )
+                return await self._generic_scrape(
+                    code_name, code_url, citation_format, max_sections
+                )
             return statutes
         except Exception as e:
             self.logger.error(f"Rhode Island custom scraper failed: {e}")

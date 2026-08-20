@@ -192,14 +192,15 @@ rag/logic_integration/
 ### Basic Extraction
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
-    LogicExtractor, LogicExtractionContext
+    LogicExtractor,
+    LogicExtractionContext,
 )
 
 extractor = LogicExtractor(model="gpt-4")
 context = LogicExtractionContext(
     data="All employees must complete training within 30 days",
     extraction_mode=ExtractionMode.TDFOL,
-    domain="legal"
+    domain="legal",
 )
 result = extractor.extract(context)
 ```
@@ -207,11 +208,14 @@ result = extractor.extract(context)
 ### Complete Pipeline
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
-    LogicExtractor, LogicCritic, LogicOptimizer, LogicHarness
+    LogicExtractor,
+    LogicCritic,
+    LogicOptimizer,
+    LogicHarness,
 )
 
 extractor = LogicExtractor()
-critic = LogicCritic(use_provers=['z3', 'cvc5'])
+critic = LogicCritic(use_provers=["z3", "cvc5"])
 optimizer = LogicOptimizer()
 harness = LogicHarness(extractor, critic)
 
@@ -413,21 +417,23 @@ Verified Theorems
 **Full Integration Mode**:
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
-    LogicExtractor, LogicCritic, ExtractionMode
+    LogicExtractor,
+    LogicCritic,
+    ExtractionMode,
 )
 
 # All Phase 2 features enabled
 extractor = LogicExtractor(
     model="gpt-4",
-    use_ipfs_accelerate=True,          # Phase 2.3: Real LLM
-    enable_formula_translation=True,    # Phase 2.2: TDFOL/CEC
-    enable_kg_integration=True,         # Phase 2.4: KG context
-    enable_rag_integration=True         # Phase 2.5: Few-shot
+    use_ipfs_accelerate=True,  # Phase 2.3: Real LLM
+    enable_formula_translation=True,  # Phase 2.2: TDFOL/CEC
+    enable_kg_integration=True,  # Phase 2.4: KG context
+    enable_rag_integration=True,  # Phase 2.5: Few-shot
 )
 
 # Real theorem provers
 critic = LogicCritic(
-    enable_prover_integration=True      # Phase 2.1: Z3/CVC5/...
+    enable_prover_integration=True  # Phase 2.1: Z3/CVC5/...
 )
 
 # Extract with full integration
@@ -449,7 +455,7 @@ extractor = LogicExtractor(
     use_ipfs_accelerate=False,
     enable_formula_translation=False,
     enable_kg_integration=False,
-    enable_rag_integration=False
+    enable_rag_integration=False,
 )
 
 critic = LogicCritic(enable_prover_integration=False)

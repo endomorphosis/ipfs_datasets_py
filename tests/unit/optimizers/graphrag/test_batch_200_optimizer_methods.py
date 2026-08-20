@@ -452,14 +452,14 @@ class TestBatch200Integration:
             OptimizationReport(average_score=0.75, trend="stable"),
             OptimizationReport(average_score=0.9, trend="stable"),
         ]
-        
+
         # Mean of last 3 should be within bounds
         mean = optimizer.score_recent_mean(n=3)
         assert 0.75 <= mean <= 0.85
-        
+
         # Length should be 5
         assert optimizer.history_length == 5
-        
+
         # Recent scores should reflect improvement
         assert not optimizer.has_regressed(threshold=0.2)
 
@@ -473,14 +473,14 @@ class TestBatch200Integration:
             OptimizationReport(average_score=0.4, trend="stable"),
             OptimizationReport(average_score=0.7, trend="stable"),
         ]
-        
+
         # Should detect regression
         assert optimizer.has_regressed(threshold=0.01)
-        
+
         # Should find recovery time
         recovery = optimizer.score_recovery_time(threshold=0.6)
         assert recovery > 0
-        
+
         # Should see trend reversals
         assert optimizer.trend_reversal_count() > 0
 

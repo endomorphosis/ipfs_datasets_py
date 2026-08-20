@@ -22,7 +22,9 @@ class IllinoisScraper(BaseStateScraper):
     _ACT_LINK_RE = re.compile(r"/Legislation/ILCS/Articles\?", re.IGNORECASE)
     _FULL_ACT_LINK_RE = re.compile(r"/legislation/ILCS/details\?.*ChapAct=FullText", re.IGNORECASE)
     _CITE_RE = re.compile(r"\((?P<cite>\d+\s+ILCS\s+[^)]+?)\)")
-    _SECTION_CITE_RE = re.compile(r"^(?P<chapter>\d+)\s+ILCS\s+(?P<act>[^/\s]+(?:/[^/\s]+)*)/(?P<section>[^)\s]+)$")
+    _SECTION_CITE_RE = re.compile(
+        r"^(?P<chapter>\d+)\s+ILCS\s+(?P<act>[^/\s]+(?:/[^/\s]+)*)/(?P<section>[^)\s]+)$"
+    )
 
     def get_base_url(self) -> str:
         """Return the base URL for Illinois's legislative website."""
@@ -85,7 +87,9 @@ class IllinoisScraper(BaseStateScraper):
                     )
 
         if not statutes:
-            self.logger.warning("Illinois official direct crawl returned no statutes; skipping generic recovery fallback")
+            self.logger.warning(
+                "Illinois official direct crawl returned no statutes; skipping generic recovery fallback"
+            )
         return statutes[:limit] if limit is not None else statutes
 
     async def _fetch_official_il_html(self, url: str, timeout_seconds: int = 20) -> str:
@@ -120,7 +124,9 @@ class IllinoisScraper(BaseStateScraper):
 
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+            await self._cache_successful_page_fetch(
+                url=url, payload=payload, provider="requests_direct"
+            )
             return payload.decode("utf-8", errors="replace")
         return ""
 
@@ -154,7 +160,8 @@ class IllinoisScraper(BaseStateScraper):
                     "label": label,
                     "chapter_id": self._first_query(query, "ChapterID"),
                     "chapter_number": self._first_query(query, "ChapterNumber"),
-                    "chapter_name": self._first_query(query, "Chapter") or self._chapter_name_from_label(label),
+                    "chapter_name": self._first_query(query, "Chapter")
+                    or self._chapter_name_from_label(label),
                     "major_topic": self._first_query(query, "MajorTopic"),
                 }
             )
@@ -255,7 +262,9 @@ class IllinoisScraper(BaseStateScraper):
                 NormalizedStatute(
                     state_code=self.state_code,
                     state_name=self.state_name,
-                    statute_id=f"IL-{chapter_number}-{act_number}-{section_number}".replace("/", "-"),
+                    statute_id=f"IL-{chapter_number}-{act_number}-{section_number}".replace(
+                        "/", "-"
+                    ),
                     code_name=code_name,
                     title_number=chapter_number,
                     title_name=chapter.get("major_topic") or None,
@@ -336,7 +345,9 @@ class IllinoisScraper(BaseStateScraper):
     @classmethod
     def _split_act_label(cls, label: str) -> Tuple[str, str]:
         cleaned = cls._clean_label(label)
-        match = re.match(r"(?P<chap_act>\d+\s+ILCS\s+[^/]+/)\s*(?P<name>.*)$", cleaned, flags=re.IGNORECASE)
+        match = re.match(
+            r"(?P<chap_act>\d+\s+ILCS\s+[^/]+/)\s*(?P<name>.*)$", cleaned, flags=re.IGNORECASE
+        )
         if match:
             return cls._clean_label(match.group("chap_act")), cls._clean_label(match.group("name"))
         return "", cleaned
@@ -351,7 +362,9 @@ class IllinoisScraper(BaseStateScraper):
             name = self._normalize_legal_text(match.group("name"))
             if name and len(name) <= 180:
                 return name.rstrip(".")
-        generic = re.search(r"\bSec\.\s*[\w.-]+\.\s*(?P<name>[^.]{3,160})\.", section_text, flags=re.IGNORECASE)
+        generic = re.search(
+            r"\bSec\.\s*[\w.-]+\.\s*(?P<name>[^.]{3,160})\.", section_text, flags=re.IGNORECASE
+        )
         if generic:
             return self._normalize_legal_text(generic.group("name")).rstrip(".")
         return ""

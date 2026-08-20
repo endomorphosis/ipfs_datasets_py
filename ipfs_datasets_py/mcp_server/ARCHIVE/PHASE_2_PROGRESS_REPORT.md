@@ -31,14 +31,8 @@ Phase 2 (Core Infrastructure) is 90% complete with all major components implemen
   
 - `@tool_metadata` decorator for easy registration
   ```python
-  @tool_metadata(
-      runtime=RUNTIME_TRIO,
-      requires_p2p=True,
-      category="p2p_workflow",
-      priority=8
-  )
-  async def p2p_workflow_submit(workflow: dict) -> str:
-      ...
+  @tool_metadata(runtime=RUNTIME_TRIO, requires_p2p=True, category="p2p_workflow", priority=8)
+  async def p2p_workflow_submit(workflow: dict) -> str: ...
   ```
 
 **Impact:**

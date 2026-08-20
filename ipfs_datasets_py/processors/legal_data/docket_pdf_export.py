@@ -15,7 +15,17 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
 
-SUPPORTED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".gif", ".webp", ".heic"}
+SUPPORTED_IMAGE_SUFFIXES = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".tif",
+    ".tiff",
+    ".bmp",
+    ".gif",
+    ".webp",
+    ".heic",
+}
 
 
 def _safe_identifier(value: Any) -> str:
@@ -132,7 +142,15 @@ def _append_image_page(
         draw_height = img_height * scale
         x = (width - draw_width) / 2
         y = ((height - 0.35 * inch) - draw_height) / 2
-        pdf.drawImage(ImageReader(rgb), x, y, width=draw_width, height=draw_height, preserveAspectRatio=True, anchor="c")
+        pdf.drawImage(
+            ImageReader(rgb),
+            x,
+            y,
+            width=draw_width,
+            height=draw_height,
+            preserveAspectRatio=True,
+            anchor="c",
+        )
     _draw_footer(pdf, footer_label, page_number)
     return page_number
 
@@ -161,7 +179,12 @@ def _iter_local_source_candidates(document: Mapping[str, Any]) -> Iterable[Path]
     def emit(candidate: Any) -> Iterable[Path]:
         path_text = ""
         if isinstance(candidate, Mapping):
-            path_text = str(candidate.get("path") or candidate.get("source_path") or candidate.get("local_path") or "")
+            path_text = str(
+                candidate.get("path")
+                or candidate.get("source_path")
+                or candidate.get("local_path")
+                or ""
+            )
         else:
             path_text = str(candidate or "")
         path_text = path_text.strip()
@@ -191,7 +214,9 @@ def _iter_local_source_candidates(document: Mapping[str, Any]) -> Iterable[Path]
             yield path
 
 
-def _collect_source_artifacts(documents: Sequence[Mapping[str, Any]]) -> List[DocketPdfSourceArtifact]:
+def _collect_source_artifacts(
+    documents: Sequence[Mapping[str, Any]],
+) -> List[DocketPdfSourceArtifact]:
     artifacts: List[DocketPdfSourceArtifact] = []
     seen_paths: set[str] = set()
     for document in documents:
@@ -203,7 +228,13 @@ def _collect_source_artifacts(documents: Sequence[Mapping[str, Any]]) -> List[Do
                 continue
             seen_paths.add(resolved)
             suffix = path.suffix.lower()
-            kind = "pdf" if suffix == ".pdf" else "image" if suffix in SUPPORTED_IMAGE_SUFFIXES else "file"
+            kind = (
+                "pdf"
+                if suffix == ".pdf"
+                else "image"
+                if suffix in SUPPORTED_IMAGE_SUFFIXES
+                else "file"
+            )
             artifacts.append(
                 DocketPdfSourceArtifact(
                     document_id=document_id,
@@ -225,7 +256,11 @@ def export_docket_dataset_single_pdf(
     """Export a docket dataset into a readable PDF binder."""
 
     dataset_payload = dataset.to_dict() if hasattr(dataset, "to_dict") else dict(dataset)
-    documents = [dict(item) for item in list(dataset_payload.get("documents") or []) if isinstance(item, Mapping)]
+    documents = [
+        dict(item)
+        for item in list(dataset_payload.get("documents") or [])
+        if isinstance(item, Mapping)
+    ]
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -239,13 +274,16 @@ def export_docket_dataset_single_pdf(
     page_number = 1
 
     intro_sections = [
-        ("Dataset Summary", [
-            f"Case Name: {case_name}",
-            f"Docket ID: {docket_id}",
-            f"Court: {court}",
-            f"Document Count: {len(documents)}",
-            f"Bundled Local Source Files: {len(source_artifacts)}",
-        ]),
+        (
+            "Dataset Summary",
+            [
+                f"Case Name: {case_name}",
+                f"Docket ID: {docket_id}",
+                f"Court: {court}",
+                f"Document Count: {len(documents)}",
+                f"Bundled Local Source Files: {len(source_artifacts)}",
+            ],
+        ),
     ]
     page_number = _append_text_sections(
         pdf,
@@ -262,18 +300,29 @@ def export_docket_dataset_single_pdf(
 
         document_id = str(document.get("document_id") or document.get("id") or f"document_{index}")
         metadata = dict(document.get("metadata") or {})
-        source_paths = [artifact.path for artifact in source_artifacts if artifact.document_id == document_id]
+        source_paths = [
+            artifact.path for artifact in source_artifacts if artifact.document_id == document_id
+        ]
         metadata_json = json.dumps(_jsonable(metadata), indent=2, ensure_ascii=False)
         sections = [
-            ("Document", [
-                f"Document ID: {document_id}",
-                f"Title: {str(document.get('title') or '').strip()}",
-                f"Document Number: {str(document.get('document_number') or '').strip()}",
-                f"Date Filed: {str(document.get('date_filed') or '').strip()}",
-                f"Source URL: {str(document.get('source_url') or '').strip()}",
-                f"Attached Local Sources: {len(source_paths)}",
-            ]),
-            ("Text", _wrap_text(str(document.get("text") or "").strip() or "[No document text available]", max_chars=105)),
+            (
+                "Document",
+                [
+                    f"Document ID: {document_id}",
+                    f"Title: {str(document.get('title') or '').strip()}",
+                    f"Document Number: {str(document.get('document_number') or '').strip()}",
+                    f"Date Filed: {str(document.get('date_filed') or '').strip()}",
+                    f"Source URL: {str(document.get('source_url') or '').strip()}",
+                    f"Attached Local Sources: {len(source_paths)}",
+                ],
+            ),
+            (
+                "Text",
+                _wrap_text(
+                    str(document.get("text") or "").strip() or "[No document text available]",
+                    max_chars=105,
+                ),
+            ),
         ]
         if metadata:
             sections.append(("Metadata", metadata_json.splitlines()))
@@ -288,7 +337,11 @@ def export_docket_dataset_single_pdf(
         )
 
     for artifact in source_artifacts:
-        _draw_footer(pdf, str(documents[-1].get("title") or "Docket Document") if documents else "Docket Dataset", page_number)
+        _draw_footer(
+            pdf,
+            str(documents[-1].get("title") or "Docket Document") if documents else "Docket Dataset",
+            page_number,
+        )
         pdf.showPage()
         page_number += 1
 
@@ -306,25 +359,34 @@ def export_docket_dataset_single_pdf(
             pdf,
             heading=f"{heading} - Source Reference",
             sections=[
-                ("Source File", [
-                    f"Document ID: {artifact.document_id}",
-                    f"Title: {artifact.title}",
-                    f"Path: {artifact.path}",
-                    f"Kind: {artifact.kind}",
-                    (
-                        "This referenced PDF was recorded in the export metadata but not inlined; "
-                        "use the path above to retrieve the native filing."
-                        if artifact.kind == "pdf"
-                        else "This file type is referenced in the export but was not inlined into the PDF binder."
-                    ),
-                ])
+                (
+                    "Source File",
+                    [
+                        f"Document ID: {artifact.document_id}",
+                        f"Title: {artifact.title}",
+                        f"Path: {artifact.path}",
+                        f"Kind: {artifact.kind}",
+                        (
+                            "This referenced PDF was recorded in the export metadata but not inlined; "
+                            "use the path above to retrieve the native filing."
+                            if artifact.kind == "pdf"
+                            else "This file type is referenced in the export but was not inlined into the PDF binder."
+                        ),
+                    ],
+                )
             ],
             footer_label=f"{artifact.title} - source reference",
             page_number=page_number,
         )
 
-    final_footer_label = f"{heading} - source reference" if source_artifacts else (
-        str(documents[-1].get("title") or "Docket Document") if documents else "Docket Dataset Summary"
+    final_footer_label = (
+        f"{heading} - source reference"
+        if source_artifacts
+        else (
+            str(documents[-1].get("title") or "Docket Document")
+            if documents
+            else "Docket Dataset Summary"
+        )
     )
     _draw_footer(pdf, final_footer_label, page_number)
     pdf.save()

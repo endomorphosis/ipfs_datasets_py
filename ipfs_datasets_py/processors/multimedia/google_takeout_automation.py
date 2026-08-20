@@ -91,7 +91,8 @@ def classify_takeout_email_stage(email_payload: dict[str, Any]) -> str:
         or "download your files" in haystack
         or "your archive is ready" in haystack
         or "your google data has been exported" in haystack
-        or "view 1 of" in haystack and "drive" in haystack
+        or "view 1 of" in haystack
+        and "drive" in haystack
         or "you can download a copy of your files in drive" in haystack
     ):
         return "archive_ready"
@@ -175,7 +176,11 @@ async def poll_email_for_takeout_link(
             continue
         if subject_filter and subject_filter not in haystack:
             continue
-        if account_filter and account_filter not in to_value.lower() and account_filter not in haystack:
+        if (
+            account_filter
+            and account_filter not in to_value.lower()
+            and account_filter not in haystack
+        ):
             continue
 
         links = extract_takeout_download_candidates_from_email(item)
@@ -615,7 +620,9 @@ def poll_for_takeout_archive(
 
     while time.monotonic() < deadline:
         matches = sorted(download_root.glob(archive_glob))
-        complete_matches = [path for path in matches if path.is_file() and not path.name.endswith(".crdownload")]
+        complete_matches = [
+            path for path in matches if path.is_file() and not path.name.endswith(".crdownload")
+        ]
         if complete_matches:
             best_match = complete_matches[-1].resolve()
             break
@@ -653,7 +660,12 @@ def list_drive_takeout_candidates(
     if modified_after:
         normalized = str(modified_after).replace("Z", "+00:00")
         try:
-            iso_value = datetime.fromisoformat(normalized).astimezone(UTC).replace(microsecond=0).isoformat()
+            iso_value = (
+                datetime.fromisoformat(normalized)
+                .astimezone(UTC)
+                .replace(microsecond=0)
+                .isoformat()
+            )
             query_parts.append(f"modifiedTime > '{iso_value}'")
         except Exception:
             pass
@@ -709,7 +721,8 @@ def _find_downloadable_descendant(
         return None
     children = list_drive_folder_children(access_token=access_token, folder_id=folder_id)
     files = [
-        item for item in children
+        item
+        for item in children
         if str(item.get("mimeType") or "") != "application/vnd.google-apps.folder"
     ]
     if files:
@@ -717,7 +730,8 @@ def _find_downloadable_descendant(
     if max_depth == 0:
         return None
     folders = [
-        item for item in children
+        item
+        for item in children
         if str(item.get("mimeType") or "") == "application/vnd.google-apps.folder"
     ]
     for folder in folders:
@@ -760,7 +774,8 @@ def poll_drive_for_takeout_artifact(
             modified_after=modified_after,
         )
         downloadable = [
-            item for item in matches
+            item
+            for item in matches
             if str(item.get("mimeType") or "") != "application/vnd.google-apps.folder"
         ]
         if downloadable:
@@ -777,7 +792,9 @@ def poll_drive_for_takeout_artifact(
             "name_contains": name_contains,
             "modified_after": modified_after,
             "message": "No matching Google Drive Takeout artifact appeared before timeout.",
-            "token_cache_path": str(Path(token_cache_path).expanduser().resolve()) if token_cache_path else None,
+            "token_cache_path": str(Path(token_cache_path).expanduser().resolve())
+            if token_cache_path
+            else None,
         }
 
     return {
@@ -785,7 +802,9 @@ def poll_drive_for_takeout_artifact(
         "name_contains": name_contains,
         "modified_after": modified_after,
         "artifact": best_match,
-        "token_cache_path": str(Path(token_cache_path).expanduser().resolve()) if token_cache_path else None,
+        "token_cache_path": str(Path(token_cache_path).expanduser().resolve())
+        if token_cache_path
+        else None,
         "has_refresh_token": bool(token_payload.get("refresh_token")),
     }
 

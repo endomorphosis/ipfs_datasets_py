@@ -25,6 +25,7 @@ from ipfs_datasets_py.mcp_server.exceptions import (
 # Fixtures / helpers
 # ---------------------------------------------------------------------------
 
+
 class _ConcreteTool(ClaudeMCPTool):
     """Minimal concrete tool for testing (ClaudeMCPTool is abstract)."""
 
@@ -65,6 +66,7 @@ def populated_registry():
 # ---------------------------------------------------------------------------
 # ToolRegistry – basic CRUD
 # ---------------------------------------------------------------------------
+
 
 class TestToolRegistryRegistration:
     """GIVEN a ToolRegistry WHEN tools are registered THEN they are discoverable."""
@@ -189,6 +191,7 @@ class TestToolRegistryUnregister:
 # ToolRegistry – search
 # ---------------------------------------------------------------------------
 
+
 class TestToolRegistrySearch:
     """GIVEN a populated ToolRegistry WHEN searched THEN matching tools are returned."""
 
@@ -214,6 +217,7 @@ class TestToolRegistrySearch:
 # ---------------------------------------------------------------------------
 # ToolRegistry – validation
 # ---------------------------------------------------------------------------
+
 
 class TestToolRegistryValidation:
     """GIVEN a ToolRegistry WHEN validate_tool_parameters is called THEN returns correct result."""
@@ -249,6 +253,7 @@ class TestToolRegistryValidation:
 # ToolRegistry – statistics
 # ---------------------------------------------------------------------------
 
+
 class TestToolRegistryStatistics:
     """GIVEN a populated ToolRegistry WHEN statistics are requested THEN accurate data returned."""
 
@@ -275,6 +280,7 @@ class TestToolRegistryStatistics:
 # ---------------------------------------------------------------------------
 # initialize_laion_tools
 # ---------------------------------------------------------------------------
+
 
 class TestInitializeLaionTools:
     """Tests for the initialize_laion_tools function."""
@@ -328,6 +334,7 @@ class TestInitializeLaionTools:
         THEN: All 19 private helpers exist and are callable
         """
         from ipfs_datasets_py.mcp_server import tool_registry as tr
+
         helpers = [
             "_register_embedding_tools",
             "_register_search_tools",
@@ -360,6 +367,7 @@ class TestInitializeLaionTools:
         THEN: No exception propagates (graceful degradation)
         """
         from ipfs_datasets_py.mcp_server import tool_registry as tr
+
         reg = ToolRegistry()
         helpers_with_service = [
             tr._register_embedding_tools,
@@ -394,6 +402,7 @@ class TestInitializeLaionTools:
 # ClaudeMCPTool – base class
 # ---------------------------------------------------------------------------
 
+
 class TestClaudeMCPTool:
     """Tests for the ClaudeMCPTool abstract base class."""
 
@@ -419,6 +428,7 @@ class TestClaudeMCPTool:
         THEN: usage_count becomes 1
         """
         import asyncio
+
         tool = _ConcreteTool()
         assert tool.usage_count == 0
         asyncio.run(tool.run(input="hello"))
@@ -431,6 +441,7 @@ class TestClaudeMCPTool:
         THEN: Returns a dict
         """
         import asyncio
+
         tool = _ConcreteTool()
         result = asyncio.run(tool.execute({"input": "hello"}))
         assert isinstance(result, dict)
@@ -440,6 +451,7 @@ class TestClaudeMCPTool:
 # ---------------------------------------------------------------------------
 # ToolRegistry – execute_tool (lines 639-695)
 # ---------------------------------------------------------------------------
+
 
 class TestToolRegistryExecuteTool:
     """Tests for ToolRegistry.execute_tool() covering uncovered paths."""
@@ -451,6 +463,7 @@ class TestToolRegistryExecuteTool:
         THEN: Returns the tool's result dict; total_executions incremented
         """
         import asyncio
+
         reg = ToolRegistry()
         tool = _ConcreteTool("exec_tool")
         reg.register_tool(tool)
@@ -466,6 +479,7 @@ class TestToolRegistryExecuteTool:
         THEN: ToolNotFoundError is raised
         """
         import asyncio
+
         reg = ToolRegistry()
         with pytest.raises(ToolNotFoundError):
             asyncio.run(reg.execute_tool("missing", {}))
@@ -546,6 +560,7 @@ class TestToolRegistryExecuteTool:
 # ---------------------------------------------------------------------------
 # ToolRegistry – get_tags and get_all_tools (lines 608-639)
 # ---------------------------------------------------------------------------
+
 
 class TestToolRegistryGetTagsAndAllTools:
     """Tests for get_tags() and get_all_tools() covering previously uncovered lines."""

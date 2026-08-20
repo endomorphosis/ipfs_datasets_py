@@ -64,22 +64,22 @@ print(strict_cfg.confidence_threshold)  # Now 0.8 (overridden)
 
 ```python
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-    OntologyGenerator, OntologyGenerationContext, DataType, ExtractionConfig
+    OntologyGenerator,
+    OntologyGenerationContext,
+    DataType,
+    ExtractionConfig,
 )
 
 documents = {
     "legal": "A party shall indemnify...",
     "technical": "To enable DEBUG mode...",
-    "financial": "Revenue increased by 15%..."
+    "financial": "Revenue increased by 15%...",
 }
 
 for domain, text in documents.items():
     cfg = ExtractionConfig.for_domain(domain)
     context = OntologyGenerationContext(
-        data_source=f"{domain}.txt",
-        data_type=DataType.TEXT,
-        domain=domain,
-        config=cfg
+        data_source=f"{domain}.txt", data_type=DataType.TEXT, domain=domain, config=cfg
     )
     generator = OntologyGenerator(context)
     result = generator.generate_ontology(text)
@@ -92,16 +92,16 @@ for domain, text in documents.items():
 
 ```python
 ExtractionConfig(
-    confidence_threshold=0.5,      # Standard threshold
-    max_entities=0,                # Unlimited (0 = no limit)
-    max_relationships=0,           # Unlimited
-    window_size=5,                 # Co-occurrence window (char count)
-    include_properties=True,       # Include property relationships
-    llm_fallback_threshold=0.0,    # No LLM fallback
-    min_entity_length=2,           # Filter single-char entities
-    max_confidence=1.0,            # Max confidence ceiling
+    confidence_threshold=0.5,  # Standard threshold
+    max_entities=0,  # Unlimited (0 = no limit)
+    max_relationships=0,  # Unlimited
+    window_size=5,  # Co-occurrence window (char count)
+    include_properties=True,  # Include property relationships
+    llm_fallback_threshold=0.0,  # No LLM fallback
+    min_entity_length=2,  # Filter single-char entities
+    max_confidence=1.0,  # Max confidence ceiling
     enable_parallel_inference=False,  # Parallelization disabled by default
-    max_workers=4,                 # But can be enabled with up to 4 workers
+    max_workers=4,  # But can be enabled with up to 4 workers
 )
 ```
 

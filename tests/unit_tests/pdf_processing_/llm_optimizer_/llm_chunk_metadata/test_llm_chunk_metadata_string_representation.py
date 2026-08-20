@@ -6,12 +6,13 @@ Test suite for string representation methods.
 Tests __str__ and __repr__ methods for LLMChunkMetadata instances,
 including content validation and security considerations.
 """
+
 import pytest
 from pydantic import ValidationError
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunkMetadata
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
-    LLMChunkMetadataTestDataFactory as DataFactory
+    LLMChunkMetadataTestDataFactory as DataFactory,
 )
 
 
@@ -26,14 +27,14 @@ class TestLLMChunkMetadataStringRepresentation:
         """
         # Constants
         EXPECTED_CLASS_NAME = "LLMChunkMetadata"
-        
+
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
         metadata = LLMChunkMetadata(**valid_data)
-        
+
         # When
         str_repr = str(metadata)
-        
+
         # Then
         assert EXPECTED_CLASS_NAME in str_repr
 
@@ -49,7 +50,7 @@ class TestLLMChunkMetadataStringRepresentation:
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
         metadata = LLMChunkMetadata(**valid_data)
-        
+
         # When
         str_repr = str(metadata)
 
@@ -69,13 +70,15 @@ class TestLLMChunkMetadataStringRepresentation:
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
         metadata = LLMChunkMetadata(**valid_data)
-        
+
         # When
         repr_str = repr(metadata)
-        
+
         # Then
         for string in EXPECTED_STRINGS:
-            assert string in repr_str, f"String '{string}' not found in repr representation: {repr_str}"
+            assert string in repr_str, (
+                f"String '{string}' not found in repr representation: {repr_str}"
+            )
 
     def test_repr_contains_all_fields(self):
         """
@@ -86,10 +89,10 @@ class TestLLMChunkMetadataStringRepresentation:
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
         metadata = LLMChunkMetadata(**valid_data)
-        
+
         # When
         repr_str = repr(metadata)
-        
+
         # Then
         for field_name in valid_data.keys():
             assert field_name in repr_str
@@ -102,16 +105,18 @@ class TestLLMChunkMetadataStringRepresentation:
         """
         # Constants
         MIN_LENGTH = 0
-        
+
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
         metadata = LLMChunkMetadata(**valid_data)
-        
+
         # When
         str_repr = str(metadata)
-        
+
         # Then
-        assert len(str_repr.strip()) > MIN_LENGTH, f"String representation of LLMChunkMetadata is empty."
+        assert len(str_repr.strip()) > MIN_LENGTH, (
+            f"String representation of LLMChunkMetadata is empty."
+        )
 
     def test_repr_is_non_empty(self):
         """
@@ -121,16 +126,18 @@ class TestLLMChunkMetadataStringRepresentation:
         """
         # Constants
         MIN_LENGTH = 0
-        
+
         # Given
         valid_data = DataFactory.create_valid_baseline_data()
         metadata = LLMChunkMetadata(**valid_data)
-        
+
         # When
         repr_str = repr(metadata)
-        
+
         # Then
-        assert len(repr_str.strip()) > MIN_LENGTH, f"Repr representation of LLMChunkMetadata is empty."
+        assert len(repr_str.strip()) > MIN_LENGTH, (
+            f"Repr representation of LLMChunkMetadata is empty."
+        )
 
 
 if __name__ == "__main__":

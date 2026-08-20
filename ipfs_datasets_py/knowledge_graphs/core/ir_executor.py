@@ -296,9 +296,7 @@ def execute_ir_operations(
                 values = list(row.values())
                 final_results.append(Record(keys, values))
 
-            logger.debug(
-                "Aggregate: %d groups, %d results", len(groups), len(final_results)
-            )
+            logger.debug("Aggregate: %d groups, %d results", len(groups), len(final_results))
 
         elif op_type == "Union":
             all_flag = op.get("all", False)
@@ -319,23 +317,23 @@ def execute_ir_operations(
                     record_data: Dict[str, Any] = {}
                     for item in items:
                         expr = item.get("expression")
-                        alias = item.get(
-                            "alias", expr if isinstance(expr, str) else "result"
-                        )
+                        alias = item.get("alias", expr if isinstance(expr, str) else "result")
                         record_data[alias] = evaluate_compiled_expression(expr, binding)
-                    final_results.append(Record(list(record_data.keys()), list(record_data.values())))
+                    final_results.append(
+                        Record(list(record_data.keys()), list(record_data.values()))
+                    )
             else:
                 for var_name, values in result_set.items():
                     for value in values:
                         record_data = {}
                         for item in items:
                             expr = item.get("expression")
-                            alias = item.get(
-                                "alias", expr if isinstance(expr, str) else "result"
-                            )
+                            alias = item.get("alias", expr if isinstance(expr, str) else "result")
                             binding = {var_name: value}
                             record_data[alias] = evaluate_compiled_expression(expr, binding)
-                        final_results.append(Record(list(record_data.keys()), list(record_data.values())))
+                        final_results.append(
+                            Record(list(record_data.keys()), list(record_data.values()))
+                        )
 
             logger.debug("Project: %d results", len(final_results))
 
@@ -378,7 +376,7 @@ def execute_ir_operations(
 
             # Apply SKIP / LIMIT if requested
             if op.get("skip") is not None:
-                new_bindings_wp = new_bindings_wp[op["skip"]:]
+                new_bindings_wp = new_bindings_wp[op["skip"] :]
             if op.get("limit") is not None:
                 new_bindings_wp = new_bindings_wp[: op["limit"]]
 
@@ -499,7 +497,9 @@ def execute_ir_operations(
                     node = graph_engine.get_node(item.id)
                     if node and property_name in node._properties:
                         del node._properties[property_name]
-                        logger.debug("RemoveProperty: removed %s from node %s", property_name, item.id)
+                        logger.debug(
+                            "RemoveProperty: removed %s from node %s", property_name, item.id
+                        )
 
         elif op_type == "RemoveLabel":
             # REMOVE n:Label — remove a label from each matched node

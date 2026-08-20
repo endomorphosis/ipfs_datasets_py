@@ -109,9 +109,7 @@ def test_canonical_dag_has_all_stages_and_explicit_dependencies() -> None:
     assert by_stage[PipelineStage.MERGE].dependencies == (
         by_stage[PipelineStage.PERSISTENCE].task_id,
     )
-    assert {
-        task.stage for task in tasks if task.canonical_write
-    } == {
+    assert {task.stage for task in tasks if task.canonical_write} == {
         PipelineStage.CANONICAL_TRAINER,
         PipelineStage.PERSISTENCE,
         PipelineStage.MERGE,
@@ -333,12 +331,8 @@ def test_canonical_write_lock_is_shared_by_independent_scheduler_facades(
     state_path = tmp_path / "resources.json"
     first = PipelineStageScheduler(resource_scheduler=_resource_scheduler(state_path))
     second = PipelineStageScheduler(resource_scheduler=_resource_scheduler(state_path))
-    first.submit(
-        PipelineTask("trainer", PipelineStage.CANONICAL_TRAINER, resources=_resources())
-    )
-    second.submit(
-        PipelineTask("merge", PipelineStage.MERGE, resources=_resources())
-    )
+    first.submit(PipelineTask("trainer", PipelineStage.CANONICAL_TRAINER, resources=_resources()))
+    second.submit(PipelineTask("merge", PipelineStage.MERGE, resources=_resources()))
 
     trainer = first.admit_ready()
     assert [item.task_id for item in trainer] == ["trainer"]

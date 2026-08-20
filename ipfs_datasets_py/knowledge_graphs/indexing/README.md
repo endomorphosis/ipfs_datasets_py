@@ -32,12 +32,7 @@ from ipfs_datasets_py.knowledge_graphs.indexing import IndexManager
 manager = IndexManager(storage_backend=storage)
 
 # Create property index
-manager.create_index(
-    index_name="person_name",
-    label="Person",
-    property="name",
-    unique=False
-)
+manager.create_index(index_name="person_name", label="Person", property="name", unique=False)
 
 # Query using index
 results = manager.lookup("person_name", "Alice")
@@ -64,7 +59,7 @@ from ipfs_datasets_py.knowledge_graphs.indexing import BTreeIndex
 # Create B-tree index
 index = BTreeIndex(
     order=100,  # B-tree order
-    unique=False
+    unique=False,
 )
 
 # Insert entries
@@ -98,25 +93,19 @@ Specialized index types for specific use cases:
 from ipfs_datasets_py.knowledge_graphs.indexing import (
     RelationshipIndex,
     CompositeIndex,
-    FullTextIndex
+    FullTextIndex,
 )
 
 # Relationship index for fast traversals
 rel_index = RelationshipIndex()
-rel_index.add_relationship(
-    source_id=123,
-    target_id=456,
-    rel_type="WORKS_AT"
-)
+rel_index.add_relationship(source_id=123, target_id=456, rel_type="WORKS_AT")
 
 # Find outgoing relationships
 outgoing = rel_index.get_outgoing(123)
 print(f"Outgoing: {len(outgoing)} relationships")
 
 # Composite index (multiple properties)
-composite = CompositeIndex(
-    properties=["age", "city"]
-)
+composite = CompositeIndex(properties=["age", "city"])
 composite.insert((30, "NYC"), node_id=123)
 nodes = composite.lookup((30, "NYC"))
 
@@ -137,28 +126,16 @@ results = ft_index.search("engineer")
 Type definitions for index structures:
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.indexing import (
-    IndexDefinition,
-    IndexEntry,
-    IndexStatistics
-)
+from ipfs_datasets_py.knowledge_graphs.indexing import IndexDefinition, IndexEntry, IndexStatistics
 
 # Index definition
 definition = IndexDefinition(
-    name="person_email",
-    label="Person",
-    properties=["email"],
-    unique=True,
-    index_type="btree"
+    name="person_email", label="Person", properties=["email"], unique=True, index_type="btree"
 )
 
 # Index statistics
 stats = IndexStatistics(
-    index_name="person_email",
-    entry_count=1000,
-    depth=4,
-    size_bytes=50000,
-    hit_rate=0.95
+    index_name="person_email", entry_count=1000, depth=4, size_bytes=50000, hit_rate=0.95
 )
 ```
 
@@ -177,12 +154,7 @@ storage = IPLDBackend()
 manager = IndexManager(storage_backend=storage)
 
 # Create index on Person.name
-manager.create_index(
-    index_name="person_name_idx",
-    label="Person",
-    property="name",
-    unique=False
-)
+manager.create_index(index_name="person_name_idx", label="Person", property="name", unique=False)
 
 # Index is automatically populated with existing data
 stats = manager.get_index_stats("person_name_idx")
@@ -201,10 +173,7 @@ result = engine.query("MATCH (p:Person {name: 'Alice'}) RETURN p")
 ```python
 # Create unique index on email
 manager.create_index(
-    index_name="person_email_unique",
-    label="Person",
-    property="email",
-    unique=True
+    index_name="person_email_unique", label="Person", property="email", unique=True
 )
 
 # Try to insert duplicate (will fail)
@@ -212,10 +181,7 @@ from ipfs_datasets_py.knowledge_graphs.exceptions import UniqueConstraintViolati
 
 try:
     # This will fail if email already exists
-    storage.create_node(
-        labels=["Person"],
-        properties={"email": "alice@example.com"}
-    )
+    storage.create_node(labels=["Person"], properties={"email": "alice@example.com"})
 except UniqueConstraintViolation as e:
     print(f"Duplicate email: {e}")
 ```
@@ -227,9 +193,7 @@ from ipfs_datasets_py.knowledge_graphs.indexing import CompositeIndex
 
 # Create composite index on (age, city)
 manager.create_composite_index(
-    index_name="person_age_city",
-    label="Person",
-    properties=["age", "city"]
+    index_name="person_age_city", label="Person", properties=["age", "city"]
 )
 
 # Query with both properties (efficient)
@@ -248,21 +212,16 @@ from ipfs_datasets_py.knowledge_graphs.indexing import FullTextIndex
 # Create full-text index on biography field
 ft_index = FullTextIndex(
     analyzer="english",  # Language-specific analysis
-    min_word_length=3
+    min_word_length=3,
 )
 
 manager.create_fulltext_index(
-    index_name="person_bio_fulltext",
-    label="Person",
-    property="biography",
-    analyzer=ft_index
+    index_name="person_bio_fulltext", label="Person", property="biography", analyzer=ft_index
 )
 
 # Search with ranking
 results = manager.fulltext_search(
-    index_name="person_bio_fulltext",
-    query="software engineer machine learning",
-    limit=10
+    index_name="person_bio_fulltext", query="software engineer machine learning", limit=10
 )
 
 for result in results:
@@ -276,10 +235,7 @@ for result in results:
 from ipfs_datasets_py.knowledge_graphs.indexing import RelationshipIndex
 
 # Create relationship index
-manager.create_relationship_index(
-    index_name="works_at_idx",
-    relationship_type="WORKS_AT"
-)
+manager.create_relationship_index(index_name="works_at_idx", relationship_type="WORKS_AT")
 
 # Fast traversal queries
 result = engine.query("""
@@ -299,11 +255,7 @@ result = engine.query("""
 ```python
 # Basic property index
 manager.create_index(
-    index_name="basic_idx",
-    label="Person",
-    property="name",
-    unique=False,
-    case_sensitive=True
+    index_name="basic_idx", label="Person", property="name", unique=False, case_sensitive=True
 )
 
 # Composite index
@@ -311,7 +263,7 @@ manager.create_composite_index(
     index_name="composite_idx",
     label="Person",
     properties=["age", "city", "occupation"],
-    unique=False
+    unique=False,
 )
 
 # Full-text index with options
@@ -321,14 +273,14 @@ manager.create_fulltext_index(
     property="content",
     analyzer="english",
     stop_words=["the", "a", "an"],
-    stemming=True
+    stemming=True,
 )
 
 # Relationship index
 manager.create_relationship_index(
     index_name="rel_idx",
     relationship_type="KNOWS",
-    direction="both"  # "outgoing", "incoming", or "both"
+    direction="both",  # "outgoing", "incoming", or "both"
 )
 ```
 
@@ -341,7 +293,7 @@ from ipfs_datasets_py.knowledge_graphs.indexing import BTreeIndex
 index = BTreeIndex(
     order=100,  # Default: balanced
     cache_size=1000,  # Cache hot nodes
-    unique=False
+    unique=False,
 )
 
 # Large datasets: higher order
@@ -433,7 +385,7 @@ if stats.hit_rate < 0.1:
 from ipfs_datasets_py.knowledge_graphs.indexing import (
     IndexAlreadyExistsError,
     IndexNotFoundError,
-    UniqueConstraintViolation
+    UniqueConstraintViolation,
 )
 
 # Index already exists

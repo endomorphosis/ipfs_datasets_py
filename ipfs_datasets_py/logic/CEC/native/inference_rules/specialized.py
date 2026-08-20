@@ -41,14 +41,15 @@ class BiconditionalIntroduction(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have both P→Q and Q→P."""
         implications = [
-            f for f in formulas
-            if isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.IMPLIES and
-            len(f.formulas) == 2
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula)
+            and f.connective == LogicalConnective.IMPLIES
+            and len(f.formulas) == 2
         ]
         for i, impl1 in enumerate(implications):
             p1, q1 = impl1.formulas[0], impl1.formulas[1]
-            for impl2 in implications[i + 1:]:
+            for impl2 in implications[i + 1 :]:
                 p2, q2 = impl2.formulas[0], impl2.formulas[1]
                 if p1 == q2 and q1 == p2:
                     return True
@@ -58,24 +59,21 @@ class BiconditionalIntroduction(InferenceRule):
         """Apply biconditional introduction."""
         results: List[Formula] = []
         implications = [
-            f for f in formulas
-            if isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.IMPLIES and
-            len(f.formulas) == 2
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula)
+            and f.connective == LogicalConnective.IMPLIES
+            and len(f.formulas) == 2
         ]
         added: List[str] = []
         for i, impl1 in enumerate(implications):
             p1, q1 = impl1.formulas[0], impl1.formulas[1]
-            for impl2 in implications[i + 1:]:
+            for impl2 in implications[i + 1 :]:
                 p2, q2 = impl2.formulas[0], impl2.formulas[1]
                 if p1 == q2 and q1 == p2:
                     key = f"{id(p1)}-{id(q1)}"
                     if key not in added:
-                        results.append(
-                            ConnectiveFormula(
-                                LogicalConnective.BICONDITIONAL, [p1, q1]
-                            )
-                        )
+                        results.append(ConnectiveFormula(LogicalConnective.BICONDITIONAL, [p1, q1]))
                         added.append(key)
         return results
 
@@ -98,8 +96,7 @@ class BiconditionalElimination(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have a biconditional."""
         return any(
-            isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.BICONDITIONAL
+            isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.BICONDITIONAL
             for f in formulas
         )
 
@@ -107,9 +104,11 @@ class BiconditionalElimination(InferenceRule):
         """Apply biconditional elimination: P↔Q → (P→Q) ∧ (Q→P)."""
         results: List[Formula] = []
         for formula in formulas:
-            if (isinstance(formula, ConnectiveFormula) and
-                    formula.connective == LogicalConnective.BICONDITIONAL and
-                    len(formula.formulas) == 2):
+            if (
+                isinstance(formula, ConnectiveFormula)
+                and formula.connective == LogicalConnective.BICONDITIONAL
+                and len(formula.formulas) == 2
+            ):
                 p, q = formula.formulas[0], formula.formulas[1]
                 results.append(ConnectiveFormula(LogicalConnective.IMPLIES, [p, q]))
                 results.append(ConnectiveFormula(LogicalConnective.IMPLIES, [q, p]))
@@ -136,24 +135,26 @@ class ConstructiveDilemma(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check for (P→Q), (R→S), (P∨R) pattern."""
         implications = [
-            f for f in formulas
-            if isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.IMPLIES and
-            len(f.formulas) == 2
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula)
+            and f.connective == LogicalConnective.IMPLIES
+            and len(f.formulas) == 2
         ]
         disjunctions = [
-            f for f in formulas
-            if isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.OR and
-            len(f.formulas) >= 2
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula)
+            and f.connective == LogicalConnective.OR
+            and len(f.formulas) >= 2
         ]
         if len(implications) < 2 or not disjunctions:
             return False
         for i, impl1 in enumerate(implications):
-            for impl2 in implications[i + 1:]:
+            for impl2 in implications[i + 1 :]:
                 p, r = impl1.formulas[0], impl2.formulas[0]
                 for disj in disjunctions:
-                    if (p in disj.formulas and r in disj.formulas):
+                    if p in disj.formulas and r in disj.formulas:
                         return True
         return False
 
@@ -161,26 +162,26 @@ class ConstructiveDilemma(InferenceRule):
         """Apply constructive dilemma."""
         results: List[Formula] = []
         implications = [
-            f for f in formulas
-            if isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.IMPLIES and
-            len(f.formulas) == 2
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula)
+            and f.connective == LogicalConnective.IMPLIES
+            and len(f.formulas) == 2
         ]
         disjunctions = [
-            f for f in formulas
-            if isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.OR and
-            len(f.formulas) >= 2
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula)
+            and f.connective == LogicalConnective.OR
+            and len(f.formulas) >= 2
         ]
         for i, impl1 in enumerate(implications):
-            for impl2 in implications[i + 1:]:
+            for impl2 in implications[i + 1 :]:
                 p, q = impl1.formulas[0], impl1.formulas[1]
                 r, s = impl2.formulas[0], impl2.formulas[1]
                 for disj in disjunctions:
                     if p in disj.formulas and r in disj.formulas:
-                        results.append(
-                            ConnectiveFormula(LogicalConnective.OR, [q, s])
-                        )
+                        results.append(ConnectiveFormula(LogicalConnective.OR, [q, s]))
         return results
 
 
@@ -204,28 +205,28 @@ class DestructiveDilemma(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check for (P→Q), (R→S), (¬Q∨¬S) pattern."""
         implications = [
-            f for f in formulas
-            if isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.IMPLIES and
-            len(f.formulas) == 2
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula)
+            and f.connective == LogicalConnective.IMPLIES
+            and len(f.formulas) == 2
         ]
         disjunctions = [
-            f for f in formulas
-            if isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.OR
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR
         ]
         if len(implications) < 2 or not disjunctions:
             return False
         for i, impl1 in enumerate(implications):
-            for impl2 in implications[i + 1:]:
+            for impl2 in implications[i + 1 :]:
                 q = impl1.formulas[1]
                 s = impl2.formulas[1]
                 not_q = ConnectiveFormula(LogicalConnective.NOT, [q])
                 not_s = ConnectiveFormula(LogicalConnective.NOT, [s])
                 for disj in disjunctions:
                     disj_lits = list(disj.formulas)
-                    if (any(l == not_q for l in disj_lits) and
-                            any(l == not_s for l in disj_lits)):
+                    if any(l == not_q for l in disj_lits) and any(l == not_s for l in disj_lits):
                         return True
         return False
 
@@ -233,31 +234,29 @@ class DestructiveDilemma(InferenceRule):
         """Apply destructive dilemma."""
         results: List[Formula] = []
         implications = [
-            f for f in formulas
-            if isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.IMPLIES and
-            len(f.formulas) == 2
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula)
+            and f.connective == LogicalConnective.IMPLIES
+            and len(f.formulas) == 2
         ]
         disjunctions = [
-            f for f in formulas
-            if isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.OR
+            f
+            for f in formulas
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR
         ]
         for i, impl1 in enumerate(implications):
-            for impl2 in implications[i + 1:]:
+            for impl2 in implications[i + 1 :]:
                 p, q = impl1.formulas[0], impl1.formulas[1]
                 r, s = impl2.formulas[0], impl2.formulas[1]
                 not_q = ConnectiveFormula(LogicalConnective.NOT, [q])
                 not_s = ConnectiveFormula(LogicalConnective.NOT, [s])
                 for disj in disjunctions:
                     disj_lits = list(disj.formulas)
-                    if (any(l == not_q for l in disj_lits) and
-                            any(l == not_s for l in disj_lits)):
+                    if any(l == not_q for l in disj_lits) and any(l == not_s for l in disj_lits):
                         not_p = ConnectiveFormula(LogicalConnective.NOT, [p])
                         not_r = ConnectiveFormula(LogicalConnective.NOT, [r])
-                        results.append(
-                            ConnectiveFormula(LogicalConnective.OR, [not_p, not_r])
-                        )
+                        results.append(ConnectiveFormula(LogicalConnective.OR, [not_p, not_r]))
         return results
 
 
@@ -279,12 +278,16 @@ class ExportationRule(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have (P∧Q)→R."""
         for f in formulas:
-            if (isinstance(f, ConnectiveFormula) and
-                    f.connective == LogicalConnective.IMPLIES and
-                    len(f.formulas) == 2):
+            if (
+                isinstance(f, ConnectiveFormula)
+                and f.connective == LogicalConnective.IMPLIES
+                and len(f.formulas) == 2
+            ):
                 antecedent = f.formulas[0]
-                if (isinstance(antecedent, ConnectiveFormula) and
-                        antecedent.connective == LogicalConnective.AND):
+                if (
+                    isinstance(antecedent, ConnectiveFormula)
+                    and antecedent.connective == LogicalConnective.AND
+                ):
                     return True
         return False
 
@@ -292,21 +295,23 @@ class ExportationRule(InferenceRule):
         """Apply exportation: (P∧Q)→R → P→(Q→R)."""
         results: List[Formula] = []
         for f in formulas:
-            if (isinstance(f, ConnectiveFormula) and
-                    f.connective == LogicalConnective.IMPLIES and
-                    len(f.formulas) == 2):
+            if (
+                isinstance(f, ConnectiveFormula)
+                and f.connective == LogicalConnective.IMPLIES
+                and len(f.formulas) == 2
+            ):
                 antecedent = f.formulas[0]
                 r = f.formulas[1]
-                if (isinstance(antecedent, ConnectiveFormula) and
-                        antecedent.connective == LogicalConnective.AND and
-                        len(antecedent.formulas) >= 2):
+                if (
+                    isinstance(antecedent, ConnectiveFormula)
+                    and antecedent.connective == LogicalConnective.AND
+                    and len(antecedent.formulas) >= 2
+                ):
                     p = antecedent.formulas[0]
                     q = antecedent.formulas[1]
                     # P → (Q → R)
                     q_implies_r = ConnectiveFormula(LogicalConnective.IMPLIES, [q, r])
-                    results.append(
-                        ConnectiveFormula(LogicalConnective.IMPLIES, [p, q_implies_r])
-                    )
+                    results.append(ConnectiveFormula(LogicalConnective.IMPLIES, [p, q_implies_r]))
         return results
 
 
@@ -327,9 +332,9 @@ class AbsorptionRule(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have P→Q."""
         return any(
-            isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.IMPLIES and
-            len(f.formulas) == 2
+            isinstance(f, ConnectiveFormula)
+            and f.connective == LogicalConnective.IMPLIES
+            and len(f.formulas) == 2
             for f in formulas
         )
 
@@ -337,14 +342,14 @@ class AbsorptionRule(InferenceRule):
         """Apply absorption: P→Q → P→(P∧Q)."""
         results: List[Formula] = []
         for f in formulas:
-            if (isinstance(f, ConnectiveFormula) and
-                    f.connective == LogicalConnective.IMPLIES and
-                    len(f.formulas) == 2):
+            if (
+                isinstance(f, ConnectiveFormula)
+                and f.connective == LogicalConnective.IMPLIES
+                and len(f.formulas) == 2
+            ):
                 p, q = f.formulas[0], f.formulas[1]
                 p_and_q = ConnectiveFormula(LogicalConnective.AND, [p, q])
-                results.append(
-                    ConnectiveFormula(LogicalConnective.IMPLIES, [p, p_and_q])
-                )
+                results.append(ConnectiveFormula(LogicalConnective.IMPLIES, [p, p_and_q]))
         return results
 
 
@@ -391,9 +396,11 @@ class TautologyRule(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have P∨P."""
         for f in formulas:
-            if (isinstance(f, ConnectiveFormula) and
-                    f.connective == LogicalConnective.OR and
-                    len(f.formulas) >= 2):
+            if (
+                isinstance(f, ConnectiveFormula)
+                and f.connective == LogicalConnective.OR
+                and len(f.formulas) >= 2
+            ):
                 if all(lit == f.formulas[0] for lit in f.formulas):
                     return True
         return False
@@ -402,9 +409,11 @@ class TautologyRule(InferenceRule):
         """Apply tautology simplification: P∨P → P."""
         results: List[Formula] = []
         for f in formulas:
-            if (isinstance(f, ConnectiveFormula) and
-                    f.connective == LogicalConnective.OR and
-                    len(f.formulas) >= 2):
+            if (
+                isinstance(f, ConnectiveFormula)
+                and f.connective == LogicalConnective.OR
+                and len(f.formulas) >= 2
+            ):
                 if all(lit == f.formulas[0] for lit in f.formulas):
                     results.append(f.formulas[0])
         return results
@@ -427,9 +436,9 @@ class CommutativityConjunction(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have a conjunction."""
         return any(
-            isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.AND and
-            len(f.formulas) == 2
+            isinstance(f, ConnectiveFormula)
+            and f.connective == LogicalConnective.AND
+            and len(f.formulas) == 2
             for f in formulas
         )
 
@@ -437,20 +446,22 @@ class CommutativityConjunction(InferenceRule):
         """Apply commutativity: P∧Q → Q∧P."""
         results: List[Formula] = []
         for f in formulas:
-            if (isinstance(f, ConnectiveFormula) and
-                    f.connective == LogicalConnective.AND and
-                    len(f.formulas) == 2):
+            if (
+                isinstance(f, ConnectiveFormula)
+                and f.connective == LogicalConnective.AND
+                and len(f.formulas) == 2
+            ):
                 p, q = f.formulas[0], f.formulas[1]
                 results.append(ConnectiveFormula(LogicalConnective.AND, [q, p]))
         return results
 
 
 __all__ = [
-    'ConstructiveDilemma',
-    'DestructiveDilemma',
-    'ExportationRule',
-    'AbsorptionRule',
-    'AdditionRule',
-    'TautologyRule',
-    'CommutativityConjunction',
+    "ConstructiveDilemma",
+    "DestructiveDilemma",
+    "ExportationRule",
+    "AbsorptionRule",
+    "AdditionRule",
+    "TautologyRule",
+    "CommutativityConjunction",
 ]

@@ -226,7 +226,7 @@ from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Simple conversion
 converter = FileConverter()
-result = await converter.convert('document.pdf')
+result = await converter.convert("document.pdf")
 print(result.text)
 ```
 
@@ -237,7 +237,7 @@ from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 
 # IPFS-enabled converter
 converter = IPFSAcceleratedConverter(enable_ipfs=True)
-result = await converter.convert('document.pdf', store_on_ipfs=True, pin=True)
+result = await converter.convert("document.pdf", store_on_ipfs=True, pin=True)
 
 print(f"Text: {result.text}")
 print(f"CID: {result.ipfs_cid}")
@@ -250,7 +250,7 @@ print(f"URL: {result.ipfs_gateway_url}")
 from ipfs_datasets_py.processors.file_converter import extract_metadata
 
 # Extract comprehensive metadata
-metadata = extract_metadata('document.pdf')
+metadata = extract_metadata("document.pdf")
 
 print(f"Size: {metadata['file']['size_human']}")
 print(f"SHA256: {metadata['hashes']['sha256']}")
@@ -262,9 +262,11 @@ print(f"MIME: {metadata['format']['mime_type']}")
 ```python
 from ipfs_datasets_py.processors.file_converter import create_batch_processor
 
+
 # Progress callback
 def on_progress(progress):
     print(f"{progress.completed}/{progress.total} ({progress.success_rate}%)")
+
 
 # Create processor
 processor = create_batch_processor(
@@ -272,7 +274,7 @@ processor = create_batch_processor(
     max_concurrent=5,
     max_file_size_mb=100,
     timeout_seconds=30,
-    progress_callback=on_progress
+    progress_callback=on_progress,
 )
 
 # Process batch
@@ -283,7 +285,11 @@ results = await processor.process_batch(files)
 
 ```python
 from ipfs_datasets_py.processors.file_converter import Pipeline, FileUnit
-from ipfs_datasets_py.processors.file_converter import validate_file_exists, detect_format, extract_text
+from ipfs_datasets_py.processors.file_converter import (
+    validate_file_exists,
+    detect_format,
+    extract_text,
+)
 
 # Build custom pipeline
 pipeline = Pipeline()
@@ -366,7 +372,7 @@ if result.is_ok():
 
 ```python
 # Content-addressable storage
-result = await converter.convert('doc.pdf', store_on_ipfs=True)
+result = await converter.convert("doc.pdf", store_on_ipfs=True)
 # Same content → same CID
 ```
 
@@ -390,7 +396,7 @@ results = await processor.process_batch(all_files)
 
 ```python
 # Rich metadata for ML pipelines
-metadata = extract_metadata('training_data.pdf')
+metadata = extract_metadata("training_data.pdf")
 # Use hashes, sizes, formats for filtering
 ```
 
@@ -400,6 +406,7 @@ metadata = extract_metadata('training_data.pdf')
 # Monitor long-running conversions
 def progress(p):
     log.info(f"{p.completed}/{p.total} - {p.items_per_second:.2f}/sec")
+
 
 processor = create_batch_processor(converter, progress_callback=progress)
 ```

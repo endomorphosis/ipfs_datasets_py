@@ -24,7 +24,7 @@ from ipfs_datasets_py.logic.CEC.provers.z3_adapter import (
     ProofStatus,
     check_z3_installation,
     get_z3_version,
-    Z3_AVAILABLE
+    Z3_AVAILABLE,
 )
 from ipfs_datasets_py.logic.CEC.native.dcec_core import (
     AtomicFormula,
@@ -61,7 +61,7 @@ def adapter():
 
 class TestZ3Installation:
     """Test Z3 installation and initialization."""
-    
+
     def test_check_z3_installation(self):
         """
         GIVEN Z3 installation check function
@@ -71,7 +71,7 @@ class TestZ3Installation:
         result = check_z3_installation()
         assert isinstance(result, bool)
         # True if z3-solver is installed, False otherwise
-    
+
     def test_get_z3_version(self):
         """
         GIVEN Z3 version function
@@ -84,7 +84,7 @@ class TestZ3Installation:
             assert isinstance(version, str)
         else:
             assert version is None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_adapter_initialization(self, adapter):
         """
@@ -100,7 +100,7 @@ class TestZ3Installation:
 
 class TestAtomicTranslation:
     """Test translation of atomic formulas."""
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_simple_atomic(self, adapter, namespace):
         """
@@ -111,10 +111,10 @@ class TestAtomicTranslation:
         pred = namespace.add_predicate("test_action", ["Agent"])
         agent_var = namespace.add_variable("agent", "Agent")
         formula = AtomicFormula(pred, [VariableTerm(agent_var)])
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_multiple_atomic(self, adapter, namespace):
         """
@@ -125,16 +125,16 @@ class TestAtomicTranslation:
         pred1 = namespace.add_predicate("action1", ["Agent"])
         pred2 = namespace.add_predicate("action2", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
-        
+
         formula1 = AtomicFormula(pred1, [VariableTerm(agent)])
         formula2 = AtomicFormula(pred2, [VariableTerm(agent)])
-        
+
         z3_f1 = adapter.translate_to_z3(formula1)
         z3_f2 = adapter.translate_to_z3(formula2)
-        
+
         assert z3_f1 is not None
         assert z3_f2 is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_atomic_translation_idempotent(self, adapter, namespace):
         """
@@ -145,10 +145,10 @@ class TestAtomicTranslation:
         pred = namespace.add_predicate("test", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
         formula = AtomicFormula(pred, [VariableTerm(agent)])
-        
+
         z3_f1 = adapter.translate_to_z3(formula)
         z3_f2 = adapter.translate_to_z3(formula)
-        
+
         # Should be consistent
         assert z3_f1 is not None
         assert z3_f2 is not None
@@ -156,7 +156,7 @@ class TestAtomicTranslation:
 
 class TestDeonticTranslation:
     """Test translation of deontic formulas."""
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_obligation(self, adapter, namespace):
         """
@@ -168,10 +168,10 @@ class TestDeonticTranslation:
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
         formula = DeonticFormula(DeonticOperator.OBLIGATION, base)
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_permission(self, adapter, namespace):
         """
@@ -183,10 +183,10 @@ class TestDeonticTranslation:
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
         formula = DeonticFormula(DeonticOperator.PERMISSION, base)
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_prohibition(self, adapter, namespace):
         """
@@ -198,10 +198,10 @@ class TestDeonticTranslation:
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
         formula = DeonticFormula(DeonticOperator.PROHIBITION, base)
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_deontic_operators_distinct(self, adapter, namespace):
         """
@@ -212,19 +212,19 @@ class TestDeonticTranslation:
         pred = namespace.add_predicate("action", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
-        
+
         obligation = DeonticFormula(DeonticOperator.OBLIGATION, base)
         permission = DeonticFormula(DeonticOperator.PERMISSION, base)
         prohibition = DeonticFormula(DeonticOperator.PROHIBITION, base)
-        
+
         z3_o = adapter.translate_to_z3(obligation)
         z3_p = adapter.translate_to_z3(permission)
         z3_f = adapter.translate_to_z3(prohibition)
-        
+
         assert z3_o is not None
         assert z3_p is not None
         assert z3_f is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_nested_deontic(self, adapter, namespace):
         """
@@ -237,10 +237,10 @@ class TestDeonticTranslation:
         base = AtomicFormula(pred, [VariableTerm(agent)])
         inner = DeonticFormula(DeonticOperator.OBLIGATION, base)
         outer = DeonticFormula(DeonticOperator.PERMISSION, inner)
-        
+
         z3_formula = adapter.translate_to_z3(outer)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_deontic_with_complex_base(self, adapter, namespace):
         """
@@ -251,11 +251,11 @@ class TestDeonticTranslation:
         pred1 = namespace.add_predicate("action1", ["Agent"])
         pred2 = namespace.add_predicate("action2", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
-        
+
         f1 = AtomicFormula(pred1, [VariableTerm(agent)])
         f2 = AtomicFormula(pred2, [VariableTerm(agent)])
         base = ConnectiveFormula(LogicalConnective.AND, [f1, f2])
-        
+
         formula = DeonticFormula(DeonticOperator.OBLIGATION, base)
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
@@ -263,7 +263,7 @@ class TestDeonticTranslation:
 
 class TestCognitiveTranslation:
     """Test translation of cognitive formulas."""
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_belief(self, adapter, namespace):
         """
@@ -275,10 +275,10 @@ class TestCognitiveTranslation:
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
         formula = CognitiveFormula(CognitiveOperator.BELIEF, VariableTerm(agent), base)
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_knowledge(self, adapter, namespace):
         """
@@ -290,10 +290,10 @@ class TestCognitiveTranslation:
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
         formula = CognitiveFormula(CognitiveOperator.KNOWLEDGE, VariableTerm(agent), base)
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_intention(self, adapter, namespace):
         """
@@ -305,10 +305,10 @@ class TestCognitiveTranslation:
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
         formula = CognitiveFormula(CognitiveOperator.INTENTION, VariableTerm(agent), base)
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_desire(self, adapter, namespace):
         """
@@ -320,10 +320,10 @@ class TestCognitiveTranslation:
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
         formula = CognitiveFormula(CognitiveOperator.DESIRE, VariableTerm(agent), base)
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_goal(self, adapter, namespace):
         """
@@ -335,14 +335,14 @@ class TestCognitiveTranslation:
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
         formula = CognitiveFormula(CognitiveOperator.GOAL, VariableTerm(agent), base)
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
 
 
 class TestTemporalTranslation:
     """Test translation of temporal formulas."""
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_always(self, adapter, namespace):
         """
@@ -354,10 +354,10 @@ class TestTemporalTranslation:
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
         formula = TemporalFormula(TemporalOperator.ALWAYS, base)
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_eventually(self, adapter, namespace):
         """
@@ -369,10 +369,10 @@ class TestTemporalTranslation:
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
         formula = TemporalFormula(TemporalOperator.EVENTUALLY, base)
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_next(self, adapter, namespace):
         """
@@ -384,14 +384,14 @@ class TestTemporalTranslation:
         agent = namespace.add_variable("agent", "Agent")
         base = AtomicFormula(pred, [VariableTerm(agent)])
         formula = TemporalFormula(TemporalOperator.NEXT, base)
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
 
 
 class TestConnectiveTranslation:
     """Test translation of connective formulas."""
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_and(self, adapter, namespace):
         """
@@ -402,14 +402,14 @@ class TestConnectiveTranslation:
         pred1 = namespace.add_predicate("p1", ["Agent"])
         pred2 = namespace.add_predicate("p2", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
-        
+
         f1 = AtomicFormula(pred1, [VariableTerm(agent)])
         f2 = AtomicFormula(pred2, [VariableTerm(agent)])
         formula = ConnectiveFormula(LogicalConnective.AND, [f1, f2])
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_or(self, adapter, namespace):
         """
@@ -420,14 +420,14 @@ class TestConnectiveTranslation:
         pred1 = namespace.add_predicate("q1", ["Agent"])
         pred2 = namespace.add_predicate("q2", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
-        
+
         f1 = AtomicFormula(pred1, [VariableTerm(agent)])
         f2 = AtomicFormula(pred2, [VariableTerm(agent)])
         formula = ConnectiveFormula(LogicalConnective.OR, [f1, f2])
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_not(self, adapter, namespace):
         """
@@ -437,13 +437,13 @@ class TestConnectiveTranslation:
         """
         pred = namespace.add_predicate("r", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
-        
+
         f = AtomicFormula(pred, [VariableTerm(agent)])
         formula = ConnectiveFormula(LogicalConnective.NOT, [f])
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_implies(self, adapter, namespace):
         """
@@ -454,14 +454,14 @@ class TestConnectiveTranslation:
         pred1 = namespace.add_predicate("s1", ["Agent"])
         pred2 = namespace.add_predicate("s2", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
-        
+
         f1 = AtomicFormula(pred1, [VariableTerm(agent)])
         f2 = AtomicFormula(pred2, [VariableTerm(agent)])
         formula = ConnectiveFormula(LogicalConnective.IMPLIES, [f1, f2])
-        
+
         z3_formula = adapter.translate_to_z3(formula)
         assert z3_formula is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_translate_nested_connectives(self, adapter, namespace):
         """
@@ -473,22 +473,22 @@ class TestConnectiveTranslation:
         pred2 = namespace.add_predicate("t2", ["Agent"])
         pred3 = namespace.add_predicate("t3", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
-        
+
         f1 = AtomicFormula(pred1, [VariableTerm(agent)])
         f2 = AtomicFormula(pred2, [VariableTerm(agent)])
         f3 = AtomicFormula(pred3, [VariableTerm(agent)])
-        
+
         # (f1 AND f2) OR f3
         and_formula = ConnectiveFormula(LogicalConnective.AND, [f1, f2])
         or_formula = ConnectiveFormula(LogicalConnective.OR, [and_formula, f3])
-        
+
         z3_formula = adapter.translate_to_z3(or_formula)
         assert z3_formula is not None
 
 
 class TestTheoremProving:
     """Test theorem proving with Z3."""
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_prove_tautology(self, adapter, namespace):
         """
@@ -498,15 +498,15 @@ class TestTheoremProving:
         """
         pred = namespace.add_predicate("p", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
-        
+
         p = AtomicFormula(pred, [VariableTerm(agent)])
         not_p = ConnectiveFormula(LogicalConnective.NOT, [p])
         tautology = ConnectiveFormula(LogicalConnective.OR, [p, not_p])
-        
+
         result = adapter.prove(tautology)
         assert result.status in [ProofStatus.VALID, ProofStatus.SATISFIABLE]
         assert result.proof_time >= 0.0
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_prove_with_axioms(self, adapter, namespace):
         """
@@ -517,16 +517,16 @@ class TestTheoremProving:
         pred1 = namespace.add_predicate("a", ["Agent"])
         pred2 = namespace.add_predicate("b", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
-        
+
         # Axiom: A
         a = AtomicFormula(pred1, [VariableTerm(agent)])
-        
+
         # Goal: A (should be valid with axiom A)
         result = adapter.prove(a, axioms=[a])
-        
+
         # With axiom A, A should be provable
         assert result.status in [ProofStatus.VALID, ProofStatus.SATISFIABLE]
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_prove_invalid_formula(self, adapter, namespace):
         """
@@ -536,12 +536,12 @@ class TestTheoremProving:
         """
         pred = namespace.add_predicate("q", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
-        
+
         # A AND NOT A (contradiction)
         a = AtomicFormula(pred, [VariableTerm(agent)])
         not_a = ConnectiveFormula(LogicalConnective.NOT, [a])
         contradiction = ConnectiveFormula(LogicalConnective.AND, [a, not_a])
-        
+
         result = adapter.prove(contradiction)
         # Contradiction should be invalid/unsatisfiable
         assert result.status in [ProofStatus.INVALID, ProofStatus.UNSATISFIABLE]
@@ -549,7 +549,7 @@ class TestTheoremProving:
 
 class TestSatisfiabilityChecking:
     """Test satisfiability checking."""
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_check_satisfiable(self, adapter, namespace):
         """
@@ -560,11 +560,11 @@ class TestSatisfiabilityChecking:
         pred = namespace.add_predicate("sat", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
         formula = AtomicFormula(pred, [VariableTerm(agent)])
-        
+
         result = adapter.check_satisfiability(formula)
         assert result.status == ProofStatus.SATISFIABLE
         assert result.model is not None
-    
+
     @pytest.mark.skipif(not Z3_AVAILABLE, reason="Z3 not installed")
     def test_check_unsatisfiable(self, adapter, namespace):
         """
@@ -574,11 +574,11 @@ class TestSatisfiabilityChecking:
         """
         pred = namespace.add_predicate("unsat", ["Agent"])
         agent = namespace.add_variable("agent", "Agent")
-        
+
         # A AND NOT A
         a = AtomicFormula(pred, [VariableTerm(agent)])
         not_a = ConnectiveFormula(LogicalConnective.NOT, [a])
         contradiction = ConnectiveFormula(LogicalConnective.AND, [a, not_a])
-        
+
         result = adapter.check_satisfiability(contradiction)
         assert result.status == ProofStatus.UNSATISFIABLE

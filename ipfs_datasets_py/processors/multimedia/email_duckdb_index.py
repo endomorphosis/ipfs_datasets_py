@@ -59,7 +59,9 @@ def _body_from_eml(eml_path: Path) -> str:
     return "\n".join(part.strip() for part in body_parts if str(part or "").strip()).strip()
 
 
-def _attachment_text_blocks(attachment_paths: list[str], *, include_attachment_text: bool) -> tuple[list[str], list[str]]:
+def _attachment_text_blocks(
+    attachment_paths: list[str], *, include_attachment_text: bool
+) -> tuple[list[str], list[str]]:
     filenames: list[str] = []
     texts: list[str] = []
     for raw_path in attachment_paths:
@@ -110,7 +112,9 @@ def _snippet_from_text(full_text: str, query_terms: list[str], *, max_chars: int
     return clean_text[start:end]
 
 
-def _message_row(record: dict[str, Any], manifest_path: Path, *, include_attachment_text: bool) -> dict[str, Any]:
+def _message_row(
+    record: dict[str, Any], manifest_path: Path, *, include_attachment_text: bool
+) -> dict[str, Any]:
     eml_path = _record_eml_path(record, manifest_path)
     body_text = _body_from_eml(eml_path) if eml_path else ""
     attachment_paths = [str(path or "") for path in list(record.get("attachment_paths") or [])]
@@ -123,7 +127,11 @@ def _message_row(record: dict[str, Any], manifest_path: Path, *, include_attachm
     from_value = str(record.get("from") or "")
     to_value = str(record.get("to") or "")
     cc_value = str(record.get("cc") or "")
-    participants = [str(item or "").strip().lower() for item in list(record.get("participants") or []) if str(item or "").strip()]
+    participants = [
+        str(item or "").strip().lower()
+        for item in list(record.get("participants") or [])
+        if str(item or "").strip()
+    ]
     attachment_text = "\n\n".join(text for text in attachment_texts if text)
 
     full_text_parts = [
@@ -153,7 +161,11 @@ def _message_row(record: dict[str, Any], manifest_path: Path, *, include_attachm
     for token in attachment_tokens:
         weighted_counts[token] += ATTACHMENT_WEIGHT
 
-    message_key = str(record.get("message_id_header") or "") or str(record.get("raw_sha256") or "") or str(record.get("date") or "")
+    message_key = (
+        str(record.get("message_id_header") or "")
+        or str(record.get("raw_sha256") or "")
+        or str(record.get("date") or "")
+    )
     return {
         "message_key": message_key,
         "message_id_header": str(record.get("message_id_header") or ""),
@@ -175,7 +187,9 @@ def _message_row(record: dict[str, Any], manifest_path: Path, *, include_attachm
     }
 
 
-def _load_message_rows(manifest_path: Path, *, include_attachment_text: bool) -> list[dict[str, Any]]:
+def _load_message_rows(
+    manifest_path: Path, *, include_attachment_text: bool
+) -> list[dict[str, Any]]:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     rows: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -188,7 +202,9 @@ def _load_message_rows(manifest_path: Path, *, include_attachment_text: bool) ->
     return rows
 
 
-def _build_term_rows(message_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _build_term_rows(
+    message_rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if not message_rows:
         return [], []
     document_count = len(message_rows)
@@ -311,7 +327,9 @@ def _write_duckdb_index(
                 "INSERT INTO email_terms VALUES (?, ?, ?)",
                 [(row["message_key"], row["term"], row["weighted_tf"]) for row in term_rows],
             )
-        con.execute("CREATE TABLE email_bm25_documents AS SELECT message_key, doc_length FROM email_messages")
+        con.execute(
+            "CREATE TABLE email_bm25_documents AS SELECT message_key, doc_length FROM email_messages"
+        )
         con.execute(
             """
             CREATE TABLE email_bm25_terms (
@@ -366,9 +384,13 @@ def build_email_duckdb_index(
     append: bool = False,
 ) -> dict[str, Any]:
     manifest_file = Path(manifest_path).expanduser().resolve()
-    index_dir = Path(output_dir).expanduser().resolve() if output_dir else manifest_file.parent / "duckdb"
+    index_dir = (
+        Path(output_dir).expanduser().resolve() if output_dir else manifest_file.parent / "duckdb"
+    )
 
-    message_rows = _load_message_rows(manifest_file, include_attachment_text=include_attachment_text)
+    message_rows = _load_message_rows(
+        manifest_file, include_attachment_text=include_attachment_text
+    )
     if append:
         existing_duckdb_path = index_dir / "email_search.duckdb"
         if existing_duckdb_path.exists():
@@ -469,7 +491,13 @@ def search_email_duckdb_index(
     try:
         query_terms = _tokenize(query)
         if not query_terms:
-            return {"status": "success", "ranking": ranking, "query": query, "result_count": 0, "results": []}
+            return {
+                "status": "success",
+                "ranking": ranking,
+                "query": query,
+                "result_count": 0,
+                "results": [],
+            }
 
         bm25_term_count = con.execute("SELECT COUNT(*) FROM email_bm25_terms").fetchone()[0]
         bm25_doc_count = con.execute("SELECT COUNT(*) FROM email_bm25_documents").fetchone()[0]

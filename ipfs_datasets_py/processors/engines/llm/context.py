@@ -10,5 +10,5 @@ Future: Will contain extracted context management logic
 from ipfs_datasets_py.processors.llm_optimizer import LLMChunkMetadata
 
 __all__ = [
-    'LLMChunkMetadata',
+    "LLMChunkMetadata",
 ]

@@ -545,14 +545,10 @@ def test_rejects_result_authority_substitution() -> None:
         scope_digest=SHA_A,
     )
     with pytest.raises(AuthorityMismatchError):
-        reject_result_authority_substitution(
-            authority, AuthorityKind.THEOREM_PROOF
-        )
+        reject_result_authority_substitution(authority, AuthorityKind.THEOREM_PROOF)
 
     # Exact match is allowed.
-    reject_result_authority_substitution(
-        AuthorityKind.THEOREM_PROOF, AuthorityKind.THEOREM_PROOF
-    )
+    reject_result_authority_substitution(AuthorityKind.THEOREM_PROOF, AuthorityKind.THEOREM_PROOF)
     artifact.require_authority(AuthorityKind.THEOREM_PROOF)
 
     evidence = _applicability()

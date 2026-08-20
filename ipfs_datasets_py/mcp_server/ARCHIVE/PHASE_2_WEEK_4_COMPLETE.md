@@ -93,6 +93,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .mcp_interfaces import MCPServerProtocol
 
+
 class P2PMCPRegistryAdapter:
     def __init__(
         self,
@@ -117,23 +118,28 @@ class P2PMCPRegistryAdapter:
 ```python
 class TestCircularImports:
     """5 tests for import independence"""
-    - test_mcp_interfaces_imports_independently()
-    - test_p2p_adapter_imports_with_protocol()
-    - test_server_context_imports_independently()
-    - test_no_circular_dependency_between_adapter_and_server()
-    - test_all_protocol_classes_are_runtime_checkable()
+
+    -test_mcp_interfaces_imports_independently()
+    -test_p2p_adapter_imports_with_protocol()
+    -test_server_context_imports_independently()
+    -test_no_circular_dependency_between_adapter_and_server()
+    -test_all_protocol_classes_are_runtime_checkable()
+
 
 class TestProtocolImplementation:
     """3 tests for protocol correctness"""
-    - test_mcp_server_protocol_interface()
-    - test_tool_manager_protocol_interface()
-    - test_check_protocol_implementation_helper()
+
+    -test_mcp_server_protocol_interface()
+    -test_tool_manager_protocol_interface()
+    -test_check_protocol_implementation_helper()
+
 
 class TestP2PAdapterWithProtocol:
     """3 tests for adapter functionality"""
-    - test_adapter_accepts_protocol_compliant_server()
-    - test_adapter_tools_property_uses_host_tools()
-    - test_adapter_accelerate_instance_property()
+
+    -test_adapter_accepts_protocol_compliant_server()
+    -test_adapter_tools_property_uses_host_tools()
+    -test_adapter_accelerate_instance_property()
 ```
 
 **All 12 tests passing! ✅**
@@ -150,7 +156,9 @@ class TestP2PAdapterWithProtocol:
 @runtime_checkable
 class ComponentProtocol(Protocol):
     """Define interface without implementation."""
+
     attribute: SomeType
+
     def method(self, arg: ArgType) -> ReturnType: ...
 ```
 
@@ -164,6 +172,7 @@ if TYPE_CHECKING:
     # Not imported at runtime!
     from .mcp_interfaces import ComponentProtocol
 
+
 def use_component(comp: ComponentProtocol | Any):
     # Runtime: comp is Any (no import needed)
     # Type checking: comp is ComponentProtocol (full type safety)
@@ -176,10 +185,12 @@ def use_component(comp: ComponentProtocol | Any):
 # implementation_module.py
 class RealComponent:
     """No explicit inheritance needed!"""
+
     attribute: SomeType = ...
-    
+
     def method(self, arg: ArgType) -> ReturnType:
         return implementation
+
 
 # RealComponent automatically satisfies ComponentProtocol
 assert isinstance(RealComponent(), ComponentProtocol)  # True!
@@ -190,6 +201,7 @@ assert isinstance(RealComponent(), ComponentProtocol)  # True!
 1. **TYPE_CHECKING is False at runtime:**
    ```python
    from typing import TYPE_CHECKING
+
    print(TYPE_CHECKING)  # False
    ```
 
@@ -376,6 +388,7 @@ if TYPE_CHECKING:
     # Imports for type checkers only
     from .interfaces import MyProtocol
 
+
 def function(obj: MyProtocol | Any):
     # Use Any as fallback for runtime
     pass
@@ -386,10 +399,11 @@ def function(obj: MyProtocol | Any):
 ```python
 from .interfaces import MyProtocol, check_protocol_implementation
 
+
 def use_component(comp: Any):
     # Optional runtime validation
     check_protocol_implementation(comp, MyProtocol, strict=True)
-    
+
     # Or soft check
     if isinstance(comp, MyProtocol):
         # Component satisfies protocol

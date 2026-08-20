@@ -4,6 +4,7 @@ Covers gemini_cli_server_tools (Gemini) and claude_cli_server_tools (Claude)
 without requiring the external CLI tools to be installed — all tests verify
 the graceful "not installed" error path and basic return-type contracts.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -35,6 +36,7 @@ from ipfs_datasets_py.mcp_server.tools.development_tools.claude_cli_server_tools
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _is_dict_result(result: object) -> bool:  # noqa: ANN001
     return isinstance(result, dict)
 
@@ -42,6 +44,7 @@ def _is_dict_result(result: object) -> bool:  # noqa: ANN001
 # ---------------------------------------------------------------------------
 # Gemini CLI tools (not installed → graceful error dicts)
 # ---------------------------------------------------------------------------
+
 
 class TestGeminiCliStatus:
     def test_returns_dict(self):
@@ -117,6 +120,7 @@ class TestGeminiAnalyzeCode:
 # ---------------------------------------------------------------------------
 # Claude CLI tools (not installed → graceful error dicts)
 # ---------------------------------------------------------------------------
+
 
 class TestClaudeCliStatus:
     def test_returns_dict(self):

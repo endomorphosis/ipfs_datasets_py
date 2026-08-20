@@ -31,7 +31,12 @@ def test_constructor_inventory_doc_contains_core_constructor_entries() -> None:
 
     # Keep these aligned with current core inventory targets.
     expected_with_params = {
-        "OntologyGenerator": ("ipfs_accelerate_config", "use_ipfs_accelerate", "logger", "llm_backend"),
+        "OntologyGenerator": (
+            "ipfs_accelerate_config",
+            "use_ipfs_accelerate",
+            "logger",
+            "llm_backend",
+        ),
         "OntologyPipeline": ("domain", "use_llm", "max_rounds", "logger", "metric_sink"),
         "OntologyCritic": ("backend_config", "use_llm", "logger"),
         "LogicExtractor": ("model", "backend", "use_ipfs_accelerate"),

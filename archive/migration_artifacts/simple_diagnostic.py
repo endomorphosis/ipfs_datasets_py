@@ -10,6 +10,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+
 def main():
     results = []
     results.append("=== MCP Server Diagnostic Results ===")
@@ -17,6 +18,7 @@ def main():
     # Test modelcontextprotocol
     try:
         from modelcontextprotocol.server import FastMCP
+
         results.append("✅ modelcontextprotocol package available")
     except ImportError as e:
         results.append(f"❌ modelcontextprotocol missing: {e}")
@@ -24,6 +26,7 @@ def main():
     # Test configs
     try:
         from ipfs_datasets_py.mcp_server.configs import Configs
+
         results.append("✅ Configs import successful")
     except Exception as e:
         results.append(f"❌ Configs import failed: {e}")
@@ -32,6 +35,7 @@ def main():
     # Test datasets
     try:
         import datasets
+
         results.append("✅ datasets library available")
     except ImportError as e:
         results.append(f"❌ datasets missing: {e}")
@@ -42,6 +46,7 @@ def main():
             f.write(result + "\n")
 
     return len(results)
+
 
 if __name__ == "__main__":
     count = main()

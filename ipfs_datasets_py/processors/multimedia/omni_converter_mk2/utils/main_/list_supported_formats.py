@@ -1,5 +1,5 @@
-
 from supported_formats import SupportedFormats
+
 
 def list_supported_formats() -> None:
     """List all supported formats."""

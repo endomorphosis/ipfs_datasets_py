@@ -37,56 +37,45 @@ This document outlines advanced features and enhancements beyond the current pro
 ```python
 class Z3ProverBridge(BaseProverBridge):
     """Enhanced Z3 integration with auto-installation."""
-    
+
     def __init__(self):
         super().__init__()
         if not self.is_available():
             self._offer_installation()
-    
+
     def _offer_installation(self):
         """Offer to install Z3 automatically."""
         print("Z3 solver not found. Install now? (y/n)")
-        if input().lower() == 'y':
+        if input().lower() == "y":
             self._install_z3()
-    
+
     def _install_z3(self):
         """Install Z3 via pip."""
         import subprocess
+
         subprocess.run(["pip", "install", "z3-solver"])
         logger.info("Z3 solver installed successfully")
-    
+
     def prove_with_z3(self, formula: Formula) -> ProofResult:
         """Use Z3's SMT solver for complex formulas."""
         import z3
-        
+
         # Convert to Z3 format
         z3_formula = self._to_z3_format(formula)
-        
+
         # Create solver
         solver = z3.Solver()
         solver.add(z3_formula)
-        
+
         # Check satisfiability
         result = solver.check()
-        
+
         if result == z3.sat:
-            return ProofResult(
-                status=ProofStatus.PROVED,
-                formula=formula,
-                method="z3_smt"
-            )
+            return ProofResult(status=ProofStatus.PROVED, formula=formula, method="z3_smt")
         elif result == z3.unsat:
-            return ProofResult(
-                status=ProofStatus.UNPROVABLE,
-                formula=formula,
-                method="z3_smt"
-            )
+            return ProofResult(status=ProofStatus.UNPROVABLE, formula=formula, method="z3_smt")
         else:
-            return ProofResult(
-                status=ProofStatus.UNKNOWN,
-                formula=formula,
-                method="z3_smt"
-            )
+            return ProofResult(status=ProofStatus.UNKNOWN, formula=formula, method="z3_smt")
 ```
 
 **Features:**
@@ -102,43 +91,31 @@ class Z3ProverBridge(BaseProverBridge):
 ```python
 class LeanProverBridge(BaseProverBridge):
     """Interactive theorem proving with Lean."""
-    
+
     def __init__(self):
         super().__init__()
         self.lean_path = self._find_lean_installation()
-    
+
     def _find_lean_installation(self) -> Optional[str]:
         """Locate Lean installation."""
         # Check common paths
-        paths = [
-            "~/.elan/bin/lean",
-            "/usr/local/bin/lean",
-            "/opt/lean/bin/lean"
-        ]
+        paths = ["~/.elan/bin/lean", "/usr/local/bin/lean", "/opt/lean/bin/lean"]
         for path in paths:
             expanded = os.path.expanduser(path)
             if os.path.exists(expanded):
                 return expanded
         return None
-    
-    def prove_interactively(
-        self,
-        formula: Formula,
-        tactics: List[str] = None
-    ) -> ProofResult:
+
+    def prove_interactively(self, formula: Formula, tactics: List[str] = None) -> ProofResult:
         """Prove using Lean with specified tactics."""
         lean_code = self._to_lean_format(formula)
-        
+
         if tactics:
             lean_code += "\n".join(tactics)
-        
+
         # Execute Lean
-        result = subprocess.run(
-            [self.lean_path, "--", lean_code],
-            capture_output=True,
-            text=True
-        )
-        
+        result = subprocess.run([self.lean_path, "--", lean_code], capture_output=True, text=True)
+
         return self._parse_lean_output(result)
 ```
 
@@ -159,7 +136,7 @@ class LeanProverBridge(BaseProverBridge):
 ```python
 class MultiProverOrchestrator:
     """Coordinate multiple provers for best results."""
-    
+
     def __init__(self):
         self.provers = [
             TDFOLProver(),
@@ -167,14 +144,10 @@ class MultiProverOrchestrator:
             TDFOLShadowProverBridge(),
             Z3ProverBridge(),
         ]
-    
-    def prove(
-        self,
-        formula: Formula,
-        strategy: str = "fastest_first"
-    ) -> ProofResult:
+
+    def prove(self, formula: Formula, strategy: str = "fastest_first") -> ProofResult:
         """Try multiple provers with specified strategy."""
-        
+
         if strategy == "fastest_first":
             # Try fast provers first
             return self._prove_fastest_first(formula)
@@ -184,37 +157,25 @@ class MultiProverOrchestrator:
         elif strategy == "cascade":
             # Try in sequence until success
             return self._prove_cascade(formula)
-    
-    def _prove_fastest_first(
-        self,
-        formula: Formula
-    ) -> ProofResult:
+
+    def _prove_fastest_first(self, formula: Formula) -> ProofResult:
         """Try provers in order of expected speed."""
         # Order: CEC (fastest) → TDFOL → ShadowProver → Z3
-        for prover in sorted(
-            self.provers,
-            key=lambda p: p.expected_time(formula)
-        ):
+        for prover in sorted(self.provers, key=lambda p: p.expected_time(formula)):
             result = prover.prove(formula, timeout=5)
             if result.status == ProofStatus.PROVED:
                 return result
-        
+
         # All failed, return best attempt
         return self._select_best_result()
-    
-    def _prove_parallel(
-        self,
-        formula: Formula
-    ) -> ProofResult:
+
+    def _prove_parallel(self, formula: Formula) -> ProofResult:
         """Run all provers in parallel, return first success."""
         from concurrent.futures import ThreadPoolExecutor, as_completed
-        
+
         with ThreadPoolExecutor(max_workers=4) as executor:
-            futures = {
-                executor.submit(p.prove, formula, timeout=10): p
-                for p in self.provers
-            }
-            
+            futures = {executor.submit(p.prove, formula, timeout=10): p for p in self.provers}
+
             for future in as_completed(futures):
                 result = future.result()
                 if result.status == ProofStatus.PROVED:
@@ -222,11 +183,8 @@ class MultiProverOrchestrator:
                     for f in futures:
                         f.cancel()
                     return result
-        
-        return ProofResult(
-            status=ProofStatus.UNPROVABLE,
-            formula=formula
-        )
+
+        return ProofResult(status=ProofStatus.UNPROVABLE, formula=formula)
 ```
 
 **Features:**
@@ -246,51 +204,47 @@ class MultiProverOrchestrator:
 ```python
 class OptimizedSymbolicOperations:
     """Enhanced symbolic operations without SymbolicAI."""
-    
+
     def __init__(self):
         # Pre-compile all regex patterns
         self.patterns = self._compile_patterns()
-        
+
         # Build decision tree for formula classification
         self.classifier = self._build_classifier()
-    
+
     def _compile_patterns(self) -> Dict[str, re.Pattern]:
         """Compile all regex patterns once."""
         return {
-            'quantifier': re.compile(r'\b(all|every|some|exists?)\b', re.I),
-            'predicate': re.compile(r'\b[A-Z]\w*\([^)]*\)', re.I),
-            'connective': re.compile(r'\b(and|or|implies?|not)\b', re.I),
-            'modal': re.compile(r'\b(necessarily|possibly|always|eventually)\b', re.I),
+            "quantifier": re.compile(r"\b(all|every|some|exists?)\b", re.I),
+            "predicate": re.compile(r"\b[A-Z]\w*\([^)]*\)", re.I),
+            "connective": re.compile(r"\b(and|or|implies?|not)\b", re.I),
+            "modal": re.compile(r"\b(necessarily|possibly|always|eventually)\b", re.I),
         }
-    
+
     def to_fol_optimized(self, text: str) -> str:
         """Optimized FOL conversion using decision tree."""
         # Classify formula type
         formula_type = self.classifier.classify(text)
-        
+
         # Use specialized converter
-        if formula_type == 'universal':
+        if formula_type == "universal":
             return self._convert_universal(text)
-        elif formula_type == 'existential':
+        elif formula_type == "existential":
             return self._convert_existential(text)
-        elif formula_type == 'modal':
+        elif formula_type == "modal":
             return self._convert_modal(text)
         else:
             return self._convert_propositional(text)
-    
+
     def _convert_universal(self, text: str) -> str:
         """Optimized universal quantification conversion."""
         # Single regex pass to extract components
-        match = re.match(
-            r'(?:all|every)\s+(\w+)\s+(?:are|is)\s+(.+)',
-            text,
-            re.I
-        )
-        
+        match = re.match(r"(?:all|every)\s+(\w+)\s+(?:are|is)\s+(.+)", text, re.I)
+
         if match:
             subject, predicate = match.groups()
             return f"∀x ({subject.capitalize()}(x) → {predicate.capitalize()}(x))"
-        
+
         return f"∀x Statement(x)"
 ```
 
@@ -312,29 +266,21 @@ class OptimizedSymbolicOperations:
 ```python
 class DistributedProver:
     """Distribute proof search across cluster."""
-    
+
     def __init__(self, cluster_nodes: List[str]):
         self.nodes = cluster_nodes
         self.coordinator = ProofCoordinator()
-    
-    def prove_distributed(
-        self,
-        formula: Formula,
-        max_depth: int = 10
-    ) -> ProofResult:
+
+    def prove_distributed(self, formula: Formula, max_depth: int = 10) -> ProofResult:
         """Distribute proof search to cluster."""
         # Partition search space
-        partitions = self._partition_search_space(
-            formula,
-            len(self.nodes)
-        )
-        
+        partitions = self._partition_search_space(formula, len(self.nodes))
+
         # Assign to nodes
         tasks = [
-            self._assign_task(node, partition)
-            for node, partition in zip(self.nodes, partitions)
+            self._assign_task(node, partition) for node, partition in zip(self.nodes, partitions)
         ]
-        
+
         # Wait for first success
         return self.coordinator.wait_for_success(tasks)
 ```
@@ -349,40 +295,29 @@ class DistributedProver:
 ```python
 import torch
 
+
 class GPUEmbeddingProver:
     """GPU-accelerated embedding-based proving."""
-    
+
     def __init__(self):
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = self._load_model().to(self.device)
-    
-    def prove_with_gpu(
-        self,
-        goal: Formula,
-        axioms: List[Formula]
-    ) -> ProofResult:
+
+    def prove_with_gpu(self, goal: Formula, axioms: List[Formula]) -> ProofResult:
         """Use GPU for similarity computation."""
         # Embed all formulas
-        goal_embedding = self.model.encode(
-            str(goal)
-        ).to(self.device)
-        
-        axiom_embeddings = torch.stack([
-            self.model.encode(str(axiom)).to(self.device)
-            for axiom in axioms
-        ])
-        
-        # Compute similarities in parallel on GPU
-        similarities = torch.cosine_similarity(
-            goal_embedding.unsqueeze(0),
-            axiom_embeddings
+        goal_embedding = self.model.encode(str(goal)).to(self.device)
+
+        axiom_embeddings = torch.stack(
+            [self.model.encode(str(axiom)).to(self.device) for axiom in axioms]
         )
-        
+
+        # Compute similarities in parallel on GPU
+        similarities = torch.cosine_similarity(goal_embedding.unsqueeze(0), axiom_embeddings)
+
         # Find most relevant axioms
         top_k = torch.topk(similarities, k=5)
-        
+
         return self._construct_proof(goal, axioms, top_k)
 ```
 

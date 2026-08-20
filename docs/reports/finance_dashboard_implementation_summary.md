@@ -85,14 +85,11 @@ articles = fetch_financial_news(
     topic="stock market",
     sources="ap,reuters,bloomberg",
     start_date="2024-01-01",
-    end_date="2024-01-31"
+    end_date="2024-01-31",
 )
 
 # ✅ Archive.org fallback
-content = scraper.fetch_from_archive(
-    url="https://reuters.com/article",
-    date=datetime(2020, 1, 15)
-)
+content = scraper.fetch_from_archive(url="https://reuters.com/article", date=datetime(2020, 1, 15))
 
 # ✅ Entity extraction (placeholder for NLP)
 entities = scraper.extract_entities(article_text)

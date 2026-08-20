@@ -62,75 +62,78 @@ from ipfs_datasets_py.logic.CEC.native import (
     create_hybrid_prover,
     ZKPCECProver,
     UnifiedCECProofResult,
-    ProvingMethod
+    ProvingMethod,
 )
+
 
 class TestBasicZKPOperations:
     """Test basic ZKP proof generation and verification (7 tests)"""
-    
+
     def test_zkp_proof_generation(self):
         """GIVEN a ZKP prover, WHEN generating a proof, THEN proof is valid"""
-        
+
     def test_zkp_proof_verification(self):
         """GIVEN a ZKP proof, WHEN verifying, THEN verification succeeds"""
-        
+
     def test_prover_initialization(self):
         """GIVEN ZKP parameters, WHEN creating prover, THEN initialization succeeds"""
-        
+
     def test_backend_selection_simulated(self):
         """GIVEN simulated backend, WHEN proving, THEN uses simulation"""
-        
+
     def test_backend_selection_groth16(self):
         """GIVEN Groth16 backend, WHEN proving, THEN uses Groth16 (if available)"""
-        
+
     def test_privacy_flag_validation(self):
         """GIVEN privacy flag, WHEN proving, THEN axioms are hidden"""
-        
+
     def test_standard_to_zkp_conversion(self):
         """GIVEN standard result, WHEN converting to ZKP, THEN conversion succeeds"""
 
+
 class TestHybridProvingStrategy:
     """Test 3-tier hybrid proving strategy (8 tests)"""
-    
+
     def test_cache_hit_bypasses_zkp(self):
         """GIVEN cached proof, WHEN proving, THEN cache hit (no ZKP/standard)"""
-        
+
     def test_cache_miss_tries_zkp(self):
         """GIVEN cache miss, WHEN ZKP available, THEN tries ZKP before standard"""
-        
+
     def test_zkp_failure_falls_back_to_standard(self):
         """GIVEN ZKP fails, WHEN proving, THEN falls back to standard"""
-        
+
     def test_prefer_zkp_mode(self):
         """GIVEN prefer_zkp=True, WHEN proving, THEN prefers ZKP over standard"""
-        
+
     def test_force_standard_mode(self):
         """GIVEN force_standard=True, WHEN proving, THEN skips cache and ZKP"""
-        
+
     def test_strategy_statistics_tracking(self):
         """GIVEN multiple proofs, WHEN proving, THEN statistics track methods used"""
-        
+
     def test_method_selection_logic(self):
         """GIVEN various scenarios, WHEN proving, THEN method selection is correct"""
-        
+
     def test_concurrent_hybrid_proving(self):
         """GIVEN multiple threads, WHEN proving concurrently, THEN hybrid strategy is thread-safe"""
 
+
 class TestZKPCorrectness:
     """Test ZKP proof correctness and privacy (5 tests)"""
-    
+
     def test_zkp_standard_equivalence(self):
         """GIVEN same formula, WHEN proving with ZKP and standard, THEN results equivalent"""
-        
+
     def test_privacy_preservation(self):
         """GIVEN ZKP proof, WHEN examining proof, THEN axioms are not visible"""
-        
+
     def test_verification_accuracy(self):
         """GIVEN valid/invalid proofs, WHEN verifying, THEN verification is accurate"""
-        
+
     def test_error_handling_robustness(self):
         """GIVEN invalid inputs, WHEN proving, THEN errors handled gracefully"""
-        
+
     def test_performance_overhead(self):
         """GIVEN ZKP vs standard, WHEN measuring time, THEN ZKP ~10x slower (privacy cost)"""
 ```
@@ -148,47 +151,47 @@ Validates cache speedup, ZKP overhead, and overall system performance.
 
 import pytest
 import time
-from ipfs_datasets_py.logic.CEC.native import (
-    CachedTheoremProver,
-    create_hybrid_prover
-)
+from ipfs_datasets_py.logic.CEC.native import CachedTheoremProver, create_hybrid_prover
+
 
 class TestCachePerformance:
     """Cache performance benchmarks (5 tests)"""
-    
+
     def test_simple_proof_caching(self):
         """Measure speedup on simple proofs (expect 1-2x)"""
-        
+
     def test_complex_proof_caching(self):
         """Measure speedup on complex proofs (expect >10x)"""
-        
+
     def test_large_kb_performance(self):
         """Measure speedup with 100+ axioms (expect >5x)"""
-        
+
     def test_concurrent_stress(self):
         """Test 10 threads proving concurrently (expect no degradation)"""
-        
+
     def test_memory_profiling(self):
         """Profile memory usage (expect <10MB for 100 cached proofs)"""
 
+
 class TestZKPPerformance:
     """ZKP performance benchmarks (3 tests)"""
-    
+
     def test_zkp_overhead(self):
         """Measure ZKP vs standard overhead (expect ~10x)"""
-        
+
     def test_hybrid_efficiency(self):
         """Measure hybrid strategy auto-optimization"""
-        
+
     def test_privacy_performance_tradeoff(self):
         """Analyze privacy cost vs performance"""
 
+
 class TestIntegrationPerformance:
     """End-to-end performance benchmarks (2 tests)"""
-    
+
     def test_end_to_end_workflow(self):
         """Time complete workflow: parse → prove → cache"""
-        
+
     def test_real_world_scenarios(self):
         """Benchmark realistic proof scenarios"""
 ```
@@ -221,22 +224,25 @@ class TestIntegrationPerformance:
 **Operators to Implement:**
 ```python
 # Modal temporal operators
-Always(φ)       # □φ - φ holds at all times
-Eventually(φ)   # ◇φ - φ holds at some time
-Next(φ)         # Xφ - φ holds at next time
-Yesterday(φ)    # Yφ - φ holds at previous time
+Always(φ)  # □φ - φ holds at all times
+Eventually(φ)  # ◇φ - φ holds at some time
+Next(φ)  # Xφ - φ holds at next time
+Yesterday(φ)  # Yφ - φ holds at previous time
 
-# Binary temporal operators  
-Until(φ, ψ)     # φ U ψ - φ holds until ψ
-Since(φ, ψ)     # φ S ψ - φ holds since ψ
+# Binary temporal operators
+Until(φ, ψ)  # φ U ψ - φ holds until ψ
+Since(φ, ψ)  # φ S ψ - φ holds since ψ
+
 
 # Implementation in dcec_core.py
 class TemporalFormula:
     """Base class for temporal formulas"""
-    
+
+
 class Always(TemporalFormula):
     """□φ - Always/Globally operator"""
-    
+
+
 class Eventually(TemporalFormula):
     """◇φ - Eventually/Finally operator"""
 ```
@@ -255,11 +261,11 @@ class Eventually(TemporalFormula):
 **Primitives to Implement:**
 ```python
 # Event calculus predicates
-Happens(event, time)               # Event occurs at time
-Initiates(event, fluent, time)     # Event initiates fluent
-Terminates(event, fluent, time)    # Event terminates fluent
-HoldsAt(fluent, time)              # Fluent holds at time
-Clipped(t1, fluent, t2)            # Fluent clipped between t1 and t2
+Happens(event, time)  # Event occurs at time
+Initiates(event, fluent, time)  # Event initiates fluent
+Terminates(event, fluent, time)  # Event terminates fluent
+HoldsAt(fluent, time)  # Fluent holds at time
+Clipped(t1, fluent, t2)  # Fluent clipped between t1 and t2
 
 # Example usage
 from ipfs_datasets_py.logic.CEC.native import Happens, Initiates, HoldsAt
@@ -276,7 +282,7 @@ axioms = [
     Initiates(turn_on, light_on, t),
     Terminates(turn_off, light_on, t),
     Happens(turn_on, 5),
-    Happens(turn_off, 10)
+    Happens(turn_off, 10),
 ]
 
 # Query: Is light on at time 7?
@@ -299,13 +305,15 @@ goal = HoldsAt(light_on, 7)
 ```python
 class Fluent:
     """Represents a time-varying property"""
+
     def __init__(self, name: str, params: List[Term] = None):
         self.name = name
         self.params = params or []
-    
+
     def at_time(self, time: int) -> Formula:
         """Returns HoldsAt(self, time)"""
         return HoldsAt(self, time)
+
 
 # Persistence axiom
 def persistence_axiom(fluent: Fluent) -> Formula:

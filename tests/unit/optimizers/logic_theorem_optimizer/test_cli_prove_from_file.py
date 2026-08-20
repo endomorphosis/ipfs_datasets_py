@@ -23,6 +23,7 @@ def cli():
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.cli_wrapper import (
         LogicOptimizerCLI,
     )
+
     return LogicOptimizerCLI()
 
 
@@ -54,6 +55,7 @@ def _mock_optimizer():
 
     try:
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import cli_wrapper as _cw
+
         ctx1 = patch.object(_cw, "LogicTheoremOptimizer", return_value=mock_opt)
         ctx2 = patch.object(_cw, "OptimizationContext", return_value=MagicMock())
         return ctx1, ctx2
@@ -114,6 +116,7 @@ class TestCmdProveFromFile:
     def test_from_yaml_file_sets_theorem_and_goal(self, cli, tmp_path):
         pytest.importorskip("yaml")
         import yaml as _yaml
+
         data = {"theorem": "P and Q", "premises": [], "goal": "P"}
         f = tmp_path / "proof.yaml"
         f.write_text(_yaml.dump(data))
@@ -126,4 +129,3 @@ class TestCmdProveFromFile:
 
         assert args.theorem == "P and Q"
         assert args.goal == "P"
-

@@ -332,9 +332,7 @@ class TestLeanFrontendReal:
         assert evidence.executables["lean"]["path"]
 
     def test_snapshot_goal_from_tactic_mode_sorry(self):
-        snapshot = LeanFrontend().snapshot_goal(
-            LEAN_SORRY_SOURCE, theorem_id="hammer_lean_goal"
-        )
+        snapshot = LeanFrontend().snapshot_goal(LEAN_SORRY_SOURCE, theorem_id="hammer_lean_goal")
         snapshot.validate()
         assert snapshot.itp is ITPKind.LEAN
         assert snapshot.goal_text == "n \u2260 0"
@@ -356,9 +354,7 @@ class TestLeanFrontendReal:
         assert by_name == {"n": "Nat", "h": "n > 0"}
 
     def test_snapshot_goal_captures_universe_context(self):
-        snapshot = LeanFrontend().snapshot_goal(
-            LEAN_UNIVERSE_SOURCE, theorem_id="hammer_lean_poly"
-        )
+        snapshot = LeanFrontend().snapshot_goal(LEAN_UNIVERSE_SOURCE, theorem_id="hammer_lean_poly")
         snapshot.validate()
         assert snapshot.universe_context.parameters == ["u", "v"]
         assert snapshot.universe_context.type_bindings == {
@@ -376,9 +372,7 @@ class TestLeanFrontendReal:
     def test_snapshot_goal_is_never_a_copy_of_input_text(self):
         # The goal text must come from Lean's own diagnostic, not merely
         # echo the caller's declaration source verbatim.
-        snapshot = LeanFrontend().snapshot_goal(
-            LEAN_SORRY_SOURCE, theorem_id="hammer_lean_goal"
-        )
+        snapshot = LeanFrontend().snapshot_goal(LEAN_SORRY_SOURCE, theorem_id="hammer_lean_goal")
         assert snapshot.goal_text != LEAN_SORRY_SOURCE
         assert snapshot.raw_native_output in snapshot.extra.get(
             "other_messages", []
@@ -426,9 +420,7 @@ class TestCoqFrontendReal:
         )
         snapshot.validate()
         assert snapshot.universe_context.parameters
-        assert any(
-            v.startswith("Type@{") for v in snapshot.universe_context.type_bindings.values()
-        )
+        assert any(v.startswith("Type@{") for v in snapshot.universe_context.type_bindings.values())
 
     def test_snapshot_goal_captures_imports(self):
         snapshot = CoqFrontend().snapshot_goal(
@@ -499,13 +491,9 @@ class TestIsabelleFrontend:
                 stderr="",
             )
 
-        monkeypatch.setattr(
-            isabelle_module, "run_bounded_process", _fake_run_bounded_process
-        )
+        monkeypatch.setattr(isabelle_module, "run_bounded_process", _fake_run_bounded_process)
 
-        snapshot = frontend.snapshot_goal(
-            ISABELLE_SORRY_SOURCE, theorem_id="hammer_isabelle_goal"
-        )
+        snapshot = frontend.snapshot_goal(ISABELLE_SORRY_SOURCE, theorem_id="hammer_isabelle_goal")
         snapshot.validate()
         assert snapshot.itp is ITPKind.ISABELLE
         assert snapshot.goal_text == "P"

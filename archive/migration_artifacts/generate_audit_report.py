@@ -29,11 +29,16 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 try:
     from ipfs_datasets_py.audit.audit_logger import AuditLogger
     from ipfs_datasets_py.audit.audit_visualization import (
-        AuditMetricsAggregator, AuditVisualizer, setup_audit_visualization
+        AuditMetricsAggregator,
+        AuditVisualizer,
+        setup_audit_visualization,
     )
     from ipfs_datasets_py.audit.audit_reporting import (
-        AuditReportGenerator, setup_audit_reporting, generate_comprehensive_audit_report
+        AuditReportGenerator,
+        setup_audit_reporting,
+        generate_comprehensive_audit_report,
     )
+
     MODULES_AVAILABLE = True
 except ImportError as e:
     print(f"Required modules not available: {e}")
@@ -43,9 +48,11 @@ except ImportError as e:
 # Check visualization libraries
 try:
     import matplotlib
-    matplotlib.use('Agg')  # Non-interactive backend
+
+    matplotlib.use("Agg")  # Non-interactive backend
     import matplotlib.pyplot as plt
     import seaborn as sns
+
     VISUALIZATION_AVAILABLE = True
 except ImportError:
     VISUALIZATION_AVAILABLE = False
@@ -53,6 +60,7 @@ except ImportError:
 # Check template engine for HTML reports
 try:
     from jinja2 import Template
+
     TEMPLATE_ENGINE_AVAILABLE = True
 except ImportError:
     TEMPLATE_ENGINE_AVAILABLE = False
@@ -60,6 +68,7 @@ except ImportError:
 # Check PDF export capability
 try:
     from weasyprint import HTML
+
     PDF_EXPORT_AVAILABLE = True
 except ImportError:
     PDF_EXPORT_AVAILABLE = False
@@ -73,33 +82,30 @@ def parse_args():
         "--type",
         choices=["security", "compliance", "operational", "comprehensive"],
         default="comprehensive",
-        help="Type of report to generate (default: comprehensive)"
+        help="Type of report to generate (default: comprehensive)",
     )
 
     parser.add_argument(
         "--format",
         choices=["json", "html", "pdf"],
         default="html",
-        help="Output format (default: html)"
+        help="Output format (default: html)",
     )
 
     parser.add_argument(
         "--output",
         type=str,
-        help="Output file path (default: ./audit_reports/[type]_report_[timestamp].[format])"
+        help="Output file path (default: ./audit_reports/[type]_report_[timestamp].[format])",
     )
 
     parser.add_argument(
-        "--days",
-        type=int,
-        default=7,
-        help="Number of days of audit data to include (default: 7)"
+        "--days", type=int, default=7, help="Number of days of audit data to include (default: 7)"
     )
 
     parser.add_argument(
         "--include-graphics",
         action="store_true",
-        help="Include visualization graphics in the report"
+        help="Include visualization graphics in the report",
     )
 
     return parser.parse_args()
@@ -127,13 +133,10 @@ def main():
 
     # Generate default output path if not provided
     if args.output is None:
-        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         output_dir = os.path.join(os.path.dirname(__file__), "audit_reports")
         os.makedirs(output_dir, exist_ok=True)
-        args.output = os.path.join(
-            output_dir,
-            f"{args.type}_report_{timestamp}.{args.format}"
-        )
+        args.output = os.path.join(output_dir, f"{args.type}_report_{timestamp}.{args.format}")
 
     # Get audit logger
     audit_logger = AuditLogger.get_instance()
@@ -146,7 +149,7 @@ def main():
         audit_logger=audit_logger,
         metrics_aggregator=metrics,
         visualizer=visualizer,
-        output_dir=os.path.dirname(args.output)
+        output_dir=os.path.dirname(args.output),
     )
 
     # Generate report based on type
@@ -165,9 +168,7 @@ def main():
 
         # Export report
         output_path = report_generator.export_report(
-            report=report,
-            format=args.format,
-            output_file=args.output
+            report=report, format=args.format, output_file=args.output
         )
 
         print(f"Report successfully generated at: {output_path}")
@@ -175,6 +176,7 @@ def main():
     except Exception as e:
         print(f"Error generating report: {str(e)}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

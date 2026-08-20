@@ -41,17 +41,17 @@ The Deontic converter provides:
 
 ```python
 converter = DeonticConverter(
-    use_cache=True,              # Enable caching (default: True)
-    cache_maxsize=1000,          # Max cache entries (default: 1000)
-    cache_ttl=3600,              # Cache TTL in seconds (default: 3600 = 1 hour)
-    use_ml=True,                 # ML confidence scoring (default: True)
-    enable_monitoring=True,      # Operation monitoring (default: True)
-    jurisdiction="us",           # Legal jurisdiction (default: "us")
-    document_type="contract",    # Document type (default: "statute")
-    extract_obligations=True,    # Extract obligations (default: True)
-    include_exceptions=True,     # Include exception clauses (default: True)
-    confidence_threshold=0.7,    # Minimum confidence (default: 0.7)
-    output_format="json"         # Output format (default: "json")
+    use_cache=True,  # Enable caching (default: True)
+    cache_maxsize=1000,  # Max cache entries (default: 1000)
+    cache_ttl=3600,  # Cache TTL in seconds (default: 3600 = 1 hour)
+    use_ml=True,  # ML confidence scoring (default: True)
+    enable_monitoring=True,  # Operation monitoring (default: True)
+    jurisdiction="us",  # Legal jurisdiction (default: "us")
+    document_type="contract",  # Document type (default: "statute")
+    extract_obligations=True,  # Extract obligations (default: True)
+    include_exceptions=True,  # Include exception clauses (default: True)
+    confidence_threshold=0.7,  # Minimum confidence (default: 0.7)
+    output_format="json",  # Output format (default: "json")
 )
 ```
 
@@ -100,7 +100,7 @@ converter = DeonticConverter(document_type="agreement")
 clauses = [
     "The seller must deliver goods within 30 days",
     "The buyer may inspect goods upon delivery",
-    "The tenant shall not sublet without written permission"
+    "The tenant shall not sublet without written permission",
 ]
 
 results = converter.convert_batch(clauses, max_workers=4)
@@ -140,7 +140,7 @@ The landlord may enter, except in cases of emergency.
 result = converter.convert(text)
 
 for formula in result.output.formulas:
-    if formula.get('exceptions'):
+    if formula.get("exceptions"):
         print(f"Deontic: {formula['operator']}")
         print(f"Exceptions: {formula['exceptions']}")
 ```
@@ -291,10 +291,12 @@ If you're using the old `legal_text_to_deontic` function:
 ```python
 # Old way (deprecated)
 from ipfs_datasets_py.logic.deontic.legal_text_to_deontic import legal_text_to_deontic
+
 result = legal_text_to_deontic("text")
 
 # New way (recommended)
 from ipfs_datasets_py.logic.deontic import DeonticConverter
+
 converter = DeonticConverter()
 result = converter.convert("text")
 ```

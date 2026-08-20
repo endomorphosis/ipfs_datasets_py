@@ -19,6 +19,7 @@ Covers missing lines:
 - 413-423: create_enhanced_nl_converter with grammar failure
 - 435-445: parse_with_grammar and linearize_with_grammar
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -58,6 +59,7 @@ from ipfs_datasets_py.logic.CEC.native.dcec_namespace import DCECNamespace
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _sort() -> Sort:
     return Sort("Agent")
 
@@ -84,6 +86,7 @@ def _agent_ft(name: str = "agent") -> FunctionTerm:
 # ===========================================================================
 # PatternMatcher
 # ===========================================================================
+
 
 class TestPatternMatcherExtractAgent:
     """Line 116 — _extract_agent returns None when no match."""
@@ -118,6 +121,7 @@ class TestPatternMatcherCreateSimplePredicate:
     def test_create_simple_predicate_value_error_path(self):
         """GIVEN add_predicate raises ValueError THEN falls back to get_predicate (lines 130-132)."""
         from ipfs_datasets_py.logic.CEC.native.dcec_core import Predicate, Sort
+
         ns = DCECNamespace()
         pm = PatternMatcher(ns)
         # Create the predicate first so get_predicate returns it on the second call
@@ -132,8 +136,10 @@ class TestPatternMatcherCreateSimplePredicate:
                 return None  # trigger add_predicate
             return existing_pred  # fallback in except block
 
-        with patch.object(ns, "get_predicate", side_effect=mock_get_predicate), \
-             patch.object(ns, "add_predicate", side_effect=ValueError("already exists")):
+        with (
+            patch.object(ns, "get_predicate", side_effect=mock_get_predicate),
+            patch.object(ns, "add_predicate", side_effect=ValueError("already exists")),
+        ):
             pred = pm._create_simple_predicate("fallback_pred")
         assert pred is not None
         assert pred.name == "fallback_pred"
@@ -153,6 +159,7 @@ class TestPatternMatcherCreateAgentVariable:
     def test_create_agent_variable_value_error_path(self):
         """GIVEN add_variable raises ValueError THEN falls back to get_variable (lines 146-148)."""
         from ipfs_datasets_py.logic.CEC.native.dcec_core import Variable, Sort
+
         ns = DCECNamespace()
         pm = PatternMatcher(ns)
         existing_var = Variable("carol", Sort("Agent"))
@@ -164,8 +171,10 @@ class TestPatternMatcherCreateAgentVariable:
                 return None
             return existing_var
 
-        with patch.object(ns, "get_variable", side_effect=mock_get_variable), \
-             patch.object(ns, "add_variable", side_effect=ValueError("already exists")):
+        with (
+            patch.object(ns, "get_variable", side_effect=mock_get_variable),
+            patch.object(ns, "add_variable", side_effect=ValueError("already exists")),
+        ):
             var = pm._create_agent_variable("carol")
         assert var is not None
         assert var.name == "carol"
@@ -287,6 +296,7 @@ class TestPatternMatcherFallback:
 # NaturalLanguageConverter
 # ===========================================================================
 
+
 class TestNLCConvertToDecSuccess:
     """Main convert_to_dcec success path (lines 255-270)."""
 
@@ -394,9 +404,7 @@ class TestNLCConvertFromDcecTemporal:
 
     def test_convert_always_formula(self):
         """GIVEN ALWAYS formula THEN 'always ...'."""
-        result = self._nlc().convert_from_dcec(
-            TemporalFormula(TemporalOperator.ALWAYS, _atomic())
-        )
+        result = self._nlc().convert_from_dcec(TemporalFormula(TemporalOperator.ALWAYS, _atomic()))
         assert "always" in result
 
     def test_convert_eventually_formula(self):
@@ -408,16 +416,12 @@ class TestNLCConvertFromDcecTemporal:
 
     def test_convert_next_formula(self):
         """GIVEN NEXT formula THEN 'next ...'."""
-        result = self._nlc().convert_from_dcec(
-            TemporalFormula(TemporalOperator.NEXT, _atomic())
-        )
+        result = self._nlc().convert_from_dcec(TemporalFormula(TemporalOperator.NEXT, _atomic()))
         assert "next" in result
 
     def test_convert_until_formula(self):
         """GIVEN UNTIL formula THEN operator.value fallback."""
-        result = self._nlc().convert_from_dcec(
-            TemporalFormula(TemporalOperator.UNTIL, _atomic())
-        )
+        result = self._nlc().convert_from_dcec(TemporalFormula(TemporalOperator.UNTIL, _atomic()))
         assert result  # non-empty
 
 
@@ -458,9 +462,7 @@ class TestNLCConvertFromDcecConnective:
     def test_convert_biconditional_formula(self):
         """GIVEN BICONDITIONAL formula THEN uses to_string() fallback."""
         result = self._nlc().convert_from_dcec(
-            ConnectiveFormula(
-                LogicalConnective.BICONDITIONAL, [_atomic("act"), _atomic("rest")]
-            )
+            ConnectiveFormula(LogicalConnective.BICONDITIONAL, [_atomic("act"), _atomic("rest")])
         )
         assert result  # non-empty
 
@@ -496,6 +498,7 @@ class TestNLCConvertFromDcecAtomicAndFallback:
 # ===========================================================================
 # NaturalLanguageConverter.get_conversion_statistics
 # ===========================================================================
+
 
 class TestNLCGetConversionStatistics:
     """Lines 384-401 — get_conversion_statistics with conversions."""
@@ -542,6 +545,7 @@ class TestNLCGetConversionStatistics:
 # NaturalLanguageConverter.initialize
 # ===========================================================================
 
+
 class TestNLCInitialize:
     """Test initialize() method."""
 
@@ -560,6 +564,7 @@ class TestNLCInitialize:
 # ===========================================================================
 # create_enhanced_nl_converter (lines 413-423)
 # ===========================================================================
+
 
 class TestCreateEnhancedNLConverter:
     """Lines 413-423 — create_enhanced_nl_converter factory."""
@@ -586,20 +591,19 @@ class TestCreateEnhancedNLConverter:
             nl_mod.GRAMMAR_AVAILABLE = True
             with patch.dict(
                 "sys.modules",
-                {
-                    "ipfs_datasets_py.logic.CEC.native.dcec_english_grammar": mock_grammar_module
-                },
+                {"ipfs_datasets_py.logic.CEC.native.dcec_english_grammar": mock_grammar_module},
             ):
                 nlc = create_enhanced_nl_converter(use_grammar=True)
         finally:
             nl_mod.GRAMMAR_AVAILABLE = original_available
-        # Should have fallen back to no grammar  
+        # Should have fallen back to no grammar
         assert hasattr(nlc, "use_grammar")
 
 
 # ===========================================================================
 # parse_with_grammar / linearize_with_grammar (lines 435-445)
 # ===========================================================================
+
 
 class TestParseWithGrammar:
     """Lines 435-445 — parse_with_grammar and linearize_with_grammar."""
@@ -622,11 +626,13 @@ class TestParseWithGrammar:
         mock_grammar.parse_to_dcec.side_effect = RuntimeError("parse fail")
         mock_grammar_module = MagicMock()
         mock_grammar_module.create_dcec_grammar = MagicMock(return_value=mock_grammar)
-        with patch.object(nl_mod, "GRAMMAR_AVAILABLE", True), \
-             patch.dict(
-                 "sys.modules",
-                 {"ipfs_datasets_py.logic.CEC.native.dcec_english_grammar": mock_grammar_module},
-             ):
+        with (
+            patch.object(nl_mod, "GRAMMAR_AVAILABLE", True),
+            patch.dict(
+                "sys.modules",
+                {"ipfs_datasets_py.logic.CEC.native.dcec_english_grammar": mock_grammar_module},
+            ),
+        ):
             result = parse_with_grammar("test")
         assert result is None
 
@@ -651,11 +657,13 @@ class TestLinearizeWithGrammar:
         mock_grammar.formula_to_english.side_effect = RuntimeError("linearize fail")
         mock_grammar_module = MagicMock()
         mock_grammar_module.create_dcec_grammar = MagicMock(return_value=mock_grammar)
-        with patch.object(nl_mod, "GRAMMAR_AVAILABLE", True), \
-             patch.dict(
-                 "sys.modules",
-                 {"ipfs_datasets_py.logic.CEC.native.dcec_english_grammar": mock_grammar_module},
-             ):
+        with (
+            patch.object(nl_mod, "GRAMMAR_AVAILABLE", True),
+            patch.dict(
+                "sys.modules",
+                {"ipfs_datasets_py.logic.CEC.native.dcec_english_grammar": mock_grammar_module},
+            ),
+        ):
             result = linearize_with_grammar(_atomic())
         assert result is None
 
@@ -663,6 +671,7 @@ class TestLinearizeWithGrammar:
 # ===========================================================================
 # GRAMMAR_AVAILABLE fallback (lines 39-41)
 # ===========================================================================
+
 
 class TestGrammarAvailableFallback:
     """Lines 39-41 — GRAMMAR_AVAILABLE set to False when import fails."""
@@ -680,11 +689,10 @@ class TestGrammarAvailableFallback:
             {"ipfs_datasets_py.logic.CEC.native.dcec_english_grammar": None},
         ):
             # Force reimport
-            saved = sys.modules.pop(
-                "ipfs_datasets_py.logic.CEC.native.nl_converter", None
-            )
+            saved = sys.modules.pop("ipfs_datasets_py.logic.CEC.native.nl_converter", None)
             try:
                 import ipfs_datasets_py.logic.CEC.native.nl_converter as m2
+
                 assert hasattr(m2, "NaturalLanguageConverter")
             except Exception:
                 pass  # acceptable if re-import fails in patched env

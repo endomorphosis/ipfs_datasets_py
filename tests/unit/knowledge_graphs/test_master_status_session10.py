@@ -25,11 +25,13 @@ from unittest.mock import MagicMock, patch
 # Part 1: core/graph_engine.py
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestGraphEngineExtended(unittest.TestCase):
     """Tests for graph_engine.py paths not covered in prior sessions."""
 
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.core.graph_engine import GraphEngine
+
         return GraphEngine()
 
     # ── get_relationships direction / type filters ──────────────────────────
@@ -230,11 +232,13 @@ class TestGraphEngineExtended(unittest.TestCase):
 # Part 2: query/hybrid_search.py
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestHybridSearchEngine(unittest.TestCase):
     """Tests for query/hybrid_search.py — vector_search, expand_graph, fuse_results, search, helpers."""
 
     def _make_engine(self, vector_store=None, backend=None):
         from ipfs_datasets_py.knowledge_graphs.query.hybrid_search import HybridSearchEngine
+
         return HybridSearchEngine(vector_store=vector_store, backend=backend)
 
     # ── vector_search ────────────────────────────────────────────────────────
@@ -313,7 +317,9 @@ class TestHybridSearchEngine(unittest.TestCase):
         """GIVEN backend with get_neighbors; WHEN expand_graph; THEN follows hops."""
         backend = MagicMock()
         backend.get_neighbors.side_effect = lambda node_id, rel_types=None: {
-            "n1": ["n2"], "n2": ["n3"], "n3": []
+            "n1": ["n2"],
+            "n2": ["n3"],
+            "n3": [],
         }.get(node_id, [])
         e = self._make_engine(backend=backend)
         result = e.expand_graph(["n1"], max_hops=2)
@@ -395,9 +401,12 @@ class TestHybridSearchEngine(unittest.TestCase):
         from ipfs_datasets_py.knowledge_graphs.query.hybrid_search import (
             HybridSearchResult,
         )
+
         e = self._make_engine()
         v_results = [
-            HybridSearchResult(node_id="n1", score=0.9, vector_score=0.9, graph_score=0.0, hop_distance=0),
+            HybridSearchResult(
+                node_id="n1", score=0.9, vector_score=0.9, graph_score=0.0, hop_distance=0
+            ),
         ]
         graph_nodes = {"n1": 1, "n2": 0}
         fused = e.fuse_results(v_results, graph_nodes, k=5)
@@ -421,9 +430,12 @@ class TestHybridSearchEngine(unittest.TestCase):
     def test_fuse_results_k_limits_output(self):
         """GIVEN many nodes; WHEN fuse with k=2; THEN at most 2 results."""
         from ipfs_datasets_py.knowledge_graphs.query.hybrid_search import HybridSearchResult
+
         e = self._make_engine()
         v_res = [
-            HybridSearchResult(node_id=f"n{i}", score=0.5, vector_score=0.5, graph_score=0.0, hop_distance=0)
+            HybridSearchResult(
+                node_id=f"n{i}", score=0.5, vector_score=0.5, graph_score=0.0, hop_distance=0
+            )
             for i in range(10)
         ]
         fused = e.fuse_results(v_res, {}, k=2)
@@ -471,15 +483,18 @@ class TestHybridSearchEngine(unittest.TestCase):
 # Part 3: jsonld/context.py
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestJSONLDContextExpander(unittest.TestCase):
     """Tests for jsonld/context.py ContextExpander — expand and _expand_term paths."""
 
     def _make_expander(self):
         from ipfs_datasets_py.knowledge_graphs.jsonld.context import ContextExpander
+
         return ContextExpander()
 
     def _make_context(self, prefixes=None, terms=None, vocab=None):
         from ipfs_datasets_py.knowledge_graphs.jsonld.context import JSONLDContext
+
         ctx = JSONLDContext()
         if prefixes:
             ctx.prefixes.update(prefixes)
@@ -522,10 +537,12 @@ class TestJSONLDContextExpander(unittest.TestCase):
     def test_expand_type_list(self):
         """GIVEN @type as list; WHEN expand; THEN @type is a list."""
         p = self._make_expander()
-        ctx = self._make_context(terms={
-            "Person": "http://schema.org/Person",
-            "Employee": "http://schema.org/Employee",
-        })
+        ctx = self._make_context(
+            terms={
+                "Person": "http://schema.org/Person",
+                "Employee": "http://schema.org/Employee",
+            }
+        )
         result = p.expand({"@type": ["Person", "Employee"]}, ctx)
         self.assertIn("@type", result)
         self.assertIsInstance(result["@type"], list)
@@ -568,10 +585,12 @@ class TestJSONLDContextCompactor(unittest.TestCase):
 
     def _make_compactor(self):
         from ipfs_datasets_py.knowledge_graphs.jsonld.context import ContextCompactor
+
         return ContextCompactor()
 
     def _make_context(self, prefixes=None, terms=None, vocab=None):
         from ipfs_datasets_py.knowledge_graphs.jsonld.context import JSONLDContext
+
         ctx = JSONLDContext()
         if prefixes:
             ctx.prefixes.update(prefixes)
@@ -639,22 +658,25 @@ class TestJSONLDContextCompactor(unittest.TestCase):
 # Part 4: reasoning/cross_document.py
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestCrossDocumentReasoner(unittest.TestCase):
     """Tests for reasoning/cross_document.py — get_statistics, explain_reasoning, _determine_relation."""
 
     def _make_reasoner(self):
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import CrossDocumentReasoner
+
         return CrossDocumentReasoner()
 
     def _make_document(self, doc_id, content="test", entities=None, metadata=None):
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import DocumentNode
+
         return DocumentNode(
             id=doc_id,
             content=content,
             source="test",
             metadata=metadata or {},
             entities=entities or [],
-            relevance_score=0.8
+            relevance_score=0.8,
         )
 
     # ── get_statistics ────────────────────────────────────────────────────────
@@ -673,9 +695,15 @@ class TestCrossDocumentReasoner(unittest.TestCase):
         r.reason_across_documents(
             query="What is IPFS?",
             input_documents=[
-                {"id": "d1", "content": "IPFS is a protocol.", "source": "test",
-                 "metadata": {}, "relevance_score": 0.9, "entities": []}
-            ]
+                {
+                    "id": "d1",
+                    "content": "IPFS is a protocol.",
+                    "source": "test",
+                    "metadata": {},
+                    "relevance_score": 0.9,
+                    "entities": [],
+                }
+            ],
         )
         stats = r.get_statistics()
         self.assertGreater(stats["total_queries"], 0)
@@ -684,8 +712,14 @@ class TestCrossDocumentReasoner(unittest.TestCase):
         """GIVEN reasoner; WHEN get_statistics; THEN all expected keys present."""
         r = self._make_reasoner()
         stats = r.get_statistics()
-        expected_keys = {"total_queries", "successful_queries", "success_rate",
-                         "avg_document_count", "avg_connection_count", "avg_confidence"}
+        expected_keys = {
+            "total_queries",
+            "successful_queries",
+            "success_rate",
+            "avg_document_count",
+            "avg_connection_count",
+            "avg_confidence",
+        }
         self.assertTrue(expected_keys.issubset(stats.keys()))
 
     # ── explain_reasoning ────────────────────────────────────────────────────
@@ -714,7 +748,10 @@ class TestCrossDocumentReasoner(unittest.TestCase):
 
     def test_determine_relation_missing_docs(self):
         """GIVEN doc IDs not in document list; WHEN _determine_relation; THEN returns UNCLEAR."""
-        from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import InformationRelationType
+        from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
+            InformationRelationType,
+        )
+
         r = self._make_reasoner()
         rel_type, strength = r._determine_relation(
             entity_id="e1",
@@ -727,30 +764,42 @@ class TestCrossDocumentReasoner(unittest.TestCase):
 
     def test_determine_relation_chronological(self):
         """GIVEN source published before target; WHEN _determine_relation; THEN ELABORATING."""
-        from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import InformationRelationType
+        from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
+            InformationRelationType,
+        )
+
         r = self._make_reasoner()
         docs = [
             self._make_document("d1", metadata={"published_date": "2020-01-01"}),
             self._make_document("d2", metadata={"published_date": "2021-01-01"}),
         ]
         rel_type, strength = r._determine_relation(
-            entity_id="e1", source_doc_id="d1", target_doc_id="d2",
-            documents=docs, knowledge_graph=None,
+            entity_id="e1",
+            source_doc_id="d1",
+            target_doc_id="d2",
+            documents=docs,
+            knowledge_graph=None,
         )
         self.assertEqual(rel_type, InformationRelationType.ELABORATING)
         self.assertGreater(strength, 0)
 
     def test_determine_relation_default_complementary(self):
         """GIVEN non-chronological, non-similar docs; WHEN _determine_relation; THEN COMPLEMENTARY."""
-        from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import InformationRelationType
+        from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
+            InformationRelationType,
+        )
+
         r = self._make_reasoner()
         docs = [
             self._make_document("d1", content="apples oranges bananas"),
             self._make_document("d2", content="quantum computing processors"),
         ]
         rel_type, strength = r._determine_relation(
-            entity_id="e1", source_doc_id="d1", target_doc_id="d2",
-            documents=docs, knowledge_graph=None,
+            entity_id="e1",
+            source_doc_id="d1",
+            target_doc_id="d2",
+            documents=docs,
+            knowledge_graph=None,
         )
         self.assertIn(rel_type, list(InformationRelationType))
         self.assertGreater(strength, 0)
@@ -763,9 +812,15 @@ class TestCrossDocumentReasoner(unittest.TestCase):
         result = r.reason_across_documents(
             query="What is IPFS?",
             input_documents=[
-                {"id": "d1", "content": "IPFS is peer-to-peer.", "source": "wiki",
-                 "metadata": {}, "relevance_score": 0.9, "entities": ["IPFS"]}
-            ]
+                {
+                    "id": "d1",
+                    "content": "IPFS is peer-to-peer.",
+                    "source": "wiki",
+                    "metadata": {},
+                    "relevance_score": 0.9,
+                    "entities": ["IPFS"],
+                }
+            ],
         )
         self.assertIn("answer", result)
         self.assertIn("confidence", result)
@@ -776,11 +831,23 @@ class TestCrossDocumentReasoner(unittest.TestCase):
         result = r.reason_across_documents(
             query="IPFS content addressing",
             input_documents=[
-                {"id": "d1", "content": "IPFS uses content addressing.", "source": "a",
-                 "metadata": {}, "relevance_score": 0.9, "entities": ["IPFS", "content-addressing"]},
-                {"id": "d2", "content": "Content addressing uses hashes.", "source": "b",
-                 "metadata": {}, "relevance_score": 0.8, "entities": ["IPFS", "hashes"]},
-            ]
+                {
+                    "id": "d1",
+                    "content": "IPFS uses content addressing.",
+                    "source": "a",
+                    "metadata": {},
+                    "relevance_score": 0.9,
+                    "entities": ["IPFS", "content-addressing"],
+                },
+                {
+                    "id": "d2",
+                    "content": "Content addressing uses hashes.",
+                    "source": "b",
+                    "metadata": {},
+                    "relevance_score": 0.8,
+                    "entities": ["IPFS", "hashes"],
+                },
+            ],
         )
         self.assertIn("documents", result)
 
@@ -789,11 +856,13 @@ class TestCrossDocumentReasoner(unittest.TestCase):
 # Part 5: extraction/finance_graphrag.py
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestFinanceGraphRAG(unittest.TestCase):
     """Tests for extraction/finance_graphrag.py dataclasses and GraphRAGNewsAnalyzer."""
 
     def _module(self):
         from ipfs_datasets_py.knowledge_graphs.extraction import finance_graphrag as m
+
         return m
 
     # ── ExecutiveProfile ──────────────────────────────────────────────────────
@@ -890,6 +959,7 @@ class TestFinanceGraphRAG(unittest.TestCase):
         """GIVEN analyzer with no data; WHEN build_knowledge_graph; THEN returns KnowledgeGraph."""
         m = self._module()
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         analyzer = m.GraphRAGNewsAnalyzer(enable_graphrag=False)
         kg = analyzer.build_knowledge_graph()
         self.assertIsInstance(kg, KnowledgeGraph)
@@ -906,10 +976,11 @@ class TestFinanceGraphRAG(unittest.TestCase):
     def test_analyze_executive_performance_returns_str(self):
         """GIVEN JSON inputs; WHEN analyze_executive_performance; THEN returns JSON string."""
         import json
+
         m = self._module()
         result = m.analyze_executive_performance(
-            json.dumps([]),   # news_articles_json
-            json.dumps([]),   # stock_data_json
+            json.dumps([]),  # news_articles_json
+            json.dumps([]),  # stock_data_json
             "test hypothesis",
             "gender",
             "male",
@@ -922,31 +993,38 @@ class TestFinanceGraphRAG(unittest.TestCase):
 # Part 6: root-level 0% shims
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestRootLevelShimsRemaining(unittest.TestCase):
     """Cover root-level shims still at 0% (cross_document_lineage_enhanced, finance_graphrag, sparql_query_templates)."""
 
     def test_cross_document_lineage_enhanced_shim_warns(self):
         """GIVEN import of cross_document_lineage_enhanced; THEN DeprecationWarning fired."""
         import sys
+
         # Force reimport to trigger warning
         mname = "ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced"
         sys.modules.pop(mname, None)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             import importlib
+
             importlib.import_module(mname)
             dep_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
             self.assertTrue(len(dep_warnings) > 0)
 
     def test_cross_document_lineage_enhanced_shim_exports(self):
         """GIVEN shim imported; THEN LineageVisualizer importable from it."""
-        from ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced import LineageVisualizer
+        from ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced import (
+            LineageVisualizer,
+        )
+
         self.assertIsNotNone(LineageVisualizer)
 
     def test_finance_graphrag_shim_warns(self):
         """GIVEN import of root-level finance_graphrag; THEN DeprecationWarning fired."""
         import sys
         import importlib
+
         mname = "ipfs_datasets_py.knowledge_graphs.finance_graphrag"
         sys.modules.pop(mname, None)
         with warnings.catch_warnings(record=True) as w:
@@ -966,6 +1044,7 @@ class TestRootLevelShimsRemaining(unittest.TestCase):
         """GIVEN import of root-level sparql_query_templates; THEN DeprecationWarning fired."""
         import sys
         import importlib
+
         mname = "ipfs_datasets_py.knowledge_graphs.sparql_query_templates"
         sys.modules.pop(mname, None)
         with warnings.catch_warnings(record=True) as w:

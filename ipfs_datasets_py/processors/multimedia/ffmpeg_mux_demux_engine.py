@@ -42,12 +42,12 @@ async def ffmpeg_mux(
                 return {"status": "error", "error": f"Video input file not found: {path}"}
             inputs.append(path)
 
-    for audio_file in (audio_inputs or []):
+    for audio_file in audio_inputs or []:
         if not _validate_input_file(audio_file):
             return {"status": "error", "error": f"Audio input file not found: {audio_file}"}
         inputs.append(audio_file)
 
-    for subtitle_file in (subtitle_inputs or []):
+    for subtitle_file in subtitle_inputs or []:
         if not _validate_input_file(subtitle_file):
             return {"status": "error", "error": f"Subtitle input file not found: {subtitle_file}"}
         inputs.append(subtitle_file)
@@ -178,7 +178,9 @@ async def ffmpeg_demux(
                     timeout=timeout,
                 )
                 if res["status"] == "success":
-                    extracted.append({"type": "subtitle", "stream_index": idx, "file_path": str(out)})
+                    extracted.append(
+                        {"type": "subtitle", "stream_index": idx, "file_path": str(out)}
+                    )
 
     return {
         "status": "success",

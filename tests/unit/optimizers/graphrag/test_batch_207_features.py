@@ -14,6 +14,7 @@ Smoke tests for pre-existing Batch 207 items:
 - OntologyOptimizer.history_percentile(p)
 - OntologyLearningAdapter.feedback_gini()
 """
+
 from __future__ import annotations
 
 import pytest
@@ -40,6 +41,7 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _report(score: float) -> OptimizationReport:
     return OptimizationReport(average_score=score, trend="stable")
 
@@ -60,8 +62,12 @@ def _adapter_with(scores: list[float]) -> OntologyLearningAdapter:
 
 def _make_critic_score(**kwargs) -> CriticScore:
     defaults = dict(
-        completeness=0.8, consistency=0.7, clarity=0.6,
-        granularity=0.5, relationship_coherence=0.4, domain_alignment=0.3,
+        completeness=0.8,
+        consistency=0.7,
+        clarity=0.6,
+        granularity=0.5,
+        relationship_coherence=0.4,
+        domain_alignment=0.3,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -105,6 +111,7 @@ def ontology_builder(ontology_dict_factory):
 # OntologyOptimizer.score_gini (alias)
 # ---------------------------------------------------------------------------
 
+
 class TestScoreGini:
     def test_empty_history_returns_zero(self):
         opt = OntologyOptimizer()
@@ -135,21 +142,30 @@ class TestScoreGini:
 # OntologyCritic.dimension_gini
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionGini:
     def setup_method(self):
         self.critic = OntologyCritic()
 
     def test_uniform_dims_returns_zero(self):
         score = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         assert self.critic.dimension_gini(score) == pytest.approx(0.0)
 
     def test_all_zero_returns_zero(self):
         score = _make_critic_score(
-            completeness=0.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         assert self.critic.dimension_gini(score) == 0.0
 
@@ -163,12 +179,20 @@ class TestDimensionGini:
 
     def test_more_spread_higher_gini(self):
         score_low = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.4,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.4,
         )
         score_high = _make_critic_score(
-            completeness=0.9, consistency=0.1, clarity=0.1,
-            granularity=0.1, relationship_coherence=0.1, domain_alignment=0.1,
+            completeness=0.9,
+            consistency=0.1,
+            clarity=0.1,
+            granularity=0.1,
+            relationship_coherence=0.1,
+            domain_alignment=0.1,
         )
         assert self.critic.dimension_gini(score_high) > self.critic.dimension_gini(score_low)
 
@@ -180,6 +204,7 @@ class TestDimensionGini:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.entity_confidence_gini
 # ---------------------------------------------------------------------------
+
 
 class TestEntityConfidenceGini:
     def setup_method(self):
@@ -218,6 +243,7 @@ class TestEntityConfidenceGini:
 # OntologyPipeline.run_score_gini
 # ---------------------------------------------------------------------------
 
+
 class TestRunScoreGini:
     def test_empty_returns_zero(self):
         pipeline = OntologyPipeline()
@@ -247,6 +273,7 @@ class TestRunScoreGini:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.first_improving_run
 # ---------------------------------------------------------------------------
+
 
 class TestFirstImprovingRun:
     def test_empty_returns_minus_one(self):
@@ -285,6 +312,7 @@ class TestFirstImprovingRun:
 # ---------------------------------------------------------------------------
 # LogicValidator.degree_centrality
 # ---------------------------------------------------------------------------
+
 
 class TestDegreeCentrality:
     def setup_method(self):
@@ -325,6 +353,7 @@ class TestDegreeCentrality:
 # LogicValidator.max_degree_node_count
 # ---------------------------------------------------------------------------
 
+
 class TestMaxDegreeNodeCount:
     def setup_method(self):
         self.validator = LogicValidator()
@@ -362,6 +391,7 @@ class TestMaxDegreeNodeCount:
 # ---------------------------------------------------------------------------
 # Smoke tests for pre-existing Batch 207 items
 # ---------------------------------------------------------------------------
+
 
 class TestExistingBatch207Methods:
     def test_history_percentile_returns_float(self):

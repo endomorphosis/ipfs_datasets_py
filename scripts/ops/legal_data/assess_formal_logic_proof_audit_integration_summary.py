@@ -163,7 +163,9 @@ def render_triage_markdown(triage: Dict[str, Any]) -> str:
 
 def main() -> None:
     default_output_json = "/tmp/formal_logic_proof_audit_integration_smoke/triage.json"
-    ap = argparse.ArgumentParser(description="Assess proof-audit integration smoke summary and emit remediation hints")
+    ap = argparse.ArgumentParser(
+        description="Assess proof-audit integration smoke summary and emit remediation hints"
+    )
     ap.add_argument(
         "--summary",
         default="/tmp/formal_logic_proof_audit_integration_smoke/summary.json",

@@ -17,22 +17,24 @@ class FloridaScraper(BaseStateScraper):
     """Scraper for Florida state laws."""
 
     _TITLE_INDEX_RE = re.compile(r"App_mode=Display_Index&Title_Request=", re.IGNORECASE)
-    _CHAPTER_CONTENTS_RE = re.compile(r"URL=([0-9]{4}-[0-9]{4}/[0-9]{4}/[0-9]{4})ContentsIndex\.html", re.IGNORECASE)
-    
+    _CHAPTER_CONTENTS_RE = re.compile(
+        r"URL=([0-9]{4}-[0-9]{4}/[0-9]{4}/[0-9]{4})ContentsIndex\.html", re.IGNORECASE
+    )
+
     def get_base_url(self) -> str:
         """Get base URL for Florida statutes."""
         return "http://www.leg.state.fl.us"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Get list of Florida statutes."""
         base_url = self.get_base_url()
-        
+
         codes = [
             {"name": "Florida Statutes", "url": f"{base_url}/Statutes/", "type": "FS"},
         ]
-        
+
         return codes
-    
+
     async def scrape_code(
         self,
         code_name: str,
@@ -71,7 +73,9 @@ class FloridaScraper(BaseStateScraper):
                 )
 
         if not statutes:
-            self.logger.warning("Florida official direct crawl returned no statutes; skipping generic recovery fallback")
+            self.logger.warning(
+                "Florida official direct crawl returned no statutes; skipping generic recovery fallback"
+            )
         return statutes[:limit] if limit is not None else statutes
 
     async def _fetch_official_fl_html(self, url: str, timeout_seconds: int = 12) -> str:
@@ -106,7 +110,9 @@ class FloridaScraper(BaseStateScraper):
 
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+            await self._cache_successful_page_fetch(
+                url=url, payload=payload, provider="requests_direct"
+            )
             return payload.decode("utf-8", errors="replace")
         return ""
 
@@ -157,7 +163,9 @@ class FloridaScraper(BaseStateScraper):
             if not match:
                 continue
             chapter_path = f"{match.group(1)}.html"
-            chapter_url = urljoin(title_url, f"index.cfm?App_mode=Display_Statute&URL={chapter_path}")
+            chapter_url = urljoin(
+                title_url, f"index.cfm?App_mode=Display_Statute&URL={chapter_path}"
+            )
             if chapter_url in seen:
                 continue
             seen.add(chapter_url)
@@ -184,7 +192,9 @@ class FloridaScraper(BaseStateScraper):
         soup = BeautifulSoup(html, "html.parser")
         title_number = self._text_or_empty(soup.select_one(".TitleNumber"))
         title_name = self._text_or_empty(soup.select_one(".TitleName"))
-        chapter_number = self._text_or_empty(soup.select_one(".ChapterNumber")) or self._chapter_number_from_url(chapter_url)
+        chapter_number = self._text_or_empty(
+            soup.select_one(".ChapterNumber")
+        ) or self._chapter_number_from_url(chapter_url)
         chapter_name = self._text_or_empty(soup.select_one(".ChapterName")) or chapter_label
 
         statutes: List[NormalizedStatute] = []
@@ -213,7 +223,9 @@ class FloridaScraper(BaseStateScraper):
                     chapter_number=chapter_number or None,
                     chapter_name=chapter_name or None,
                     section_number=section_number,
-                    section_name=section_name[:200] if section_name else f"Section {section_number}",
+                    section_name=section_name[:200]
+                    if section_name
+                    else f"Section {section_number}",
                     short_title=section_name[:200] if section_name else None,
                     full_text=full_text,
                     legal_area=self._identify_legal_area(section_name or chapter_name or code_name),

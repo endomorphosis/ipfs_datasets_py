@@ -25,7 +25,9 @@ import requests
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import US_STATES
 
 LINK_RE = re.compile(r"\[(?P<label>[^\]]+)\]\((?P<url>[^)]+)\)")
-HTML_LINK_RE = re.compile(r"<a\s+[^>]*href=[\"'](?P<url>[^\"']+)[\"'][^>]*>(?P<label>.*?)</a>", re.IGNORECASE | re.DOTALL)
+HTML_LINK_RE = re.compile(
+    r"<a\s+[^>]*href=[\"'](?P<url>[^\"']+)[\"'][^>]*>(?P<label>.*?)</a>", re.IGNORECASE | re.DOTALL
+)
 
 CIVIL_RE = re.compile(
     r"rules?\s+of\s+civil\s+procedure|civil\s+procedure|code\s+of\s+civil\s+procedure|civil\s+practice|special\s+civil|\bcplr\b|\bccp\b|\bciv\.?\s*p(?:roc)?\b|\br\.?civ\.?\s*p\.?\b",
@@ -201,10 +203,15 @@ def _extract_matches(markdown_text: str, seed_url: str) -> List[Tuple[str, str, 
                 family = "civil_procedure"
             elif ".chapter.2." in url.lower():
                 family = "criminal_procedure"
-        if not family and fallback_family and (
-            url.lower().endswith(".pdf")
-            or FALLBACK_LINK_RE.search(f"{label}\n{url}") is not None
-        ) and _same_domain(seed_url, url):
+        if (
+            not family
+            and fallback_family
+            and (
+                url.lower().endswith(".pdf")
+                or FALLBACK_LINK_RE.search(f"{label}\n{url}") is not None
+            )
+            and _same_domain(seed_url, url)
+        ):
             family = fallback_family
         if family:
             out.append((family, label, url))
@@ -221,10 +228,15 @@ def _extract_matches(markdown_text: str, seed_url: str) -> List[Tuple[str, str, 
                 continue
             url = urldefrag(full_url)[0]
             family = _classify(label, url)
-            if not family and fallback_family and (
-                url.lower().endswith(".pdf")
-                or FALLBACK_LINK_RE.search(f"{label}\n{url}") is not None
-            ) and _same_domain(seed_url, url):
+            if (
+                not family
+                and fallback_family
+                and (
+                    url.lower().endswith(".pdf")
+                    or FALLBACK_LINK_RE.search(f"{label}\n{url}") is not None
+                )
+                and _same_domain(seed_url, url)
+            ):
                 family = fallback_family
             if family:
                 out.append((family, label, url))
@@ -284,7 +296,9 @@ def _state_seed_urls(state_code: str, state_name: str) -> List[str]:
     if state_code == "LA":
         seeds.append("https://law.justia.com/codes/louisiana/code-of-civil-procedure/")
     if state_code == "MD":
-        seeds.append("https://law.justia.com/codes/maryland/courts-and-judicial-proceedings/title-6/")
+        seeds.append(
+            "https://law.justia.com/codes/maryland/courts-and-judicial-proceedings/title-6/"
+        )
     if state_code == "UT":
         seeds.extend(
             [
@@ -306,7 +320,9 @@ def _state_seed_urls(state_code: str, state_name: str) -> List[str]:
         seeds.append("https://law.justia.com/codes/district-of-columbia/title-13/")
         seeds.append("https://law.justia.com/codes/district-of-columbia/title-13/chapter-1/")
     if state_code == "HI":
-        seeds.append("https://www.courts.state.hi.us/circuit-courts-civil-justice-improvement-rules")
+        seeds.append(
+            "https://www.courts.state.hi.us/circuit-courts-civil-justice-improvement-rules"
+        )
     if state_code == "OH":
         seeds.extend(
             [
@@ -368,11 +384,13 @@ def _state_seed_urls(state_code: str, state_name: str) -> List[str]:
             ]
         )
     if state_code == "DC":
-        seeds.extend([
-            "https://www.dccourts.gov/superior-court/rules",
-            "https://www.dccourts.gov/services/civil-matters/rules-civil-procedure",
-            "https://www.dccourts.gov/services/criminal-matters/rules-criminal-procedure",
-        ])
+        seeds.extend(
+            [
+                "https://www.dccourts.gov/superior-court/rules",
+                "https://www.dccourts.gov/services/civil-matters/rules-civil-procedure",
+                "https://www.dccourts.gov/services/criminal-matters/rules-criminal-procedure",
+            ]
+        )
     return seeds
 
 
@@ -544,19 +562,43 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Supplement state procedural rules via r.jina.ai")
     parser.add_argument(
         "--summary-json",
-        default=str(Path.home() / ".ipfs_datasets" / "state_laws" / "procedural_rules" / "us_state_procedural_rules_summary.json"),
+        default=str(
+            Path.home()
+            / ".ipfs_datasets"
+            / "state_laws"
+            / "procedural_rules"
+            / "us_state_procedural_rules_summary.json"
+        ),
     )
     parser.add_argument(
         "--base-jsonl",
-        default=str(Path.home() / ".ipfs_datasets" / "state_laws" / "procedural_rules" / "us_state_procedural_rules.jsonl"),
+        default=str(
+            Path.home()
+            / ".ipfs_datasets"
+            / "state_laws"
+            / "procedural_rules"
+            / "us_state_procedural_rules.jsonl"
+        ),
     )
     parser.add_argument(
         "--output-jsonl",
-        default=str(Path.home() / ".ipfs_datasets" / "state_laws" / "procedural_rules" / "us_state_procedural_rules_supplemental_rjina.jsonl"),
+        default=str(
+            Path.home()
+            / ".ipfs_datasets"
+            / "state_laws"
+            / "procedural_rules"
+            / "us_state_procedural_rules_supplemental_rjina.jsonl"
+        ),
     )
     parser.add_argument(
         "--merged-output-jsonl",
-        default=str(Path.home() / ".ipfs_datasets" / "state_laws" / "procedural_rules" / "us_state_procedural_rules_merged_with_rjina.jsonl"),
+        default=str(
+            Path.home()
+            / ".ipfs_datasets"
+            / "state_laws"
+            / "procedural_rules"
+            / "us_state_procedural_rules_merged_with_rjina.jsonl"
+        ),
     )
     parser.add_argument("--sleep-s", type=float, default=0.1)
     parser.add_argument(

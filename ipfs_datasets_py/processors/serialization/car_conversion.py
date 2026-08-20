@@ -18,18 +18,21 @@ from ipfs_datasets_py.processors.serialization.dataset_serialization import Data
 try:
     import pyarrow as pa
     import pyarrow.parquet as pq
+
     HAVE_ARROW = True
 except ImportError:
     HAVE_ARROW = False
 
 try:
     import ipld_car
+
     HAVE_IPLD_CAR = True
 except ImportError:
     HAVE_IPLD_CAR = False
 
 try:
     import _jsonnet
+
     HAVE_JSONNET = True
 except ImportError:
     HAVE_JSONNET = False
@@ -110,14 +113,14 @@ class DataInterchangeUtils:
 
         if not HAVE_ARROW:
             # Mock implementation for testing
-            with open(safe_output_path, 'wb') as f:
+            with open(safe_output_path, "wb") as f:
                 f.write(b"mock CAR data")
             return "bafybeicarfilecid"
 
         if not HAVE_IPLD_CAR:
             # JSON fallback when CAR support is unavailable
             records = table.to_pylist()
-            with open(safe_output_path, 'w', encoding='utf-8') as f:
+            with open(safe_output_path, "w", encoding="utf-8") as f:
                 json.dump(records, f)
             return "bafybeicarjsonfallback"
 
@@ -153,10 +156,7 @@ class DataInterchangeUtils:
                     self.column_names = ["id", "value"]
 
                 def to_pydict(self):
-                    return {
-                        "id": list(range(5)),
-                        "value": [float(i * 1.5) for i in range(5)]
-                    }
+                    return {"id": list(range(5)), "value": [float(i * 1.5) for i in range(5)]}
 
             return MockTable()
 
@@ -164,22 +164,20 @@ class DataInterchangeUtils:
             # JSON fallback when CAR support is unavailable
             try:
                 safe_car_path = self._validate_car_path(car_path)
-                with open(safe_car_path, 'r', encoding='utf-8') as f:
+                with open(safe_car_path, "r", encoding="utf-8") as f:
                     records = json.load(f)
                 if not isinstance(records, list):
                     records = [records]
                 return pa.Table.from_pylist(records)
             except Exception:
+
                 class MockTable:
                     def __init__(self):
                         self.num_rows = 5
                         self.column_names = ["id", "value"]
 
                     def to_pydict(self):
-                        return {
-                            "id": list(range(5)),
-                            "value": [float(i * 1.5) for i in range(5)]
-                        }
+                        return {"id": list(range(5)), "value": [float(i * 1.5) for i in range(5)]}
 
                 return MockTable()
 
@@ -240,7 +238,7 @@ class DataInterchangeUtils:
         """
         if not HAVE_ARROW:
             # Mock implementation for testing
-            with open(parquet_path, 'wb') as f:
+            with open(parquet_path, "wb") as f:
                 f.write(b"mock parquet data from CAR")
             return parquet_path
 
@@ -248,7 +246,7 @@ class DataInterchangeUtils:
         table = self.import_table_from_car(car_path)
 
         # Check if we got a mock table
-        if not hasattr(table, 'schema'):
+        if not hasattr(table, "schema"):
             # Create a real table from the mock data
             data = table.to_pydict()
             table = pa.Table.from_pydict(data)
@@ -387,10 +385,7 @@ class DataInterchangeUtils:
                 else:
                     buffers.append(0)
 
-        return {
-            "schema": schema_json,
-            "buffers": buffers
-        }
+        return {"schema": schema_json, "buffers": buffers}
 
     def table_from_c_data_interface(self, c_data):
         """
@@ -412,9 +407,7 @@ class DataInterchangeUtils:
         # In a real implementation, this would use the shared memory addresses
         # to reconstruct the table. For this demonstration, we just return a
         # placeholder table.
-        data = {
-            "placeholder": pa.array([1, 2, 3])
-        }
+        data = {"placeholder": pa.array([1, 2, 3])}
         return pa.Table.from_pydict(data)
 
     def huggingface_to_car(self, dataset, output_path, split="train", hash_columns=None):
@@ -442,7 +435,9 @@ class DataInterchangeUtils:
             raise ImportError("HuggingFace datasets is required for dataset export")
 
         # Serialize the dataset
-        root_cid = self.serializer.serialize_huggingface_dataset(dataset, split=split, hash_columns=hash_columns)
+        root_cid = self.serializer.serialize_huggingface_dataset(
+            dataset, split=split, hash_columns=hash_columns
+        )
 
         # Export to CAR
         self.storage.export_to_car([root_cid], output_path)
@@ -496,10 +491,14 @@ class DataInterchangeUtils:
 
         raise ValueError(f"No valid HuggingFace dataset found in CAR file {car_path}")
 
-    def jsonnet_to_car(self, jsonnet_path: str, car_path: str, 
-                      ext_vars: Optional[Dict[str, str]] = None,
-                      tla_vars: Optional[Dict[str, str]] = None,
-                      hash_columns: Optional[List[str]] = None) -> str:
+    def jsonnet_to_car(
+        self,
+        jsonnet_path: str,
+        car_path: str,
+        ext_vars: Optional[Dict[str, str]] = None,
+        tla_vars: Optional[Dict[str, str]] = None,
+        hash_columns: Optional[List[str]] = None,
+    ) -> str:
         """
         Convert a Jsonnet file to a CAR file.
 
@@ -518,29 +517,26 @@ class DataInterchangeUtils:
         """
         if not HAVE_ARROW:
             raise ImportError("PyArrow is required for Jsonnet to CAR conversion")
-        
+
         if not HAVE_JSONNET:
             raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
 
         # Evaluate the Jsonnet file
         import json
+
         ext_vars = ext_vars or {}
         tla_vars = tla_vars or {}
-        
-        json_str = _jsonnet.evaluate_file(
-            jsonnet_path,
-            ext_vars=ext_vars,
-            tla_vars=tla_vars
-        )
-        
+
+        json_str = _jsonnet.evaluate_file(jsonnet_path, ext_vars=ext_vars, tla_vars=tla_vars)
+
         # Parse JSON
         data = json.loads(json_str)
-        
+
         # Ensure it's a list for table conversion
         if not isinstance(data, list):
             # If it's a single object, wrap it in a list
             data = [data]
-        
+
         # Convert to Arrow table
         table = pa.Table.from_pylist(data)
 
@@ -569,7 +565,7 @@ class DataInterchangeUtils:
         table = self.import_table_from_car(car_path)
 
         # Check if we got a mock table
-        if not hasattr(table, 'schema'):
+        if not hasattr(table, "schema"):
             # Create a real table from the mock data
             data = table.to_pydict()
             table = pa.Table.from_pydict(data)
@@ -579,9 +575,10 @@ class DataInterchangeUtils:
 
         # Write to Jsonnet (which is essentially JSON)
         import json
+
         jsonnet_str = json.dumps(records, indent=2)
-        
-        with open(jsonnet_path, 'w') as f:
+
+        with open(jsonnet_path, "w") as f:
             f.write(jsonnet_str)
 
         return jsonnet_path

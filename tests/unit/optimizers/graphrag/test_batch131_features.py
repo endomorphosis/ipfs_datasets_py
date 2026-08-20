@@ -8,6 +8,7 @@ Methods under test:
   - OntologyMediator.most_used_action()
   - OntologyMediator.least_used_action()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -16,41 +17,53 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_cfg(threshold=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
     return ExtractionConfig(confidence_threshold=threshold)
 
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_entity(eid, confidence=0.8):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="person", text=eid, properties={}, confidence=confidence)
 
 
 def _make_result(entities):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(entities=entities, relationships=[], confidence=0.8)
 
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _score(overall):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     return CriticScore(
-        completeness=overall, consistency=overall, clarity=overall,
-        granularity=overall, relationship_coherence=overall, domain_alignment=overall,
+        completeness=overall,
+        consistency=overall,
+        clarity=overall,
+        granularity=overall,
+        relationship_coherence=overall,
+        domain_alignment=overall,
     )
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     gen = MagicMock()
     critic = MagicMock()
     return OntologyMediator(generator=gen, critic=critic)
@@ -59,6 +72,7 @@ def _make_mediator():
 # ---------------------------------------------------------------------------
 # ExtractionConfig.describe
 # ---------------------------------------------------------------------------
+
 
 class TestDescribe:
     def test_returns_string(self):
@@ -78,6 +92,7 @@ class TestDescribe:
 # OntologyGenerator.filter_low_confidence
 # ---------------------------------------------------------------------------
 
+
 class TestFilterLowConfidence:
     def test_empty(self):
         g = _make_generator()
@@ -93,10 +108,12 @@ class TestFilterLowConfidence:
 
     def test_filters_low_confidence(self):
         g = _make_generator()
-        result = _make_result([
-            _make_entity("a", 0.3),
-            _make_entity("b", 0.7),
-        ])
+        result = _make_result(
+            [
+                _make_entity("a", 0.3),
+                _make_entity("b", 0.7),
+            ]
+        )
         filtered = g.filter_low_confidence(result, threshold=0.5)
         assert len(filtered.entities) == 1
         assert filtered.entities[0].id == "b"
@@ -111,6 +128,7 @@ class TestFilterLowConfidence:
 # ---------------------------------------------------------------------------
 # OntologyCritic.passing_rate
 # ---------------------------------------------------------------------------
+
 
 class TestPassingRate:
     def test_empty(self):
@@ -137,6 +155,7 @@ class TestPassingRate:
 # OntologyCritic.score_spread
 # ---------------------------------------------------------------------------
 
+
 class TestScoreSpread:
     def test_empty(self):
         c = _make_critic()
@@ -160,6 +179,7 @@ class TestScoreSpread:
 # ---------------------------------------------------------------------------
 # OntologyMediator.most_used_action / least_used_action
 # ---------------------------------------------------------------------------
+
 
 class TestMostLeastUsedAction:
     def test_most_empty_returns_none(self):

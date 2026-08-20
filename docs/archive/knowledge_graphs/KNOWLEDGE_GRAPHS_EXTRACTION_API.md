@@ -31,7 +31,7 @@ from ipfs_datasets_py.knowledge_graphs.extraction import (
     Relationship,
     KnowledgeGraph,
     KnowledgeGraphExtractor,
-    KnowledgeGraphExtractorWithValidation
+    KnowledgeGraphExtractorWithValidation,
 )
 ```
 
@@ -43,7 +43,7 @@ from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
     Relationship,
     KnowledgeGraph,
     KnowledgeGraphExtractor,
-    KnowledgeGraphExtractorWithValidation
+    KnowledgeGraphExtractorWithValidation,
 )
 ```
 
@@ -107,7 +107,7 @@ data = {
     "entity_type": "organization",
     "name": "Microsoft",
     "properties": {"founded": "1975"},
-    "confidence": 0.9
+    "confidence": 0.9,
 }
 entity = Entity.from_dict(data)
 ```
@@ -125,7 +125,7 @@ company = Entity(
     name="Apple Inc.",
     properties={"founded": "1976", "location": "Cupertino"},
     confidence=0.95,
-    source_text="Apple Inc. was founded in 1976"
+    source_text="Apple Inc. was founded in 1976",
 )
 
 # Serialize and deserialize
@@ -186,7 +186,7 @@ founded = Relationship(
     target_entity=company,
     relationship_type="FOUNDED",
     properties={"year": "1976"},
-    confidence=0.9
+    confidence=0.9,
 )
 
 # Serialize
@@ -343,11 +343,7 @@ kg.add_entity(person)
 kg.add_entity(company)
 
 # Add relationship
-rel = Relationship(
-    source_entity=person,
-    target_entity=company,
-    relationship_type="FOUNDED"
-)
+rel = Relationship(source_entity=person, target_entity=company, relationship_type="FOUNDED")
 kg.add_relationship(rel)
 
 # Query
@@ -502,7 +498,7 @@ kg = extractor.extract_knowledge_graph(text)
 kg_detailed = extractor.extract_knowledge_graph(
     text,
     extraction_temperature=0.9,  # Detailed
-    structure_temperature=0.8     # Rich structure
+    structure_temperature=0.8,  # Rich structure
 )
 
 # Extract from Wikipedia
@@ -511,7 +507,7 @@ kg_wiki = extractor.extract_from_wikipedia("Artificial Intelligence")
 # Extract from multiple documents
 documents = [
     {"text": "Document 1 text...", "title": "Doc 1"},
-    {"text": "Document 2 text...", "title": "Doc 2"}
+    {"text": "Document 2 text...", "title": "Doc 2"},
 ]
 kg_multi = extractor.extract_from_documents(documents)
 
@@ -606,15 +602,14 @@ Apply validation corrections to graph.
 ```python
 # Create validation extractor
 extractor = KnowledgeGraphExtractorWithValidation(
-    validate_during_extraction=True,
-    auto_correct_suggestions=True
+    validate_during_extraction=True, auto_correct_suggestions=True
 )
 
 # Extract with validation
 text = "Albert Einstein developed the theory of relativity."
 result = extractor.extract_knowledge_graph(
     text,
-    validation_depth=2  # Validate entities and relationships
+    validation_depth=2,  # Validate entities and relationships
 )
 
 kg = result["knowledge_graph"]
@@ -630,9 +625,7 @@ if corrections:
 
 # Extract from Wikipedia with validation
 result_wiki = extractor.extract_from_wikipedia(
-    "Marie Curie",
-    validation_depth=2,
-    focus_validation_on_main_entity=True
+    "Marie Curie", validation_depth=2, focus_validation_on_main_entity=True
 )
 
 kg_wiki = result_wiki["knowledge_graph"]
@@ -668,7 +661,7 @@ custom_patterns = [
         "pattern": r"(\w+(?:\s+\w+)*)\s+employs\s+(\w+(?:\s+\w+)*)",
         "source_type": "organization",
         "target_type": "person",
-        "confidence": 0.85
+        "confidence": 0.85,
     }
 ]
 
@@ -689,15 +682,13 @@ additional = validation.get("additional_relationships", [])
 
 # Advanced validation
 extractor_val = KnowledgeGraphExtractorWithValidation(
-    validate_during_extraction=True,
-    auto_correct_suggestions=True
+    validate_during_extraction=True, auto_correct_suggestions=True
 )
 
 result = extractor_val.extract_knowledge_graph(text, validation_depth=2)
 if result.get("corrections"):
     kg_corrected = extractor_val.apply_validation_corrections(
-        result["knowledge_graph"],
-        result["corrections"]
+        result["knowledge_graph"], result["corrections"]
     )
 ```
 
@@ -710,14 +701,18 @@ if result.get("corrections"):
 ```python
 # Old (still works)
 from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
-    Entity, Relationship, KnowledgeGraph,
-    KnowledgeGraphExtractor
+    Entity,
+    Relationship,
+    KnowledgeGraph,
+    KnowledgeGraphExtractor,
 )
 
 # New (recommended)
 from ipfs_datasets_py.knowledge_graphs.extraction import (
-    Entity, Relationship, KnowledgeGraph,
-    KnowledgeGraphExtractor
+    Entity,
+    Relationship,
+    KnowledgeGraph,
+    KnowledgeGraphExtractor,
 )
 ```
 
@@ -737,7 +732,7 @@ For texts > 2000 characters, use enhanced extraction with chunking:
 extractor = KnowledgeGraphExtractor()
 kg = extractor.extract_enhanced_knowledge_graph(
     large_text,
-    use_chunking=True  # Processes in 1000-char chunks with overlap
+    use_chunking=True,  # Processes in 1000-char chunks with overlap
 )
 ```
 
@@ -765,9 +760,7 @@ extractor = KnowledgeGraphExtractorWithValidation(
 ## Error Handling
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractor
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor
 
 extractor = KnowledgeGraphExtractor()
 

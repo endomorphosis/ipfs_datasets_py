@@ -103,6 +103,7 @@ with anyio.fail_after(timeout):
 ```python
 # Works with asyncio, trio, or any anyio-supported backend
 import anyio
+
 anyio.run(main)  # Detects and uses appropriate backend
 ```
 
@@ -116,16 +117,18 @@ import anyio
 from ipfs_datasets_py.processors.adapters import register_all_adapters
 from ipfs_datasets_py.processors.core import UniversalProcessor
 
+
 async def main():
     # Register adapters
     register_all_adapters()
-    
+
     # Process asynchronously
     processor = UniversalProcessor()
     result = await processor.process("document.pdf")
-    
+
     if result.success:
         print(f"Found {len(result.knowledge_graph['entities'])} entities")
+
 
 anyio.run(main)
 ```
@@ -135,12 +138,13 @@ anyio.run(main)
 async def process_many():
     processor = UniversalProcessor()
     files = ["doc1.pdf", "doc2.pdf", "doc3.pdf", "doc4.pdf", "doc5.pdf"]
-    
+
     # Process all files concurrently
     results = await processor.process_batch(files, parallel=True)
-    
+
     successful = len([r for r in results if r.success])
     print(f"Processed {successful}/{len(files)} files")
+
 
 anyio.run(process_many)
 ```
@@ -149,12 +153,13 @@ anyio.run(process_many)
 ```python
 async def process_with_timeout():
     processor = UniversalProcessor()
-    
+
     try:
         with anyio.fail_after(30.0):  # 30 second timeout
             result = await processor.process("large_file.pdf")
     except TimeoutError:
         print("Processing timed out!")
+
 
 anyio.run(process_with_timeout)
 ```
@@ -259,9 +264,11 @@ Create a simple wrapper:
 ```python
 import anyio
 
+
 def process_sync(input_data):
     """Synchronous wrapper for async process."""
     return anyio.run(process, input_data)
+
 
 # Use it
 result = process_sync("document.pdf")

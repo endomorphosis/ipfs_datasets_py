@@ -50,13 +50,15 @@ def test_rebuild_municipal_laws_corpus_normalizes_raw_parquet_pairs(tmp_path, mo
                 "cid": shared_cid,
                 "doc_id": "DOC-10-66",
                 "doc_order": 83,
-                "html_title": "<div class=\"chunk-title\">Sec. 10-66. - Organization of department of permits and inspections.</div>",
+                "html_title": '<div class="chunk-title">Sec. 10-66. - Organization of department of permits and inspections.</div>',
                 "html": "<div><p>The department is hereby established pursuant to G.S. 160D-402(b).</p><p>Editor\u00e2\u20ac\u201d note \u00c2\u00a7 10-66.</p></div>",
             }
         ],
     )
 
-    def _fake_build_canonical_corpus_artifacts(*args: object, **kwargs: object) -> dict[str, object]:
+    def _fake_build_canonical_corpus_artifacts(
+        *args: object, **kwargs: object
+    ) -> dict[str, object]:
         canonical_path = str(kwargs["canonical_parquet_path"])
         return {
             "corpus_key": args[0] if args else kwargs.get("corpus_key"),
@@ -64,8 +66,12 @@ def test_rebuild_municipal_laws_corpus_normalizes_raw_parquet_pairs(tmp_path, mo
             "updated_canonical_parquet_path": canonical_path,
         }
 
-    monkeypatch.setattr(rebuilder, "build_canonical_corpus_artifacts", _fake_build_canonical_corpus_artifacts)
-    monkeypatch.setattr(rebuilder, "canonical_corpus_artifact_build_result_to_dict", lambda result: dict(result))
+    monkeypatch.setattr(
+        rebuilder, "build_canonical_corpus_artifacts", _fake_build_canonical_corpus_artifacts
+    )
+    monkeypatch.setattr(
+        rebuilder, "canonical_corpus_artifact_build_result_to_dict", lambda result: dict(result)
+    )
 
     result = rebuilder.rebuild_municipal_laws_corpus(
         input_root=input_root,

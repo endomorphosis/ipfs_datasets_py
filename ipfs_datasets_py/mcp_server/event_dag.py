@@ -44,6 +44,7 @@ HOT_TIER_MAX = 2000
 # EventDAG
 # ---------------------------------------------------------------------------
 
+
 class EventDAG:
     """Append-only, content-addressed Event DAG with ZK compaction.
 
@@ -84,6 +85,7 @@ class EventDAG:
         if self._compactor is None:
             try:
                 from .dag_compaction import DAGCompactor, COLD_TIER_DIR
+
                 storage = self._storage_dir or COLD_TIER_DIR
                 self._compactor = DAGCompactor(storage_dir=storage)
             except ImportError:
@@ -126,7 +128,9 @@ class EventDAG:
                 # Release lock for compaction (I/O-bound)
                 pass  # _maybe_compact() called after lock release below
             if len(self._nodes) >= MAX_EVENTS:
-                oldest = sorted(self._nodes.values(), key=lambda n: getattr(n, 'timestamp', 0))[:100]
+                oldest = sorted(self._nodes.values(), key=lambda n: getattr(n, "timestamp", 0))[
+                    :100
+                ]
                 evicted_cids = []
                 for old in oldest:
                     old_cid = old.event_cid
@@ -136,7 +140,8 @@ class EventDAG:
                 logger.error(
                     "DAG hard cap reached (%d); evicted %d oldest events. "
                     "Consider increasing compaction frequency or cold storage capacity.",
-                    MAX_EVENTS, len(evicted_cids)
+                    MAX_EVENTS,
+                    len(evicted_cids),
                 )
 
             # Parent validation
@@ -194,15 +199,15 @@ class EventDAG:
                 # Clean children refs
                 for parent_cid in list(self._children.keys()):
                     self._children[parent_cid] = {
-                        c for c in self._children[parent_cid]
-                        if c not in compacted_set
+                        c for c in self._children[parent_cid] if c not in compacted_set
                     }
                     if not self._children[parent_cid]:
                         del self._children[parent_cid]
                 remaining = len(self._nodes)
             logger.info(
                 "Compacted epoch: removed %d events, hot tier now %d",
-                len(result.compacted_cids), remaining,
+                len(result.compacted_cids),
+                remaining,
             )
 
     # ------------------------------------------------------------------
@@ -427,16 +432,19 @@ class EventDAG:
         with self._lock:
             nodes_data = []
             for cid, node in self._nodes.items():
-                nodes_data.append({
-                    "event_cid": cid,
-                    "parents": list(node.parents),
-                    "intent_cid": node.intent_cid,
-                    "decision_cid": getattr(node, "decision_cid", ""),
-                    "receipt_cid": getattr(node, "receipt_cid", ""),
-                    "timestamp": getattr(node, "timestamp", ""),
-                })
+                nodes_data.append(
+                    {
+                        "event_cid": cid,
+                        "parents": list(node.parents),
+                        "intent_cid": node.intent_cid,
+                        "decision_cid": getattr(node, "decision_cid", ""),
+                        "receipt_cid": getattr(node, "receipt_cid", ""),
+                        "timestamp": getattr(node, "timestamp", ""),
+                    }
+                )
 
         import os
+
         os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
         with open(path, "w") as f:
             json.dump({"version": 1, "nodes": nodes_data}, f)
@@ -481,6 +489,7 @@ class EventDAG:
 # ---------------------------------------------------------------------------
 # Convenience builder
 # ---------------------------------------------------------------------------
+
 
 def build_linear_dag(nodes: Iterable[EventNode]) -> EventDAG:
     """Build an EventDAG from a sequence of nodes treated as a linear chain.

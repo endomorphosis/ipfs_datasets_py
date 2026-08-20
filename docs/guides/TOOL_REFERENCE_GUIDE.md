@@ -155,10 +155,9 @@ from ipfs_datasets_py.embeddings import generate_embeddings
 from ipfs_datasets_py.mcp_server.tools.embedding_tools import embedding_generation
 
 # Generate embeddings for text
-embeddings = await embedding_generation.generate_embeddings({
-    "text": "Your text here",
-    "model": "sentence-transformers/all-MiniLM-L6-v2"
-})
+embeddings = await embedding_generation.generate_embeddings(
+    {"text": "Your text here", "model": "sentence-transformers/all-MiniLM-L6-v2"}
+)
 ```
 
 ### Vector Store Operations
@@ -166,10 +165,7 @@ embeddings = await embedding_generation.generate_embeddings({
 from ipfs_datasets_py.vector_stores import QdrantVectorStore
 
 # Initialize vector store
-store = QdrantVectorStore(
-    url="http://localhost:6333",
-    collection_name="my_collection"
-)
+store = QdrantVectorStore(url="http://localhost:6333", collection_name="my_collection")
 
 # Search for similar vectors
 results = await store.search(query_vector, top_k=10)
@@ -180,12 +176,9 @@ results = await store.search(query_vector, top_k=10)
 from ipfs_datasets_py.mcp_server.tools.embedding_tools import advanced_search
 
 # Perform hybrid search
-results = await advanced_search.hybrid_search({
-    "query": "search query",
-    "search_type": "hybrid",
-    "vector_weight": 0.7,
-    "text_weight": 0.3
-})
+results = await advanced_search.hybrid_search(
+    {"query": "search query", "search_type": "hybrid", "vector_weight": 0.7, "text_weight": 0.3}
+)
 ```
 
 ## Feature Flags
@@ -193,11 +186,7 @@ results = await advanced_search.hybrid_search({
 The integration includes feature flags for optional functionality:
 
 ```python
-from ipfs_datasets_py import (
-    EMBEDDINGS_ENABLED,
-    VECTOR_STORES_ENABLED, 
-    MCP_TOOLS_ENABLED
-)
+from ipfs_datasets_py import EMBEDDINGS_ENABLED, VECTOR_STORES_ENABLED, MCP_TOOLS_ENABLED
 
 # Check if features are available
 if EMBEDDINGS_ENABLED:

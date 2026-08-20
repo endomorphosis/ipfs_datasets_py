@@ -61,7 +61,7 @@ reporter = get_global_error_reporter()
 try:
     risky_operation()
 except Exception as e:
-    reporter.report_exception(e, context={'user': 'admin'})
+    reporter.report_exception(e, context={"user": "admin"})
 ```
 
 ### JavaScript - Dashboard
@@ -112,9 +112,9 @@ from ipfs_datasets_py.error_reporting import ErrorReporter
 
 reporter = ErrorReporter(
     enabled=True,
-    repo='owner/repo',
-    github_token='token',
-    min_report_interval=3600  # Don't report same error for 1 hour
+    repo="owner/repo",
+    github_token="token",
+    min_report_interval=3600,  # Don't report same error for 1 hour
 )
 ```
 

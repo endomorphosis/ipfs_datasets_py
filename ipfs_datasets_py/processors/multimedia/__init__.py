@@ -65,6 +65,7 @@ from .ffmpeg_wrapper import FFmpegWrapper
 # Import MediaProcessor conditionally (requires pydantic)
 try:
     from .media_processor import MediaProcessor
+
     HAVE_MEDIA_PROCESSOR = True
 except ImportError:
     HAVE_MEDIA_PROCESSOR = False
@@ -75,6 +76,7 @@ from .media_utils import MediaUtils
 # Import Discord wrapper (new addition)
 try:
     from .discord_wrapper import DiscordWrapper, create_discord_wrapper
+
     HAVE_DISCORD = True
 except ImportError:
     HAVE_DISCORD = False
@@ -84,6 +86,7 @@ except ImportError:
 # Import Email processor
 try:
     from .email_processor import EmailProcessor, create_email_processor
+
     HAVE_EMAIL = True
 except ImportError:
     HAVE_EMAIL = False
@@ -93,6 +96,7 @@ except ImportError:
 # Import Google Voice processor
 try:
     from .google_voice_processor import GoogleVoiceProcessor, create_google_voice_processor
+
     HAVE_GOOGLE_VOICE = True
 except ImportError:
     HAVE_GOOGLE_VOICE = False
@@ -102,12 +106,14 @@ except ImportError:
 # Feature availability flags
 try:
     import yt_dlp
+
     HAVE_YTDLP = True
 except ImportError:
     HAVE_YTDLP = False
 
 try:
     import ffmpeg
+
     HAVE_FFMPEG = True
 except ImportError:
     HAVE_FFMPEG = False
@@ -116,6 +122,7 @@ except ImportError:
 # Note: Adapters are currently stubs - set to False until implemented
 try:
     from .converters import UnifiedConverter, ConverterRegistry
+
     # Converters exist but adapters are stubs - mark as unavailable
     HAVE_CONVERTERS = False
 except ImportError:
@@ -126,6 +133,7 @@ except ImportError:
 # Canonical FFmpeg editing/info engine functions
 from .ffmpeg_edit_engine import ffmpeg_cut, ffmpeg_splice, ffmpeg_concat  # noqa: E402
 from .ffmpeg_info_engine import ffmpeg_probe, ffmpeg_analyze  # noqa: E402
+
 # Canonical FFmpeg mux/demux, filters, stream, batch engines
 from .ffmpeg_mux_demux_engine import ffmpeg_mux, ffmpeg_demux  # noqa: E402
 from .ffmpeg_filters_engine import ffmpeg_apply_filters, get_available_filters  # noqa: E402
@@ -168,7 +176,7 @@ __all__ = [
     "HAVE_EMAIL",
     "HAVE_GOOGLE_VOICE",
     "HAVE_MEDIA_PROCESSOR",
-    "HAVE_CONVERTERS"
+    "HAVE_CONVERTERS",
 ]
 
 from .ytdlp_download_engine import (

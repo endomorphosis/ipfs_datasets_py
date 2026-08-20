@@ -52,9 +52,7 @@ from .views import (
 )
 
 
-FORMALIZATION_COMPILER_CONFIG_SCHEMA_VERSION: Final = (
-    "formalization-compiler-config/v1"
-)
+FORMALIZATION_COMPILER_CONFIG_SCHEMA_VERSION: Final = "formalization-compiler-config/v1"
 FORMALIZATION_ARTIFACT_SCHEMA_VERSION: Final = "formalization-artifact/v1"
 UNSUPPORTED_SEMANTICS_SCHEMA_VERSION: Final = "unsupported-semantics/v1"
 
@@ -75,16 +73,12 @@ class FormalizationCompilerConfig:
     target_view_ids: tuple[str, ...]
     config_id: str = "default"
     producer_id: str = ""
-    unsupported_policy: UnsupportedSemanticsPolicy = (
-        UnsupportedSemanticsPolicy.PRESERVE_OPAQUE
-    )
+    unsupported_policy: UnsupportedSemanticsPolicy = UnsupportedSemanticsPolicy.PRESERVE_OPAQUE
     options: FrozenMap = field(default_factory=FrozenMap)
     schema_version: str = FORMALIZATION_COMPILER_CONFIG_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "compiler_id", _identifier(self.compiler_id, "compiler_id")
-        )
+        object.__setattr__(self, "compiler_id", _identifier(self.compiler_id, "compiler_id"))
         object.__setattr__(
             self,
             "compiler_version",
@@ -96,14 +90,10 @@ class FormalizationCompilerConfig:
             _unique_identifiers(self.target_view_ids, "target_view_ids"),
         )
         if not self.target_view_ids:
-            raise FormalizationValidationError(
-                "target_view_ids must contain at least one view"
-            )
+            raise FormalizationValidationError("target_view_ids must contain at least one view")
         object.__setattr__(self, "config_id", _identifier(self.config_id, "config_id"))
         if self.producer_id:
-            object.__setattr__(
-                self, "producer_id", _identifier(self.producer_id, "producer_id")
-            )
+            object.__setattr__(self, "producer_id", _identifier(self.producer_id, "producer_id"))
         try:
             policy = (
                 self.unsupported_policy
@@ -122,9 +112,7 @@ class FormalizationCompilerConfig:
             if isinstance(self.options, FrozenMap)
             else FrozenMap(_mapping(self.options, "options")),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != FORMALIZATION_COMPILER_CONFIG_SCHEMA_VERSION:
             raise FormalizationValidationError(
                 f"unsupported compiler config schema: {self.schema_version!r}"
@@ -173,9 +161,7 @@ class FormalizationCompilerConfig:
         )
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any]
-    ) -> "FormalizationCompilerConfig":
+    def from_dict(cls, value: Mapping[str, Any]) -> "FormalizationCompilerConfig":
         value = _mapping(value, "compiler config")
         _reject_unknown(
             value,
@@ -196,9 +182,7 @@ class FormalizationCompilerConfig:
         return cls(
             compiler_id=value.get("compiler_id", ""),
             compiler_version=value.get("compiler_version", ""),
-            target_view_ids=tuple(
-                _sequence(value.get("target_view_ids", ()), "target_view_ids")
-            ),
+            target_view_ids=tuple(_sequence(value.get("target_view_ids", ()), "target_view_ids")),
             config_id=value.get("config_id", "default"),
             producer_id=value.get("producer_id", ""),
             unsupported_policy=value.get(
@@ -212,15 +196,11 @@ class FormalizationCompilerConfig:
         )
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> "FormalizationCompilerConfig":
+    def from_json(cls, value: str | bytes | bytearray) -> "FormalizationCompilerConfig":
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise FormalizationValidationError(
-                "compiler config must be valid JSON"
-            ) from exc
+            raise FormalizationValidationError("compiler config must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "compiler config"))
 
 
@@ -244,26 +224,18 @@ class UnsupportedSemanticsDiagnostic:
     schema_version: str = UNSUPPORTED_SEMANTICS_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "construct_id", _identifier(self.construct_id, "construct_id")
-        )
+        object.__setattr__(self, "construct_id", _identifier(self.construct_id, "construct_id"))
         object.__setattr__(self, "reason", _text(self.reason, "reason"))
         object.__setattr__(
             self,
             "source_ref_ids",
             _unique_identifiers(self.source_ref_ids, "source_ref_ids"),
         )
-        object.__setattr__(
-            self, "span_ids", _unique_identifiers(self.span_ids, "span_ids")
-        )
+        object.__setattr__(self, "span_ids", _unique_identifiers(self.span_ids, "span_ids"))
         if not self.source_ref_ids and not self.span_ids:
-            raise FormalizationValidationError(
-                "unsupported semantics must retain source grounding"
-            )
+            raise FormalizationValidationError("unsupported semantics must retain source grounding")
         if self.view_id:
-            object.__setattr__(
-                self, "view_id", _identifier(self.view_id, "view_id")
-            )
+            object.__setattr__(self, "view_id", _identifier(self.view_id, "view_id"))
         if self.opaque_formula_id:
             object.__setattr__(
                 self,
@@ -272,9 +244,7 @@ class UnsupportedSemanticsDiagnostic:
             )
         if not isinstance(self.severity, DiagnosticSeverity):
             try:
-                object.__setattr__(
-                    self, "severity", DiagnosticSeverity(self.severity)
-                )
+                object.__setattr__(self, "severity", DiagnosticSeverity(self.severity))
             except (TypeError, ValueError) as exc:
                 raise FormalizationValidationError(
                     f"unknown diagnostic severity: {self.severity!r}"
@@ -286,9 +256,7 @@ class UnsupportedSemanticsDiagnostic:
             if isinstance(self.metadata, FrozenMap)
             else FrozenMap(_mapping(self.metadata, "metadata")),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != UNSUPPORTED_SEMANTICS_SCHEMA_VERSION:
             raise FormalizationValidationError(
                 f"unsupported unsupported-semantics schema: {self.schema_version!r}"
@@ -304,11 +272,7 @@ class UnsupportedSemanticsDiagnostic:
                 "view_id": self.view_id,
             }
         )
-        subject_ids = tuple(
-            value
-            for value in (self.construct_id, self.opaque_formula_id)
-            if value
-        )
+        subject_ids = tuple(value for value in (self.construct_id, self.opaque_formula_id) if value)
         result = Diagnostic(
             code=DiagnosticCode.UNSUPPORTED_FEATURE,
             message=self.reason,
@@ -337,9 +301,7 @@ class UnsupportedSemanticsDiagnostic:
         }
 
     @classmethod
-    def from_dict(
-        cls, value: Mapping[str, Any]
-    ) -> "UnsupportedSemanticsDiagnostic":
+    def from_dict(cls, value: Mapping[str, Any]) -> "UnsupportedSemanticsDiagnostic":
         value = _mapping(value, "unsupported semantics")
         _reject_unknown(
             value,
@@ -361,17 +323,13 @@ class UnsupportedSemanticsDiagnostic:
         return cls(
             construct_id=value.get("construct_id", ""),
             reason=value.get("reason", ""),
-            source_ref_ids=tuple(
-                _sequence(value.get("source_ref_ids", ()), "source_ref_ids")
-            ),
+            source_ref_ids=tuple(_sequence(value.get("source_ref_ids", ()), "source_ref_ids")),
             span_ids=tuple(_sequence(value.get("span_ids", ()), "span_ids")),
             view_id=value.get("view_id", ""),
             opaque_formula_id=value.get("opaque_formula_id", ""),
             severity=value.get("severity", DiagnosticSeverity.ERROR.value),
             metadata=FrozenMap(_mapping(value.get("metadata", {}), "metadata")),
-            schema_version=value.get(
-                "schema_version", UNSUPPORTED_SEMANTICS_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", UNSUPPORTED_SEMANTICS_SCHEMA_VERSION),
         )
 
 
@@ -418,21 +376,15 @@ class FormalizationArtifact:
         if not isinstance(self.declaration_digest, str) or not _DIGEST_RE.fullmatch(
             self.declaration_digest
         ):
-            raise FormalizationValidationError(
-                "declaration_digest must be a sha256:<hex> digest"
-            )
+            raise FormalizationValidationError("declaration_digest must be a sha256:<hex> digest")
         if not isinstance(self.compiler_config, FormalizationCompilerConfig):
             raise FormalizationValidationError(
                 "compiler_config must be a FormalizationCompilerConfig"
             )
         if not isinstance(self.view_registry, ViewRegistry):
-            raise FormalizationValidationError(
-                "view_registry must be a ViewRegistry"
-            )
+            raise FormalizationValidationError("view_registry must be a ViewRegistry")
         if not isinstance(self.symbol_table, SymbolTable):
-            raise FormalizationValidationError(
-                "symbol_table must be a SymbolTable"
-            )
+            raise FormalizationValidationError("symbol_table must be a SymbolTable")
         object.__setattr__(
             self,
             "formulas",
@@ -486,18 +438,14 @@ class FormalizationArtifact:
             tuple(sorted(obligations, key=lambda item: item.obligation_id)),
         )
         if not isinstance(self.source_map, Provenance):
-            raise FormalizationValidationError(
-                "source_map must be a shared Provenance instance"
-            )
+            raise FormalizationValidationError("source_map must be a shared Provenance instance")
         object.__setattr__(
             self,
             "source_map",
             Provenance.from_dict(self.source_map.to_dict()),
         )
         if not isinstance(self.diagnostics, DiagnosticReport):
-            raise FormalizationValidationError(
-                "diagnostics must be a shared DiagnosticReport"
-            )
+            raise FormalizationValidationError("diagnostics must be a shared DiagnosticReport")
         object.__setattr__(
             self,
             "metadata",
@@ -505,9 +453,7 @@ class FormalizationArtifact:
             if isinstance(self.metadata, FrozenMap)
             else FrozenMap(_mapping(self.metadata, "metadata")),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         self.validate()
 
     @classmethod
@@ -538,15 +484,11 @@ class FormalizationArtifact:
             symbol_table=symbol_table,
             formulas=tuple(formulas),
             cross_view_links=tuple(cross_view_links),
-            assumptions=tuple(
-                sample.assumptions if assumptions is None else assumptions
-            ),
+            assumptions=tuple(sample.assumptions if assumptions is None else assumptions),
             proof_obligations=tuple(proof_obligations),
             source_map=source_map or sample.provenance,
             diagnostics=diagnostics,
-            metadata=metadata
-            if isinstance(metadata, FrozenMap)
-            else FrozenMap(metadata),
+            metadata=metadata if isinstance(metadata, FrozenMap) else FrozenMap(metadata),
         )
 
     def validate(self) -> "FormalizationArtifact":
@@ -563,15 +505,13 @@ class FormalizationArtifact:
         )
         if missing_targets:
             raise FormalizationValidationError(
-                "compiler targets unregistered views: "
-                + ", ".join(sorted(missing_targets))
+                "compiler targets unregistered views: " + ", ".join(sorted(missing_targets))
             )
         emitted_views = {item.view_id for item in self.formulas}
         unexpected_views = emitted_views - set(self.compiler_config.target_view_ids)
         if unexpected_views:
             raise FormalizationValidationError(
-                "formulas emitted for untargeted views: "
-                + ", ".join(sorted(unexpected_views))
+                "formulas emitted for untargeted views: " + ", ".join(sorted(unexpected_views))
             )
 
         assumption_ids = [item.assumption_id for item in self.assumptions]
@@ -598,9 +538,7 @@ class FormalizationArtifact:
         ):
             _validate_span_sources(grounded, spans)
 
-        bindings_by_subject = {
-            item.subject_id: item for item in self.source_map.bindings
-        }
+        bindings_by_subject = {item.subject_id: item for item in self.source_map.bindings}
         if (
             self.sample_id not in bindings_by_subject
             and self.declaration_id not in bindings_by_subject
@@ -638,12 +576,8 @@ class FormalizationArtifact:
                 )
 
         if self.compiler_config.producer_id:
-            producer_ids = {
-                item.producer_id for item in self.source_map.producers
-            }
-            configs = {
-                item.config_id: item for item in self.source_map.configs
-            }
+            producer_ids = {item.producer_id for item in self.source_map.producers}
+            configs = {item.config_id: item for item in self.source_map.configs}
             if self.compiler_config.producer_id not in producer_ids:
                 raise FormalizationValidationError(
                     "source_map does not contain the configured compiler producer"
@@ -653,10 +587,7 @@ class FormalizationArtifact:
                 raise FormalizationValidationError(
                     "source_map does not contain the compiler configuration"
                 )
-            if (
-                config_binding.content_sha256
-                != self.compiler_config.identity.hexdigest
-            ):
+            if config_binding.content_sha256 != self.compiler_config.identity.hexdigest:
                 raise FormalizationValidationError(
                     "source_map compiler configuration digest does not match "
                     "compiler_config identity"
@@ -702,8 +633,7 @@ class FormalizationArtifact:
                 )
         for formula in self.formulas:
             if formula.opaque and not any(
-                formula.formula_id in item.location.subject_ids
-                for item in unsupported
+                formula.formula_id in item.location.subject_ids for item in unsupported
             ):
                 raise FormalizationValidationError(
                     f"opaque formula {formula.formula_id!r} requires a matching "
@@ -724,13 +654,8 @@ class FormalizationArtifact:
                 "target views with no formulas require unsupported diagnostics: "
                 + ", ".join(sorted(unexplained_views))
             )
-        if (
-            self.compiler_config.unsupported_policy
-            is UnsupportedSemanticsPolicy.ERROR
-            and any(
-                item.severity.rank < DiagnosticSeverity.ERROR.rank
-                for item in unsupported
-            )
+        if self.compiler_config.unsupported_policy is UnsupportedSemanticsPolicy.ERROR and any(
+            item.severity.rank < DiagnosticSeverity.ERROR.rank for item in unsupported
         ):
             raise FormalizationValidationError(
                 "strict unsupported policy requires error/fatal diagnostics"
@@ -752,18 +677,14 @@ class FormalizationArtifact:
             "assumptions": [item.to_dict() for item in self.assumptions],
             "compiler_config": self.compiler_config.to_dict(),
             "compiler_config_identity": self.compiler_config.identity.to_dict(),
-            "cross_view_links": [
-                item.to_dict() for item in self.cross_view_links
-            ],
+            "cross_view_links": [item.to_dict() for item in self.cross_view_links],
             "declaration_digest": self.declaration_digest,
             "declaration_id": self.declaration_id,
             "diagnostics": self.diagnostics.to_dict(),
             "domain": self.domain,
             "formulas": [item.to_dict() for item in self.formulas],
             "metadata": self.metadata.to_dict(),
-            "proof_obligations": [
-                item.to_dict() for item in self.proof_obligations
-            ],
+            "proof_obligations": [item.to_dict() for item in self.proof_obligations],
             "sample_id": self.sample_id,
             "schema_version": self.schema_version,
             "source_map": self.source_map.to_dict(),
@@ -876,9 +797,7 @@ class FormalizationArtifact:
             ),
             cross_view_links=tuple(
                 CrossViewLink.from_dict(_mapping(item, "cross-view link"))
-                for item in _sequence(
-                    value.get("cross_view_links", ()), "cross_view_links"
-                )
+                for item in _sequence(value.get("cross_view_links", ()), "cross_view_links")
             ),
             assumptions=tuple(
                 Assumption.from_dict(_mapping(item, "assumption"))
@@ -886,20 +805,14 @@ class FormalizationArtifact:
             ),
             proof_obligations=tuple(
                 ProofObligation.from_dict(_mapping(item, "proof obligation"))
-                for item in _sequence(
-                    value.get("proof_obligations", ()), "proof_obligations"
-                )
+                for item in _sequence(value.get("proof_obligations", ()), "proof_obligations")
             ),
-            source_map=Provenance.from_dict(
-                _mapping(value.get("source_map", {}), "source_map")
-            ),
+            source_map=Provenance.from_dict(_mapping(value.get("source_map", {}), "source_map")),
             diagnostics=DiagnosticReport.from_dict(
                 _mapping(value.get("diagnostics", {}), "diagnostics")
             ),
             metadata=FrozenMap(_mapping(value.get("metadata", {}), "metadata")),
-            schema_version=value.get(
-                "schema_version", FORMALIZATION_ARTIFACT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", FORMALIZATION_ARTIFACT_SCHEMA_VERSION),
         )
         _verify_embedded_identity(
             value.get("compiler_config_identity"),
@@ -918,9 +831,7 @@ class FormalizationArtifact:
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise FormalizationValidationError(
-                "formalization artifact must be valid JSON"
-            ) from exc
+            raise FormalizationValidationError("formalization artifact must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "formalization artifact"))
 
 
@@ -939,25 +850,19 @@ def _validate_span_sources(item: Any, spans: Mapping[str, Any]) -> None:
             getattr(item, "symbol_id", getattr(item, "link_id", "item")),
         )
         raise FormalizationValidationError(
-            f"{identifier!r} spans belong to unlisted sources: "
-            + ", ".join(sorted(mismatched))
+            f"{identifier!r} spans belong to unlisted sources: " + ", ".join(sorted(mismatched))
         )
 
 
-def _require_known_sources(
-    values: Sequence[str], known: set[str], field_name: str
-) -> None:
+def _require_known_sources(values: Sequence[str], known: set[str], field_name: str) -> None:
     unknown = set(values) - known
     if unknown:
         raise FormalizationValidationError(
-            f"{field_name} references unknown sources: "
-            + ", ".join(sorted(unknown))
+            f"{field_name} references unknown sources: " + ", ".join(sorted(unknown))
         )
 
 
-def _verify_embedded_identity(
-    value: Any, expected: CanonicalIdentity, field_name: str
-) -> None:
+def _verify_embedded_identity(value: Any, expected: CanonicalIdentity, field_name: str) -> None:
     if value is None:
         return
     supplied = _mapping(value, field_name)

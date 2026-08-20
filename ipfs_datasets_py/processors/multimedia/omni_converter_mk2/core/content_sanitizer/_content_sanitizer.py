@@ -6,28 +6,28 @@ from types_ import Any, Configs, Content, SanitizedContent, Pattern, Logger
 
 from logger import logger as debug_logger
 
-class ContentSanitizer: # TODO Add more tests for the regex used by this class. There's a LOT of different patterns and rules that need to be tested.
+
+class ContentSanitizer:  # TODO Add more tests for the regex used by this class. There's a LOT of different patterns and rules that need to be tested.
     """
     A class to sanitize content by removing unwanted characters and patterns.
     """
 
-    def __init__(self, 
-                 configs: Configs = None, 
-                 resources: dict[str, Any] = None
-                ):
+    def __init__(self, configs: Configs = None, resources: dict[str, Any] = None):
         """Initialize the content sanitizer with injected dependencies."""
         self.configs = configs
         self.resources = resources
 
-        self._sanitized_content:           SanitizedContent          = self.resources['sanitized_content']
-        self._pii_detection:               list[tuple[Pattern, str]] = self.resources['pii_detection_regex']
-        self._remove_active_content_regex: list[Pattern]             = self.resources['remove_active_content_regex']
-        self._remove_scripts_regex:        list[Pattern]             = self.resources['remove_scripts_regex']
-        self._sensitive_keys:              list[str]                 = self.resources['sensitive_keys']
-        self._sanitization_rules:          dict[str, bool]           = self.resources['security_rules']
-        self._logger:                      Logger                    = self.resources['logger']
+        self._sanitized_content: SanitizedContent = self.resources["sanitized_content"]
+        self._pii_detection: list[tuple[Pattern, str]] = self.resources["pii_detection_regex"]
+        self._remove_active_content_regex: list[Pattern] = self.resources[
+            "remove_active_content_regex"
+        ]
+        self._remove_scripts_regex: list[Pattern] = self.resources["remove_scripts_regex"]
+        self._sensitive_keys: list[str] = self.resources["sensitive_keys"]
+        self._sanitization_rules: dict[str, bool] = self.resources["security_rules"]
+        self._logger: Logger = self.resources["logger"]
 
-    def sanitize(self, content: 'Content') -> SanitizedContent:
+    def sanitize(self, content: "Content") -> SanitizedContent:
         """Sanitize content for security.
 
         Args:
@@ -40,9 +40,7 @@ class ContentSanitizer: # TODO Add more tests for the regex used by this class. 
             debug_logger.debug("Content sanitization is disabled, returning content as-is.")
             # Return content as-is if sanitization is disabled
             return self._sanitized_content(
-                content=content,
-                sanitization_applied=["none"],
-                removed_content={}
+                content=content, sanitization_applied=["none"], removed_content={}
             )
 
         text = content.text
@@ -52,7 +50,7 @@ class ContentSanitizer: # TODO Add more tests for the regex used by this class. 
         removed_content = {}
 
         # Apply sanitization rules
-        text_rules = { 
+        text_rules = {
             "remove_scripts": ("scripts", self._remove_scripts),
             "remove_active_content": ("active_content", self._remove_active_content),
             "remove_personal_data": ("personal_data", self._remove_personal_data),
@@ -81,16 +79,16 @@ class ContentSanitizer: # TODO Add more tests for the regex used by this class. 
         return self._sanitized_content(
             content=content,
             sanitization_applied=applied_sanitizers,
-            removed_content=removed_content
+            removed_content=removed_content,
         )
 
     def _remove_scripts(self, text: str) -> tuple[str, int]:
         """
         Remove script content from text.
-        
+
         Args:
             text: The text to sanitize.
-            
+
         Returns:
             Tuple of (sanitized text, count of items removed).
         """
@@ -106,10 +104,10 @@ class ContentSanitizer: # TODO Add more tests for the regex used by this class. 
     def _remove_active_content(self, text: str) -> tuple[str, int]:
         """
         Remove active content from text.
-        
+
         Args:
             text: The text to sanitize.
-            
+
         Returns:
             Tuple of (sanitized text, count of items removed).
         """
@@ -125,10 +123,10 @@ class ContentSanitizer: # TODO Add more tests for the regex used by this class. 
     def _remove_personal_data(self, text: str) -> tuple[str, int]:
         """
         Remove personal data from text.
-        
+
         Args:
             text: The text to sanitize.
-            
+
         Returns:
             Tuple of (sanitized text, count of items removed).
         """
@@ -142,10 +140,10 @@ class ContentSanitizer: # TODO Add more tests for the regex used by this class. 
 
     def _sanitize_metadata(self, metadata: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
         """Sanitize metadata.
-        
+
         Args:
             metadata: The metadata to sanitize.
-            
+
         Returns:
             Tuple of (sanitized metadata, list of removed keys).
         """
@@ -175,5 +173,5 @@ class ContentSanitizer: # TODO Add more tests for the regex used by this class. 
                 self._sanitization_rules[key] = value
             else:
                 self._logger.warning(f"Unknown security rule: {key}")
-        
+
         self._logger.info("Sanitization rules updated", {"rules": self._sanitization_rules})

@@ -72,22 +72,16 @@ from .variants import get_causal_proof_variant_profile, get_variant_definition
 
 
 COMPILER_REFERENCE_EXPOSURE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "compiler-reference-exposure.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.compiler-reference-exposure.v2"
 )
 CAUSAL_RUNTIME_EVIDENCE_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.causal-runtime-evidence.v2"
 )
 G210_PROOF_COMPILER_BINDING_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "reviewed-proof-compiler-binding.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.reviewed-proof-compiler-binding.v2"
 )
-_PROOF_STAGES: Final = frozenset(
-    {StageName.HAMMER, StageName.LEANSTRAL}
-)
-_FRONTEND_STAGES: Final = frozenset(
-    {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
-)
+_PROOF_STAGES: Final = frozenset({StageName.HAMMER, StageName.LEANSTRAL})
+_FRONTEND_STAGES: Final = frozenset({StageName.COMPILER, StageName.SPACY, StageName.SYMAI})
 
 
 class CausalRuntimeBridgeError(ValueError):
@@ -112,24 +106,17 @@ def _freeze_plain_json(value: object) -> object:
     plain = _plain(value)
     if isinstance(plain, Mapping):
         return MappingProxyType(
-            {
-                str(key): _freeze_plain_json(member)
-                for key, member in plain.items()
-            }
+            {str(key): _freeze_plain_json(member) for key, member in plain.items()}
         )
     if isinstance(plain, list):
         return tuple(_freeze_plain_json(member) for member in plain)
     if plain is None or type(plain) in {str, bool, int, float}:
         return plain
-    raise CausalRuntimeBridgeError(
-        "causal runtime evidence contains a non-JSON value"
-    )
+    raise CausalRuntimeBridgeError("causal runtime evidence contains a non-JSON value")
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise CausalRuntimeBridgeError(f"{field} must be an object")
     return value
 
@@ -155,17 +142,13 @@ def _stage_artifact(
 ) -> StageArtifact:
     invoked = record.provenance.effective_identity.get("graph_invoked")
     if type(invoked) is not bool:
-        raise CausalRuntimeBridgeError(
-            f"{record.stage.value} record lacks an invocation decision"
-        )
+        raise CausalRuntimeBridgeError(f"{record.stage.value} record lacks an invocation decision")
     return StageArtifact(
         stage=record.stage,
         status=record.status,
         data=_plain(record.data),
         output_sha256=record.output_sha256,
-        effective_identity=_plain(
-            record.provenance.effective_identity
-        ),  # type: ignore[arg-type]
+        effective_identity=_plain(record.provenance.effective_identity),  # type: ignore[arg-type]
         invocation_index=invocation_index,
         invoked=invoked,
         policy_reason=policy_reason,
@@ -205,17 +188,13 @@ def _proof_compiler_binding(
     compiler record.
     """
 
-    if (
-        not isinstance(compiler_exposure, CompilerReferenceExposureV2)
-        or compiler_exposure.source_cid
-        != cid_for_bytes(source_text.encode("utf-8"))
-    ):
+    if not isinstance(
+        compiler_exposure, CompilerReferenceExposureV2
+    ) or compiler_exposure.source_cid != cid_for_bytes(source_text.encode("utf-8")):
         raise CausalRuntimeBridgeError(
             "proof compiler binding differs from the source-only A0 exposure"
         )
-    proof_context_value = _mapping(
-        proof_context, "proof compiler reviewed context"
-    )
+    proof_context_value = _mapping(proof_context, "proof compiler reviewed context")
     proof_input = {
         "text": source_text,
         **_plain(proof_context_value),  # type: ignore[arg-type]
@@ -223,13 +202,9 @@ def _proof_compiler_binding(
     try:
         compiled = compile_reviewed_obligation(proof_input)
     except RuntimeBindingError as exc:
-        raise CausalRuntimeBridgeError(
-            "reviewed proof compiler binding could not compile"
-        ) from exc
+        raise CausalRuntimeBridgeError("reviewed proof compiler binding could not compile") from exc
     if compiled is None:
-        raise CausalRuntimeBridgeError(
-            "reviewed proof compiler binding lacks an obligation"
-        )
+        raise CausalRuntimeBridgeError("reviewed proof compiler binding lacks an obligation")
     translation = _entailment_translation(
         proof_input,
         theorem_name=compiled.theorem_name,
@@ -274,8 +249,7 @@ def _proof_compiler_binding(
             or (
                 native_candidate is not None
                 and exposed_candidate is not None
-                and exposed_candidate.certificate.decode("utf-8")
-                == native_candidate["certificate"]
+                and exposed_candidate.certificate.decode("utf-8") == native_candidate["certificate"]
             )
         )
     ):
@@ -287,17 +261,11 @@ def _proof_compiler_binding(
         "causal_proof_protocol_cid": CAUSAL_PROOF_PROTOCOL_V2_CID,
         "source_cid": compiler_exposure.source_cid,
         "proof_context_cid": proof_context_cid,
-        "compiler_reference_exposure_cid": (
-            compiler_exposure.receipt_cid
-        ),
+        "compiler_reference_exposure_cid": (compiler_exposure.receipt_cid),
         "compiled_obligation": compiled.to_dict(),
         "compiled_obligation_sha256": compiled.digest,
-        "entailment_translation": (
-            None if translation is None else translation.to_dict()
-        ),
-        "entailment_translation_sha256": (
-            None if translation is None else translation.digest
-        ),
+        "entailment_translation": (None if translation is None else translation.to_dict()),
+        "entailment_translation_sha256": (None if translation is None else translation.digest),
         "native_proof_candidate": native_candidate,
     }
     artifact = StageArtifact(
@@ -311,9 +279,7 @@ def _proof_compiler_binding(
             "causal_proof_protocol_cid": CAUSAL_PROOF_PROTOCOL_V2_CID,
             "source_cid": compiler_exposure.source_cid,
             "proof_context_cid": proof_context_cid,
-            "compiler_reference_exposure_cid": (
-                compiler_exposure.receipt_cid
-            ),
+            "compiler_reference_exposure_cid": (compiler_exposure.receipt_cid),
         },
         invocation_index=0,
         invoked=True,
@@ -334,9 +300,7 @@ def _proof_compiler_binding(
 def _legacy_source_input_sha256(source_text: str) -> str:
     """Return the frozen v1 input join for a semantic-v2 source envelope."""
 
-    return hashlib.sha256(
-        canonical_json({"text": source_text}).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(canonical_json({"text": source_text}).encode("utf-8")).hexdigest()
 
 
 def _semantic_requested_identity(
@@ -346,9 +310,7 @@ def _semantic_requested_identity(
 ) -> dict[str, object]:
     """Rebuild one exact source-only requested treatment identity."""
 
-    identity = dict(
-        get_variant_definition(variant_id).requested_identity(stage)
-    )
+    identity = dict(get_variant_definition(variant_id).requested_identity(stage))
     identity.update(
         {
             "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
@@ -382,9 +344,7 @@ def _candidate_from_dict(value: object) -> CausalProofCandidate | None:
         "compiler_candidate",
     )
     if not isinstance(data["certificate_utf8"], str):
-        raise CausalRuntimeBridgeError(
-            "compiler candidate certificate must be UTF-8 text"
-        )
+        raise CausalRuntimeBridgeError("compiler candidate certificate must be UTF-8 text")
     return CausalProofCandidate(
         source=str(data["source"]),
         certificate=data["certificate_utf8"],
@@ -402,9 +362,7 @@ def _compiler_record_certificate(record: StageRecord) -> str | None:
     candidate = _mapping(value, "compiler native_proof_candidate")
     certificate = candidate.get("certificate")
     if not isinstance(certificate, str) or not certificate.strip():
-        raise CausalRuntimeBridgeError(
-            "compiler native candidate lacks exact certificate bytes"
-        )
+        raise CausalRuntimeBridgeError("compiler native candidate lacks exact certificate bytes")
     return certificate
 
 
@@ -421,25 +379,16 @@ class CompilerReferenceExposureV2:
 
     def __post_init__(self) -> None:
         if self.schema != COMPILER_REFERENCE_EXPOSURE_SCHEMA_V2:
-            raise CausalRuntimeBridgeError(
-                "unsupported compiler-reference exposure schema"
-            )
+            raise CausalRuntimeBridgeError("unsupported compiler-reference exposure schema")
         if (
             self.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
-            or self.causal_proof_protocol_cid
-            != CAUSAL_PROOF_PROTOCOL_V2_CID
+            or self.causal_proof_protocol_cid != CAUSAL_PROOF_PROTOCOL_V2_CID
         ):
-            raise CausalRuntimeBridgeError(
-                "compiler exposure protocol identity drifted"
-            )
+            raise CausalRuntimeBridgeError("compiler exposure protocol identity drifted")
         try:
-            source_cid = validate_cid(
-                self.source_cid, codecs=("raw",)
-            )
+            source_cid = validate_cid(self.source_cid, codecs=("raw",))
         except (TypeError, ValueError) as exc:
-            raise CausalRuntimeBridgeError(
-                "compiler exposure source CID is invalid"
-            ) from exc
+            raise CausalRuntimeBridgeError("compiler exposure source CID is invalid") from exc
         object.__setattr__(self, "source_cid", source_cid)
         record = self.compiler_record
         if (
@@ -449,8 +398,7 @@ class CompilerReferenceExposureV2:
             or record.variant_id != "A0"
             or record.split not in {Split.PILOT, Split.DEVELOPMENT}
             or record.provenance.environment_sha256 is None
-            or record.provenance.effective_identity.get("graph_invoked")
-            is not True
+            or record.provenance.effective_identity.get("graph_invoked") is not True
         ):
             raise CausalRuntimeBridgeError(
                 "shared compiler exposure requires an invoked A0 compiler "
@@ -461,8 +409,7 @@ class CompilerReferenceExposureV2:
             record.provenance.effective_identity,
         ):
             if (
-                identity.get("semantic_protocol_cid")
-                != SEMANTIC_PROTOCOL_V2_CID
+                identity.get("semantic_protocol_cid") != SEMANTIC_PROTOCOL_V2_CID
                 or identity.get("source_cid") != source_cid
                 or identity.get("proof_context_cid") is not None
             ):
@@ -477,8 +424,7 @@ class CompilerReferenceExposureV2:
             )
         ):
             raise CausalRuntimeBridgeError(
-                "compiler exposure requested identity differs from the "
-                "frozen A0 compiler treatment"
+                "compiler exposure requested identity differs from the frozen A0 compiler treatment"
             )
         certificate = _compiler_record_certificate(record)
         candidate = self.compiler_candidate
@@ -501,8 +447,7 @@ class CompilerReferenceExposureV2:
         expected_cid = _artifact_cid(artifact)
         if candidate.artifact_cid != expected_cid:
             raise CausalRuntimeBridgeError(
-                "compiler candidate artifact CID differs from the exposed "
-                "canonical artifact bytes"
+                "compiler candidate artifact CID differs from the exposed canonical artifact bytes"
             )
 
     @classmethod
@@ -521,19 +466,12 @@ class CompilerReferenceExposureV2:
         """
 
         if not isinstance(source_text, str) or not source_text.strip():
-            raise CausalRuntimeBridgeError(
-                "compiler exposure source text must be nonempty"
-            )
+            raise CausalRuntimeBridgeError("compiler exposure source text must be nonempty")
         if not isinstance(compiler_record, StageRecord):
+            raise CausalRuntimeBridgeError("compiler exposure requires a compiler StageRecord")
+        if compiler_record.provenance.input_sha256 != (_legacy_source_input_sha256(source_text)):
             raise CausalRuntimeBridgeError(
-                "compiler exposure requires a compiler StageRecord"
-            )
-        if compiler_record.provenance.input_sha256 != (
-            _legacy_source_input_sha256(source_text)
-        ):
-            raise CausalRuntimeBridgeError(
-                "compiler exposure legacy input digest differs from its "
-                "exact source bytes"
+                "compiler exposure legacy input digest differs from its exact source bytes"
             )
         artifact = _stage_artifact(
             compiler_record,
@@ -574,31 +512,19 @@ class CompilerReferenceExposureV2:
             "run_id": self.compiler_record.run_id,
             "case_id": self.compiler_record.case_id,
             "cache_mode": self.compiler_record.cache_mode.value,
-            "environment_sha256": (
-                self.compiler_record.provenance.environment_sha256
-            ),
+            "environment_sha256": (self.compiler_record.provenance.environment_sha256),
             "compiler_invoked": True,
-            "candidate_state": (
-                "absent"
-                if self.compiler_candidate is None
-                else "present"
-            ),
+            "candidate_state": ("absent" if self.compiler_candidate is None else "present"),
             "compiler_record": self.compiler_record.to_dict(),
-            "compiler_record_cid": cid_for_dag_json(
-                _plain(self.compiler_record.to_dict())
-            ),
+            "compiler_record_cid": cid_for_dag_json(_plain(self.compiler_record.to_dict())),
             "compiler_artifact": artifact.to_dict(),
             "compiler_artifact_cid": _artifact_cid(artifact),
             "compiler_artifact_sha256": _artifact_sha256(artifact),
-            "compiler_candidate": _candidate_to_dict(
-                self.compiler_candidate
-            ),
+            "compiler_candidate": _candidate_to_dict(self.compiler_candidate),
         }
         plain = _plain(body)
         if not isinstance(plain, dict):  # pragma: no cover - fixed body shape
-            raise CausalRuntimeBridgeError(
-                "compiler exposure body is not a DAG-JSON object"
-            )
+            raise CausalRuntimeBridgeError("compiler exposure body is not a DAG-JSON object")
         return plain
 
     @property
@@ -643,9 +569,7 @@ class CompilerReferenceExposureV2:
             source_cid=str(data["source_cid"]),
             compiler_candidate=candidate,
             semantic_protocol_cid=str(data["semantic_protocol_cid"]),
-            causal_proof_protocol_cid=str(
-                data["causal_proof_protocol_cid"]
-            ),
+            causal_proof_protocol_cid=str(data["causal_proof_protocol_cid"]),
             schema=str(data["schema"]),
         )
         if _plain(data) != result.to_dict():
@@ -661,29 +585,17 @@ def _semantic_frontend(
     source_text: str,
 ) -> tuple[StageRecord, ...]:
     if not isinstance(result, CaseResultRecord):
-        raise CausalRuntimeBridgeError(
-            "semantic_result must be a CaseResultRecord"
-        )
+        raise CausalRuntimeBridgeError("semantic_result must be a CaseResultRecord")
     try:
         restored = CaseResultRecord.from_dict(result.to_dict())
     except ProtocolContractError as exc:
-        raise CausalRuntimeBridgeError(
-            "semantic result failed canonical replay"
-        ) from exc
+        raise CausalRuntimeBridgeError("semantic result failed canonical replay") from exc
     if restored != result or result.split is Split.HOLDOUT:
-        raise CausalRuntimeBridgeError(
-            "G210 requires a canonical non-holdout semantic result"
-        )
+        raise CausalRuntimeBridgeError("G210 requires a canonical non-holdout semantic result")
     source_cid = cid_for_bytes(source_text.encode("utf-8"))
     profile = get_causal_proof_variant_profile(result.variant_id)
-    expected = tuple(
-        stage
-        for stage in profile.effective_stages
-        if stage in _FRONTEND_STAGES
-    )
-    records = tuple(
-        stage for stage in result.stages if stage.stage in _FRONTEND_STAGES
-    )
+    expected = tuple(stage for stage in profile.effective_stages if stage in _FRONTEND_STAGES)
+    records = tuple(stage for stage in result.stages if stage.stage in _FRONTEND_STAGES)
     if tuple(stage.stage for stage in records) != expected:
         raise CausalRuntimeBridgeError(
             "semantic result does not contain the exact G210 frontend prefix"
@@ -696,8 +608,7 @@ def _semantic_frontend(
             or stage.provenance.upstream_stage_digests != expected_upstream
         ):
             raise CausalRuntimeBridgeError(
-                "immutable semantic frontend has a source-input or digest-chain "
-                "mismatch"
+                "immutable semantic frontend has a source-input or digest-chain mismatch"
             )
         if stage.provenance.requested_identity != (
             _semantic_requested_identity(
@@ -707,16 +618,14 @@ def _semantic_frontend(
             )
         ):
             raise CausalRuntimeBridgeError(
-                f"{stage.stage.value} requested identity differs from the "
-                "frozen semantic treatment"
+                f"{stage.stage.value} requested identity differs from the frozen semantic treatment"
             )
         for identity in (
             stage.provenance.requested_identity,
             stage.provenance.effective_identity,
         ):
             if (
-                identity.get("semantic_protocol_cid")
-                != SEMANTIC_PROTOCOL_V2_CID
+                identity.get("semantic_protocol_cid") != SEMANTIC_PROTOCOL_V2_CID
                 or identity.get("source_cid") != source_cid
                 or identity.get("proof_context_cid") is not None
             ):
@@ -744,9 +653,7 @@ def _runtime_identity(
     identity.update(
         {
             "causal_proof_protocol_cid": CAUSAL_PROOF_PROTOCOL_V2_CID,
-            "causal_variant_profile_cid": (
-                CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
-            ),
+            "causal_variant_profile_cid": (CAUSAL_PROOF_VARIANT_PROFILE_V2_CID),
             "compiler_reference_exposure_cid": exposure_cid,
         }
     )
@@ -780,12 +687,8 @@ def _terminal_kernel_target_identity(
     """Derive the terminal kernel target from the ordered native sidecars."""
 
     sidecars = selection_result.receipt.get("kernel_receipts")
-    if not isinstance(sidecars, Sequence) or isinstance(
-        sidecars, (str, bytes, bytearray)
-    ):
-        raise CausalRuntimeBridgeError(
-            "selection kernel receipts must be an array"
-        )
+    if not isinstance(sidecars, Sequence) or isinstance(sidecars, (str, bytes, bytearray)):
+        raise CausalRuntimeBridgeError("selection kernel receipts must be an array")
     if not sidecars:
         return {}
     terminal = _mapping(sidecars[-1], "terminal kernel sidecar")
@@ -811,12 +714,8 @@ def _terminal_kernel_target_identity(
         artifact_cid = compiler.get("artifact_cid")
     else:
         optional = selection_result.receipt.get("optional_candidates")
-        if not isinstance(optional, Sequence) or isinstance(
-            optional, (str, bytes, bytearray)
-        ):
-            raise CausalRuntimeBridgeError(
-                "selection optional candidates must be an array"
-            )
+        if not isinstance(optional, Sequence) or isinstance(optional, (str, bytes, bytearray)):
+            raise CausalRuntimeBridgeError("selection optional candidates must be an array")
         matches = [
             _mapping(item, "selection optional candidate")
             for item in optional
@@ -826,9 +725,7 @@ def _terminal_kernel_target_identity(
             and item.get("kernel_checked") is True
         ]
         if len(matches) != 1:
-            raise CausalRuntimeBridgeError(
-                "terminal kernel target has no unique selected producer"
-            )
+            raise CausalRuntimeBridgeError("terminal kernel target has no unique selected producer")
         source = matches[0].get("source")
         artifact_cid = matches[0].get("artifact_cid")
     if source not in {
@@ -836,9 +733,7 @@ def _terminal_kernel_target_identity(
         StageName.HAMMER.value,
         StageName.LEANSTRAL.value,
     }:
-        raise CausalRuntimeBridgeError(
-            "terminal kernel target source is invalid"
-        )
+        raise CausalRuntimeBridgeError("terminal kernel target source is invalid")
     validated_artifact_cid = validate_cid(
         artifact_cid,
         codecs=("raw",),
@@ -867,9 +762,7 @@ def _artifact_from_invocation(
         status=output.status,
         data=_plain(output.data),
         output_sha256=None,
-        effective_identity=_plain(
-            output.effective_identity
-        ),  # type: ignore[arg-type]
+        effective_identity=_plain(output.effective_identity),  # type: ignore[arg-type]
         invocation_index=invocation_index,
         invoked=True,
         policy_reason=policy_reason,
@@ -883,9 +776,7 @@ def _proof_failure(
     if stage is StageName.HAMMER:
         if output.failure_code is FailureCode.PREMISE_SELECTION_MISS:
             code = "hammer_premise_selection_miss"
-        elif output.failure_code is (
-            FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
-        ):
+        elif output.failure_code is (FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE):
             code = "hammer_timeout"
         elif output.failure_code in {
             FailureCode.RECEIPT_OR_PROVENANCE_FAILURE,
@@ -924,9 +815,7 @@ def _proof_failure(
         code = "leanstral_schema_invalid"
     else:
         code = "leanstral_provider_failure"
-    return CausalProofFailure(
-        "leanstral", code, output.failure_detail or ""
-    )
+    return CausalProofFailure("leanstral", code, output.failure_detail or "")
 
 
 def _certificate_from_output(
@@ -940,17 +829,11 @@ def _certificate_from_output(
         value = data.get("proof_text", data.get("certificate"))
     else:
         draft = data.get("draft")
-        value = (
-            draft.get("proof_text")
-            if isinstance(draft, Mapping)
-            else data.get("certificate")
-        )
+        value = draft.get("proof_text") if isinstance(draft, Mapping) else data.get("certificate")
     if value is None:
         return None
     if not isinstance(value, str) or not value.strip():
-        raise CausalRuntimeBridgeError(
-            f"{stage.value} emitted invalid candidate bytes"
-        )
+        raise CausalRuntimeBridgeError(f"{stage.value} emitted invalid candidate bytes")
     return value
 
 
@@ -958,21 +841,15 @@ def _aggregate_kernel_telemetry(
     invocations: Sequence[StageInvocation],
 ) -> TelemetryRecord:
     if not invocations:
-        raise CausalRuntimeBridgeError(
-            "terminal kernel evidence requires an invocation"
-        )
-    return _aggregate_kernel_telemetry_records(
-        tuple(item.telemetry for item in invocations)
-    )
+        raise CausalRuntimeBridgeError("terminal kernel evidence requires an invocation")
+    return _aggregate_kernel_telemetry_records(tuple(item.telemetry for item in invocations))
 
 
 def _aggregate_kernel_telemetry_records(
     values: Sequence[TelemetryRecord],
 ) -> TelemetryRecord:
     if not values:
-        raise CausalRuntimeBridgeError(
-            "terminal kernel evidence requires telemetry"
-        )
+        raise CausalRuntimeBridgeError("terminal kernel evidence requires telemetry")
     return TelemetryRecord(
         wall_time_ms=sum(item.wall_time_ms for item in values),
         cpu_time_ms=sum(item.cpu_time_ms for item in values),
@@ -1006,19 +883,14 @@ class CausalRuntimeEvidenceV2:
 
     def __post_init__(self) -> None:
         if self.schema != CAUSAL_RUNTIME_EVIDENCE_SCHEMA_V2:
-            raise CausalRuntimeBridgeError(
-                "unsupported causal runtime evidence schema"
-            )
+            raise CausalRuntimeBridgeError("unsupported causal runtime evidence schema")
         if (
             not isinstance(
                 self.compiler_exposure,
                 CompilerReferenceExposureV2,
             )
             or not isinstance(self.semantic_frontend, tuple)
-            or not all(
-                isinstance(item, StageRecord)
-                for item in self.semantic_frontend
-            )
+            or not all(isinstance(item, StageRecord) for item in self.semantic_frontend)
             or not isinstance(
                 self.selection_result,
                 CausalProofGraphResult,
@@ -1026,51 +898,31 @@ class CausalRuntimeEvidenceV2:
             or not isinstance(self.case_result, CaseResultRecord)
             or not isinstance(self.causal_case_receipt, Mapping)
             or not isinstance(self.kernel_check_telemetry, tuple)
-            or not all(
-                isinstance(item, Mapping)
-                for item in self.kernel_check_telemetry
-            )
+            or not all(isinstance(item, Mapping) for item in self.kernel_check_telemetry)
             or not isinstance(self.source_text, str)
             or not self.source_text.strip()
             or not isinstance(self.proof_context, Mapping)
         ):
-            raise CausalRuntimeBridgeError(
-                "causal runtime evidence contains invalid typed fields"
-            )
+            raise CausalRuntimeBridgeError("causal runtime evidence contains invalid typed fields")
         frozen_context = _freeze_plain_json(self.proof_context)
-        frozen_case_receipt = _freeze_plain_json(
-            self.causal_case_receipt
-        )
-        frozen_telemetry = tuple(
-            _freeze_plain_json(item)
-            for item in self.kernel_check_telemetry
-        )
+        frozen_case_receipt = _freeze_plain_json(self.causal_case_receipt)
+        frozen_telemetry = tuple(_freeze_plain_json(item) for item in self.kernel_check_telemetry)
         if (
             not isinstance(frozen_context, Mapping)
             or not isinstance(frozen_case_receipt, Mapping)
-            or not all(
-                isinstance(item, Mapping)
-                for item in frozen_telemetry
-            )
+            or not all(isinstance(item, Mapping) for item in frozen_telemetry)
         ):  # pragma: no cover - guarded by input shapes
-            raise CausalRuntimeBridgeError(
-                "causal runtime JSON fields did not remain objects"
-            )
+            raise CausalRuntimeBridgeError("causal runtime JSON fields did not remain objects")
         try:
             proof_context_cid = validate_cid(
                 self.proof_context_cid,
                 codecs=("dag-json",),
             )
         except (TypeError, ValueError) as exc:
-            raise CausalRuntimeBridgeError(
-                "causal runtime proof-context CID is invalid"
-            ) from exc
-        if (
-            proof_context_cid
-            != cid_for_dag_json(_plain(frozen_context))
-            or self.compiler_exposure.source_cid
-            != cid_for_bytes(self.source_text.encode("utf-8"))
-        ):
+            raise CausalRuntimeBridgeError("causal runtime proof-context CID is invalid") from exc
+        if proof_context_cid != cid_for_dag_json(
+            _plain(frozen_context)
+        ) or self.compiler_exposure.source_cid != cid_for_bytes(self.source_text.encode("utf-8")):
             raise CausalRuntimeBridgeError(
                 "causal runtime source or proof-context identity changed"
             )
@@ -1092,9 +944,7 @@ class CausalRuntimeEvidenceV2:
         )
 
     def identity_body(self) -> dict[str, object]:
-        frontend = [
-            _plain(item.to_dict()) for item in self.semantic_frontend
-        ]
+        frontend = [_plain(item.to_dict()) for item in self.semantic_frontend]
         case_result = _plain(self.case_result.to_dict())
         body = {
             "schema": self.schema,
@@ -1104,12 +954,8 @@ class CausalRuntimeEvidenceV2:
             "source_text_utf8": self.source_text,
             "proof_context": _plain(self.proof_context),
             "proof_context_cid": self.proof_context_cid,
-            "compiler_reference_exposure": (
-                self.compiler_exposure.to_dict()
-            ),
-            "compiler_reference_exposure_cid": (
-                self.compiler_exposure.receipt_cid
-            ),
+            "compiler_reference_exposure": (self.compiler_exposure.to_dict()),
+            "compiler_reference_exposure_cid": (self.compiler_exposure.receipt_cid),
             "semantic_frontend": frontend,
             "semantic_frontend_cid": cid_for_dag_json(frontend),
             "selection_receipt": dict(self.selection_result.receipt),
@@ -1117,15 +963,11 @@ class CausalRuntimeEvidenceV2:
             "case_result": case_result,
             "case_result_cid": cid_for_dag_json(case_result),
             "causal_case_receipt": _plain(self.causal_case_receipt),
-            "kernel_check_telemetry": [
-                _plain(item) for item in self.kernel_check_telemetry
-            ],
+            "kernel_check_telemetry": [_plain(item) for item in self.kernel_check_telemetry],
         }
         plain = _plain(body)
         if not isinstance(plain, dict):  # pragma: no cover - fixed body shape
-            raise CausalRuntimeBridgeError(
-                "causal runtime body is not a DAG-JSON object"
-            )
+            raise CausalRuntimeBridgeError("causal runtime body is not a DAG-JSON object")
         return plain
 
     @property
@@ -1146,16 +988,9 @@ def _proof_artifact_binding(
     record: StageRecord,
     selection_record: Mapping[str, object],
 ) -> tuple[StageArtifact, str | None]:
-    invocation_index = record.provenance.effective_identity.get(
-        "graph_invocation_index"
-    )
-    if (
-        isinstance(invocation_index, bool)
-        or not isinstance(invocation_index, int)
-    ):
-        raise CausalRuntimeBridgeError(
-            f"{stage.value} record lacks its invocation index"
-        )
+    invocation_index = record.provenance.effective_identity.get("graph_invocation_index")
+    if isinstance(invocation_index, bool) or not isinstance(invocation_index, int):
+        raise CausalRuntimeBridgeError(f"{stage.value} record lacks its invocation index")
     artifact = _stage_artifact(
         record,
         invocation_index=invocation_index,
@@ -1164,9 +999,7 @@ def _proof_artifact_binding(
     output = StageOutput(
         data=_plain(record.data),
         status=record.status,
-        effective_identity=_plain(
-            record.provenance.effective_identity
-        ),  # type: ignore[arg-type]
+        effective_identity=_plain(record.provenance.effective_identity),  # type: ignore[arg-type]
         failure_code=record.failure_code,
         failure_detail=record.failure_detail,
     )
@@ -1176,19 +1009,15 @@ def _proof_artifact_binding(
         if (
             selection_record.get("candidate_cid") is not None
             or selection_record.get("artifact_cid") is not None
-            or selection_record.get("failure_code")
-            != failure.failure_code
+            or selection_record.get("failure_code") != failure.failure_code
         ):
             raise CausalRuntimeBridgeError(
-                f"{stage.value} selection differs from its typed failure "
-                "StageRecord"
+                f"{stage.value} selection differs from its typed failure StageRecord"
             )
         return artifact, None
     artifact_cid = _artifact_cid(artifact)
     if selection_record.get("artifact_cid") != artifact_cid:
-        raise CausalRuntimeBridgeError(
-            f"{stage.value} selection artifact CID changed"
-        )
+        raise CausalRuntimeBridgeError(f"{stage.value} selection artifact CID changed")
     candidate_cid = cid_for_bytes(certificate.encode("utf-8"))
     if selection_record.get("candidate_cid") != candidate_cid:
         raise CausalRuntimeBridgeError(
@@ -1227,54 +1056,33 @@ def validate_causal_runtime_evidence_v2(
     if (
         data["schema"] != CAUSAL_RUNTIME_EVIDENCE_SCHEMA_V2
         or data["semantic_protocol_cid"] != SEMANTIC_PROTOCOL_V2_CID
-        or data["causal_proof_protocol_cid"]
-        != CAUSAL_PROOF_PROTOCOL_V2_CID
+        or data["causal_proof_protocol_cid"] != CAUSAL_PROOF_PROTOCOL_V2_CID
     ):
-        raise CausalRuntimeBridgeError(
-            "causal runtime evidence protocol drifted"
-        )
+        raise CausalRuntimeBridgeError("causal runtime evidence protocol drifted")
     source_text = data["source_text_utf8"]
     if not isinstance(source_text, str) or not source_text.strip():
-        raise CausalRuntimeBridgeError(
-            "causal runtime evidence lacks exact source UTF-8 text"
-        )
-    proof_context = _mapping(
-        data["proof_context"], "causal runtime proof_context"
-    )
+        raise CausalRuntimeBridgeError("causal runtime evidence lacks exact source UTF-8 text")
+    proof_context = _mapping(data["proof_context"], "causal runtime proof_context")
     expected_source_cid = cid_for_bytes(source_text.encode("utf-8"))
-    expected_proof_context_cid = cid_for_dag_json(
-        _plain(proof_context)
-    )
+    expected_proof_context_cid = cid_for_dag_json(_plain(proof_context))
     if (
         data["source_cid"] != expected_source_cid
         or data["proof_context_cid"] != expected_proof_context_cid
     ):
-        raise CausalRuntimeBridgeError(
-            "causal runtime exact source/proof-context bytes changed"
-        )
+        raise CausalRuntimeBridgeError("causal runtime exact source/proof-context bytes changed")
     try:
-        exposure = CompilerReferenceExposureV2.from_dict(
-            data["compiler_reference_exposure"]
-        )
+        exposure = CompilerReferenceExposureV2.from_dict(data["compiler_reference_exposure"])
         raw_frontend = data["semantic_frontend"]
         if not isinstance(raw_frontend, list):
-            raise CausalRuntimeBridgeError(
-                "semantic_frontend must be an array"
-            )
-        frontend = tuple(
-            StageRecord.from_dict(item) for item in raw_frontend
-        )
-        selection = validate_causal_proof_selection_receipt(
-            data["selection_receipt"]
-        )
+            raise CausalRuntimeBridgeError("semantic_frontend must be an array")
+        frontend = tuple(StageRecord.from_dict(item) for item in raw_frontend)
+        selection = validate_causal_proof_selection_receipt(data["selection_receipt"])
         selection_result = CausalProofGraphResult(
             receipt=selection,
             receipt_cid=str(data["selection_receipt_cid"]),
         )
         case_result = CaseResultRecord.from_dict(data["case_result"])
-        causal_receipt = validate_causal_rescue_case_receipt(
-            data["causal_case_receipt"]
-        )
+        causal_receipt = validate_causal_rescue_case_receipt(data["causal_case_receipt"])
     except (
         ProtocolContractError,
         RuntimeBindingError,
@@ -1283,30 +1091,18 @@ def validate_causal_runtime_evidence_v2(
     ) as exc:
         if isinstance(exc, CausalRuntimeBridgeError):
             raise
-        raise CausalRuntimeBridgeError(
-            "causal runtime typed evidence failed replay"
-        ) from exc
+        raise CausalRuntimeBridgeError("causal runtime typed evidence failed replay") from exc
     if (
         data["source_cid"] != exposure.source_cid
-        or data["compiler_reference_exposure_cid"]
-        != exposure.receipt_cid
+        or data["compiler_reference_exposure_cid"] != exposure.receipt_cid
         or data["semantic_frontend_cid"]
-        != cid_for_dag_json(
-            _plain([item.to_dict() for item in frontend])
-        )
-        or data["case_result_cid"]
-        != cid_for_dag_json(_plain(case_result.to_dict()))
+        != cid_for_dag_json(_plain([item.to_dict() for item in frontend]))
+        or data["case_result_cid"] != cid_for_dag_json(_plain(case_result.to_dict()))
         or tuple(case_result.stages[: len(frontend)]) != frontend
         or _plain(causal_receipt)
-        != _plain(
-            build_causal_rescue_case_receipt(
-                case_result, selection_result.receipt
-            )
-        )
+        != _plain(build_causal_rescue_case_receipt(case_result, selection_result.receipt))
     ):
-        raise CausalRuntimeBridgeError(
-            "causal runtime evidence lost an immutable evidence binding"
-        )
+        raise CausalRuntimeBridgeError("causal runtime evidence lost an immutable evidence binding")
     expected_proof_input = {
         "text": source_text,
         **_plain(proof_context),  # type: ignore[arg-type]
@@ -1314,19 +1110,13 @@ def validate_causal_runtime_evidence_v2(
     try:
         compiled = compile_reviewed_obligation(expected_proof_input)
     except RuntimeBindingError as exc:
-        raise CausalRuntimeBridgeError(
-            "persisted proof context no longer compiles"
-        ) from exc
+        raise CausalRuntimeBridgeError("persisted proof context no longer compiles") from exc
     if compiled is None:
-        raise CausalRuntimeBridgeError(
-            "G210 evidence lacks a reviewed compiled obligation"
-        )
-    proof_compiler_artifact, proof_compiler_candidate = (
-        _proof_compiler_binding(
-            exposure,
-            source_text=source_text,
-            proof_context=proof_context,
-        )
+        raise CausalRuntimeBridgeError("G210 evidence lacks a reviewed compiled obligation")
+    proof_compiler_artifact, proof_compiler_candidate = _proof_compiler_binding(
+        exposure,
+        source_text=source_text,
+        proof_context=proof_context,
     )
     semantic_artifacts: list[StageArtifact] = [proof_compiler_artifact]
     for record in frontend:
@@ -1349,17 +1139,13 @@ def validate_causal_runtime_evidence_v2(
             cache_mode=case_result.cache_mode,
             input_data={"text": source_text},
             requested_identity={},
-            environment_sha256=(
-                case_result.stages[0].provenance.environment_sha256
-            ),
+            environment_sha256=(case_result.stages[0].provenance.environment_sha256),
             upstream_artifacts=tuple(semantic_artifacts),
             source=("causal_runtime_v2_replay",),
             semantic_protocol_cid=SEMANTIC_PROTOCOL_V2_CID,
             proof_context=proof_context,
         )
-        semantic_binding = semantic_context_binding(
-            kernel_input_semantic_context(semantic_request)
-        )
+        semantic_binding = semantic_context_binding(kernel_input_semantic_context(semantic_request))
         context_cid = validate_cid(
             semantic_binding.get("context_cid"),
             codecs=("dag-json",),
@@ -1368,12 +1154,9 @@ def validate_causal_runtime_evidence_v2(
         if not isinstance(artifact_cids, list):
             raise ValueError("semantic artifact CIDs are not an array")
         expected_native_semantic_fields = {
-            "semantic_context_sha256": sha256_digest_for_cid(
-                context_cid, codecs=("dag-json",)
-            ),
+            "semantic_context_sha256": sha256_digest_for_cid(context_cid, codecs=("dag-json",)),
             "semantic_artifact_sha256s": [
-                sha256_digest_for_cid(value, codecs=("dag-json",))
-                for value in artifact_cids
+                sha256_digest_for_cid(value, codecs=("dag-json",)) for value in artifact_cids
             ],
         }
     except (ProtocolContractError, RuntimeBindingError, TypeError, ValueError) as exc:
@@ -1385,16 +1168,13 @@ def validate_causal_runtime_evidence_v2(
         or exposure.compiler_record.case_id != case_result.case_id
         or exposure.compiler_record.split is not case_result.split
         or exposure.compiler_record.cache_mode is not case_result.cache_mode
-        or exposure.compiler_record.case_manifest_sha256
-        != case_result.case_manifest_sha256
+        or exposure.compiler_record.case_manifest_sha256 != case_result.case_manifest_sha256
         or exposure.compiler_record.provenance.environment_sha256
         != case_result.stages[0].provenance.environment_sha256
         or exposure.compiler_record.provenance.input_sha256
         != _legacy_source_input_sha256(source_text)
     ):
-        raise CausalRuntimeBridgeError(
-            "compiler exposure differs from its CaseResult coordinate"
-        )
+        raise CausalRuntimeBridgeError("compiler exposure differs from its CaseResult coordinate")
     expected_frontend_stages = tuple(
         stage.stage
         for stage in _semantic_frontend(
@@ -1402,17 +1182,11 @@ def validate_causal_runtime_evidence_v2(
             source_text=source_text,
         )
     )
-    if expected_frontend_stages != tuple(
-        stage.stage for stage in frontend
-    ):
-        raise CausalRuntimeBridgeError(
-            "persisted semantic frontend changed during replay"
-        )
+    if expected_frontend_stages != tuple(stage.stage for stage in frontend):
+        raise CausalRuntimeBridgeError("persisted semantic frontend changed during replay")
     proof_identity = {
         "causal_proof_protocol_cid": CAUSAL_PROOF_PROTOCOL_V2_CID,
-        "causal_variant_profile_cid": (
-            CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
-        ),
+        "causal_variant_profile_cid": (CAUSAL_PROOF_VARIANT_PROFILE_V2_CID),
         "compiler_reference_exposure_cid": exposure.receipt_cid,
     }
     terminal_kernel_requested_identity = _proof_requested_identity(
@@ -1422,16 +1196,10 @@ def validate_causal_runtime_evidence_v2(
         proof_context_cid=expected_proof_context_cid,
         exposure_cid=exposure.receipt_cid,
     )
-    terminal_kernel_requested_identity.update(
-        _terminal_kernel_target_identity(selection_result)
-    )
+    terminal_kernel_requested_identity.update(_terminal_kernel_target_identity(selection_result))
     for stage in case_result.stages:
         proof_stage = stage.stage not in _FRONTEND_STAGES
-        expected_proof_cid = (
-            None
-            if not proof_stage
-            else expected_proof_context_cid
-        )
+        expected_proof_cid = None if not proof_stage else expected_proof_context_cid
         expected_requested_identity = (
             _semantic_requested_identity(
                 case_result.variant_id,
@@ -1451,24 +1219,18 @@ def validate_causal_runtime_evidence_v2(
                 )
             )
         )
-        if (
-            stage.provenance.requested_identity
-            != expected_requested_identity
-        ):
+        if stage.provenance.requested_identity != expected_requested_identity:
             raise CausalRuntimeBridgeError(
-                f"{stage.stage.value} requested identity differs from the "
-                "frozen causal treatment"
+                f"{stage.stage.value} requested identity differs from the frozen causal treatment"
             )
         for identity_name, identity in (
             ("requested", stage.provenance.requested_identity),
             ("effective", stage.provenance.effective_identity),
         ):
             if (
-                identity.get("semantic_protocol_cid")
-                != SEMANTIC_PROTOCOL_V2_CID
+                identity.get("semantic_protocol_cid") != SEMANTIC_PROTOCOL_V2_CID
                 or identity.get("source_cid") != expected_source_cid
-                or identity.get("proof_context_cid")
-                != expected_proof_cid
+                or identity.get("proof_context_cid") != expected_proof_cid
                 or (
                     proof_stage
                     and any(
@@ -1476,10 +1238,7 @@ def validate_causal_runtime_evidence_v2(
                         for field, expected in proof_identity.items()
                     )
                 )
-                or (
-                    not proof_stage
-                    and any(field in identity for field in proof_identity)
-                )
+                or (not proof_stage and any(field in identity for field in proof_identity))
             ):
                 raise CausalRuntimeBridgeError(
                     f"{stage.stage.value} {identity_name} identity crossed "
@@ -1489,52 +1248,38 @@ def validate_causal_runtime_evidence_v2(
             kernel_identity = stage.provenance.effective_identity
             raw_kernel_telemetry = data["kernel_check_telemetry"]
             if (
-                kernel_identity.get("causal_selection_receipt_cid")
-                != selection_result.receipt_cid
+                kernel_identity.get("causal_selection_receipt_cid") != selection_result.receipt_cid
                 or not isinstance(raw_kernel_telemetry, list)
                 or type(kernel_identity.get("kernel_check_count")) is not int
-                or kernel_identity.get("kernel_check_count")
-                != len(raw_kernel_telemetry)
+                or kernel_identity.get("kernel_check_count") != len(raw_kernel_telemetry)
             ):
                 raise CausalRuntimeBridgeError(
                     "terminal kernel identity differs from its causal "
                     "selection or native-check count"
                 )
     if (
-        selection_result.receipt.get("source_cid")
-        != exposure.source_cid
+        selection_result.receipt.get("source_cid") != exposure.source_cid
         or selection_result.receipt.get("run_id") != case_result.run_id
         or selection_result.receipt.get("case_id") != case_result.case_id
-        or selection_result.receipt.get("variant_id")
-        != case_result.variant_id
+        or selection_result.receipt.get("variant_id") != case_result.variant_id
     ):
-        raise CausalRuntimeBridgeError(
-            "causal selection differs from its terminal CaseResult"
-        )
+        raise CausalRuntimeBridgeError("causal selection differs from its terminal CaseResult")
     compiler = _mapping(
         selection_result.receipt["compiler_reference"],
         "selection compiler reference",
     )
     candidate = proof_compiler_candidate
-    if (
-        compiler.get("candidate_cid")
-        != (None if candidate is None else candidate.candidate_cid)
-        or compiler.get("artifact_cid")
-        != (None if candidate is None else candidate.artifact_cid)
-    ):
-        raise CausalRuntimeBridgeError(
-            "selection used a different shared compiler reference"
-        )
-    candidate_bindings: dict[
-        str, tuple[str, str, StageArtifact]
-    ] = {}
+    if compiler.get("candidate_cid") != (
+        None if candidate is None else candidate.candidate_cid
+    ) or compiler.get("artifact_cid") != (None if candidate is None else candidate.artifact_cid):
+        raise CausalRuntimeBridgeError("selection used a different shared compiler reference")
+    candidate_bindings: dict[str, tuple[str, str, StageArtifact]] = {}
     if candidate is not None:
         assert candidate.candidate_cid is not None
         compiler_artifact = proof_compiler_artifact
         if (
             candidate.artifact_cid != _artifact_cid(compiler_artifact)
-            or _artifact_sha256(compiler_artifact)
-            != compiler_artifact.digest
+            or _artifact_sha256(compiler_artifact) != compiler_artifact.digest
         ):
             raise CausalRuntimeBridgeError(
                 "compiler candidate is not its exact canonical StageArtifact"
@@ -1545,12 +1290,8 @@ def validate_causal_runtime_evidence_v2(
             compiler_artifact,
         )
     optionals = selection_result.receipt.get("optional_candidates")
-    if not isinstance(optionals, Sequence) or isinstance(
-        optionals, (str, bytes, bytearray)
-    ):
-        raise CausalRuntimeBridgeError(
-            "selection optional_candidates must be an array"
-        )
+    if not isinstance(optionals, Sequence) or isinstance(optionals, (str, bytes, bytearray)):
+        raise CausalRuntimeBridgeError("selection optional_candidates must be an array")
     by_stage = {stage.stage: stage for stage in case_result.stages}
     for raw in optionals:
         item = _mapping(raw, "selection optional candidate")
@@ -1558,9 +1299,7 @@ def validate_causal_runtime_evidence_v2(
         record = by_stage.get(stage)
         if item.get("invoked") is True:
             if record is None:
-                raise CausalRuntimeBridgeError(
-                    f"invoked {stage.value} lacks durable telemetry"
-                )
+                raise CausalRuntimeBridgeError(f"invoked {stage.value} lacks durable telemetry")
             artifact, certificate = _proof_artifact_binding(
                 stage=stage,
                 record=record,
@@ -1571,8 +1310,7 @@ def validate_causal_runtime_evidence_v2(
                 if candidate_cid in candidate_bindings:
                     if (
                         item.get("overlap") is not True
-                        or item.get("duplicate_of_candidate_cid")
-                        != candidate_cid
+                        or item.get("duplicate_of_candidate_cid") != candidate_cid
                     ):
                         raise CausalRuntimeBridgeError(
                             "candidate bytes repeat without overlap binding"
@@ -1589,21 +1327,13 @@ def validate_causal_runtime_evidence_v2(
                     artifact,
                 )
         elif record is not None:
-            raise CausalRuntimeBridgeError(
-                f"suppressed {stage.value} has an execution record"
-            )
+            raise CausalRuntimeBridgeError(f"suppressed {stage.value} has an execution record")
     raw_telemetry = data["kernel_check_telemetry"]
     if not isinstance(raw_telemetry, list) or not raw_telemetry:
-        raise CausalRuntimeBridgeError(
-            "kernel check telemetry must be a nonempty array"
-        )
+        raise CausalRuntimeBridgeError("kernel check telemetry must be a nonempty array")
     sidecars = selection_result.receipt.get("kernel_receipts")
-    if not isinstance(sidecars, Sequence) or isinstance(
-        sidecars, (str, bytes, bytearray)
-    ):
-        raise CausalRuntimeBridgeError(
-            "selection kernel_receipts must be an array"
-        )
+    if not isinstance(sidecars, Sequence) or isinstance(sidecars, (str, bytes, bytearray)):
+        raise CausalRuntimeBridgeError("selection kernel_receipts must be an array")
     sidecar_pairs = {
         (
             str(_mapping(item, "kernel sidecar")["candidate_cid"]),
@@ -1612,18 +1342,14 @@ def validate_causal_runtime_evidence_v2(
         for item in sidecars
     }
     if len(sidecar_pairs) != len(sidecars):
-        raise CausalRuntimeBridgeError(
-            "causal native sidecars repeat a candidate or receipt"
-        )
+        raise CausalRuntimeBridgeError("causal native sidecars repeat a candidate or receipt")
     checked_candidate_cids: set[str] = set()
     for raw in sidecars:
         sidecar = _mapping(raw, "kernel sidecar")
         candidate_cid = str(sidecar.get("candidate_cid"))
         binding = candidate_bindings.get(candidate_cid)
         if binding is None or candidate_cid in checked_candidate_cids:
-            raise CausalRuntimeBridgeError(
-                "native sidecar lacks one exact producer StageArtifact"
-            )
+            raise CausalRuntimeBridgeError("native sidecar lacks one exact producer StageArtifact")
         checked_candidate_cids.add(candidate_cid)
         source, certificate, artifact = binding
         artifact_cid = _artifact_cid(artifact)
@@ -1643,10 +1369,8 @@ def validate_causal_runtime_evidence_v2(
             ) from exc
         if (
             sidecar.get("candidate_bytes_utf8") != certificate
-            or sidecar.get("candidate_bytes_length")
-            != len(certificate.encode("utf-8"))
-            or cid_for_bytes(certificate.encode("utf-8"))
-            != candidate_cid
+            or sidecar.get("candidate_bytes_length") != len(certificate.encode("utf-8"))
+            or cid_for_bytes(certificate.encode("utf-8")) != candidate_cid
             or artifact_cid
             != (
                 compiler.get("artifact_cid")
@@ -1654,24 +1378,16 @@ def validate_causal_runtime_evidence_v2(
                 else next(
                     item.get("artifact_cid")
                     for item in optionals
-                    if item.get("source") == source
-                    and item.get("candidate_cid") == candidate_cid
+                    if item.get("source") == source and item.get("candidate_cid") == candidate_cid
                 )
             )
-            or sha256_digest_for_cid(
-                artifact_cid, codecs=("raw",)
-            )
-            != artifact_sha256
+            or sha256_digest_for_cid(artifact_cid, codecs=("raw",)) != artifact_sha256
             or artifact_sha256 != artifact.digest
             or receipt.get("candidate_source") != source
-            or receipt.get("candidate_artifact_sha256")
-            != artifact_sha256
-            or receipt.get("compiled_obligation_sha256")
-            != compiled.digest
-            or receipt.get("obligation_sha256")
-            != compiled.obligation_sha256
-            or receipt.get("source_sha256")
-            != rendered_source_sha256
+            or receipt.get("candidate_artifact_sha256") != artifact_sha256
+            or receipt.get("compiled_obligation_sha256") != compiled.digest
+            or receipt.get("obligation_sha256") != compiled.obligation_sha256
+            or receipt.get("source_sha256") != rendered_source_sha256
             or any(
                 receipt.get(field) != expected
                 for field, expected in expected_native_semantic_fields.items()
@@ -1680,10 +1396,8 @@ def validate_causal_runtime_evidence_v2(
             or len(attempts) != 1
             or not isinstance(attempts[0], Mapping)
             or attempts[0].get("candidate_source") != source
-            or attempts[0].get("candidate_artifact_sha256")
-            != artifact_sha256
-            or attempts[0].get("source_sha256")
-            != rendered_source_sha256
+            or attempts[0].get("candidate_artifact_sha256") != artifact_sha256
+            or attempts[0].get("source_sha256") != rendered_source_sha256
         ):
             raise CausalRuntimeBridgeError(
                 "native receipt does not replay one exact candidate source"
@@ -1700,9 +1414,7 @@ def validate_causal_runtime_evidence_v2(
         )
         telemetry = TelemetryRecord.from_dict(item["telemetry"])
         if telemetry.resource_lane is not ResourceLane.KERNEL:
-            raise CausalRuntimeBridgeError(
-                "kernel check telemetry uses the wrong resource lane"
-            )
+            raise CausalRuntimeBridgeError("kernel check telemetry uses the wrong resource lane")
         receipt_cid = str(item["native_receipt_cid"])
         validate_cid(receipt_cid, codecs=("dag-json",))
         raw_candidate_cid = item["candidate_cid"]
@@ -1721,50 +1433,36 @@ def validate_causal_runtime_evidence_v2(
         )
     kernel_record = by_stage.get(StageName.KERNEL)
     if kernel_record is None:
-        raise CausalRuntimeBridgeError(
-            "causal runtime evidence lacks its terminal kernel record"
-        )
+        raise CausalRuntimeBridgeError("causal runtime evidence lacks its terminal kernel record")
     terminal_receipt_cid = cid_for_dag_json(_plain(kernel_record.data))
-    terminal_receipt = _mapping(
-        kernel_record.data, "terminal native-kernel receipt"
-    )
+    terminal_receipt = _mapping(kernel_record.data, "terminal native-kernel receipt")
     if any(
         _plain(terminal_receipt.get(field)) != expected
         for field, expected in expected_native_semantic_fields.items()
     ):
         raise CausalRuntimeBridgeError(
-            "terminal native receipt differs from the rebuilt semantic "
-            "context CIDs"
+            "terminal native receipt differs from the rebuilt semantic context CIDs"
         )
     if sidecars:
-        if (
-            recorded_pairs != sidecar_pairs
-            or len(recorded_pairs) != len(telemetry_maps)
-        ):
+        if recorded_pairs != sidecar_pairs or len(recorded_pairs) != len(telemetry_maps):
             raise CausalRuntimeBridgeError(
                 "persisted telemetry does not cover every native check once"
             )
     elif (
         len(telemetry_maps) != 1
         or telemetry_maps[0]["candidate_cid"] is not None
-        or telemetry_maps[0]["native_receipt_cid"]
-        != terminal_receipt_cid
+        or telemetry_maps[0]["native_receipt_cid"] != terminal_receipt_cid
     ):
         raise CausalRuntimeBridgeError(
             "candidate-absent path lacks one measured negative kernel check"
         )
-    if (
-        _aggregate_kernel_telemetry_records(telemetry_records)
-        != kernel_record.telemetry
-    ):
+    if _aggregate_kernel_telemetry_records(telemetry_records) != kernel_record.telemetry:
         raise CausalRuntimeBridgeError(
             "terminal kernel telemetry differs from its per-check receipts"
         )
     body = {key: _plain(item) for key, item in data.items() if key != "receipt_cid"}
     if data["receipt_cid"] != cid_for_dag_json(body):
-        raise CausalRuntimeBridgeError(
-            "causal runtime evidence CID changed"
-        )
+        raise CausalRuntimeBridgeError("causal runtime evidence CID changed")
     return CausalRuntimeEvidenceV2(
         compiler_exposure=exposure,
         semantic_frontend=frontend,
@@ -1788,24 +1486,16 @@ def execute_causal_runtime_case_v2(
     """Execute one G210 case with lazy proof adapters and native receipts."""
 
     if not isinstance(source_text, str) or not source_text.strip():
-        raise CausalRuntimeBridgeError(
-            "causal runtime source text must be nonempty"
-        )
-    frontend = _semantic_frontend(
-        semantic_result, source_text=source_text
-    )
+        raise CausalRuntimeBridgeError("causal runtime source text must be nonempty")
+    frontend = _semantic_frontend(semantic_result, source_text=source_text)
     source_cid = cid_for_bytes(source_text.encode("utf-8"))
     if (
         not isinstance(compiler_exposure, CompilerReferenceExposureV2)
         or compiler_exposure.source_cid != source_cid
-        or compiler_exposure.compiler_record.run_id
-        != semantic_result.run_id
-        or compiler_exposure.compiler_record.case_id
-        != semantic_result.case_id
-        or compiler_exposure.compiler_record.cache_mode
-        is not semantic_result.cache_mode
-        or compiler_exposure.compiler_record.split
-        is not semantic_result.split
+        or compiler_exposure.compiler_record.run_id != semantic_result.run_id
+        or compiler_exposure.compiler_record.case_id != semantic_result.case_id
+        or compiler_exposure.compiler_record.cache_mode is not semantic_result.cache_mode
+        or compiler_exposure.compiler_record.split is not semantic_result.split
         or compiler_exposure.compiler_record.case_manifest_sha256
         != semantic_result.case_manifest_sha256
         or compiler_exposure.compiler_record.provenance.environment_sha256
@@ -1816,9 +1506,7 @@ def execute_causal_runtime_case_v2(
         raise CausalRuntimeBridgeError(
             "compiler exposure differs from the semantic case/cache coordinate"
         )
-    profile = get_causal_proof_variant_profile(
-        semantic_result.variant_id
-    )
+    profile = get_causal_proof_variant_profile(semantic_result.variant_id)
     expected_adapters = {
         *profile.optional_order,
         StageName.KERNEL,
@@ -1827,13 +1515,9 @@ def execute_causal_runtime_case_v2(
     supplied_adapters = set(adapters) if isinstance(adapters, Mapping) else set()
     if (
         not isinstance(adapters, Mapping)
-        or (
-            supplied_adapters != expected_adapters
-            and supplied_adapters != full_live_route
-        )
+        or (supplied_adapters != expected_adapters and supplied_adapters != full_live_route)
         or any(
-            not isinstance(adapter, StageAdapter)
-            or adapter.stage is not stage
+            not isinstance(adapter, StageAdapter) or adapter.stage is not stage
             for stage, adapter in adapters.items()
         )
     ):
@@ -1860,9 +1544,7 @@ def execute_causal_runtime_case_v2(
     )
     proof_context_cid = base_request.proof_context_cid
     if proof_context_cid is None:
-        raise CausalRuntimeBridgeError(
-            "causal runtime requires a reviewed proof context"
-        )
+        raise CausalRuntimeBridgeError("causal runtime requires a reviewed proof context")
     try:
         compiled_obligation = compile_reviewed_obligation(
             base_request.proof_input_data  # type: ignore[arg-type]
@@ -1876,16 +1558,12 @@ def execute_causal_runtime_case_v2(
             "causal runtime proof context contains no reviewed obligation"
         )
 
-    proof_compiler_artifact, compiler_candidate = (
-        _proof_compiler_binding(
-            compiler_exposure,
-            source_text=source_text,
-            proof_context=proof_context_value,
-        )
+    proof_compiler_artifact, compiler_candidate = _proof_compiler_binding(
+        compiler_exposure,
+        source_text=source_text,
+        proof_context=proof_context_value,
     )
-    runtime_artifacts: list[StageArtifact] = [
-        proof_compiler_artifact
-    ]
+    runtime_artifacts: list[StageArtifact] = [proof_compiler_artifact]
     for record in frontend:
         if record.stage is StageName.COMPILER:
             continue
@@ -1901,9 +1579,7 @@ def execute_causal_runtime_case_v2(
     candidate_artifacts: dict[str, StageArtifact] = {}
     if compiler_candidate is not None:
         assert compiler_candidate.candidate_cid is not None
-        candidate_artifacts[
-            compiler_candidate.candidate_cid
-        ] = compiler_exposure.artifact
+        candidate_artifacts[compiler_candidate.candidate_cid] = compiler_exposure.artifact
     kernel_invocations: list[StageInvocation] = []
     kernel_requests: list[StageRequest] = []
     kernel_checks: dict[str, CausalKernelCheck] = {}
@@ -1917,14 +1593,8 @@ def execute_causal_runtime_case_v2(
     ) -> StageRequest:
         return replace(
             base_request,
-            requested_identity=_runtime_identity(
-                semantic_result.variant_id, stage, exposure_cid
-            ),
-            upstream_artifacts=(
-                tuple(runtime_artifacts)
-                if artifacts is None
-                else artifacts
-            ),
+            requested_identity=_runtime_identity(semantic_result.variant_id, stage, exposure_cid),
+            upstream_artifacts=(tuple(runtime_artifacts) if artifacts is None else artifacts),
             invocation_index=invocation_index,
         )
 
@@ -1940,21 +1610,15 @@ def execute_causal_runtime_case_v2(
             adapter: StageAdapter = adapter,
         ) -> CausalProofCandidate | CausalProofFailure:
             invocation_index = len(runtime_artifacts)
-            request = request_for(
-                stage, invocation_index=invocation_index
-            )
+            request = request_for(stage, invocation_index=invocation_index)
             invocation = adapter.invoke(request)
             effective = {
                 **dict(invocation.output.effective_identity),
                 "graph_invoked": True,
                 "graph_invocation_index": invocation_index,
                 "policy_reason": "g210_optional_trigger",
-                "causal_proof_protocol_cid": (
-                    CAUSAL_PROOF_PROTOCOL_V2_CID
-                ),
-                "causal_variant_profile_cid": (
-                    CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
-                ),
+                "causal_proof_protocol_cid": (CAUSAL_PROOF_PROTOCOL_V2_CID),
+                "causal_variant_profile_cid": (CAUSAL_PROOF_VARIANT_PROFILE_V2_CID),
                 "compiler_reference_exposure_cid": exposure_cid,
                 "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
                 "source_cid": source_cid,
@@ -1976,9 +1640,7 @@ def execute_causal_runtime_case_v2(
             optional_invocations[stage] = invocation
             optional_artifacts[stage] = artifact
             runtime_artifacts.append(artifact)
-            certificate = _certificate_from_output(
-                stage, invocation.output
-            )
+            certificate = _certificate_from_output(stage, invocation.output)
             if certificate is None:
                 return _proof_failure(stage, invocation.output)
             artifact_cid = _artifact_cid(artifact)
@@ -2006,50 +1668,36 @@ def execute_causal_runtime_case_v2(
             artifacts=artifacts,
         )
         if candidate is not None:
-            candidate_artifact = candidate_artifacts.get(
-                str(candidate.candidate_cid)
-            )
+            candidate_artifact = candidate_artifacts.get(str(candidate.candidate_cid))
             if candidate_artifact is None:
-                raise CausalRuntimeBridgeError(
-                    "native target lacks its exact producer artifact"
-                )
+                raise CausalRuntimeBridgeError("native target lacks its exact producer artifact")
             request = replace(
                 request,
                 requested_identity={
                     **dict(request.requested_identity),
                     "causal_target_candidate_source": candidate.source,
-                    "causal_target_candidate_cid": (
-                        candidate.candidate_cid
-                    ),
-                    "causal_target_candidate_artifact_cid": (
-                        candidate.artifact_cid
-                    ),
+                    "causal_target_candidate_cid": (candidate.candidate_cid),
+                    "causal_target_candidate_artifact_cid": (candidate.artifact_cid),
                     "causal_target_candidate_artifact_sha256": (
                         _artifact_sha256(candidate_artifact)
                     ),
                 },
             )
         invocation = kernel_adapter.invoke(request)
-        candidate_cid = (
-            None if candidate is None else candidate.candidate_cid
-        )
+        candidate_cid = None if candidate is None else candidate.candidate_cid
         effective = {
             **dict(invocation.output.effective_identity),
             "graph_invoked": True,
             "graph_invocation_index": invocation_index,
             "policy_reason": "g210_independent_native_kernel",
             "causal_proof_protocol_cid": CAUSAL_PROOF_PROTOCOL_V2_CID,
-            "causal_variant_profile_cid": (
-                CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
-            ),
+            "causal_variant_profile_cid": (CAUSAL_PROOF_VARIANT_PROFILE_V2_CID),
             "compiler_reference_exposure_cid": exposure_cid,
             "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
             "source_cid": source_cid,
             "proof_context_cid": proof_context_cid,
             "candidate_cid": candidate_cid,
-            "consumed_artifact_sha256": tuple(
-                artifact.digest for artifact in artifacts
-            ),
+            "consumed_artifact_sha256": tuple(artifact.digest for artifact in artifacts),
         }
         invocation = StageInvocation(
             replace(
@@ -2086,19 +1734,13 @@ def execute_causal_runtime_case_v2(
         kernel_requests.append(request)
         if candidate is None:
             if accepted:
-                raise CausalRuntimeBridgeError(
-                    "native kernel accepted without a candidate"
-                )
+                raise CausalRuntimeBridgeError("native kernel accepted without a candidate")
             return invocation, request, None
         assert candidate_cid is not None
         artifact = candidate_artifacts.get(candidate_cid)
         if artifact is None:
-            raise CausalRuntimeBridgeError(
-                "native kernel checked an unbound candidate"
-            )
-        artifact_sha256 = sha256_digest_for_cid(
-            candidate.artifact_cid, codecs=("raw",)
-        )
+            raise CausalRuntimeBridgeError("native kernel checked an unbound candidate")
+        artifact_sha256 = sha256_digest_for_cid(candidate.artifact_cid, codecs=("raw",))
         receipt = _mapping(output.data, "native kernel receipt")
         attempts = receipt.get("candidate_attempts")
         try:
@@ -2106,38 +1748,28 @@ def execute_causal_runtime_case_v2(
                 base_request.proof_input_data  # type: ignore[arg-type]
             )
             if compiled is None:
-                raise RuntimeBindingError(
-                    "causal proof context compiled no obligation"
-                )
+                raise RuntimeBindingError("causal proof context compiled no obligation")
             rendered_source_sha256 = hashlib.sha256(
-                compiled.render(
-                    candidate.certificate.decode("utf-8")
-                ).encode("utf-8")
+                compiled.render(candidate.certificate.decode("utf-8")).encode("utf-8")
             ).hexdigest()
         except (AttributeError, RuntimeBindingError) as exc:
             raise CausalRuntimeBridgeError(
                 "native target source could not be independently rebuilt"
             ) from exc
         if (
-            candidate.artifact_cid
-            != _artifact_cid(artifact)
+            candidate.artifact_cid != _artifact_cid(artifact)
             or artifact.digest != artifact_sha256
             or receipt.get("candidate_source") != candidate.source
-            or receipt.get("candidate_artifact_sha256")
-            != artifact_sha256
-            or receipt.get("compiled_obligation_sha256")
-            != compiled.digest
-            or receipt.get("obligation_sha256")
-            != compiled.obligation_sha256
-            or receipt.get("source_sha256")
-            != rendered_source_sha256
+            or receipt.get("candidate_artifact_sha256") != artifact_sha256
+            or receipt.get("compiled_obligation_sha256") != compiled.digest
+            or receipt.get("obligation_sha256") != compiled.obligation_sha256
+            or receipt.get("source_sha256") != rendered_source_sha256
             or not isinstance(attempts, (list, tuple))
             or len(attempts) != 1
             or artifact_sha256 not in consumed
         ):
             raise CausalRuntimeBridgeError(
-                "native receipt candidate SHA-256 differs from the candidate "
-                "artifact CID multihash"
+                "native receipt candidate SHA-256 differs from the candidate artifact CID multihash"
             )
         check = CausalKernelCheck(
             candidate_cid=candidate_cid,
@@ -2153,9 +1785,7 @@ def execute_causal_runtime_case_v2(
     def checker(candidate: CausalProofCandidate) -> CausalKernelCheck:
         _invocation, _request, check = invoke_kernel(candidate)
         if check is None:  # pragma: no cover - candidate is non-null
-            raise CausalRuntimeBridgeError(
-                "candidate check produced no receipt"
-            )
+            raise CausalRuntimeBridgeError("candidate check produced no receipt")
         return check
 
     def replay_check(
@@ -2177,9 +1807,7 @@ def execute_causal_runtime_case_v2(
                 protocol_sha256=semantic_result.protocol_sha256,
                 run_id=semantic_result.run_id,
                 case_id=semantic_result.case_id,
-                case_manifest_sha256=(
-                    semantic_result.case_manifest_sha256
-                ),
+                case_manifest_sha256=(semantic_result.case_manifest_sha256),
                 variant_id=semantic_result.variant_id,
                 split=semantic_result.split,
                 cache_mode=semantic_result.cache_mode,
@@ -2188,27 +1816,19 @@ def execute_causal_runtime_case_v2(
                 stage_status=check.stage_status,
                 kernel_accepted=check.accepted,
                 kernel_receipt_sha256=(
-                    str(receipt_value["receipt_sha256"])
-                    if check.accepted
-                    else None
+                    str(receipt_value["receipt_sha256"]) if check.accepted else None
                 ),
-                consumed_artifact_sha256s=(
-                    check.consumed_artifact_sha256s
-                ),
+                consumed_artifact_sha256s=(check.consumed_artifact_sha256s),
                 failure_code=check.failure_code,
             )
         except (KeyError, ProtocolContractError):
             return False
-        artifact_sha256 = sha256_digest_for_cid(
-            candidate.artifact_cid, codecs=("raw",)
-        )
+        artifact_sha256 = sha256_digest_for_cid(candidate.artifact_cid, codecs=("raw",))
         attempts = receipt_value.get("candidate_attempts")
         return bool(
             accepted is check.accepted
-            and candidate.artifact_cid
-            == _artifact_cid(artifact)
-            and receipt_value.get("candidate_artifact_sha256")
-            == artifact_sha256
+            and candidate.artifact_cid == _artifact_cid(artifact)
+            and receipt_value.get("candidate_artifact_sha256") == artifact_sha256
             and isinstance(attempts, (list, tuple))
             and len(attempts) == 1
             and artifact_sha256 in check.consumed_artifact_sha256s
@@ -2228,9 +1848,7 @@ def execute_causal_runtime_case_v2(
             optional_producers=optional_producers,
         )
     except RuntimeBindingError as exc:
-        raise CausalRuntimeBridgeError(
-            "causal proof controller failed closed"
-        ) from exc
+        raise CausalRuntimeBridgeError("causal proof controller failed closed") from exc
     if not kernel_invocations:
         invoke_kernel(None)
 
@@ -2260,9 +1878,7 @@ def execute_causal_runtime_case_v2(
     )
     terminal_identity = {
         **dict(terminal_invocation.output.effective_identity),
-        "causal_selection_receipt_cid": (
-            selection_result.receipt_cid
-        ),
+        "causal_selection_receipt_cid": (selection_result.receipt_cid),
         "compiler_reference_exposure_cid": exposure_cid,
         "kernel_check_count": len(kernel_invocations),
     }
@@ -2270,21 +1886,15 @@ def execute_causal_runtime_case_v2(
         replace(
             terminal_invocation.output,
             effective_identity=terminal_identity,
-            telemetry=_aggregate_kernel_telemetry(
-                kernel_invocations
-            ),
+            telemetry=_aggregate_kernel_telemetry(kernel_invocations),
         ),
         _aggregate_kernel_telemetry(kernel_invocations),
     )
-    kernel_record = kernel_adapter.record(
-        terminal_request, terminal_invocation
-    )
+    kernel_record = kernel_adapter.record(terminal_request, terminal_invocation)
     records.append(kernel_record)
     try:
         case_result = CaseResultRecord.from_stages(tuple(records))
-        causal_receipt = build_causal_rescue_case_receipt(
-            case_result, selection_result.receipt
-        )
+        causal_receipt = build_causal_rescue_case_receipt(case_result, selection_result.receipt)
     except (ProtocolContractError, ValueError) as exc:
         raise CausalRuntimeBridgeError(
             "terminal G210 CaseResult failed receipt validation"
@@ -2292,14 +1902,8 @@ def execute_causal_runtime_case_v2(
     telemetry_receipts = tuple(
         MappingProxyType(
             {
-                "candidate_cid": (
-                    invocation.output.effective_identity.get(
-                        "candidate_cid"
-                    )
-                ),
-                "native_receipt_cid": cid_for_dag_json(
-                    _plain(invocation.output.data)
-                ),
+                "candidate_cid": (invocation.output.effective_identity.get("candidate_cid")),
+                "native_receipt_cid": cid_for_dag_json(_plain(invocation.output.data)),
                 "telemetry": invocation.telemetry.to_dict(),
             }
         )

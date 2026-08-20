@@ -17,7 +17,14 @@ from ipfs_datasets_py.mcp_server.p2p_libp2p_transport import (
 
 def _fixture() -> dict:
     for parent in Path(__file__).resolve().parents:
-        candidate = parent / "Mcp-Plus-Plus" / "tests-py" / "fixtures" / "valid" / "profile_f_groth16_mpc_ceremony.json"
+        candidate = (
+            parent
+            / "Mcp-Plus-Plus"
+            / "tests-py"
+            / "fixtures"
+            / "valid"
+            / "profile_f_groth16_mpc_ceremony.json"
+        )
         if candidate.is_file():
             return json.loads(candidate.read_text(encoding="utf-8"))
     raise RuntimeError("shared MCP++ ceremony fixture is unavailable")
@@ -106,10 +113,15 @@ def test_profile_e_stream_handles_initialize_tools_and_ceremony_validation() -> 
         "mcp++/event-dag",
         "mcp++/p2p-transport",
     ]
-    assert responses[0]["result"]["capabilities"]["experimental"]["mcp++/groth16-mpc-ceremony"] is True
+    assert (
+        responses[0]["result"]["capabilities"]["experimental"]["mcp++/groth16-mpc-ceremony"] is True
+    )
     assert responses[1]["result"] == {"tools": []}
     assert responses[2]["result"]["production_eligible"] is True
-    assert responses[2]["result"]["ceremony_cid"] == "sha256:645338f97ee9f1d17529c4be2b88f928b8bc4c19d906172f0ba0d269780f04b8"
+    assert (
+        responses[2]["result"]["ceremony_cid"]
+        == "sha256:645338f97ee9f1d17529c4be2b88f928b8bc4c19d906172f0ba0d269780f04b8"
+    )
 
 
 def test_profile_e_dispatch_rejects_invalid_ceremony_params() -> None:

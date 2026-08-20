@@ -18,5 +18,5 @@ def auth_ok(message: Dict[str, Any]) -> bool:
     expected = get_shared_token()
     if not expected:
         return True
-    provided = (message.get("token") or "")
+    provided = message.get("token") or ""
     return isinstance(provided, str) and provided == expected

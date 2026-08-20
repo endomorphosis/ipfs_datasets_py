@@ -22,42 +22,53 @@ import pytest
 # GQ257 — Polish text E2E
 # ---------------------------------------------------------------------------
 
+
 class TestGQ257PolishE2E:
     """GQ257: Polish text → detect_i18n_clauses("pl") integration."""
 
     def test_detect_i18n_clauses_pl_returns_list(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_clauses
+
         result = detect_i18n_clauses("musi zaakceptować warunki", "pl")
         assert isinstance(result, list)
 
     def test_detect_i18n_clauses_pl_empty_text(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_clauses
+
         result = detect_i18n_clauses("", "pl")
         assert isinstance(result, list)
 
     def test_detect_all_languages_pl_slot_is_list(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("musi zaakceptować warunki")
         assert isinstance(report.by_language.get("pl"), list)
 
     def test_detect_all_languages_pl_slot_present(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         assert "pl" in report.by_language
 
     def test_load_i18n_keywords_pl_prohibition(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("pl")
-        assert any("zabroni" in k.lower() or "zakazane" in k.lower()
-                   for k in kw.get("prohibition", []))
+        assert any(
+            "zabroni" in k.lower() or "zakazane" in k.lower() for k in kw.get("prohibition", [])
+        )
 
     def test_load_i18n_keywords_pl_obligation(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("pl")
-        assert "musi" in kw.get("obligation", []) or any("musi" in k for k in kw.get("obligation", []))
+        assert "musi" in kw.get("obligation", []) or any(
+            "musi" in k for k in kw.get("obligation", [])
+        )
 
     def test_load_i18n_keywords_pl_permission(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("pl")
         assert "może" in kw.get("permission", [])
 
@@ -66,53 +77,79 @@ class TestGQ257PolishE2E:
 # GR258 — Vietnamese text E2E
 # ---------------------------------------------------------------------------
 
+
 class TestGR258VietnameseE2E:
     """GR258: Vietnamese text → detect_i18n_clauses("vi") integration."""
 
     def test_detect_i18n_clauses_vi_returns_list(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_clauses
+
         result = detect_i18n_clauses("phải tuân thủ quy định", "vi")
         assert isinstance(result, list)
 
     def test_detect_i18n_clauses_vi_empty_text(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_clauses
+
         result = detect_i18n_clauses("", "vi")
         assert isinstance(result, list)
 
     def test_detect_all_languages_vi_slot_is_list(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("phải tuân thủ quy định")
         assert isinstance(report.by_language.get("vi"), list)
 
     def test_detect_all_languages_vi_slot_present(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         assert "vi" in report.by_language
 
     def test_load_i18n_keywords_vi_prohibition(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("vi")
-        assert "không được" in kw.get("prohibition", []) or \
-               any("cấm" in k for k in kw.get("prohibition", []))
+        assert "không được" in kw.get("prohibition", []) or any(
+            "cấm" in k for k in kw.get("prohibition", [])
+        )
 
     def test_load_i18n_keywords_vi_obligation(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("vi")
         assert "phải" in kw.get("obligation", [])
 
     def test_load_i18n_keywords_vi_permission(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("vi")
-        assert "có thể" in kw.get("permission", []) or \
-               "được phép" in kw.get("permission", [])
+        assert "có thể" in kw.get("permission", []) or "được phép" in kw.get("permission", [])
 
 
 # ---------------------------------------------------------------------------
 # GS259 — All 18 original slots list-typed
 # ---------------------------------------------------------------------------
 
-_ORIGINAL_18 = ("fr", "es", "de", "en", "pt", "nl", "it", "ja", "zh",
-                "ko", "ar", "sv", "ru", "el", "tr", "hi", "pl", "vi")
+_ORIGINAL_18 = (
+    "fr",
+    "es",
+    "de",
+    "en",
+    "pt",
+    "nl",
+    "it",
+    "ja",
+    "zh",
+    "ko",
+    "ar",
+    "sv",
+    "ru",
+    "el",
+    "tr",
+    "hi",
+    "pl",
+    "vi",
+)
 
 
 class TestGS259AllSlotsListTyped:
@@ -120,36 +157,43 @@ class TestGS259AllSlotsListTyped:
 
     def test_at_least_18_slots(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         assert len(report.by_language) >= 18
 
     def test_all_original_18_present(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         for lang in _ORIGINAL_18:
             assert lang in report.by_language, f"Missing lang slot: {lang}"
 
     def test_all_18_slots_are_lists(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         for lang in _ORIGINAL_18:
-            assert isinstance(report.by_language[lang], list), \
+            assert isinstance(report.by_language[lang], list), (
                 f"Slot '{lang}' is not a list: {type(report.by_language[lang])}"
+            )
 
     def test_empty_text_all_slots_empty_lists(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("")
         for lang in _ORIGINAL_18:
             assert report.by_language[lang] == []
 
     def test_no_slot_is_none(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("hello world")
         for lang in _ORIGINAL_18:
             assert report.by_language[lang] is not None
 
     def test_total_conflicts_zero_for_empty(self):
         from ipfs_datasets_py.logic.api import detect_all_languages, I18NConflictReport
+
         report = detect_all_languages("")
         assert isinstance(report, I18NConflictReport)
         assert report.total_conflicts == 0
@@ -158,6 +202,7 @@ class TestGS259AllSlotsListTyped:
 # ---------------------------------------------------------------------------
 # GT260 — conflict_density() with full 18-lang populated report
 # ---------------------------------------------------------------------------
+
 
 class TestGT260ConflictDensity18Langs:
     """GT260: conflict_density() with full 18-language populated report."""
@@ -174,11 +219,13 @@ class TestGT260ConflictDensity18Langs:
 
     def test_density_zero_for_empty_report(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         assert report.conflict_density() == 0.0
 
     def test_density_all_18_langs_one_conflict_each(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         for lang in _ORIGINAL_18:
             report.by_language[lang] = [object()]
@@ -186,6 +233,7 @@ class TestGT260ConflictDensity18Langs:
 
     def test_density_all_18_langs_three_each(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         for lang in _ORIGINAL_18:
             report.by_language[lang] = [object(), object(), object()]
@@ -193,6 +241,7 @@ class TestGT260ConflictDensity18Langs:
 
     def test_density_half_18_langs_empty(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         for i, lang in enumerate(_ORIGINAL_18):
             report.by_language[lang] = [object()] if i % 2 == 0 else []
@@ -202,11 +251,13 @@ class TestGT260ConflictDensity18Langs:
 
     def test_density_real_18_lang_detect_empty_text(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("")
         assert report.conflict_density() == pytest.approx(0.0)
 
     def test_density_scales_with_total_conflicts(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         r1 = I18NConflictReport()
         r2 = I18NConflictReport()
         for lang in _ORIGINAL_18:
@@ -219,11 +270,13 @@ class TestGT260ConflictDensity18Langs:
 # GU261 — languages_above_threshold() with all 18 languages
 # ---------------------------------------------------------------------------
 
+
 class TestGU261LanguagesAboveThreshold18:
     """GU261: languages_above_threshold() with all 18 language slots."""
 
     def _report_with_counts(self, counts):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         for lang, n in counts.items():
             report.by_language[lang] = [object()] * n
@@ -231,6 +284,7 @@ class TestGU261LanguagesAboveThreshold18:
 
     def test_threshold_0_equals_sorted_languages_with_conflicts(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         for i, lang in enumerate(_ORIGINAL_18):
             report.by_language[lang] = [object()] * (i % 3)
@@ -240,6 +294,7 @@ class TestGU261LanguagesAboveThreshold18:
 
     def test_all_18_one_conflict_threshold_0(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         for lang in _ORIGINAL_18:
             report.by_language[lang] = [object()]
@@ -249,6 +304,7 @@ class TestGU261LanguagesAboveThreshold18:
 
     def test_threshold_1_subset_of_threshold_0(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         for i, lang in enumerate(_ORIGINAL_18):
             report.by_language[lang] = [object()] * i  # 0..17
@@ -258,6 +314,7 @@ class TestGU261LanguagesAboveThreshold18:
 
     def test_threshold_100_empty(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         for lang in _ORIGINAL_18:
             report.by_language[lang] = [object()] * 5
@@ -265,6 +322,7 @@ class TestGU261LanguagesAboveThreshold18:
 
     def test_threshold_4_with_5_conflicts(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         for lang in _ORIGINAL_18[:3]:
             report.by_language[lang] = [object()] * 5
@@ -275,6 +333,7 @@ class TestGU261LanguagesAboveThreshold18:
 
     def test_all_empty_threshold_0_empty_list(self):
         from ipfs_datasets_py.logic.api import I18NConflictReport
+
         report = I18NConflictReport()
         for lang in _ORIGINAL_18:
             report.by_language[lang] = []
@@ -285,47 +344,56 @@ class TestGU261LanguagesAboveThreshold18:
 # GV262 — Thai ("th") keyword table → 19 languages
 # ---------------------------------------------------------------------------
 
+
 class TestGV262ThaiKeywords:
     """GV262: _TH_DEONTIC_KEYWORDS inline Thai; detect_all_languages() → ≥19 langs."""
 
     def test_load_i18n_keywords_th_returns_dict(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("th")
         assert isinstance(kw, dict)
 
     def test_load_i18n_keywords_th_has_three_types(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("th")
         assert set(kw.keys()) == {"permission", "prohibition", "obligation"}
 
     def test_th_prohibition_contains_ham(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("th")
         assert "ห้าม" in kw["prohibition"]
 
     def test_th_obligation_contains_tong(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("th")
         assert "ต้อง" in kw["obligation"]
 
     def test_th_permission_contains_samart(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("th")
         assert "สามารถ" in kw["permission"]
 
     def test_detect_all_languages_has_th_slot(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         assert "th" in report.by_language
         assert isinstance(report.by_language["th"], list)
 
     def test_detect_all_languages_gte_19(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         assert len(report.by_language) >= 19
 
     def test_detect_i18n_clauses_th_returns_list(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_clauses
+
         result = detect_i18n_clauses("ต้องปฏิบัติตามกฎ", "th")
         assert isinstance(result, list)
 
@@ -334,53 +402,63 @@ class TestGV262ThaiKeywords:
 # GW263 — Indonesian ("id") keyword table → 20 languages
 # ---------------------------------------------------------------------------
 
+
 class TestGW263IndonesianKeywords:
     """GW263: _ID_DEONTIC_KEYWORDS inline Indonesian; detect_all_languages() → ≥20 langs."""
 
     def test_load_i18n_keywords_id_returns_dict(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("id")
         assert isinstance(kw, dict)
 
     def test_load_i18n_keywords_id_has_three_types(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("id")
         assert set(kw.keys()) == {"permission", "prohibition", "obligation"}
 
     def test_id_prohibition_contains_dilarang(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("id")
         assert "dilarang" in kw["prohibition"]
 
     def test_id_obligation_contains_harus(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("id")
         assert "harus" in kw["obligation"]
 
     def test_id_permission_contains_boleh(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import _load_i18n_keywords
+
         kw = _load_i18n_keywords("id")
         assert "boleh" in kw["permission"]
 
     def test_detect_all_languages_has_id_slot(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         assert "id" in report.by_language
         assert isinstance(report.by_language["id"], list)
 
     def test_detect_all_languages_gte_20(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         assert len(report.by_language) >= 20
 
     def test_detect_all_has_both_th_and_id(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("test")
         assert "th" in report.by_language
         assert "id" in report.by_language
 
     def test_detect_i18n_clauses_id_returns_list(self):
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_i18n_clauses
+
         result = detect_i18n_clauses("harus mematuhi peraturan", "id")
         assert isinstance(result, list)
 
@@ -388,6 +466,7 @@ class TestGW263IndonesianKeywords:
 # ---------------------------------------------------------------------------
 # GX264 — compile_batch_with_explain + detect_all_languages 18-lang combined
 # ---------------------------------------------------------------------------
+
 
 class TestGX264CompileBatchWith18Langs:
     """GX264: compile_batch_with_explain combined with 18-language detect_all_languages."""
@@ -433,19 +512,19 @@ class TestGX264CompileBatchWith18Langs:
 
         compiler = NLUCANPolicyCompiler()
         # With fail_fast=False (default), all batches returned
-        results = compiler.compile_batch_with_explain(
-            [["ok sentence"]] * 3, fail_fast=False
-        )
+        results = compiler.compile_batch_with_explain([["ok sentence"]] * 3, fail_fast=False)
         assert len(results) == 3
 
     def test_18_lang_report_all_slots_present(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("user must comply with regulations")
         for lang in _ORIGINAL_18:
             assert lang in report.by_language
 
     def test_18_lang_report_density_nonnegative(self):
         from ipfs_datasets_py.logic.api import detect_all_languages
+
         report = detect_all_languages("user must comply. user may not share.")
         assert report.conflict_density() >= 0.0
 
@@ -453,6 +532,7 @@ class TestGX264CompileBatchWith18Langs:
 # ---------------------------------------------------------------------------
 # GY265 — PolicyAuditLog + 18-language metadata export/import
 # ---------------------------------------------------------------------------
+
 
 class TestGY265AuditLog18LangExport:
     """GY265: PolicyAuditLog full 18-language metadata export/import E2E."""
@@ -505,6 +585,7 @@ class TestGY265AuditLog18LangExport:
 
     def test_metadata_line_not_counted_in_imported(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog(max_entries=50)
         for i in range(5):
             log.record(policy_cid=f"p{i}", intent_cid="i", decision="allow")
@@ -521,6 +602,7 @@ class TestGY265AuditLog18LangExport:
 
     def test_export_count_equals_import_count_18_langs(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog(max_entries=50)
         for lang in _ORIGINAL_18:
             log.record(policy_cid=lang, intent_cid="i", decision="deny")
@@ -537,6 +619,7 @@ class TestGY265AuditLog18LangExport:
 
     def test_recent_after_import_capped_by_max_entries(self):
         from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
         log = PolicyAuditLog(max_entries=50)
         for lang in _ORIGINAL_18:
             log.record(policy_cid=lang, intent_cid="i", decision="allow")
@@ -557,8 +640,10 @@ class TestGY265AuditLog18LangExport:
 # GZ266 — active_tokens_by_actor + active_tokens_by_resource + merge triple
 # ---------------------------------------------------------------------------
 
+
 def _make_token(issuer, audience, resource, ability="read"):
     from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken, Capability
+
     cap = Capability(resource=resource, ability=ability)
     return DelegationToken(
         issuer=issuer,
@@ -574,6 +659,7 @@ class TestGZ266TripleCombinedE2E:
 
     def test_merged_tokens_visible_by_actor_and_resource(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr_a = DelegationManager(path=None)
         mgr_b = DelegationManager(path=None)
 
@@ -593,6 +679,7 @@ class TestGZ266TripleCombinedE2E:
 
     def test_actor_and_resource_same_set_for_matching_token(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager(path=None)
         tok = _make_token("alice", "carol", "database")
         cid = mgr.add(tok)
@@ -603,6 +690,7 @@ class TestGZ266TripleCombinedE2E:
 
     def test_revoke_removes_from_both_actor_and_resource(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager(path=None)
         tok = _make_token("alice", "dave", "secrets")
         cid = mgr.add(tok)
@@ -614,6 +702,7 @@ class TestGZ266TripleCombinedE2E:
 
     def test_two_actors_same_resource_after_merge(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager(path=None)
         tok1 = _make_token("alice", "user1", "reports")
         tok2 = _make_token("alice", "user2", "reports")
@@ -633,6 +722,7 @@ class TestGZ266TripleCombinedE2E:
 
     def test_wildcard_resource_visible_by_actor_and_resource(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager(path=None)
         tok = _make_token("root", "admin", "*")
         cid = mgr.add(tok)
@@ -645,6 +735,7 @@ class TestGZ266TripleCombinedE2E:
 
     def test_active_token_count_after_triple_merge_revoke(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager(path=None)
         tokens = []
         for i in range(3):

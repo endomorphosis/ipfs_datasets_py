@@ -98,21 +98,21 @@ Currently, GraphRAG functionality is fragmented across 3 locations:
 ```python
 class UnifiedQueryEngine:
     """Single entry point for all query types."""
-    
-    def execute_cypher(self, query: str, params: Dict, 
-                      budgets: ExecutionBudgets) -> Result:
+
+    def execute_cypher(self, query: str, params: Dict, budgets: ExecutionBudgets) -> Result:
         """Execute Cypher query with budget enforcement."""
-        
-    def execute_ir(self, ir: QueryIR, 
-                  budgets: ExecutionBudgets) -> ExecutionResult:
+
+    def execute_ir(self, ir: QueryIR, budgets: ExecutionBudgets) -> ExecutionResult:
         """Execute IR-based query."""
-        
-    def execute_hybrid(self, query: str, embeddings: Dict,
-                      budgets: ExecutionBudgets) -> HybridResult:
+
+    def execute_hybrid(
+        self, query: str, embeddings: Dict, budgets: ExecutionBudgets
+    ) -> HybridResult:
         """Execute hybrid vector+graph search."""
-        
-    def execute_graphrag(self, question: str, context: Dict,
-                        budgets: ExecutionBudgets) -> GraphRAGResult:
+
+    def execute_graphrag(
+        self, question: str, context: Dict, budgets: ExecutionBudgets
+    ) -> GraphRAGResult:
         """Execute full GraphRAG pipeline with LLM reasoning."""
 ```
 
@@ -135,10 +135,12 @@ class UnifiedQueryEngine:
 ```python
 # All modules use this
 from ipfs_datasets_py.search.graph_query.budgets import (
-    ExecutionBudgets, ExecutionCounters, budgets_from_preset
+    ExecutionBudgets,
+    ExecutionCounters,
+    budgets_from_preset,
 )
 
-budgets = budgets_from_preset('moderate')
+budgets = budgets_from_preset("moderate")
 result = engine.execute_cypher(query, params, budgets)
 ```
 

@@ -25,5 +25,5 @@ Implementation Status:
 from .core_factory import make_processing_pipeline
 
 __all__ = [
-    'make_processing_pipeline',
+    "make_processing_pipeline",
 ]

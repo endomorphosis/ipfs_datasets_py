@@ -41,7 +41,7 @@ def _redact_sensitive_text(message: str) -> str:
 
 class LLMProvider(Enum):
     """Supported LLM providers."""
-    
+
     GPT4 = "gpt4"
     CLAUDE = "claude"
     CODEX = "codex"
@@ -54,7 +54,7 @@ class LLMProvider(Enum):
 @dataclass
 class ProviderCapability:
     """Capabilities of an LLM provider.
-    
+
     Attributes:
         name: Provider name
         supports_code: Whether provider is good at code generation
@@ -64,7 +64,7 @@ class ProviderCapability:
         cost_per_1k_tokens: Approximate cost per 1000 tokens (USD)
         priority: Provider priority (lower = higher priority)
     """
-    
+
     name: str
     supports_code: bool = True
     supports_reasoning: bool = True
@@ -144,10 +144,10 @@ _ROUTER_PROVIDER_NAME_MAP = {
 
 class OptimizerLLMRouter:
     """LLM Router for optimizer operations.
-    
+
     Routes optimization tasks to appropriate LLM providers based on
     task complexity, provider capabilities, and availability.
-    
+
     Example:
         >>> router = OptimizerLLMRouter(
         ...     preferred_provider=LLMProvider.CLAUDE,
@@ -159,7 +159,7 @@ class OptimizerLLMRouter:
         ...     max_tokens=2000,
         ... )
     """
-    
+
     def __init__(
         self,
         preferred_provider: Optional[LLMProvider] = None,
@@ -170,7 +170,7 @@ class OptimizerLLMRouter:
         cache: Optional[LLMCache] = None,
     ):
         """Initialize LLM router.
-        
+
         Args:
             preferred_provider: Preferred LLM provider (None = auto-detect)
             fallback_providers: Fallback providers if preferred fails
@@ -184,23 +184,24 @@ class OptimizerLLMRouter:
         self.model_name = model_name
         self.enable_tracking = enable_tracking
         self.enable_caching = enable_caching
-        
+
         # LLM caching for 70-90% API call reduction
         self.cache = cache or (get_global_cache() if enable_caching else None)
-        
+
         # Token usage tracking
         self.token_usage: Dict[str, int] = {}
         self.call_count: Dict[str, int] = {}
         self.error_count: Dict[str, int] = {}
         self.cache_hits: int = 0
         self.cache_misses: int = 0
-        
+
         # Production hardening: Circuit breakers for each provider
         self._breakers: Dict[LLMProvider, CircuitBreaker] = {
             provider: CircuitBreaker(failure_threshold=3, timeout=30)
-            for provider in LLMProvider if provider != LLMProvider.AUTO
+            for provider in LLMProvider
+            if provider != LLMProvider.AUTO
         }
-        
+
         # Keep legacy retry wrapper for compatibility, but delegate retries to
         # shared backend resilience policy to avoid stacked retry amplification.
         self._retry_handler = RetryHandler(max_retries=0, base_delay=0.1, max_delay=0.1)
@@ -250,15 +251,13 @@ class OptimizerLLMRouter:
         head = prompt[:1200].rstrip()
         tail = prompt[-1400:].lstrip()
         compacted = (
-            f"{head}\n\n"
-            "[... local optimizer prompt truncated for model context ...]\n\n"
-            f"{tail}"
+            f"{head}\n\n[... local optimizer prompt truncated for model context ...]\n\n{tail}"
         )
         return compacted, safe_max_tokens
-    
+
     def _detect_provider(self) -> LLMProvider:
         """Auto-detect best available provider.
-        
+
         Returns:
             Best available LLM provider
         """
@@ -281,10 +280,10 @@ class OptimizerLLMRouter:
             "local": LLMProvider.LOCAL,
         }
         return mapping.get(name, LLMProvider.CODEX)
-    
+
     def _get_default_fallbacks(self) -> List[LLMProvider]:
         """Get default fallback providers.
-        
+
         Returns:
             List of fallback providers
         """
@@ -292,28 +291,22 @@ class OptimizerLLMRouter:
             return []
 
         # Sort providers by priority
-        sorted_providers = sorted(
-            PROVIDER_CAPABILITIES.items(),
-            key=lambda x: x[1].priority
-        )
-        
+        sorted_providers = sorted(PROVIDER_CAPABILITIES.items(), key=lambda x: x[1].priority)
+
         # Return all providers except the preferred one
-        return [
-            provider for provider, _ in sorted_providers
-            if provider != self.preferred_provider
-        ]
-    
+        return [provider for provider, _ in sorted_providers if provider != self.preferred_provider]
+
     def select_provider(
         self,
         method: OptimizationMethod,
         complexity: str = "medium",
     ) -> LLMProvider:
         """Select best provider for given optimization method.
-        
+
         Args:
             method: Optimization method
             complexity: Task complexity (simple/medium/complex)
-            
+
         Returns:
             Selected LLM provider
         """
@@ -323,7 +316,7 @@ class OptimizerLLMRouter:
         # For simple tasks, any provider works
         if complexity == "simple":
             return self.preferred_provider
-        
+
         # For complex reasoning tasks, prefer Claude or GPT-4
         if method in [OptimizationMethod.ACTOR_CRITIC, OptimizationMethod.CHAOS]:
             if self.preferred_provider in [LLMProvider.CLAUDE, LLMProvider.GPT4]:
@@ -332,15 +325,15 @@ class OptimizerLLMRouter:
             for provider in [LLMProvider.CLAUDE, LLMProvider.GPT4]:
                 if provider in self.fallback_providers:
                     return provider
-        
+
         # For code-heavy tasks, Codex or Copilot can work well
         if method == OptimizationMethod.TEST_DRIVEN:
             if self.preferred_provider == LLMProvider.CODEX:
                 return self.preferred_provider
-        
+
         # Default to preferred provider
         return self.preferred_provider
-    
+
     def generate(
         self,
         prompt: str,
@@ -350,17 +343,17 @@ class OptimizerLLMRouter:
         router_kwargs: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Generate text using LLM router with caching.
-        
+
         Args:
             prompt: Input prompt
             method: Optimization method (for provider selection)
             max_tokens: Maximum tokens to generate
             temperature: Sampling temperature
             router_kwargs: Optional additional router arguments
-            
+
         Returns:
             Generated text
-            
+
         Raises:
             RuntimeError: If all providers fail
         """
@@ -373,22 +366,20 @@ class OptimizerLLMRouter:
                 "max_tokens": max_tokens,
                 "model_name": self.model_name,
                 "temperature": temperature,
-                **{k: str(v) for k, v in resolved_router_kwargs.items()}
+                **{k: str(v) for k, v in resolved_router_kwargs.items()},
             }
             cached_response = self.cache.get(prompt, **cache_key_kwargs)
             if cached_response is not None:
                 self.cache_hits += 1
                 return cached_response
             self.cache_misses += 1
-        
+
         # Select provider
         provider = self.select_provider(method)
-        providers_to_try = [provider] + [
-            p for p in self.fallback_providers if p != provider
-        ]
-        
+        providers_to_try = [provider] + [p for p in self.fallback_providers if p != provider]
+
         last_error = None
-        
+
         for current_provider in providers_to_try:
             try:
                 # Get provider name for router
@@ -398,11 +389,11 @@ class OptimizerLLMRouter:
                     prompt=prompt,
                     max_tokens=max_tokens,
                 )
-                
+
                 # Track call
                 if self.enable_tracking:
                     self.call_count[provider_name] = self.call_count.get(provider_name, 0) + 1
-                
+
                 # Call router with provider hint
                 os.environ["IPFS_DATASETS_PY_LLM_PROVIDER"] = provider_name
                 generation_kwargs = {
@@ -418,7 +409,7 @@ class OptimizerLLMRouter:
                     and "model" not in generation_kwargs
                 ):
                     generation_kwargs["model_name"] = self.model_name
-                
+
                 # Production hardening: Use circuit breaker + retry logic
                 def _make_llm_call():
                     return execute_with_resilience(
@@ -429,9 +420,9 @@ class OptimizerLLMRouter:
                         self._policy_for_provider(current_provider),
                         circuit_breaker=self._resilience_breakers[current_provider],
                     )
-                
+
                 response = self._retry_handler.retry(_make_llm_call)
-                
+
                 # Store in cache
                 if self.cache:
                     cache_key_kwargs = {
@@ -439,17 +430,19 @@ class OptimizerLLMRouter:
                         "max_tokens": max_tokens,
                         "model_name": self.model_name,
                         "temperature": temperature,
-                        **{k: str(v) for k, v in resolved_router_kwargs.items()}
+                        **{k: str(v) for k, v in resolved_router_kwargs.items()},
                     }
                     self.cache.set(prompt, response, **cache_key_kwargs)
-                
+
                 # Track tokens (estimate)
                 if self.enable_tracking:
                     estimated_tokens = len(prompt.split()) + len(response.split())
-                    self.token_usage[provider_name] = self.token_usage.get(provider_name, 0) + estimated_tokens
-                
+                    self.token_usage[provider_name] = (
+                        self.token_usage.get(provider_name, 0) + estimated_tokens
+                    )
+
                 return response
-                
+
             except (
                 ExtractionError,
                 ValueError,
@@ -466,28 +459,28 @@ class OptimizerLLMRouter:
                 if self.enable_tracking:
                     provider_name = PROVIDER_CAPABILITIES[current_provider].name
                     self.error_count[provider_name] = self.error_count.get(provider_name, 0) + 1
-                
+
                 # Try next provider
                 continue
-        
+
         # All providers failed
         safe_last_error = _redact_sensitive_text(str(last_error))
         raise ExtractionError(
             "All LLM providers failed",
             details={"last_error": safe_last_error},
         )
-    
+
     def get_prompt_template(
         self,
         method: OptimizationMethod,
         task_type: str = "code",
     ) -> str:
         """Get prompt template for optimization method.
-        
+
         Args:
             method: Optimization method
             task_type: Type of task (code, test, analysis, fix)
-            
+
         Returns:
             Prompt template string with {placeholders}
         """
@@ -498,66 +491,66 @@ class OptimizerLLMRouter:
                 return CODE_OPTIMIZATION_TEMPLATE
             else:
                 return ANALYSIS_TEMPLATE
-        
+
         elif method == OptimizationMethod.ADVERSARIAL:
             return ADVERSARIAL_TEMPLATE
-        
+
         elif method == OptimizationMethod.ACTOR_CRITIC:
             if task_type == "actor":
                 return ACTOR_PROPOSAL_TEMPLATE
             else:
                 return CRITIC_EVALUATION_TEMPLATE
-        
+
         elif method == OptimizationMethod.CHAOS:
             if task_type == "analysis":
                 return CHAOS_ANALYSIS_TEMPLATE
             else:
                 return CHAOS_FIX_TEMPLATE
-        
+
         return GENERIC_TEMPLATE
-    
+
     def extract_code(self, response: str) -> str:
         """Extract code from LLM response.
-        
+
         Args:
             response: LLM response text
-            
+
         Returns:
             Extracted code
         """
         # Look for code blocks
-        code_block_pattern = r'```(?:python)?\n(.*?)\n```'
+        code_block_pattern = r"```(?:python)?\n(.*?)\n```"
         matches = re.findall(code_block_pattern, response, re.DOTALL)
-        
+
         if matches:
             # Return the first code block
             return matches[0].strip()
-        
+
         # No code blocks found, return response as-is
         return response.strip()
-    
+
     def extract_description(self, response: str) -> str:
         """Extract description from LLM response.
-        
+
         Args:
             response: LLM response text
-            
+
         Returns:
             Extracted description
         """
         # Look for text before first code block
-        code_block_pattern = r'```(?:python)?'
+        code_block_pattern = r"```(?:python)?"
         parts = re.split(code_block_pattern, response)
-        
+
         if len(parts) > 1:
             return parts[0].strip()
-        
+
         # Take first 200 chars as description
         return response[:200] + "..." if len(response) > 200 else response
-    
+
     def get_statistics(self) -> Dict[str, Any]:
         """Get usage statistics including cache performance.
-        
+
         Returns:
             Dictionary with usage statistics
         """
@@ -565,7 +558,7 @@ class OptimizerLLMRouter:
         total_tokens = sum(self.token_usage.values())
         total_errors = sum(self.error_count.values())
         total_cache_requests = self.cache_hits + self.cache_misses
-        
+
         stats = {
             "total_calls": total_calls,
             "total_tokens": total_tokens,
@@ -578,13 +571,13 @@ class OptimizerLLMRouter:
                     "errors": self.error_count.get(provider, 0),
                 }
                 for provider in set(
-                    list(self.call_count.keys()) +
-                    list(self.token_usage.keys()) +
-                    list(self.error_count.keys())
+                    list(self.call_count.keys())
+                    + list(self.token_usage.keys())
+                    + list(self.error_count.keys())
                 )
             },
         }
-        
+
         # Add cache statistics if caching is enabled
         if self.cache:
             stats["cache"] = {
@@ -596,7 +589,7 @@ class OptimizerLLMRouter:
             # Add internal cache stats
             cache_stats = self.cache.get_stats()
             stats["cache"].update(cache_stats)
-        
+
         return stats
 
 

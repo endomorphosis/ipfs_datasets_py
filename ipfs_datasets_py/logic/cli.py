@@ -60,7 +60,9 @@ def create_parser() -> argparse.ArgumentParser:
     p_norm.add_argument("--document-type", default="legal")
 
     p_add = sub.add_parser("add-theorem", help="Add a temporal-deontic theorem")
-    p_add.add_argument("--operator", required=True, choices=["OBLIGATION", "PERMISSION", "PROHIBITION"])
+    p_add.add_argument(
+        "--operator", required=True, choices=["OBLIGATION", "PERMISSION", "PROHIBITION"]
+    )
     p_add.add_argument("--proposition", required=True)
     p_add.add_argument("--agent-name", default="Unspecified Party")
     p_add.add_argument("--jurisdiction", default="Federal")
@@ -357,7 +359,9 @@ async def _run_async(ns: argparse.Namespace) -> Dict[str, Any]:
         }
 
     if cmd == "add-theorem":
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import add_theorem_from_parameters
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            add_theorem_from_parameters,
+        )
 
         params: Dict[str, Any] = {
             "operator": ns.operator,
@@ -375,7 +379,9 @@ async def _run_async(ns: argparse.Namespace) -> Dict[str, Any]:
         return await add_theorem_from_parameters(params)
 
     if cmd == "query-theorems":
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import query_theorems_from_parameters
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            query_theorems_from_parameters,
+        )
 
         params = {
             "query": ns.query,

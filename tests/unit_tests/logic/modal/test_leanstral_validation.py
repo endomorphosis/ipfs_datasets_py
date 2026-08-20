@@ -72,7 +72,9 @@ def _repo_with_allowed_file(tmp_path: Path) -> Path:
     target.parent.mkdir(parents=True)
     target.write_text("VALUE = 1\n", encoding="utf-8")
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
-    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.invalid"], check=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "test@example.invalid"], check=True
+    )
     subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test User"], check=True)
     subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
     subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "base"], check=True)
@@ -96,7 +98,9 @@ def _allowed_patch(task: LegalIRLeanTask) -> PythonPatchProposal:
     )
 
 
-def test_projected_change_runs_in_disposable_worktree_and_accepts_pareto_safe_patch(tmp_path) -> None:
+def test_projected_change_runs_in_disposable_worktree_and_accepts_pareto_safe_patch(
+    tmp_path,
+) -> None:
     sample = _sample()
     task = _task(sample)
     repo = _repo_with_allowed_file(tmp_path)
@@ -205,6 +209,4 @@ def test_holdout_pareto_rejects_cross_entropy_regression_beyond_deadband() -> No
 
     failed = [comparison for comparison in comparisons if not comparison.accepted]
     assert failed
-    assert {comparison.reason_code for comparison in failed} == {
-        "holdout_cross_entropy_regression"
-    }
+    assert {comparison.reason_code for comparison in failed} == {"holdout_cross_entropy_regression"}

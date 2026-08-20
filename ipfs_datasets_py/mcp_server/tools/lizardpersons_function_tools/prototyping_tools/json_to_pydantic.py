@@ -8,40 +8,43 @@ import traceback
 
 from ipfs_datasets_py.mcp_server.logger import mcp_logger
 
+
 def _to_snake_case(name: str) -> str:
     """Convert camelCase or PascalCase to snake_case"""
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+    return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
+
 
 def _structure_signature(data: dict) -> tuple:
     """Create a hashable structure signature for deduplication"""
     return tuple(sorted((key, type(value).__name__) for key, value in data.items()))
 
+
 def _sanitize_field_name(name: str) -> str:
     """Sanitize field names to be valid Python identifiers"""
     # Convert spaces and special characters to underscores
-    name = re.sub(r'\W', '_', name)
-    
+    name = re.sub(r"\W", "_", name)
+
     # Handle special cases
     if name.startswith("_"):
         # Remove all leading underscores and add a trailing underscore
-        name = re.sub(r'^_+', '', name)
+        name = re.sub(r"^_+", "", name)
         if not name.endswith("_"):
             name = name + "_"
     elif name[0].isdigit():
         # Prepend 'a_' to names starting with digits
         name = "a_" + name
-    
+
     # Handle Python keywords
     if keyword.iskeyword(name):
         name += "_"
-    
+
     # Special handling for complex cases
     if name.startswith("a_") and "class" in name:
         # If it's a numeric-class combination, ensure it ends with an underscore
         if not name.endswith("_"):
             name += "_"
-    
+
     return name
 
 
@@ -51,7 +54,7 @@ def _build_model(
     model_registry: dict,
     structure_map: dict,
     dependencies: Dict[str, Set[str]] = None,
-    allow_optional_fields: bool = False
+    allow_optional_fields: bool = False,
 ) -> str:
     """
     Builds a Pydantic model definition dynamically based on the provided data structure.
@@ -70,11 +73,11 @@ def _build_model(
     # Initialize dependencies graph if not provided
     if dependencies is None:
         dependencies = {}
-    
+
     # Add this class to the dependencies graph
     if class_name not in dependencies:
         dependencies[class_name] = set()
-        
+
     # Generate a unique structure key for deduplication
     structure_key = _structure_signature(data)
     if structure_key in structure_map:
@@ -92,11 +95,11 @@ def _build_model(
         )
         # Normalize the field_type outside the loop
         safe_key = re.sub(r"_{2,}", "_", safe_key)
-        
+
         # Add dependencies to the graph
         if depends_on:
             dependencies[class_name].add(depends_on)
-        
+
         # Handle fields for Field class.
         field_options = []
 
@@ -112,7 +115,7 @@ def _build_model(
         if key != safe_key:
             # If the key is not safe, we need to add an alias
             field_options.append(f"alias='{key}'")
-        
+
         if field_options:
             field_options_str = ", ".join(field_options)
         else:
@@ -125,26 +128,30 @@ def _build_model(
         fields.append(f"    {safe_key}: {field_type}{alias_code}")
 
     # Generate the model definition string, add it to the registry, and return the definition.
-    model_def = f"class {class_name}(BaseModel):\n" + "\n".join(fields) if fields else f"class {class_name}(BaseModel):\n    pass"
+    model_def = (
+        f"class {class_name}(BaseModel):\n" + "\n".join(fields)
+        if fields
+        else f"class {class_name}(BaseModel):\n    pass"
+    )
 
     model_registry[class_name] = model_def
     return model_def
 
 
 def _infer_type_dictionary_logic(
-        value: dict[Any, Any],
-        model_registry: dict,
-        structure_map: dict,
-        parent_key: str,
-        dependencies: Dict[str, Set[str]],
-        allow_optional_fields: bool
-        ) -> tuple[str, str | None]:
+    value: dict[Any, Any],
+    model_registry: dict,
+    structure_map: dict,
+    parent_key: str,
+    dependencies: Dict[str, Set[str]],
+    allow_optional_fields: bool,
+) -> tuple[str, str | None]:
     """
     Logic to infer the type of a dictionary value and update the model registry.
     """
     if value is None or not value:  # If the dictionary is None or empty
         return ("Optional[Dict[Any, Any]]", None)
-    
+
     # Check if all keys are numeric strings
     if all(isinstance(k, str) and k.isdigit() for k in value.keys()):
         # Check if values are consistent type
@@ -153,22 +160,24 @@ def _infer_type_dictionary_logic(
             # This looks like a numeric array
             value_type = "int" if list(value_types)[0] is int else "float"
             return (f"Union[List[{value_type}], Dict[str, {value_type}]]", None)
-    
+
     # For regular dictionaries, create a nested model
     class_name = f"{parent_key.capitalize()}"
     # Recursively build the nested model
-    _build_model(value, class_name, model_registry, structure_map, dependencies, allow_optional_fields)
+    _build_model(
+        value, class_name, model_registry, structure_map, dependencies, allow_optional_fields
+    )
     return (class_name, class_name)  # Return the class name and dependency
 
 
 def _infer_type_list_logic(
-        value: list[Any],
-        model_registry: dict,
-        structure_map: dict,
-        parent_key: str,
-        dependencies: Dict[str, Set[str]],
-        allow_optional_fields: bool
-        ) -> tuple[str, str | None]:
+    value: list[Any],
+    model_registry: dict,
+    structure_map: dict,
+    parent_key: str,
+    dependencies: Dict[str, Set[str]],
+    allow_optional_fields: bool,
+) -> tuple[str, str | None]:
     """
     Logic to infer the types of values in a list and update the model registry accordingly.
     """
@@ -200,7 +209,7 @@ def _infer_type(
     structure_map: dict,
     parent_key: str,
     dependencies: Dict[str, Set[str]],
-    allow_optional_fields: bool
+    allow_optional_fields: bool,
 ) -> tuple[str, str | None]:
     """
     Infers the Pydantic-compatible type of a given value and updates the model registry
@@ -221,21 +230,21 @@ def _infer_type(
     match value:
         case dict():
             return _infer_type_dictionary_logic(
-            value,
-            model_registry,
-            structure_map,
-            parent_key,
-            dependencies,
-            allow_optional_fields
+                value,
+                model_registry,
+                structure_map,
+                parent_key,
+                dependencies,
+                allow_optional_fields,
             )
         case list():
             return _infer_type_list_logic(
-            value,
-            model_registry,
-            structure_map,
-            parent_key,
-            dependencies,
-            allow_optional_fields
+                value,
+                model_registry,
+                structure_map,
+                parent_key,
+                dependencies,
+                allow_optional_fields,
             )
         case str():
             return ("str", None)
@@ -251,14 +260,15 @@ def _infer_type(
             # Default to Any if the type is not recognized.
             return ("Any", None)
 
+
 def _topological_sort(dependency_graph: Dict[str, Set[str]]) -> list:
     """
     Performs a topological sort on the dependency graph to ensure classes are defined
     before they are used.
-    
+
     Args:
         dependency_graph: Dictionary mapping class names to the set of classes they depend on.
-        
+
     Returns:
         List of class names in topologically sorted order.
     """
@@ -266,7 +276,7 @@ def _topological_sort(dependency_graph: Dict[str, Set[str]]) -> list:
     visited = set()
     temp_mark = set()
     result = []
-    
+
     def visit(node):
         if node in temp_mark:
             # This is a cyclic dependency, skip to avoid infinite loop
@@ -282,19 +292,20 @@ def _topological_sort(dependency_graph: Dict[str, Set[str]]) -> list:
             temp_mark.discard(node)  # Use discard to avoid KeyError
             visited.add(node)
             result.append(node)
-    
+
     # Visit all nodes
     for node in list(dependency_graph.keys()):
         if node not in visited:
             visit(node)
-            
+
     return result
+
 
 def json_to_pydantic(
     json_data: str | dict[str, Any],
     output_dir: str,
     model_name: str = "GeneratedModel",
-    allow_optional_fields: bool = True
+    allow_optional_fields: bool = True,
 ) -> str:
     """
     Turn JSON data into a Pydantic model or series of models.
@@ -303,7 +314,7 @@ def json_to_pydantic(
 
     Args:
         json_data (str | dict): JSON data as a JSON string, JSON dictionary, or path to a JSON file.
-            
+
         output_dir (str): Directory to save the generated model file.
         model_name (str): Name of the generated model class. Defaults to "GeneratedModel".
         allow_optional_fields (bool): If True, allows models fields to be optional. Defaults to True.
@@ -315,7 +326,7 @@ def json_to_pydantic(
     Raises:
         FileNotFoundError: If the output directory does not exist.
         TypeError: If the input JSON is not a string, dictionary, or path to a JSON file.
-        ValueError: 
+        ValueError:
             - If the input JSON is invalid.
             - If there is any error during model generation.
             - If importing the generated model fails.
@@ -346,9 +357,16 @@ def json_to_pydantic(
     model_registry: dict = {}
     structure_map: dict = {}
     dependencies: Dict[str, Set[str]] = {}
-    
+
     try:
-        _build_model(json_data, model_name, model_registry, structure_map, dependencies, allow_optional_fields)
+        _build_model(
+            json_data,
+            model_name,
+            model_registry,
+            structure_map,
+            dependencies,
+            allow_optional_fields,
+        )
     except Exception as e:
         mcp_logger.exception(f"Error building model: {e}")
         raise ValueError(f"Error generating Pydantic model: {e}") from e
@@ -363,9 +381,9 @@ def json_to_pydantic(
     # Add the imports at the beginning of the file
     imports = [
         "from pydantic import BaseModel, Field",
-        "from typing import List, Any, Union, Optional, Dict"
+        "from typing import List, Any, Union, Optional, Dict",
     ]
-    
+
     # Concatenate model definitions in topologically sorted order
     model_definitions = []
     for class_name in sorted_class_names:

@@ -107,9 +107,7 @@ def test_lifecycle_accepts_event_records_and_marks_first_missing_stage_censored(
     "mutate, message",
     [
         (
-            lambda raw: raw["audit"].update(
-                timestamp="2026-07-19T23:59:59+00:00"
-            ),
+            lambda raw: raw["audit"].update(timestamp="2026-07-19T23:59:59+00:00"),
             "precedes",
         ),
         (
@@ -121,9 +119,7 @@ def test_lifecycle_accepts_event_records_and_marks_first_missing_stage_censored(
             "must be later",
         ),
         (
-            lambda raw: raw["state_snapshot"].update(
-                timestamp="2026-07-20T00:00:00"
-            ),
+            lambda raw: raw["state_snapshot"].update(timestamp="2026-07-20T00:00:00"),
             "UTC offset",
         ),
         (
@@ -171,9 +167,7 @@ def test_report_computes_completed_wall_clock_cycle_and_queue_stage_percentiles(
         ),
     ]
 
-    report = state_to_compiler_patch_lag(
-        {"state_to_compiler_patch_paths": paths}
-    )
+    report = state_to_compiler_patch_lag({"state_to_compiler_patch_paths": paths})
 
     assert report["schema_version"] == STATE_TO_COMPILER_PATCH_LAG_REPORT_SCHEMA_VERSION
     assert report["status"] == "censored"
@@ -202,9 +196,7 @@ def test_report_computes_completed_wall_clock_cycle_and_queue_stage_percentiles(
     assert cycle_lag["p50"] == 3.0
     assert cycle_lag["p95"] == 3.9
 
-    snapshot_to_audit = report["queue_stage_lag_seconds"][
-        "state_snapshot_to_audit"
-    ]
+    snapshot_to_audit = report["queue_stage_lag_seconds"]["state_snapshot_to_audit"]
     assert snapshot_to_audit["observed_count"] == 3
     assert snapshot_to_audit["p50"] == 60.0
     claim_wait = report["queue_stage_lag_seconds"]["todo_to_claimed_worktree"]
@@ -212,9 +204,7 @@ def test_report_computes_completed_wall_clock_cycle_and_queue_stage_percentiles(
     assert claim_wait["censored_count"] == 1
     assert report["censored_by_stage"]["claimed_worktree"] == 1
 
-    assert report["version_paths"][0]["versions"]["state_snapshot"] == (
-        "fast-state_snapshot-v1"
-    )
+    assert report["version_paths"][0]["versions"]["state_snapshot"] == ("fast-state_snapshot-v1")
     assert report["version_paths"][2]["versions"]["merged_commit"] is None
 
 
@@ -274,9 +264,7 @@ def test_invalid_paths_fail_closed_and_are_counted_as_censored() -> None:
     )
     malformed = {"path_id": "missing-snapshot", "audit": valid["audit"]}
 
-    report = state_to_compiler_patch_lag(
-        lifecycle_paths=[valid, valid, malformed, "not-a-record"]
-    )
+    report = state_to_compiler_patch_lag(lifecycle_paths=[valid, valid, malformed, "not-a-record"])
 
     assert report["path_count"] == 4
     assert report["valid_path_count"] == 1

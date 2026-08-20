@@ -25,12 +25,12 @@ def test_sigint_signal_exits_with_code_0():
         exit_code == 0
     """
     expected_exit_code = 0
-    
+
     # signal_handler calls sys.exit(0), which will raise SystemExit
     with pytest.raises(SystemExit) as exc_info:
         signal_handler(signal.SIGINT, None)
-    
+
     actual_exit_code = exc_info.value.code
-    assert actual_exit_code == expected_exit_code, f"expected {expected_exit_code}, got {actual_exit_code}"
-
-
+    assert actual_exit_code == expected_exit_code, (
+        f"expected {expected_exit_code}, got {actual_exit_code}"
+    )

@@ -29,13 +29,11 @@ except Exception:
 
 
 class CarFetcher(Protocol):
-    def fetch(self, car_cid: str) -> bytes:
-        ...
+    def fetch(self, car_cid: str) -> bytes: ...
 
 
 class BytesFetcher(Protocol):
-    def fetch(self, cid: str) -> bytes:
-        ...
+    def fetch(self, cid: str) -> bytes: ...
 
 
 @dataclass(frozen=True)
@@ -72,11 +70,17 @@ class IPFSCarFetcher(CarFetcher):
             nonlocal last_err
             try:
                 if op == "cat":
-                    return ipfs_router.cat(car_cid, backend=self.backend, backend_instance=self.backend_instance)
+                    return ipfs_router.cat(
+                        car_cid, backend=self.backend, backend_instance=self.backend_instance
+                    )
                 if op == "block_get":
-                    return ipfs_router.block_get(car_cid, backend=self.backend, backend_instance=self.backend_instance)
+                    return ipfs_router.block_get(
+                        car_cid, backend=self.backend, backend_instance=self.backend_instance
+                    )
                 if op == "dag_export":
-                    return ipfs_router.dag_export(car_cid, backend=self.backend, backend_instance=self.backend_instance)
+                    return ipfs_router.dag_export(
+                        car_cid, backend=self.backend, backend_instance=self.backend_instance
+                    )
                 raise ValueError(f"Unknown fetch op: {op}")
             except Exception as e:  # pragma: no cover - depends on backend availability
                 last_err = e
@@ -137,8 +141,7 @@ class _BlockMapStorage:
 
 
 class ShardLoader(Protocol):
-    def load_kg(self, shard: ShardInfo) -> IPLDKnowledgeGraph:
-        ...
+    def load_kg(self, shard: ShardInfo) -> IPLDKnowledgeGraph: ...
 
 
 @dataclass(frozen=True)
@@ -576,7 +579,9 @@ class ShardedCARBackend(GraphBackend):
                 # Group by bucket so we fetch each bucket at most once.
                 by_bucket: dict[str, list[str]] = {}
                 for eid in eids:
-                    by_bucket.setdefault(self._bucket_key(eid, prefix_len=prefix_len), []).append(eid)
+                    by_bucket.setdefault(self._bucket_key(eid, prefix_len=prefix_len), []).append(
+                        eid
+                    )
 
                 for bkey, bucket_eids in by_bucket.items():
                     bucket_cid = buckets.get(bkey)
@@ -606,7 +611,9 @@ class ShardedCARBackend(GraphBackend):
 
         return out
 
-    def get_entity_headers_with_stats(self, entity_ids: Sequence[str]) -> tuple[dict[str, EntityHeader], int]:
+    def get_entity_headers_with_stats(
+        self, entity_ids: Sequence[str]
+    ) -> tuple[dict[str, EntityHeader], int]:
         # Count unique routed shards as a conservative estimate of shards touched.
         by_shard: dict[str, list[str]] = {}
         for eid in entity_ids:
@@ -644,7 +651,9 @@ class ShardedCARBackend(GraphBackend):
             candidate_ids = [sid for sid in candidate_ids if sid in allowlist]
 
         if not candidate_ids or limit == 0:
-            return ScanPage(entity_ids=[], next_cursor=None, shards_touched=0, shards_touched_ids=[])
+            return ScanPage(
+                entity_ids=[], next_cursor=None, shards_touched=0, shards_touched_ids=[]
+            )
 
         # Cursor format (opaque to callers):
         # v1: {"v":1,"shard_id":"S0","offset":123}
@@ -720,7 +729,9 @@ class ShardedCARBackend(GraphBackend):
                 if len(out) >= remaining:
                     more_in_page = off < len(ids)
                     if more_in_page:
-                        next_cursor = json.dumps({"v": 2, "shard_id": sid, "page": p, "offset": off})
+                        next_cursor = json.dumps(
+                            {"v": 2, "shard_id": sid, "page": p, "offset": off}
+                        )
                         return out, next_cursor
                     # Advance to next page within this shard.
                     p += 1
@@ -824,19 +835,31 @@ class ShardedCARBackend(GraphBackend):
                 shard_pos += 1
                 offset = 0
                 if shard_pos < len(candidate_ids):
-                    next_cursor = json.dumps({"v": 1, "shard_id": candidate_ids[shard_pos], "offset": 0})
+                    next_cursor = json.dumps(
+                        {"v": 1, "shard_id": candidate_ids[shard_pos], "offset": 0}
+                    )
                     return ScanPage(
                         entity_ids=entity_ids,
                         next_cursor=next_cursor,
                         shards_touched=shards_touched,
                         shards_touched_ids=touched_ids,
                     )
-                return ScanPage(entity_ids=entity_ids, next_cursor=None, shards_touched=shards_touched, shards_touched_ids=touched_ids)
+                return ScanPage(
+                    entity_ids=entity_ids,
+                    next_cursor=None,
+                    shards_touched=shards_touched,
+                    shards_touched_ids=touched_ids,
+                )
 
             shard_pos += 1
             offset = 0
 
-        return ScanPage(entity_ids=entity_ids, next_cursor=None, shards_touched=shards_touched, shards_touched_ids=touched_ids)
+        return ScanPage(
+            entity_ids=entity_ids,
+            next_cursor=None,
+            shards_touched=shards_touched,
+            shards_touched_ids=touched_ids,
+        )
 
     def neighbors(
         self,
@@ -859,7 +882,9 @@ class ShardedCARBackend(GraphBackend):
                     raise ValueError("Cursor entity_id mismatch")
                 if c.get("direction") != direction:
                     raise ValueError("Cursor direction mismatch")
-                expected_types = list(relationship_types) if relationship_types is not None else None
+                expected_types = (
+                    list(relationship_types) if relationship_types is not None else None
+                )
                 if c.get("relationship_types") != expected_types:
                     raise ValueError("Cursor relationship_types mismatch")
                 offset = int(c.get("offset", 0))
@@ -896,7 +921,9 @@ class ShardedCARBackend(GraphBackend):
                     elif direction == "incoming":
                         rels = list(adj_obj.get("incoming") or [])
                     else:
-                        rels = list(adj_obj.get("outgoing") or []) + list(adj_obj.get("incoming") or [])
+                        rels = list(adj_obj.get("outgoing") or []) + list(
+                            adj_obj.get("incoming") or []
+                        )
                     used_index = True
             except Exception:
                 used_index = False
@@ -906,19 +933,27 @@ class ShardedCARBackend(GraphBackend):
             rels = kg.get_entity_relationships(
                 entity_id,
                 direction=direction,
-                relationship_types=list(relationship_types) if relationship_types is not None else None,
+                relationship_types=list(relationship_types)
+                if relationship_types is not None
+                else None,
             )
 
         # Apply relationship type filter for index-backed rels.
         if used_index and relationship_types is not None:
-            rels = [r for r in rels if isinstance(r, dict) and r.get("relationship_type") in set(relationship_types)]
+            rels = [
+                r
+                for r in rels
+                if isinstance(r, dict) and r.get("relationship_type") in set(relationship_types)
+            ]
 
         edges: list[NeighborEdge] = []
         if offset < 0:
             offset = 0
         if offset >= len(rels):
             # Count the shard that served adjacency for this entity.
-            return NeighborPage(edges=[], next_cursor=None, shards_touched=1, shards_touched_ids=[shard_id])
+            return NeighborPage(
+                edges=[], next_cursor=None, shards_touched=1, shards_touched_ids=[shard_id]
+            )
 
         slice_rels = rels[offset : offset + limit]
         for rel in slice_rels:
@@ -951,7 +986,9 @@ class ShardedCARBackend(GraphBackend):
                     "v": 1,
                     "entity_id": entity_id,
                     "direction": direction,
-                    "relationship_types": list(relationship_types) if relationship_types is not None else None,
+                    "relationship_types": list(relationship_types)
+                    if relationship_types is not None
+                    else None,
                     "offset": next_offset,
                 }
             )

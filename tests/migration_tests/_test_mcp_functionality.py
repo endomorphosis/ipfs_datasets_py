@@ -15,6 +15,7 @@ from pathlib import Path
 current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir))
 
+
 def test_web_archive_functionality():
     """Test web archive functionality for MCP tools."""
     print("=== Testing Web Archive Functionality ===")
@@ -41,7 +42,7 @@ def test_web_archive_functionality():
         print(f"  Extracted text: {result['text'][:50]}...")
 
         # Test URL processing
-        test_urls = ['https://example.com', 'https://test.org']
+        test_urls = ["https://example.com", "https://test.org"]
         url_result = processor.process_urls(test_urls)
         print(f"✓ URL processing: {url_result['status']}")
         print(f"  Processed {len(url_result['results'])} URLs")
@@ -51,8 +52,10 @@ def test_web_archive_functionality():
     except Exception as e:
         print(f"✗ Web archive test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_vector_tools_functionality():
     """Test vector tools functionality for MCP tools."""
@@ -96,8 +99,10 @@ def test_vector_tools_functionality():
     except Exception as e:
         print(f"✗ Vector tools test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_graphrag_functionality():
     """Test GraphRAG functionality for MCP tools."""
@@ -122,8 +127,10 @@ def test_graphrag_functionality():
     except Exception as e:
         print(f"✗ GraphRAG test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def create_simple_mcp_tool_registry():
     """Create a simple registry of MCP tools."""
@@ -139,7 +146,7 @@ def create_simple_mcp_tool_registry():
             processor = WebArchiveProcessor()
             return processor.extract_text_from_html(html_content)
 
-        tool_registry['extract_text_from_html'] = extract_text_tool
+        tool_registry["extract_text_from_html"] = extract_text_tool
         print("✓ Registered extract_text_from_html tool")
 
     except Exception as e:
@@ -153,7 +160,7 @@ def create_simple_mcp_tool_registry():
             calc = VectorSimilarityCalculator()
             return calc.cosine_similarity(vector1, vector2)
 
-        tool_registry['calculate_similarity'] = calculate_similarity_tool
+        tool_registry["calculate_similarity"] = calculate_similarity_tool
         print("✓ Registered calculate_similarity tool")
 
     except Exception as e:
@@ -167,7 +174,7 @@ def create_simple_mcp_tool_registry():
             processor = MockGraphRAGProcessor()
             return processor.query(query)
 
-        tool_registry['query_knowledge_graph'] = query_graph_tool
+        tool_registry["query_knowledge_graph"] = query_graph_tool
         print("✓ Registered query_knowledge_graph tool")
 
     except Exception as e:
@@ -175,33 +182,35 @@ def create_simple_mcp_tool_registry():
 
     return tool_registry
 
+
 def test_tool_registry(registry):
     """Test the tool registry functionality."""
     print("\n=== Testing Tool Registry ===")
 
     # Test HTML extraction tool
-    if 'extract_text_from_html' in registry:
+    if "extract_text_from_html" in registry:
         try:
-            result = registry['extract_text_from_html']("<h1>Test</h1><p>Content</p>")
+            result = registry["extract_text_from_html"]("<h1>Test</h1><p>Content</p>")
             print(f"✓ HTML extraction tool works: {result['status']}")
         except Exception as e:
             print(f"✗ HTML extraction tool failed: {e}")
 
     # Test similarity calculation tool
-    if 'calculate_similarity' in registry:
+    if "calculate_similarity" in registry:
         try:
-            result = registry['calculate_similarity']([1, 0], [0, 1])
+            result = registry["calculate_similarity"]([1, 0], [0, 1])
             print(f"✓ Similarity calculation tool works: {result:.3f}")
         except Exception as e:
             print(f"✗ Similarity calculation tool failed: {e}")
 
     # Test GraphRAG tool
-    if 'query_knowledge_graph' in registry:
+    if "query_knowledge_graph" in registry:
         try:
-            result = registry['query_knowledge_graph']("What is AI?")
+            result = registry["query_knowledge_graph"]("What is AI?")
             print(f"✓ GraphRAG tool works: {result['status']}")
         except Exception as e:
             print(f"✗ GraphRAG tool failed: {e}")
+
 
 def main():
     """Main test function."""
@@ -228,6 +237,7 @@ def main():
         print("\n❌ Some tests failed. Please check the errors above.")
 
     return web_ok and vector_ok and graphrag_ok
+
 
 if __name__ == "__main__":
     main()

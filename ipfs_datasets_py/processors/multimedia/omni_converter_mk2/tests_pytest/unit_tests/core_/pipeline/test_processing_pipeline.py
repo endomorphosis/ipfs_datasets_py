@@ -1,6 +1,7 @@
 """
 Test suite for core/_processing_pipeline.py converted from unittest to pytest.
 """
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock, call
 from datetime import datetime
@@ -52,17 +53,17 @@ class _ProcessingPipelineResources(TypedDict):
 def make_mock_resources():
     """Create a mock resources dictionary for testing."""
     return {
-        'file_format_detector': MagicMock(spec=FileFormatDetector),
-        'file_validator': MagicMock(spec=FileValidator),
-        'content_extractor': MagicMock(spec=ContentExtractor),
-        'content_sanitizer': MagicMock(spec=ContentSanitizer),
-        'text_normalizer': MagicMock(spec=TextNormalizer),
-        'output_formatter': MagicMock(spec=OutputFormatter),
-        'processing_result': MagicMock(spec=ProcessingResult),
-        'pipeline_status': MagicMock(spec=PipelineStatus),
-        'security_monitor': MagicMock(spec=SecurityMonitor),
-        'logger': MagicMock(spec=Logger),
-        'hashlib': MagicMock(spec=hashlib),
+        "file_format_detector": MagicMock(spec=FileFormatDetector),
+        "file_validator": MagicMock(spec=FileValidator),
+        "content_extractor": MagicMock(spec=ContentExtractor),
+        "content_sanitizer": MagicMock(spec=ContentSanitizer),
+        "text_normalizer": MagicMock(spec=TextNormalizer),
+        "output_formatter": MagicMock(spec=OutputFormatter),
+        "processing_result": MagicMock(spec=ProcessingResult),
+        "pipeline_status": MagicMock(spec=PipelineStatus),
+        "security_monitor": MagicMock(spec=SecurityMonitor),
+        "logger": MagicMock(spec=Logger),
+        "hashlib": MagicMock(spec=hashlib),
     }
 
 
@@ -78,22 +79,22 @@ def temp_dir():
 def test_files(temp_dir):
     """Create test files in temporary directory."""
     test_file_path = os.path.join(temp_dir, "test_file.txt")
-    with open(test_file_path, 'w') as f:
+    with open(test_file_path, "w") as f:
         f.write("Test content")
-    
+
     large_file_path = os.path.join(temp_dir, "large_file.txt")
-    with open(large_file_path, 'w') as f:
+    with open(large_file_path, "w") as f:
         f.write("A" * (15 * 1024 * 1024))  # 15 MB file (exceeds text limit)
-    
+
     executable_file_path = os.path.join(temp_dir, "test_script.sh")
-    with open(executable_file_path, 'w') as f:
+    with open(executable_file_path, "w") as f:
         f.write("#!/bin/bash\necho 'test'")
     os.chmod(executable_file_path, stat.S_IRWXU)  # Make executable
-    
+
     return {
-        'test_file': test_file_path,
-        'large_file': large_file_path,
-        'executable_file': executable_file_path
+        "test_file": test_file_path,
+        "large_file": large_file_path,
+        "executable_file": executable_file_path,
     }
 
 
@@ -123,7 +124,7 @@ class TestProcessingPipelineInit:
         """
         # Act
         pipeline = ProcessingPipeline(resources=mock_resources, configs=mock_configs)
-        
+
         # Assert
         assert isinstance(pipeline, ProcessingPipeline)
         assert pipeline.configs == mock_configs

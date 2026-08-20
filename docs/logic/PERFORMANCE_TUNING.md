@@ -170,7 +170,7 @@ formulas = [
     "∀x (P(x) → T(x))",
     "∀y (Q(y) → T(y))",
     "∀z (R(z) → T(z))",
-    "∀x∀y∀z (T(x) ∧ T(y) ∧ T(z) → S(x,y,z))"
+    "∀x∀y∀z (T(x) ∧ T(y) ∧ T(z) → S(x,y,z))",
 ]
 ```
 
@@ -205,20 +205,20 @@ local_cache = ProofCache(max_size=1000, ttl_seconds=3600)
 ```python
 # High-memory server: Large cache
 cache = ProofCache(
-    max_size=10000,      # Cache up to 10K proofs
-    ttl_seconds=86400,   # 24 hour TTL
+    max_size=10000,  # Cache up to 10K proofs
+    ttl_seconds=86400,  # 24 hour TTL
 )
 
 # Low-memory server: Small cache
 cache = ProofCache(
-    max_size=100,        # Cache up to 100 proofs
-    ttl_seconds=3600,    # 1 hour TTL
+    max_size=100,  # Cache up to 100 proofs
+    ttl_seconds=3600,  # 1 hour TTL
 )
 
 # Infinite cache (use with caution!)
 cache = ProofCache(
-    max_size=None,       # No size limit
-    ttl_seconds=None,    # No expiration
+    max_size=None,  # No size limit
+    ttl_seconds=None,  # No expiration
 )
 ```
 
@@ -230,11 +230,13 @@ cache_key = hash(formula_text)
 
 # Option 2: Structural keys (more precise)
 from ipfs_datasets_py.logic.fol import normalize_formula
+
 normalized = normalize_formula(formula_text)
 cache_key = hash(normalized)
 
 # Option 3: Semantic keys (most precise, slower)
 from ipfs_datasets_py.logic.fol import parse_formula
+
 ast = parse_formula(formula_text)
 cache_key = hash(ast.to_canonical())
 ```
@@ -316,6 +318,7 @@ with open("formulas.txt") as f:
         process_results(results)
         # Results can be garbage collected
 
+
 def chunked(iterable, size):
     """Yield successive chunks."""
     chunk = []
@@ -333,19 +336,20 @@ def chunked(iterable, size):
 ```python
 import psutil
 
+
 def adaptive_batch_convert(texts, max_memory_mb=1000):
     """Adjust batch size based on available memory."""
     converter = FOLConverter()
-    
+
     process = psutil.Process()
     results = []
-    
+
     batch_size = 50
     for i in range(0, len(texts), batch_size):
-        batch = texts[i:i+batch_size]
+        batch = texts[i : i + batch_size]
         batch_results = converter.convert_batch(batch)
         results.extend(batch_results)
-        
+
         # Check memory usage
         memory_mb = process.memory_info().rss / (1024 * 1024)
         if memory_mb > max_memory_mb:
@@ -354,7 +358,7 @@ def adaptive_batch_convert(texts, max_memory_mb=1000):
         elif memory_mb < max_memory_mb * 0.5:
             # Increase batch size if plenty of memory
             batch_size = min(200, batch_size * 2)
-    
+
     return results
 ```
 
@@ -371,10 +375,11 @@ class Formula:
         self.type = type
         self.args = args
 
+
 # Memory-light: __slots__
 class Formula:
-    __slots__ = ['type', 'args', '_hash']
-    
+    __slots__ = ["type", "args", "_hash"]
+
     def __init__(self, type, args):
         self.type = type
         self.args = args
@@ -393,6 +398,7 @@ def find_all_proofs(formula):
         for proof in search_at_depth(formula, depth):
             proofs.append(proof)
     return proofs
+
 
 # Memory-light: Yield proofs as found
 def find_proofs(formula):
@@ -440,15 +446,14 @@ if memory_pressure():
 from concurrent.futures import ProcessPoolExecutor
 from ipfs_datasets_py.logic.integration import prove_formula
 
+
 def prove_many(formulas, n_workers=4):
     """Prove multiple formulas in parallel."""
     with ProcessPoolExecutor(max_workers=n_workers) as executor:
-        futures = [
-            executor.submit(prove_formula, f)
-            for f in formulas
-        ]
+        futures = [executor.submit(prove_formula, f) for f in formulas]
         results = [f.result() for f in futures]
     return results
+
 
 # Usage
 results = prove_many(formulas, n_workers=8)
@@ -460,13 +465,14 @@ results = prove_many(formulas, n_workers=8)
 from concurrent.futures import ThreadPoolExecutor
 from ipfs_datasets_py.logic.fol import FOLConverter
 
+
 def convert_many(texts, n_workers=4):
     """Convert multiple texts in parallel (thread-safe)."""
     converter = FOLConverter()
-    
+
     with ThreadPoolExecutor(max_workers=n_workers) as executor:
         results = list(executor.map(converter.convert, texts))
-    
+
     return results
 ```
 
@@ -510,7 +516,7 @@ result = slow_operation()
 
 profiler.disable()
 stats = pstats.Stats(profiler)
-stats.sort_stats('cumulative')
+stats.sort_stats("cumulative")
 stats.print_stats(20)  # Top 20 slowest functions
 ```
 
@@ -519,6 +525,7 @@ stats.print_stats(20)  # Top 20 slowest functions
 ```python
 from memory_profiler import profile
 
+
 @profile
 def memory_intensive_operation():
     results = []
@@ -526,6 +533,7 @@ def memory_intensive_operation():
         result = converter.convert(f"Formula {i}")
         results.append(result)
     return results
+
 
 # Run and see memory usage line-by-line
 memory_intensive_operation()
@@ -556,17 +564,12 @@ with monitor.track("conversion"):
 ```python
 import re
 
+
 class OptimizedFallback:
     # Compile patterns once at class level
-    QUANTIFIER_PATTERN = re.compile(
-        r'\b(all|every|each|some|exists?)\b',
-        re.IGNORECASE
-    )
-    PREDICATE_PATTERN = re.compile(
-        r'([A-Z][a-z]*)\s*\(',
-        re.MULTILINE
-    )
-    
+    QUANTIFIER_PATTERN = re.compile(r"\b(all|every|each|some|exists?)\b", re.IGNORECASE)
+    PREDICATE_PATTERN = re.compile(r"([A-Z][a-z]*)\s*\(", re.MULTILINE)
+
     def extract_quantifiers_fast(self, text):
         # Single pass with compiled pattern
         return self.QUANTIFIER_PATTERN.findall(text)
@@ -577,12 +580,13 @@ class OptimizedFallback:
 ```python
 from functools import lru_cache
 
+
 class CachedConverter:
     @lru_cache(maxsize=1000)
     def parse(self, text: str):
         """Parse with automatic AST caching."""
         return self._slow_parse(text)
-    
+
     def convert(self, text: str):
         ast = self.parse(text)  # Cached!
         return self.generate_fol(ast)
@@ -624,14 +628,17 @@ def find_variables_slow(formula):
                 variables.append(child)
     return list(set(variables))
 
+
 # FAST: O(n) single-pass traversal
 def find_variables_fast(formula):
     variables = set()
+
     def visit(node):
         if node.is_variable():
             variables.add(node)
         for child in node.children:
             visit(child)
+
     visit(formula.root)
     return list(variables)
 ```
@@ -723,6 +730,7 @@ python benchmarks.py --compare baseline.json
 import time
 import statistics
 
+
 def benchmark(func, *args, iterations=100):
     times = []
     for _ in range(iterations):
@@ -730,16 +738,17 @@ def benchmark(func, *args, iterations=100):
         func(*args)
         elapsed = time.perf_counter() - start
         times.append(elapsed * 1000)  # Convert to ms
-    
+
     return {
-        'mean': statistics.mean(times),
-        'median': statistics.median(times),
-        'stdev': statistics.stdev(times) if len(times) > 1 else 0,
-        'min': min(times),
-        'max': max(times),
-        'p95': sorted(times)[int(len(times) * 0.95)],
-        'p99': sorted(times)[int(len(times) * 0.99)],
+        "mean": statistics.mean(times),
+        "median": statistics.median(times),
+        "stdev": statistics.stdev(times) if len(times) > 1 else 0,
+        "min": min(times),
+        "max": max(times),
+        "p95": sorted(times)[int(len(times) * 0.95)],
+        "p99": sorted(times)[int(len(times) * 0.99)],
     }
+
 
 # Run benchmark
 stats = benchmark(converter.convert, "All cats are animals")

@@ -1,7 +1,7 @@
 class SupportedFormats:
     """
     Utility class for managing supported formats and their extensions.
-    
+
     Properties:
         SUPPORTED_AUDIO_FORMATS (frozenset[str]): Set of supported audio format extensions.
         SUPPORTED_APPLICATION_FORMATS (frozenset[str]): Set of supported application format extensions.
@@ -29,9 +29,10 @@ class SupportedFormats:
     # Decorator to create class properties
     class _classproperty:
         """Helper decorator to turn class methods into properties."""
+
         def __init__(self, func):
             self.func = func
-        
+
         def __get__(self, instance, owner):
             return self.func(owner)
 
@@ -63,7 +64,7 @@ class SupportedFormats:
     def SUPPORTED_IMAGE_FORMATS(cls) -> frozenset[str]:
         """Set of supported image formats."""
         return cls._make_frozen_set_from_frozen_set_dict(cls.IMAGE_FORMAT_EXTENSIONS)
- 
+
     # Text formats
     @_classproperty
     def SUPPORTED_TEXT_FORMATS(cls) -> frozenset[str]:
@@ -83,12 +84,12 @@ class SupportedFormats:
                 "csv": frozenset(("csv",))
             }
         """
-        return { # NOTE More will be added as more formats are implemented.
+        return {  # NOTE More will be added as more formats are implemented.
             "html": frozenset(("html", "htm", "xhtml", "xml")),
             "xml": frozenset(("xml",)),
             "plain": frozenset(("txt", "text", "plain", "plaintext")),
             "calendar": frozenset(("ics", "ical")),
-            "csv": frozenset(("csv",))
+            "csv": frozenset(("csv",)),
         }
 
     @_classproperty
@@ -109,7 +110,7 @@ class SupportedFormats:
             "wav": frozenset(("wav", "x-wav")),
             "ogg": frozenset(("ogg",)),
             "flac": frozenset(("flac",)),
-            "aac": frozenset(("aac",))
+            "aac": frozenset(("aac",)),
         }
 
     @_classproperty
@@ -131,13 +132,13 @@ class SupportedFormats:
             "docx": frozenset(("docx",)),
             "doc": frozenset(("doc",)),
             "xlsx": frozenset(("xlsx", "xlsm", "xlsb", "xltx", "xltm")),
-            "zip": frozenset(("zip",))
+            "zip": frozenset(("zip",)),
         }
 
     @_classproperty
     def IMAGE_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
         """A dictionary mapping image format names to their supported file extensions.
-        
+
         Example:
             >>> {
             "jpeg": frozenset(("jpeg", "jpg")),
@@ -152,7 +153,7 @@ class SupportedFormats:
             "png": frozenset(("png",)),
             "gif": frozenset(("gif",)),
             "webp": frozenset(("webp",)),
-            "svg": frozenset(("svg",))
+            "svg": frozenset(("svg",)),
         }
 
     @_classproperty
@@ -166,11 +167,7 @@ class SupportedFormats:
             "ai": frozenset(("ai",))
             }
         """
-        return {
-            "svg": frozenset(("svg",)),
-            "eps": frozenset(("eps",)),
-            "ai": frozenset(("ai",))
-        }
+        return {"svg": frozenset(("svg",)), "eps": frozenset(("eps",)), "ai": frozenset(("ai",))}
 
     @_classproperty
     def RASTER_IMAGE_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
@@ -205,12 +202,12 @@ class SupportedFormats:
             "webm": frozenset(("webm",)),
             "avi": frozenset(("avi",)),
             "mkv": frozenset(("mkv",)),
-            "mov": frozenset(("mov",))
+            "mov": frozenset(("mov",)),
         }
 
     @_classproperty
     def FORMAT_REGISTRY(cls) -> dict[str, frozenset[tuple[str]]]:
-        """ A dictionary mapping format names to sets of supported file extensions.
+        """A dictionary mapping format names to sets of supported file extensions.
 
         Example:
             >>> {
@@ -226,7 +223,7 @@ class SupportedFormats:
             "video": cls.SUPPORTED_VIDEO_FORMATS,
             "image": cls.SUPPORTED_IMAGE_FORMATS,
             "text": cls.SUPPORTED_TEXT_FORMATS,
-            "application": cls.SUPPORTED_APPLICATION_FORMATS
+            "application": cls.SUPPORTED_APPLICATION_FORMATS,
         }
 
     @_classproperty
@@ -244,12 +241,12 @@ class SupportedFormats:
     @_classproperty
     def HTML_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
         """Set of supported HTML formats."""
-        return cls.TEXT_FORMAT_EXTENSIONS['html']
+        return cls.TEXT_FORMAT_EXTENSIONS["html"]
 
     @_classproperty
     def PLAINTEXT_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
         """Set of supported plaintext formats."""
-        return cls.TEXT_FORMAT_EXTENSIONS['plain']
+        return cls.TEXT_FORMAT_EXTENSIONS["plain"]
 
     @_classproperty
     def DOCUMENT_FORMAT_EXTENSIONS(cls) -> dict[str, frozenset[tuple[str]]]:
@@ -261,35 +258,57 @@ class SupportedFormats:
                 "doc": frozenset(("doc",))
             }
         """
-        return frozenset(("docx","doc",)) # TODO Add more document formats as needed,
+        return frozenset(
+            (
+                "docx",
+                "doc",
+            )
+        )  # TODO Add more document formats as needed,
 
     @_classproperty
     def XML_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
         """Set of supported XML formats."""
-        return cls.TEXT_FORMAT_EXTENSIONS['xml']
+        return cls.TEXT_FORMAT_EXTENSIONS["xml"]
 
     @_classproperty
     def CALENDAR_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
         """Set of supported calendar formats."""
-        return cls.TEXT_FORMAT_EXTENSIONS['calendar']
+        return cls.TEXT_FORMAT_EXTENSIONS["calendar"]
 
     @_classproperty
     def CSV_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
         """Set of supported CSV formats."""
-        return cls.TEXT_FORMAT_EXTENSIONS['csv']
+        return cls.TEXT_FORMAT_EXTENSIONS["csv"]
 
     @_classproperty
     def TRANSCRIPTION_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
         """Set of supported transcription formats."""
-        return frozenset(("srt", "vtt", "ass",)) # hehe 
+        return frozenset(
+            (
+                "srt",
+                "vtt",
+                "ass",
+            )
+        )  # hehe
 
     @_classproperty
     def ARCHIVE_FORMAT_EXTENSIONS(cls) -> frozenset[str]:
         """Set of supported ZIP formats."""
-        return frozenset((
-            "zip", "tar", "gz", "bz2", "xz", "7z", "rar",
-            "tar.gz", "tar.bz2", "tar.xz", "tar.7z",
-        ))
+        return frozenset(
+            (
+                "zip",
+                "tar",
+                "gz",
+                "bz2",
+                "xz",
+                "7z",
+                "rar",
+                "tar.gz",
+                "tar.bz2",
+                "tar.xz",
+                "tar.7z",
+            )
+        )
 
     @_classproperty
     def SUPPORTED_FORMATS(cls) -> set[str]:
@@ -325,66 +344,60 @@ class SupportedFormats:
         """
         return {
             # Text formats
-            'text/html': 'html',
-            'application/xhtml+xml': 'html', # TODO figure out which processor to use: html or xml
-            'text/xml': 'xml',
-            'application/xml': 'xml',
-            'application/atom+xml': 'xml',
-            'application/rss+xml': 'xml',
-            'application/ld+json': 'json',
-            'application/rdf+xml': 'xml',
-            'application/vnd.wap.xhtml+xml': 'xml',
-            'application/vnd.mozilla.xul+xml': 'xml',
-
-
-            'text/plain': 'plain',
-            'text/calendar': 'calendar',
-            'application/ics': 'calendar',  # Added from PROCESSOR_MIME_TYPE_MAP
-            'text/csv': 'csv',
-            'text/comma-separated-values': 'csv',  # Added from PROCESSOR_MIME_TYPE_MAP
-            'text/tab-separated-values': 'csv',   # Added from PROCESSOR_MIME_TYPE_MAP
-            
+            "text/html": "html",
+            "application/xhtml+xml": "html",  # TODO figure out which processor to use: html or xml
+            "text/xml": "xml",
+            "application/xml": "xml",
+            "application/atom+xml": "xml",
+            "application/rss+xml": "xml",
+            "application/ld+json": "json",
+            "application/rdf+xml": "xml",
+            "application/vnd.wap.xhtml+xml": "xml",
+            "application/vnd.mozilla.xul+xml": "xml",
+            "text/plain": "plain",
+            "text/calendar": "calendar",
+            "application/ics": "calendar",  # Added from PROCESSOR_MIME_TYPE_MAP
+            "text/csv": "csv",
+            "text/comma-separated-values": "csv",  # Added from PROCESSOR_MIME_TYPE_MAP
+            "text/tab-separated-values": "csv",  # Added from PROCESSOR_MIME_TYPE_MAP
             # Image formats
-            'image/jpeg': 'jpeg',
-            'image/jpg': 'jpeg',
-            'image/png': 'png',
-            'image/gif': 'gif',
-            'image/webp': 'webp',
-            'image/svg+xml': 'svg', #TODO figure out which processor to use: xml or svg 
-            
+            "image/jpeg": "jpeg",
+            "image/jpg": "jpeg",
+            "image/png": "png",
+            "image/gif": "gif",
+            "image/webp": "webp",
+            "image/svg+xml": "svg",  # TODO figure out which processor to use: xml or svg
             # Audio formats
-            'audio/mpeg': 'mp3',
-            'audio/mp3': 'mp3',
-            'audio/wav': 'wav',
-            'audio/x-wav': 'wav',
-            'audio/ogg': 'ogg',
-            'audio/flac': 'flac',
-            'audio/aac': 'aac',
-            
+            "audio/mpeg": "mp3",
+            "audio/mp3": "mp3",
+            "audio/wav": "wav",
+            "audio/x-wav": "wav",
+            "audio/ogg": "ogg",
+            "audio/flac": "flac",
+            "audio/aac": "aac",
             # Video formats
-            'video/mp4': 'mp4',
-            'video/webm': 'webm',
-            'video/x-msvideo': 'avi',
-            'video/avi': 'avi',  # Added from MIME_TYPE_TO_FORMAT_MAP
-            'video/x-matroska': 'mkv',
-            'video/mkv': 'mkv',  # Added from MIME_TYPE_TO_FORMAT_MAP
-            'video/quicktime': 'mov',
-            'video/mov': 'mov',  # Added from MIME_TYPE_TO_FORMAT_MAP
-            
+            "video/mp4": "mp4",
+            "video/webm": "webm",
+            "video/x-msvideo": "avi",
+            "video/avi": "avi",  # Added from MIME_TYPE_TO_FORMAT_MAP
+            "video/x-matroska": "mkv",
+            "video/mkv": "mkv",  # Added from MIME_TYPE_TO_FORMAT_MAP
+            "video/quicktime": "mov",
+            "video/mov": "mov",  # Added from MIME_TYPE_TO_FORMAT_MAP
             # Application formats
-            'application/pdf': 'pdf',
-            'application/json': 'json',
-            'application/zip': 'zip', # NOTE zip is for Archive/Compression formats
-            'application/gzip': 'zip',
-            'application/x-gzip': 'zip',
-            'application/x-zip-compressed': 'zip',
-            'application/x-7z-compressed': 'zip',  # # Via 7-zip
-            'application/vnd.rar': 'zip',  # Via 7-zip
-            'application/x-rar-compressed': 'zip', # Via 7-zip
-            'application/x-bzip2': 'zip',  # Via 7-zip
-            'application/x-tar': 'zip',  # Via 7-zip
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx'
+            "application/pdf": "pdf",
+            "application/json": "json",
+            "application/zip": "zip",  # NOTE zip is for Archive/Compression formats
+            "application/gzip": "zip",
+            "application/x-gzip": "zip",
+            "application/x-zip-compressed": "zip",
+            "application/x-7z-compressed": "zip",  # # Via 7-zip
+            "application/vnd.rar": "zip",  # Via 7-zip
+            "application/x-rar-compressed": "zip",  # Via 7-zip
+            "application/x-bzip2": "zip",  # Via 7-zip
+            "application/x-tar": "zip",  # Via 7-zip
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
         }
 
     @_classproperty
@@ -409,7 +422,6 @@ class SupportedFormats:
             ".txt": "plaintext",
             ".ics": "calendar",
             ".csv": "csv",
-            
             # Image formats
             ".jpeg": "jpeg",
             ".jpg": "jpg",
@@ -417,25 +429,22 @@ class SupportedFormats:
             ".gif": "gif",
             ".webp": "webp",
             ".svg": "svg",
-            
             # Audio formats
             ".mp3": "mp3",
             ".wav": "wav",
             ".ogg": "ogg",
             ".flac": "flac",
             ".aac": "aac",
-            
             # Video formats
             ".mp4": "mp4",
             ".webm": "webm",
             ".avi": "avi",
             ".mkv": "mkv",
             ".mov": "mov",
-
             # Application formats
             ".pdf": "pdf",
             ".json": "json",
-            ".zip": "zip"
+            ".zip": "zip",
         }
 
     ###########################################################################
@@ -449,67 +458,104 @@ class SupportedFormats:
         Returns a set of application formats that are not currently supported by the converter.
         """
         return {
-            "x-bzip", # TODO Figure out how bzip can be implemented 
-            "x-freearc", # TODO freearc has been discontinued, figure out how to implement it
+            "x-bzip",  # TODO Figure out how bzip can be implemented
+            "x-freearc",  # TODO freearc has been discontinued, figure out how to implement it
             # Document formats - Microsoft Office
-            "msword", # TODO This is a legacy format, need a specific handler for it
-            
-            "vnd.ms-excel", "vnd.ms-powerpoint", "vnd.ms-word",
+            "msword",  # TODO This is a legacy format, need a specific handler for it
+            "vnd.ms-excel",
+            "vnd.ms-powerpoint",
+            "vnd.ms-word",
             "vnd.openxmlformats-officedocument.presentationml.presentation",
             # Document formats - OpenDocument
-            "vnd.oasis.opendocument.presentation", "vnd.oasis.opendocument.spreadsheet",
+            "vnd.oasis.opendocument.presentation",
+            "vnd.oasis.opendocument.spreadsheet",
             "vnd.oasis.opendocument.text",
             # Document formats - Other
-            "rtf", "postscript", "x-abiword", "x-tex", "x-troff-man",
+            "rtf",
+            "postscript",
+            "x-abiword",
+            "x-tex",
+            "x-troff-man",
             # eBook formats
-            "epub+zip", "vnd.amazon.ebook", "x-mobipocket-ebook",
-
+            "epub+zip",
+            "vnd.amazon.ebook",
+            "x-mobipocket-ebook",
             # JavaScript/Programming formats
-            "javascript", "x-javascript", "x-json", "x-httpd-php",
+            "javascript",
+            "x-javascript",
+            "x-json",
+            "x-httpd-php",
             # Geographic/Mapping formats
-            "vnd.google-earth.kml+xml", "vnd.google-earth.kmz",
+            "vnd.google-earth.kml+xml",
+            "vnd.google-earth.kmz",
             # Calendar/Time formats
-            "calendar", "ics",
+            "calendar",
+            "ics",
             # Media/Multimedia formats
-            "ogg", "x-shockwave-flash",
+            "ogg",
+            "x-shockwave-flash",
             # Security/Encryption formats
-            "pgp-encrypted", "pgp-signature",
+            "pgp-encrypted",
+            "pgp-signature",
             # System/Binary formats
-            "octet-stream", "octetstream", "x-msdownload", "vnd.android.package-archive",
-            "vnd.apple.installer+xml", "x-debian-package",
+            "octet-stream",
+            "octetstream",
+            "x-msdownload",
+            "vnd.android.package-archive",
+            "vnd.apple.installer+xml",
+            "x-debian-package",
             # Script/Shell formats
-            "x-csh", "x-sh",
+            "x-csh",
+            "x-sh",
             # Scientific/Data formats
-            "marc", "x-netcdf", "x-cdf", "x-endnote-refer", "x-research-info-systems",
+            "marc",
+            "x-netcdf",
+            "x-cdf",
+            "x-endnote-refer",
+            "x-research-info-systems",
             "x-bibtex",
             # Download/Transfer formats
-            "download", "force-download", "save-to-disk", "x-download",
+            "download",
+            "force-download",
+            "save-to-disk",
+            "x-download",
             # Application/Specialized formats
-            "java-archive", "x-java-jnlp-file", "x-bittorrent", "vnd.visio", "text"
+            "java-archive",
+            "x-java-jnlp-file",
+            "x-bittorrent",
+            "vnd.visio",
+            "text",
         }
 
     @_classproperty
     def UNIMPLEMENTED_AUDIO_FORMATS_SET(cls) -> set[str]:
         return {
             # Mobile/3GPP formats
-            "3gpp", "3gpp2",
+            "3gpp",
+            "3gpp2",
             # MIDI formats
-            "midi", "x-midi",
+            "midi",
+            "x-midi",
             # Playlist/Streaming formats
-            "x-mpegurl", "x-scpls",
+            "x-mpegurl",
+            "x-scpls",
             # Container formats
-            "webm"
+            "webm",
         }
 
     @_classproperty
     def UNIMPLEMENTED_VIDEO_FORMATS_SET(cls) -> set[str]:
         return {
             # Mobile/3GPP formats
-            "3gpp", "3gpp2",
+            "3gpp",
+            "3gpp2",
             # MPEG variants
-            "mp2t", "mpeg", 
+            "mp2t",
+            "mpeg",
             # Container/Streaming formats
-            "ogg", "x-ms-asf", "x-msvideo"
+            "ogg",
+            "x-ms-asf",
+            "x-msvideo",
         }
 
     @_classproperty
@@ -520,42 +566,51 @@ class SupportedFormats:
             # Next-gen formats
             "avif",
             # Legacy/Common formats
-            "bmp", "tiff",
+            "bmp",
+            "tiff",
             # JPEG variants
-            "jp2", "pjpeg",
+            "jp2",
+            "pjpeg",
             # Specialized formats
-            "vnd.djvu", "vnd.microsoft.icon"
+            "vnd.djvu",
+            "vnd.microsoft.icon",
         }
 
     @_classproperty
     def UNIMPLEMENTED_TEXT_FORMATS_SET(cls) -> set[str]:
         return {
             # Web/Styling formats
-            "css", "javascript",
+            "css",
+            "javascript",
             # Programming/Source code formats
-            "x-c", "x-csrc", "x-perl",
+            "x-c",
+            "x-csrc",
+            "x-perl",
             # Data/Structured formats
-            "tab-separated-values", "turtle", "x-bibtex",
+            "tab-separated-values",
+            "turtle",
+            "x-bibtex",
             # Contact/Calendar formats
-            "vcard", "x-vcalendar", "x-vcard",
+            "vcard",
+            "x-vcalendar",
+            "x-vcard",
             # Document/File formats
-            "directory", "enriched", "prs.lines.tag",
+            "directory",
+            "enriched",
+            "prs.lines.tag",
             # Development/Patch formats
-            "x-diff", "x-patch"
+            "x-diff",
+            "x-patch",
         }
 
     # Additional unimplemented formats not in main MIME categories
     @_classproperty
     def UNIMPLEMENTED_BINARY_FORMATS_SET(cls) -> set[str]:
-        return {
-            "octet-stream"
-        }
+        return {"octet-stream"}
 
     @_classproperty
     def UNIMPLEMENTED_MESSAGE_FORMATS_SET(cls) -> set[str]:
-        return {
-            "rfc822"
-        }
+        return {"rfc822"}
 
     @_classproperty
     def ALL_ROADMAP_FORMATS(cls) -> set[str]:
@@ -574,7 +629,7 @@ class SupportedFormats:
             *cls.UNIMPLEMENTED_TEXT_FORMATS_SET,
             *cls.UNIMPLEMENTED_VIDEO_FORMATS_SET,
             *cls.UNIMPLEMENTED_BINARY_FORMATS_SET,
-            *cls.UNIMPLEMENTED_MESSAGE_FORMATS_SET
+            *cls.UNIMPLEMENTED_MESSAGE_FORMATS_SET,
         }
 
     @classmethod
@@ -589,11 +644,11 @@ class SupportedFormats:
     def get(cls, name: str, default: bool = False) -> bool:
         """
         Get a supported format by name with a default value.
-        
+
         Args:
             name: The name of the supported format.
             default: The default value to return if the supported format is not found.
-        
+
         Returns:
             The supported format if found, otherwise the default value.
         """
@@ -603,36 +658,40 @@ class SupportedFormats:
     def keys(cls) -> list[str]:
         """
         Get a list of all supported format names.
-        
+
         Returns:
             A list of supported format names.
         """
         return [
-            name for name in dir(cls) 
-            if not name.startswith('_') # Check if it's not a private attribute
-            and hasattr(cls._classproperty, name) # Check for class properties decorator
+            name
+            for name in dir(cls)
+            if not name.startswith("_")  # Check if it's not a private attribute
+            and hasattr(cls._classproperty, name)  # Check for class properties decorator
         ]
 
     @classmethod
     def items(cls) -> list[tuple[str, bool]]:
         """
         Get a list of all supported formats as (name, format) tuples.
-        
+
         Returns:
             A list of tuples containing supported format names and their corresponding objects.
         """
         return [
-            (name, getattr(cls, name)) # Check if the attribute exists. The second part of each tuple must be a boolean
+            (
+                name,
+                getattr(cls, name),
+            )  # Check if the attribute exists. The second part of each tuple must be a boolean
             for name in cls.keys()
         ]
 
-    def __contains__ (cls, item: str) -> bool:
+    def __contains__(cls, item: str) -> bool:
         """
         Check if a format is supported (e.g. can be processed).
-        
+
         Args:
             item: The name of the supported format.
-        
+
         Returns:
             Boolean: True if the format is supported, else False.
         """

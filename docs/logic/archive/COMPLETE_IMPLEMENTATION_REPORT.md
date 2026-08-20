@@ -176,7 +176,7 @@ Implemented **complete privacy-preserving theorem proving system** enabling conf
 ```python
 proof = prover.generate_proof(
     theorem="Q",
-    private_axioms=["P", "P -> Q"]  # Kept secret!
+    private_axioms=["P", "P -> Q"],  # Kept secret!
 )
 # Axioms never exposed in proof
 ```
@@ -245,6 +245,7 @@ Created **comprehensive monitoring infrastructure** for utility functions throug
 def my_utility(text):
     return process(text)
 
+
 # Automatically tracks: calls, timing, errors
 ```
 
@@ -254,6 +255,7 @@ def my_utility(text):
 def expensive_operation(text):
     # Complex computation
     return result
+
 
 # 48.1x speedup validated!
 ```

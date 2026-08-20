@@ -179,8 +179,7 @@ TOOL_SCHEMAS: Final[dict[str, dict[str, Any]]] = {
         "name": "list_authorization_api_tools",
         "interface": MCP_INTENT_AUTHORIZATION_INTERFACE,
         "description": (
-            "List MCPIntentAuthorization@1 tool schemas without evaluation "
-            "or execution."
+            "List MCPIntentAuthorization@1 tool schemas without evaluation or execution."
         ),
         "parameters": {"type": "object", "properties": {}},
         "returns": {
@@ -259,9 +258,7 @@ def _optional_str(value: Any, label: str) -> str:
 def _optional_str_seq(value: Any, label: str) -> tuple[str, ...]:
     if value is None:
         return ()
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
-        value, Sequence
-    ):
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
         raise TypeError(f"{label} must be a sequence of strings")
     items: list[str] = []
     for index, item in enumerate(value):
@@ -274,9 +271,7 @@ def _optional_str_seq(value: Any, label: str) -> tuple[str, ...]:
 def _assert_no_forbidden_tools() -> None:
     overlap = set(TOOL_NAMES) & FORBIDDEN_TOOL_NAMES
     if overlap:
-        raise RuntimeError(
-            f"forbidden capability lifecycle tools exposed: {sorted(overlap)}"
-        )
+        raise RuntimeError(f"forbidden capability lifecycle tools exposed: {sorted(overlap)}")
 
 
 _assert_no_forbidden_tools()
@@ -293,9 +288,7 @@ def _load_api():
     try:
         from ipfs_datasets_py.logic.admissibility import api as auth_api
     except ImportError as exc:  # pragma: no cover - environment dependent
-        raise RuntimeError(
-            f"authorization API backend unavailable: {exc}"
-        ) from exc
+        raise RuntimeError(f"authorization API backend unavailable: {exc}") from exc
     return auth_api
 
 
@@ -503,10 +496,7 @@ async def verify_authorization_receipt(
         audience = _optional_str(expected_audience, "expected_audience") or None
         actor = _optional_str(expected_actor, "expected_actor") or None
         nonce = _optional_str(expected_nonce, "expected_nonce") or None
-        request_digest = (
-            _optional_str(expected_request_digest, "expected_request_digest")
-            or None
-        )
+        request_digest = _optional_str(expected_request_digest, "expected_request_digest") or None
         roots = None
         if expected_roots is not None:
             roots = dict(_require_mapping(expected_roots, "expected_roots"))
@@ -543,9 +533,7 @@ async def verify_authorization_receipt(
             require_not_expired=require_not_expired,
         )
     except Exception as exc:  # noqa: BLE001
-        logger.debug(
-            "verify_authorization_receipt failed closed: %s", exc, exc_info=True
-        )
+        logger.debug("verify_authorization_receipt failed closed: %s", exc, exc_info=True)
         return _fail(
             tool,
             status="abstain",
@@ -559,8 +547,7 @@ async def verify_authorization_receipt(
         wire = "abstain"
     # Verification success means integrity ok; status still reflects decision.
     verified = result.receipt_ref is not None and not any(
-        code == "auth.api.receipt_verify_failed"
-        for code in (payload.get("reason_codes") or [])
+        code == "auth.api.receipt_verify_failed" for code in (payload.get("reason_codes") or [])
     )
     # Fail-closed verify: missing receipt_ref means verification did not pass.
     if result.receipt_ref is None:

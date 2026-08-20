@@ -84,9 +84,9 @@ OUTPUT_NORMALIZATION_SCHEMA: Final = (
 )
 REASSESSMENT_RUN_ID: Final = PUBLISHED_REASSESSMENT_RUN_ID
 REASSESSMENT_BASELINE_ID: Final = "a0-current-effective-v2"
-DEFAULT_RECONCILED_MANIFEST_PATH: Final = (
-    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).baseline_manifest
-)
+DEFAULT_RECONCILED_MANIFEST_PATH: Final = ReassessmentRunLayout.for_run(
+    REASSESSMENT_RUN_ID
+).baseline_manifest
 DEFAULT_IMMUTABLE_V1_ARTIFACT_PATHS: Final = (
     DEFAULT_BASELINE_MANIFEST_PATH,
     DEFAULT_BENCHMARK_ROOT / "results" / "frontend-overlap-v1.json",
@@ -181,11 +181,7 @@ def _sha256_json(value: object) -> str:
 def _paths_overlap(left: Path, right: Path) -> bool:
     left = left.resolve(strict=False)
     right = right.resolve(strict=False)
-    return (
-        left == right
-        or left.is_relative_to(right)
-        or right.is_relative_to(left)
-    )
+    return left == right or left.is_relative_to(right) or right.is_relative_to(left)
 
 
 def _logical_absolute_path(path: str | Path, field: str) -> Path:
@@ -214,13 +210,9 @@ def _reject_symlink_components(path: str | Path, field: str) -> Path:
                 f"cannot inspect {field} path component: {current}"
             ) from exc
         if stat.S_ISLNK(metadata.st_mode):
-            raise SourceReconciliationError(
-                f"{field} may not traverse a symlink: {current}"
-            )
+            raise SourceReconciliationError(f"{field} may not traverse a symlink: {current}")
         if index < len(parts) - 1 and not stat.S_ISDIR(metadata.st_mode):
-            raise SourceReconciliationError(
-                f"{field} ancestor is not a directory: {current}"
-            )
+            raise SourceReconciliationError(f"{field} ancestor is not a directory: {current}")
     return logical
 
 
@@ -294,9 +286,7 @@ def _mkdir_without_following_symlinks(
                 ) from exc
             if not stat.S_ISDIR(os.fstat(child_fd).st_mode):
                 os.close(child_fd)
-                raise SourceReconciliationError(
-                    f"fresh state path is not a directory: {logical}"
-                )
+                raise SourceReconciliationError(f"fresh state path is not a directory: {logical}")
             os.close(parent_fd)
             parent_fd = child_fd
     finally:
@@ -332,9 +322,7 @@ def _write_bytes_exclusive_nofollow(
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise SourceReconciliationError(f"{field} must be a JSON object")
     return value
 
@@ -354,8 +342,7 @@ def _exact_keys(
     unknown = set(value) - expected
     if missing or unknown:
         raise SourceReconciliationError(
-            f"{field} fields invalid: missing={sorted(missing)}, "
-            f"unknown={sorted(unknown)}"
+            f"{field} fields invalid: missing={sorted(missing)}, unknown={sorted(unknown)}"
         )
 
 
@@ -364,9 +351,7 @@ def _safe_relative_path(value: object, field: str) -> str:
         raise SourceReconciliationError(f"{field} must be a nonempty path")
     path = Path(value)
     if path.is_absolute() or ".." in path.parts or path.as_posix() != value:
-        raise SourceReconciliationError(
-            f"{field} must be a normalized relative POSIX path"
-        )
+        raise SourceReconciliationError(f"{field} must be a normalized relative POSIX path")
     return value
 
 
@@ -388,8 +373,7 @@ def _git(
             if secure_materialization:
                 if template_directory is None:
                     raise SourceReconciliationError(
-                        "secure submodule materialization requires an empty "
-                        "template directory"
+                        "secure submodule materialization requires an empty template directory"
                     )
                 template = Path(template_directory)
                 metadata = template.lstat()
@@ -400,9 +384,7 @@ def _git(
                     or stat.S_IMODE(metadata.st_mode) & 0o022
                     or any(template.iterdir())
                 ):
-                    raise SourceReconciliationError(
-                        "secure submodule template directory is unsafe"
-                    )
+                    raise SourceReconciliationError("secure submodule template directory is unsafe")
                 template_arguments = (
                     "-c",
                     f"init.templateDir={template}",
@@ -416,9 +398,7 @@ def _git(
                 *arguments,
             ]
             environment = _hardened_git_environment()
-            effective_umask = (
-                0o022 if secure_materialization else child_umask
-            )
+            effective_umask = 0o022 if secure_materialization else child_umask
         else:
             command = [
                 "git",
@@ -444,16 +424,8 @@ def _git(
             close_fds=True,
             shell=False,
             input=input_text,
-            stdin=(
-                subprocess.DEVNULL
-                if hardened and input_text is None
-                else None
-            ),
-            **(
-                {}
-                if effective_umask is None
-                else {"umask": effective_umask}
-            ),
+            stdin=(subprocess.DEVNULL if hardened and input_text is None else None),
+            **({} if effective_umask is None else {"umask": effective_umask}),
             env=environment,
         )
     except (
@@ -461,15 +433,11 @@ def _git(
         OSError,
         subprocess.SubprocessError,
     ) as exc:
-        raise SourceReconciliationError(
-            f"Git command failed: {type(exc).__name__}"
-        ) from exc
+        raise SourceReconciliationError(f"Git command failed: {type(exc).__name__}") from exc
     if check and completed.returncode:
         detail = (completed.stderr or completed.stdout).strip().splitlines()
         summary = detail[0][:512] if detail else "no diagnostic"
-        raise SourceReconciliationError(
-            f"Git command {arguments[0]!r} failed: {summary}"
-        )
+        raise SourceReconciliationError(f"Git command {arguments[0]!r} failed: {summary}")
     return completed
 
 
@@ -503,11 +471,7 @@ def _active_source_snapshot(repository: Path) -> tuple[str, str | None, str]:
         "HEAD",
         check=False,
     )
-    branch = (
-        branch_result.stdout.strip()
-        if branch_result.returncode == 0
-        else None
-    )
+    branch = branch_result.stdout.strip() if branch_result.returncode == 0 else None
     status = _worktree_status(
         repository,
         ignore_submodules=False,
@@ -561,13 +525,9 @@ def _validate_live_detached_source(
         ).returncode
         == 0
     ):
-        raise SourceReconciliationError(
-            "live repository HEAD must remain detached"
-        )
+        raise SourceReconciliationError("live repository HEAD must remain detached")
     if _worktree_status(repository, ignore_submodules=True):
-        raise SourceReconciliationError(
-            "live detached source worktree must be clean"
-        )
+        raise SourceReconciliationError("live detached source worktree must be clean")
 
     materialized = (item for item in gitlinks if item.depth == 1)
     for item in sorted(
@@ -579,12 +539,8 @@ def _validate_live_detached_source(
             f"submodule {item.path!r}",
         )
         if not logical.is_dir():
-            raise SourceReconciliationError(
-                f"materialized submodule is missing: {item.path!r}"
-            )
-        top = Path(
-            _git_value(logical, "rev-parse", "--show-toplevel")
-        ).resolve()
+            raise SourceReconciliationError(f"materialized submodule is missing: {item.path!r}")
+        top = Path(_git_value(logical, "rev-parse", "--show-toplevel")).resolve()
         if top != logical:
             raise SourceReconciliationError(
                 f"submodule is not an exact worktree root: {item.path!r}"
@@ -609,13 +565,9 @@ def _validate_live_detached_source(
             ).returncode
             == 0
         ):
-            raise SourceReconciliationError(
-                f"submodule HEAD must remain detached: {item.path!r}"
-            )
+            raise SourceReconciliationError(f"submodule HEAD must remain detached: {item.path!r}")
         if _worktree_status(logical, ignore_submodules=True):
-            raise SourceReconciliationError(
-                f"submodule worktree must be clean: {item.path!r}"
-            )
+            raise SourceReconciliationError(f"submodule worktree must be clean: {item.path!r}")
 
 
 def _direct_gitlinks(
@@ -673,19 +625,10 @@ class GitlinkIdentity:
             _safe_relative_path(self.parent_path, "gitlink.parent_path")
         if not isinstance(self.commit, str) or not _HEX_COMMIT.fullmatch(self.commit):
             raise SourceReconciliationError("gitlink.commit is not a full commit")
-        if (
-            not isinstance(self.parent_commit, str)
-            or not _HEX_COMMIT.fullmatch(self.parent_commit)
-        ):
-            raise SourceReconciliationError(
-                "gitlink.parent_commit is not a full commit"
-            )
+        if not isinstance(self.parent_commit, str) or not _HEX_COMMIT.fullmatch(self.parent_commit):
+            raise SourceReconciliationError("gitlink.parent_commit is not a full commit")
         # Depth is repository nesting, not filesystem component count.
-        if (
-            not isinstance(self.depth, int)
-            or isinstance(self.depth, bool)
-            or self.depth < 1
-        ):
+        if not isinstance(self.depth, int) or isinstance(self.depth, bool) or self.depth < 1:
             raise SourceReconciliationError("gitlink.depth must be positive")
 
     def to_dict(self) -> dict[str, object]:
@@ -741,12 +684,8 @@ def capture_recursive_gitlinks(
         if identity in seen:
             raise SourceReconciliationError("recursive submodule cycle detected")
         next_seen = seen | {identity}
-        for child_path, child_commit in _direct_gitlinks(
-            current_repository, current_commit
-        ):
-            qualified = (
-                f"{prefix}/{child_path}" if prefix else child_path
-            )
+        for child_path, child_commit in _direct_gitlinks(current_repository, current_commit):
+            qualified = f"{prefix}/{child_path}" if prefix else child_path
             records.append(
                 GitlinkIdentity(
                     path=qualified,
@@ -756,9 +695,7 @@ def capture_recursive_gitlinks(
                     depth=depth,
                 )
             )
-            child_repository = _exact_submodule_repository(
-                current_repository, child_path
-            )
+            child_repository = _exact_submodule_repository(current_repository, child_path)
             if child_repository is None:
                 if require_complete:
                     raise SourceReconciliationError(
@@ -809,14 +746,10 @@ def _capture_benchmark_bounded_gitlinks(
 
     root = Path(repository).resolve()
     if not root.is_dir():
-        raise SourceReconciliationError(
-            "repository must be an existing directory"
-        )
+        raise SourceReconciliationError("repository must be an existing directory")
     top = Path(_git_value(root, "rev-parse", "--show-toplevel")).resolve()
     if top != root:
-        raise SourceReconciliationError(
-            "repository must name a Git worktree root"
-        )
+        raise SourceReconciliationError("repository must name a Git worktree root")
     root_commit = _resolve_commit(root, revision)
     records: list[GitlinkIdentity] = []
     for path, commit in _direct_gitlinks(root, root_commit):
@@ -865,9 +798,7 @@ def _capture_benchmark_bounded_gitlinks(
             )
     paths = [item.path for item in records]
     if len(paths) != len(set(paths)):
-        raise SourceReconciliationError(
-            "fresh bounded gitlink paths are not unique"
-        )
+        raise SourceReconciliationError("fresh bounded gitlink paths are not unique")
     return tuple(sorted(records, key=lambda item: item.path))
 
 
@@ -926,14 +857,10 @@ def _reject_local_transport_overrides(repository: Path) -> None:
         check=False,
     )
     if worktree_config.returncode not in {0, 1}:
-        raise SourceReconciliationError(
-            "cannot inspect repository-local Git transport policy"
-        )
+        raise SourceReconciliationError("cannot inspect repository-local Git transport policy")
     if worktree_config.returncode == 0:
         if worktree_config.stdout.strip().casefold() != "true":
-            raise SourceReconciliationError(
-                "repository worktreeConfig setting is invalid"
-            )
+            raise SourceReconciliationError("repository worktreeConfig setting is invalid")
         scopes.append("--worktree")
     patterns = (
         r"^url\..*\.(insteadof|pushinsteadof)$",
@@ -980,16 +907,12 @@ def _materialize_recursive_local_gitlinks(
             "cannot create the secure submodule template directory"
         ) from exc
     for item in sorted(gitlinks, key=lambda record: (record.depth, record.path)):
-        parent_relative = (
-            Path() if item.parent_path == "." else Path(item.parent_path)
-        )
+        parent_relative = Path() if item.parent_path == "." else Path(item.parent_path)
         child_relative = Path(item.path).relative_to(parent_relative)
         source_parent = (source_repository / parent_relative).resolve()
         worktree_parent = (worktree_repository / parent_relative).resolve()
         local_child = (source_repository / item.path).resolve()
-        if _exact_submodule_repository(source_parent, child_relative.as_posix()) != (
-            local_child
-        ):
+        if _exact_submodule_repository(source_parent, child_relative.as_posix()) != (local_child):
             raise SourceReconciliationError(
                 f"local submodule repository unavailable for {item.path!r}"
             )
@@ -1003,9 +926,7 @@ def _materialize_recursive_local_gitlinks(
             ).returncode
             != 0
         ):
-            raise SourceReconciliationError(
-                f"local submodule commit unavailable for {item.path!r}"
-            )
+            raise SourceReconciliationError(f"local submodule commit unavailable for {item.path!r}")
         try:
             _reject_effective_checkout_filters(
                 local_child,
@@ -1062,9 +983,7 @@ def _materialize_recursive_local_gitlinks(
             check=False,
         )
         if actual_commit != item.commit or branch.returncode == 0:
-            raise SourceReconciliationError(
-                f"local submodule identity drifted for {item.path!r}"
-            )
+            raise SourceReconciliationError(f"local submodule identity drifted for {item.path!r}")
 
 
 def _redact_safe_inventory(value: object, field: str = "environment") -> object:
@@ -1085,10 +1004,7 @@ def _redact_safe_inventory(value: object, field: str = "environment") -> object:
             result[key] = _redact_safe_inventory(item, f"{field}.{key}")
         return result
     if isinstance(value, (list, tuple)):
-        return [
-            _redact_safe_inventory(item, f"{field}[]")
-            for item in value
-        ]
+        return [_redact_safe_inventory(item, f"{field}[]") for item in value]
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
     raise SourceReconciliationError(f"{field} is not JSON serializable")
@@ -1105,9 +1021,7 @@ def environment_inventory_record(
     if isinstance(inventory, CapabilityInventory):
         payload = inventory.to_dict()
         if inventory.run_id != run_id:
-            raise SourceReconciliationError(
-                "capability inventory belongs to a different run"
-            )
+            raise SourceReconciliationError("capability inventory belongs to a different run")
         if inventory.source_commit != source_commit:
             raise SourceReconciliationError(
                 "capability inventory belongs to a different source commit"
@@ -1135,9 +1049,7 @@ def _reject_secret_values(value: object, field: str = "environment") -> None:
             _reject_secret_values(item, f"{field}[]")
         return
     if isinstance(value, str) and _SECRET_VALUE.search(value):
-        raise SourceReconciliationError(
-            f"{field} contains a credential-shaped value"
-        )
+        raise SourceReconciliationError(f"{field} contains a credential-shaped value")
 
 
 def fresh_environment_inventory_record(
@@ -1221,16 +1133,12 @@ def _validate_namespaces(value: object, run_id: str) -> None:
     for name in filesystem_names:
         raw = namespaces[name]
         if not isinstance(raw, str) or run_id not in Path(raw).parts:
-            raise SourceReconciliationError(
-                f"namespace {name} is not scoped to run {run_id!r}"
-            )
+            raise SourceReconciliationError(f"namespace {name} is not scoped to run {run_id!r}")
         filesystem_paths[name] = Path(raw)
     root = filesystem_paths["run_root"]
     for name, path in filesystem_paths.items():
         if name != "run_root" and not path.is_relative_to(root):
-            raise SourceReconciliationError(
-                f"namespace {name} escapes the run root"
-            )
+            raise SourceReconciliationError(f"namespace {name} escapes the run root")
     nonroot = [filesystem_paths[name] for name in filesystem_names[1:]]
     if len(nonroot) != len(set(nonroot)):
         raise SourceReconciliationError("filesystem namespaces collide")
@@ -1297,8 +1205,7 @@ def normalize_a0_outputs(
             missing_stage = required_stage - set(stage)
             if missing_stage:
                 raise SourceReconciliationError(
-                    "A0 stage lacks behavior fields: "
-                    f"{sorted(missing_stage)}"
+                    f"A0 stage lacks behavior fields: {sorted(missing_stage)}"
                 )
             normalized_stages.append(
                 {
@@ -1330,8 +1237,7 @@ def normalize_a0_outputs(
         missing_result = required_result - set(payload)
         if missing_result:
             raise SourceReconciliationError(
-                "A0 output lacks behavior fields: "
-                f"{sorted(missing_result)}"
+                f"A0 output lacks behavior fields: {sorted(missing_result)}"
             )
         normalized.append(
             {
@@ -1371,18 +1277,12 @@ def compare_a0_outputs(
 ) -> dict[str, object]:
     """Compare normalized old/fresh pilot behavior and reject any drift."""
 
-    old = normalize_a0_outputs(
-        predecessor_outputs, expected_case_ids=expected_case_ids
-    )
-    fresh = normalize_a0_outputs(
-        fresh_outputs, expected_case_ids=expected_case_ids
-    )
+    old = normalize_a0_outputs(predecessor_outputs, expected_case_ids=expected_case_ids)
+    fresh = normalize_a0_outputs(fresh_outputs, expected_case_ids=expected_case_ids)
     old_digest = _sha256_json(old)
     fresh_digest = _sha256_json(fresh)
     if old != fresh or old_digest != fresh_digest:
-        raise SourceReconciliationError(
-            "unexplained normalized A0 pilot output drift"
-        )
+        raise SourceReconciliationError("unexplained normalized A0 pilot output drift")
     return {
         "schema": OUTPUT_NORMALIZATION_SCHEMA,
         "coordinate_count": len(old),
@@ -1399,9 +1299,7 @@ def _decode_json(text: str, context: str) -> object:
         result: dict[str, object] = {}
         for key, value in pairs:
             if key in result:
-                raise SourceReconciliationError(
-                    f"{context} has duplicate JSON key {key!r}"
-                )
+                raise SourceReconciliationError(f"{context} has duplicate JSON key {key!r}")
             result[key] = value
         return result
 
@@ -1410,9 +1308,7 @@ def _decode_json(text: str, context: str) -> object:
     except SourceReconciliationError:
         raise
     except (json.JSONDecodeError, ValueError) as exc:
-        raise SourceReconciliationError(
-            f"{context} is not strict JSON: {exc}"
-        ) from exc
+        raise SourceReconciliationError(f"{context} is not strict JSON: {exc}") from exc
 
 
 def _freeze(value: object) -> object:
@@ -1525,19 +1421,14 @@ def validate_fresh_source_baseline_payload(
     )
     if (
         predecessor["run_id"] != PUBLISHED_REASSESSMENT_RUN_ID
-        or predecessor["manifest_path"]
-        != DEFAULT_RECONCILED_MANIFEST_PATH.as_posix()
-        or predecessor["manifest_sha256"]
-        != PUBLISHED_REASSESSMENT_BASELINE_SHA256
-        or predecessor["manifest_bytes_sha256"]
-        != PUBLISHED_REASSESSMENT_BASELINE_BYTES_SHA256
+        or predecessor["manifest_path"] != DEFAULT_RECONCILED_MANIFEST_PATH.as_posix()
+        or predecessor["manifest_sha256"] != PUBLISHED_REASSESSMENT_BASELINE_SHA256
+        or predecessor["manifest_bytes_sha256"] != PUBLISHED_REASSESSMENT_BASELINE_BYTES_SHA256
         or predecessor["immutable"] is not True
         or not isinstance(predecessor["source_commit"], str)
         or not _HEX_COMMIT.fullmatch(predecessor["source_commit"])
     ):
-        raise SourceReconciliationError(
-            "immutable published predecessor identity drifted"
-        )
+        raise SourceReconciliationError("immutable published predecessor identity drifted")
     artifacts = _array(predecessor["artifacts"], "predecessor.artifacts")
     expected_artifact_paths = tuple(
         path.as_posix() for path in DEFAULT_FRESH_PREDECESSOR_ARTIFACT_PATHS
@@ -1550,19 +1441,13 @@ def validate_fresh_source_baseline_payload(
         path = _safe_relative_path(record["path"], "predecessor artifact.path")
         digest = record["bytes_sha256"]
         if not isinstance(digest, str) or not _SHA256.fullmatch(digest):
-            raise SourceReconciliationError(
-                "predecessor artifact digest is invalid"
-            )
+            raise SourceReconciliationError("predecessor artifact digest is invalid")
         observed_artifact_paths.append(path)
         normalized_artifacts.append({"path": path, "bytes_sha256": digest})
     if tuple(observed_artifact_paths) != expected_artifact_paths:
-        raise SourceReconciliationError(
-            "published predecessor artifact coverage drifted"
-        )
+        raise SourceReconciliationError("published predecessor artifact coverage drifted")
     if predecessor["artifacts_sha256"] != _sha256_json(normalized_artifacts):
-        raise SourceReconciliationError(
-            "published predecessor artifact snapshot digest drifted"
-        )
+        raise SourceReconciliationError("published predecessor artifact snapshot digest drifted")
     manifest_artifact = next(
         (
             record
@@ -1573,12 +1458,9 @@ def validate_fresh_source_baseline_payload(
     )
     if (
         manifest_artifact is None
-        or manifest_artifact["bytes_sha256"]
-        != predecessor["manifest_bytes_sha256"]
+        or manifest_artifact["bytes_sha256"] != predecessor["manifest_bytes_sha256"]
     ):
-        raise SourceReconciliationError(
-            "published predecessor manifest snapshot is inconsistent"
-        )
+        raise SourceReconciliationError("published predecessor manifest snapshot is inconsistent")
 
     source = _mapping(payload["source"], "source")
     _exact_keys(
@@ -1596,9 +1478,7 @@ def validate_fresh_source_baseline_payload(
         "source",
     )
     for name in ("repository_commit", "worktree_commit"):
-        if not isinstance(source[name], str) or not _HEX_COMMIT.fullmatch(
-            source[name]
-        ):
+        if not isinstance(source[name], str) or not _HEX_COMMIT.fullmatch(source[name]):
             raise SourceReconciliationError(f"source.{name} is invalid")
     if (
         source["repository_commit"] != source["worktree_commit"]
@@ -1609,9 +1489,7 @@ def validate_fresh_source_baseline_payload(
         or not isinstance(source["worktree_receipt_sha256"], str)
         or not _SHA256.fullmatch(source["worktree_receipt_sha256"])
     ):
-        raise SourceReconciliationError(
-            "fresh detached source evidence is invalid"
-        )
+        raise SourceReconciliationError("fresh detached source evidence is invalid")
     gitlinks = tuple(
         GitlinkIdentity.from_dict(item)
         for item in _array(source["recursive_gitlinks"], "recursive_gitlinks")
@@ -1619,18 +1497,13 @@ def validate_fresh_source_baseline_payload(
     if not gitlinks or tuple(item.path for item in gitlinks) != tuple(
         sorted(item.path for item in gitlinks)
     ):
-        raise SourceReconciliationError(
-            "recursive local-only gitlinks must be nonempty and sorted"
-        )
+        raise SourceReconciliationError("recursive local-only gitlinks must be nonempty and sorted")
     if len({item.path for item in gitlinks}) != len(gitlinks):
         raise SourceReconciliationError("recursive gitlink paths are duplicated")
     by_path = {item.path: item for item in gitlinks}
     for item in gitlinks:
         if item.parent_path == ".":
-            if (
-                item.parent_commit != source["repository_commit"]
-                or item.depth != 1
-            ):
+            if item.parent_commit != source["repository_commit"] or item.depth != 1:
                 raise SourceReconciliationError(
                     "root gitlink is not bound to the repaired source commit"
                 )
@@ -1642,12 +1515,8 @@ def validate_fresh_source_baseline_payload(
             or item.depth != parent.depth + 1
             or not Path(item.path).is_relative_to(Path(item.parent_path))
         ):
-            raise SourceReconciliationError(
-                "recursive gitlink parent chain is invalid"
-            )
-    if source["recursive_gitlinks_sha256"] != _sha256_json(
-        [item.to_dict() for item in gitlinks]
-    ):
+            raise SourceReconciliationError("recursive gitlink parent chain is invalid")
+    if source["recursive_gitlinks_sha256"] != _sha256_json([item.to_dict() for item in gitlinks]):
         raise SourceReconciliationError("recursive gitlink digest is invalid")
 
     environment = _mapping(payload["environment"], "environment")
@@ -1661,9 +1530,7 @@ def validate_fresh_source_baseline_payload(
         or environment["source_commit"] != source["repository_commit"]
         or environment["sha256"] != _sha256_json(environment["inventory"])
     ):
-        raise SourceReconciliationError(
-            "generic capability inventory is not source-bound"
-        )
+        raise SourceReconciliationError("generic capability inventory is not source-bound")
     _redact_safe_inventory(environment["inventory"])
     _reject_secret_values(environment["inventory"])
 
@@ -1683,13 +1550,9 @@ def validate_fresh_source_baseline_payload(
         "variant_id": "A0",
         "definition": "repaired_source_within_run_control",
         "historical_a0_equivalence_claimed": False,
-        "reason": (
-            "repaired_environment_and_code_define_a_new_within_run_A0_control"
-        ),
+        "reason": ("repaired_environment_and_code_define_a_new_within_run_A0_control"),
     }:
-        raise SourceReconciliationError(
-            "fresh A0 control must not claim historical equivalence"
-        )
+        raise SourceReconciliationError("fresh A0 control must not claim historical equivalence")
     comparison = _mapping(
         payload["behavior_comparison"],
         "behavior_comparison",
@@ -1768,9 +1631,7 @@ class FreshSourceBaselineManifest:
         return result
 
 
-SourceBaselineManifest = (
-    SourceReconciledBaselineManifest | FreshSourceBaselineManifest
-)
+SourceBaselineManifest = SourceReconciledBaselineManifest | FreshSourceBaselineManifest
 
 
 def canonical_reconciled_baseline_json(
@@ -1788,9 +1649,7 @@ def reconciled_baseline_sha256(
 ) -> str:
     """Return the semantic SHA-256 identity of a validated v2 receipt."""
 
-    return _sha256_bytes(
-        canonical_reconciled_baseline_json(manifest).encode("utf-8")
-    )
+    return _sha256_bytes(canonical_reconciled_baseline_json(manifest).encode("utf-8"))
 
 
 def _validate_digest_record(value: object, field: str) -> None:
@@ -1839,16 +1698,11 @@ def validate_reconciled_manifest_payload(
     try:
         ReassessmentRunLayout.for_run(run_id)
     except ValueError as exc:
-        raise SourceReconciliationError(
-            "reconciliation run_id is invalid"
-        ) from exc
+        raise SourceReconciliationError("reconciliation run_id is invalid") from exc
     if (
         payload["benchmark_id"] != BENCHMARK_ID
         or payload["baseline_id"] != REASSESSMENT_BASELINE_ID
-        or (
-            expected_run_id is not None
-            and run_id != expected_run_id
-        )
+        or (expected_run_id is not None and run_id != expected_run_id)
     ):
         raise SourceReconciliationError("reassessment baseline identity drifted")
     if payload["evidence"] != HSSLEV1134D84() or payload["frozen"] is not True:
@@ -1894,9 +1748,7 @@ def validate_reconciled_manifest_payload(
         "source",
     )
     for name in ("repository_commit", "worktree_commit"):
-        if not isinstance(source[name], str) or not _HEX_COMMIT.fullmatch(
-            source[name]
-        ):
+        if not isinstance(source[name], str) or not _HEX_COMMIT.fullmatch(source[name]):
             raise SourceReconciliationError(f"source.{name} is invalid")
     if source["repository_commit"] != source["worktree_commit"]:
         raise SourceReconciliationError("fresh worktree commit is not source-bound")
@@ -1916,21 +1768,14 @@ def validate_reconciled_manifest_payload(
     if not gitlinks or tuple(item.path for item in gitlinks) != tuple(
         sorted(item.path for item in gitlinks)
     ):
-        raise SourceReconciliationError(
-            "recursive gitlinks must be nonempty and sorted"
-        )
+        raise SourceReconciliationError("recursive gitlinks must be nonempty and sorted")
     if len({item.path for item in gitlinks}) != len(gitlinks):
         raise SourceReconciliationError("recursive gitlink paths are duplicated")
     by_path = {item.path: item for item in gitlinks}
     for item in gitlinks:
         if item.parent_path == ".":
-            if (
-                item.parent_commit != source["repository_commit"]
-                or item.depth != 1
-            ):
-                raise SourceReconciliationError(
-                    "root gitlink is not bound to the fresh commit"
-                )
+            if item.parent_commit != source["repository_commit"] or item.depth != 1:
+                raise SourceReconciliationError("root gitlink is not bound to the fresh commit")
             continue
         parent = by_path.get(item.parent_path)
         if (
@@ -1939,12 +1784,8 @@ def validate_reconciled_manifest_payload(
             or item.depth != parent.depth + 1
             or not Path(item.path).is_relative_to(Path(item.parent_path))
         ):
-            raise SourceReconciliationError(
-                "recursive gitlink parent chain is invalid"
-            )
-    if source["recursive_gitlinks_sha256"] != _sha256_json(
-        [item.to_dict() for item in gitlinks]
-    ):
+            raise SourceReconciliationError("recursive gitlink parent chain is invalid")
+    if source["recursive_gitlinks_sha256"] != _sha256_json([item.to_dict() for item in gitlinks]):
         raise SourceReconciliationError("recursive gitlink digest is invalid")
 
     treatment = _array(source["treatment_files"], "source.treatment_files")
@@ -1998,11 +1839,7 @@ def validate_reconciled_manifest_payload(
             {"run_id", "variant_id", "split", "cache_mode", "cache_namespace"},
             "run contract",
         )
-        if (
-            record["run_id"] != run_id
-            or record["variant_id"] != "A0"
-            or record["split"] != "pilot"
-        ):
+        if record["run_id"] != run_id or record["variant_id"] != "A0" or record["split"] != "pilot":
             raise SourceReconciliationError("reassessment run contract drifted")
         if not isinstance(record["cache_mode"], str):
             raise SourceReconciliationError("cache mode is invalid")
@@ -2019,9 +1856,7 @@ def validate_reconciled_manifest_payload(
         "namespaces.cache",
     )
     if contract_namespaces != [namespace_cache["cold"], namespace_cache["warm"]]:
-        raise SourceReconciliationError(
-            "run-contract caches disagree with namespace receipt"
-        )
+        raise SourceReconciliationError("run-contract caches disagree with namespace receipt")
 
     reconciliation = _mapping(payload["reconciliation"], "reconciliation")
     _exact_keys(
@@ -2041,14 +1876,13 @@ def validate_reconciled_manifest_payload(
     case_ids = _array(reconciliation["case_ids"], "reconciliation.case_ids")
     if (
         reconciliation["schema"] != OUTPUT_NORMALIZATION_SCHEMA
-        or reconciliation["coordinate_count"] not in {
+        or reconciliation["coordinate_count"]
+        not in {
             len(case_ids),
             len(case_ids) * 2,
         }
-        or reconciliation["predecessor_sha256"]
-        != reconciliation["fresh_sha256"]
-        or reconciliation["predecessor_sha256"]
-        != FROZEN_NORMALIZED_A0_PILOT_SHA256
+        or reconciliation["predecessor_sha256"] != reconciliation["fresh_sha256"]
+        or reconciliation["predecessor_sha256"] != FROZEN_NORMALIZED_A0_PILOT_SHA256
         or not isinstance(reconciliation["fresh_sha256"], str)
         or not _SHA256.fullmatch(reconciliation["fresh_sha256"])
         or reconciliation["equivalent"] is not True
@@ -2104,9 +1938,7 @@ def load_reconciled_baseline_manifest(
         raw = manifest_path.read_bytes()
         text = raw.decode("utf-8")
     except (OSError, UnicodeDecodeError) as exc:
-        raise SourceReconciliationError(
-            f"cannot read reconciled baseline manifest: {exc}"
-        ) from exc
+        raise SourceReconciliationError(f"cannot read reconciled baseline manifest: {exc}") from exc
     if not text or not text.endswith("\n"):
         raise SourceReconciliationError(
             "reconciled manifest must be nonempty and newline-terminated"
@@ -2119,9 +1951,7 @@ def load_reconciled_baseline_manifest(
         )
     expected = (canonical_json(manifest.to_dict()) + "\n").encode("utf-8")
     if raw != expected:
-        raise SourceReconciliationError(
-            "reconciled manifest is not canonical JSON"
-        )
+        raise SourceReconciliationError("reconciled manifest is not canonical JSON")
     _validate_checked_source_evidence(manifest)
     return manifest
 
@@ -2159,9 +1989,7 @@ def _validate_checked_source_evidence(
     configuration = _mapping(payload["configuration"], "configuration")
     frozen_protocol = _mapping(frozen_payload["protocol"], "predecessor.protocol")
     frozen_corpus = _mapping(frozen_payload["corpus"], "predecessor.corpus")
-    frozen_configuration = _mapping(
-        frozen_payload["configuration"], "predecessor.configuration"
-    )
+    frozen_configuration = _mapping(frozen_payload["configuration"], "predecessor.configuration")
     reconciliation = _mapping(payload["reconciliation"], "reconciliation")
     if dict(protocol) != {
         "protocol_id": frozen_protocol["protocol_id"],
@@ -2200,12 +2028,9 @@ def _validate_checked_source_evidence(
         if (
             _blob_sha256(REPOSITORY_ROOT, str(predecessor["source_commit"]), path)
             != record["predecessor_sha256"]
-            or _blob_sha256(REPOSITORY_ROOT, commit, path)
-            != record["fresh_sha256"]
+            or _blob_sha256(REPOSITORY_ROOT, commit, path) != record["fresh_sha256"]
         ):
-            raise SourceReconciliationError(
-                f"recorded A0 treatment identity drifted: {path}"
-            )
+            raise SourceReconciliationError(f"recorded A0 treatment identity drifted: {path}")
 
 
 def _fresh_predecessor_artifact_records(
@@ -2238,13 +2063,9 @@ def _load_worktree_safety_receipt(path: Path) -> WorktreeSafetyReceipt:
         raw = _read_bytes_nofollow(path, "worktree safety receipt")
         text = raw.decode("utf-8")
     except UnicodeDecodeError as exc:
-        raise SourceReconciliationError(
-            f"cannot read worktree safety receipt: {exc}"
-        ) from exc
+        raise SourceReconciliationError(f"cannot read worktree safety receipt: {exc}") from exc
     if not text or not text.endswith("\n"):
-        raise SourceReconciliationError(
-            "worktree safety receipt must be newline-terminated"
-        )
+        raise SourceReconciliationError("worktree safety receipt must be newline-terminated")
     payload = _mapping(
         _decode_json(text, "worktree safety receipt"),
         "worktree safety receipt",
@@ -2252,14 +2073,10 @@ def _load_worktree_safety_receipt(path: Path) -> WorktreeSafetyReceipt:
     try:
         receipt = WorktreeSafetyReceipt.from_dict(payload)
     except (TypeError, ValueError) as exc:
-        raise SourceReconciliationError(
-            "worktree safety receipt is invalid"
-        ) from exc
+        raise SourceReconciliationError("worktree safety receipt is invalid") from exc
     expected = (canonical_worktree_safety_json(receipt) + "\n").encode("utf-8")
     if raw != expected:
-        raise SourceReconciliationError(
-            "worktree safety receipt is not canonical JSON"
-        )
+        raise SourceReconciliationError("worktree safety receipt is not canonical JSON")
     return receipt
 
 
@@ -2283,9 +2100,7 @@ def _validate_checked_fresh_source_evidence(
     source = _mapping(payload["source"], "source")
     commit = str(source["worktree_commit"])
 
-    receipt_path = (
-        layout.run_paths.receipts / WORKTREE_SAFETY_RECEIPT_NAME
-    )
+    receipt_path = layout.run_paths.receipts / WORKTREE_SAFETY_RECEIPT_NAME
     receipt = _load_worktree_safety_receipt(receipt_path)
     expected_worktree = _logical_absolute_path(
         layout.run_paths.worktrees / "source",
@@ -2311,11 +2126,7 @@ def _validate_checked_fresh_source_evidence(
         or receipt.state_root != expected_state
         or receipt.sha256 != source["worktree_receipt_sha256"]
         or dict(receipt.submodule_commits)
-        != {
-            item.path: item.commit
-            for item in manifest.recursive_gitlinks
-            if item.depth == 1
-        }
+        != {item.path: item.commit for item in manifest.recursive_gitlinks if item.depth == 1}
     ):
         raise SourceReconciliationError(
             "worktree receipt is not bound to the repaired source baseline"
@@ -2326,9 +2137,7 @@ def _validate_checked_fresh_source_evidence(
         raise SourceReconciliationError("repository_root must be a directory")
     top = Path(_git_value(repository, "rev-parse", "--show-toplevel")).resolve()
     if top != repository:
-        raise SourceReconciliationError(
-            "repository_root must name a Git worktree root"
-        )
+        raise SourceReconciliationError("repository_root must name a Git worktree root")
     _validate_live_detached_source(
         repository,
         commit=commit,
@@ -2337,12 +2146,8 @@ def _validate_checked_fresh_source_evidence(
 
     artifact_records = _fresh_predecessor_artifact_records(repository)
     if artifact_records != predecessor["artifacts"]:
-        raise SourceReconciliationError(
-            "immutable published predecessor artifact bytes drifted"
-        )
-    predecessor_path = (
-        repository / str(predecessor["manifest_path"])
-    )
+        raise SourceReconciliationError("immutable published predecessor artifact bytes drifted")
+    predecessor_path = repository / str(predecessor["manifest_path"])
     try:
         predecessor_raw = _read_bytes_nofollow(
             predecessor_path,
@@ -2359,28 +2164,19 @@ def _validate_checked_fresh_source_evidence(
         raise SourceReconciliationError(
             f"cannot read published predecessor manifest: {exc}"
         ) from exc
-    predecessor_manifest = SourceReconciledBaselineManifest(
-        predecessor_payload
-    )
+    predecessor_manifest = SourceReconciledBaselineManifest(predecessor_payload)
     if (
-        predecessor_manifest.digest
-        != PUBLISHED_REASSESSMENT_BASELINE_SHA256
-        or _sha256_bytes(predecessor_raw)
-        != PUBLISHED_REASSESSMENT_BASELINE_BYTES_SHA256
-        or predecessor_manifest.to_dict()["run_id"]
-        != PUBLISHED_REASSESSMENT_RUN_ID
+        predecessor_manifest.digest != PUBLISHED_REASSESSMENT_BASELINE_SHA256
+        or _sha256_bytes(predecessor_raw) != PUBLISHED_REASSESSMENT_BASELINE_BYTES_SHA256
+        or predecessor_manifest.to_dict()["run_id"] != PUBLISHED_REASSESSMENT_RUN_ID
     ):
-        raise SourceReconciliationError(
-            "published predecessor manifest identity drifted"
-        )
+        raise SourceReconciliationError("published predecessor manifest identity drifted")
     predecessor_source = _mapping(
         predecessor_manifest.to_dict()["source"],
         "published predecessor source",
     )
     if predecessor["source_commit"] != predecessor_source["worktree_commit"]:
-        raise SourceReconciliationError(
-            "published predecessor source commit drifted"
-        )
+        raise SourceReconciliationError("published predecessor source commit drifted")
 
     actual_gitlinks = _capture_benchmark_bounded_gitlinks(
         repository,
@@ -2443,9 +2239,7 @@ def load_fresh_source_baseline_manifest(
     manifest = FreshSourceBaselineManifest(payload)
     expected = (canonical_json(manifest.to_dict()) + "\n").encode("utf-8")
     if raw != expected:
-        raise SourceReconciliationError(
-            "fresh source manifest is not canonical JSON"
-        )
+        raise SourceReconciliationError("fresh source manifest is not canonical JSON")
     _validate_checked_fresh_source_evidence(
         manifest,
         repository_root=repository_root,
@@ -2467,9 +2261,7 @@ def load_source_baseline_manifest(
         raw = Path(path).read_bytes()
         text = raw.decode("utf-8")
     except (OSError, UnicodeDecodeError) as exc:
-        raise SourceReconciliationError(
-            f"cannot read source baseline manifest: {exc}"
-        ) from exc
+        raise SourceReconciliationError(f"cannot read source baseline manifest: {exc}") from exc
     payload = _mapping(_decode_json(text, "source baseline manifest"), "manifest")
     schema = payload.get("schema")
     if schema == SOURCE_RECONCILIATION_SCHEMA:
@@ -2556,9 +2348,7 @@ def write_fresh_source_baseline_manifest(
     )
     payload = manifest.to_dict()
     if payload["run_id"] != run_id:
-        raise SourceReconciliationError(
-            "fresh source manifest belongs to a different run"
-        )
+        raise SourceReconciliationError("fresh source manifest belongs to a different run")
     repository = Path(repository_root).resolve()
     run_root = _logical_absolute_path(
         layout.run_paths.run_root,
@@ -2579,9 +2369,7 @@ def write_fresh_source_baseline_manifest(
             )
         ).resolve()
     except (OSError, SourceReconciliationError) as exc:
-        raise SourceReconciliationError(
-            "cannot resolve repository Git state"
-        ) from exc
+        raise SourceReconciliationError("cannot resolve repository Git state") from exc
     if (
         destination != expected
         or not destination.is_relative_to(run_root)
@@ -2639,9 +2427,7 @@ def _blob_sha256(repository: Path, commit: str, path: str) -> str:
             f"cannot read treatment file {path!r}: {type(exc).__name__}"
         ) from exc
     if completed.returncode:
-        raise SourceReconciliationError(
-            f"cannot read treatment file {path!r} at {commit}"
-        )
+        raise SourceReconciliationError(f"cannot read treatment file {path!r} at {commit}")
     return _sha256_bytes(completed.stdout)
 
 
@@ -2679,14 +2465,10 @@ def create_fresh_source_baseline(
     )
     source = Path(source_checkout).resolve()
     if not source.is_dir():
-        raise SourceReconciliationError(
-            "source_checkout must be an existing Git worktree root"
-        )
+        raise SourceReconciliationError("source_checkout must be an existing Git worktree root")
     top = Path(_git_value(source, "rev-parse", "--show-toplevel")).resolve()
     if top != source:
-        raise SourceReconciliationError(
-            "source_checkout must name the Git worktree root"
-        )
+        raise SourceReconciliationError("source_checkout must name the Git worktree root")
     _require_clean_source_checkout(source)
     try:
         layout = require_fresh_reassessment_run(
@@ -2696,9 +2478,7 @@ def create_fresh_source_baseline(
     except ReassessmentNamespaceError as exc:
         raise SourceReconciliationError(str(exc)) from exc
     if layout.run_paths != run_paths:
-        raise SourceReconciliationError(
-            "run_paths are not the canonical fresh reassessment layout"
-        )
+        raise SourceReconciliationError("run_paths are not the canonical fresh reassessment layout")
     common = Path(
         _git_value(
             source,
@@ -2712,13 +2492,10 @@ def create_fresh_source_baseline(
         common,
         external_root,
     ):
-        raise SourceReconciliationError(
-            "fresh source baseline requires an external run root"
-        )
+        raise SourceReconciliationError("fresh source baseline requires an external run root")
     base_commit = _resolve_commit(source, base_revision)
     predecessor_paths = tuple(
-        (source / path).resolve()
-        for path in DEFAULT_FRESH_PREDECESSOR_ARTIFACT_PATHS
+        (source / path).resolve() for path in DEFAULT_FRESH_PREDECESSOR_ARTIFACT_PATHS
     )
     before_artifacts = _artifact_snapshot(predecessor_paths)
     source_before = _active_source_snapshot(source)
@@ -2732,9 +2509,7 @@ def create_fresh_source_baseline(
         or _sha256_bytes(predecessor_path.read_bytes())
         != PUBLISHED_REASSESSMENT_BASELINE_BYTES_SHA256
     ):
-        raise SourceReconciliationError(
-            "immutable published predecessor manifest drifted"
-        )
+        raise SourceReconciliationError("immutable published predecessor manifest drifted")
     expected_gitlinks = _capture_benchmark_bounded_gitlinks(
         source,
         base_commit,
@@ -2788,9 +2563,7 @@ def create_fresh_source_baseline(
             "run_id": PUBLISHED_REASSESSMENT_RUN_ID,
             "manifest_path": DEFAULT_RECONCILED_MANIFEST_PATH.as_posix(),
             "manifest_sha256": predecessor.digest,
-            "manifest_bytes_sha256": _sha256_bytes(
-                predecessor_path.read_bytes()
-            ),
+            "manifest_bytes_sha256": _sha256_bytes(predecessor_path.read_bytes()),
             "source_commit": predecessor_source["worktree_commit"],
             "immutable": True,
             "artifacts": artifact_records,
@@ -2812,9 +2585,7 @@ def create_fresh_source_baseline(
             "variant_id": "A0",
             "definition": "repaired_source_within_run_control",
             "historical_a0_equivalence_claimed": False,
-            "reason": (
-                "repaired_environment_and_code_define_a_new_within_run_A0_control"
-            ),
+            "reason": ("repaired_environment_and_code_define_a_new_within_run_A0_control"),
         },
         "behavior_comparison": {
             "status": "deferred",
@@ -2891,16 +2662,11 @@ def reconcile_source(
         else tuple(Path(item) for item in predecessor_artifacts)
     )
     immutable_artifacts = tuple(
-        path if path.is_absolute() else source / path
-        for path in immutable_artifact_values
+        path if path.is_absolute() else source / path for path in immutable_artifact_values
     )
     frozen_paths = (
         predecessor_path,
-        *(
-            path
-            for path in immutable_artifacts
-            if path.resolve() != predecessor_path.resolve()
-        ),
+        *(path for path in immutable_artifacts if path.resolve() != predecessor_path.resolve()),
     )
     before = _artifact_snapshot(frozen_paths)
     source_before = _active_source_snapshot(source)
@@ -2937,8 +2703,7 @@ def reconcile_source(
         expected_case_ids=expected_case_ids,
     )
     comparison["explained_source_deltas"] = [
-        f"repository commit advanced from {old_commit} "
-        f"to {receipt.worktree_commit}",
+        f"repository commit advanced from {old_commit} to {receipt.worktree_commit}",
         "recursive submodule gitlinks rebound to the fresh source tree",
     ]
     treatment_files: list[dict[str, object]] = []
@@ -2946,9 +2711,7 @@ def reconcile_source(
         old_sha = _blob_sha256(source, old_commit, path)
         fresh_sha = _blob_sha256(source, receipt.worktree_commit, path)
         if old_sha != fresh_sha:
-            raise SourceReconciliationError(
-                f"unexplained A0 treatment code drift: {path}"
-            )
+            raise SourceReconciliationError(f"unexplained A0 treatment code drift: {path}")
         treatment_files.append(
             {
                 "path": path,
@@ -2959,12 +2722,8 @@ def reconcile_source(
         )
     protocol = _mapping(predecessor_payload["protocol"], "protocol")
     corpus = _mapping(predecessor_payload["corpus"], "corpus")
-    configuration = _mapping(
-        predecessor_payload["configuration"], "configuration"
-    )
-    namespaces = build_run_namespaces(
-        run_paths, protocol_sha256=str(protocol["sha256"])
-    )
+    configuration = _mapping(predecessor_payload["configuration"], "configuration")
+    namespaces = build_run_namespaces(run_paths, protocol_sha256=str(protocol["sha256"]))
     cache = _mapping(namespaces["cache"], "namespaces.cache")
     environment = environment_inventory_record(
         environment_inventory,
@@ -2993,9 +2752,7 @@ def reconcile_source(
             "active_checkout_unchanged": receipt.source_unchanged,
             "worktree_receipt_sha256": receipt.sha256,
             "recursive_gitlinks": [item.to_dict() for item in gitlinks],
-            "recursive_gitlinks_sha256": _sha256_json(
-                [item.to_dict() for item in gitlinks]
-            ),
+            "recursive_gitlinks_sha256": _sha256_json([item.to_dict() for item in gitlinks]),
             "treatment_files": treatment_files,
         },
         "environment": environment,
@@ -3033,20 +2790,12 @@ def reconcile_source(
     }
     manifest = SourceReconciledBaselineManifest(payload)
     if _active_source_snapshot(source) != source_before:
-        raise SourceReconciliationError(
-            "active source checkout changed during reconciliation"
-        )
+        raise SourceReconciliationError("active source checkout changed during reconciliation")
     if _artifact_snapshot(frozen_paths) != before:
-        raise SourceReconciliationError(
-            "a predecessor v1 artifact changed during reconciliation"
-        )
-    (run_paths.run_root / PROCESS_NAMESPACE_NAME).mkdir(
-        mode=0o700, parents=True, exist_ok=True
-    )
+        raise SourceReconciliationError("a predecessor v1 artifact changed during reconciliation")
+    (run_paths.run_root / PROCESS_NAMESPACE_NAME).mkdir(mode=0o700, parents=True, exist_ok=True)
     destination = (
-        run_paths.state / "baseline-manifest.json"
-        if output_path is None
-        else Path(output_path)
+        run_paths.state / "baseline-manifest.json" if output_path is None else Path(output_path)
     )
     if not destination.is_absolute():
         destination = source / destination
@@ -3068,9 +2817,7 @@ def reconcile_source(
     )
     after = _artifact_snapshot(frozen_paths)
     if after != before:
-        raise SourceReconciliationError(
-            "a predecessor v1 artifact changed during reconciliation"
-        )
+        raise SourceReconciliationError("a predecessor v1 artifact changed during reconciliation")
     return manifest
 
 

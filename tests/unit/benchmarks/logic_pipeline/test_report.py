@@ -45,8 +45,7 @@ def test_default_report_covers_the_exact_paired_proof_scope() -> None:
     assert len(value["observations"]) == 154
 
     coordinates = {
-        (row["case_id"], row["cache_mode"], row["variant_id"])
-        for row in value["observations"]
+        (row["case_id"], row["cache_mode"], row["variant_id"]) for row in value["observations"]
     }
     assert len(coordinates) == 154
     for case_id in report.ELIGIBLE_CASE_IDS:
@@ -59,8 +58,7 @@ def test_default_report_covers_the_exact_paired_proof_scope() -> None:
 def test_ordering_policy_is_not_inferred_from_canonical_stage_order() -> None:
     value = report.create_capability_preflight_report()
     rows = {
-        (row["variant_id"], row["cache_mode"], row["case_id"]): row
-        for row in value["observations"]
+        (row["variant_id"], row["cache_mode"], row["case_id"]): row for row in value["observations"]
     }
 
     assert rows[("A2", "cold", "pilot-p01")]["proof_order"] == ["hammer"]
@@ -136,9 +134,7 @@ def test_metric_derivation_reports_component_wins_and_missing_premise_gold() -> 
     assert metric["reconstruction_success_rate"] == 1.0
     assert metric["hammer_unique_verified_count"] == 1
     assert metric["premise_recall_at_budget"] is None
-    assert metric["premise_recall_missing_reason"] == (
-        "gold_premise_set_unavailable"
-    )
+    assert metric["premise_recall_missing_reason"] == ("gold_premise_set_unavailable")
     with pytest.raises(report.ProofReportError, match="full case-result"):
         report.validate_proof_report(value)
 
@@ -146,9 +142,7 @@ def test_metric_derivation_reports_component_wins_and_missing_premise_gold() -> 
 def test_s1_claims_stay_non_authoritative_and_out_of_primary_metrics() -> None:
     value = copy.deepcopy(report.create_capability_preflight_report())
     value["execution_mode"] = "measured"
-    row = next(
-        item for item in value["observations"] if item["variant_id"] == "S1"
-    )
+    row = next(item for item in value["observations"] if item["variant_id"] == "S1")
     row["status"] = "not_verified"
     row["missing_reason"] = None
     row["model_claimed_verified"] = True
@@ -163,9 +157,7 @@ def test_s1_claims_stay_non_authoritative_and_out_of_primary_metrics() -> None:
     }
 
     forged = copy.deepcopy(value)
-    s1 = next(
-        item for item in forged["observations"] if item["variant_id"] == "S1"
-    )
+    s1 = next(item for item in forged["observations"] if item["variant_id"] == "S1")
     s1.update(
         {
             "status": "verified",
@@ -233,9 +225,7 @@ def test_required_cli_validates_checked_in_evidence() -> None:
     assert process.returncode == 0, process.stderr
     summary = json.loads(process.stdout)
     assert summary == {
-        "artifact_sha256": (
-            "dae3faa6af66d5a78156dad69fb93151c8f600a1d7f07bada8e7ae6943eef9b9"
-        ),
+        "artifact_sha256": ("dae3faa6af66d5a78156dad69fb93151c8f600a1d7f07bada8e7ae6943eef9b9"),
         "execution_mode": "capability_preflight",
         "kernel_verified_count": 0,
         "missingness_retained": True,

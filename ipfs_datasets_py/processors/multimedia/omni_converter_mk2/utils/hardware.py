@@ -16,14 +16,14 @@ _PID = os.getpid()
 _BYTE_MAPPING = {
     "B": 1,
     "KiB": 1024,
-    "MiB": 1024 ** 2,
-    "GiB": 1024 ** 3,
-    "TiB": 1024 ** 4,
-    "PiB": 1024 ** 5,
-    "EiB": 1024 ** 6,
-    "ZiB": 1024 ** 7,
-    "YiB": 1024 ** 8,
-    "bit": 1 / 8
+    "MiB": 1024**2,
+    "GiB": 1024**3,
+    "TiB": 1024**4,
+    "PiB": 1024**5,
+    "EiB": 1024**6,
+    "ZiB": 1024**7,
+    "YiB": 1024**8,
+    "bit": 1 / 8,
 }
 
 
@@ -36,11 +36,13 @@ def _get_info_from_nvidia_smi(command: list[str]) -> dict[str, Any]:
         result = subprocess.run(command, capture_output=True, text=True, check=True)
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
-        return {'error': f'nvidia-smi command failed: {str(e)}\ncmd: {command}\nresult: {result}'}
+        return {"error": f"nvidia-smi command failed: {str(e)}\ncmd: {command}\nresult: {result}"}
     except FileNotFoundError:
-        return {'error': 'nvidia-smi not found. Please install NVIDIA System Management Interface program.'}
+        return {
+            "error": "nvidia-smi not found. Please install NVIDIA System Management Interface program."
+        }
     except Exception as e:
-        return {'error': f'Unexpected Error occurred: {str(e)}'}
+        return {"error": f"Unexpected Error occurred: {str(e)}"}
 
 
 class Hardware:
@@ -81,20 +83,23 @@ class Hardware:
         _get_shared_memory_usage_in_mb() -> float:
             Returns the shared memory usage of the current process in megabytes, if available.
     """
+
     # Decorator to create class properties
     class _classproperty:
         """Helper decorator to turn class methods into properties."""
+
         def __init__(self, func):
             self.func = func
-        
+
         def __get__(self, instance, owner):
             return self.func(owner)
 
     class _cached_class_property:
         """Helper decorator to turn class methods into cached properties."""
+
         def __init__(self, func):
             self.func = func
-            self.cache_attr = f'_cached_{func.__name__}'
+            self.cache_attr = f"_cached_{func.__name__}"
 
         def __get__(self, instance, owner):
             if not hasattr(owner, self.cache_attr):
@@ -146,7 +151,7 @@ class Hardware:
     @staticmethod
     def get_disk_usage_in_percent() -> float:
         """Returns the percentage of disk usage for the root directory."""
-        return psutil.disk_usage('/').percent
+        return psutil.disk_usage("/").percent
 
     @staticmethod
     def get_num_open_files() -> int:
@@ -157,22 +162,22 @@ class Hardware:
     def get_shared_memory_usage_in_mb() -> float:
         """Returns the shared memory usage of the current process in megabytes."""
         mem_info = psutil.Process(_PID).memory_info()
-        return getattr(mem_info, 'shared', 0) / _BYTE_MAPPING["MiB"]
+        return getattr(mem_info, "shared", 0) / _BYTE_MAPPING["MiB"]
 
     @cache
     @staticmethod
     def get_num_cpu_cores(include_logical: bool = False) -> int:
         """Get the number of logical CPUs available."""
         return psutil.cpu_count(logical=include_logical)
-    
+
     @staticmethod
     def get_cpu_info() -> dict[str, Any]:
         """Get CPU information including model, frequency, and core count."""
         cpu_info = {
-            'model':  platform.processor(),
-            'frequency': psutil.cpu_freq().current,
-            'cores': psutil.cpu_count(logical=False),
-            'logical_cores': psutil.cpu_count(logical=True)
+            "model": platform.processor(),
+            "frequency": psutil.cpu_freq().current,
+            "cores": psutil.cpu_count(logical=False),
+            "logical_cores": psutil.cpu_count(logical=True),
         }
         return cpu_info
 
@@ -180,57 +185,58 @@ class Hardware:
     def get_vram_info() -> dict[str, Any]:
         """Get CUDA GPU memory information if available."""
         cmd = [
-            'nvidia-smi', 
-            '--query-gpu=index,memory.total,memory.used,memory.free', 
-            '--format=csv,noheader,nounits'
+            "nvidia-smi",
+            "--query-gpu=index,memory.total,memory.used,memory.free",
+            "--format=csv,noheader,nounits",
         ]
         result = _get_info_from_nvidia_smi(cmd)
-        if 'error' in result:
+        if "error" in result:
             return result
         else:
             cuda_memory_info = {}
 
-            for line in result.stdout.strip().split('\n'):
+            for line in result.stdout.strip().split("\n"):
                 if line:
-                    parts = [part.strip() for part in line.split(',')]
+                    parts = [part.strip() for part in line.split(",")]
                     if len(parts) == 4:
                         gpu_index, total_mb, used_mb, free_mb = parts
                         total_mb = float(total_mb)
                         used_mb = float(used_mb)
-                        
-                        cuda_memory_info[f'gpu_{gpu_index}'] = {
-                            'total_mb': total_mb,
-                            'used_mb': used_mb,
-                            'free_mb': float(free_mb),
-                            'used_percent': (used_mb / total_mb) * 100 if total_mb > 0 else 0
+
+                        cuda_memory_info[f"gpu_{gpu_index}"] = {
+                            "total_mb": total_mb,
+                            "used_mb": used_mb,
+                            "free_mb": float(free_mb),
+                            "used_percent": (used_mb / total_mb) * 100 if total_mb > 0 else 0,
                         }
             return cuda_memory_info
-
 
     @staticmethod
     def get_gpu_info() -> dict[str, Any]:
         """Get GPU information including model, total physical VRAM, etc."""
         cmd = [
-            'nvidia-smi',
-            '--query-gpu=index,name,memory.total,driver_version,temperature.gpu',
-            '--format=csv,noheader,nounits'
+            "nvidia-smi",
+            "--query-gpu=index,name,memory.total,driver_version,temperature.gpu",
+            "--format=csv,noheader,nounits",
         ]
         result = _get_info_from_nvidia_smi(cmd)
-        if 'error' in result:
+        if "error" in result:
             return result
         else:
             gpu_info = {}
-            
-            for line in result.strip().split('\n'):
+
+            for line in result.strip().split("\n"):
                 if line:
-                    parts = [part.strip() for part in line.split(',')]
+                    parts = [part.strip() for part in line.split(",")]
                     if len(parts) == 5:
                         gpu_index, name, total_memory_mb, driver_version, temperature = parts
-                        gpu_info[f'gpu_{gpu_index}'] = {
-                            'name': name,
-                            'total_memory_mb': float(total_memory_mb),
-                            'total_memory_gb': float(total_memory_mb) / _BYTE_MAPPING["MiB"],
-                            'driver_version': driver_version,
-                            'temperature_celsius': float(temperature) if temperature != '[Not Supported]' else None
+                        gpu_info[f"gpu_{gpu_index}"] = {
+                            "name": name,
+                            "total_memory_mb": float(total_memory_mb),
+                            "total_memory_gb": float(total_memory_mb) / _BYTE_MAPPING["MiB"],
+                            "driver_version": driver_version,
+                            "temperature_celsius": float(temperature)
+                            if temperature != "[Not Supported]"
+                            else None,
                         }
             return gpu_info

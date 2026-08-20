@@ -39,7 +39,9 @@ class _FakeIndexLoader:
 class _FakeCcApi:
     def fetch_warc_record(self, **kwargs):
         return (
-            SimpleNamespace(ok=True, raw_base64=base64.b64encode(b"fake-warc-member").decode("ascii")),
+            SimpleNamespace(
+                ok=True, raw_base64=base64.b64encode(b"fake-warc-member").decode("ascii")
+            ),
             "range",
             None,
         )

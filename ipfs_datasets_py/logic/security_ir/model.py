@@ -56,9 +56,7 @@ def _text(value: Any, name: str, *, allow_empty: bool = False) -> str:
     if not allow_empty and not value.strip():
         raise SecurityIRValidationError(f"{name} must be a non-empty string")
     if value != value.strip():
-        raise SecurityIRValidationError(
-            f"{name} must not have surrounding whitespace"
-        )
+        raise SecurityIRValidationError(f"{name} must not have surrounding whitespace")
     return value
 
 
@@ -72,9 +70,7 @@ def _identifier(value: Any, name: str) -> str:
 def _ids(values: Sequence[str] | None, name: str) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise SecurityIRValidationError(f"{name} must be a sequence")
     result = tuple(_identifier(value, name) for value in values)
     if len(result) != len(set(result)):
@@ -102,14 +98,10 @@ def _as_mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _known_fields(
-    value: Mapping[str, Any], allowed: frozenset[str], name: str
-) -> None:
+def _known_fields(value: Mapping[str, Any], allowed: frozenset[str], name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise SecurityIRValidationError(
-            f"unknown {name} field(s): {', '.join(unknown)}"
-        )
+        raise SecurityIRValidationError(f"unknown {name} field(s): {', '.join(unknown)}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,16 +118,10 @@ class SecuritySource:
     def __post_init__(self) -> None:
         object.__setattr__(self, "source_id", _identifier(self.source_id, "source_id"))
         object.__setattr__(self, "uri", _text(self.uri, "uri"))
-        object.__setattr__(
-            self, "revision", _text(self.revision, "revision", allow_empty=True)
-        )
+        object.__setattr__(self, "revision", _text(self.revision, "revision", allow_empty=True))
         if self.content_sha256 and not _SHA256_RE.fullmatch(self.content_sha256):
-            raise SecurityIRValidationError(
-                "content_sha256 must be a lowercase SHA-256 hex digest"
-            )
-        object.__setattr__(
-            self, "review_status", _text(self.review_status, "review_status")
-        )
+            raise SecurityIRValidationError("content_sha256 must be a lowercase SHA-256 hex digest")
+        object.__setattr__(self, "review_status", _text(self.review_status, "review_status"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -187,9 +173,7 @@ class Principal:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "principal_id", _identifier(self.principal_id, "principal_id")
-        )
+        object.__setattr__(self, "principal_id", _identifier(self.principal_id, "principal_id"))
         object.__setattr__(self, "kind", _text(self.kind, "principal kind"))
         for name in ("role_ids", "trust_zone_ids", "source_ids"):
             object.__setattr__(self, name, _ids(getattr(self, name), name))
@@ -223,9 +207,7 @@ class Asset:
     def __post_init__(self) -> None:
         object.__setattr__(self, "asset_id", _identifier(self.asset_id, "asset_id"))
         object.__setattr__(self, "kind", _text(self.kind, "asset kind"))
-        object.__setattr__(
-            self, "symbol", _text(self.symbol, "asset symbol", allow_empty=True)
-        )
+        object.__setattr__(self, "symbol", _text(self.symbol, "asset symbol", allow_empty=True))
         object.__setattr__(self, "source_ids", _ids(self.source_ids, "source_ids"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
@@ -280,9 +262,7 @@ class Channel:
         for name in ("channel_id", "source_node_id", "target_node_id"):
             object.__setattr__(self, name, _identifier(getattr(self, name), name))
         object.__setattr__(self, "protocol", _text(self.protocol, "channel protocol"))
-        object.__setattr__(
-            self, "trust_zone_ids", _ids(self.trust_zone_ids, "trust_zone_ids")
-        )
+        object.__setattr__(self, "trust_zone_ids", _ids(self.trust_zone_ids, "trust_zone_ids"))
         object.__setattr__(self, "source_ids", _ids(self.source_ids, "source_ids"))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
@@ -317,9 +297,7 @@ class Resource:
     attributes: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "resource_id", _identifier(self.resource_id, "resource_id")
-        )
+        object.__setattr__(self, "resource_id", _identifier(self.resource_id, "resource_id"))
         object.__setattr__(self, "kind", _text(self.kind, "resource kind"))
         for name in (
             "owner_principal_ids",
@@ -364,14 +342,10 @@ class Policy:
         object.__setattr__(self, "name", _text(self.name, "policy name"))
         try:
             effect = (
-                self.effect
-                if isinstance(self.effect, PolicyEffect)
-                else PolicyEffect(self.effect)
+                self.effect if isinstance(self.effect, PolicyEffect) else PolicyEffect(self.effect)
             )
         except (TypeError, ValueError) as exc:
-            raise SecurityIRValidationError(
-                f"unsupported policy effect: {self.effect!r}"
-            ) from exc
+            raise SecurityIRValidationError(f"unsupported policy effect: {self.effect!r}") from exc
         object.__setattr__(self, "effect", effect)
         for name in ("principal_ids", "resource_ids", "channel_ids", "source_ids"):
             object.__setattr__(self, name, _ids(getattr(self, name), name))
@@ -410,9 +384,7 @@ class StateTransition:
         for name in ("source_state", "target_state", "event"):
             object.__setattr__(self, name, _text(getattr(self, name), name))
         for name in ("guard", "effect"):
-            object.__setattr__(
-                self, name, _text(getattr(self, name), name, allow_empty=True)
-            )
+            object.__setattr__(self, name, _text(getattr(self, name), name, allow_empty=True))
         object.__setattr__(self, "attributes", _attributes(self.attributes))
 
     def to_dict(self) -> dict[str, Any]:
@@ -471,9 +443,7 @@ class StateMachine:
         )
         states = tuple(_text(value, "state") for value in self.states)
         if not states or len(states) != len(set(states)):
-            raise SecurityIRValidationError(
-                "state machine states must be non-empty and unique"
-            )
+            raise SecurityIRValidationError("state machine states must be non-empty and unique")
         object.__setattr__(self, "states", states)
         initial = _text(self.initial_state, "initial_state", allow_empty=True)
         if initial and initial not in states:
@@ -486,10 +456,7 @@ class StateMachine:
             for item in self.transitions
         )
         for transition in transitions:
-            if (
-                transition.source_state not in states
-                or transition.target_state not in states
-            ):
+            if transition.source_state not in states or transition.target_state not in states:
                 raise SecurityIRValidationError(
                     "state transition endpoints must be declared states"
                 )
@@ -529,8 +496,7 @@ class StateMachine:
             states=tuple(value.get("states", ())),
             initial_state=value.get("initial_state", ""),
             transitions=tuple(
-                StateTransition.from_dict(item)
-                for item in value.get("transitions", ())
+                StateTransition.from_dict(item) for item in value.get("transitions", ())
             ),
             source_ids=tuple(value.get("source_ids", ())),
             attributes=value.get("attributes", {}),
@@ -561,9 +527,7 @@ class ThreatAssumption:
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "ThreatAssumption":
-        return _record_from_dict(
-            cls, value, "assumption_id", required=("statement",)
-        )
+        return _record_from_dict(cls, value, "assumption_id", required=("statement",))
 
 
 @dataclass(frozen=True, slots=True)
@@ -602,9 +566,7 @@ class SecurityClaim:
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "SecurityClaim":
-        return _record_from_dict(
-            cls, value, "claim_id", required=("statement", "domain")
-        )
+        return _record_from_dict(cls, value, "claim_id", required=("statement", "domain"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -619,12 +581,8 @@ class SecurityExtension:
     source_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "extension_id", _identifier(self.extension_id, "extension_id")
-        )
-        object.__setattr__(
-            self, "vocabulary", _identifier(self.vocabulary, "extension vocabulary")
-        )
+        object.__setattr__(self, "extension_id", _identifier(self.extension_id, "extension_id"))
+        object.__setattr__(self, "vocabulary", _identifier(self.vocabulary, "extension vocabulary"))
         object.__setattr__(self, "version", _text(self.version, "extension version"))
         if not isinstance(self.required, bool):
             raise SecurityIRValidationError("extension required must be a boolean")
@@ -822,9 +780,7 @@ class SecurityIR:
             )
         for name, record_type in self._COLLECTION_TYPES.items():
             values = getattr(self, name)
-            if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-                values, Sequence
-            ):
+            if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
                 raise SecurityIRValidationError(f"{name} must be a sequence")
             converted = tuple(
                 item
@@ -864,21 +820,15 @@ class SecurityIR:
         """Decode a strict Security IR v1 declaration."""
 
         value = _as_mapping(value, "SecurityIR")
-        allowed = frozenset(
-            {"declaration_id", "schema_version", *cls._COLLECTION_TYPES}
-        )
+        allowed = frozenset({"declaration_id", "schema_version", *cls._COLLECTION_TYPES})
         _known_fields(value, allowed, "SecurityIR")
         kwargs: dict[str, Any] = {
             "declaration_id": value.get("declaration_id", ""),
-            "schema_version": value.get(
-                "schema_version", SECURITY_IR_SCHEMA_VERSION
-            ),
+            "schema_version": value.get("schema_version", SECURITY_IR_SCHEMA_VERSION),
         }
         for name, record_type in cls._COLLECTION_TYPES.items():
             raw = value.get(name, ())
-            if isinstance(raw, (str, bytes, bytearray)) or not isinstance(
-                raw, Sequence
-            ):
+            if isinstance(raw, (str, bytes, bytearray)) or not isinstance(raw, Sequence):
                 raise SecurityIRValidationError(f"{name} must be a sequence")
             kwargs[name] = tuple(record_type.from_dict(item) for item in raw)
         return cls(**kwargs)
@@ -886,9 +836,7 @@ class SecurityIR:
     def canonical_bytes(self) -> bytes:
         """Return canonical declaration bytes (not a verification artifact)."""
 
-        return canonical_json_bytes(
-            self.to_dict(), collection_schema=SECURITY_IR_COLLECTION_SCHEMA
-        )
+        return canonical_json_bytes(self.to_dict(), collection_schema=SECURITY_IR_COLLECTION_SCHEMA)
 
     def canonical_json(self) -> str:
         """Return canonical declaration JSON."""
@@ -934,14 +882,10 @@ def _unique(records: Sequence[Any], field_name: str, label: str) -> set[str]:
     return set(values)
 
 
-def _require_refs(
-    values: Sequence[str], known: set[str], field_name: str
-) -> None:
+def _require_refs(values: Sequence[str], known: set[str], field_name: str) -> None:
     missing = sorted(set(values) - known)
     if missing:
-        raise SecurityIRValidationError(
-            f"{field_name} contains unknown identifiers: {missing}"
-        )
+        raise SecurityIRValidationError(f"{field_name} contains unknown identifiers: {missing}")
 
 
 def validate_security_ir(declaration: SecurityIR) -> SecurityIR:
@@ -957,9 +901,7 @@ def validate_security_ir(declaration: SecurityIR) -> SecurityIR:
     resource_ids = _unique(declaration.resources, "resource_id", "resource")
     policy_ids = _unique(declaration.policies, "policy_id", "policy")
     _unique(declaration.state_machines, "state_machine_id", "state machine")
-    assumption_ids = _unique(
-        declaration.assumptions, "assumption_id", "assumption"
-    )
+    assumption_ids = _unique(declaration.assumptions, "assumption_id", "assumption")
     _unique(declaration.claims, "claim_id", "claim")
     _unique(declaration.extensions, "extension_id", "extension")
 
@@ -987,18 +929,14 @@ def validate_security_ir(declaration: SecurityIR) -> SecurityIR:
             known_nodes,
             f"Channel {item.channel_id} endpoints",
         )
-        _require_refs(
-            item.trust_zone_ids, zone_ids, f"Channel {item.channel_id}.trust_zone_ids"
-        )
+        _require_refs(item.trust_zone_ids, zone_ids, f"Channel {item.channel_id}.trust_zone_ids")
     for item in declaration.resources:
         _require_refs(
             item.owner_principal_ids,
             principal_ids,
             f"Resource {item.resource_id}.owner_principal_ids",
         )
-        _require_refs(
-            item.asset_ids, asset_ids, f"Resource {item.resource_id}.asset_ids"
-        )
+        _require_refs(item.asset_ids, asset_ids, f"Resource {item.resource_id}.asset_ids")
         _require_refs(
             item.trust_zone_ids,
             zone_ids,
@@ -1015,18 +953,14 @@ def validate_security_ir(declaration: SecurityIR) -> SecurityIR:
             resource_ids,
             f"Policy {item.policy_id}.resource_ids",
         )
-        _require_refs(
-            item.channel_ids, channel_ids, f"Policy {item.policy_id}.channel_ids"
-        )
+        _require_refs(item.channel_ids, channel_ids, f"Policy {item.policy_id}.channel_ids")
     for item in declaration.claims:
         _require_refs(
             item.assumption_ids,
             assumption_ids,
             f"SecurityClaim {item.claim_id}.assumption_ids",
         )
-        _require_refs(
-            item.policy_ids, policy_ids, f"SecurityClaim {item.claim_id}.policy_ids"
-        )
+        _require_refs(item.policy_ids, policy_ids, f"SecurityClaim {item.claim_id}.policy_ids")
     return declaration
 
 

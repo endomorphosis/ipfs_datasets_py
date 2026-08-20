@@ -25,6 +25,7 @@ import pytest
 # SRL extraction
 # ---------------------------------------------------------------------------
 
+
 class TestSRLFrameGetRoles:
     """GIVEN SRLFrame with multiple arguments WHEN calling get_roles
     THEN returns all matching + empty list for missing role."""
@@ -32,8 +33,11 @@ class TestSRLFrameGetRoles:
     def test_get_roles_returns_all_matching(self):
         # GIVEN
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            SRLExtractor, ROLE_AGENT, ROLE_PATIENT,
+            SRLExtractor,
+            ROLE_AGENT,
+            ROLE_PATIENT,
         )
+
         e = SRLExtractor()
         frames = e.extract_srl("He sent the report.")
         assert frames, "Expected at least one frame"
@@ -46,6 +50,7 @@ class TestSRLFrameGetRoles:
 
     def test_get_roles_returns_empty_for_missing_role(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         e = SRLExtractor()
         frames = e.extract_srl("She walked.")
         assert frames
@@ -56,6 +61,7 @@ class TestSRLFrameGetRoles:
 
     def test_get_role_returns_none_for_missing(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         e = SRLExtractor()
         frames = e.extract_srl("She walked.")
         assert frames
@@ -66,6 +72,7 @@ class TestSRLFrameGetRoles:
 
     def test_srlframe_has_frame_id(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         e = SRLExtractor()
         frames = e.extract_srl("Alice sends messages.")
         assert frames
@@ -81,8 +88,10 @@ class TestSRLModifierRoles:
     def test_instrument_role_extracted(self):
         # GIVEN
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_INSTRUMENT,
+            _extract_heuristic_frames,
+            ROLE_INSTRUMENT,
         )
+
         sentence = "He fixed with a screwdriver"
         # WHEN
         frames = _extract_heuristic_frames(sentence)
@@ -92,8 +101,10 @@ class TestSRLModifierRoles:
 
     def test_cause_role_extracted(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_CAUSE,
+            _extract_heuristic_frames,
+            ROLE_CAUSE,
         )
+
         sentence = "He failed because he was unprepared"
         frames = _extract_heuristic_frames(sentence)
         all_roles = [a.role for f in frames for a in f.arguments]
@@ -101,8 +112,10 @@ class TestSRLModifierRoles:
 
     def test_time_role_extracted(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            _extract_heuristic_frames, ROLE_TIME,
+            _extract_heuristic_frames,
+            ROLE_TIME,
         )
+
         sentence = "She left after the bell rang"
         frames = _extract_heuristic_frames(sentence)
         all_roles = [a.role for f in frames for a in f.arguments]
@@ -110,12 +123,14 @@ class TestSRLModifierRoles:
 
     def test_sentence_no_verb_returns_empty(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import _extract_heuristic_frames
+
         # All-punctuation / no verb-like word
         frames = _extract_heuristic_frames("...")
         assert frames == []
 
     def test_empty_sentence_returns_empty(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import _extract_heuristic_frames
+
         assert _extract_heuristic_frames("") == []
 
 
@@ -126,6 +141,7 @@ class TestSRLToKnowledgeGraph:
     def test_basic_frames_to_kg(self):
         # GIVEN
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         e = SRLExtractor()
         frames = e.extract_srl("He fixed the car.")
         assert frames
@@ -139,6 +155,7 @@ class TestSRLToKnowledgeGraph:
     def test_extends_existing_kg(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         e = SRLExtractor()
         frames = e.extract_srl("She walked.")
         assert frames
@@ -149,6 +166,7 @@ class TestSRLToKnowledgeGraph:
 
     def test_to_kg_creates_relationships(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         e = SRLExtractor()
         frames = e.extract_srl("Alice sent the message.")
         assert frames
@@ -159,6 +177,7 @@ class TestSRLToKnowledgeGraph:
         """GIVEN two frames with the same agent name WHEN converting to KG
         THEN the agent entity is reused (not duplicated)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         e = SRLExtractor()
         frames = e.extract_srl("Alice sends. Alice receives.")
         assert len(frames) >= 2
@@ -168,6 +187,7 @@ class TestSRLToKnowledgeGraph:
 
     def test_high_confidence_filter_excludes_frames(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         e = SRLExtractor(min_confidence=0.99)
         frames = e.extract_srl("He ran.")
         # Heuristic frames have confidence ~0.65 — they should not pass the filter
@@ -181,12 +201,14 @@ class TestSRLBuildTemporalGraph:
 
     def test_single_sentence(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         e = SRLExtractor()
         kg = e.build_temporal_graph("He ran.")
         assert len(kg.entities) >= 0  # might be 0 if verb not found
 
     def test_multi_sentence_then_connector(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         e = SRLExtractor()
         kg = e.build_temporal_graph("He ran. Then he jumped.")
         # entities should include event nodes from both sentences
@@ -195,12 +217,14 @@ class TestSRLBuildTemporalGraph:
     def test_returns_knowledge_graph(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         e = SRLExtractor()
         kg = e.build_temporal_graph("Alice cooked. Bob ate. Carol cleaned.")
         assert isinstance(kg, KnowledgeGraph)
 
     def test_extract_batch_returns_list_of_lists(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         e = SRLExtractor()
         results = e.extract_batch(["He ran.", "She jumped."])
         assert len(results) == 2
@@ -208,6 +232,7 @@ class TestSRLBuildTemporalGraph:
 
     def test_extract_srl_sentence_split_false(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         e = SRLExtractor(sentence_split=False)
         # With sentence_split=False, the whole text is treated as one sentence
         frames = e.extract_srl("He ran. She jumped.")
@@ -218,12 +243,14 @@ class TestSRLBuildTemporalGraph:
 # extraction/graph.py — KnowledgeGraph helpers
 # ---------------------------------------------------------------------------
 
+
 class TestKnowledgeGraphAddEntityString:
     """GIVEN entity_type as a string WHEN add_entity is called
     THEN an entity is created and returned."""
 
     def test_add_entity_with_string_type_and_name(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = KnowledgeGraph(name="test")
         entity = kg.add_entity("Person", name="Alice")
         assert entity.entity_type == "Person"
@@ -231,6 +258,7 @@ class TestKnowledgeGraphAddEntityString:
 
     def test_add_entity_string_type_with_properties(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = KnowledgeGraph(name="test")
         entity = kg.add_entity("Animal", name="Cat", properties={"legs": 4})
         assert entity.name == "Cat"
@@ -238,6 +266,7 @@ class TestKnowledgeGraphAddEntityString:
 
     def test_add_entity_string_type_requires_name(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = KnowledgeGraph(name="test")
         with pytest.raises(ValueError):
             kg.add_entity("Person")  # name missing
@@ -251,6 +280,7 @@ class TestKnowledgeGraphGetHelpers:
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
         from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
         kg = KnowledgeGraph(name="test")
         a = Entity(entity_id="a1", entity_type="Person", name="Alice")
         b = Entity(entity_id="b1", entity_type="Animal", name="Dog")
@@ -323,17 +353,24 @@ class TestKnowledgeGraphFindPaths:
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
         from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
         kg = KnowledgeGraph(name="chain")
         a = Entity(entity_id="a", entity_type="N", name="A")
         b = Entity(entity_id="b", entity_type="N", name="B")
         c = Entity(entity_id="c", entity_type="N", name="C")
         d = Entity(entity_id="d", entity_type="N", name="D")
-        kg.add_entity(a); kg.add_entity(b); kg.add_entity(c); kg.add_entity(d)
+        kg.add_entity(a)
+        kg.add_entity(b)
+        kg.add_entity(c)
+        kg.add_entity(d)
         r1 = Relationship(relationship_type="EDGE", source_entity=a, target_entity=b)
         r2 = Relationship(relationship_type="EDGE", source_entity=b, target_entity=c)
-        r3 = Relationship(relationship_type="OTHER", source_entity=b, target_entity=c,
-                          bidirectional=True)
-        kg.add_relationship(r1); kg.add_relationship(r2); kg.add_relationship(r3)
+        r3 = Relationship(
+            relationship_type="OTHER", source_entity=b, target_entity=c, bidirectional=True
+        )
+        kg.add_relationship(r1)
+        kg.add_relationship(r2)
+        kg.add_relationship(r3)
         return kg, a, b, c, d
 
     def test_direct_path(self):
@@ -367,12 +404,15 @@ class TestKnowledgeGraphFindPaths:
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
         from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
         kg = KnowledgeGraph(name="bidir")
         x = Entity(entity_id="x", entity_type="N", name="X")
         y = Entity(entity_id="y", entity_type="N", name="Y")
-        kg.add_entity(x); kg.add_entity(y)
-        rel = Relationship(relationship_type="BIDIR", source_entity=x, target_entity=y,
-                           bidirectional=True)
+        kg.add_entity(x)
+        kg.add_entity(y)
+        rel = Relationship(
+            relationship_type="BIDIR", source_entity=x, target_entity=y, bidirectional=True
+        )
         kg.add_relationship(rel)
         paths = kg.find_paths(y, x, max_depth=2)
         assert len(paths) >= 1
@@ -384,10 +424,12 @@ class TestKnowledgeGraphQueryAndMerge:
     def _make_kg(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         kg = KnowledgeGraph(name="q")
         a = Entity(entity_id="p1", entity_type="Person", name="Alice", properties={"age": 30})
         b = Entity(entity_id="a1", entity_type="Animal", name="Cat", properties={"age": 5})
-        kg.add_entity(a); kg.add_entity(b)
+        kg.add_entity(a)
+        kg.add_entity(b)
         return kg, a, b
 
     def test_query_by_type(self):
@@ -409,6 +451,7 @@ class TestKnowledgeGraphQueryAndMerge:
     def test_merge_two_graphs(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         kg1 = KnowledgeGraph(name="g1")
         kg2 = KnowledgeGraph(name="g2")
         kg1.add_entity(Entity(entity_id="e1", entity_type="T", name="E1"))
@@ -419,6 +462,7 @@ class TestKnowledgeGraphQueryAndMerge:
     def test_merge_deduplicates_entities(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         kg1 = KnowledgeGraph(name="g1")
         kg2 = KnowledgeGraph(name="g2")
         shared = Entity(entity_id="shared", entity_type="T", name="Shared")
@@ -430,6 +474,7 @@ class TestKnowledgeGraphQueryAndMerge:
     def test_merge_entities_with_none_properties(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         kg1 = KnowledgeGraph(name="g1")
         kg2 = KnowledgeGraph(name="g2")
         kg1.add_entity(Entity(entity_id="e1", entity_type="T", name="E1", properties=None))
@@ -442,6 +487,7 @@ class TestKnowledgeGraphQueryAndMerge:
         d = kg.to_dict()
         assert "entities" in d and "relationships" in d
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         restored = KnowledgeGraph.from_dict(d)
         assert len(restored.entities) == len(kg.entities)
 
@@ -450,6 +496,7 @@ class TestKnowledgeGraphQueryAndMerge:
         j = kg.to_json()
         assert isinstance(j, str)
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         restored = KnowledgeGraph.from_json(j)
         assert len(restored.entities) == 2
 
@@ -465,11 +512,13 @@ class TestKnowledgeGraphQueryAndMerge:
 # query/distributed.py
 # ---------------------------------------------------------------------------
 
+
 class TestPartitionStats:
     """GIVEN PartitionStats WHEN to_dict called THEN returns expected keys."""
 
     def test_to_dict_returns_all_keys(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import PartitionStats
+
         ps = PartitionStats(partition_id=3, node_count=10, edge_count=5)
         d = ps.to_dict()
         assert d == {"partition_id": 3, "node_count": 10, "edge_count": 5}
@@ -482,6 +531,7 @@ class TestGraphPartitionerStrategies:
     def _make_kg(self, n=6):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         kg = KnowledgeGraph(name="test")
         for i in range(n):
             kg.add_entity(Entity(entity_id=f"e{i:02d}", entity_type="T", name=f"n{i}"))
@@ -489,8 +539,10 @@ class TestGraphPartitionerStrategies:
 
     def test_hash_partitioning(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, PartitionStrategy,
+            GraphPartitioner,
+            PartitionStrategy,
         )
+
         kg = self._make_kg()
         p = GraphPartitioner(num_partitions=2, strategy=PartitionStrategy.HASH)
         dg = p.partition(kg)
@@ -498,8 +550,10 @@ class TestGraphPartitionerStrategies:
 
     def test_range_partitioning(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, PartitionStrategy,
+            GraphPartitioner,
+            PartitionStrategy,
         )
+
         kg = self._make_kg()
         p = GraphPartitioner(num_partitions=2, strategy=PartitionStrategy.RANGE)
         dg = p.partition(kg)
@@ -507,8 +561,10 @@ class TestGraphPartitionerStrategies:
 
     def test_round_robin_partitioning(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, PartitionStrategy,
+            GraphPartitioner,
+            PartitionStrategy,
         )
+
         kg = self._make_kg()
         p = GraphPartitioner(num_partitions=3, strategy=PartitionStrategy.ROUND_ROBIN)
         dg = p.partition(kg)
@@ -517,6 +573,7 @@ class TestGraphPartitionerStrategies:
     def test_invalid_strategy_raises(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import GraphPartitioner
         from unittest.mock import patch
+
         kg = self._make_kg(2)
         p = GraphPartitioner(num_partitions=2)
         # Force an unknown strategy
@@ -526,8 +583,10 @@ class TestGraphPartitionerStrategies:
 
     def test_get_partition_stats(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, DistributedGraph,
+            GraphPartitioner,
+            DistributedGraph,
         )
+
         kg = self._make_kg()
         p = GraphPartitioner(num_partitions=2)
         dg = p.partition(kg)
@@ -544,8 +603,10 @@ class TestFederatedQueryExecutorParallel:
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, FederatedQueryExecutor,
+            GraphPartitioner,
+            FederatedQueryExecutor,
         )
+
         kg = KnowledgeGraph(name="t")
         for i in range(n):
             kg.add_entity(Entity(entity_id=f"e{i}", entity_type="Person", name=f"p{i}"))
@@ -580,8 +641,10 @@ class TestFederatedQueryExecutorParallel:
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, FederatedQueryExecutor,
+            GraphPartitioner,
+            FederatedQueryExecutor,
         )
+
         kg = KnowledgeGraph(name="t")
         for i in range(3):
             kg.add_entity(Entity(entity_id=f"e{i}", entity_type="Person", name=f"p{i}"))
@@ -600,10 +663,12 @@ class TestNormaliseResult:
 
     def test_none_returns_empty(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         assert _normalise_result(None) == []
 
     def test_list_of_dicts_passthrough(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         result = _normalise_result([{"x": 1}, {"x": 2}])
         assert result == [{"x": 1}, {"x": 2}]
 
@@ -618,11 +683,13 @@ class TestNormaliseResult:
 
     def test_iterable_of_dicts(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         result = _normalise_result(iter([{"k": "v"}]))
         assert result == [{"k": "v"}]
 
     def test_non_iterable_returns_empty(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         # An integer is not iterable
         result = _normalise_result(42)
         assert result == []
@@ -634,18 +701,21 @@ class TestRecordFingerprint:
 
     def test_returns_40_char_hex(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _record_fingerprint
+
         fp = _record_fingerprint({"a": 1, "b": "hello"})
         assert isinstance(fp, str)
         assert len(fp) == 40
 
     def test_same_record_same_fingerprint(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _record_fingerprint
+
         fp1 = _record_fingerprint({"x": 1, "y": 2})
         fp2 = _record_fingerprint({"y": 2, "x": 1})
         assert fp1 == fp2  # sort_keys=True ensures stability
 
     def test_different_records_different_fingerprints(self):
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _record_fingerprint
+
         fp1 = _record_fingerprint({"x": 1})
         fp2 = _record_fingerprint({"x": 2})
         assert fp1 != fp2
@@ -655,19 +725,23 @@ class TestRecordFingerprint:
 # cypher/compiler.py
 # ---------------------------------------------------------------------------
 
+
 class TestCypherCompilerMisc:
     """GIVEN various Cypher queries WHEN compiled THEN correct IR ops generated."""
 
     def _compile(self, query: str):
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import compile_cypher
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
+
         parser = CypherParser()
         return compile_cypher(parser.parse(query))
 
     def test_unknown_clause_raises(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import (
-            CypherCompiler, CypherCompileError,
+            CypherCompiler,
+            CypherCompileError,
         )
+
         compiler = CypherCompiler()
         with pytest.raises(CypherCompileError):
             compiler._compile_clause("not_a_clause_type")
@@ -733,9 +807,7 @@ class TestCypherCompilerMisc:
         assert any(o.get("distinct") for o in proj)
 
     def test_optional_match_emits_optional_expand(self):
-        ops = self._compile(
-            "OPTIONAL MATCH (n:Person)-[r:KNOWS]->(m:Person) RETURN n, r, m"
-        )
+        ops = self._compile("OPTIONAL MATCH (n:Person)-[r:KNOWS]->(m:Person) RETURN n, r, m")
         op_names = [o["op"] for o in ops]
         assert "OptionalExpand" in op_names
 
@@ -765,10 +837,12 @@ class TestCypherCompilerExpressions:
 
     def _compiler(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
+
         return CypherCompiler()
 
     def test_list_node_compiled_to_list(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import ListNode, LiteralNode
+
         comp = self._compiler()
         lst = ListNode(elements=[LiteralNode(value=1), LiteralNode(value=2)])
         result = comp._compile_expression(lst)
@@ -777,6 +851,7 @@ class TestCypherCompilerExpressions:
 
     def test_dict_compiled_to_dict(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import LiteralNode
+
         comp = self._compiler()
         result = comp._compile_expression({"a": LiteralNode(value="x")})
         assert isinstance(result, dict)
@@ -784,8 +859,11 @@ class TestCypherCompilerExpressions:
 
     def test_non_var_property_access_node(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
-            PropertyAccessNode, FunctionCallNode, LiteralNode,
+            PropertyAccessNode,
+            FunctionCallNode,
+            LiteralNode,
         )
+
         comp = self._compiler()
         func = FunctionCallNode(name="toString", arguments=[LiteralNode(value=42)])
         prop = PropertyAccessNode(object=func, property="len")
@@ -795,8 +873,12 @@ class TestCypherCompilerExpressions:
 
     def test_case_expression_to_string(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
-            CaseExpressionNode, WhenClause, LiteralNode, VariableNode,
+            CaseExpressionNode,
+            WhenClause,
+            LiteralNode,
+            VariableNode,
         )
+
         comp = self._compiler()
         case = CaseExpressionNode(
             test_expression=VariableNode(name="n"),
@@ -812,12 +894,17 @@ class TestCypherCompilerExpressions:
 
     def test_case_expression_no_else_to_string(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
-            CaseExpressionNode, WhenClause, LiteralNode,
+            CaseExpressionNode,
+            WhenClause,
+            LiteralNode,
         )
+
         comp = self._compiler()
         case = CaseExpressionNode(
             test_expression=None,
-            when_clauses=[WhenClause(condition=LiteralNode(value=True), result=LiteralNode(value="yes"))],
+            when_clauses=[
+                WhenClause(condition=LiteralNode(value=True), result=LiteralNode(value="yes"))
+            ],
             else_result=None,
         )
         s = comp._expression_to_string(case)
@@ -827,22 +914,32 @@ class TestCypherCompilerExpressions:
     def test_compile_cypher_convenience(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import compile_cypher
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
+
         ops = compile_cypher(CypherParser().parse("MATCH (n) RETURN n"))
         assert any(o["op"] == "ScanAll" for o in ops)
 
     def test_merge_with_on_create_set(self):
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
-            MergeClause, PatternNode, NodePattern, QueryNode,
-            PropertyAccessNode, VariableNode, LiteralNode,
+            MergeClause,
+            PatternNode,
+            NodePattern,
+            QueryNode,
+            PropertyAccessNode,
+            VariableNode,
+            LiteralNode,
         )
+
         comp = CypherCompiler()
         node = NodePattern(variable="n", labels=["Person"], properties={})
         pattern = PatternNode(elements=[node])
         merge = MergeClause(
             patterns=[pattern],
             on_create_set=[
-                (PropertyAccessNode(object=VariableNode("n"), property="age"), LiteralNode(value=25))
+                (
+                    PropertyAccessNode(object=VariableNode("n"), property="age"),
+                    LiteralNode(value=25),
+                )
             ],
             on_match_set=[
                 (PropertyAccessNode(object=VariableNode("n"), property="ts"), LiteralNode(value=1))
@@ -859,12 +956,14 @@ class TestCypherCompilerExpressions:
 # neo4j_compat/types.py
 # ---------------------------------------------------------------------------
 
+
 class TestNodeType:
     """GIVEN Node objects WHEN accessing properties / calling dunder methods
     THEN correct results returned."""
 
     def _make(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node
+
         return Node(
             node_id="n1",
             labels=["Person"],
@@ -881,12 +980,14 @@ class TestNodeType:
 
     def test_eq_same_id(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node
+
         n1 = self._make()
         n2 = Node(node_id="n1", labels=["Animal"], properties={})
         assert n1 == n2
 
     def test_eq_different_id(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node
+
         n1 = self._make()
         n2 = Node(node_id="n2", labels=["Person"], properties={"name": "Alice", "age": 30})
         assert n1 != n2
@@ -897,6 +998,7 @@ class TestNodeType:
 
     def test_hash_same_for_same_id(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node
+
         n1 = self._make()
         n2 = Node(node_id="n1", labels=[], properties={})
         assert hash(n1) == hash(n2)
@@ -917,6 +1019,7 @@ class TestRelationshipType:
 
     def _make(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Relationship
+
         return Relationship(
             rel_id="r1",
             rel_type="KNOWS",
@@ -935,16 +1038,24 @@ class TestRelationshipType:
 
     def test_eq_same_id(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Relationship
+
         r1 = self._make()
-        r2 = Relationship(rel_id="r1", rel_type="LOVES", start_node="x", end_node="y",
-                          properties={})
+        r2 = Relationship(
+            rel_id="r1", rel_type="LOVES", start_node="x", end_node="y", properties={}
+        )
         assert r1 == r2
 
     def test_eq_different_id(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Relationship
+
         r1 = self._make()
-        r2 = Relationship(rel_id="r2", rel_type="KNOWS", start_node="n1", end_node="n2",
-                          properties={"since": 2020})
+        r2 = Relationship(
+            rel_id="r2",
+            rel_type="KNOWS",
+            start_node="n1",
+            end_node="n2",
+            properties={"since": 2020},
+        )
         assert r1 != r2
 
     def test_hash_is_int(self):
@@ -971,14 +1082,17 @@ class TestPathType:
 
     def _make_nodes_and_rel(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Node, Relationship
+
         n1 = Node(node_id="n1", labels=["Person"], properties={"name": "A"})
         n2 = Node(node_id="n2", labels=["Person"], properties={"name": "B"})
-        r = Relationship(rel_id="r1", rel_type="KNOWS", start_node="n1", end_node="n2",
-                         properties={})
+        r = Relationship(
+            rel_id="r1", rel_type="KNOWS", start_node="n1", end_node="n2", properties={}
+        )
         return n1, n2, r
 
     def test_path_start_and_end_nodes(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Path
+
         n1, n2, r = self._make_nodes_and_rel()
         p = Path(n1, r, n2)
         assert p.start_node is n1
@@ -986,12 +1100,14 @@ class TestPathType:
 
     def test_path_len_equals_relationship_count(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Path
+
         n1, n2, r = self._make_nodes_and_rel()
         p = Path(n1, r, n2)
         assert len(p) == 1
 
     def test_single_node_path_len_zero(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Path
+
         n1, _, _ = self._make_nodes_and_rel()
         p = Path(n1)
         assert len(p) == 0
@@ -999,6 +1115,7 @@ class TestPathType:
 
     def test_path_iter_yields_rel_then_node(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Path, Relationship, Node
+
         n1, n2, r = self._make_nodes_and_rel()
         p = Path(n1, r, n2)
         items = list(p)
@@ -1008,6 +1125,7 @@ class TestPathType:
 
     def test_path_repr_contains_node_id(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Path
+
         n1, n2, r = self._make_nodes_and_rel()
         p = Path(n1, r, n2)
         r_str = repr(p)
@@ -1015,6 +1133,7 @@ class TestPathType:
 
     def test_path_nodes_and_relationships_lists(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.types import Path
+
         n1, n2, r = self._make_nodes_and_rel()
         p = Path(n1, r, n2)
         assert len(p.nodes) == 2
@@ -1025,40 +1144,52 @@ class TestPathType:
 # extraction/types.py
 # ---------------------------------------------------------------------------
 
+
 class TestExtractionTypes:
     """GIVEN the extraction/types module WHEN imported THEN feature flags and
     optional imports are correctly set."""
 
     def test_have_tracer_is_bool(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.types import HAVE_TRACER
+
         assert isinstance(HAVE_TRACER, bool)
 
     def test_have_accelerate_is_bool(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.types import HAVE_ACCELERATE
+
         assert isinstance(HAVE_ACCELERATE, bool)
 
     def test_is_accelerate_available_callable(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.types import is_accelerate_available
+
         result = is_accelerate_available()
         assert isinstance(result, bool)
 
     def test_get_accelerate_status_callable(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.types import get_accelerate_status
+
         result = get_accelerate_status()
         assert isinstance(result, dict)
 
     def test_type_aliases_are_strings(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.types import (
-            EntityID, RelationshipID, EntityType, RelationshipType,
+            EntityID,
+            RelationshipID,
+            EntityType,
+            RelationshipType,
         )
+
         # They are type aliases (str) — verify usage
         eid: EntityID = "e1"
         assert eid == "e1"
 
     def test_constants(self):
         from ipfs_datasets_py.knowledge_graphs.extraction.types import (
-            DEFAULT_CONFIDENCE, MIN_CONFIDENCE, MAX_CONFIDENCE,
+            DEFAULT_CONFIDENCE,
+            MIN_CONFIDENCE,
+            MAX_CONFIDENCE,
         )
+
         assert DEFAULT_CONFIDENCE == 1.0
         assert MIN_CONFIDENCE == 0.0
         assert MAX_CONFIDENCE == 1.0

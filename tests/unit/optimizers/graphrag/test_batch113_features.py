@@ -7,6 +7,7 @@ Methods under test:
   - OntologyMediator.reset_action_counts()
   - LogicValidator.count_relationship_types(ontology)
 """
+
 import pytest
 
 
@@ -14,13 +15,16 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _entity(eid, etype="Person", text="Alice", confidence=0.9):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=etype, text=text, confidence=confidence)
 
 
 def _result(entities=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=[],
@@ -30,16 +34,28 @@ def _result(entities=None):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_score(v):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
-    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, relationship_coherence=v, domain_alignment=v)
+
+    return CriticScore(
+        completeness=v,
+        consistency=v,
+        clarity=v,
+        granularity=v,
+        relationship_coherence=v,
+        domain_alignment=v,
+    )
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -47,17 +63,20 @@ def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyMediator(generator=OntologyGenerator(), critic=OntologyCritic(use_llm=False))
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator, ProverConfig
+
     return LogicValidator(ProverConfig())
 
 
 # ---------------------------------------------------------------------------
 # EntityExtractionResult.confidence_stats
 # ---------------------------------------------------------------------------
+
 
 class TestEntityConfidenceStats:
     def test_empty_result(self):
@@ -90,6 +109,7 @@ class TestEntityConfidenceStats:
 # ---------------------------------------------------------------------------
 # OntologyCritic.compare_runs
 # ---------------------------------------------------------------------------
+
 
 class TestCompareRuns:
     def test_improvement_detected(self):
@@ -138,6 +158,7 @@ class TestCompareRuns:
 # OntologyLearningAdapter.reset_and_load
 # ---------------------------------------------------------------------------
 
+
 class TestResetAndLoad:
     def test_clears_existing_feedback(self):
         a = _make_adapter()
@@ -171,6 +192,7 @@ class TestResetAndLoad:
 # OntologyMediator.reset_action_counts
 # ---------------------------------------------------------------------------
 
+
 class TestResetActionCounts:
     def test_clears_counts(self):
         m = _make_mediator()
@@ -194,6 +216,7 @@ class TestResetActionCounts:
 # ---------------------------------------------------------------------------
 # LogicValidator.count_relationship_types
 # ---------------------------------------------------------------------------
+
 
 class TestCountRelationshipTypes:
     def test_empty(self):

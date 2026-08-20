@@ -44,19 +44,13 @@ class TestExtractionConfigValidation:
     # confidence_threshold vs max_confidence ordering
     def test_confidence_threshold_greater_than_max_confidence_fails(self):
         """Test that confidence_threshold > max_confidence fails."""
-        config = ExtractionConfig(
-            confidence_threshold=0.8,
-            max_confidence=0.6
-        )
+        config = ExtractionConfig(confidence_threshold=0.8, max_confidence=0.6)
         with pytest.raises(ValueError, match="confidence_threshold.*must be.*<= max_confidence"):
             config.validate()
 
     def test_confidence_threshold_equals_max_confidence_passes(self):
         """Test that confidence_threshold == max_confidence passes."""
-        config = ExtractionConfig(
-            confidence_threshold=0.8,
-            max_confidence=0.8
-        )
+        config = ExtractionConfig(confidence_threshold=0.8, max_confidence=0.8)
         config.validate()  # Should not raise
 
     # max_entities and max_relationships
@@ -174,10 +168,7 @@ class TestExtractionConfigSerialization:
     def test_to_dict_includes_all_fields(self):
         """Test that to_dict includes all config fields."""
         config = ExtractionConfig(
-            confidence_threshold=0.7,
-            max_entities=100,
-            window_size=10,
-            llm_fallback_threshold=0.6
+            confidence_threshold=0.7, max_entities=100, window_size=10, llm_fallback_threshold=0.6
         )
         d = config.to_dict()
 
@@ -188,11 +179,7 @@ class TestExtractionConfigSerialization:
 
     def test_from_dict_reconstructs_config(self):
         """Test that from_dict reconstructs config from dict."""
-        original = ExtractionConfig(
-            confidence_threshold=0.7,
-            max_entities=100,
-            window_size=10
-        )
+        original = ExtractionConfig(confidence_threshold=0.7, max_entities=100, window_size=10)
         d = original.to_dict()
         reconstructed = ExtractionConfig.from_dict(d)
 
@@ -212,10 +199,7 @@ class TestExtractionConfigSerialization:
     def test_roundtrip_preserves_validation(self):
         """Test that roundtrip through to_dict/from_dict preserves validity."""
         original = ExtractionConfig(
-            confidence_threshold=0.6,
-            max_confidence=0.9,
-            max_entities=50,
-            window_size=8
+            confidence_threshold=0.6, max_confidence=0.9, max_entities=50, window_size=8
         )
         original.validate()
 

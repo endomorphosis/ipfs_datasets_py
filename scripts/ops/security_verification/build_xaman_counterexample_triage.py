@@ -18,24 +18,28 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_counte
 )
 
 
-COUNTEREXAMPLE_PATH = Path('security_ir_artifacts/corpora/xaman-app/counterexample-report.json')
-FUZZ_PATH = Path('security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json')
-TRANSACTION_COVERAGE_PATH = Path('security_ir_artifacts/corpora/xaman-app/xrpl-transaction-coverage.json')
-NATIVE_VAULT_STATE_FUZZ_PATH = Path('security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz-report.json')
-OUTPUT_PATH = Path('security_ir_artifacts/corpora/xaman-app/counterexample-triage.json')
+COUNTEREXAMPLE_PATH = Path("security_ir_artifacts/corpora/xaman-app/counterexample-report.json")
+FUZZ_PATH = Path("security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json")
+TRANSACTION_COVERAGE_PATH = Path(
+    "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-coverage.json"
+)
+NATIVE_VAULT_STATE_FUZZ_PATH = Path(
+    "security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz-report.json"
+)
+OUTPUT_PATH = Path("security_ir_artifacts/corpora/xaman-app/counterexample-triage.json")
 
 
 def _load(path: Path) -> dict[str, object]:
-    payload = json.loads(path.read_text(encoding='utf-8'))
+    payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f'expected JSON object: {path}')
+        raise ValueError(f"expected JSON object: {path}")
     return payload
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root.')
-    parser.add_argument('--out', default=str(OUTPUT_PATH), help='Triage report path.')
+    parser.add_argument("--repo-root", default=str(ROOT_DIR), help="Repository root.")
+    parser.add_argument("--out", default=str(OUTPUT_PATH), help="Triage report path.")
     args = parser.parse_args(argv)
     root = Path(args.repo_root).resolve()
     out = Path(args.out)
@@ -48,10 +52,21 @@ def main(argv: list[str] | None = None) -> int:
         native_vault_state_fuzz=_load(root / NATIVE_VAULT_STATE_FUZZ_PATH),
     )
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=True) + '\n', encoding='utf-8')
-    print(json.dumps({'report_path': str(out.relative_to(root)) if out.is_relative_to(root) else str(out), 'overall_status': report['overall_status'], 'entry_count': report['summary']['entry_count']}, sort_keys=True))
+    out.write_text(
+        json.dumps(report, indent=2, sort_keys=True, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
+    print(
+        json.dumps(
+            {
+                "report_path": str(out.relative_to(root)) if out.is_relative_to(root) else str(out),
+                "overall_status": report["overall_status"],
+                "entry_count": report["summary"]["entry_count"],
+            },
+            sort_keys=True,
+        )
+    )
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

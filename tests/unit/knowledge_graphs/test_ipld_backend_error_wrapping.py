@@ -38,7 +38,7 @@ def test_retrieve_json_wraps_invalid_json() -> None:
 
 
 def test_store_wraps_unsupported_type_as_serialization_error() -> None:
-    backend = _backend_with_dummy(b"{}");
+    backend = _backend_with_dummy(b"{}")
 
     class _Nope:
         pass

@@ -5,6 +5,7 @@ Feature: Municipal Laws Scraper
   The municipal laws scraper searches and scrapes municipal codes and ordinances
   from major US cities for building municipal code datasets.
 """
+
 import pytest
 import anyio
 from typing import Dict, Any, List, Optional
@@ -40,12 +41,14 @@ SEARCH_ALL = "all"
 
 # Fixtures from Background
 
+
 @pytest.fixture
 def municipal_laws_scraper_module_loaded() -> Dict[str, Any]:
     """
     Given the municipal laws scraper module is loaded
     """
     raise NotImplementedError
+
 
 @pytest.fixture
 def major_cities_list() -> List[Dict[str, str]]:
@@ -54,90 +57,76 @@ def major_cities_list() -> List[Dict[str, str]]:
     """
     raise NotImplementedError
 
+
 @pytest.fixture
 def search_municipal_codes_callable():
     """Fixture providing the search municipal codes function."""
     raise NotImplementedError
+
 
 @pytest.fixture
 def scrape_municipal_laws_callable():
     """Fixture providing the scrape municipal laws function."""
     raise NotImplementedError
 
+
 @pytest.fixture
 def get_city_count_callable():
     """Fixture providing a city count function."""
     raise NotImplementedError
+
 
 @pytest.fixture
 def find_city_by_name_callable():
     """Fixture providing a city finder function."""
     raise NotImplementedError
 
+
 @pytest.fixture
 def find_city_by_code_callable():
     """Fixture providing a city finder by code function."""
     raise NotImplementedError
 
+
 class TestSearchMunicipalCodes:
     """Search Municipal Codes"""
 
     def test_search_returns_city_for_valid_name(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_name_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_name_callable
     ):
         raise NotImplementedError
 
     def test_search_returns_correct_city_code(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_name_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_name_callable
     ):
         raise NotImplementedError
 
     def test_search_returns_correct_state(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_name_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_name_callable
     ):
         raise NotImplementedError
 
     def test_search_partial_name_finds_city(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_name_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_name_callable
     ):
         raise NotImplementedError
 
     def test_search_partial_name_returns_correct_code(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_name_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_name_callable
     ):
         raise NotImplementedError
 
     def test_search_unknown_city_returns_none(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_name_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_name_callable
     ):
         raise NotImplementedError
+
 
 class TestCityListValidation:
     """City List Validation"""
 
     def test_cities_list_has_expected_count(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        get_city_count_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, get_city_count_callable
     ):
         """
         Given the major cities list is loaded
@@ -147,80 +136,55 @@ class TestCityListValidation:
         raise NotImplementedError
 
     def test_cities_list_contains_nyc(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_code_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_code_callable
     ):
         raise NotImplementedError
 
     def test_cities_list_contains_lax(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_code_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_code_callable
     ):
         raise NotImplementedError
 
     def test_cities_list_contains_seattle(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_code_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_code_callable
     ):
         raise NotImplementedError
+
 
 class TestCityDataStructure:
     """City Data Structure"""
 
     def test_city_entry_contains_code(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_code_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_code_callable
     ):
         raise NotImplementedError
 
     def test_city_entry_contains_name(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_code_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_code_callable
     ):
         raise NotImplementedError
 
     def test_city_entry_contains_state(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_code_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_code_callable
     ):
         raise NotImplementedError
 
     def test_city_name_is_correct(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_code_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_code_callable
     ):
         raise NotImplementedError
 
     def test_seattle_name_is_correct(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_code_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_code_callable
     ):
         raise NotImplementedError
+
 
 class TestMultipleCitiesOperations:
     """Multiple Cities Operations"""
 
     def test_filter_multiple_cities_returns_correct_count(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_code_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_code_callable
     ):
         """
         Given the major cities list is loaded
@@ -230,10 +194,7 @@ class TestMultipleCitiesOperations:
         raise NotImplementedError
 
     def test_filter_invalid_city_returns_none(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        find_city_by_code_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, find_city_by_code_callable
     ):
         """
         Given the major cities list is loaded
@@ -243,10 +204,7 @@ class TestMultipleCitiesOperations:
         raise NotImplementedError
 
     def test_all_cities_are_unique(
-        self, 
-        municipal_laws_scraper_module_loaded, 
-        major_cities_list,
-        get_city_count_callable
+        self, municipal_laws_scraper_module_loaded, major_cities_list, get_city_count_callable
     ):
         """
         Given the major cities list is loaded

@@ -80,8 +80,10 @@ context = OntologyGenerationContext(
 result = generator.extract_entities(complex_text, context)
 
 # LLM extraction provides higher confidence and richer entity types
-print(f"Extracted {len(result.entities)} entities with mean confidence: "
-      f"{sum(e.confidence for e in result.entities) / len(result.entities):.2f}")
+print(
+    f"Extracted {len(result.entities)} entities with mean confidence: "
+    f"{sum(e.confidence for e in result.entities) / len(result.entities):.2f}"
+)
 ```
 
 #### Extracting from Files
@@ -93,7 +95,7 @@ Extract entities directly from files:
 pdf_result = generator.extract_entities_from_file(
     "document.pdf",
     context,
-    max_pages=10  # Limit to first 10 pages
+    max_pages=10,  # Limit to first 10 pages
 )
 
 # Extract from JSON data
@@ -234,11 +236,12 @@ ewma_series = generator.score_ewma_series(results, alpha=0.3)
 
 # Plot quality trend
 import matplotlib.pyplot as plt
+
 plt.plot(ewma_series)
 plt.xlabel("Batch Number")
 plt.ylabel("EWMA Confidence")
 plt.title("Extraction Quality Trend")
-plt.axhline(y=0.7, color='r', linestyle='--', label='Threshold')
+plt.axhline(y=0.7, color="r", linestyle="--", label="Threshold")
 plt.legend()
 plt.savefig("quality_trend.png")
 ```
@@ -255,7 +258,9 @@ print(f"Discovered {len(unique_types)} relationship types: {unique_types}")
 # Count high-confidence entities
 high_conf_count = generator.entity_count_with_confidence_above(result, threshold=0.9)
 total_count = generator.entity_count(result)
-print(f"High confidence entities: {high_conf_count}/{total_count} ({high_conf_count/total_count*100:.1f}%)")
+print(
+    f"High confidence entities: {high_conf_count}/{total_count} ({high_conf_count / total_count * 100:.1f}%)"
+)
 
 # Analyze entity-relationship ratio
 ratio = generator.entity_relation_ratio(result)
@@ -278,9 +283,10 @@ Use async/await for efficient batch processing:
 import asyncio
 from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
 
+
 async def process_document_batch():
     generator = OntologyGenerator()
-    
+
     # Prepare documents
     documents = [
         "Document 1 text...",
@@ -288,20 +294,21 @@ async def process_document_batch():
         "Document 3 text...",
         # ... many more documents
     ]
-    
+
     # Process up to 5 documents concurrently
     results = await generator.extract_batch_async(
         documents,
         context,
         max_concurrent=5,
-        timeout_per_item=30.0  # 30 second timeout per document
+        timeout_per_item=30.0,  # 30 second timeout per document
     )
-    
+
     # Process results
     for i, result in enumerate(results):
-        print(f"Document {i+1}: {len(result.entities)} entities extracted")
-    
+        print(f"Document {i + 1}: {len(result.entities)} entities extracted")
+
     return results
+
 
 # Run async batch processing
 results = asyncio.run(process_document_batch())
@@ -315,15 +322,14 @@ Stream extraction results asynchronously:
 async def stream_large_document():
     generator = OntologyGenerator()
     large_text = load_large_document()
-    
+
     async for entity in generator.extract_with_streaming_async(
-        large_text,
-        context,
-        chunk_size=1000
+        large_text, context, chunk_size=1000
     ):
         # Process each entity as it arrives
         await save_to_database(entity)
         print(f"Processed: {entity.text}")
+
 
 asyncio.run(stream_large_document())
 ```
@@ -335,18 +341,16 @@ Infer relationships asynchronously for large entity sets:
 ```python
 async def infer_relationships_for_entities():
     generator = OntologyGenerator()
-    
+
     # Extract entities first
     result = await generator.extract_entities_async(document, context)
-    
+
     # Infer additional relationships asynchronously
-    relationships = await generator.infer_relationships_async(
-        result.entities,
-        context
-    )
-    
+    relationships = await generator.infer_relationships_async(result.entities, context)
+
     print(f"Inferred {len(relationships)} relationships")
     return relationships
+
 
 relationships = asyncio.run(infer_relationships_for_entities())
 ```
@@ -409,7 +413,6 @@ for obligation in result.obligations:
     print(f"Party: {obligation.party}")
     print(f"Action: {obligation.action}")
     print(f"Deadline: {obligation.deadline}")
-
 ```
 
 ### Refinement Feedback Schema
@@ -431,13 +434,13 @@ strict requirements (for example, relationship dicts must include
 ```python
 from ipfs_datasets_py.optimizers.graphrag import OntologyRefinementAgent
 
+
 def backend(prompt: str):
     return {
-        "relationships_to_add": [
-            {"source_id": "e1", "target_id": "e2", "type": "employs"}
-        ],
+        "relationships_to_add": [{"source_id": "e1", "target_id": "e2", "type": "employs"}],
         "confidence_floor": 0.65,
     }
+
 
 # Strict validation removes malformed feedback keys and types.
 agent = OntologyRefinementAgent(backend, strict_validation=True)
@@ -456,6 +459,7 @@ All optimizers support automatic query validation through `QueryValidationMixin`
 ```python
 from ipfs_datasets_py.optimizers.common import QueryValidationMixin
 
+
 class MyOptimizer(QueryValidationMixin):
     def process_query(self, query):
         # Validate numeric parameters
@@ -466,7 +470,7 @@ class MyOptimizer(QueryValidationMixin):
             max_value=1000,
             default=10,
         )
-        
+
         # Validate list parameters
         edge_types = self.validate_list_param(
             value=query.get("edge_types"),
@@ -476,7 +480,7 @@ class MyOptimizer(QueryValidationMixin):
             max_length=50,
             default=["ALL"],
         )
-        
+
         # Validate enum parameters
         priority = self.validate_string_param(
             value=query.get("priority"),
@@ -484,7 +488,7 @@ class MyOptimizer(QueryValidationMixin):
             allowed_values=["low", "normal", "high", "critical"],
             default="normal",
         )
-        
+
         # Parameters are now validated and safe to use
         return {
             "max_results": max_results,
@@ -527,7 +531,7 @@ malformed_query = {
     "max_results": 50000,  # Too large
     "min_similarity": 1.5,  # Out of bounds
     "priority": "URGENT",  # Invalid enum
-    "edge_types": None,    # None instead of list
+    "edge_types": None,  # None instead of list
 }
 
 # Optimizer automatically corrects issues
@@ -583,7 +587,7 @@ processor = AsyncBatchProcessor(max_concurrent=3)
 results = await processor.process_batch_chunked(
     items=large_document_list,
     func=lambda doc: generator.extract_entities(doc, context),
-    chunk_size=100  # Process 100 at a time
+    chunk_size=100,  # Process 100 at a time
 )
 ```
 
@@ -597,7 +601,7 @@ try:
         documents,
         context,
         max_concurrent=5,
-        timeout_per_item=10.0  # 10 second timeout
+        timeout_per_item=10.0,  # 10 second timeout
     )
 except asyncio.TimeoutError:
     # Reduce concurrency or increase timeout
@@ -605,7 +609,7 @@ except asyncio.TimeoutError:
         documents,
         context,
         max_concurrent=2,  # Reduced concurrency
-        timeout_per_item=30.0  # Increased timeout
+        timeout_per_item=30.0,  # Increased timeout
     )
 ```
 
@@ -616,6 +620,7 @@ Debug validation issues:
 ```python
 # Enable validation logging
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 
 # Validation warnings will be logged

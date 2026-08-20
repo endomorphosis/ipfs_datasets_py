@@ -2,20 +2,26 @@
 
 Covers issues #1173 (API Semantics) and #1175 (8-Query Proof Matrix).
 """
+
 from __future__ import annotations
 
 import pytest
 
 # Path is set up by the layered conftest.py files (root, tests/, and this directory)
 from reasoner.hybrid_v2_blueprint import (
-    parse_cnl_to_ir, check_compliance, find_violations,
-    explain_proof, clear_v2_proof_store, DeonticOpV2,
+    parse_cnl_to_ir,
+    check_compliance,
+    find_violations,
+    explain_proof,
+    clear_v2_proof_store,
+    DeonticOpV2,
 )
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def reset_proof_store():
@@ -42,6 +48,7 @@ def ir_permission():
 # ---------------------------------------------------------------------------
 # TestQueryAPISemantics (#1173)
 # ---------------------------------------------------------------------------
+
 
 class TestQueryAPISemantics:
     def test_check_compliance_preserves_temporal_proof_metadata(self, ir_obligation):
@@ -78,18 +85,14 @@ class TestQueryAPISemantics:
         # GIVEN an obligation IR and the target frame is in the events list
         norm = list(ir_obligation.norms.values())[0]
         target = norm.target_frame_ref
-        result = check_compliance(
-            {"ir": ir_obligation, "facts": {}, "events": [target]}, {}
-        )
+        result = check_compliance({"ir": ir_obligation, "facts": {}, "events": [target]}, {})
         # THEN status is compliant
         assert result["status"] == "compliant"
         assert result["violation_count"] == 0
 
     def test_check_compliance_violation_omission(self, ir_obligation):
         # GIVEN an obligation IR but no event fulfilling the obligation
-        result = check_compliance(
-            {"ir": ir_obligation, "facts": {}, "events": []}, {}
-        )
+        result = check_compliance({"ir": ir_obligation, "facts": {}, "events": []}, {})
         # THEN status is non_compliant with omission violation
         assert result["status"] == "non_compliant"
         assert result["violation_count"] >= 1
@@ -99,18 +102,14 @@ class TestQueryAPISemantics:
         # GIVEN a prohibition IR and the forbidden action appears in events
         norm = list(ir_prohibition.norms.values())[0]
         target = norm.target_frame_ref
-        result = check_compliance(
-            {"ir": ir_prohibition, "facts": {}, "events": [target]}, {}
-        )
+        result = check_compliance({"ir": ir_prohibition, "facts": {}, "events": [target]}, {})
         # THEN status is non_compliant with forbidden_action violation
         assert result["status"] == "non_compliant"
         assert result["violations"][0]["type"] == "forbidden_action"
 
     def test_check_compliance_schema_stable(self, ir_obligation):
         # GIVEN an obligation IR
-        result = check_compliance(
-            {"ir": ir_obligation, "facts": {}, "events": []}, {}
-        )
+        result = check_compliance({"ir": ir_obligation, "facts": {}, "events": []}, {})
         # THEN all required keys are present
         for key in ("api", "schema_version", "status", "violations", "proof_id", "violation_count"):
             assert key in result, f"Missing key: {key}"
@@ -127,9 +126,7 @@ class TestQueryAPISemantics:
 
     def test_explain_proof_nl_format(self, ir_obligation):
         # GIVEN a compliance result
-        result = check_compliance(
-            {"ir": ir_obligation, "facts": {}, "events": []}, {}
-        )
+        result = check_compliance({"ir": ir_obligation, "facts": {}, "events": []}, {})
         proof_id = result["proof_id"]
         # WHEN explained in NL format
         expl = explain_proof(proof_id, format="nl")
@@ -139,9 +136,7 @@ class TestQueryAPISemantics:
 
     def test_explain_proof_json_format(self, ir_obligation):
         # GIVEN a compliance result
-        result = check_compliance(
-            {"ir": ir_obligation, "facts": {}, "events": []}, {}
-        )
+        result = check_compliance({"ir": ir_obligation, "facts": {}, "events": []}, {})
         proof_id = result["proof_id"]
         # WHEN explained in JSON format
         expl = explain_proof(proof_id, format="json")
@@ -184,9 +179,7 @@ class TestQueryAPISemantics:
 
     def test_compliance_result_has_proof_id(self, ir_obligation):
         # GIVEN a compliance check
-        result = check_compliance(
-            {"ir": ir_obligation, "facts": {}, "events": []}, {}
-        )
+        result = check_compliance({"ir": ir_obligation, "facts": {}, "events": []}, {})
         # THEN proof_id is a non-empty string
         assert isinstance(result["proof_id"], str)
         assert len(result["proof_id"]) > 0
@@ -196,6 +189,7 @@ class TestQueryAPISemantics:
 # TestExceptionAndDeadlineSemantics
 # ---------------------------------------------------------------------------
 
+
 class TestExceptionAndDeadlineSemantics:
     def test_exception_prevents_violation(self):
         # GIVEN an obligation with unless clause
@@ -204,9 +198,7 @@ class TestExceptionAndDeadlineSemantics:
         # Get the actual exception predicate name
         ex_pred = norm.exceptions[0].atom.pred
         # WHEN the exception fact is true
-        result = check_compliance(
-            {"ir": ir, "facts": {ex_pred: True}, "events": []}, {}
-        )
+        result = check_compliance({"ir": ir, "facts": {ex_pred: True}, "events": []}, {})
         # THEN no violation occurs (exception discharges obligation)
         assert result["status"] == "compliant"
 
@@ -221,6 +213,7 @@ class TestExceptionAndDeadlineSemantics:
 # ---------------------------------------------------------------------------
 # TestConflictSemantics
 # ---------------------------------------------------------------------------
+
 
 class TestConflictSemantics:
     def test_two_conflicting_norms_both_tracked(self):
@@ -267,14 +260,13 @@ class TestConflictSemantics:
 # TestEightQueryProofMatrix (#1175)
 # ---------------------------------------------------------------------------
 
+
 class TestEightQueryProofMatrix:
     def test_q1_obligation_compliant(self):
         # Q1: O norm + event happened → compliant
         ir = parse_cnl_to_ir("Contractor shall submit the report")
         norm = list(ir.norms.values())[0]
-        result = check_compliance(
-            {"ir": ir, "facts": {}, "events": [norm.target_frame_ref]}, {}
-        )
+        result = check_compliance({"ir": ir, "facts": {}, "events": [norm.target_frame_ref]}, {})
         assert result["status"] == "compliant"
         assert result["violation_count"] == 0
         assert isinstance(result["proof_id"], str)
@@ -300,9 +292,7 @@ class TestEightQueryProofMatrix:
         # Q4: F norm + event happened → violation
         ir = parse_cnl_to_ir("Vendor shall not disclose confidential data")
         norm = list(ir.norms.values())[0]
-        result = check_compliance(
-            {"ir": ir, "facts": {}, "events": [norm.target_frame_ref]}, {}
-        )
+        result = check_compliance({"ir": ir, "facts": {}, "events": [norm.target_frame_ref]}, {})
         assert result["status"] == "non_compliant"
         assert result["violation_count"] >= 1
         assert result["violations"][0]["type"] == "forbidden_action"
@@ -317,9 +307,7 @@ class TestEightQueryProofMatrix:
         r1 = check_compliance({"ir": ir, "facts": {}, "events": []}, {})
         assert r1["violation_count"] == 0
         # With target event
-        r2 = check_compliance(
-            {"ir": ir, "facts": {}, "events": [norm.target_frame_ref]}, {}
-        )
+        r2 = check_compliance({"ir": ir, "facts": {}, "events": [norm.target_frame_ref]}, {})
         assert r2["violation_count"] == 0
 
     def test_q6_conditional_obligation_inactive(self):
@@ -336,9 +324,7 @@ class TestEightQueryProofMatrix:
         ir = parse_cnl_to_ir("Contractor shall file the form unless emergency")
         norm = list(ir.norms.values())[0]
         ex_pred = norm.exceptions[0].atom.pred
-        result = check_compliance(
-            {"ir": ir, "facts": {ex_pred: True}, "events": []}, {}
-        )
+        result = check_compliance({"ir": ir, "facts": {ex_pred: True}, "events": []}, {})
         assert result["status"] == "compliant"
         assert result["violation_count"] == 0
         assert isinstance(result["proof_id"], str)

@@ -49,7 +49,13 @@ def small_ontology():
             {"id": "e3", "text": "Acme Corp", "type": "Organization", "confidence": 0.8},
         ],
         "relationships": [
-            {"id": "r1", "source_id": "e1", "target_id": "e3", "type": "works_at", "confidence": 0.75},
+            {
+                "id": "r1",
+                "source_id": "e1",
+                "target_id": "e3",
+                "type": "works_at",
+                "confidence": 0.75,
+            },
         ],
         "metadata": {"domain": "general"},
     }
@@ -111,10 +117,10 @@ class TestCriticScoreBasics:
         score = critic.evaluate_ontology(small_ontology, context)
 
         assert score is not None
-        assert hasattr(score, 'completeness')
-        assert hasattr(score, 'consistency')
-        assert hasattr(score, 'clarity')
-        assert hasattr(score, 'overall')
+        assert hasattr(score, "completeness")
+        assert hasattr(score, "consistency")
+        assert hasattr(score, "clarity")
+        assert hasattr(score, "overall")
 
     def test_score_dimensions_in_valid_range(self, critic, small_ontology, context):
         """Test that all score dimensions are in [0, 1]."""
@@ -137,7 +143,9 @@ class TestCriticScoreBasics:
 class TestScoreDistributionAcrossSizes:
     """Tests for score distribution across ontologies of different sizes."""
 
-    def test_completeness_increases_with_size(self, critic, minimal_ontology, small_ontology, medium_ontology, context):
+    def test_completeness_increases_with_size(
+        self, critic, minimal_ontology, small_ontology, medium_ontology, context
+    ):
         """Test that completeness tends to increase with ontology size."""
         score_minimal = critic.evaluate_ontology(minimal_ontology, context)
         score_small = critic.evaluate_ontology(small_ontology, context)
@@ -147,7 +155,9 @@ class TestScoreDistributionAcrossSizes:
         assert score_small.completeness >= score_minimal.completeness
         assert score_medium.completeness >= score_small.completeness
 
-    def test_consistency_independent_of_size(self, critic, small_ontology, medium_ontology, large_ontology, context):
+    def test_consistency_independent_of_size(
+        self, critic, small_ontology, medium_ontology, large_ontology, context
+    ):
         """Test that consistency can vary independently of ontology size."""
         score_small1 = critic.evaluate_ontology(small_ontology, context)
         score_medium1 = critic.evaluate_ontology(medium_ontology, context)
@@ -159,7 +169,9 @@ class TestScoreDistributionAcrossSizes:
         assert 0.0 <= score_medium1.consistency <= 1.0
         assert 0.0 <= score_large1.consistency <= 1.0
 
-    def test_clarity_varies_across_sizes(self, critic, small_ontology, medium_ontology, large_ontology, context):
+    def test_clarity_varies_across_sizes(
+        self, critic, small_ontology, medium_ontology, large_ontology, context
+    ):
         """Test that clarity scores vary across different ontology sizes."""
         scores = [
             critic.evaluate_ontology(small_ontology, context),
@@ -214,7 +226,12 @@ class TestScoresWithDuplicates:
         ontology_with_dups = {
             "entities": [
                 {"id": "e1", "text": "John Smith", "type": "Person", "confidence": 0.9},
-                {"id": "e2", "text": "John Smith", "type": "Person", "confidence": 0.9},  # Duplicate
+                {
+                    "id": "e2",
+                    "text": "John Smith",
+                    "type": "Person",
+                    "confidence": 0.9,
+                },  # Duplicate
                 {"id": "e3", "text": "Jane Doe", "type": "Person", "confidence": 0.9},
             ],
             "relationships": [],
@@ -265,7 +282,13 @@ class TestScoresWithMissingData:
                 {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.9},
             ],
             "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows", "confidence": 0.8},
+                {
+                    "id": "r1",
+                    "source_id": "e1",
+                    "target_id": "e2",
+                    "type": "knows",
+                    "confidence": 0.8,
+                },
             ],
             "metadata": {"domain": "general"},
         }
@@ -311,7 +334,7 @@ class TestScoreDistributionStatistics:
 
 def test_score_distribution_across_100_samples():
     """Test score distribution statistics across 100 random sample ontologies.
-    
+
     This is a property-based test that validates the distribution characteristics
     of the critic scorer across various ontology configurations.
     """
@@ -375,7 +398,7 @@ def test_score_distribution_across_1000_samples():
     THEN: Score distribution shows reasonable statistical properties
     """
     import statistics
-    
+
     critic = OntologyCritic()
     context = OntologyGenerationContext(
         domain="general",
@@ -392,12 +415,12 @@ def test_score_distribution_across_1000_samples():
         "relationship_coherence": [],
         "domain_alignment": [],
     }
-    
+
     for i in range(1000):
         # Create varied ontologies: 5-50 entities, 2-40 relationships
         num_entities = 5 + (i % 46)
         num_rels = 2 + (i % 39)
-        
+
         entities = [
             {
                 "id": f"e{j}",
@@ -407,7 +430,7 @@ def test_score_distribution_across_1000_samples():
             }
             for j in range(num_entities)
         ]
-        
+
         relationships = [
             {
                 "id": f"r{j}",
@@ -427,7 +450,7 @@ def test_score_distribution_across_1000_samples():
 
         score = critic.evaluate_ontology(ontology, context)
         scores.append(score.overall)
-        
+
         # Track dimension scores
         dimension_scores["completeness"].append(score.completeness)
         dimension_scores["consistency"].append(score.consistency)
@@ -438,24 +461,26 @@ def test_score_distribution_across_1000_samples():
 
     # Statistical analysis
     assert len(scores) == 1000, "Should have 1000 scores"
-    
+
     mean_score = statistics.mean(scores)
     std_score = statistics.stdev(scores)
     min_score = min(scores)
     max_score = max(scores)
-    
+
     # Score distribution properties
     assert 0.3 <= mean_score <= 0.9, f"Mean score {mean_score:.3f} should be reasonable"
     assert std_score > 0.01, f"Std dev {std_score:.3f} should show variance"
     assert 0.0 <= min_score <= 1.0, "Min score in valid range"
     assert 0.0 <= max_score <= 1.0, "Max score in valid range"
     assert max_score > min_score + 0.05, "Should have meaningful score range"
-    
+
     # Validate dimension scores are in valid range
     # Note: Some dimensions may have low/zero variance depending on ontology similarity
     for dim, dim_scores in dimension_scores.items():
         assert all(0.0 <= s <= 1.0 for s in dim_scores), f"{dim} scores must be in [0, 1]"
-        
+
     # At least some dimensions should show variance
     variances = [statistics.stdev(scores) for scores in dimension_scores.values()]
-    assert sum(v > 0.01 for v in variances) >= 2, "At least 2 dimensions should show notable variance"
+    assert sum(v > 0.01 for v in variances) >= 2, (
+        "At least 2 dimensions should show notable variance"
+    )

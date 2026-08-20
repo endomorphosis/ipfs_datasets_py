@@ -11,6 +11,7 @@ Methods under test:
   - OntologyLearningAdapter.feedback_window_mean(n)
   - OntologyLearningAdapter.feedback_outlier_count(z_threshold)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -26,14 +27,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -41,16 +48,19 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
 def _make_result(entities, rels=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=rels or [], confidence=1.0, metadata={}, errors=[]
     )
@@ -58,6 +68,7 @@ def _make_result(entities, rels=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
@@ -75,11 +86,13 @@ class _FakeOntology:
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -90,16 +103,21 @@ def _push_run(p, score):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(adapter, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     adapter._feedback.append(FeedbackRecord(final_score=score))
 
 
 # ── OntologyOptimizer.history_first_derivative ────────────────────────────────
+
 
 class TestHistoryFirstDerivative:
     def test_empty_returns_empty(self):
@@ -133,6 +151,7 @@ class TestHistoryFirstDerivative:
 
 # ── OntologyOptimizer.score_improvement_ratio ─────────────────────────────────
 
+
 class TestScoreImprovementRatio:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -165,17 +184,40 @@ class TestScoreImprovementRatio:
 
 # ── OntologyCritic.dimensions_above_count ────────────────────────────────────
 
+
 class TestDimensionsAboveCount:
     def test_all_above(self):
         c = _make_critic()
-        score = _make_score(**{d: 0.9 for d in ["completeness", "consistency", "clarity",
-                                                 "granularity", "relationship_coherence", "domain_alignment"]})
+        score = _make_score(
+            **{
+                d: 0.9
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         assert c.dimensions_above_count(score, 0.5) == 6
 
     def test_none_above(self):
         c = _make_critic()
-        score = _make_score(**{d: 0.3 for d in ["completeness", "consistency", "clarity",
-                                                 "granularity", "relationship_coherence", "domain_alignment"]})
+        score = _make_score(
+            **{
+                d: 0.3
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         assert c.dimensions_above_count(score, 0.5) == 0
 
     def test_partial_count(self):
@@ -188,13 +230,25 @@ class TestDimensionsAboveCount:
 
 # ── OntologyCritic.score_letter_grade ────────────────────────────────────────
 
+
 class TestScoreLetterGrade:
     def test_grade_a(self):
         c = _make_critic()
         # all 1.0 → overall would be computed; since overall is a property
         # we test with a mock-like approach using score
-        score = _make_score(**{d: 1.0 for d in ["completeness", "consistency", "clarity",
-                                                  "granularity", "relationship_coherence", "domain_alignment"]})
+        score = _make_score(
+            **{
+                d: 1.0
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         grade = c.score_letter_grade(score)
         # overall = computed from weights; just check it's one of the grades
         assert grade in ("A", "B", "C", "D", "F")
@@ -205,6 +259,7 @@ class TestScoreLetterGrade:
 
 
 # ── OntologyGenerator.entity_confidence_percentile ───────────────────────────
+
 
 class TestEntityConfidencePercentile:
     def test_empty_returns_zero(self):
@@ -234,6 +289,7 @@ class TestEntityConfidencePercentile:
 
 # ── LogicValidator.strongly_connected_count ───────────────────────────────────
 
+
 class TestStronglyConnectedCount:
     def test_empty_returns_zero(self):
         v = _make_validator()
@@ -258,6 +314,7 @@ class TestStronglyConnectedCount:
 
 
 # ── OntologyPipeline.consecutive_improvements ────────────────────────────────
+
 
 class TestConsecutiveImprovements:
     def test_empty_returns_zero(self):
@@ -290,6 +347,7 @@ class TestConsecutiveImprovements:
 
 # ── OntologyLearningAdapter.feedback_window_mean ─────────────────────────────
 
+
 class TestFeedbackWindowMean:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -310,6 +368,7 @@ class TestFeedbackWindowMean:
 
 
 # ── OntologyLearningAdapter.feedback_outlier_count ───────────────────────────
+
 
 class TestFeedbackOutlierCount:
     def test_empty_returns_zero(self):

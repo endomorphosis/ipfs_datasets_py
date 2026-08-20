@@ -7,7 +7,8 @@ import pytest
 
 
 @pytest.mark.skipif(
-    os.environ.get("IPFS_DATASETS_RUN_GROTH16_EVM", "").strip() not in {"1", "true", "TRUE", "yes", "YES"},
+    os.environ.get("IPFS_DATASETS_RUN_GROTH16_EVM", "").strip()
+    not in {"1", "true", "TRUE", "yes", "YES"},
     reason="Set IPFS_DATASETS_RUN_GROTH16_EVM=1 to run the local-EVM Groth16 test",
 )
 def test_groth16_proof_verifies_on_local_evm(tmp_path: Path):
@@ -76,7 +77,9 @@ def test_groth16_proof_verifies_on_local_evm(tmp_path: Path):
     )
 
     # 3) Prove
-    vectors_path = ipfs_root / "tests" / "unit_tests" / "logic" / "zkp" / "groth16_wire_vectors.json"
+    vectors_path = (
+        ipfs_root / "tests" / "unit_tests" / "logic" / "zkp" / "groth16_wire_vectors.json"
+    )
     vectors = json.loads(vectors_path.read_text(encoding="utf-8"))
     witness = vectors["vectors"]["modus_ponens_v1"]["witness"]
 
@@ -112,14 +115,18 @@ def test_groth16_proof_verifies_on_local_evm(tmp_path: Path):
     # 4) Compile + deploy to an in-memory EVM, then call verifyProof.
     installed = solcx.get_installed_solc_versions()
     if not installed:
-        pytest.skip("No solc installed for py-solc-x; install one (e.g. solcx.install_solc('0.8.20'))")
+        pytest.skip(
+            "No solc installed for py-solc-x; install one (e.g. solcx.install_solc('0.8.20'))"
+        )
     solcx.set_solc_version(sorted(installed)[-1])
 
     compiled = solcx.compile_standard(
         {
             "language": "Solidity",
             "sources": {
-                "GrothVerifier.sol": {"content": (tmp_path / "GrothVerifier.sol").read_text(encoding="utf-8")},
+                "GrothVerifier.sol": {
+                    "content": (tmp_path / "GrothVerifier.sol").read_text(encoding="utf-8")
+                },
                 "GrothVerifierV1.sol": {"content": verifier_sol_path.read_text(encoding="utf-8")},
             },
             "settings": {
@@ -145,4 +152,6 @@ def test_groth16_proof_verifies_on_local_evm(tmp_path: Path):
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
     verifier = w3.eth.contract(address=receipt.contractAddress, abi=abi)
-    assert verifier.functions.verifyProof(proof_words, public_inputs).call({"from": deployer}) is True
+    assert (
+        verifier.functions.verifyProof(proof_words, public_inputs).call({"from": deployer}) is True
+    )

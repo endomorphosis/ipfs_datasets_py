@@ -3,6 +3,7 @@
 All domain logic lives at:
   ipfs_datasets_py.processors.discord.discord_analysis_engine
 """
+
 from ipfs_datasets_py.processors.discord.discord_analysis_engine import (  # noqa: F401
     _analyze_content_patterns,
     _analyze_message_stats,

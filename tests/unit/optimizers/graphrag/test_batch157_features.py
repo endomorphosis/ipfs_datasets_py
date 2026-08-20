@@ -6,12 +6,14 @@ Methods under test:
   - LogicValidator.source_entities(ontology)
   - OntologyOptimizer.best_history_entry()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -25,11 +27,13 @@ def _push_run(p, overall):
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -46,6 +50,7 @@ def _push_opt(o, avg):
 # ---------------------------------------------------------------------------
 # OntologyPipeline.last_n_scores
 # ---------------------------------------------------------------------------
+
 
 class TestLastNScores:
     def test_empty_returns_empty(self):
@@ -82,6 +87,7 @@ class TestLastNScores:
 # ---------------------------------------------------------------------------
 # LogicValidator.leaf_entities
 # ---------------------------------------------------------------------------
+
 
 class TestLeafEntities:
     def test_empty_returns_empty(self):
@@ -124,6 +130,7 @@ class TestLeafEntities:
 # LogicValidator.source_entities
 # ---------------------------------------------------------------------------
 
+
 class TestSourceEntities:
     def test_empty_returns_empty(self):
         v = _make_validator()
@@ -160,6 +167,7 @@ class TestSourceEntities:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.best_history_entry
 # ---------------------------------------------------------------------------
+
 
 class TestBestHistoryEntry:
     def test_empty_returns_none(self):

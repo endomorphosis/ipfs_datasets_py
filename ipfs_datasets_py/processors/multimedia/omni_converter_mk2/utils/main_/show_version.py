@@ -2,6 +2,7 @@ def show_version() -> None:
     """Show version information."""
     from __version__ import __version__
     from datetime import datetime
+
     print(f"Omni-Converter version {__version__}")
     print("By Kyle Rose, Claude 3.7 Sonnet")
     print(f"MIT {datetime.now().year}")

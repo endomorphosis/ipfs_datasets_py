@@ -1,12 +1,13 @@
 """
 Test suite for processors/by_mime_type/pdf_processor.py converted from unittest to pytest.
 
-This module contains tests for the PyPDF2Processor class, covering text extraction, 
+This module contains tests for the PyPDF2Processor class, covering text extraction,
 metadata extraction, structure extraction, and error handling.
 
-NOTE: Original tests were commented out. This is a skeleton conversion 
+NOTE: Original tests were commented out. This is a skeleton conversion
 that can be expanded when the processor implementation is ready.
 """
+
 import pytest
 from unittest.mock import MagicMock, patch
 import tempfile
@@ -24,44 +25,44 @@ except ImportError:
 def sample_pdf_data():
     """Create sample PDF data for testing."""
     # Skip creating test data if PyPDF2 is not available
-    if not hasattr(Constants, 'PYPDF2_AVAILABLE') or not Constants.PYPDF2_AVAILABLE:
+    if not hasattr(Constants, "PYPDF2_AVAILABLE") or not Constants.PYPDF2_AVAILABLE:
         pytest.skip("PyPDF2 not available")
-    
+
     # Create a simple test PDF
     try:
         import PyPDF2
         from reportlab.pdfgen import canvas
         from reportlab.lib.pagesizes import letter
-        
+
         # Create a PDF with 2 pages
         buffer = BytesIO()
-        
+
         # Create the PDF
         c = canvas.Canvas(buffer, pagesize=letter)
-        
+
         # Add some text to the first page
         c.drawString(100, 750, "Test PDF Document")
         c.drawString(100, 730, "Page 1")
         c.drawString(100, 710, "This is a test document for the PDF processor.")
-        
+
         # Add metadata
         c.setTitle("Test PDF")
         c.setAuthor("Test Author")
         c.setSubject("Test Subject")
-        
+
         # Start a new page
         c.showPage()
         c.drawString(100, 750, "Page 2")
         c.drawString(100, 730, "This is the second page.")
         c.drawString(100, 710, "It contains additional content for testing.")
-        
+
         # Save the PDF
         c.save()
-        
+
         # Get the PDF data
         buffer.seek(0)
         return buffer.getvalue()
-    
+
     except ImportError:
         pytest.skip("Required PDF libraries not available")
 
@@ -70,11 +71,11 @@ def sample_pdf_data():
 @pytest.mark.unit
 class TestPyPDF2Processor:
     """Test the PyPDF2Processor class."""
-    
+
     @pytest.fixture
     def processor(self):
         """Create PyPDF2Processor instance for testing."""
-        if not hasattr(Constants, 'PYPDF2_AVAILABLE') or not Constants.PYPDF2_AVAILABLE:
+        if not hasattr(Constants, "PYPDF2_AVAILABLE") or not Constants.PYPDF2_AVAILABLE:
             pytest.skip("PyPDF2 not available")
         return PyPDF2Processor()
 
@@ -107,7 +108,7 @@ class TestPyPDF2Processor:
         """Test extracting text from a PDF document."""
         # Test with sample PDF data
         text = processor.extract_text(sample_pdf_data, {})
-        
+
         # Check that the text contains expected content
         assert "Test PDF Document" in text
         assert "Page 1" in text
@@ -117,7 +118,7 @@ class TestPyPDF2Processor:
         """Test extracting metadata from a PDF document."""
         # Test with sample PDF data
         metadata = processor.extract_metadata(sample_pdf_data, {})
-        
+
         # Check that metadata contains expected fields
         assert "file_size_bytes" in metadata
         assert "page_count" in metadata
@@ -129,10 +130,10 @@ class TestPyPDF2Processor:
         """Test extracting structure from a PDF document."""
         # Test with sample PDF data
         structure = processor.extract_structure(sample_pdf_data, {})
-        
+
         # Check we have structure elements
         assert len(structure) > 0
-        
+
         # Check for page sections
         page_sections = [s for s in structure if s["type"] == "page"]
         assert len(page_sections) == 2  # We created 2 pages
@@ -141,12 +142,12 @@ class TestPyPDF2Processor:
         """Test processing a complete PDF document."""
         # Test with sample PDF data
         text, metadata, sections = processor.process_document(sample_pdf_data, {})
-        
+
         # Check results
         assert isinstance(text, str)
         assert isinstance(metadata, dict)
         assert isinstance(sections, list)
-        
+
         # Check that the text includes expected content
         assert "Test PDF Document" in text
         assert "Page 1" in text
@@ -155,26 +156,28 @@ class TestPyPDF2Processor:
         """Test handling of invalid PDF data."""
         # Create some invalid PDF data
         invalid_data = b"This is not a PDF file"
-        
+
         # Test all methods with invalid data and verify they raise ValueError
         with pytest.raises(ValueError):
             processor.extract_text(invalid_data, {})
-        
+
         with pytest.raises(ValueError):
             processor.extract_metadata(invalid_data, {})
-        
+
         with pytest.raises(ValueError):
             processor.extract_structure(invalid_data, {})
-        
+
         with pytest.raises(ValueError):
             processor.process_document(invalid_data, {})
 
 
 # Placeholder test class for when the implementation is ready
-@pytest.mark.skip(reason="PDF processor tests converted from commented unittest - implementation pending")
+@pytest.mark.skip(
+    reason="PDF processor tests converted from commented unittest - implementation pending"
+)
 class TestPyPDF2ProcessorPlaceholder:
     """Placeholder for PDF processor tests that will be implemented later."""
-    
+
     def test_placeholder(self):
         """Placeholder test to mark this conversion as complete."""
         assert True  # This will pass but indicates work pending

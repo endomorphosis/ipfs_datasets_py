@@ -24,16 +24,16 @@ from .circuits import compiler_guidance_ref_from_metadata, refresh_proof_attesta
 class ZKPProver:
     """
     Generate zero-knowledge proofs for logic theorems.
-    
+
     This prover generates **simulated** proofs that a theorem can be derived
     from a set of private axioms, without revealing the axioms themselves.
-    
+
     Features:
         - Private axiom hiding
         - Succinct proof generation (<500 bytes)
         - Fast proving (<1 second for simple formulas)
         - Integration with IPFS for proof storage
-    
+
     Example:
         >>> prover = ZKPProver()
         >>> proof = prover.generate_proof(
@@ -45,13 +45,13 @@ class ZKPProver:
         ... )
         >>> print(f"Proof size: {proof.size_bytes} bytes")
         Proof size: 256 bytes
-    
+
     Note:
         This is a simulated ZKP prover for demonstration. It is NOT
         cryptographically secure. In production, use a real ZKP backend
         (e.g., Groth16) via a cryptographic library.
     """
-    
+
     def __init__(
         self,
         security_level: int = 128,
@@ -85,15 +85,15 @@ class ZKPProver:
         self._backend = get_backend(backend)
         self._proof_cache: Dict[str, ZKPProof] = {}
         self._stats = {
-            'proofs_generated': 0,
-            'cache_hits': 0,
-            'total_proving_time': 0.0,
+            "proofs_generated": 0,
+            "cache_hits": 0,
+            "total_proving_time": 0.0,
         }
 
     def get_backend_instance(self):
         """Return the underlying backend instance."""
         return self._backend
-    
+
     def generate_proof(
         self,
         theorem: str,
@@ -102,18 +102,18 @@ class ZKPProver:
     ) -> ZKPProof:
         """
         Generate a zero-knowledge proof for a theorem.
-        
+
         Args:
             theorem: The theorem to prove (public)
             private_axioms: Axioms used in proof (kept private)
             metadata: Additional proof metadata
-        
+
         Returns:
             ZKPProof: The generated zero-knowledge proof
-        
+
         Raises:
             ZKPError: If proof generation fails
-        
+
         Example:
             >>> prover = ZKPProver()
             >>> proof = prover.generate_proof(
@@ -123,42 +123,42 @@ class ZKPProver:
             >>> assert proof.size_bytes < 500
         """
         start_time = time.time()
-        
+
         try:
             # Check cache
             cache_key = self._compute_cache_key(theorem, private_axioms, metadata)
             if self.enable_caching and cache_key in self._proof_cache:
-                self._stats['cache_hits'] += 1
+                self._stats["cache_hits"] += 1
                 cached = self._proof_cache[cache_key]
                 return self._adapt_cached_proof(cached, theorem)
-            
+
             # Validate inputs
             if not theorem:
                 raise ZKPError("Theorem cannot be empty")
             if not private_axioms:
                 raise ZKPError("At least one axiom required")
-            
+
             # Generate proof via backend
             proof = self._backend.generate_proof(
                 theorem=theorem,
                 private_axioms=private_axioms,
                 metadata={
                     **(metadata or {}),
-                    'security_level': self.security_level,
+                    "security_level": self.security_level,
                 },
             )
-            
+
             # Update stats
             proving_time = time.time() - start_time
-            self._stats['proofs_generated'] += 1
-            self._stats['total_proving_time'] += proving_time
-            
+            self._stats["proofs_generated"] += 1
+            self._stats["total_proving_time"] += proving_time
+
             # Cache proof
             if self.enable_caching:
                 self._proof_cache[cache_key] = proof
-            
+
             return proof
-            
+
         except Exception as e:
             raise ZKPError(f"Proof generation failed: {e}")
 
@@ -205,7 +205,7 @@ class ZKPProver:
             )
         except Exception:
             return proof
-    
+
     def _compute_cache_key(
         self,
         theorem: str,
@@ -222,7 +222,7 @@ class ZKPProver:
 
         meta_ctx: Dict[str, Any] = {
             # Prover-level security setting is always applied downstream.
-            'security_level': self.security_level,
+            "security_level": self.security_level,
         }
         if metadata:
             for key in (
@@ -245,37 +245,39 @@ class ZKPProver:
 
         key_data = json.dumps(
             {
-                'theorem': canonical_theorem,
-                'axioms': canonical_axioms,
-                'meta': meta_ctx,
+                "theorem": canonical_theorem,
+                "axioms": canonical_axioms,
+                "meta": meta_ctx,
             },
             sort_keys=True,
         )
         return hashlib.sha256(key_data.encode()).hexdigest()
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get prover statistics."""
         return {
             **self._stats,
-            'avg_proving_time': (
-                self._stats['total_proving_time'] / self._stats['proofs_generated']
-                if self._stats['proofs_generated'] > 0 else 0.0
+            "avg_proving_time": (
+                self._stats["total_proving_time"] / self._stats["proofs_generated"]
+                if self._stats["proofs_generated"] > 0
+                else 0.0
             ),
-            'cache_hit_rate': (
-                self._stats['cache_hits'] / (
-                    self._stats['proofs_generated'] + self._stats['cache_hits']
-                ) if (self._stats['proofs_generated'] + self._stats['cache_hits']) > 0 else 0.0
+            "cache_hit_rate": (
+                self._stats["cache_hits"]
+                / (self._stats["proofs_generated"] + self._stats["cache_hits"])
+                if (self._stats["proofs_generated"] + self._stats["cache_hits"]) > 0
+                else 0.0
             ),
         }
-    
+
     def clear_cache(self):
         """Clear proof cache."""
         self._proof_cache.clear()
 
-    def prove(self, statement: str, witness=None, metadata=None) -> 'ZKPProof':
-        '''Alias for generate_proof() for backward compatibility.'''
+    def prove(self, statement: str, witness=None, metadata=None) -> "ZKPProof":
+        """Alias for generate_proof() for backward compatibility."""
         if isinstance(witness, dict):
-            private_axioms = witness.get('axioms', [])
+            private_axioms = witness.get("axioms", [])
         elif isinstance(witness, str):
             private_axioms = [witness]
         elif isinstance(witness, list):

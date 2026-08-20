@@ -12,18 +12,19 @@ import tempfile
 import pyarrow.parquet as pq
 
 # Add parent directory to path so we can import the module
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet import (
     jsonl_to_parquet,
     batch_jsonl_to_parquet,
     infer_schema_from_jsonl,
-    jsonl_to_arrow
+    jsonl_to_arrow,
 )
+
 
 def create_sample_jsonl(file_path, num_records=100):
     """Create a sample JSONL file for testing."""
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         for i in range(num_records):
             record = {
                 "id": i,
@@ -33,12 +34,13 @@ def create_sample_jsonl(file_path, num_records=100):
                 "metadata": {
                     "created_at": "2023-10-26T12:34:56Z",
                     "source": "example",
-                    "is_valid": True
-                }
+                    "is_valid": True,
+                },
             }
-            f.write(json.dumps(record) + '\n')
+            f.write(json.dumps(record) + "\n")
 
     return file_path
+
 
 def example_single_file_conversion():
     """Example of converting a single JSONL file to Parquet."""
@@ -68,6 +70,7 @@ def example_single_file_conversion():
         df = table.to_pandas().head(3)
         print(df)
 
+
 def example_batch_conversion():
     """Example of batch converting multiple JSONL files to Parquet."""
     print("\n=== Example: Batch Conversion ===")
@@ -88,16 +91,14 @@ def example_batch_conversion():
 
         # Perform batch conversion
         output_paths = batch_jsonl_to_parquet(
-            input_dir,
-            output_dir,
-            file_pattern="*.jsonl",
-            compression="snappy"
+            input_dir, output_dir, file_pattern="*.jsonl", compression="snappy"
         )
 
         print(f"Converted {len(output_paths)} files to Parquet format")
         for path in output_paths:
             table = pq.read_table(path)
             print(f"  {path}: {table.num_rows} rows, {len(table.column_names)} columns")
+
 
 def example_schema_inference():
     """Example of inferring schema from a JSONL file."""
@@ -121,6 +122,7 @@ def example_schema_inference():
         print(f"Converted to Parquet using the inferred schema: {output_path}")
         print(f"File size: {os.path.getsize(output_path) / 1024:.2f} KB")
 
+
 def example_arrow_integration():
     """Example of integration with Arrow for more complex processing."""
     print("\n=== Example: Arrow Integration ===")
@@ -137,17 +139,18 @@ def example_arrow_integration():
 
         # Perform Arrow transformations
         # Filter rows where id > 500
-        filtered_table = table.filter(table['id'] > 500)
+        filtered_table = table.filter(table["id"] > 500)
         print(f"Filtered table: {filtered_table.num_rows} rows")
 
         # Select specific columns
-        selected_table = filtered_table.select(['id', 'name', 'value'])
+        selected_table = filtered_table.select(["id", "name", "value"])
         print(f"Selected columns: {selected_table.column_names}")
 
         # Sort by id (using pandas as Arrow doesn't have direct sort)
         import pandas as pd
+
         df = selected_table.to_pandas()
-        df = df.sort_values('value', ascending=False)
+        df = df.sort_values("value", ascending=False)
         sorted_table = pa.Table.from_pandas(df)
         print(f"Sorted table (first 3 rows by highest value):")
         print(sorted_table.to_pandas().head(3))
@@ -158,6 +161,7 @@ def example_arrow_integration():
         print(f"Wrote processed data to Parquet: {output_path}")
         print(f"File size: {os.path.getsize(output_path) / 1024:.2f} KB")
 
+
 def main():
     """Run all examples."""
     print("JSONL to Parquet Conversion Examples")
@@ -165,6 +169,7 @@ def main():
     # Import pyarrow for Arrow examples
     try:
         import pyarrow as pa
+
         has_arrow = True
     except ImportError:
         print("Warning: pyarrow not available, skipping Arrow examples")
@@ -179,6 +184,7 @@ def main():
         example_arrow_integration()
 
     print("\nAll examples completed successfully!")
+
 
 if __name__ == "__main__":
     main()

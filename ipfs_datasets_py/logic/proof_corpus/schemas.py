@@ -109,27 +109,21 @@ def _sha256_digest(data: bytes) -> str:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise ProofCorpusSchemaError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise ProofCorpusSchemaError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
 def _require_profile(value: Any) -> str:
     profile = _require_text(value, "profile")
     if not _PROFILE_RE.fullmatch(profile):
-        raise ProofCorpusSchemaError(
-            "profile must be a lowercase hyphenated identifier"
-        )
+        raise ProofCorpusSchemaError("profile must be a lowercase hyphenated identifier")
     return profile
 
 
 def _require_digest(value: Any, field_name: str) -> str:
     digest = _require_text(value, field_name)
     if not _DIGEST_RE.fullmatch(digest):
-        raise ProofCorpusSchemaError(
-            f"{field_name} must be a sha256:<hex> digest"
-        )
+        raise ProofCorpusSchemaError(f"{field_name} must be a sha256:<hex> digest")
     return digest
 
 
@@ -192,8 +186,7 @@ def _json_ready(value: Any) -> Any:
     if callable(to_dict):
         return _json_ready(to_dict())
     raise ProofCorpusSchemaError(
-        f"value of type {type(value).__name__} is not JSON-serializable "
-        "for the proof corpus"
+        f"value of type {type(value).__name__} is not JSON-serializable for the proof corpus"
     )
 
 
@@ -235,13 +228,9 @@ def normalize_artifact(
         produced = artifact
     else:
         try:
-            produced = FormalizationArtifact.from_dict(
-                _as_mapping(artifact, "artifact")
-            )
+            produced = FormalizationArtifact.from_dict(_as_mapping(artifact, "artifact"))
         except (TypeError, ValueError) as exc:
-            raise ProofCorpusSchemaError(
-                f"invalid formalization artifact: {exc}"
-            ) from exc
+            raise ProofCorpusSchemaError(f"invalid formalization artifact: {exc}") from exc
     family = family_for_domain(produced.domain)
     if expected_family is not None and family is not expected_family:
         raise ProofCorpusIntegrityError(
@@ -259,38 +248,24 @@ def normalize_attachments(value: Any) -> dict[str, Any]:
     payload = dict(_as_mapping(value, "attachments"))
     unknown = sorted(set(payload) - _ATTACHMENT_FIELDS)
     if unknown:
-        raise ProofCorpusSchemaError(
-            "unknown attachment field(s): " + ", ".join(unknown)
-        )
+        raise ProofCorpusSchemaError("unknown attachment field(s): " + ", ".join(unknown))
     out: dict[str, Any] = {}
     if "theorem_receipts" in payload:
         receipts = payload["theorem_receipts"]
-        if not isinstance(receipts, Sequence) or isinstance(
-            receipts, (str, bytes, bytearray)
-        ):
-            raise ProofCorpusSchemaError(
-                "attachments.theorem_receipts must be a sequence"
-            )
+        if not isinstance(receipts, Sequence) or isinstance(receipts, (str, bytes, bytearray)):
+            raise ProofCorpusSchemaError("attachments.theorem_receipts must be a sequence")
         out["theorem_receipts"] = [
-            _json_ready(dict(_as_mapping(item, "theorem_receipt")))
-            for item in receipts
+            _json_ready(dict(_as_mapping(item, "theorem_receipt"))) for item in receipts
         ]
     if "policy_decisions" in payload:
         decisions = payload["policy_decisions"]
-        if not isinstance(decisions, Sequence) or isinstance(
-            decisions, (str, bytes, bytearray)
-        ):
-            raise ProofCorpusSchemaError(
-                "attachments.policy_decisions must be a sequence"
-            )
+        if not isinstance(decisions, Sequence) or isinstance(decisions, (str, bytes, bytearray)):
+            raise ProofCorpusSchemaError("attachments.policy_decisions must be a sequence")
         out["policy_decisions"] = [
-            _json_ready(dict(_as_mapping(item, "policy_decision")))
-            for item in decisions
+            _json_ready(dict(_as_mapping(item, "policy_decision"))) for item in decisions
         ]
     if "declaration" in payload:
-        out["declaration"] = _json_ready(
-            dict(_as_mapping(payload["declaration"], "declaration"))
-        )
+        out["declaration"] = _json_ready(dict(_as_mapping(payload["declaration"], "declaration")))
     if "declaration_cid" in payload and payload["declaration_cid"] not in (
         None,
         "",
@@ -308,33 +283,22 @@ def normalize_attachments(value: Any) -> dict[str, Any]:
     if "extension_ids" in payload:
         ids = payload["extension_ids"]
         if not isinstance(ids, Sequence) or isinstance(ids, (str, bytes, bytearray)):
-            raise ProofCorpusSchemaError(
-                "attachments.extension_ids must be a sequence of strings"
-            )
-        normalized_ids = [
-            _require_text(item, "attachments.extension_ids") for item in ids
-        ]
+            raise ProofCorpusSchemaError("attachments.extension_ids must be a sequence of strings")
+        normalized_ids = [_require_text(item, "attachments.extension_ids") for item in ids]
         if len(normalized_ids) != len(set(normalized_ids)):
-            raise ProofCorpusSchemaError(
-                "attachments.extension_ids must be unique"
-            )
+            raise ProofCorpusSchemaError("attachments.extension_ids must be unique")
         out["extension_ids"] = sorted(normalized_ids)
     if "extension_vocabularies" in payload:
         vocabs = payload["extension_vocabularies"]
-        if not isinstance(vocabs, Sequence) or isinstance(
-            vocabs, (str, bytes, bytearray)
-        ):
+        if not isinstance(vocabs, Sequence) or isinstance(vocabs, (str, bytes, bytearray)):
             raise ProofCorpusSchemaError(
                 "attachments.extension_vocabularies must be a sequence of strings"
             )
         normalized_vocabs = [
-            _require_text(item, "attachments.extension_vocabularies")
-            for item in vocabs
+            _require_text(item, "attachments.extension_vocabularies") for item in vocabs
         ]
         if len(normalized_vocabs) != len(set(normalized_vocabs)):
-            raise ProofCorpusSchemaError(
-                "attachments.extension_vocabularies must be unique"
-            )
+            raise ProofCorpusSchemaError("attachments.extension_vocabularies must be unique")
         out["extension_vocabularies"] = sorted(normalized_vocabs)
     return out
 
@@ -366,18 +330,14 @@ class ArtifactEnvelope:
     def __post_init__(self) -> None:
         family = parse_family(self.family)
         object.__setattr__(self, "family", family)
-        object.__setattr__(
-            self, "source_id", _require_text(self.source_id, "source_id")
-        )
+        object.__setattr__(self, "source_id", _require_text(self.source_id, "source_id"))
         object.__setattr__(
             self,
             "source_digest",
             _require_digest(self.source_digest, "source_digest"),
         )
         object.__setattr__(self, "profile", _require_profile(self.profile))
-        object.__setattr__(
-            self, "review_state", _require_review_state(self.review_state)
-        )
+        object.__setattr__(self, "review_state", _require_review_state(self.review_state))
         if self.jurisdiction not in ("", None):
             jurisdiction = _require_text(self.jurisdiction, "jurisdiction")
             if not _PROFILE_RE.fullmatch(jurisdiction):
@@ -389,9 +349,7 @@ class ArtifactEnvelope:
             object.__setattr__(self, "jurisdiction", "")
 
         if self.producer_id not in ("", None):
-            object.__setattr__(
-                self, "producer_id", _require_text(self.producer_id, "producer_id")
-            )
+            object.__setattr__(self, "producer_id", _require_text(self.producer_id, "producer_id"))
         else:
             object.__setattr__(self, "producer_id", "")
 
@@ -441,23 +399,17 @@ class ArtifactEnvelope:
         if self.content_digest:
             recorded = _require_digest(self.content_digest, "content_digest")
             if recorded != digest:
-                raise ProofCorpusIntegrityError(
-                    "envelope content_digest does not match payload"
-                )
+                raise ProofCorpusIntegrityError("envelope content_digest does not match payload")
         if self.content_cid:
             recorded_cid = _require_text(self.content_cid, "content_cid")
             if recorded_cid != cid:
-                raise ProofCorpusIntegrityError(
-                    "envelope content_cid does not match payload"
-                )
+                raise ProofCorpusIntegrityError("envelope content_cid does not match payload")
         object.__setattr__(self, "content_digest", digest)
         object.__setattr__(self, "content_cid", cid)
 
         self.verify_integrity()
 
-    def _validate_family_attachments(
-        self, artifact: FormalizationArtifact
-    ) -> None:
+    def _validate_family_attachments(self, artifact: FormalizationArtifact) -> None:
         """Enforce family-specific attachment rules (fail closed)."""
 
         attachments = dict(self.attachments)
@@ -486,8 +438,7 @@ class ArtifactEnvelope:
                 decl_digest = attachments.get("declaration_digest")
                 if decl_digest and decl_digest != artifact.declaration_digest:
                     raise ProofCorpusIntegrityError(
-                        "attachments.declaration_digest does not match "
-                        "artifact declaration_digest"
+                        "attachments.declaration_digest does not match artifact declaration_digest"
                     )
         elif self.family is ProofCorpusFamily.INTENT:
             # Intent fixtures are formalization artifacts only; no attachments.
@@ -563,9 +514,7 @@ class ArtifactEnvelope:
             )
         cid = cid_v1_from_digest(bytes.fromhex(digest.removeprefix("sha256:")))
         if cid != self.content_cid:
-            raise ProofCorpusIntegrityError(
-                "envelope content_cid drifted from recomputed payload"
-            )
+            raise ProofCorpusIntegrityError("envelope content_cid drifted from recomputed payload")
         return self
 
     @classmethod
@@ -590,9 +539,7 @@ class ArtifactEnvelope:
             jurisdiction=value.get("jurisdiction", "") or "",
             content_digest=value.get("content_digest", ""),
             content_cid=value.get("content_cid", ""),
-            schema_version=value.get(
-                "schema_version", PROOF_CORPUS_ENVELOPE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", PROOF_CORPUS_ENVELOPE_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -612,9 +559,7 @@ class ArtifactEnvelope:
         """Build a verified envelope from a formalization artifact."""
 
         expected = parse_family(family) if family is not None else None
-        produced, artifact_payload = normalize_artifact(
-            artifact, expected_family=expected
-        )
+        produced, artifact_payload = normalize_artifact(artifact, expected_family=expected)
         resolved_family = expected or family_for_domain(produced.domain)
         resolved_source_id = source_id or produced.declaration_id or produced.sample_id
         resolved_source_digest = source_digest or produced.declaration_digest
@@ -627,9 +572,7 @@ class ArtifactEnvelope:
         return cls(
             family=resolved_family,
             source_id=_require_text(resolved_source_id, "source_id"),
-            source_digest=_require_digest(
-                resolved_source_digest, "source_digest"
-            ),
+            source_digest=_require_digest(resolved_source_digest, "source_digest"),
             profile=_require_profile(profile),
             artifact=artifact_payload,
             artifact_digest=produced.digest,
@@ -715,13 +658,9 @@ class ArtifactEnvelope:
         if payload.get("extension_ids"):
             attachments["extension_ids"] = list(payload["extension_ids"])
         if payload.get("extension_vocabularies"):
-            attachments["extension_vocabularies"] = list(
-                payload["extension_vocabularies"]
-            )
+            attachments["extension_vocabularies"] = list(payload["extension_vocabularies"])
         source_id = payload.get("declaration_id") or payload.get("source_id")
-        source_digest = payload.get("declaration_digest") or payload.get(
-            "source_digest"
-        )
+        source_digest = payload.get("declaration_digest") or payload.get("source_digest")
         return cls.build(
             artifact,
             profile=payload.get("profile", ""),

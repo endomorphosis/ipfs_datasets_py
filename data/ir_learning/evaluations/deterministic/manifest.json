@@ -1,0 +1,39 @@
+{
+  "experiment_id": "R1",
+  "files": {
+    "identities.json": {
+      "cid": "baguqeeraejouoqkj2inudgumy7nygoowwvu3zi767pdofnhguoyxjuzqhpmq",
+      "path": "data/ir_learning/evaluations/deterministic/identities.json",
+      "sha256": "sha256:6af60b9f9e6cc1e534a70b16325612d10c6da2f1a240d98d75611678e4d81ebc"
+    },
+    "metric_catalog.json": {
+      "cid": "baguqeeraf2bvrvkrxez4ap4ngftynmgaf6lvkdhdbpakqtmb5he2nzqxjhsq",
+      "path": "data/ir_learning/evaluations/deterministic/metric_catalog.json",
+      "sha256": "sha256:1748241fcfbd82cf193027edd1cfc6eb2034e16fe49d823c5ae8fcaa92900c85"
+    },
+    "r1_baseline.json": {
+      "cid": "baguqeerau73uowpiy22d7rohi7gvbtfkwivyldlivxnxqw4zzc7zeyzavasq",
+      "path": "data/ir_learning/evaluations/deterministic/r1_baseline.json",
+      "sha256": "sha256:a3d409963760b68146b945d366d7f08ea4ad72ddecd14581f457a968ebb636b3"
+    },
+    "recipe.json": {
+      "cid": "baguqeerazuhonzzynznbhtlfgmsbmlrl4fzs73ogo3ogek4e5xbb577unuea",
+      "path": "data/ir_learning/evaluations/deterministic/recipe.json",
+      "sha256": "sha256:9653be154d5f7b5070d3c4726edcfab46c446ff5de4a8a39ad25482d6805286b"
+    },
+    "strata.json": {
+      "cid": "baguqeerarwgs6u4nnhxm3n7ezwvfe2frhmnx42tkynjyhxnt3pshbvoti7vq",
+      "path": "data/ir_learning/evaluations/deterministic/strata.json",
+      "sha256": "sha256:16597fe39c9214eb922a93ddff7dc2cbc43fa5479f90d48426ad57772c053b64"
+    },
+    "tool_versions.json": {
+      "cid": "baguqeerao4yromhadthwds2tmoa5qgrnxkdo4ifwbeeq3goc2p4lo3vg47pq",
+      "path": "data/ir_learning/evaluations/deterministic/tool_versions.json",
+      "sha256": "sha256:3fc0f7ed4d71eeda6affe6f698933a3e26e68f63257d54593ece9bf2f9584b1e"
+    }
+  },
+  "interface": "IRDeterministicEvaluationManifest@1",
+  "manifest_cid": "baguqeeraf3mevd4zrpkcy6hmsamfyszkq5zeisq2ipu6bvupquprtfqi53ta",
+  "report_cid": "baguqeerau73uowpiy22d7rohi7gvbtfkwivyldlivxnxqw4zzc7zeyzavasq",
+  "task_id": "PGIR-023"
+}

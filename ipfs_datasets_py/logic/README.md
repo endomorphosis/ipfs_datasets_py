@@ -120,7 +120,7 @@ from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
 prover = ZKPProver()
 proof = prover.generate_proof(
     theorem="Q",
-    private_axioms=["P", "P -> Q"]  # Remains private!
+    private_axioms=["P", "P -> Q"],  # Remains private!
 )
 
 # Verify WITHOUT seeing axioms
@@ -170,10 +170,7 @@ from ipfs_datasets_py.logic.ucan import AccessManager
 
 # Protected resource operations
 access_mgr = AccessManager()
-token = access_mgr.generate_ucan(
-    resource="ipfs_path",
-    permissions=["read", "write"]
-)
+token = access_mgr.generate_ucan(resource="ipfs_path", permissions=["read", "write"])
 
 assert access_mgr.verify_token(token)
 ```

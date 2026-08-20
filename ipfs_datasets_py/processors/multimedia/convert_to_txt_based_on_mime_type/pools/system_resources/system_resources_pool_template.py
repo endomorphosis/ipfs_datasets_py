@@ -25,7 +25,7 @@ class _AnyioCondition:
         """Release *lock*, wait for a notification, then re-acquire *lock*."""
         ev = anyio.Event()
         self._waiters.append(ev)
-        lock.release()           # type: ignore[attr-defined]
+        lock.release()  # type: ignore[attr-defined]
         try:
             await ev.wait()
         finally:
@@ -38,7 +38,7 @@ class _AnyioCondition:
         self._waiters.clear()
 
 
-class SystemResourcesPoolTemplate():
+class SystemResourcesPoolTemplate:
     """
     Attributes:
     - amount_available (int): The amount of resources available in the pool.
@@ -55,7 +55,6 @@ class SystemResourcesPoolTemplate():
 
         self._amount_lock = anyio.Lock()
         self._resource_available = _AnyioCondition()
-
 
     async def add_value_to_resource(self, resource: Resource) -> Resource:
         """
@@ -83,7 +82,6 @@ class SystemResourcesPoolTemplate():
                 except Exception as e:
                     raise ResourceError(f"Failed to add resource: {e}")
 
-
     async def _add_value_implementation(self, resource: Resource) -> Resource:
         amount_requested = resource.request_this(self.resource_type)
 
@@ -97,7 +95,6 @@ class SystemResourcesPoolTemplate():
                     resource.acquire(self.resource_type)
                     self.amount_available -= 1
         return resource
-
 
     async def remove_value_from_resource(self, resource: Resource) -> Resource:
         """

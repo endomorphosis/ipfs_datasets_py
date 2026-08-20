@@ -16,12 +16,12 @@ Key Features:
 
 Example:
     >>> from ipfs_datasets_py.optimizers.graphrag import LogicValidator
-    >>> 
+    >>>
     >>> validator = LogicValidator(prover_config={
     ...     'strategy': 'AUTO',
     ...     'timeout': 5.0
     ... })
-    >>> 
+    >>>
     >>> result = validator.check_consistency(ontology)
     >>> if not result.is_consistent:
     ...     fixes = validator.suggest_fixes(ontology, result.contradictions)
@@ -85,7 +85,7 @@ class ProverConfig:
 class ValidationResult:
     """
     Result of logical validation of an ontology.
-    
+
     Attributes:
         is_consistent: Whether the ontology is logically consistent
         contradictions: List of detected contradictions
@@ -97,7 +97,7 @@ class ValidationResult:
         invalid_entity_ids: IDs of entities involved in validation errors
             (e.g. entities referenced by dangling relationships).
     """
-    
+
     is_consistent: bool
     contradictions: List[str] = field(default_factory=list)
     proofs: List[Dict[str, Any]] = field(default_factory=list)
@@ -106,7 +106,7 @@ class ValidationResult:
     time_ms: float = 0.0
     metadata: Dict[str, Any] = field(default_factory=dict)
     invalid_entity_ids: List[str] = field(default_factory=list)
-    
+
     def __repr__(self) -> str:
         """Compact representation for debugging."""
         status = "✓ consistent" if self.is_consistent else "✗ inconsistent"
@@ -119,66 +119,66 @@ class ValidationResult:
             details.append(f"{len(self.invalid_entity_ids)} invalid entities")
         detail_str = ", ".join(details) if details else "no issues"
         return f"ValidationResult({status}, {self.prover_used}, {detail_str}, conf={self.confidence:.2f}, {self.time_ms:.0f}ms)"
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert validation result to dictionary."""
         return {
-            'is_consistent': self.is_consistent,
-            'contradictions': self.contradictions,
-            'proofs': self.proofs,
-            'confidence': self.confidence,
-            'prover_used': self.prover_used,
-            'time_ms': self.time_ms,
-            'metadata': self.metadata,
-            'invalid_entity_ids': self.invalid_entity_ids,
+            "is_consistent": self.is_consistent,
+            "contradictions": self.contradictions,
+            "proofs": self.proofs,
+            "confidence": self.confidence,
+            "prover_used": self.prover_used,
+            "time_ms": self.time_ms,
+            "metadata": self.metadata,
+            "invalid_entity_ids": self.invalid_entity_ids,
         }
 
 
 class LogicValidator:
     """
     Validate ontologies using theorem provers.
-    
+
     This class bridges knowledge graph ontologies to formal logic validation
     using the TDFOL framework and various theorem provers. It can detect
     contradictions, prove consistency, and suggest fixes for logical issues.
-    
+
     The validator integrates with the existing logic module infrastructure,
     including TDFOL parsing, inference rules, and external prover bridges.
-    
+
     Attributes:
         prover_config: Configuration for theorem provers
         use_cache: Whether to cache validation results
-        
+
     Example:
         >>> validator = LogicValidator(prover_config={
         ...     'provers': ['z3', 'cvc5'],
         ...     'strategy': 'parallel',
         ...     'timeout': 10.0
         ... })
-        >>> 
+        >>>
         >>> # Check consistency
         >>> result = validator.check_consistency(ontology)
         >>> print(f"Consistent: {result.is_consistent}")
-        >>> 
+        >>>
         >>> # Get fixes if needed
         >>> if not result.is_consistent:
         ...     fixes = validator.suggest_fixes(ontology, result.contradictions)
     """
-    
+
     def __init__(
         self,
         prover_config: Optional[Any] = None,  # ProverConfig | Dict[str, Any]
-        use_cache: bool = True
+        use_cache: bool = True,
     ):
         """
         Initialize the logic validator.
-        
+
         Args:
             prover_config: Configuration for theorem provers. Accepts either a
                 :class:`ProverConfig` instance or a plain ``dict`` with keys:
                 ``strategy``, ``provers``, ``timeout``, ``parallel``.
             use_cache: Whether to cache validation results for performance
-            
+
         Raises:
             ImportError: If TDFOL module is not available
         """
@@ -190,24 +190,19 @@ class LogicValidator:
             self.prover_config = ProverConfig()
         self.use_cache = use_cache
         self._cache: Optional[Dict[str, Any]] = {} if use_cache else None
-        self._incremental_cache: Optional[Dict[str, ValidationResult]] = (
-            {} if use_cache else None
-        )
+        self._incremental_cache: Optional[Dict[str, ValidationResult]] = {} if use_cache else None
         self._incremental_cache_stats: Dict[str, int] = {"hits": 0, "misses": 0}
-        
+
         # Try to import TDFOL infrastructure
         try:
             from ipfs_datasets_py.logic.TDFOL import parse_tdfol, Formula
             from ipfs_datasets_py.logic.integration import NeurosymbolicReasoner
-            
+
             self._tdfol_available = True
             self._reasoner = NeurosymbolicReasoner()
             logger.info("TDFOL integration available")
         except ImportError as e:
-            logger.warning(
-                f"TDFOL module not available: {e}. "
-                "Logic validation will be limited."
-            )
+            logger.warning(f"TDFOL module not available: {e}. Logic validation will be limited.")
             self._tdfol_available = False
             self._reasoner = None
 
@@ -234,12 +229,8 @@ class LogicValidator:
             "strategy": self.prover_config.strategy,
             "provers_requested": list(self.prover_config.provers),
         }
-    
 
-    def ontology_to_tdfol(
-        self,
-        ontology: Dict[str, Any]
-    ) -> List[Any]:  # List[Formula]
+    def ontology_to_tdfol(self, ontology: Dict[str, Any]) -> List[Any]:  # List[Formula]
         """
         Convert ontology to TDFOL formulas.
 
@@ -266,7 +257,7 @@ class LogicValidator:
         logger.info("Converting ontology to TDFOL formulas")
 
         from .exceptions import OntologyValidationError
-        
+
         if not isinstance(ontology, dict):
             raise OntologyValidationError("ontology must be a dict")
 
@@ -287,10 +278,7 @@ class LogicValidator:
         if not isinstance(relationships, list):
             raise OntologyValidationError("ontology['relationships'] must be a list")
 
-        logger.info(
-            f"Converting {len(entities)} entities and "
-            f"{len(relationships)} relationships"
-        )
+        logger.info(f"Converting {len(entities)} entities and {len(relationships)} relationships")
 
         # Minimal conversion that does not depend on the TDFOL Formula classes.
         # We emit simple predicate-style string facts that downstream checkers
@@ -403,22 +391,19 @@ class LogicValidator:
 
         return facts
 
-    def check_consistency(
-        self,
-        ontology: Dict[str, Any]
-    ) -> ValidationResult:
+    def check_consistency(self, ontology: Dict[str, Any]) -> ValidationResult:
         """
         Check ontology for logical consistency.
-        
+
         Converts the ontology to TDFOL formulas and uses theorem provers
         to detect contradictions and verify logical consistency.
-        
+
         Args:
             ontology: Ontology to validate
-            
+
         Returns:
             ValidationResult with consistency information
-            
+
         Example:
             >>> result = validator.check_consistency(ontology)
             >>> if result.is_consistent:
@@ -427,7 +412,7 @@ class LogicValidator:
             ...     print("Found contradictions:", result.contradictions)
         """
         logger.info("Checking ontology consistency")
-        
+
         # Check incremental cache if enabled (ignores metadata ordering)
         if self.use_cache and self._incremental_cache is not None:
             incremental_key = self._get_incremental_cache_key(ontology)
@@ -446,10 +431,11 @@ class LogicValidator:
                 if isinstance(cached_result, ValidationResult):
                     logger.info("Using cached validation result")
                     return cached_result
-        
+
         import time
+
         start_time = time.time()
-        
+
         if not self._tdfol_available:
             # Fallback to basic structural validation
             logger.warning("TDFOL not available, using basic validation")
@@ -459,7 +445,16 @@ class LogicValidator:
             try:
                 formulas = self.ontology_to_tdfol(ontology)
                 result = self._prove_consistency(formulas, ontology)
-            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as e:
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                KeyError,
+                RuntimeError,
+                OSError,
+                ImportError,
+                OptimizerError,
+            ) as e:
                 logger.error(f"TDFOL validation failed: {e}")
                 result = ValidationResult(
                     is_consistent=False,
@@ -468,10 +463,10 @@ class LogicValidator:
                     prover_used="error",
                     metadata=self.proving_scope() | {"error": str(e)},
                 )
-        
+
         # Update timing
         result.time_ms = (time.time() - start_time) * 1000
-        
+
         # Cache result if enabled (use namespaced key to avoid conflicts with ontology_to_tdfol)
         if self.use_cache:
             if self._cache is not None:
@@ -480,73 +475,67 @@ class LogicValidator:
             if self._incremental_cache is not None:
                 incremental_key = self._get_incremental_cache_key(ontology)
                 self._incremental_cache[incremental_key] = result
-        
+
         logger.info(
-            f"Validation complete: consistent={result.is_consistent}, "
-            f"time={result.time_ms:.2f}ms"
+            f"Validation complete: consistent={result.is_consistent}, time={result.time_ms:.2f}ms"
         )
-        
+
         return result
-    
-    def find_contradictions(
-        self,
-        ontology: Dict[str, Any]
-    ) -> List[str]:
+
+    def find_contradictions(self, ontology: Dict[str, Any]) -> List[str]:
         """
         Identify logical contradictions in ontology.
-        
+
         Args:
             ontology: Ontology to analyze
-            
+
         Returns:
             List of contradiction descriptions
-            
+
         Example:
             >>> contradictions = validator.find_contradictions(ontology)
             >>> for contradiction in contradictions:
             ...     print(f"Contradiction: {contradiction}")
         """
         logger.info("Finding contradictions in ontology")
-        
+
         result = self.check_consistency(ontology)
         return result.contradictions
-    
+
     def suggest_fixes(
-        self,
-        ontology: Dict[str, Any],
-        contradictions: List[str]
+        self, ontology: Dict[str, Any], contradictions: List[str]
     ) -> List[Dict[str, Any]]:
         """
         Suggest fixes for detected contradictions.
-        
+
         Analyzes contradictions and generates actionable suggestions
         for resolving logical inconsistencies in the ontology.
-        
+
         Args:
             ontology: Ontology with contradictions
             contradictions: List of contradiction descriptions
-            
+
         Returns:
             List of fix suggestions, each a dictionary with:
                 - 'description': Description of the fix
                 - 'type': Type of fix (e.g., 'remove_entity', 'modify_relationship')
                 - 'target': Target element(s) to fix
                 - 'confidence': Confidence in the fix (0.0 to 1.0)
-                
+
         Example:
             >>> fixes = validator.suggest_fixes(ontology, contradictions)
             >>> for fix in fixes:
             ...     print(f"Fix: {fix['description']}")
         """
         logger.info(f"Generating fix suggestions for {len(contradictions)} contradictions")
-        
+
         fixes = []
 
         import re as _re
 
-        entities = ontology.get('entities', [])
-        relationships = ontology.get('relationships', [])
-        entity_ids = {e.get('id') for e in entities if isinstance(e, dict) and e.get('id')}
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+        entity_ids = {e.get("id") for e in entities if isinstance(e, dict) and e.get("id")}
         entity_id_to_text: dict[str, str] = {}
         for e in entities:
             if not isinstance(e, dict):
@@ -562,71 +551,90 @@ class LogicValidator:
             c_lower = contradiction.lower()
 
             # Pattern: dangling / non-existent source/target entity reference
-            if 'non-existent' in c_lower or 'missing' in c_lower or 'not found' in c_lower:
+            if "non-existent" in c_lower or "missing" in c_lower or "not found" in c_lower:
                 # Try to extract an entity ID from the message
-                id_match = _re.search(r"entity[:\s]+['\"]?([^\s'\"]+)['\"]?", contradiction, _re.IGNORECASE)
+                id_match = _re.search(
+                    r"entity[:\s]+['\"]?([^\s'\"]+)['\"]?", contradiction, _re.IGNORECASE
+                )
                 target_id = id_match.group(1) if id_match else None
-                fixes.append({
-                    'description': (
-                        f"Add a placeholder entity with id '{target_id}' to satisfy the dangling reference, "
-                        "or remove the relationship that references it."
-                        if target_id else f"Resolve dangling reference: {contradiction}"
-                    ),
-                    'type': 'add_entity_or_remove_relationship',
-                    'target': target_id,
-                    'confidence': 0.75,
-                })
+                fixes.append(
+                    {
+                        "description": (
+                            f"Add a placeholder entity with id '{target_id}' to satisfy the dangling reference, "
+                            "or remove the relationship that references it."
+                            if target_id
+                            else f"Resolve dangling reference: {contradiction}"
+                        ),
+                        "type": "add_entity_or_remove_relationship",
+                        "target": target_id,
+                        "confidence": 0.75,
+                    }
+                )
 
             # Pattern: duplicate entity ID
-            elif 'duplicate' in c_lower:
-                id_match = _re.search(r"id[:\s]+['\"]?([^\s'\"]+)['\"]?", contradiction, _re.IGNORECASE)
+            elif "duplicate" in c_lower:
+                id_match = _re.search(
+                    r"id[:\s]+['\"]?([^\s'\"]+)['\"]?", contradiction, _re.IGNORECASE
+                )
                 target_id = id_match.group(1) if id_match else None
-                fixes.append({
-                    'description': (
-                        f"Assign a unique ID to the duplicate entity '{target_id}' "
-                        "and update all references."
-                        if target_id else f"Resolve duplicate ID: {contradiction}"
-                    ),
-                    'type': 'rename_duplicate_id',
-                    'target': target_id,
-                    'confidence': 0.85,
-                })
+                fixes.append(
+                    {
+                        "description": (
+                            f"Assign a unique ID to the duplicate entity '{target_id}' "
+                            "and update all references."
+                            if target_id
+                            else f"Resolve duplicate ID: {contradiction}"
+                        ),
+                        "type": "rename_duplicate_id",
+                        "target": target_id,
+                        "confidence": 0.85,
+                    }
+                )
 
             # Pattern: circular dependency (is_a / part_of cycle)
-            elif 'circular' in c_lower or 'cycle' in c_lower:
-                fixes.append({
-                    'description': (
-                        "Break the circular dependency by removing or redirecting one of the "
-                        "'is_a' or 'part_of' relationships in the cycle."
-                    ),
-                    'type': 'remove_circular_relationship',
-                    'target': None,
-                    'confidence': 0.70,
-                })
+            elif "circular" in c_lower or "cycle" in c_lower:
+                fixes.append(
+                    {
+                        "description": (
+                            "Break the circular dependency by removing or redirecting one of the "
+                            "'is_a' or 'part_of' relationships in the cycle."
+                        ),
+                        "type": "remove_circular_relationship",
+                        "target": None,
+                        "confidence": 0.70,
+                    }
+                )
 
             # Pattern: type conflict
-            elif 'type' in c_lower and 'conflict' in c_lower:
-                id_match = _re.search(r"entity[:\s]+['\"]?([^\s'\"]+)['\"]?", contradiction, _re.IGNORECASE)
+            elif "type" in c_lower and "conflict" in c_lower:
+                id_match = _re.search(
+                    r"entity[:\s]+['\"]?([^\s'\"]+)['\"]?", contradiction, _re.IGNORECASE
+                )
                 target_id = id_match.group(1) if id_match else None
-                fixes.append({
-                    'description': (
-                        f"Resolve the type conflict for entity '{entity_id_to_text.get(target_id, target_id)}' "
-                        "by choosing the type with the highest confidence and updating all references."
-                        if target_id else f"Resolve type conflict: {contradiction}"
-                    ),
-                    'type': 'unify_entity_type',
-                    'target': target_id,
-                    'confidence': 0.65,
-                })
+                fixes.append(
+                    {
+                        "description": (
+                            f"Resolve the type conflict for entity '{entity_id_to_text.get(target_id, target_id)}' "
+                            "by choosing the type with the highest confidence and updating all references."
+                            if target_id
+                            else f"Resolve type conflict: {contradiction}"
+                        ),
+                        "type": "unify_entity_type",
+                        "target": target_id,
+                        "confidence": 0.65,
+                    }
+                )
 
             # Fallback: generic manual review
             else:
-                fixes.append({
-                    'description': f"Manual review required: {contradiction}",
-                    'type': 'manual_review',
-                    'target': None,
-                    'confidence': 0.40,
-                })
+                fixes.append(
+                    {
+                        "description": f"Manual review required: {contradiction}",
+                        "type": "manual_review",
+                        "target": None,
+                        "confidence": 0.40,
+                    }
+                )
 
         logger.info(f"Generated {len(fixes)} fix suggestions")
         return fixes
@@ -651,48 +659,47 @@ class LogicValidator:
         """
         fixes = self.suggest_fixes(ontology, result.contradictions)
         for eid in result.invalid_entity_ids:
-            fixes.append({
-                "description": (
-                    f"Entity id '{eid}' is referenced in a relationship but does not exist. "
-                    "Add a stub entity or remove the offending relationship."
-                ),
-                "type": "add_entity_or_remove_relationship",
-                "target": eid,
-                "confidence": 0.80,
-            })
+            fixes.append(
+                {
+                    "description": (
+                        f"Entity id '{eid}' is referenced in a relationship but does not exist. "
+                        "Add a stub entity or remove the offending relationship."
+                    ),
+                    "type": "add_entity_or_remove_relationship",
+                    "target": eid,
+                    "confidence": 0.80,
+                }
+            )
         return fixes
 
-    def _basic_consistency_check(
-        self,
-        ontology: Dict[str, Any]
-    ) -> ValidationResult:
+    def _basic_consistency_check(self, ontology: Dict[str, Any]) -> ValidationResult:
         """
         Basic structural consistency check without TDFOL.
-        
+
         Args:
             ontology: Ontology to check
-            
+
         Returns:
             Basic validation result
         """
         logger.info("Performing basic consistency check")
-        
+
         contradictions = []
-        entities = ontology.get('entities', [])
-        relationships = ontology.get('relationships', [])
-        
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+
         # Check for basic structural issues
-        entity_ids = {e.get('id') for e in entities if isinstance(e, dict)}
-        
+        entity_ids = {e.get("id") for e in entities if isinstance(e, dict)}
+
         # Check relationships reference valid entities
         invalid_ids: List[str] = []
         for rel in relationships:
             if not isinstance(rel, dict):
                 continue
-            
-            source_id = rel.get('source_id')
-            target_id = rel.get('target_id')
-            
+
+            source_id = rel.get("source_id")
+            target_id = rel.get("target_id")
+
             if source_id not in entity_ids:
                 contradictions.append(
                     f"Relationship references non-existent source entity: {source_id}"
@@ -705,9 +712,9 @@ class LogicValidator:
                 )
                 if target_id and target_id not in invalid_ids:
                     invalid_ids.append(target_id)
-        
+
         is_consistent = len(contradictions) == 0
-        
+
         return ValidationResult(
             is_consistent=is_consistent,
             contradictions=contradictions,
@@ -716,19 +723,15 @@ class LogicValidator:
             metadata=self.proving_scope(),
             invalid_entity_ids=invalid_ids,
         )
-    
-    def _prove_consistency(
-        self,
-        formulas: List[Any],
-        ontology: Dict[str, Any]
-    ) -> ValidationResult:
+
+    def _prove_consistency(self, formulas: List[Any], ontology: Dict[str, Any]) -> ValidationResult:
         """
         Prove consistency using TDFOL reasoner.
-        
+
         Args:
             formulas: List of TDFOL formulas (string predicates or Formula objects)
             ontology: Original ontology
-            
+
         Returns:
             Validation result from theorem proving
         """
@@ -769,24 +772,19 @@ class LogicValidator:
         # Dangling references
         for rel_type, src, tgt in rel_triples:
             if src not in entity_ids:
-                contradictions.append(
-                    f"Relationship '{rel_type}' has dangling source: {src}"
-                )
+                contradictions.append(f"Relationship '{rel_type}' has dangling source: {src}")
             if tgt not in entity_ids:
-                contradictions.append(
-                    f"Relationship '{rel_type}' has dangling target: {tgt}"
-                )
+                contradictions.append(f"Relationship '{rel_type}' has dangling target: {tgt}")
 
         # Trivial is_a cycles: A is_a B and B is_a A
         isa_pairs = {
-            (src, tgt) for (rt, src, tgt) in rel_triples
+            (src, tgt)
+            for (rt, src, tgt) in rel_triples
             if rt in ("is_a", "subclass_of", "instance_of")
         }
         for src, tgt in isa_pairs:
             if (tgt, src) in isa_pairs:
-                contradictions.append(
-                    f"Circular is_a relationship: {src} ↔ {tgt}"
-                )
+                contradictions.append(f"Circular is_a relationship: {src} ↔ {tgt}")
 
         is_consistent = len(contradictions) == 0
         confidence = 0.85 if is_consistent else 0.75
@@ -798,7 +796,7 @@ class LogicValidator:
             prover_used=f"structural:{self.prover_config.strategy}",
             metadata=self.proving_scope(),
         )
-    
+
     def batch_validate(
         self,
         ontologies: List[Dict[str, Any]],
@@ -829,12 +827,24 @@ class LogicValidator:
 
         results: List[Optional[ValidationResult]] = [None] * len(ontologies)
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(self.check_consistency, ont): idx for idx, ont in enumerate(ontologies)}
+            futures = {
+                executor.submit(self.check_consistency, ont): idx
+                for idx, ont in enumerate(ontologies)
+            }
             for future in as_completed(futures):
                 idx = futures[future]
                 try:
                     results[idx] = future.result()
-                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as exc:
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    KeyError,
+                    RuntimeError,
+                    OSError,
+                    ImportError,
+                    OptimizerError,
+                ) as exc:
                     results[idx] = ValidationResult(
                         is_consistent=False,
                         contradictions=[f"Validation error: {exc}"],
@@ -884,7 +894,11 @@ class LogicValidator:
                     "Merge duplicate entities to maintain a clean ontology."
                 )
                 action = "merge_duplicate_entities"
-            elif "self.loop" in c_lower or "self-loop" in c_lower or "source_id == target_id" in c_lower:
+            elif (
+                "self.loop" in c_lower
+                or "self-loop" in c_lower
+                or "source_id == target_id" in c_lower
+            ):
                 explanation = (
                     f"A relationship points to itself: {contradiction}. "
                     "Remove or redirect self-loop relationships."
@@ -899,14 +913,17 @@ class LogicValidator:
             else:
                 explanation = f"Logical inconsistency detected: {contradiction}."
                 action = "review_manually"
-            explanations.append({
-                "contradiction": contradiction,
-                "explanation": explanation,
-                "action": action,
-            })
+            explanations.append(
+                {
+                    "contradiction": contradiction,
+                    "explanation": explanation,
+                    "action": action,
+                }
+            )
         return explanations
 
-    def filter_valid_entities(        self,
+    def filter_valid_entities(
+        self,
         entities: List[Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
         """Return the subset of *entities* that pass a consistency check.
@@ -987,7 +1004,16 @@ class LogicValidator:
                         f"consistency issue(s): {'; '.join(result.contradictions[:2])}"
                     ),
                 }
-        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as exc:
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            KeyError,
+            RuntimeError,
+            OSError,
+            ImportError,
+            OptimizerError,
+        ) as exc:
             return {
                 "entity_id": entity_id,
                 "is_valid": False,
@@ -1068,7 +1094,7 @@ class LogicValidator:
         """
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
-        
+
         # Count degree for each entity ID
         degree: Dict[str, int] = {}
         for rel in relationships:
@@ -1078,13 +1104,13 @@ class LogicValidator:
                 degree[source_id] = degree.get(source_id, 0) + 1
             if target_id:
                 degree[target_id] = degree.get(target_id, 0) + 1
-        
+
         # Filter hubs meeting minimum degree threshold
         hubs = [eid for eid, deg in degree.items() if deg >= min_degree]
-        
+
         # Sort by degree (descending), then alphabetically for tiebreak
         hubs.sort(key=lambda eid: (-degree[eid], eid))
-        
+
         return hubs
 
     def quick_check(self, ontology: Dict[str, Any]) -> bool:
@@ -1166,9 +1192,7 @@ class LogicValidator:
             >>> validator.is_empty({"entities": [{"id": "e1"}]})
             False
         """
-        return (
-            not ontology.get("entities") and not ontology.get("relationships")
-        )
+        return not ontology.get("entities") and not ontology.get("relationships")
 
     def contradiction_count(self, ontology: Dict[str, Any]) -> int:
         """Return the number of logical contradictions in *ontology*.
@@ -1405,7 +1429,7 @@ class LogicValidator:
         """Generate cache key for ontology."""
         import hashlib
         import json
-        
+
         # Create deterministic representation
         ontology_str = json.dumps(ontology, sort_keys=True)
         return hashlib.sha256(ontology_str.encode()).hexdigest()
@@ -1735,7 +1759,7 @@ class LogicValidator:
             return True
         rels = ontology.get("relationships", ontology.get("edges", []))
         adj: Dict[str, set[str]] = {eid: set() for eid in entity_ids}
-        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+        for rel in rels if isinstance(rels, (list, tuple)) else []:
             if isinstance(rel, dict):
                 src = rel.get("source_id")
                 tgt = rel.get("target_id")
@@ -1791,8 +1815,7 @@ class LogicValidator:
         if not isinstance(rels, (list, tuple)):
             return 0
         return sum(
-            1 for r in rels
-            if isinstance(r, dict) and r.get("source_id") == r.get("target_id")
+            1 for r in rels if isinstance(r, dict) and r.get("source_id") == r.get("target_id")
         )
 
     def average_entity_degree(self, ontology: Dict[str, Any]) -> float:
@@ -1812,7 +1835,7 @@ class LogicValidator:
             return 0.0
         rels = ontology.get("relationships", ontology.get("edges", []))
         degree: Dict[str, int] = {eid: 0 for eid in entity_ids}
-        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+        for rel in rels if isinstance(rels, (list, tuple)) else []:
             if isinstance(rel, dict):
                 for key in ("source_id", "target_id"):
                     eid = rel.get(key)
@@ -1843,14 +1866,16 @@ class LogicValidator:
             return 0
         rels = ontology.get("relationships", ontology.get("edges", []))
         adj: Dict[str, set[str]] = {}
-        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+        for rel in rels if isinstance(rels, (list, tuple)) else []:
             if isinstance(rel, dict):
                 src = rel.get("source_id")
                 tgt = rel.get("target_id")
                 if isinstance(src, str) and isinstance(tgt, str):
                     adj.setdefault(src, set()).add(tgt)
                     adj.setdefault(tgt, set()).add(src)
-        if source not in adj and source not in {e.get("id") for e in ontology.get("entities", []) if isinstance(e, dict)}:
+        if source not in adj and source not in {
+            e.get("id") for e in ontology.get("entities", []) if isinstance(e, dict)
+        }:
             return -1
         visited: set[str] = {source}
         queue: List[tuple[str, int]] = [(source, 0)]
@@ -1897,7 +1922,7 @@ class LogicValidator:
         """
         rels = ontology.get("relationships", ontology.get("edges", []))
         adj: Dict[str, set[str]] = {}
-        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+        for rel in rels if isinstance(rels, (list, tuple)) else []:
             if isinstance(rel, dict):
                 src = rel.get("source_id")
                 tgt = rel.get("target_id")
@@ -1928,7 +1953,7 @@ class LogicValidator:
         """
         rels = ontology.get("relationships", ontology.get("edges", []))
         adj: Dict[str, List[str]] = {}
-        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+        for rel in rels if isinstance(rels, (list, tuple)) else []:
             if isinstance(rel, dict):
                 src = rel.get("source_id")
                 tgt = rel.get("target_id")
@@ -1950,7 +1975,7 @@ class LogicValidator:
             return False
 
         all_nodes = set(adj.keys())
-        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+        for rel in rels if isinstance(rels, (list, tuple)) else []:
             if isinstance(rel, dict):
                 for key in ("source_id", "target_id"):
                     v = rel.get(key)
@@ -1978,7 +2003,7 @@ class LogicValidator:
         """
         rels = ontology.get("relationships", ontology.get("edges", []))
         adj: Dict[str, List[str]] = {}
-        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+        for rel in rels if isinstance(rels, (list, tuple)) else []:
             if isinstance(rel, dict):
                 src = rel.get("source_id")
                 tgt = rel.get("target_id")
@@ -2023,7 +2048,8 @@ class LogicValidator:
         """
         rels = ontology.get("relationships", ontology.get("edges", []))
         return sum(
-            1 for r in (rels if isinstance(rels, (list, tuple)) else [])
+            1
+            for r in (rels if isinstance(rels, (list, tuple)) else [])
             if isinstance(r, dict) and r.get("target_id") == entity_id
         )
 
@@ -2039,7 +2065,8 @@ class LogicValidator:
         """
         rels = ontology.get("relationships", ontology.get("edges", []))
         return sum(
-            1 for r in (rels if isinstance(rels, (list, tuple)) else [])
+            1
+            for r in (rels if isinstance(rels, (list, tuple)) else [])
             if isinstance(r, dict) and r.get("source_id") == entity_id
         )
 
@@ -2055,7 +2082,7 @@ class LogicValidator:
         """
         rels = ontology.get("relationships", ontology.get("edges", []))
         degree: Dict[str, int] = {}
-        for r in (rels if isinstance(rels, (list, tuple)) else []):
+        for r in rels if isinstance(rels, (list, tuple)) else []:
             if isinstance(r, dict):
                 for key in ("source_id", "target_id"):
                     eid = r.get(key)
@@ -2706,6 +2733,7 @@ class LogicValidator:
             Float entropy (bits); ``0.0`` when no relationships or only one type.
         """
         import math
+
         rels = ontology.get("relationships", [])
         if not rels:
             return 0.0
@@ -2889,8 +2917,9 @@ class LogicValidator:
 
         # Build adjacency list
         from collections import defaultdict as _dd
+
         adj: Dict[Any, set[Any]] = _dd(set)
-        for (src, tgt) in edge_set:
+        for src, tgt in edge_set:
             adj[src].add(tgt)
 
         count = 0
@@ -3033,6 +3062,7 @@ class LogicValidator:
             Integer max depth; 0 when there are no relationships.
         """
         from collections import deque as _deque, defaultdict as _dd
+
         rels = getattr(ontology, "relationships", [])
         if not rels:
             return 0
@@ -3075,6 +3105,7 @@ class LogicValidator:
             Integer SCC count; 0 when no nodes are present.
         """
         from collections import defaultdict as _dd
+
         rels = getattr(ontology, "relationships", [])
         if not rels:
             return 0
@@ -3149,6 +3180,7 @@ class LogicValidator:
             return 0
         # Build undirected adjacency
         from collections import defaultdict as _dd
+
         adj: Dict[Any, set[Any]] = _dd(set)
         nodes: set[Any] = set()
         for r in rels:
@@ -3187,7 +3219,10 @@ class LogicValidator:
         if not rels:
             return 0.0
         from collections import Counter as _Counter
-        in_deg = _Counter(getattr(r, "target_id", None) for r in rels if getattr(r, "target_id", None))
+
+        in_deg = _Counter(
+            getattr(r, "target_id", None) for r in rels if getattr(r, "target_id", None)
+        )
         nodes: set[Any] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
@@ -3213,7 +3248,10 @@ class LogicValidator:
         if not rels:
             return 0.0
         from collections import Counter as _Counter
-        out_deg = _Counter(getattr(r, "source_id", None) for r in rels if getattr(r, "source_id", None))
+
+        out_deg = _Counter(
+            getattr(r, "source_id", None) for r in rels if getattr(r, "source_id", None)
+        )
         nodes: set[Any] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
@@ -3444,6 +3482,7 @@ class LogicValidator:
             Integer maximum depth; 0 when no relationships.
         """
         from collections import deque, defaultdict
+
         rels = ontology.get("relationships", [])
         if not rels:
             return 0
@@ -3548,6 +3587,7 @@ class LogicValidator:
             True when the graph has no directed cycles; False otherwise.
         """
         from collections import defaultdict
+
         adj: Dict[str, List[str]] = defaultdict(list)
         for rel in ontology.get("relationships", []):
             if not isinstance(rel, dict):
@@ -3642,6 +3682,7 @@ class LogicValidator:
             Non-negative integer count.
         """
         import collections
+
         rels = ontology.get("relationships", []) if ontology else []
         adj: Dict[str, set[str]] = collections.defaultdict(set)
         for rel in rels:
@@ -3748,6 +3789,7 @@ class LogicValidator:
             return 0.0
         max_edges = n * (n - 1)
         return len(relationships) / max_edges
+
     # ------------------------------------------------------------------ #
     # Batch 203: Cache and validation result analysis methods            #
     # ------------------------------------------------------------------ #
@@ -4202,8 +4244,7 @@ class LogicValidator:
             return 0.0
         max_edges = n * (n - 1)
         edge_count = sum(
-            1 for r in rels
-            if isinstance(r, dict) and r.get("source") and r.get("target")
+            1 for r in rels if isinstance(r, dict) and r.get("source") and r.get("target")
         )
         return edge_count / max_edges
 
@@ -4339,6 +4380,7 @@ class LogicValidator:
             >>> d >= 0
         """
         from collections import deque
+
         entities = ontology.get("entities", []) or []
         rels = ontology.get("relationships", []) or []
 
@@ -4403,6 +4445,7 @@ class LogicValidator:
             [1, 0]
         """
         from collections import deque
+
         entities = ontology.get("entities", []) or []
         rels = ontology.get("relationships", []) or []
 
@@ -4580,9 +4623,13 @@ class LogicValidator:
         # Collect IDs that appear as targets (have incoming edges)
         has_incoming: set[Any] = set()
         for r in rels:
-            tgt = getattr(r, "target_id", None) or (r.get("target_id") if isinstance(r, dict) else None)
+            tgt = getattr(r, "target_id", None) or (
+                r.get("target_id") if isinstance(r, dict) else None
+            )
             if tgt is None:
-                tgt = getattr(r, "target", None) or (r.get("target") if isinstance(r, dict) else None)
+                tgt = getattr(r, "target", None) or (
+                    r.get("target") if isinstance(r, dict) else None
+                )
             if tgt:
                 has_incoming.add(tgt)
         return sum(1 for nid in all_ids if nid not in has_incoming)
@@ -4629,9 +4676,13 @@ class LogicValidator:
         # Collect IDs that appear as sources (have outgoing edges)
         has_outgoing: set[str] = set()
         for r in rels:
-            src = getattr(r, "source_id", None) or (r.get("source_id") if isinstance(r, dict) else None)
+            src = getattr(r, "source_id", None) or (
+                r.get("source_id") if isinstance(r, dict) else None
+            )
             if src is None:
-                src = getattr(r, "source", None) or (r.get("source") if isinstance(r, dict) else None)
+                src = getattr(r, "source", None) or (
+                    r.get("source") if isinstance(r, dict) else None
+                )
             if src:
                 has_outgoing.add(src)
         return sum(1 for nid in all_ids if nid not in has_outgoing)
@@ -4659,7 +4710,9 @@ class LogicValidator:
             []
         """
         sccs = self.strongly_connected_components(
-            ontology if isinstance(ontology, dict) else {
+            ontology
+            if isinstance(ontology, dict)
+            else {
                 "entities": [
                     {"id": getattr(e, "id", None)}
                     for e in (getattr(ontology, "entities", None) or [])
@@ -4816,12 +4869,11 @@ class LogicValidator:
         nodes_in_cycles = sum(s for s in sizes if s > 1)
         return nodes_in_cycles / total_nodes
 
-
     def dag_fraction(self, ontology: Any) -> float:
         """Return the fraction of nodes NOT in any cycle (complement of node_in_cycle_fraction).
 
-        This is the proportion of nodes that belong to singleton strongly 
-        connected components (i.e., nodes not part of any cycle). For a pure 
+        This is the proportion of nodes that belong to singleton strongly
+        connected components (i.e., nodes not part of any cycle). For a pure
         DAG, this returns ``1.0`` since no nodes are in cycles.
 
         Mathematically:
@@ -4845,7 +4897,7 @@ class LogicValidator:
 
 
 __all__ = [
-    'LogicValidator',
-    'ValidationResult',
-    'ProverConfig',
+    "LogicValidator",
+    "ValidationResult",
+    "ProverConfig",
 ]

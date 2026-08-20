@@ -315,17 +315,22 @@ Files >500 lines violating thin wrapper architecture:
 def _initialize_laion_core_tools(self) -> None:
     """Initialize LAION core dataset tools."""  # ~40 lines
 
+
 def _initialize_laion_embedding_tools(self) -> None:
     """Initialize LAION embedding and vector tools."""  # ~50 lines
+
 
 def _initialize_laion_search_tools(self) -> None:
     """Initialize LAION search and retrieval tools."""  # ~40 lines
 
+
 def _initialize_laion_processing_tools(self) -> None:
     """Initialize LAION data processing tools."""  # ~50 lines
 
+
 def _initialize_laion_cache_tools(self) -> None:
     """Initialize LAION caching tools."""  # ~30 lines
+
 
 def initialize_laion_tools(self) -> None:
     """Initialize all LAION tools by delegating to sub-initializers."""  # ~20 lines
@@ -343,18 +348,23 @@ def initialize_laion_tools(self) -> None:
 def _check_error_rate_alerts(self, metrics: Dict) -> List[Dict]:
     """Check for error rate alert conditions."""
 
+
 def _check_latency_alerts(self, metrics: Dict) -> List[Dict]:
     """Check for latency threshold alerts."""
 
+
 def _check_resource_alerts(self, metrics: Dict) -> List[Dict]:
     """Check for resource usage alerts."""
+
 
 # get_metrics_summary() 131 lines → extract:
 def _build_system_summary(self) -> Dict:
     """Build system resource summary."""
 
+
 def _build_tool_summary(self) -> Dict:
     """Build tool execution summary."""
+
 
 def _build_performance_summary(self) -> Dict:
     """Build performance metrics summary."""
@@ -367,12 +377,15 @@ def _build_performance_summary(self) -> Dict:
 def _validate_filter_type(self, filter_name: str, filter_value: Any) -> None:
     """Validate a single search filter type and value."""
 
+
 def _validate_numeric_filter(self, name: str, value: Any) -> None:
     """Validate numeric filter constraints."""
+
 
 # validate_file_path() 124 lines → extract:
 def _check_path_traversal(self, path: str) -> None:
     """Check for path traversal attacks."""
+
 
 def _validate_path_permissions(self, path: Path) -> None:
     """Validate file system permissions for path."""
@@ -385,15 +398,19 @@ def _validate_path_permissions(self, path: Path) -> None:
 def _initialize_error_reporting(self) -> None:
     """Initialize global error reporting if available."""
 
+
 def _initialize_mcp_server(self) -> None:
     """Initialize FastMCP server instance."""
+
 
 def _initialize_p2p_services(self) -> None:
     """Initialize P2P service manager with config."""
 
+
 # server_context.py:execute_tool() 106 lines → extract:
 def _prepare_tool_execution(self, tool_name: str, kwargs: Dict) -> Tuple:
     """Prepare and validate tool for execution."""
+
 
 def _execute_tool_safely(self, tool: Any, kwargs: Dict) -> Any:
     """Execute tool with error handling."""
@@ -547,6 +564,7 @@ Files 500-900 lines that need extraction (estimated 3-5h each):
 def _get_tool_path(tool_name: str, category: str) -> str:
     return f"tools/{category}/{tool_name}"
 
+
 # Extract to: utils/tool_path_utils.py
 ```
 
@@ -562,6 +580,7 @@ BASE_DIR = Path(__file__).parent
 # Repeated 15+ times across mcplusplus/ modules:
 try:
     from ipfs_accelerate_py import X
+
     HAS_X = True
 except ImportError:
     HAS_X = False
@@ -616,6 +635,7 @@ except ImportError:
 class HierarchicalToolManager:
     def __init__(self):
         self._load_all_tools()  # Loads all 382 files
+
 
 # After: Lazy category loading
 class HierarchicalToolManager:
@@ -944,9 +964,9 @@ for f in os.listdir('ipfs_datasets_py/mcp_server'):
 **1. Hierarchical Meta-Tools (99% context reduction)**
 ```python
 mcp.add_tool(tools_list_categories)  # List 60 categories
-mcp.add_tool(tools_list_tools)       # List tools in category
-mcp.add_tool(tools_get_schema)       # Get tool schema
-mcp.add_tool(tools_dispatch)         # Execute any tool
+mcp.add_tool(tools_list_tools)  # List tools in category
+mcp.add_tool(tools_get_schema)  # Get tool schema
+mcp.add_tool(tools_dispatch)  # Execute any tool
 ```
 
 **2. Thin Wrapper Pattern (<150 lines)**
@@ -955,26 +975,30 @@ mcp.add_tool(tools_dispatch)         # Execute any tool
 async def tool_name(param: str) -> Dict:
     """Tool wraps core module."""
     from ipfs_datasets_py.core import CoreClass
+
     return await CoreClass().method(param)
 ```
 
 **3. Dual-Runtime Routing**
 ```python
 @tool_metadata(runtime="fastapi")  # Standard tools
-async def standard_tool(): pass
+async def standard_tool():
+    pass
 
-@tool_metadata(runtime="trio")     # P2P tools (50-70% faster)
-async def p2p_tool(): pass
+
+@tool_metadata(runtime="trio")  # P2P tools (50-70% faster)
+async def p2p_tool():
+    pass
 ```
 
 **4. Custom Exception Hierarchy**
 ```python
 from ipfs_datasets_py.mcp_server.exceptions import (
-    ToolNotFoundError,      # Tool doesn't exist
-    ToolExecutionError,     # Tool failed
-    ValidationError,        # Invalid input
-    RuntimeRoutingError,    # Wrong runtime
-    ConfigurationError,     # Bad config
+    ToolNotFoundError,  # Tool doesn't exist
+    ToolExecutionError,  # Tool failed
+    ValidationError,  # Invalid input
+    RuntimeRoutingError,  # Wrong runtime
+    ConfigurationError,  # Bad config
 )
 ```
 

@@ -30,7 +30,7 @@ class TestUnicodeSupport:
         """
         text = "For all α, if β then γ"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         # Should not crash even if quality varies
 
@@ -43,7 +43,7 @@ class TestUnicodeSupport:
         """
         text = "∀x∈ℕ: x≥0"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -55,7 +55,7 @@ class TestUnicodeSupport:
         """
         text = "All 😀 are happy and 🎉 means celebration"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -67,7 +67,7 @@ class TestUnicodeSupport:
         """
         text = "Test Тест 测试"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -79,7 +79,7 @@ class TestUnicodeSupport:
         """
         text = "Café résumé naïve"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -91,7 +91,7 @@ class TestUnicodeSupport:
         """
         text = "مرحبا שלום"  # Hello in Arabic and Hebrew
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
 
@@ -107,7 +107,7 @@ class TestNestedQuantifiers:
         """
         text = "For all x and for all y, if x equals y then they are identical"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         assert result["summary"]["quantifier_distribution"]["∀"] >= 1
 
@@ -120,12 +120,12 @@ class TestNestedQuantifiers:
         """
         text = "For every person there exists a friend"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         # Should detect at least some quantifiers
         total_quantifiers = (
-            result["summary"]["quantifier_distribution"]["∀"] +
-            result["summary"]["quantifier_distribution"]["∃"]
+            result["summary"]["quantifier_distribution"]["∀"]
+            + result["summary"]["quantifier_distribution"]["∃"]
         )
         assert total_quantifiers >= 0
 
@@ -138,7 +138,7 @@ class TestNestedQuantifiers:
         """
         text = "For all x, there exists y such that for all z, x relates to y through z"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -150,7 +150,7 @@ class TestNestedQuantifiers:
         """
         text = "For every A, there is some B, such that for all C, A B and C are related"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -162,7 +162,7 @@ class TestNestedQuantifiers:
         """
         text = "All students and some professors attend every lecture"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
 
@@ -178,7 +178,7 @@ class TestComplexBooleanExpressions:
         """
         text = "Either A or B, and either C or D"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         assert result["summary"]["operator_distribution"]["∧"] >= 0
         assert result["summary"]["operator_distribution"]["∨"] >= 0
@@ -192,7 +192,7 @@ class TestComplexBooleanExpressions:
         """
         text = "Either both A and B, or both C and D"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -204,7 +204,7 @@ class TestComplexBooleanExpressions:
         """
         text = "It is not the case that both A and B"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         assert result["summary"]["operator_distribution"]["¬"] >= 0
 
@@ -217,7 +217,7 @@ class TestComplexBooleanExpressions:
         """
         text = "If A, then if B then C"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         assert result["summary"]["operator_distribution"]["→"] >= 0
 
@@ -230,7 +230,7 @@ class TestComplexBooleanExpressions:
         """
         text = "A if and only if B"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -242,7 +242,7 @@ class TestComplexBooleanExpressions:
         """
         text = "For all x, if x is A and not B, then there exists y such that y is C or D"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         # Should detect multiple operator types
         ops = result["summary"]["operator_distribution"]
@@ -261,11 +261,11 @@ class TestPerformance:
         THEN: Should complete in <100ms
         """
         text = "All humans are mortal"
-        
+
         start = time.time()
         result = await convert_text_to_fol(text)
         duration = time.time() - start
-        
+
         assert result["status"] == "success"
         assert duration < 0.1  # Should be fast (<100ms)
 
@@ -277,16 +277,15 @@ class TestPerformance:
         THEN: Should complete in reasonable time
         """
         dataset = {
-            "text": " ".join([
-                f"Statement number {i} about something interesting."
-                for i in range(10)
-            ])
+            "text": " ".join(
+                [f"Statement number {i} about something interesting." for i in range(10)]
+            )
         }
-        
+
         start = time.time()
         result = await convert_text_to_fol(dataset)
         duration = time.time() - start
-        
+
         assert result["status"] == "success"
         assert duration < 1.0  # Should process 10 sentences in <1s
 
@@ -297,20 +296,12 @@ class TestPerformance:
         WHEN: Processing in parallel
         THEN: Should handle concurrent load
         """
-        texts = [
-            "All A are B",
-            "Some C are D",
-            "If E then F",
-            "G and H",
-            "I or J"
-        ]
-        
+        texts = ["All A are B", "Some C are D", "If E then F", "G and H", "I or J"]
+
         start = time.time()
-        results = await asyncio.gather(*[
-            convert_text_to_fol(text) for text in texts
-        ])
+        results = await asyncio.gather(*[convert_text_to_fol(text) for text in texts])
         duration = time.time() - start
-        
+
         assert len(results) == 5
         assert all(r["status"] == "success" for r in results)
         assert duration < 1.0  # Should handle concurrency well
@@ -323,9 +314,9 @@ class TestPerformance:
         THEN: Should not cause memory issues
         """
         large_text = "Test sentence. " * 500  # ~7.5KB
-        
+
         result = await convert_text_to_fol(large_text)
-        
+
         assert result["status"] == "success"
         # Should complete without memory errors
 
@@ -342,7 +333,7 @@ class TestMalformedInput:
         """
         text = "((Test (incomplete"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -354,7 +345,7 @@ class TestMalformedInput:
         """
         text = "Test    with     many      spaces"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -366,7 +357,7 @@ class TestMalformedInput:
         """
         text = "!@#$%^&*()"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -378,7 +369,7 @@ class TestMalformedInput:
         """
         text = "123 456 789"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -390,7 +381,7 @@ class TestMalformedInput:
         """
         text = "Line1\n\tLine2\r\nLine3"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
 
@@ -405,7 +396,7 @@ class TestDistributionFunctions:
         """
         results = []
         dist = get_quantifier_distribution(results)
-        
+
         assert dist["∀"] == 0
         assert dist["∃"] == 0
 
@@ -420,7 +411,7 @@ class TestDistributionFunctions:
             {"quantifiers": ["∃"]},
         ]
         dist = get_quantifier_distribution(results)
-        
+
         assert dist["∀"] >= 0
         assert dist["∃"] >= 0
 
@@ -432,7 +423,7 @@ class TestDistributionFunctions:
         """
         results = []
         dist = get_operator_distribution(results)
-        
+
         assert dist["∧"] == 0
         assert dist["∨"] == 0
         assert dist["→"] == 0
@@ -450,7 +441,7 @@ class TestDistributionFunctions:
             {"operators": ["→"]},
         ]
         dist = get_operator_distribution(results)
-        
+
         assert isinstance(dist, dict)
         assert all(isinstance(v, int) for v in dist.values())
 

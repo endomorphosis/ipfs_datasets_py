@@ -173,9 +173,7 @@ def test_monitor_tracks_all_required_drift_families_and_rolls_back_guidance() ->
     assert todo["priority"] == "P0"
     assert todo["action"] == "remove_promoted_guidance_records"
     assert todo["affected_promotion_id"] == "lir-guidance-promotion-unit"
-    assert set(todo["drift_event_ids"]) == {
-        event["event_id"] for event in payload["events"]
-    }
+    assert set(todo["drift_event_ids"]) == {event["event_id"] for event in payload["events"]}
 
 
 def test_monitor_detects_missing_rollback_metadata_as_guardrail_violation() -> None:
@@ -191,15 +189,10 @@ def test_monitor_detects_missing_rollback_metadata_as_guardrail_violation() -> N
 
     assert payload["status"] == "rollback_required"
     assert payload["events"][0]["category"] == "rollback_readiness"
-    assert (
-        payload["events"][0]["signal"]
-        == "promoted_guidance_rollback_metadata_missing"
-    )
+    assert payload["events"][0]["signal"] == "promoted_guidance_rollback_metadata_missing"
     disabled = payload["rollback_decision"]["disabled_promotions"][0]
     assert disabled["disabled"] is True
-    assert disabled["rollback_metadata"]["rollback_id"].startswith(
-        "lir-guidance-rollback-"
-    )
+    assert disabled["rollback_metadata"]["rollback_id"].startswith("lir-guidance-rollback-")
 
 
 def test_thresholds_can_be_tightened_for_specific_signals() -> None:
@@ -242,9 +235,7 @@ def test_report_and_rollback_todos_can_be_persisted(tmp_path: Path) -> None:
 
     saved = json.loads(report_path.read_text(encoding="utf-8"))
     todos = [
-        json.loads(line)
-        for line in todo_path.read_text(encoding="utf-8").splitlines()
-        if line
+        json.loads(line) for line in todo_path.read_text(encoding="utf-8").splitlines() if line
     ]
 
     assert saved["report_id"] == report.report_id

@@ -35,6 +35,7 @@ import numpy as np
 from .storage import IPLDStorage
 from .dag_pb import create_dag_node, parse_dag_node
 from .optimized_codec import OptimizedEncoder, OptimizedDecoder
+
 try:
     from ipfs_datasets_py.vector_stores.ipld_vector_store import IPLDVectorStore
     from ipfs_datasets_py.vector_stores.schema import SearchResult
@@ -48,20 +49,24 @@ try:
 except ImportError:
     # Simple fallback implementation of slugify
     import re
+
     def slugify(text):
         text = text.lower().strip()
-        text = re.sub(r'[^\w\s-]', '', text)
-        text = re.sub(r'[\s_-]+', '-', text)
+        text = re.sub(r"[^\w\s-]", "", text)
+        text = re.sub(r"[\s_-]+", "-", text)
         return text
+
 
 try:
     import ipld_car
+
     HAVE_IPLD_CAR = True
 except ImportError:
     HAVE_IPLD_CAR = False
 
 try:
     from multiformats import CID as _MF_CID
+
     _HAVE_MULTIFORMATS_CID = True
 except Exception:
     _HAVE_MULTIFORMATS_CID = False
@@ -73,6 +78,7 @@ MAX_BLOCK_SIZE = 800 * 1024
 # Type for entity and relationship IDs
 EntityID = str
 RelationshipID = str
+
 
 class Entity:
     """
@@ -89,7 +95,7 @@ class Entity:
         name: str = "",
         properties: Optional[Dict[str, Any]] = None,
         confidence: float = 1.0,
-        source_text: str = None
+        source_text: str = None,
     ):
         """
         Initialize an entity.
@@ -118,11 +124,11 @@ class Entity:
             "name": self.name,
             "properties": self.properties,
             "confidence": self.confidence,
-            "source_text": self.source_text
+            "source_text": self.source_text,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Entity':
+    def from_dict(cls, data: Dict[str, Any]) -> "Entity":
         """Create entity from dictionary representation."""
         entity = cls(
             entity_id=data.get("id"),
@@ -130,7 +136,7 @@ class Entity:
             name=data.get("name", ""),
             properties=data.get("properties", {}),
             confidence=data.get("confidence", 1.0),
-            source_text=data.get("source_text")
+            source_text=data.get("source_text"),
         )
         entity.cid = data.get("cid")
         return entity
@@ -138,6 +144,7 @@ class Entity:
     def __str__(self) -> str:
         """Get string representation of the entity."""
         return f"Entity(id={self.id}, type={self.type}, name={self.name})"
+
 
 class Relationship:
     """
@@ -155,7 +162,7 @@ class Relationship:
         target: Union[Entity, EntityID] = None,
         properties: Optional[Dict[str, Any]] = None,
         confidence: float = 1.0,
-        source_text: str = None
+        source_text: str = None,
     ):
         """
         Initialize a relationship.
@@ -197,11 +204,11 @@ class Relationship:
             "target_id": self.target_id,
             "properties": self.properties,
             "confidence": self.confidence,
-            "source_text": self.source_text
+            "source_text": self.source_text,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Relationship':
+    def from_dict(cls, data: Dict[str, Any]) -> "Relationship":
         """Create relationship from dictionary representation."""
         relationship = cls(
             relationship_id=data.get("id"),
@@ -210,7 +217,7 @@ class Relationship:
             target=data.get("target_id"),
             properties=data.get("properties", {}),
             confidence=data.get("confidence", 1.0),
-            source_text=data.get("source_text")
+            source_text=data.get("source_text"),
         )
         relationship.cid = data.get("cid")
         return relationship
@@ -218,6 +225,7 @@ class Relationship:
     def __str__(self) -> str:
         """Get string representation of the relationship."""
         return f"Relationship(id={self.id}, type={self.type}, source={self.source_id}, target={self.target_id})"
+
 
 class IPLDKnowledgeGraph:
     """
@@ -232,7 +240,7 @@ class IPLDKnowledgeGraph:
         self,
         name: str = "knowledge_graph",
         storage: Optional[IPLDStorage] = None,
-        vector_store: Optional[IPLDVectorStore] = None
+        vector_store: Optional[IPLDVectorStore] = None,
     ):
         """
         Initialize knowledge graph.
@@ -252,12 +260,20 @@ class IPLDKnowledgeGraph:
 
         # Index for efficient access
         self._entity_index: Dict[str, Set[EntityID]] = defaultdict(set)  # type -> entity_ids
-        self._relationship_index: Dict[str, Set[RelationshipID]] = defaultdict(set)  # type -> relationship_ids
-        self._source_relationships: Dict[EntityID, Set[RelationshipID]] = defaultdict(set)  # source_id -> relationship_ids
-        self._target_relationships: Dict[EntityID, Set[RelationshipID]] = defaultdict(set)  # target_id -> relationship_ids
+        self._relationship_index: Dict[str, Set[RelationshipID]] = defaultdict(
+            set
+        )  # type -> relationship_ids
+        self._source_relationships: Dict[EntityID, Set[RelationshipID]] = defaultdict(
+            set
+        )  # source_id -> relationship_ids
+        self._target_relationships: Dict[EntityID, Set[RelationshipID]] = defaultdict(
+            set
+        )  # target_id -> relationship_ids
 
         # For entity-entity relationships
-        self._entity_relationships: Dict[Tuple[EntityID, EntityID], Set[RelationshipID]] = defaultdict(set)  # (source_id, target_id) -> relationship_ids
+        self._entity_relationships: Dict[Tuple[EntityID, EntityID], Set[RelationshipID]] = (
+            defaultdict(set)
+        )  # (source_id, target_id) -> relationship_ids
 
         # Track CIDs
         self.root_cid = None
@@ -282,7 +298,7 @@ class IPLDKnowledgeGraph:
         properties: Optional[Dict[str, Any]] = None,
         confidence: float = 1.0,
         source_text: str = None,
-        vector: Optional[np.ndarray] = None
+        vector: Optional[np.ndarray] = None,
     ) -> Entity:
         """
         Add entity node to graph.
@@ -306,7 +322,7 @@ class IPLDKnowledgeGraph:
             name=name,
             properties=properties,
             confidence=confidence,
-            source_text=source_text
+            source_text=source_text,
         )
 
         # Add to entities collection
@@ -319,8 +335,7 @@ class IPLDKnowledgeGraph:
         if vector is not None and self.vector_store is not None:
             # Add vector with entity ID as metadata
             vector_ids = self.vector_store.add_vectors(
-                [vector],
-                [{"entity_id": entity.id, "type": entity_type, "name": name}]
+                [vector], [{"entity_id": entity.id, "type": entity_type, "name": name}]
             )
 
             # Store vector ID in entity properties
@@ -349,7 +364,7 @@ class IPLDKnowledgeGraph:
         properties: Optional[Dict[str, Any]] = None,
         confidence: float = 1.0,
         source_text: str = None,
-        relationship_id: Optional[RelationshipID] = None
+        relationship_id: Optional[RelationshipID] = None,
     ) -> Relationship:
         """
         Add relationship between entities.
@@ -374,7 +389,7 @@ class IPLDKnowledgeGraph:
             target=target,
             properties=properties,
             confidence=confidence,
-            source_text=source_text
+            source_text=source_text,
         )
 
         # Validate entity IDs
@@ -456,13 +471,17 @@ class IPLDKnowledgeGraph:
             List of relationships of the specified type
         """
         relationship_ids = self._relationship_index.get(relationship_type, set())
-        return [self.relationships[relationship_id] for relationship_id in relationship_ids if relationship_id in self.relationships]
+        return [
+            self.relationships[relationship_id]
+            for relationship_id in relationship_ids
+            if relationship_id in self.relationships
+        ]
 
     def get_entity_relationships(
         self,
         entity_id: EntityID,
         direction: str = "both",
-        relationship_types: Optional[List[str]] = None
+        relationship_types: Optional[List[str]] = None,
     ) -> List[Relationship]:
         """
         Get relationships for an entity.
@@ -500,7 +519,7 @@ class IPLDKnowledgeGraph:
         start_entity: Union[Entity, EntityID],
         relationship_path: List[str],
         max_results: int = 100,
-        min_confidence: float = 0.0
+        min_confidence: float = 0.0,
     ) -> List[Dict[str, Any]]:
         """
         Query graph following relationship paths.
@@ -537,9 +556,7 @@ class IPLDKnowledgeGraph:
 
                 # Get relationships of the specified type
                 relationships = self.get_entity_relationships(
-                    current_entity.id,
-                    direction="outgoing",
-                    relationship_types=[rel_type]
+                    current_entity.id, direction="outgoing", relationship_types=[rel_type]
                 )
 
                 # Filter by confidence
@@ -556,10 +573,7 @@ class IPLDKnowledgeGraph:
                     new_path = current_path + [(rel_type, rel.id, target_entity.id)]
 
                     # Add to new results
-                    new_results.append({
-                        "entity": target_entity,
-                        "path": new_path
-                    })
+                    new_results.append({"entity": target_entity, "path": new_path})
 
                     # Check if we've reached the maximum
                     if len(new_results) >= max_results:
@@ -584,7 +598,7 @@ class IPLDKnowledgeGraph:
         relationship_constraints: Optional[List[Dict[str, Any]]] = None,
         top_k: int = 10,
         max_hops: int = 2,
-        min_confidence: float = 0.0
+        min_confidence: float = 0.0,
     ) -> List[Dict[str, Any]]:
         """
         GraphRAG query combining vector similarity and graph traversal.
@@ -637,14 +651,16 @@ class IPLDKnowledgeGraph:
                     break
 
             # Add the seed entity to results
-            graph_results.append({
-                "entity": entity,
-                "vector_score": vector_score,
-                "graph_score": 1.0,  # Maximum graph score for seed entities
-                "combined_score": vector_score,  # Will be updated later
-                "path": [],  # Empty path for seed entities
-                "hops": 0
-            })
+            graph_results.append(
+                {
+                    "entity": entity,
+                    "vector_score": vector_score,
+                    "graph_score": 1.0,  # Maximum graph score for seed entities
+                    "combined_score": vector_score,  # Will be updated later
+                    "path": [],  # Empty path for seed entities
+                    "hops": 0,
+                }
+            )
 
             # Stop if we have enough results
             if len(graph_results) >= top_k:
@@ -656,17 +672,13 @@ class IPLDKnowledgeGraph:
             for hop in range(1, max_hops + 1):
                 # Get entities from the previous hop
                 prev_hop_entities = [
-                    result["entity"].id for result in graph_results
-                    if result["hops"] == hop - 1
+                    result["entity"].id for result in graph_results if result["hops"] == hop - 1
                 ]
 
                 # Expand each entity
                 for entity_id in prev_hop_entities:
                     # Get relationships for this entity
-                    relationships = self.get_entity_relationships(
-                        entity_id,
-                        direction="both"
-                    )
+                    relationships = self.get_entity_relationships(entity_id, direction="both")
 
                     # Filter by constraints if provided
                     if relationship_constraints:
@@ -687,7 +699,9 @@ class IPLDKnowledgeGraph:
                         relationships = filtered_relationships
 
                     # Filter by confidence
-                    relationships = [rel for rel in relationships if rel.confidence >= min_confidence]
+                    relationships = [
+                        rel for rel in relationships if rel.confidence >= min_confidence
+                    ]
 
                     # Process each relationship
                     for rel in relationships:
@@ -712,8 +726,7 @@ class IPLDKnowledgeGraph:
 
                         # Find source entity in results
                         source_result = next(
-                            (r for r in graph_results if r["entity"].id == entity_id),
-                            None
+                            (r for r in graph_results if r["entity"].id == entity_id), None
                         )
 
                         if not source_result:
@@ -727,22 +740,26 @@ class IPLDKnowledgeGraph:
 
                         # Create path information
                         path = source_result["path"].copy()
-                        path.append({
-                            "source": entity_id,
-                            "target": target_id,
-                            "relationship": rel.type,
-                            "relationship_id": rel.id
-                        })
+                        path.append(
+                            {
+                                "source": entity_id,
+                                "target": target_id,
+                                "relationship": rel.type,
+                                "relationship_id": rel.id,
+                            }
+                        )
 
                         # Add to results
-                        graph_results.append({
-                            "entity": target_entity,
-                            "vector_score": vector_score,
-                            "graph_score": graph_score,
-                            "combined_score": combined_score,
-                            "path": path,
-                            "hops": hop
-                        })
+                        graph_results.append(
+                            {
+                                "entity": target_entity,
+                                "vector_score": vector_score,
+                                "graph_score": graph_score,
+                                "combined_score": combined_score,
+                                "path": path,
+                                "hops": hop,
+                            }
+                        )
 
         # Sort results by combined score
         graph_results.sort(key=lambda x: x["combined_score"], reverse=True)
@@ -758,7 +775,7 @@ class IPLDKnowledgeGraph:
         max_hops: int = 2,
         min_relevance: float = 0.6,
         max_documents: int = 5,
-        reasoning_depth: str = "moderate"
+        reasoning_depth: str = "moderate",
     ) -> Dict[str, Any]:
         """
         Reason across multiple documents using entity-mediated connections.
@@ -797,10 +814,7 @@ class IPLDKnowledgeGraph:
             entity = self.entities.get(entity_id)
 
             if entity and entity.type in document_node_types and result.score >= min_relevance:
-                document_results.append({
-                    "document": entity,
-                    "score": result.score
-                })
+                document_results.append({"document": entity, "score": result.score})
 
         # Limit to max_documents
         document_results = document_results[:max_documents]
@@ -813,7 +827,7 @@ class IPLDKnowledgeGraph:
 
         # Check all pairs of documents
         for i, doc1 in enumerate(document_results):
-            for j, doc2 in enumerate(document_results[i+1:], i+1):
+            for j, doc2 in enumerate(document_results[i + 1 :], i + 1):
                 # Get document entities
                 doc1_id = doc1["document"].id
                 doc2_id = doc2["document"].id
@@ -832,14 +846,16 @@ class IPLDKnowledgeGraph:
                         continue
 
                     # Create evidence path
-                    evidence_paths.append({
-                        "doc1": doc1["document"],
-                        "doc2": doc2["document"],
-                        "entity": entity,
-                        "doc1_score": doc1["score"],
-                        "doc2_score": doc2["score"],
-                        "path_score": (doc1["score"] + doc2["score"]) / 2
-                    })
+                    evidence_paths.append(
+                        {
+                            "doc1": doc1["document"],
+                            "doc2": doc2["document"],
+                            "entity": entity,
+                            "doc1_score": doc1["score"],
+                            "doc2_score": doc2["score"],
+                            "path_score": (doc1["score"] + doc2["score"]) / 2,
+                        }
+                    )
 
         # Sort evidence paths by score
         evidence_paths.sort(key=lambda x: x["path_score"], reverse=True)
@@ -855,7 +871,7 @@ class IPLDKnowledgeGraph:
                 "id": document.id,
                 "title": document.properties.get("title", document.name),
                 "type": document.type,
-                "relevance": doc["score"]
+                "relevance": doc["score"],
             }
             document_summaries.append(summary)
 
@@ -867,7 +883,7 @@ class IPLDKnowledgeGraph:
                 "entity_type": path["entity"].type,
                 "doc1_title": path["doc1"].properties.get("title", path["doc1"].name),
                 "doc2_title": path["doc2"].properties.get("title", path["doc2"].name),
-                "strength": path["path_score"]
+                "strength": path["path_score"],
             }
             evidence_chain_summaries.append(chain)
 
@@ -875,7 +891,7 @@ class IPLDKnowledgeGraph:
         reasoning_trace = [
             "Identified relevant documents based on semantic similarity",
             f"Found {len(document_results)} relevant documents above the threshold",
-            f"Discovered {len(evidence_paths)} evidence chains connecting documents"
+            f"Discovered {len(evidence_paths)} evidence chains connecting documents",
         ]
 
         if reasoning_depth == "moderate":
@@ -894,7 +910,9 @@ class IPLDKnowledgeGraph:
 
             # Adjust based on evidence paths
             if evidence_paths:
-                path_confidence = sum(path["path_score"] for path in evidence_paths) / len(evidence_paths)
+                path_confidence = sum(path["path_score"] for path in evidence_paths) / len(
+                    evidence_paths
+                )
                 # Weight document scores more heavily than paths
                 confidence = 0.7 * doc_confidence + 0.3 * path_confidence
             else:
@@ -915,7 +933,9 @@ class IPLDKnowledgeGraph:
 
             if evidence_paths:
                 top_entity = evidence_paths[0]["entity"].name
-                answer += f" The concept of '{top_entity}' appears to be central to answering this query."
+                answer += (
+                    f" The concept of '{top_entity}' appears to be central to answering this query."
+                )
         else:
             answer = "Could not find relevant information to answer this query."
             confidence = 0.1
@@ -925,7 +945,7 @@ class IPLDKnowledgeGraph:
             "documents": document_summaries,
             "evidence_paths": evidence_chain_summaries,
             "confidence": confidence,
-            "reasoning_trace": reasoning_trace
+            "reasoning_trace": reasoning_trace,
         }
 
     def get_entities_by_vector_ids(self, vector_ids: List[str]) -> List[Entity]:
@@ -957,7 +977,7 @@ class IPLDKnowledgeGraph:
         self,
         entities: List[Union[Entity, EntityID]],
         relationship_types: Optional[List[str]] = None,
-        max_depth: int = 2
+        max_depth: int = 2,
     ) -> List[Entity]:
         """
         Traverse graph from seed entities.
@@ -1002,9 +1022,7 @@ class IPLDKnowledgeGraph:
 
             # Get relationships for this entity
             relationships = self.get_entity_relationships(
-                current_id,
-                direction="both",
-                relationship_types=relationship_types
+                current_id, direction="both", relationship_types=relationship_types
             )
 
             # Process connected entities
@@ -1031,10 +1049,7 @@ class IPLDKnowledgeGraph:
         return result_entities
 
     def _get_connected_entities(
-        self,
-        entity_id: EntityID,
-        max_hops: int = 1,
-        relationship_types: Optional[List[str]] = None
+        self, entity_id: EntityID, max_hops: int = 1, relationship_types: Optional[List[str]] = None
     ) -> Set[EntityID]:
         """
         Get entities connected to the given entity.
@@ -1065,9 +1080,7 @@ class IPLDKnowledgeGraph:
 
             # Get relationships for this entity
             relationships = self.get_entity_relationships(
-                current_id,
-                direction="both",
-                relationship_types=relationship_types
+                current_id, direction="both", relationship_types=relationship_types
             )
 
             # Process connected entities
@@ -1155,7 +1168,7 @@ class IPLDKnowledgeGraph:
             "entity_types": list(self._entity_index.keys()),
             "relationship_types": list(self._relationship_index.keys()),
         }
-        
+
         # Helper function to store large data as separate block
         def store_if_large(data, field_name):
             data_bytes = json.dumps(data).encode()
@@ -1164,23 +1177,15 @@ class IPLDKnowledgeGraph:
                 cid = self.storage.store(data_bytes)
                 return {"_cid": cid, "_chunked": True}
             return data
-        
+
         # Store entity and relationship data, chunking if necessary
-        root_node["entity_ids"] = store_if_large(
-            list(self.entities.keys()), 
-            "entity_ids"
-        )
-        root_node["entity_cids"] = store_if_large(
-            self._entity_cids, 
-            "entity_cids"
-        )
+        root_node["entity_ids"] = store_if_large(list(self.entities.keys()), "entity_ids")
+        root_node["entity_cids"] = store_if_large(self._entity_cids, "entity_cids")
         root_node["relationship_ids"] = store_if_large(
-            list(self.relationships.keys()), 
-            "relationship_ids"
+            list(self.relationships.keys()), "relationship_ids"
         )
         root_node["relationship_cids"] = store_if_large(
-            self._relationship_cids, 
-            "relationship_cids"
+            self._relationship_cids, "relationship_cids"
         )
 
         # Store the root node
@@ -1246,8 +1251,8 @@ class IPLDKnowledgeGraph:
         cls,
         cid: str,
         storage: Optional[IPLDStorage] = None,
-        vector_store: Optional[IPLDVectorStore] = None
-    ) -> 'IPLDKnowledgeGraph':
+        vector_store: Optional[IPLDVectorStore] = None,
+    ) -> "IPLDKnowledgeGraph":
         """
         Load knowledge graph from IPFS by CID.
 
@@ -1277,7 +1282,7 @@ class IPLDKnowledgeGraph:
         kg = cls(
             name=root_node.get("name", "knowledge_graph"),
             storage=storage,
-            vector_store=vector_store
+            vector_store=vector_store,
         )
 
         # Set the root CID
@@ -1337,7 +1342,9 @@ class IPLDKnowledgeGraph:
             kg._target_relationships[relationship.target_id].add(relationship.id)
 
             # Index by entity pair
-            kg._entity_relationships[(relationship.source_id, relationship.target_id)].add(relationship.id)
+            kg._entity_relationships[(relationship.source_id, relationship.target_id)].add(
+                relationship.id
+            )
 
         return kg
 
@@ -1346,8 +1353,8 @@ class IPLDKnowledgeGraph:
         cls,
         car_path: str,
         storage: Optional[IPLDStorage] = None,
-        vector_store: Optional[IPLDVectorStore] = None
-    ) -> 'IPLDKnowledgeGraph':
+        vector_store: Optional[IPLDVectorStore] = None,
+    ) -> "IPLDKnowledgeGraph":
         """
         Load knowledge graph from CAR file.
 

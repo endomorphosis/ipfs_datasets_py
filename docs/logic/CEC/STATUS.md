@@ -101,11 +101,11 @@ native/                                    # 8,970+ LOC total (after Phase 5 spl
 ### Wrapper Layer
 
 ```python
-cec_framework.py                          # Main unified API
-dcec_wrapper.py                           # DCEC Library wrapper
-eng_dcec_wrapper.py                       # Eng-DCEC wrapper
-shadow_prover_wrapper.py                  # ShadowProver wrapper
-talos_wrapper.py                          # Talos wrapper
+cec_framework.py  # Main unified API
+dcec_wrapper.py  # DCEC Library wrapper
+eng_dcec_wrapper.py  # Eng-DCEC wrapper
+shadow_prover_wrapper.py  # ShadowProver wrapper
+talos_wrapper.py  # Talos wrapper
 ```
 
 ### Test Coverage

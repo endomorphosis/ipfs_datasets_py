@@ -9,13 +9,10 @@ class CsvProcessor:
     Processor for CSV files.
     """
 
-    def __init__(self, 
-                 resources: dict[str, Callable] = None, 
-                 configs: Configs = None
-                 ) -> None:
+    def __init__(self, resources: dict[str, Callable] = None, configs: Configs = None) -> None:
         """
         Initialize the CSV processor with resources.
-        
+
         Args:
             resources (dict): Dictionary of resources including parsers and services.
         """

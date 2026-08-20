@@ -7,7 +7,9 @@ Implements the three MCP tools required for the Maps tab functionality.
     ``ipfs_datasets_py.mcp_server.tools.geospatial_tools``.
     See ``legacy_mcp_tools/MIGRATION_GUIDE.md`` for migration instructions.
 """
+
 import warnings
+
 warnings.warn(
     "legacy_mcp_tools.geospatial_tools is deprecated. "
     "Use ipfs_datasets_py.mcp_server.tools.geospatial_tools instead.",
@@ -35,9 +37,7 @@ def extract_geographic_entities(
     include_coordinates: bool = True,
 ) -> str:
     """MCP tool: Extract geographic entities from corpus data."""
-    result = _extract_geographic_entities(
-        corpus_data, confidence_threshold, include_coordinates
-    )
+    result = _extract_geographic_entities(corpus_data, confidence_threshold, include_coordinates)
     return json.dumps(result)
 
 
@@ -64,7 +64,11 @@ def query_geographic_context(
 ) -> str:
     """MCP tool: Perform natural language geographic queries."""
     result = _query_geographic_context(
-        query, corpus_data, radius_km, center_location,
-        include_related_entities, temporal_context,
+        query,
+        corpus_data,
+        radius_km,
+        center_location,
+        include_related_entities,
+        temporal_context,
     )
     return json.dumps(result)

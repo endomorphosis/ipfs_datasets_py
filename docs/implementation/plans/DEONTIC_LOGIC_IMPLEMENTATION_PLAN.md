@@ -102,14 +102,18 @@ class LegalSymbolicAnalyzer:
 ```python
 class LegalReasoningEngine:
     """Advanced legal reasoning using SymbolicAI"""
-    
-    def infer_implicit_obligations(self, explicit_rules: List[DeonticFormula]) -> List[DeonticFormula]:
+
+    def infer_implicit_obligations(
+        self, explicit_rules: List[DeonticFormula]
+    ) -> List[DeonticFormula]:
         """Infer implicit legal obligations from explicit rules"""
-        
+
     def check_legal_consistency(self, rules: List[DeonticFormula]) -> ConsistencyReport:
         """Check for logical inconsistencies in legal rules"""
-        
-    def analyze_legal_precedents(self, current_case: str, precedents: List[str]) -> PrecedentAnalysis:
+
+    def analyze_legal_precedents(
+        self, current_case: str, precedents: List[str]
+    ) -> PrecedentAnalysis:
         """Analyze how legal precedents apply to current case"""
 ```
 
@@ -137,31 +141,33 @@ class LogicTranslationTarget(Enum):
 ```python
 class LeanTranslator:
     """Translates deontic logic to Lean theorem prover format"""
-    
+
     def translate_deontic_formula(self, formula: DeonticFormula) -> str:
         """Convert to Lean 4 syntax with deontic operators"""
-        
+
     def generate_lean_theory(self, formulas: List[DeonticFormula]) -> str:
         """Generate complete Lean theory file"""
-        
+
     def create_proof_obligations(self, formulas: List[DeonticFormula]) -> List[str]:
         """Create proof obligations for verification"""
 
+
 class CoqTranslator:
     """Translates deontic logic to Coq proof assistant format"""
-    
+
     def translate_deontic_formula(self, formula: DeonticFormula) -> str:
         """Convert to Coq syntax with deontic operators"""
-        
+
     def generate_coq_module(self, formulas: List[DeonticFormula]) -> str:
         """Generate complete Coq module"""
 
+
 class SMTTranslator:
     """Translates to SMT-LIB format for SAT/SMT solvers"""
-    
+
     def translate_to_smt_lib(self, formulas: List[DeonticFormula]) -> str:
         """Convert to SMT-LIB format for Z3, CVC4, etc."""
-        
+
     def generate_satisfiability_query(self, formulas: List[DeonticFormula]) -> str:
         """Generate SAT/UNSAT queries for consistency checking"""
 ```
@@ -170,7 +176,7 @@ class SMTTranslator:
 ```python
 class UniversalLogicTranslator:
     """Unified interface for translating to multiple theorem provers"""
-    
+
     def __init__(self):
         self.translators = {
             LogicTranslationTarget.LEAN: LeanTranslator(),
@@ -178,16 +184,18 @@ class UniversalLogicTranslator:
             LogicTranslationTarget.SMT_LIB: SMTTranslator(),
             # ... other translators
         }
-    
-    def translate(self, formulas: List[DeonticFormula], 
-                  target: LogicTranslationTarget) -> TranslationResult:
+
+    def translate(
+        self, formulas: List[DeonticFormula], target: LogicTranslationTarget
+    ) -> TranslationResult:
         """Translate formulas to specified target format"""
-        
+
     def translate_all_targets(self, formulas: List[DeonticFormula]) -> Dict[str, TranslationResult]:
         """Translate to all supported formats"""
-        
-    def validate_translation(self, original: DeonticFormula, 
-                           translated: str, target: LogicTranslationTarget) -> bool:
+
+    def validate_translation(
+        self, original: DeonticFormula, translated: str, target: LogicTranslationTarget
+    ) -> bool:
         """Validate that translation preserves semantics"""
 ```
 
@@ -199,6 +207,7 @@ class UniversalLogicTranslator:
 @dataclass
 class LogicIPLDNode:
     """IPLD node for storing logic formulas with provenance"""
+
     formula_id: str
     deontic_formula: DeonticFormula
     source_document_cid: str
@@ -209,21 +218,22 @@ class LogicIPLDNode:
     creation_timestamp: str
     confidence_score: float
 
+
 class LogicIPLDStorage:
     """IPLD storage manager for deontic logic formulas"""
-    
-    def store_logic_formula(self, formula: DeonticFormula, 
-                          source_doc_cid: str, metadata: Dict) -> str:
+
+    def store_logic_formula(
+        self, formula: DeonticFormula, source_doc_cid: str, metadata: Dict
+    ) -> str:
         """Store logic formula in IPLD with source provenance"""
-        
+
     def retrieve_formulas_by_document(self, doc_cid: str) -> List[LogicIPLDNode]:
         """Retrieve all logic formulas derived from a document"""
-        
+
     def create_logic_collection(self, formulas: List[DeonticFormula]) -> str:
         """Create IPLD collection of related logic formulas"""
-        
-    def link_formulas_to_entities(self, formula_cids: List[str], 
-                                 entity_cids: List[str]) -> str:
+
+    def link_formulas_to_entities(self, formula_cids: List[str], entity_cids: List[str]) -> str:
         """Create IPLD links between formulas and source entities"""
 ```
 
@@ -231,15 +241,15 @@ class LogicIPLDStorage:
 ```python
 class LogicProvenanceTracker:
     """Track the lineage from source document to logic formula"""
-    
-    def create_provenance_chain(self, source_pdf: str, 
-                               graphrag_entities: List[str],
-                               logic_formulas: List[str]) -> ProvenanceChain:
+
+    def create_provenance_chain(
+        self, source_pdf: str, graphrag_entities: List[str], logic_formulas: List[str]
+    ) -> ProvenanceChain:
         """Create complete provenance from PDF to logic formulas"""
-        
+
     def verify_provenance(self, formula_cid: str) -> ProvenanceVerification:
         """Verify the complete lineage of a logic formula"""
-        
+
     def find_related_formulas(self, formula_cid: str) -> List[str]:
         """Find formulas derived from same source or related entities"""
 ```
@@ -270,21 +280,24 @@ class LegalGraphRAGProcessor:
 ```python
 class DeonticLogicConverter:
     """Main converter from GraphRAG output to deontic logic"""
-    
-    def __init__(self, domain_knowledge: LegalDomainKnowledge,
-                 symbolic_analyzer: LegalSymbolicAnalyzer):
+
+    def __init__(
+        self, domain_knowledge: LegalDomainKnowledge, symbolic_analyzer: LegalSymbolicAnalyzer
+    ):
         self.domain_knowledge = domain_knowledge
         self.symbolic_analyzer = symbolic_analyzer
-        
+
     def convert_entities_to_logic(self, entities: List[Entity]) -> List[DeonticFormula]:
         """Convert GraphRAG entities to deontic logic formulas"""
-        
-    def convert_relationships_to_logic(self, relationships: List[Relationship]) -> List[DeonticFormula]:
+
+    def convert_relationships_to_logic(
+        self, relationships: List[Relationship]
+    ) -> List[DeonticFormula]:
         """Convert GraphRAG relationships to deontic logic formulas"""
-        
+
     def synthesize_complex_rules(self, formulas: List[DeonticFormula]) -> List[DeonticFormula]:
         """Synthesize complex legal rules from simple formulas"""
-        
+
     def validate_legal_consistency(self, formulas: List[DeonticFormula]) -> ValidationResult:
         """Validate logical consistency of extracted rules"""
 ```
@@ -295,17 +308,16 @@ class DeonticLogicConverter:
 ```python
 class DeonticQueryEngine:
     """Query engine for deontic logic formulas"""
-    
+
     def query_obligations(self, agent: str, context: Dict) -> List[DeonticFormula]:
         """Find all obligations for a specific agent in given context"""
-        
+
     def query_permissions(self, action: str, agent: str) -> List[DeonticFormula]:
         """Find permissions for specific actions by agent"""
-        
-    def check_compliance(self, proposed_action: str, 
-                        context: Dict) -> ComplianceResult:
+
+    def check_compliance(self, proposed_action: str, context: Dict) -> ComplianceResult:
         """Check if proposed action complies with legal rules"""
-        
+
     def find_conflicts(self, formulas: List[DeonticFormula]) -> List[LogicConflict]:
         """Find logical conflicts between deontic formulas"""
 ```
@@ -335,31 +347,31 @@ class MultiProverVerificationEngine:
 # Enhanced pipeline in demonstrate_graphrag_pdf.py
 def demonstrate_legal_graphrag_to_logic():
     """Demonstrate complete legal document to deontic logic pipeline"""
-    
+
     # Step 1: Process legal PDF with GraphRAG
     graphrag_result = process_legal_pdf("contract.pdf")
-    
+
     # Step 2: Convert to deontic logic
     converter = DeonticLogicConverter()
     logic_formulas = converter.convert_graphrag_to_logic(graphrag_result)
-    
+
     # Step 3: Translate to multiple theorem prover formats
     translator = UniversalLogicTranslator()
     translations = translator.translate_all_targets(logic_formulas)
-    
+
     # Step 4: Store in IPLD with provenance
     storage = LogicIPLDStorage()
     formula_cids = storage.store_logic_collection(logic_formulas, "contract.pdf")
-    
+
     # Step 5: Verify with multiple provers
     verifier = MultiProverVerificationEngine()
     verification_results = verifier.cross_verify(logic_formulas)
-    
+
     return {
         "logic_formulas": logic_formulas,
         "translations": translations,
         "ipld_cids": formula_cids,
-        "verification": verification_results
+        "verification": verification_results,
     }
 ```
 
@@ -378,8 +390,8 @@ SYMBOLICAI_CONFIG = {
     "deontic_logic_prompt_templates": {
         "extract_obligations": "Extract all obligations from this legal text: {text}",
         "extract_permissions": "Extract all permissions from this legal text: {text}",
-        "identify_agents": "Identify all legal parties and agents in: {text}"
-    }
+        "identify_agents": "Identify all legal parties and agents in: {text}",
+    },
 }
 ```
 

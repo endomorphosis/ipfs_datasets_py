@@ -12,6 +12,7 @@ Methods under test:
   - OntologyLearningAdapter.feedback_max()
   - OntologyLearningAdapter.feedback_cumulative_sum()
 """
+
 import pytest
 
 
@@ -27,14 +28,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -42,16 +49,19 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
 def _make_result(entities, rels=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=rels or [], confidence=1.0, metadata={}, errors=[]
     )
@@ -59,20 +69,26 @@ def _make_result(entities, rels=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(adapter, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     adapter._feedback.append(FeedbackRecord(final_score=score))
 
 
 # ── OntologyOptimizer.history_kurtosis ────────────────────────────────────────
+
 
 class TestHistoryKurtosis:
     def test_empty_returns_zero(self):
@@ -100,6 +116,7 @@ class TestHistoryKurtosis:
 
 # ── OntologyOptimizer.score_ewma ──────────────────────────────────────────────
 
+
 class TestScoreEWMA:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -124,6 +141,7 @@ class TestScoreEWMA:
 
 # ── OntologyCritic dimension_min / dimension_max / dimension_range ────────────
 
+
 class TestDimensionMinMax:
     def test_dimension_min_returns_lowest(self):
         c = _make_critic()
@@ -146,6 +164,7 @@ class TestDimensionMinMax:
 
 
 # ── OntologyGenerator.entity_confidence_skewness ─────────────────────────────
+
 
 class TestEntityConfidenceSkewness:
     def test_empty_returns_zero(self):
@@ -171,6 +190,7 @@ class TestEntityConfidenceSkewness:
 
 # ── OntologyGenerator.unique_relationship_types ───────────────────────────────
 
+
 class TestUniqueRelationshipTypes:
     def test_empty_returns_empty_set(self):
         gen = _make_generator()
@@ -179,12 +199,14 @@ class TestUniqueRelationshipTypes:
     def test_single_type(self):
         gen = _make_generator()
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         rels = [Relationship(id="r1", type="knows", source_id="a", target_id="b")]
         assert gen.unique_relationship_types(_make_result([], rels)) == {"knows"}
 
     def test_multiple_types(self):
         gen = _make_generator()
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
         rels = [
             Relationship(id="r1", type="knows", source_id="a", target_id="b"),
             Relationship(id="r2", type="owns", source_id="b", target_id="c"),
@@ -195,6 +217,7 @@ class TestUniqueRelationshipTypes:
 
 
 # ── OntologyLearningAdapter.feedback_min / feedback_max ──────────────────────
+
 
 class TestFeedbackMinMax:
     def test_empty_min_returns_zero(self):
@@ -219,6 +242,7 @@ class TestFeedbackMinMax:
 
 
 # ── OntologyLearningAdapter.feedback_cumulative_sum ──────────────────────────
+
 
 class TestFeedbackCumulativeSum:
     def test_empty_returns_empty(self):

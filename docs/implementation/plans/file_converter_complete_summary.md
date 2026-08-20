@@ -268,8 +268,8 @@ ipfs_datasets_py/file_converter/  (v0.4.0)
 from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Recommended: Use native backend
-converter = FileConverter(backend='native')
-result = await converter.convert('document.pdf')
+converter = FileConverter(backend="native")
+result = await converter.convert("document.pdf")
 print(result.text)
 ```
 
@@ -279,7 +279,7 @@ print(result.text)
 from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 
 converter = IPFSAcceleratedConverter(enable_ipfs=True)
-result = await converter.convert('doc.pdf', store_on_ipfs=True, pin=True)
+result = await converter.convert("doc.pdf", store_on_ipfs=True, pin=True)
 print(f"CID: {result.ipfs_cid}")
 ```
 
@@ -288,7 +288,7 @@ print(f"CID: {result.ipfs_cid}")
 ```python
 from ipfs_datasets_py.processors.file_converter import extract_metadata
 
-metadata = extract_metadata('document.pdf')
+metadata = extract_metadata("document.pdf")
 print(f"SHA256: {metadata['hashes']['sha256']}")
 print(f"MIME: {metadata['format']['mime_type']}")
 ```
@@ -299,9 +299,7 @@ print(f"MIME: {metadata['format']['mime_type']}")
 from ipfs_datasets_py.processors.file_converter import create_batch_processor
 
 processor = create_batch_processor(
-    converter,
-    max_concurrent=5,
-    progress_callback=lambda p: print(f"{p.completed}/{p.total}")
+    converter, max_concurrent=5, progress_callback=lambda p: print(f"{p.completed}/{p.total}")
 )
 results = await processor.process_batch(files)
 ```

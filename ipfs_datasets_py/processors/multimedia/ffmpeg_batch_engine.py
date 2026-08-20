@@ -82,7 +82,9 @@ async def ffmpeg_batch_process(
     # --- resume logic -----------------------------------------------------
     processed_set: set = set()
     if resume_from_checkpoint and save_progress:
-        checkpoints = sorted(output_path.glob("batch_progress_*.json"), key=lambda p: p.stat().st_mtime)
+        checkpoints = sorted(
+            output_path.glob("batch_progress_*.json"), key=lambda p: p.stat().st_mtime
+        )
         if checkpoints:
             try:
                 with open(checkpoints[-1]) as fh:
@@ -108,25 +110,34 @@ async def ffmpeg_batch_process(
         try:
             if operation == "convert":
                 from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
+
                 w = FFmpegWrapper(enable_logging=False)
                 result = await w.convert_video(
-                    input_path=file_path, output_path=out_file,
-                    timeout=timeout_per_file, **operation_params
+                    input_path=file_path,
+                    output_path=out_file,
+                    timeout=timeout_per_file,
+                    **operation_params,
                 )
             elif operation == "filter":
                 from .ffmpeg_filters_engine import ffmpeg_apply_filters
+
                 result = await ffmpeg_apply_filters(
-                    input_file=file_path, output_file=out_file,
-                    timeout=timeout_per_file, **operation_params
+                    input_file=file_path,
+                    output_file=out_file,
+                    timeout=timeout_per_file,
+                    **operation_params,
                 )
             elif operation == "extract_audio":
                 audio_codec = operation_params.get("audio_codec", "mp3")
                 audio_out = str(output_path / f"{in_path.stem}.{audio_codec}")
                 from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
+
                 w = FFmpegWrapper(enable_logging=False)
                 result = await w.extract_audio(
-                    input_path=file_path, output_path=audio_out,
-                    timeout=timeout_per_file, **operation_params
+                    input_path=file_path,
+                    output_path=audio_out,
+                    timeout=timeout_per_file,
+                    **operation_params,
                 )
             else:
                 result = {"status": "error", "error": f"Unsupported operation: {operation}"}
@@ -150,9 +161,11 @@ async def ffmpeg_batch_process(
     async with send_s, recv_s:
         async with anyio.create_task_group() as tg:
             for fp in files_to_process:
+
                 async def _worker(fp=fp):
                     res = await bounded(fp)
                     await send_s.send(res)
+
                 tg.start_soon(_worker)
 
             # Receive all results inside the task group so the stream
@@ -174,9 +187,15 @@ async def ffmpeg_batch_process(
 
     total_duration = time.time() - start_time
     if save_progress:
-        _save_checkpoint(checkpoint_file, file_list, processed_set, operation, operation_params, completed=True)
+        _save_checkpoint(
+            checkpoint_file, file_list, processed_set, operation, operation_params, completed=True
+        )
 
-    status = "success" if failed_count == 0 else ("partial" if processed_count > skipped_count else "error")
+    status = (
+        "success"
+        if failed_count == 0
+        else ("partial" if processed_count > skipped_count else "error")
+    )
     return {
         "status": status,
         "total_files": len(file_list),
@@ -202,14 +221,18 @@ def _save_checkpoint(
 ) -> None:
     try:
         with open(path, "w") as fh:
-            json.dump({
-                "total_files": len(all_files),
-                "processed_files": list(done),
-                "operation": operation,
-                "operation_params": params,
-                "timestamp": time.time(),
-                "completed": completed,
-            }, fh, indent=2)
+            json.dump(
+                {
+                    "total_files": len(all_files),
+                    "processed_files": list(done),
+                    "operation": operation,
+                    "operation_params": params,
+                    "timestamp": time.time(),
+                    "completed": completed,
+                },
+                fh,
+                indent=2,
+            )
     except Exception as exc:
         logger.warning("Could not save checkpoint: %s", exc)
 

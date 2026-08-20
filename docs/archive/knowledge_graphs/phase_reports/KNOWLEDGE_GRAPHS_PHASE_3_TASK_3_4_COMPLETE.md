@@ -233,10 +233,7 @@ rels = kg.get_relationships_by_entity(person)
 **Path Finding:**
 ```python
 paths = kg.find_paths(
-    source=entity1,
-    target=entity2,
-    max_depth=3,
-    relationship_types=["knows", "related_to"]
+    source=entity1, target=entity2, max_depth=3, relationship_types=["knows", "related_to"]
 )
 ```
 

@@ -15,14 +15,14 @@ and enhanced session state management.
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.session_tools import (
-    create_session, validate_session, list_sessions
+    create_session,
+    validate_session,
+    list_sessions,
 )
 
 # Create a session
 session = await create_session(
-    user_id="user_42",
-    metadata={"client": "python-sdk", "ip": "10.0.0.1"},
-    ttl_seconds=3600
+    user_id="user_42", metadata={"client": "python-sdk", "ip": "10.0.0.1"}, ttl_seconds=3600
 )
 session_id = session["session_id"]
 
@@ -38,17 +38,16 @@ sessions = await list_sessions(user_id="user_42", status="active")
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.session_tools import (
-    create_session_with_context, update_session_state
+    create_session_with_context,
+    update_session_state,
 )
 
 session = await create_session_with_context(
-    user_id="user_42",
-    context={"dataset": "legal_corpus", "current_query": "contract law"}
+    user_id="user_42", context={"dataset": "legal_corpus", "current_query": "contract law"}
 )
 
 await update_session_state(
-    session_id=session["session_id"],
-    state={"last_result_count": 42, "current_page": 2}
+    session_id=session["session_id"], state={"last_result_count": 42, "current_page": 2}
 )
 ```
 

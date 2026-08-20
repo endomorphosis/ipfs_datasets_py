@@ -147,7 +147,6 @@ def _make_ont(nodes, edges):
 
 
 class TestScoreEntropyRatio:
-
     def test_empty_returns_zero(self):
         opt = _make_opt()
         assert opt.score_entropy_ratio() == 0.0
@@ -209,7 +208,6 @@ class TestScoreEntropyRatio:
 
 
 class TestScoreDimensionGiniCoefficient:
-
     def test_uniform_returns_zero(self):
         # All equal → Gini = 0
         critic = _make_critic()
@@ -218,29 +216,53 @@ class TestScoreDimensionGiniCoefficient:
 
     def test_all_zero_returns_zero(self):
         critic = _make_critic()
-        s = _make_score(completeness=0.0, consistency=0.0, clarity=0.0,
-                        granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0)
+        s = _make_score(
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
+        )
         assert critic.score_dimension_gini_coefficient(s) == 0.0
 
     def test_one_dominant_dim_high_gini(self):
         # One dimension = 1.0, rest = 0.0 → high inequality
         critic = _make_critic()
-        s = _make_score(completeness=1.0, consistency=0.0, clarity=0.0,
-                        granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0)
+        s = _make_score(
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
+        )
         g = critic.score_dimension_gini_coefficient(s)
         assert g > 0.5
 
     def test_alias_of_dimension_gini(self):
         # Must produce exactly the same result as dimension_gini
         critic = _make_critic()
-        s = _make_score(completeness=0.2, consistency=0.8, clarity=0.5,
-                        granularity=0.3, relationship_coherence=0.6, domain_alignment=0.4)
+        s = _make_score(
+            completeness=0.2,
+            consistency=0.8,
+            clarity=0.5,
+            granularity=0.3,
+            relationship_coherence=0.6,
+            domain_alignment=0.4,
+        )
         assert critic.score_dimension_gini_coefficient(s) == critic.dimension_gini(s)
 
     def test_result_in_zero_one_range(self):
         critic = _make_critic()
-        s = _make_score(completeness=0.1, consistency=0.9, clarity=0.3,
-                        granularity=0.7, relationship_coherence=0.5, domain_alignment=0.2)
+        s = _make_score(
+            completeness=0.1,
+            consistency=0.9,
+            clarity=0.3,
+            granularity=0.7,
+            relationship_coherence=0.5,
+            domain_alignment=0.2,
+        )
         g = critic.score_dimension_gini_coefficient(s)
         assert 0.0 <= g <= 1.0
 
@@ -251,11 +273,25 @@ class TestScoreDimensionGiniCoefficient:
 
     def test_high_inequality_higher_than_low_inequality(self):
         critic = _make_critic()
-        low = _make_score(completeness=0.4, consistency=0.5, clarity=0.5,
-                          granularity=0.5, relationship_coherence=0.5, domain_alignment=0.6)
-        high = _make_score(completeness=0.0, consistency=0.0, clarity=0.0,
-                           granularity=0.0, relationship_coherence=0.0, domain_alignment=1.0)
-        assert critic.score_dimension_gini_coefficient(high) > critic.score_dimension_gini_coefficient(low)
+        low = _make_score(
+            completeness=0.4,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.6,
+        )
+        high = _make_score(
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=1.0,
+        )
+        assert critic.score_dimension_gini_coefficient(
+            high
+        ) > critic.score_dimension_gini_coefficient(low)
 
 
 # ---------------------------------------------------------------------------
@@ -264,7 +300,6 @@ class TestScoreDimensionGiniCoefficient:
 
 
 class TestFeedbackPlateauCount:
-
     def test_empty_returns_zero(self):
         adapter = _make_adapter()
         assert adapter.feedback_plateau_count() == 0
@@ -334,7 +369,6 @@ class TestFeedbackPlateauCount:
 
 
 class TestRunScoreVelocityMax:
-
     def test_empty_returns_zero(self):
         p = _make_pipeline([])
         assert p.run_score_velocity_max() == 0.0
@@ -392,7 +426,6 @@ class TestRunScoreVelocityMax:
 
 
 class TestAvgSccSize:
-
     def test_empty_graph_returns_zero(self):
         lv = _make_lv()
         ont = _make_ont([], [])

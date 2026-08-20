@@ -61,7 +61,9 @@ class TestWebArchiveListArchives:
         result = archive.list_archives()
         assert result[0]["url"] == test_url, f"Expected {test_url} but got {result[0].get('url')}"
 
-    def test_when_calling_list_archives_with_multiple_items_then_returns_multiple_dicts(self, archive):
+    def test_when_calling_list_archives_with_multiple_items_then_returns_multiple_dicts(
+        self, archive
+    ):
         """
         Given an archive with multiple archived items.
         When list_archives is called.
@@ -108,7 +110,7 @@ class TestWebArchiveListArchives:
             "https://alpha.example.com",
             "https://beta.example.com",
             "https://gamma.example.com",
-            "https://delta.example.com"
+            "https://delta.example.com",
         ]
         for url in urls:
             archive.archive_url(url)
@@ -148,7 +150,9 @@ class TestWebArchiveListArchives:
         """
         archive.archive_url("https://example.com")
         result = archive.list_archives()
-        assert "id" in result[0] or "archive_id" in result[0], f"No id field in {list(result[0].keys())}"
+        assert "id" in result[0] or "archive_id" in result[0], (
+            f"No id field in {list(result[0].keys())}"
+        )
 
     def test_when_calling_list_archives_then_item_contains_url(self, archive):
         """
@@ -201,7 +205,9 @@ class TestWebArchiveListArchives:
         second_call = archive.list_archives()
         assert first_call == second_call, f"State changed: {first_call} != {second_call}"
 
-    def test_when_calling_list_archives_multiple_times_then_returns_independent_copies(self, archive):
+    def test_when_calling_list_archives_multiple_times_then_returns_independent_copies(
+        self, archive
+    ):
         """
         Given an archive with archived items.
         When list_archives is called multiple times.

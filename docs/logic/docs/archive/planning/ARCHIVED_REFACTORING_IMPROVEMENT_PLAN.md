@@ -360,6 +360,7 @@ except Exception:  # Too broad!
 ```python
 class RateLimitExceeded(Exception):
     """Raised when rate limit is exceeded."""
+
     pass  # No actual implementation!
 ```
 
@@ -499,34 +500,36 @@ extras_require={
 from typing import Dict, List
 import sys
 
+
 class FeatureDetector:
     """Detect available optional features."""
-    
+
     _cache: Dict[str, bool] = {}
-    
+
     @classmethod
     def has_symbolicai(cls) -> bool:
         """Check if SymbolicAI is available."""
-        if 'symbolicai' not in cls._cache:
+        if "symbolicai" not in cls._cache:
             try:
                 import symbolicai
-                cls._cache['symbolicai'] = True
+
+                cls._cache["symbolicai"] = True
             except ImportError:
-                cls._cache['symbolicai'] = False
-        return cls._cache['symbolicai']
-    
+                cls._cache["symbolicai"] = False
+        return cls._cache["symbolicai"]
+
     @classmethod
     def has_z3(cls) -> bool:
         """Check if Z3 is available."""
         # Similar implementation
         pass
-    
+
     @classmethod
     def has_spacy(cls) -> bool:
         """Check if spaCy is available."""
         # Similar implementation
         pass
-    
+
     @classmethod
     def get_available_features(cls) -> List[str]:
         """Get list of available features."""
@@ -538,7 +541,7 @@ class FeatureDetector:
         if cls.has_spacy():
             features.append("spaCy NLP")
         return features
-    
+
     @classmethod
     def print_feature_report(cls):
         """Print feature availability report."""

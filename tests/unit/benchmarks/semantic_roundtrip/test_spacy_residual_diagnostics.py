@@ -145,9 +145,7 @@ def _empty_frontend_diagnostics(
 def test_interfaces_and_production_defaults_are_frozen() -> None:
     assert SPACY_RESIDUAL_DIAGNOSTICS_INTERFACE == "SpacyResidualDiagnostics@1"
     assert SPACY_RESIDUAL_CUE_INTERFACE == "SpacyResidualCue@1"
-    assert SPACY_PILOT_DIAGNOSTICS_MAP_INTERFACE == (
-        "SpacyPilotDiagnosticsMap@1"
-    )
+    assert SPACY_PILOT_DIAGNOSTICS_MAP_INTERFACE == ("SpacyPilotDiagnosticsMap@1")
     assert SPACY_DIAGNOSTIC_RECEIPT_INTERFACE == "SpacyDiagnosticReceipt@1"
     assert SPACY_RESIDUAL_DIAGNOSTICS_SCHEMA.startswith("ipfs-datasets.")
     assert TEACHER_IDENTITY == MODAL_SPACY_CANONICAL_CONSTRUCTOR_INTERFACE
@@ -197,9 +195,7 @@ def test_missing_slot_signals_for_empty_candidate_fields() -> None:
     assert "rules[0].temporal" in paths
     assert "rules[0].exceptions" in paths
     assert all(item.signal_kind == SIGNAL_KIND_MISSING_SLOT for item in signals)
-    temporal = next(
-        item for item in signals if item.field_path == "rules[0].temporal"
-    )
+    temporal = next(item for item in signals if item.field_path == "rules[0].temporal")
     assert temporal.gold_value == ["within_10_days"]
     assert temporal.candidate_value == []
 
@@ -208,9 +204,7 @@ def test_missing_slot_signals_for_missing_rule() -> None:
     gold = _ir(_rule(), _rule(actor="banks", action="disclose"))
     candidate = _ir(_rule())
     signals = compute_missing_slot_signals(gold, candidate)
-    missing_rules = [
-        item for item in signals if item.residual_kind == "missing_rule"
-    ]
+    missing_rules = [item for item in signals if item.residual_kind == "missing_rule"]
     assert missing_rules
     assert any(item.field_path == "rules[1]" for item in missing_rules)
 
@@ -251,9 +245,7 @@ def test_diagnose_ir_pair_returns_all_three_signal_families() -> None:
     assert diagnostics.semantic_authority is False
     assert diagnostics.promotion_requires_full_gates is True
     assert diagnostics.polarity_gate_passed is False
-    assert diagnostics.polarity_preflight["interface"] == (
-        POLARITY_PREFLIGHT_INTERFACE
-    )
+    assert diagnostics.polarity_preflight["interface"] == (POLARITY_PREFLIGHT_INTERFACE)
     assert diagnostics.polarity_preflight["gate_passed"] is False
     assert diagnostics.polarity_signals
     assert diagnostics.span_signals
@@ -331,9 +323,7 @@ def test_diagnose_modal_spacy_construction_uses_private_spans() -> None:
         ),
         diagnostics=_empty_frontend_diagnostics(spans=(span,)),
     )
-    diagnostics = diagnose_modal_spacy_construction(
-        "exception_with_window", gold, construction
-    )
+    diagnostics = diagnose_modal_spacy_construction("exception_with_window", gold, construction)
     assert diagnostics.polarity_gate_passed is True
     assert diagnostics.span_signal_count == 1
     assert diagnostics.frontend_status == "full_model"
@@ -353,15 +343,12 @@ def test_diagnose_modal_spacy_construction_failed_result_fail_closed() -> None:
             detail="spaCy model unavailable",
         ),
     )
-    diagnostics = diagnose_modal_spacy_construction(
-        "exec_order_1", gold, construction
-    )
+    diagnostics = diagnose_modal_spacy_construction("exec_order_1", gold, construction)
     assert diagnostics.polarity_gate_passed is False
     assert diagnostics.evaluated is False
     assert diagnostics.frontend_status == "unavailable"
     assert "unavailable" in (diagnostics.detail or "").lower() or (
-        "missing" in (diagnostics.detail or "").lower()
-        or diagnostics.detail is not None
+        "missing" in (diagnostics.detail or "").lower() or diagnostics.detail is not None
     )
 
 
@@ -384,18 +371,12 @@ def test_spacy_cues_attach_to_residual_facets_without_changing_loss() -> None:
         source_spans=(_span(source="Agency shall file notice within 10 days."),),
     )
     cues = spacy_cues_by_field_path(diagnostics)
-    assert any(
-        SIGNAL_KIND_MISSING_SLOT in cue["signal_kinds"] for cue in cues.values()
-    )
+    assert any(SIGNAL_KIND_MISSING_SLOT in cue["signal_kinds"] for cue in cues.values())
 
     attached_facets = attach_spacy_cues_to_facets(case.residuals, cues)
     assert len(attached_facets) == len(case.residuals)
     # At least the temporal residual should receive a missing-slot cue.
-    temporal = next(
-        facet
-        for facet in attached_facets
-        if facet.field_path == "rules[0].temporal"
-    )
+    temporal = next(facet for facet in attached_facets if facet.field_path == "rules[0].temporal")
     assert temporal.spacy_cue is not None
     assert temporal.spacy_cue["interface"] == SPACY_RESIDUAL_CUE_INTERFACE
     assert temporal.spacy_cue["semantic_authority"] is False
@@ -406,10 +387,7 @@ def test_spacy_cues_attach_to_residual_facets_without_changing_loss() -> None:
 
     attached_case = attach_spacy_diagnostics_to_case_residual(case, diagnostics)
     assert attached_case.forward_loss == original_loss
-    assert (
-        sum(facet.loss_contribution for facet in attached_case.residuals)
-        == original_contrib
-    )
+    assert sum(facet.loss_contribution for facet in attached_case.residuals) == original_contrib
     assert any(facet.spacy_cue is not None for facet in attached_case.residuals)
 
 
@@ -445,8 +423,7 @@ def test_diagnose_pilot_cases_offline_returns_signals_per_case() -> None:
             spans_by_case[case.case_id] = (
                 _span(
                     formula_id=f"{case.case_id}:f0",
-                    source=case.source_text[: min(40, len(case.source_text))]
-                    or "control",
+                    source=case.source_text[: min(40, len(case.source_text))] or "control",
                 ),
             )
         else:
@@ -470,7 +447,9 @@ def test_diagnose_pilot_cases_offline_returns_signals_per_case() -> None:
             if rules:
                 first = rules[0]
                 inverted_mod = (
-                    "O" if first.modality == "F" else "F"
+                    "O"
+                    if first.modality == "F"
+                    else "F"
                     if first.modality == "O"
                     else first.modality
                 )
@@ -487,8 +466,7 @@ def test_diagnose_pilot_cases_offline_returns_signals_per_case() -> None:
             spans_by_case[case.case_id] = (
                 _span(
                     formula_id=f"{case.case_id}:f0",
-                    source=case.source_text[: min(40, len(case.source_text))]
-                    or case.case_id,
+                    source=case.source_text[: min(40, len(case.source_text))] or case.case_id,
                 ),
             )
 
@@ -503,10 +481,7 @@ def test_diagnose_pilot_cases_offline_returns_signals_per_case() -> None:
     assert diagnostics_map.production_default_changed is False
     assert set(diagnostics_map.case_ids) == set(PILOT_CASE_IDS)
     assert diagnostics_map.production_arm_id == BASELINE_ARM_ID
-    assert (
-        diagnostics_map.production_constructor_identity
-        == BASELINE_CONSTRUCTOR_IDENTITY
-    )
+    assert diagnostics_map.production_constructor_identity == BASELINE_CONSTRUCTOR_IDENTITY
 
     by_case = diagnostics_map.by_case_id()
     control = by_case[ZERO_RESIDUAL_CONTROL_CASE_ID]
@@ -572,23 +547,22 @@ def test_attach_spacy_diagnostics_to_catalog_cases() -> None:
         candidate_ir_by_case=candidate_by_case,
         construct=False,
     )
-    enriched = attach_spacy_diagnostics_to_catalog_cases(
-        catalog, diagnostics_map
-    )
+    enriched = attach_spacy_diagnostics_to_catalog_cases(catalog, diagnostics_map)
     assert enriched["spacy_teacher"]["semantic_authority"] is False
     assert enriched["spacy_teacher"]["production_default_changed"] is False
     assert (
-        enriched["spacy_teacher"]["teacher_identity"]
-        == MODAL_SPACY_CANONICAL_CONSTRUCTOR_INTERFACE
+        enriched["spacy_teacher"]["teacher_identity"] == MODAL_SPACY_CANONICAL_CONSTRUCTOR_INTERFACE
     )
     # Production baseline metadata on the sealed catalog is preserved.
     assert enriched["baseline"]["arm_id"] == catalog["baseline"]["arm_id"]
-    assert enriched["baseline"]["constructor_identity"] == (
-        catalog["baseline"]["constructor_identity"]
+    assert (
+        enriched["baseline"]["constructor_identity"]
+        == (catalog["baseline"]["constructor_identity"])
     )
 
     case_by_id = {
-        item["case_id"]: item for item in enriched["cases"]  # type: ignore[index]
+        item["case_id"]: item
+        for item in enriched["cases"]  # type: ignore[index]
     }
     assert "spacy_diagnostics" in case_by_id[ZERO_RESIDUAL_CONTROL_CASE_ID]
     # Nonzero pilots with field residuals should receive at least some cues
@@ -598,16 +572,11 @@ def test_attach_spacy_diagnostics_to_catalog_cases() -> None:
         case = case_by_id[case_id]
         assert "spacy_diagnostics" in case
         assert case["spacy_diagnostics"]["semantic_authority"] is False
-        if any(
-            facet.get("spacy_cue") is not None
-            for facet in case.get("residuals") or ()
-        ):
+        if any(facet.get("spacy_cue") is not None for facet in case.get("residuals") or ()):
             nonzero_with_cues += 1
     # Catalog residuals are vs typed_deontic L1 (not our defective candidates),
     # so attachment may be sparse; the API still stamps case-level diagnostics.
-    assert case_by_id["exec_order_1"]["spacy_diagnostics"][
-        "missing_slot_signal_count"
-    ] >= 0
+    assert case_by_id["exec_order_1"]["spacy_diagnostics"]["missing_slot_signal_count"] >= 0
     # Ensure attachment path does not invent semantic authority on facets.
     for case in enriched["cases"]:  # type: ignore[union-attr]
         for facet in case.get("residuals") or ():
@@ -632,9 +601,7 @@ def test_case_diagnostics_round_trip_dict() -> None:
     assert restored.polarity_gate_passed == original.polarity_gate_passed
     assert restored.polarity_signal_count == original.polarity_signal_count
     assert restored.span_signal_count == original.span_signal_count
-    assert (
-        restored.missing_slot_signal_count == original.missing_slot_signal_count
-    )
+    assert restored.missing_slot_signal_count == original.missing_slot_signal_count
     assert restored.semantic_authority is False
 
 

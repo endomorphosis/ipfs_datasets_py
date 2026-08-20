@@ -10,11 +10,13 @@ Methods under test:
   - OntologyLearningAdapter.feedback_recovery_count(threshold)
   - OntologyMediator.action_balance_score()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -27,11 +29,13 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_entity(eid, etype="T"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=etype, text=eid)
 
 
@@ -45,6 +49,7 @@ def _make_rel_mock(source_id, target_id):
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -54,16 +59,19 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -74,21 +82,27 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 # ── OntologyOptimizer.history_top_k_mean ─────────────────────────────────────
+
 
 class TestHistoryTopKMean:
     def test_empty_returns_zero(self):
@@ -110,6 +124,7 @@ class TestHistoryTopKMean:
 
 
 # ── OntologyOptimizer.score_second_derivative ────────────────────────────────
+
 
 class TestScoreSecondDerivative:
     def test_empty_returns_zero(self):
@@ -139,6 +154,7 @@ class TestScoreSecondDerivative:
 
 # ── OntologyGenerator.entity_id_prefix_groups ────────────────────────────────
 
+
 class TestEntityIdPrefixGroups:
     def test_empty_returns_empty_dict(self):
         g = _make_generator()
@@ -147,11 +163,13 @@ class TestEntityIdPrefixGroups:
 
     def test_groups_by_prefix(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("abc"),
-            _make_entity("abd"),
-            _make_entity("xyz"),
-        ])
+        r = _make_result(
+            [
+                _make_entity("abc"),
+                _make_entity("abd"),
+                _make_entity("xyz"),
+            ]
+        )
         result = g.entity_id_prefix_groups(r, prefix_len=2)
         assert set(result.keys()) == {"ab", "xy"}
         assert sorted(result["ab"]) == ["abc", "abd"]
@@ -166,6 +184,7 @@ class TestEntityIdPrefixGroups:
 
 
 # ── OntologyGenerator.relationship_cross_type_count ──────────────────────────
+
 
 class TestRelationshipCrossTypeCount:
     def test_empty_returns_zero(self):
@@ -190,6 +209,7 @@ class TestRelationshipCrossTypeCount:
 
 # ── LogicValidator.acyclic_check ──────────────────────────────────────────────
 
+
 class TestAcyclicCheck:
     def test_empty_is_acyclic(self):
         v = _make_validator()
@@ -197,10 +217,12 @@ class TestAcyclicCheck:
 
     def test_tree_is_acyclic(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "a", "target": "b"},
-            {"source": "b", "target": "c"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "a", "target": "b"},
+                {"source": "b", "target": "c"},
+            ]
+        }
         assert v.acyclic_check(onto) is True
 
     def test_self_loop_not_acyclic(self):
@@ -210,15 +232,18 @@ class TestAcyclicCheck:
 
     def test_cycle_not_acyclic(self):
         v = _make_validator()
-        onto = {"relationships": [
-            {"source": "a", "target": "b"},
-            {"source": "b", "target": "c"},
-            {"source": "c", "target": "a"},
-        ]}
+        onto = {
+            "relationships": [
+                {"source": "a", "target": "b"},
+                {"source": "b", "target": "c"},
+                {"source": "c", "target": "a"},
+            ]
+        }
         assert v.acyclic_check(onto) is False
 
 
 # ── OntologyPipeline.run_score_oscillation ───────────────────────────────────
+
 
 class TestRunScoreOscillation:
     def test_empty_returns_zero(self):
@@ -248,6 +273,7 @@ class TestRunScoreOscillation:
 
 # ── OntologyLearningAdapter.feedback_recovery_count ──────────────────────────
 
+
 class TestFeedbackRecoveryCount:
     def test_empty_returns_zero(self):
         a = _make_adapter()
@@ -273,6 +299,7 @@ class TestFeedbackRecoveryCount:
 
 
 # ── OntologyMediator.action_balance_score ─────────────────────────────────────
+
 
 class TestActionBalanceScore:
     def test_empty_returns_zero(self):

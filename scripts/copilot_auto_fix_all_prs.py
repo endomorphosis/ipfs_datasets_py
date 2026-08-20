@@ -49,61 +49,55 @@ from pathlib import Path
 from datetime import datetime
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 class CopilotAutoFixAllPRs:
     """
     Comprehensive PR auto-fixer using GitHub Copilot CLI.
-    
+
     This class provides functionality to:
     1. Find all open pull requests
     2. Analyze each PR to understand what needs fixing
     3. Invoke GitHub Copilot agent with appropriate instructions
     4. Track and report progress
     """
-    
+
     def __init__(self, dry_run: bool = False, github_token: Optional[str] = None):
         """
         Initialize the auto-fixer.
-        
+
         Args:
             dry_run: If True, show what would be done without making changes
             github_token: GitHub token for API access (optional, uses environment if not provided)
         """
         self.dry_run = dry_run
-        self.github_token = github_token or os.environ.get('GITHUB_TOKEN') or os.environ.get('GH_TOKEN')
-        
+        self.github_token = (
+            github_token or os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+        )
+
         # Verify prerequisites
         self._verify_prerequisites()
-        
+
         # Statistics tracking
         self.stats = {
-            'total_prs': 0,
-            'processed': 0,
-            'succeeded': 0,
-            'failed': 0,
-            'skipped': 0,
-            'already_fixed': 0,
-            'errors': []
+            "total_prs": 0,
+            "processed": 0,
+            "succeeded": 0,
+            "failed": 0,
+            "skipped": 0,
+            "already_fixed": 0,
+            "errors": [],
         }
-    
+
     def _verify_prerequisites(self):
         """Verify that all required tools are installed and configured."""
         logger.info("🔍 Verifying prerequisites...")
-        
+
         # Check GitHub CLI
         try:
-            result = subprocess.run(
-                ['gh', '--version'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+            result = subprocess.run(["gh", "--version"], capture_output=True, text=True, timeout=5)
             if result.returncode != 0:
                 logger.error("❌ GitHub CLI (gh) not found. Please install it first.")
                 logger.error("   Visit: https://cli.github.com/")
@@ -118,22 +112,21 @@ class CopilotAutoFixAllPRs:
         except Exception as e:
             logger.error(f"❌ Error checking GitHub CLI: {e}")
             sys.exit(1)
-        
+
         # Check GitHub Copilot extension
         try:
             result = subprocess.run(
-                ['gh', 'extension', 'list'],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["gh", "extension", "list"], capture_output=True, text=True, timeout=10
             )
-            if 'gh-copilot' not in result.stdout:
-                logger.warning("⚠️  GitHub Copilot CLI extension not found. Attempting to install...")
+            if "gh-copilot" not in result.stdout:
+                logger.warning(
+                    "⚠️  GitHub Copilot CLI extension not found. Attempting to install..."
+                )
                 install_result = subprocess.run(
-                    ['gh', 'extension', 'install', 'github/gh-copilot'],
+                    ["gh", "extension", "install", "github/gh-copilot"],
                     capture_output=True,
                     text=True,
-                    timeout=60
+                    timeout=60,
                 )
                 if install_result.returncode == 0:
                     logger.info("✅ Installed GitHub Copilot CLI extension")
@@ -146,18 +139,15 @@ class CopilotAutoFixAllPRs:
         except Exception as e:
             logger.error(f"❌ Error checking Copilot CLI extension: {e}")
             sys.exit(1)
-        
+
         # Check GitHub authentication
         if not self.github_token:
             logger.warning("⚠️  No GitHub token found in environment (GITHUB_TOKEN or GH_TOKEN)")
             logger.info("   Attempting to use gh CLI authentication...")
-        
+
         try:
             result = subprocess.run(
-                ['gh', 'auth', 'status'],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["gh", "auth", "status"], capture_output=True, text=True, timeout=10
             )
             if result.returncode != 0:
                 logger.error("❌ GitHub CLI not authenticated. Please run: gh auth login")
@@ -166,18 +156,20 @@ class CopilotAutoFixAllPRs:
         except Exception as e:
             logger.error(f"❌ Error checking GitHub authentication: {e}")
             sys.exit(1)
-        
+
         logger.info("✅ All prerequisites verified\n")
-    
-    def run_command(self, cmd: List[str], timeout: int = 30, env: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+
+    def run_command(
+        self, cmd: List[str], timeout: int = 30, env: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         """
         Run a shell command and return the result.
-        
+
         Args:
             cmd: Command to run as a list of strings
             timeout: Command timeout in seconds
             env: Optional environment variables
-        
+
         Returns:
             Dictionary with success status and output
         """
@@ -186,215 +178,250 @@ class CopilotAutoFixAllPRs:
             command_env = os.environ.copy()
             if env:
                 command_env.update(env)
-            
+
             # Add GitHub token to environment if available
-            if self.github_token and 'GH_TOKEN' not in command_env:
-                command_env['GH_TOKEN'] = self.github_token
-            
+            if self.github_token and "GH_TOKEN" not in command_env:
+                command_env["GH_TOKEN"] = self.github_token
+
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                env=command_env
+                cmd, capture_output=True, text=True, timeout=timeout, env=command_env
             )
-            
+
             return {
-                'success': result.returncode == 0,
-                'stdout': result.stdout,
-                'stderr': result.stderr,
-                'returncode': result.returncode
+                "success": result.returncode == 0,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "returncode": result.returncode,
             }
         except subprocess.TimeoutExpired:
             return {
-                'success': False,
-                'error': f'Command timed out after {timeout} seconds',
-                'stdout': '',
-                'stderr': ''
+                "success": False,
+                "error": f"Command timed out after {timeout} seconds",
+                "stdout": "",
+                "stderr": "",
             }
         except Exception as e:
-            return {
-                'success': False,
-                'error': str(e),
-                'stdout': '',
-                'stderr': ''
-            }
-    
+            return {"success": False, "error": str(e), "stdout": "", "stderr": ""}
+
     def get_all_open_prs(self, limit: int = 100) -> List[Dict[str, Any]]:
         """
         Get all open pull requests from the repository.
-        
+
         Args:
             limit: Maximum number of PRs to retrieve
-        
+
         Returns:
             List of PR dictionaries
         """
         logger.info(f"🔍 Fetching open pull requests (limit: {limit})...")
-        
+
         # Fetch PRs without comments for efficiency - we'll get comments later if needed
-        result = self.run_command([
-            'gh', 'pr', 'list',
-            '--state', 'open',
-            '--limit', str(limit),
-            '--json', 'number,title,body,isDraft,state,author,labels,files,url,headRefName'
-        ])
-        
-        if not result['success']:
+        result = self.run_command(
+            [
+                "gh",
+                "pr",
+                "list",
+                "--state",
+                "open",
+                "--limit",
+                str(limit),
+                "--json",
+                "number,title,body,isDraft,state,author,labels,files,url,headRefName",
+            ]
+        )
+
+        if not result["success"]:
             logger.error(f"❌ Failed to fetch PRs: {result.get('error', result.get('stderr'))}")
             return []
-        
+
         try:
-            prs = json.loads(result['stdout'])
+            prs = json.loads(result["stdout"])
             logger.info(f"✅ Found {len(prs)} open PRs\n")
             return prs
         except json.JSONDecodeError as e:
             logger.error(f"❌ Failed to parse PR data: {e}")
             return []
-    
+
     def get_pr_details(self, pr_number: int) -> Optional[Dict[str, Any]]:
         """
         Get detailed information about a specific PR.
-        
+
         Args:
             pr_number: PR number
-        
+
         Returns:
             PR details dictionary or None if failed
         """
-        result = self.run_command([
-            'gh', 'pr', 'view', str(pr_number),
-            '--json', 'number,title,body,isDraft,state,author,labels,comments,files,url,headRefName'
-        ])
-        
-        if not result['success']:
-            logger.error(f"❌ Failed to get PR #{pr_number}: {result.get('error', result.get('stderr'))}")
+        result = self.run_command(
+            [
+                "gh",
+                "pr",
+                "view",
+                str(pr_number),
+                "--json",
+                "number,title,body,isDraft,state,author,labels,comments,files,url,headRefName",
+            ]
+        )
+
+        if not result["success"]:
+            logger.error(
+                f"❌ Failed to get PR #{pr_number}: {result.get('error', result.get('stderr'))}"
+            )
             return None
-        
+
         try:
-            return json.loads(result['stdout'])
+            return json.loads(result["stdout"])
         except json.JSONDecodeError as e:
             logger.error(f"❌ Failed to parse PR #{pr_number} data: {e}")
             return None
-    
+
     def check_copilot_already_invoked(self, pr_details: Dict[str, Any]) -> bool:
         """
         Check if Copilot has already been invoked on this PR.
-        
+
         Args:
             pr_details: PR details dictionary
-        
+
         Returns:
             True if Copilot already invoked, False otherwise
         """
-        comments = pr_details.get('comments', [])
-        
+        comments = pr_details.get("comments", [])
+
         for comment in comments:
-            body = comment.get('body', '').lower()
-            if '@copilot' in body or '@github-copilot' in body:
+            body = comment.get("body", "").lower()
+            if "@copilot" in body or "@github-copilot" in body:
                 return True
-        
+
         # Also check PR body
-        pr_body = pr_details.get('body', '').lower()
-        if '@copilot' in pr_body or '@github-copilot' in pr_body:
+        pr_body = pr_details.get("body", "").lower()
+        if "@copilot" in pr_body or "@github-copilot" in pr_body:
             return True
-        
+
         return False
-    
+
     def analyze_pr(self, pr_details: Dict[str, Any]) -> Dict[str, Any]:
         """
         Analyze a PR to determine the appropriate fix strategy.
-        
+
         Args:
             pr_details: PR details dictionary
-        
+
         Returns:
             Analysis dictionary with fix strategy
         """
-        pr_number = pr_details['number']
-        title = pr_details['title'].lower()
-        body = pr_details.get('body', '').lower()
-        is_draft = pr_details['isDraft']
-        files = pr_details.get('files', [])
-        
+        pr_number = pr_details["number"]
+        title = pr_details["title"].lower()
+        body = pr_details.get("body", "").lower()
+        is_draft = pr_details["isDraft"]
+        files = pr_details.get("files", [])
+
         analysis = {
-            'should_fix': False,
-            'fix_type': 'general',
-            'priority': 'normal',
-            'reasons': [],
-            'instructions': ''
+            "should_fix": False,
+            "fix_type": "general",
+            "priority": "normal",
+            "reasons": [],
+            "instructions": "",
         }
         is_auto_fix = False
         is_draft_override = False
-        
+
         # Check for auto-fix PRs (highest priority)
-        if 'auto-fix' in title or 'autofix' in title or 'auto fix' in title:
-            analysis['should_fix'] = True
-            analysis['fix_type'] = 'auto-fix'
-            analysis['priority'] = 'critical'
-            analysis['reasons'].append("Auto-generated fix PR")
+        if "auto-fix" in title or "autofix" in title or "auto fix" in title:
+            analysis["should_fix"] = True
+            analysis["fix_type"] = "auto-fix"
+            analysis["priority"] = "critical"
+            analysis["reasons"].append("Auto-generated fix PR")
             is_auto_fix = True
 
         # Draft PRs needing implementation
         if is_draft and not is_auto_fix:
-            analysis['should_fix'] = True
-            analysis['fix_type'] = 'draft'
-            analysis['priority'] = 'normal'
-            analysis['reasons'].append("Draft PR needing implementation")
+            analysis["should_fix"] = True
+            analysis["fix_type"] = "draft"
+            analysis["priority"] = "normal"
+            analysis["reasons"].append("Draft PR needing implementation")
             is_draft_override = True
-        
+
         # Check for workflow/CI failures
-        if not is_auto_fix and not is_draft_override and any(keyword in title for keyword in ['workflow', 'ci', 'github actions', 'action']):
-            analysis['should_fix'] = True
-            analysis['fix_type'] = 'workflow'
-            analysis['priority'] = 'high'
-            analysis['reasons'].append("Workflow/CI fix")
-        
+        if (
+            not is_auto_fix
+            and not is_draft_override
+            and any(keyword in title for keyword in ["workflow", "ci", "github actions", "action"])
+        ):
+            analysis["should_fix"] = True
+            analysis["fix_type"] = "workflow"
+            analysis["priority"] = "high"
+            analysis["reasons"].append("Workflow/CI fix")
+
         # Check for permission errors
-        if not is_auto_fix and not is_draft_override and any(keyword in title or keyword in body for keyword in ['permission', 'denied', 'unauthorized']):
-            analysis['should_fix'] = True
-            analysis['fix_type'] = 'permissions'
-            analysis['priority'] = 'high'
-            analysis['reasons'].append("Permission error fix")
-        
+        if (
+            not is_auto_fix
+            and not is_draft_override
+            and any(
+                keyword in title or keyword in body
+                for keyword in ["permission", "denied", "unauthorized"]
+            )
+        ):
+            analysis["should_fix"] = True
+            analysis["fix_type"] = "permissions"
+            analysis["priority"] = "high"
+            analysis["reasons"].append("Permission error fix")
+
         # Check for syntax/compile errors
-        if not is_auto_fix and not is_draft_override and analysis['fix_type'] == 'general' and any(keyword in title or keyword in body for keyword in ['syntax', 'compile', 'build', 'error']):
-            analysis['should_fix'] = True
-            analysis['fix_type'] = 'syntax'
-            analysis['priority'] = 'high'
-            analysis['reasons'].append("Syntax/compilation fix")
-        
+        if (
+            not is_auto_fix
+            and not is_draft_override
+            and analysis["fix_type"] == "general"
+            and any(
+                keyword in title or keyword in body
+                for keyword in ["syntax", "compile", "build", "error"]
+            )
+        ):
+            analysis["should_fix"] = True
+            analysis["fix_type"] = "syntax"
+            analysis["priority"] = "high"
+            analysis["reasons"].append("Syntax/compilation fix")
+
         # Check for test failures
-        if not is_auto_fix and not is_draft_override and analysis['fix_type'] == 'general' and any(keyword in title for keyword in ['test', 'failing', 'failure']):
-            analysis['should_fix'] = True
-            analysis['fix_type'] = 'test'
-            analysis['priority'] = 'medium'
-            analysis['reasons'].append("Test failure fix")
-        
+        if (
+            not is_auto_fix
+            and not is_draft_override
+            and analysis["fix_type"] == "general"
+            and any(keyword in title for keyword in ["test", "failing", "failure"])
+        ):
+            analysis["should_fix"] = True
+            analysis["fix_type"] = "test"
+            analysis["priority"] = "medium"
+            analysis["reasons"].append("Test failure fix")
+
         # Check for bug fixes
-        if not is_auto_fix and not is_draft_override and analysis['fix_type'] == 'general' and any(keyword in title for keyword in ['bug', 'fix', 'issue']):
-            analysis['should_fix'] = True
-            analysis['fix_type'] = 'bugfix'
-            analysis['priority'] = 'medium'
-            analysis['reasons'].append("Bug fix")
-        
+        if (
+            not is_auto_fix
+            and not is_draft_override
+            and analysis["fix_type"] == "general"
+            and any(keyword in title for keyword in ["bug", "fix", "issue"])
+        ):
+            analysis["should_fix"] = True
+            analysis["fix_type"] = "bugfix"
+            analysis["priority"] = "medium"
+            analysis["reasons"].append("Bug fix")
+
         # If still no reason to fix but it's open, consider for review
-        if not analysis['should_fix']:
-            analysis['should_fix'] = True
-            analysis['fix_type'] = 'review'
-            analysis['priority'] = 'low'
-            analysis['reasons'].append("General PR review")
-        
+        if not analysis["should_fix"]:
+            analysis["should_fix"] = True
+            analysis["fix_type"] = "review"
+            analysis["priority"] = "low"
+            analysis["reasons"].append("General PR review")
+
         return analysis
-    
+
     def _format_instruction_footer(self, priority: str, reasons: str) -> str:
         """
         Format common instruction footer.
-        
+
         Args:
             priority: Priority level
             reasons: Comma-separated reasons
-        
+
         Returns:
             Formatted footer string
         """
@@ -402,29 +429,31 @@ class CopilotAutoFixAllPRs:
 **Priority**: {priority.upper()}
 **Reason**: {reasons}
 """
-    
-    def create_copilot_instructions(self, pr_details: Dict[str, Any], analysis: Dict[str, Any]) -> str:
+
+    def create_copilot_instructions(
+        self, pr_details: Dict[str, Any], analysis: Dict[str, Any]
+    ) -> str:
         """
         Create appropriate Copilot instructions based on PR analysis.
-        
+
         Args:
             pr_details: PR details dictionary
             analysis: PR analysis dictionary
-        
+
         Returns:
             Copilot instruction string
         """
-        pr_number = pr_details['number']
-        title = pr_details['title']
-        fix_type = analysis['fix_type']
-        priority = analysis['priority']
-        reasons = ', '.join(analysis['reasons'])
-        
+        pr_number = pr_details["number"]
+        title = pr_details["title"]
+        fix_type = analysis["fix_type"]
+        priority = analysis["priority"]
+        reasons = ", ".join(analysis["reasons"])
+
         # Base instruction
         instruction = f"@copilot "
-        
+
         # Add fix-type specific instructions
-        if fix_type == 'auto-fix':
+        if fix_type == "auto-fix":
             instruction += f"""Please implement the auto-fix described in this PR.
 
 **Context**: This PR was automatically created by the auto-healing workflow to fix a failed GitHub Actions workflow.
@@ -438,8 +467,8 @@ class CopilotAutoFixAllPRs:
 6. Commit the changes with a clear message
 {self._format_instruction_footer(priority, reasons)}
 Please proceed with implementing this auto-fix."""
-        
-        elif fix_type == 'workflow':
+
+        elif fix_type == "workflow":
             instruction += f"""Please fix the workflow/CI issue described in this PR.
 
 **Task**:
@@ -454,8 +483,8 @@ Please proceed with implementing this auto-fix."""
 **Reason**: {reasons}
 
 Please implement the necessary workflow fixes."""
-        
-        elif fix_type == 'permissions':
+
+        elif fix_type == "permissions":
             instruction += f"""Please resolve the permission issues in this PR.
 
 **Task**:
@@ -470,8 +499,8 @@ Please implement the necessary workflow fixes."""
 **Reason**: {reasons}
 
 Please fix the permission issues."""
-        
-        elif fix_type == 'syntax':
+
+        elif fix_type == "syntax":
             instruction += f"""Please fix the syntax/compilation errors in this PR.
 
 **Task**:
@@ -486,8 +515,8 @@ Please fix the permission issues."""
 **Reason**: {reasons}
 
 Please fix the syntax/compilation errors."""
-        
-        elif fix_type == 'test':
+
+        elif fix_type == "test":
             instruction += f"""Please fix the test failures described in this PR.
 
 **Task**:
@@ -502,8 +531,8 @@ Please fix the syntax/compilation errors."""
 **Reason**: {reasons}
 
 Please fix the test failures."""
-        
-        elif fix_type == 'draft':
+
+        elif fix_type == "draft":
             instruction += f"""Please implement the changes described in this draft PR.
 
 **Task**:
@@ -518,8 +547,8 @@ Please fix the test failures."""
 **Reason**: {reasons}
 
 Please implement the proposed changes."""
-        
-        elif fix_type == 'bugfix':
+
+        elif fix_type == "bugfix":
             instruction += f"""Please implement the bug fix described in this PR.
 
 **Task**:
@@ -534,7 +563,7 @@ Please implement the proposed changes."""
 **Reason**: {reasons}
 
 Please implement the bug fix."""
-        
+
         else:  # review or general
             instruction += f"""Please review and work on this pull request.
 
@@ -550,101 +579,97 @@ Please implement the bug fix."""
 **Reason**: {reasons}
 
 Please review and improve this PR."""
-        
+
         return instruction
-    
+
     def invoke_copilot_on_pr(self, pr_number: int) -> bool:
         """
         Invoke GitHub Copilot on a specific PR.
-        
+
         Args:
             pr_number: PR number to fix
-        
+
         Returns:
             True if successful, False otherwise
         """
-        logger.info(f"\n{'='*80}")
+        logger.info(f"\n{'=' * 80}")
         logger.info(f"🔨 Processing PR #{pr_number}")
-        logger.info(f"{'='*80}\n")
-        
+        logger.info(f"{'=' * 80}\n")
+
         # Get PR details
         pr_details = self.get_pr_details(pr_number)
         if not pr_details:
-            self.stats['failed'] += 1
+            self.stats["failed"] += 1
             return False
-        
+
         logger.info(f"📄 Title: {pr_details['title']}")
-        logger.info(f"📊 Status: {pr_details['state']} {'(Draft)' if pr_details['isDraft'] else ''}")
+        logger.info(
+            f"📊 Status: {pr_details['state']} {'(Draft)' if pr_details['isDraft'] else ''}"
+        )
         logger.info(f"👤 Author: {pr_details['author']['login']}")
         logger.info(f"🔗 URL: {pr_details['url']}")
-        
+
         # Check if Copilot already invoked
         if self.check_copilot_already_invoked(pr_details):
             logger.info(f"✅ Copilot already invoked on PR #{pr_number} - skipping")
-            self.stats['already_fixed'] += 1
-            self.stats['skipped'] += 1
+            self.stats["already_fixed"] += 1
+            self.stats["skipped"] += 1
             return True
-        
+
         # Analyze the PR
         analysis = self.analyze_pr(pr_details)
-        
-        if not analysis['should_fix']:
+
+        if not analysis["should_fix"]:
             logger.info(f"⏭️  No fix needed for PR #{pr_number}")
-            self.stats['skipped'] += 1
+            self.stats["skipped"] += 1
             return True
-        
+
         logger.info(f"🎯 Fix Type: {analysis['fix_type']}")
         logger.info(f"⚡ Priority: {analysis['priority']}")
         logger.info(f"📝 Reasons: {', '.join(analysis['reasons'])}")
-        
+
         # Create Copilot instructions
         instructions = self.create_copilot_instructions(pr_details, analysis)
-        
+
         if self.dry_run:
-            logger.info(f"\n{'─'*80}")
+            logger.info(f"\n{'─' * 80}")
             logger.info("🔍 DRY RUN - Would post this comment:")
-            logger.info(f"{'─'*80}")
+            logger.info(f"{'─' * 80}")
             logger.info(instructions)
-            logger.info(f"{'─'*80}\n")
-            self.stats['succeeded'] += 1
+            logger.info(f"{'─' * 80}\n")
+            self.stats["succeeded"] += 1
             return True
-        
+
         # Post the Copilot instruction comment
         logger.info("📤 Posting Copilot instructions...")
-        result = self.run_command([
-            'gh', 'pr', 'comment', str(pr_number),
-            '--body', instructions
-        ])
-        
-        if result['success']:
+        result = self.run_command(["gh", "pr", "comment", str(pr_number), "--body", instructions])
+
+        if result["success"]:
             logger.info(f"✅ Successfully invoked Copilot on PR #{pr_number}")
             logger.info(f"🔗 View PR: {pr_details['url']}")
-            self.stats['succeeded'] += 1
+            self.stats["succeeded"] += 1
             return True
         else:
-            error_msg = result.get('error', result.get('stderr', 'Unknown error'))
+            error_msg = result.get("error", result.get("stderr", "Unknown error"))
             logger.error(f"❌ Failed to invoke Copilot on PR #{pr_number}: {error_msg}")
-            self.stats['errors'].append({
-                'pr': pr_number,
-                'error': error_msg
-            })
-            self.stats['failed'] += 1
+            self.stats["errors"].append({"pr": pr_number, "error": error_msg})
+            self.stats["failed"] += 1
             return False
-    
+
     def process_all_prs(self, limit: int = 100, pr_numbers: Optional[List[int]] = None):
         """
         Process all open PRs or specific PR numbers.
-        
+
         Args:
             limit: Maximum number of PRs to process
             pr_numbers: Optional list of specific PR numbers to process
         """
         logger.info("🚀 Starting Copilot Auto-Fix for Pull Requests")
-        logger.info("="*80)
-        
+        logger.info("=" * 80)
+
         if self.dry_run:
             logger.info("🔍 DRY RUN MODE - No actual changes will be made\n")
-        
+
         # Get PRs to process
         if pr_numbers:
             logger.info(f"📋 Processing specific PRs: {pr_numbers}")
@@ -655,30 +680,30 @@ Please review and improve this PR."""
                     prs.append(pr_details)
         else:
             prs = self.get_all_open_prs(limit=limit)
-        
+
         if not prs:
             logger.warning("⚠️  No PRs to process")
             return
-        
-        self.stats['total_prs'] = len(prs)
-        
+
+        self.stats["total_prs"] = len(prs)
+
         # Process each PR
         for idx, pr in enumerate(prs, 1):
-            pr_number = pr['number']
+            pr_number = pr["number"]
             logger.info(f"\n[{idx}/{len(prs)}] Processing PR #{pr_number}...")
-            
-            self.stats['processed'] += 1
+
+            self.stats["processed"] += 1
             self.invoke_copilot_on_pr(pr_number)
-        
+
         # Print summary
         self.print_summary()
-    
+
     def print_summary(self):
         """Print execution summary."""
         lines = [
-            f"\n{'='*80}",
+            f"\n{'=' * 80}",
             "📊 Execution Summary",
-            f"{'='*80}",
+            f"{'=' * 80}",
             f"Total PRs found:          {self.stats['total_prs']}",
             f"PRs processed:            {self.stats['processed']}",
             f"Successfully invoked:     {self.stats['succeeded']}",
@@ -690,25 +715,25 @@ Please review and improve this PR."""
         for line in lines:
             print(line)
             logger.info(line)
-        
-        if self.stats['errors']:
-            print(f"\n{'─'*80}")
+
+        if self.stats["errors"]:
+            print(f"\n{'─' * 80}")
             print("Errors:")
-            logger.info(f"\n{'─'*80}")
+            logger.info(f"\n{'─' * 80}")
             logger.info("Errors:")
-            for error in self.stats['errors']:
+            for error in self.stats["errors"]:
                 line = f"  PR #{error['pr']}: {error['error']}"
                 print(line)
                 logger.info(line)
-        
-        print(f"{'='*80}\n")
-        logger.info(f"{'='*80}\n")
-        
-        if self.stats['succeeded'] > 0:
+
+        print(f"{'=' * 80}\n")
+        logger.info(f"{'=' * 80}\n")
+
+        if self.stats["succeeded"] > 0:
             line = f"✨ Successfully invoked Copilot on {self.stats['succeeded']} PR(s)!"
             print(line)
             logger.info(line)
-        
+
         if self.dry_run:
             line = "🔍 This was a DRY RUN - no actual changes were made"
             print(line)
@@ -718,7 +743,7 @@ Please review and improve this PR."""
 def main():
     """Main execution function."""
     parser = argparse.ArgumentParser(
-        description='Copilot Auto-Fix All Pull Requests',
+        description="Copilot Auto-Fix All Pull Requests",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -739,72 +764,58 @@ Examples:
 
 Environment Variables:
   GITHUB_TOKEN or GH_TOKEN - GitHub authentication token
-        """
+        """,
     )
-    
+
     parser.add_argument(
-        '--pr',
+        "--pr",
         type=int,
-        action='append',
-        dest='pr_numbers',
-        help='Specific PR number to process (can be used multiple times)'
+        action="append",
+        dest="pr_numbers",
+        help="Specific PR number to process (can be used multiple times)",
     )
     parser.add_argument(
-        '--limit',
-        type=int,
-        default=100,
-        help='Maximum number of PRs to process (default: 100)'
+        "--limit", type=int, default=100, help="Maximum number of PRs to process (default: 100)"
     )
     parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='Show what would be done without making changes'
+        "--dry-run", action="store_true", help="Show what would be done without making changes"
     )
     parser.add_argument(
-        '--token',
+        "--token",
         type=str,
-        help='GitHub token (defaults to GITHUB_TOKEN or GH_TOKEN environment variable)'
+        help="GitHub token (defaults to GITHUB_TOKEN or GH_TOKEN environment variable)",
     )
-    parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Enable verbose logging'
-    )
-    
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
+
     args = parser.parse_args()
-    
+
     # Set logging level
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
-    
+
     # Create auto-fixer instance
-    auto_fixer = CopilotAutoFixAllPRs(
-        dry_run=args.dry_run,
-        github_token=args.token
-    )
-    
+    auto_fixer = CopilotAutoFixAllPRs(dry_run=args.dry_run, github_token=args.token)
+
     # Process PRs
     try:
-        auto_fixer.process_all_prs(
-            limit=args.limit,
-            pr_numbers=args.pr_numbers
-        )
-        
+        auto_fixer.process_all_prs(limit=args.limit, pr_numbers=args.pr_numbers)
+
         # Exit with appropriate code
-        if auto_fixer.stats['failed'] > 0:
+        if auto_fixer.stats["failed"] > 0:
             sys.exit(1)
         else:
             sys.exit(0)
-    
+
     except KeyboardInterrupt:
         logger.info("\n\n⚠️  Interrupted by user")
         sys.exit(130)
     except Exception as e:
         logger.error(f"\n❌ Fatal error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

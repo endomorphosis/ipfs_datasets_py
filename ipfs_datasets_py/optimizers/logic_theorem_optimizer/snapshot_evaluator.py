@@ -345,7 +345,8 @@ class SnapshotShardAggregate:
         present = {
             shard.family
             for shard in self.shards
-            if shard.family != "all" and shard.role in set(self.required_roles or self.roles_present)
+            if shard.family != "all"
+            and shard.role in set(self.required_roles or self.roles_present)
         }
         return tuple(family for family in self.required_families if family not in present)
 
@@ -356,9 +357,7 @@ class SnapshotShardAggregate:
     def metrics_by_role(self) -> Dict[str, Dict[str, Any]]:
         grouped: Dict[str, Dict[str, Any]] = {}
         for shard in self.shards:
-            grouped.setdefault(shard.role, {})[shard.family] = copy.deepcopy(
-                dict(shard.metrics)
-            )
+            grouped.setdefault(shard.role, {})[shard.family] = copy.deepcopy(dict(shard.metrics))
         return grouped
 
     def to_dict(self) -> Dict[str, Any]:
@@ -416,9 +415,7 @@ def aggregate_matching_snapshot_shards(
         versions=expected_versions,
         shards=tuple(accepted),
         required_roles=tuple(str(role) for role in required_roles if str(role)),
-        required_families=tuple(
-            str(family) for family in required_families if str(family)
-        ),
+        required_families=tuple(str(family) for family in required_families if str(family)),
         rejected_shards=tuple(rejected),
     )
 
@@ -634,9 +631,7 @@ class SnapshotEvaluator:
     # Compatibility/domain aliases used by trainer call sites.
     publish_snapshot = publish
 
-    def _coalescing_candidate(
-        self, replacement: EvaluationSnapshot
-    ) -> EvaluationSnapshot:
+    def _coalescing_candidate(self, replacement: EvaluationSnapshot) -> EvaluationSnapshot:
         replacement_lineage = (
             replacement.versions.compiler_version,
             replacement.versions.holdout_version,
@@ -941,9 +936,7 @@ class SnapshotEvaluator:
             promotion_state = {
                 "accepted_result_count": accepted_result_count,
                 "complete": int(stats.get("promoted", 0)) > 0,
-                "latest_promoted_sequence": int(
-                    stats.get("latest_promoted_sequence", -1)
-                ),
+                "latest_promoted_sequence": int(stats.get("latest_promoted_sequence", -1)),
                 "promoted_result_count": int(stats.get("promoted", 0)),
                 "ready_result_count": ready_result_count,
             }

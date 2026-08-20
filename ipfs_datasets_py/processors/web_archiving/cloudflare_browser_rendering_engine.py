@@ -129,9 +129,7 @@ def _resolve_credentials(
         or ""
     ).strip()
     if not resolved_account_id or not resolved_api_token:
-        raise ValueError(
-            "Cloudflare Browser Rendering requires account_id and api_token"
-        )
+        raise ValueError("Cloudflare Browser Rendering requires account_id and api_token")
     return resolved_account_id, resolved_api_token
 
 
@@ -250,7 +248,9 @@ def _extract_error_details(payload: Dict[str, Any]) -> Dict[str, str]:
     }
 
 
-def _build_rate_limit_diagnostics(response: Any, payload: Dict[str, Any], **fields: Any) -> Dict[str, Any]:
+def _build_rate_limit_diagnostics(
+    response: Any, payload: Dict[str, Any], **fields: Any
+) -> Dict[str, Any]:
     headers = _response_headers(response)
     error_details = _extract_error_details(payload)
     diagnostics: Dict[str, Any] = {
@@ -439,7 +439,9 @@ async def start_cloudflare_browser_rendering_crawl(
             if not isinstance(body, dict) or not _is_retryable_create_error(body):
                 return {
                     "status": "error",
-                    "error": _extract_error_message(body) if body else f"HTTP {response.status_code}",
+                    "error": _extract_error_message(body)
+                    if body
+                    else f"HTTP {response.status_code}",
                     "submitted_url": url,
                     "http_status": int(response.status_code),
                     "raw": body or None,
@@ -449,7 +451,7 @@ async def start_cloudflare_browser_rendering_crawl(
                 return _build_rate_limited_result(
                     response=response,
                     payload=body,
-                    fallback_delay_seconds=float(min(8, 2 ** attempt)),
+                    fallback_delay_seconds=float(min(8, 2**attempt)),
                     operation="create_crawl",
                     endpoint=endpoint,
                     account_id=resolved_account_id,
@@ -460,7 +462,7 @@ async def start_cloudflare_browser_rendering_crawl(
             slept_seconds = await _sleep_for_rate_limit(
                 response=response,
                 payload=body,
-                fallback_delay_seconds=float(min(8, 2 ** attempt)),
+                fallback_delay_seconds=float(min(8, 2**attempt)),
                 max_wait_seconds=float(max_rate_limit_wait_seconds),
                 waited_seconds=rate_limit_waited_seconds,
             )
@@ -468,7 +470,7 @@ async def start_cloudflare_browser_rendering_crawl(
                 return _build_rate_limited_result(
                     response=response,
                     payload=body,
-                    fallback_delay_seconds=float(min(8, 2 ** attempt)),
+                    fallback_delay_seconds=float(min(8, 2**attempt)),
                     operation="create_crawl",
                     endpoint=endpoint,
                     account_id=resolved_account_id,
@@ -665,7 +667,9 @@ async def _collect_records(
                     if isinstance(retry_after_seconds, (int, float))
                     else 2.0
                 )
-                if rate_limit_waited_seconds + fallback_delay_seconds > float(max_rate_limit_wait_seconds):
+                if rate_limit_waited_seconds + fallback_delay_seconds > float(
+                    max_rate_limit_wait_seconds
+                ):
                     page["wait_budget_exhausted"] = True
                     return page
                 await anyio.sleep(max(0.1, fallback_delay_seconds))
@@ -754,7 +758,9 @@ async def wait_for_cloudflare_browser_rendering_crawl(
                 fallback_delay_seconds = page.get("retry_after_seconds")
                 if not isinstance(fallback_delay_seconds, (int, float)):
                     fallback_delay_seconds = max(0.1, float(poll_interval_seconds))
-                remaining_timeout_seconds = max(0.0, float(timeout_seconds) - (time.monotonic() - started))
+                remaining_timeout_seconds = max(
+                    0.0, float(timeout_seconds) - (time.monotonic() - started)
+                )
                 allowed_wait_seconds = min(
                     float(max_rate_limit_wait_seconds) - rate_limit_waited_seconds,
                     remaining_timeout_seconds,

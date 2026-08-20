@@ -202,8 +202,7 @@ class StockDataScraper:
                 if attempt < self.max_retries - 1:
                     delay = self.retry_delay * (2**attempt)  # Exponential backoff
                     logger.warning(
-                        f"Attempt {attempt + 1} failed: {e}. "
-                        f"Retrying in {delay} seconds..."
+                        f"Attempt {attempt + 1} failed: {e}. Retrying in {delay} seconds..."
                     )
                     time.sleep(delay)
                 else:

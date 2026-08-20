@@ -41,10 +41,10 @@ Successfully completed Phase 8 by adding comprehensive multimedia processing cap
 ```python
 from ipfs_datasets_py.processors.file_converter import ImageProcessor
 
-processor = ImageProcessor(ocr_enabled=True, ocr_lang='eng')
-result = processor.extract_text('diagram.png')
-print(result['text'])  # OCR extracted text
-print(result['metadata'])  # Image metadata
+processor = ImageProcessor(ocr_enabled=True, ocr_lang="eng")
+result = processor.extract_text("diagram.png")
+print(result["text"])  # OCR extracted text
+print(result["metadata"])  # Image metadata
 ```
 
 ### Phase 8.2: Audio Transcription with Whisper (+8%)
@@ -75,14 +75,10 @@ print(result['metadata'])  # Image metadata
 ```python
 from ipfs_datasets_py.processors.file_converter import AudioProcessor
 
-processor = AudioProcessor(
-    transcription_enabled=True,
-    model_size='base',
-    language='en'
-)
-result = processor.extract_text('podcast.mp3')
-print(result['text'])  # Transcribed speech
-print(result['metadata'])  # Audio metadata
+processor = AudioProcessor(transcription_enabled=True, model_size="base", language="en")
+result = processor.extract_text("podcast.mp3")
+print(result["text"])  # Transcribed speech
+print(result["metadata"])  # Audio metadata
 ```
 
 ### Integration Complete
@@ -184,33 +180,26 @@ from ipfs_datasets_py.processors.file_converter import (
     UniversalKnowledgeGraphPipeline,
     TextSummarizationPipeline,
     VectorEmbeddingPipeline,
-    IPFSAcceleratedConverter
+    IPFSAcceleratedConverter,
 )
 
 # Initialize with IPFS and acceleration
-converter = IPFSAcceleratedConverter(
-    enable_ipfs=True,
-    enable_acceleration=True,
-    auto_pin=True
-)
+converter = IPFSAcceleratedConverter(enable_ipfs=True, enable_acceleration=True, auto_pin=True)
 
 kg_pipeline = UniversalKnowledgeGraphPipeline(enable_ipfs=True)
 summary_pipeline = TextSummarizationPipeline()
-vector_pipeline = VectorEmbeddingPipeline(
-    enable_ipfs=True,
-    enable_acceleration=True
-)
+vector_pipeline = VectorEmbeddingPipeline(enable_ipfs=True, enable_acceleration=True)
 
 # Process multimedia files
 files = [
-    'document.pdf',           # Office document
-    'diagram.png',            # Image (OCR)
-    'podcast.mp3',            # Audio (transcription)
-    'presentation.pptx',      # PowerPoint
-    'recording.wav',          # Audio
-    'infographic.jpg',        # Image
-    'data.zip',              # Archive
-    'https://url.com/file'   # URL
+    "document.pdf",  # Office document
+    "diagram.png",  # Image (OCR)
+    "podcast.mp3",  # Audio (transcription)
+    "presentation.pptx",  # PowerPoint
+    "recording.wav",  # Audio
+    "infographic.jpg",  # Image
+    "data.zip",  # Archive
+    "https://url.com/file",  # URL
 ]
 
 for file in files:
@@ -219,19 +208,19 @@ for file in files:
     print(f"Text: {result.text[:100]}...")
     print(f"IPFS CID: {result.ipfs_cid}")
     print(f"Accelerated: {result.accelerated}")
-    
+
     # 2. Extract knowledge graph
     kg = await kg_pipeline.process(file)
     print(f"Entities: {len(kg.entities)}")
     print(f"Relationships: {len(kg.relationships)}")
-    
+
     # 3. Generate summary
     summary = await summary_pipeline.summarize(file)
     print(f"Summary: {summary.summary}")
-    
+
     # 4. Create embeddings and search
     embeddings = await vector_pipeline.process(file)
-    results = await vector_pipeline.search('machine learning', top_k=5)
+    results = await vector_pipeline.search("machine learning", top_k=5)
 ```
 
 ### Image-Specific Workflow
@@ -240,22 +229,19 @@ for file in files:
 from ipfs_datasets_py.processors.file_converter import ImageProcessor
 
 # Process image with OCR
-processor = ImageProcessor(
-    ocr_enabled=True,
-    ocr_lang='eng'
-)
+processor = ImageProcessor(ocr_enabled=True, ocr_lang="eng")
 
 # Extract text from image
-result = processor.extract_text('screenshot.png')
+result = processor.extract_text("screenshot.png")
 print(f"OCR Text: {result['text']}")
 print(f"Dimensions: {result['metadata']['size']}")
 print(f"Format: {result['metadata']['format']}")
 print(f"DPI: {result['metadata'].get('dpi')}")
 
 # Works with all pipelines
-kg = await kg_pipeline.process('diagram.png')  # Extract entities from image
-summary = await summary_pipeline.summarize('infographic.jpg')  # Summarize image
-embeddings = await vector_pipeline.process('images/*.png')  # Embed image text
+kg = await kg_pipeline.process("diagram.png")  # Extract entities from image
+summary = await summary_pipeline.summarize("infographic.jpg")  # Summarize image
+embeddings = await vector_pipeline.process("images/*.png")  # Embed image text
 ```
 
 ### Audio-Specific Workflow
@@ -266,21 +252,21 @@ from ipfs_datasets_py.processors.file_converter import AudioProcessor
 # Process audio with Whisper
 processor = AudioProcessor(
     transcription_enabled=True,
-    model_size='base',  # tiny, base, small, medium, large
-    language='en'
+    model_size="base",  # tiny, base, small, medium, large
+    language="en",
 )
 
 # Transcribe audio
-result = processor.extract_text('interview.mp3')
+result = processor.extract_text("interview.mp3")
 print(f"Transcription: {result['text']}")
 print(f"Duration: {result['metadata']['duration']} seconds")
 print(f"Bitrate: {result['metadata']['bitrate']}")
 print(f"Sample Rate: {result['metadata']['sample_rate']} Hz")
 
 # Works with all pipelines
-kg = await kg_pipeline.process('podcast.mp3')  # Extract entities from audio
-summary = await summary_pipeline.summarize('lecture.wav')  # Summarize audio
-embeddings = await vector_pipeline.process('audiobooks/*.mp3')  # Embed audio text
+kg = await kg_pipeline.process("podcast.mp3")  # Extract entities from audio
+summary = await summary_pipeline.summarize("lecture.wav")  # Summarize audio
+embeddings = await vector_pipeline.process("audiobooks/*.mp3")  # Embed audio text
 ```
 
 ---

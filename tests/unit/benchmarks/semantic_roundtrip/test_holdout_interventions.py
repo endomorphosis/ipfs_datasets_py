@@ -87,24 +87,16 @@ REGISTRY_DOCS = ROOT / "docs/benchmarks/semantic_roundtrip_plateau2_intervention
 
 
 def test_interfaces_and_method_roles_are_frozen() -> None:
-    assert (
-        PLATEAU2_INTERVENTION_REGISTRY_INTERFACE
-        == "Plateau2InterventionRegistry@1"
-    )
+    assert PLATEAU2_INTERVENTION_REGISTRY_INTERFACE == "Plateau2InterventionRegistry@1"
     assert (
         PLATEAU2_INTERVENTION_REGISTRY_SCHEMA
         == "ipfs-datasets.semantic-roundtrip-plateau2-intervention-registry.v1"
     )
-    assert (
-        SEMANTIC_ROUNDTRIP_CAPABILITY_RECORD_INTERFACE
-        == "SemanticRoundtripCapabilityRecord@1"
-    )
+    assert SEMANTIC_ROUNDTRIP_CAPABILITY_RECORD_INTERFACE == "SemanticRoundtripCapabilityRecord@1"
     assert INTERVENTION_TASK_ID == "PLAT2-035"
     assert INTERVENTION_GOAL_ID == "PLAT2-G035"
     assert INTERVENTION_EVIDENCE_ID == "PLAT2EV035INT"
-    assert METHOD_ROLE_BY_ID[METHOD_DETERMINISTIC_COMPILER] == (
-        ROLE_PRODUCTION_EDIT_TARGET
-    )
+    assert METHOD_ROLE_BY_ID[METHOD_DETERMINISTIC_COMPILER] == (ROLE_PRODUCTION_EDIT_TARGET)
     assert METHOD_ROLE_BY_ID[METHOD_AUTOENCODER] == ROLE_CAUSAL_GUIDANCE
     assert METHOD_ROLE_BY_ID[METHOD_SPACY] == ROLE_NON_AUTHORITATIVE_DIAGNOSTICS
     assert METHOD_ROLE_BY_ID[METHOD_SYMAI] == ROLE_ORCHESTRATION_ROUTING
@@ -133,26 +125,18 @@ def test_interfaces_and_method_roles_are_frozen() -> None:
 
 def test_health_only_cannot_establish_model_inference() -> None:
     assert (
-        health_only_establishes_model_inference(
-            health_only=True, model_inference_performed=True
-        )
+        health_only_establishes_model_inference(health_only=True, model_inference_performed=True)
         is False
     )
     assert (
-        health_only_establishes_model_inference(
-            health_only=False, model_inference_performed=True
-        )
+        health_only_establishes_model_inference(health_only=False, model_inference_performed=True)
         is True
     )
     assert (
-        health_only_establishes_model_inference(
-            health_only=False, model_inference_performed=False
-        )
+        health_only_establishes_model_inference(health_only=False, model_inference_performed=False)
         is False
     )
-    with pytest.raises(
-        HoldoutInterventionError, match="health-only probes cannot establish"
-    ):
+    with pytest.raises(HoldoutInterventionError, match="health-only probes cannot establish"):
         assert_health_only_cannot_establish_model_inference(
             {
                 "health_only": True,
@@ -230,9 +214,7 @@ def test_build_method_records_classify_roles_and_statuses() -> None:
 
 
 def test_method_record_requires_exact_identity_fields() -> None:
-    det = build_method_capability_record(
-        METHOD_DETERMINISTIC_COMPILER, repo_root=ROOT
-    )
+    det = build_method_capability_record(METHOD_DETERMINISTIC_COMPILER, repo_root=ROOT)
     assert det["identity"]["version"]
     assert det["identity"]["toolchain"]
     assert det["evidence"]["kind"] == "plat_baseline"
@@ -252,9 +234,7 @@ def test_parse_method_record_rejects_semantic_authority_for_advisors() -> None:
 
 
 def test_parse_method_record_rejects_health_only_inference_claim() -> None:
-    leanstral = build_method_capability_record(
-        METHOD_LEANSTRAL, repo_root=ROOT
-    )
+    leanstral = build_method_capability_record(METHOD_LEANSTRAL, repo_root=ROOT)
     tampered = copy.deepcopy(leanstral)
     tampered["health_only"] = True
     tampered["model_inference_established"] = True
@@ -335,19 +315,13 @@ def test_each_repair_dev_residual_maps_to_intervention_and_ablations() -> None:
         assert mapping["population_kind"] == POPULATION_KIND_REPAIR_DEVELOPMENT
         assert mapping["blind_data_used"] is False
         assert mapping["outcome_dependent_selection"] is False
-        assert mapping["primary_intervention"]["method_id"] == (
-            METHOD_DETERMINISTIC_COMPILER
-        )
+        assert mapping["primary_intervention"]["method_id"] == (METHOD_DETERMINISTIC_COMPILER)
         assert mapping["primary_intervention"]["edit_target"] is True
         assert mapping["primary_intervention"]["semantic_authority"] is True
-        control_ids = {
-            item["control_id"] for item in mapping["negative_controls"]
-        }
+        control_ids = {item["control_id"] for item in mapping["negative_controls"]}
         assert NEGATIVE_CONTROL_NO_EDIT in control_ids
         assert mapping["per_wave_ablation"]["units"]
-        assert mapping["cumulative_ablation"]["included_mapping_ids"][-1] == (
-            mapping["mapping_id"]
-        )
+        assert mapping["cumulative_ablation"]["included_mapping_ids"][-1] == (mapping["mapping_id"])
         # AE advisory is never eligible without scored_supported adapter.
         ae_adv = [
             item
@@ -379,21 +353,10 @@ def test_build_and_parse_intervention_registry() -> None:
     assert parsed["blind_holdout"]["access_receipt_count"] == 0
     assert parsed["blind_holdout"]["blind_seal_unopened"] is True
     assert parsed["selection_policy"]["blind_data_permitted"] is False
-    assert (
-        parsed["selection_policy"]["outcome_dependent_selection_permitted"]
-        is False
-    )
+    assert parsed["selection_policy"]["outcome_dependent_selection_permitted"] is False
     assert parsed["selection_policy"]["full_matrix_requires_override"] is True
-    assert (
-        parsed["full_matrix_policy"]["full_matrix_rerun_default_allowed"]
-        is False
-    )
-    assert (
-        parsed["full_matrix_policy"][
-            "requires_explicit_evidence_backed_override"
-        ]
-        is True
-    )
+    assert parsed["full_matrix_policy"]["full_matrix_rerun_default_allowed"] is False
+    assert parsed["full_matrix_policy"]["requires_explicit_evidence_backed_override"] is True
 
     catalog = load_repair_dev_residual_catalog(
         ROOT / DEFAULT_REPAIR_DEV_CATALOG_RELATIVE_PATH, repo_root=ROOT
@@ -419,9 +382,7 @@ def test_build_and_parse_intervention_registry() -> None:
 def test_registry_doctrine_matches_capability_policy() -> None:
     registry = build_intervention_registry(ROOT)
     roles = registry["doctrine"]
-    assert roles["deterministic_compiler_ir_decompiler"] == (
-        ROLE_PRODUCTION_EDIT_TARGET
-    )
+    assert roles["deterministic_compiler_ir_decompiler"] == (ROLE_PRODUCTION_EDIT_TARGET)
     assert roles["autoencoder"] == ROLE_CAUSAL_GUIDANCE
     assert roles["spacy"] == ROLE_NON_AUTHORITATIVE_DIAGNOSTICS
     assert roles["symai"] == ROLE_ORCHESTRATION_ROUTING
@@ -469,9 +430,7 @@ def test_registry_rejects_outcome_dependent_selection_flag() -> None:
         }
     }
     tampered["registry_cid"] = cid_for_dag_json(identity)
-    with pytest.raises(
-        HoldoutInterventionError, match="outcome-dependent selection"
-    ):
+    with pytest.raises(HoldoutInterventionError, match="outcome-dependent selection"):
         parse_intervention_registry(tampered)
 
 
@@ -492,9 +451,7 @@ def test_registry_rejects_non_det_edit_target() -> None:
         }
     }
     tampered["registry_cid"] = cid_for_dag_json(identity)
-    with pytest.raises(
-        HoldoutInterventionError, match="deterministic compiler"
-    ):
+    with pytest.raises(HoldoutInterventionError, match="deterministic compiler"):
         parse_intervention_registry(tampered)
 
 
@@ -505,9 +462,7 @@ def test_full_matrix_override_requires_evidence() -> None:
     assert policy["requires_explicit_evidence_backed_override"] is True
 
     mapping_id = registry["residual_mappings"][0]["mapping_id"]
-    evidence_cid = cid_for_dag_json(
-        {"kind": "full_matrix_override_evidence", "note": "test"}
-    )
+    evidence_cid = cid_for_dag_json({"kind": "full_matrix_override_evidence", "note": "test"})
     override = {
         "override_id": "test-override-1",
         "evidence_cid": evidence_cid,
@@ -529,9 +484,7 @@ def test_full_matrix_override_requires_evidence() -> None:
 
     outcome_dep = copy.deepcopy(override)
     outcome_dep["outcome_dependent_selection"] = True
-    with pytest.raises(
-        HoldoutInterventionError, match="outcome-dependent selection"
-    ):
+    with pytest.raises(HoldoutInterventionError, match="outcome-dependent selection"):
         validate_full_matrix_override(outcome_dep, registry=registry)
 
 
@@ -552,9 +505,7 @@ def test_checked_in_registry_artifact_parses() -> None:
 def test_write_intervention_registry_round_trip(tmp_path: Path) -> None:
     registry = build_intervention_registry(ROOT)
     out = tmp_path / "repair_dev_intervention_registry.json"
-    written = write_intervention_registry(
-        out, registry=registry, repo_root=ROOT
-    )
+    written = write_intervention_registry(out, registry=registry, repo_root=ROOT)
     assert out.is_file()
     reloaded = json.loads(out.read_text(encoding="utf-8"))
     assert reloaded["registry_cid"] == written["registry_cid"]
@@ -603,6 +554,4 @@ def test_residual_identity_key_is_stable() -> None:
         "field_path": "rules[2]",
         "residual_kind": "missing_rule",
     }
-    assert residual_identity_key(residual) == (
-        "legal_doc_2::rules[2]::missing_rule"
-    )
+    assert residual_identity_key(residual) == ("legal_doc_2::rules[2]::missing_rule")

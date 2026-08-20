@@ -15,7 +15,9 @@ from typing import Any
 STATE_START_RE = re.compile(r"\.([A-Z]{2})\] Scraping \d+ codes? for ([^\n]+)")
 CODE_START_RE = re.compile(r"\.([A-Z]{2})\] Scraping (.+?)\.\.\.")
 SCRAPED_RE = re.compile(r"\.([A-Z]{2})\] Scraped (\d+) statutes from (.+)")
-INCREMENTAL_RE = re.compile(r"\[state_laws_refresh\] incremental_publish state=([A-Z]{2}) stage=([a-z_]+)")
+INCREMENTAL_RE = re.compile(
+    r"\[state_laws_refresh\] incremental_publish state=([A-Z]{2}) stage=([a-z_]+)"
+)
 KRS_PROGRESS_RE = re.compile(
     r"Kentucky KRS (?P<event>chapter start|chapter discovered sections|section progress|chapter done): (?P<detail>.*)"
 )
@@ -48,7 +50,13 @@ def _pid_alive(pid: int | None) -> bool | None:
     return Path(f"/proc/{pid}").exists()
 
 
-def summarize(log_path: Path, *, phase_path: Path | None = None, pid: int | None = None, tail_bytes: int = 1_000_000) -> dict[str, Any]:
+def summarize(
+    log_path: Path,
+    *,
+    phase_path: Path | None = None,
+    pid: int | None = None,
+    tail_bytes: int = 1_000_000,
+) -> dict[str, Any]:
     text = _tail_text(log_path, bytes_to_read=max(4096, int(tail_bytes)))
     lines = [line for line in text.splitlines() if line.strip()]
     latest: dict[str, Any] = {}
@@ -61,7 +69,11 @@ def summarize(log_path: Path, *, phase_path: Path | None = None, pid: int | None
         match = STATE_START_RE.search(line)
         if match:
             current_state = match.group(1)
-            latest["state_start"] = {"state": current_state, "state_name": match.group(2), "line": line}
+            latest["state_start"] = {
+                "state": current_state,
+                "state_name": match.group(2),
+                "line": line,
+            }
         match = CODE_START_RE.search(line)
         if match:
             current_state = match.group(1)
@@ -72,7 +84,12 @@ def summarize(log_path: Path, *, phase_path: Path | None = None, pid: int | None
             state = match.group(1)
             count = int(match.group(2))
             state_counts[state] = count
-            latest["scraped"] = {"state": state, "count": count, "code": match.group(3), "line": line}
+            latest["scraped"] = {
+                "state": state,
+                "count": count,
+                "code": match.group(3),
+                "line": line,
+            }
         match = INCREMENTAL_RE.search(line)
         if match:
             incremental[match.group(1)] = match.group(2)

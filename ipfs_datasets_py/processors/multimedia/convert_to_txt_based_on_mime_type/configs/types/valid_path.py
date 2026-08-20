@@ -1,4 +1,3 @@
-
 from pathlib import Path
 from typing import Any, Type, Self
 
@@ -16,15 +15,17 @@ class ValidPath(Path):
     ) -> CoreSchema:
         return core_schema.json_or_python_schema(
             json_schema=core_schema.str_schema(),
-            python_schema=core_schema.union_schema([
-                core_schema.is_instance_schema(cls),
-                core_schema.no_info_plain_validator_function(cls.validate),
-            ]),
+            python_schema=core_schema.union_schema(
+                [
+                    core_schema.is_instance_schema(cls),
+                    core_schema.no_info_plain_validator_function(cls.validate),
+                ]
+            ),
             serialization=core_schema.plain_serializer_function_ser_schema(
                 lambda x: str(x),
             ),
         )
-    
+
     @classmethod
     def validate(cls, value: Any) -> Self:
         if isinstance(value, str):

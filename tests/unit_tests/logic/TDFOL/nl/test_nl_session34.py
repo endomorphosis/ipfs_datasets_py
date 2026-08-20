@@ -39,6 +39,7 @@ pytestmark = pytest.mark.skipif(
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_pattern(type_: PatternType, name: str = "test") -> Pattern:
     return Pattern(name=name, type=type_, description=f"Test {name}")
 
@@ -66,12 +67,14 @@ def _generator() -> FormulaGenerator:
 # tdfol_nl_generator.py branches
 # ===========================================================================
 
+
 class TestFormulaGeneratorBranchesSession34:
     """Cover previously-missing branches in FormulaGenerator."""
 
     def test_init_raises_when_tdfol_core_unavailable(self):
         """FormulaGenerator.__init__ raises ImportError when HAVE_TDFOL_CORE is False (line 105)."""
         import ipfs_datasets_py.logic.TDFOL.nl.tdfol_nl_generator as gen_mod
+
         orig = gen_mod.HAVE_TDFOL_CORE
         gen_mod.HAVE_TDFOL_CORE = False
         try:
@@ -239,7 +242,7 @@ class TestFormulaGeneratorBranchesSession34:
         gen = _generator()
         match = _make_match(
             PatternType.TEMPORAL,
-            "payment occurs",   # no 'always'/'eventually'/'next'/'within'/'until'
+            "payment occurs",  # no 'always'/'eventually'/'next'/'within'/'until'
             {"action": "occurs"},
         )
         formulas = gen.generate_from_matches([match])
@@ -278,7 +281,7 @@ class TestFormulaGeneratorBranchesSession34:
         match = _make_match(
             PatternType.TEMPORAL,
             "always occurs",
-            {},   # no 'action' key → generic Action
+            {},  # no 'action' key → generic Action
         )
         formulas = gen.generate_from_matches([match])
         assert len(formulas) == 1
@@ -305,7 +308,7 @@ class TestFormulaGeneratorBranchesSession34:
         gen = _generator()
         match = _make_match(
             PatternType.CONDITIONAL,
-            "payment triggers delivery",   # no 'if'/'when'
+            "payment triggers delivery",  # no 'if'/'when'
             {},
         )
         formulas = gen.generate_from_matches([match])
@@ -333,13 +336,14 @@ class TestFormulaGeneratorBranchesSession34:
 # llm.py branches
 # ===========================================================================
 
+
 class TestLLMResponseCacheClearSession34:
     """Cover LLMResponseCache.clear() (lines 386-388)."""
 
     def test_clear_resets_cache_and_counters(self):
         cache = LLMResponseCache(max_size=5)
         cache.put("t", "p", "h", "formula", 0.9)
-        cache.get("t", "p", "h")   # hit
+        cache.get("t", "p", "h")  # hit
         cache.get("t2", "p", "h")  # miss
 
         assert cache.hits == 1
@@ -379,6 +383,7 @@ class TestLLMNLConverterInitSession34:
     def test_init_raises_when_tdfol_nl_unavailable(self):
         """Line 434: ImportError when TDFOL_NL_AVAILABLE=False."""
         import ipfs_datasets_py.logic.TDFOL.nl.llm as llm_mod
+
         orig = llm_mod.TDFOL_NL_AVAILABLE
         llm_mod.TDFOL_NL_AVAILABLE = False
         try:
@@ -390,6 +395,7 @@ class TestLLMNLConverterInitSession34:
     def test_init_with_mocked_nlparser(self):
         """Lines 448-451: init body executes when deps mocked."""
         import ipfs_datasets_py.logic.TDFOL.nl.llm as llm_mod
+
         orig_parser = llm_mod.NLParser
         orig_options = llm_mod.ParseOptions
         llm_mod.NLParser = MagicMock()
@@ -406,6 +412,7 @@ class TestLLMNLConverterInitSession34:
     def test_init_with_caching_enabled(self):
         """LLMResponseCache created when enable_caching=True."""
         import ipfs_datasets_py.logic.TDFOL.nl.llm as llm_mod
+
         orig_parser = llm_mod.NLParser
         orig_options = llm_mod.ParseOptions
         llm_mod.NLParser = MagicMock()
@@ -660,7 +667,7 @@ class TestLLMGetStatsAndClearCacheSession34:
     def test_clear_cache_without_llm_cache(self):
         c = object.__new__(LLMNLConverter)
         c.llm_cache = None
-        c.clear_cache()   # should not raise
+        c.clear_cache()  # should not raise
 
 
 # ===========================================================================
@@ -681,6 +688,7 @@ class TestLLMConvertInternalSession34:
     def test_llm_convert_no_cache(self):
         """_llm_convert calls router.generate and extracts formula (lines 585-619)."""
         import ipfs_datasets_py.logic.TDFOL.nl.llm as llm_mod
+
         orig_cid = llm_mod.create_cache_cid
         orig_router = llm_mod.get_default_router
         try:
@@ -701,6 +709,7 @@ class TestLLMConvertInternalSession34:
     def test_llm_convert_cache_hit(self):
         """_llm_convert returns cache hit when available (lines 592-597)."""
         import ipfs_datasets_py.logic.TDFOL.nl.llm as llm_mod
+
         orig_cid = llm_mod.create_cache_cid
         try:
             llm_mod.create_cache_cid = lambda data: "bafktest123456789"
@@ -720,6 +729,7 @@ class TestLLMConvertInternalSession34:
     def test_llm_convert_caches_result(self):
         """_llm_convert stores result in cache after LLM call (lines 614-617)."""
         import ipfs_datasets_py.logic.TDFOL.nl.llm as llm_mod
+
         orig_cid = llm_mod.create_cache_cid
         orig_router = llm_mod.get_default_router
         try:
@@ -737,8 +747,6 @@ class TestLLMConvertInternalSession34:
         finally:
             llm_mod.create_cache_cid = orig_cid
             llm_mod.get_default_router = orig_router
-
-
 
     """Cover NLParser and module-level functions in tdfol_nl_api.py (lines 97, 122-210, 237-285)."""
 
@@ -773,7 +781,9 @@ class TestLLMConvertInternalSession34:
         api_mod.FormulaGenerator = MagicMock(return_value=gen)
         api_mod.ContextResolver = MagicMock(return_value=res)
         api_mod.Context = MagicMock(return_value=ctx)
-        options = api_mod.ParseOptions(resolve_context=resolve_context, enable_caching=enable_caching)
+        options = api_mod.ParseOptions(
+            resolve_context=resolve_context, enable_caching=enable_caching
+        )
         return api_mod.NLParser(options), pre, mat, gen, res, ctx
 
     def test_nlparser_raises_when_deps_unavailable(self):
@@ -842,7 +852,7 @@ class TestLLMConvertInternalSession34:
         """reset_context() when context=None does nothing."""
         parser, pre, mat, gen, res, ctx = self._make_parser(resolve_context=False)
         assert parser.context is None
-        parser.reset_context()   # must not raise
+        parser.reset_context()  # must not raise
         assert parser.context is None
 
     def test_nlparser_clear_cache(self):

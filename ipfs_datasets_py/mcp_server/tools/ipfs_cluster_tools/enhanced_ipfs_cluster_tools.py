@@ -5,6 +5,7 @@ Enhanced IPFS cluster tools — standalone async MCP functions.
 Business logic (MockIPFSClusterService) lives in
 ipfs_datasets_py.ipfs_cluster.cluster_engine.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -105,30 +106,79 @@ async def manage_ipfs_content(
         if pin:
             await _DEFAULT_CLUSTER_SERVICE.pin_content(mock_cid)
     elif action == "download":
-        result = {"cid": cid, "content": f"Mock content for {cid}", "size_bytes": 1024, "content_type": "text/plain", "download_time_ms": 80}
+        result = {
+            "cid": cid,
+            "content": f"Mock content for {cid}",
+            "size_bytes": 1024,
+            "content_type": "text/plain",
+            "download_time_ms": 80,
+        }
     elif action == "get_metadata":
-        result = {"cid": cid, "metadata": {"size": 1024, "type": "file", "created": datetime.now(timezone.utc).isoformat(), "links": 0}, "retrieval_time_ms": 30}
+        result = {
+            "cid": cid,
+            "metadata": {
+                "size": 1024,
+                "type": "file",
+                "created": datetime.now(timezone.utc).isoformat(),
+                "links": 0,
+            },
+            "retrieval_time_ms": 30,
+        }
     elif action == "verify_integrity":
-        result = {"cid": cid, "integrity_valid": True, "hash_matches": True, "size_correct": True, "verification_time_ms": 200}
+        result = {
+            "cid": cid,
+            "integrity_valid": True,
+            "hash_matches": True,
+            "size_correct": True,
+            "verification_time_ms": 200,
+        }
     elif action == "list_content":
-        result = {"content": [{"cid": "QmExample1", "size": 1024, "type": "file"}, {"cid": "QmExample2", "size": 2048, "type": "directory"}], "total_items": 2, "list_time_ms": 100}
+        result = {
+            "content": [
+                {"cid": "QmExample1", "size": 1024, "type": "file"},
+                {"cid": "QmExample2", "size": 2048, "type": "directory"},
+            ],
+            "total_items": 2,
+            "list_time_ms": 100,
+        }
     else:
         result = {"status": "unknown_action", "action": action}
 
-    return {"action": action, "result": result, "status": "success", "timestamp": datetime.now(timezone.utc).isoformat()}
+    return {
+        "action": action,
+        "result": result,
+        "status": "success",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 # Backward-compatible class shims
 class EnhancedIPFSClusterManagementTool:
     """Backward-compatible shim."""
+
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:  # noqa: D102
-        return await manage_ipfs_cluster(parameters["action"], parameters.get("node_id"), parameters.get("cid"), parameters.get("replication_factor", 3), parameters.get("cluster_config", {}), parameters.get("filters", {}))
+        return await manage_ipfs_cluster(
+            parameters["action"],
+            parameters.get("node_id"),
+            parameters.get("cid"),
+            parameters.get("replication_factor", 3),
+            parameters.get("cluster_config", {}),
+            parameters.get("filters", {}),
+        )
 
 
 class EnhancedIPFSContentTool:
     """Backward-compatible shim."""
+
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:  # noqa: D102
-        return await manage_ipfs_content(parameters["action"], parameters.get("cid"), parameters.get("content"), parameters.get("metadata", {}), parameters.get("pin", True), parameters.get("content_type", "text/plain"))
+        return await manage_ipfs_content(
+            parameters["action"],
+            parameters.get("cid"),
+            parameters.get("content"),
+            parameters.get("metadata", {}),
+            parameters.get("pin", True),
+            parameters.get("content_type", "text/plain"),
+        )
 
 
 # Module-level tool instances for registration (backward compat)

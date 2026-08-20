@@ -43,13 +43,13 @@ class FOLConstructorIOMixin:
                 "created_at": self.metadata.created_at.isoformat(),
                 "exported_at": datetime.now().isoformat(),
                 "total_statements": len(self.session_statements),
-                "average_confidence": self.metadata.average_confidence
+                "average_confidence": self.metadata.average_confidence,
             },
             "statements": [],
             "fol_formulas": [],
             "logical_analysis": {},
             "consistency_report": {},
-            "errors": []
+            "errors": [],
         }
 
         try:
@@ -59,7 +59,9 @@ class FOLConstructorIOMixin:
             export_data["errors"].append(f"logical_analysis: {e}")
 
         try:
-            export_data["consistency_report"] = self.validate_consistency().get("consistency_report", {})
+            export_data["consistency_report"] = self.validate_consistency().get(
+                "consistency_report", {}
+            )
         except Exception as e:
             logger.warning(f"Failed to validate consistency during export: {e}")
             export_data["errors"].append(f"consistency_report: {e}")
@@ -72,7 +74,7 @@ class FOLConstructorIOMixin:
                     "timestamp": statement.timestamp.isoformat(),
                     "confidence": statement.confidence,
                     "is_consistent": statement.is_consistent,
-                    "tags": statement.tags
+                    "tags": statement.tags,
                 }
 
                 if statement.logical_components:
@@ -80,7 +82,7 @@ class FOLConstructorIOMixin:
                         "quantifiers": statement.logical_components.quantifiers,
                         "predicates": statement.logical_components.predicates,
                         "entities": statement.logical_components.entities,
-                        "connectives": statement.logical_components.logical_connectives
+                        "connectives": statement.logical_components.logical_connectives,
                     }
 
                 export_data["statements"].append(statement_data)
@@ -90,17 +92,18 @@ class FOLConstructorIOMixin:
                         "statement_id": statement.id,
                         "original_text": statement.text,
                         "fol_formula": statement.fol_formula,
-                        "format": format
+                        "format": format,
                     }
 
                     if format != "symbolic":
                         try:
                             fol_data["exported_formula"] = self._convert_fol_format(
-                                statement.fol_formula,
-                                format
+                                statement.fol_formula, format
                             )
                         except Exception as e:
-                            logger.warning(f"Failed to convert formula for statement {statement.id}: {e}")
+                            logger.warning(
+                                f"Failed to convert formula for statement {statement.id}: {e}"
+                            )
                             export_data["errors"].append(f"fol_format {statement.id}: {e}")
                             fol_data["exported_formula"] = statement.fol_formula
                     else:
@@ -122,11 +125,11 @@ class FOLConstructorIOMixin:
                 "created_at": self.metadata.created_at.isoformat(),
                 "last_modified": self.metadata.last_modified.isoformat(),
                 "total_statements": len(self.session_statements),
-                "average_confidence": self.metadata.average_confidence
+                "average_confidence": self.metadata.average_confidence,
             },
             "logical_elements": self._count_logical_elements(),
             "bridge_statistics": self.bridge.get_statistics(),
-            "session_health": self._assess_session_health()
+            "session_health": self._assess_session_health(),
         }
 
     def _update_session_metadata(self):
@@ -139,35 +142,32 @@ class FOLConstructorIOMixin:
             self.metadata.average_confidence = total_confidence / len(self.session_statements)
 
             self.metadata.consistent_statements = sum(
-                1 for stmt in self.session_statements.values()
-                if stmt.is_consistent is True
+                1 for stmt in self.session_statements.values() if stmt.is_consistent is True
             )
             self.metadata.inconsistent_statements = sum(
-                1 for stmt in self.session_statements.values()
-                if stmt.is_consistent is False
+                1 for stmt in self.session_statements.values() if stmt.is_consistent is False
             )
 
     def _check_consistency_with_existing(self, new_text: str, fol_result: Any) -> Dict[str, Any]:
         """Check consistency of new statement with existing ones."""
-        consistency_result: Dict[str, Any] = {
-            "consistent": True,
-            "conflicts": [],
-            "warnings": []
-        }
+        consistency_result: Dict[str, Any] = {"consistent": True, "conflicts": [], "warnings": []}
 
         new_text_lower = new_text.lower()
 
         for existing_statement in self.session_statements.values():
             existing_text_lower = existing_statement.text.lower()
 
-            if ("all" in new_text_lower and "no" in existing_text_lower) or \
-               ("no" in new_text_lower and "all" in existing_text_lower):
+            if ("all" in new_text_lower and "no" in existing_text_lower) or (
+                "no" in new_text_lower and "all" in existing_text_lower
+            ):
                 consistency_result["consistent"] = False
-                consistency_result["conflicts"].append({
-                    "type": "universal_contradiction",
-                    "existing_statement": existing_statement.text,
-                    "new_statement": new_text
-                })
+                consistency_result["conflicts"].append(
+                    {
+                        "type": "universal_contradiction",
+                        "existing_statement": existing_statement.text,
+                        "new_statement": new_text,
+                    }
+                )
 
         return consistency_result
 
@@ -176,7 +176,7 @@ class FOLConstructorIOMixin:
         conflict_result: Dict[str, Any] = {
             "has_conflict": False,
             "conflict_type": None,
-            "description": ""
+            "description": "",
         }
 
         if not stmt1.fol_formula or not stmt2.fol_formula:
@@ -185,8 +185,9 @@ class FOLConstructorIOMixin:
         text1_lower = stmt1.text.lower()
         text2_lower = stmt2.text.lower()
 
-        if ("all" in text1_lower and "no" in text2_lower) or \
-           ("no" in text1_lower and "all" in text2_lower):
+        if ("all" in text1_lower and "no" in text2_lower) or (
+            "no" in text1_lower and "all" in text2_lower
+        ):
             conflict_result["has_conflict"] = True
             conflict_result["conflict_type"] = "universal_contradiction"
             conflict_result["description"] = "Universal statement contradicts negative universal"
@@ -228,7 +229,9 @@ class FOLConstructorIOMixin:
         if low_confidence > total_statements * 0.3:
             insights.append("Many statements have low confidence - consider rephrasing")
 
-        quantified_ratio = analysis["complexity_analysis"]["quantified_statements"] / total_statements
+        quantified_ratio = (
+            analysis["complexity_analysis"]["quantified_statements"] / total_statements
+        )
         if quantified_ratio > 0.5:
             insights.append("Session heavily uses quantified statements")
 
@@ -260,7 +263,7 @@ class FOLConstructorIOMixin:
             "total_quantifiers": 0,
             "total_predicates": 0,
             "total_entities": 0,
-            "total_connectives": 0
+            "total_connectives": 0,
         }
 
         for statement in self.session_statements.values():
@@ -284,9 +287,15 @@ class FOLConstructorIOMixin:
 
         health_score = (avg_confidence * 50) + (consistency_ratio * 50)
 
-        health_status = "excellent" if health_score > 80 else \
-                       "good" if health_score > 60 else \
-                       "fair" if health_score > 40 else "poor"
+        health_status = (
+            "excellent"
+            if health_score > 80
+            else "good"
+            if health_score > 60
+            else "fair"
+            if health_score > 40
+            else "poor"
+        )
 
         return {
             "status": health_status,
@@ -294,6 +303,6 @@ class FOLConstructorIOMixin:
             "metrics": {
                 "average_confidence": avg_confidence,
                 "consistency_ratio": consistency_ratio,
-                "total_statements": total_statements
-            }
+                "total_statements": total_statements,
+            },
         }

@@ -1,11 +1,7 @@
-
-
-
-
 from ._archive_security import ArchiveSecurity
 from ._document_security import DocumentSecurity
 from .specific_checks_factory import (
-    make_archive_security, 
+    make_archive_security,
     make_document_security,
     make_image_security,
     make_video_security,

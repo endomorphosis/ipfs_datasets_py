@@ -16,6 +16,7 @@ Usage
     result = pipeline.run("Alice must pay Bob by Friday.", data_source="test")
     print(result["score"].overall, result["entities"])
 """
+
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -29,9 +30,10 @@ _logger = logging.getLogger(__name__)
 
 # TypedDict Definitions for Type-Safe Pipeline Serialization
 
+
 class PipelineResultDict(TypedDict, total=False):
     """Serialized pipeline result with ontology, scoring, and metadata.
-    
+
     Fields:
         ontology: Extracted ontology structure
         score: Critic score for the extraction (dict or CriticScore object)
@@ -40,6 +42,7 @@ class PipelineResultDict(TypedDict, total=False):
         actions_applied: List of actions/refinements applied during processing
         metadata: Additional metadata from the extraction process
     """
+
     ontology: Dict[str, Any]
     score: Any  # Dict or CriticScore
     entities: List[Dict[str, Any]]
@@ -50,21 +53,24 @@ class PipelineResultDict(TypedDict, total=False):
 
 class PipelineConfigDict(TypedDict, total=False):
     """Pipeline configuration for serialization and reconstruction.
-    
+
     This TypedDict represents the essential configuration needed to
     recreate an equivalent OntologyPipeline instance.
-    
+
     Fields:
         domain: Domain specification for the pipeline
         use_llm: Whether language model is enabled for criticism
         max_rounds: Maximum refinement rounds for the mediator
     """
+
     domain: str
     use_llm: bool
     max_rounds: int
 
+
 try:
     from opentelemetry import trace
+
     HAVE_OPENTELEMETRY = True
 except ImportError:  # pragma: no cover - optional dependency
     trace = None  # type: ignore[assignment]
@@ -83,6 +89,7 @@ class PipelineResult:
         actions_applied: Refinement actions applied by the mediator.
         metadata: Extra timing / adapter stats.
     """
+
     ontology: Dict[str, Any]
     score: Any  # CriticScore
     entities: List[Dict[str, Any]] = field(default_factory=list)
@@ -224,7 +231,12 @@ class OntologyPipeline:
         if self._otel_enabled and HAVE_OPENTELEMETRY and trace is not None:
             try:
                 self._otel_tracer = trace.get_tracer(__name__)
-            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - optional dependency
+            except (
+                AttributeError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as exc:  # pragma: no cover - optional dependency
                 self._log.debug("OpenTelemetry tracer unavailable: %s", exc)
         try:
             from ipfs_datasets_py.optimizers.common.metrics_prometheus import (
@@ -244,7 +256,12 @@ class OntologyPipeline:
 
         try:
             span_cm = self._otel_tracer.start_as_current_span(operation)
-        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - optional dependency path
+        except (
+            AttributeError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:  # pragma: no cover - optional dependency path
             self._log.debug("Failed to create OpenTelemetry span %s: %s", operation, exc)
             yield None
             return
@@ -258,17 +275,18 @@ class OntologyPipeline:
                         span.set_attribute(key, value)
                     else:
                         span.set_attribute(key, str(value))
-                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - best effort
+                except (
+                    AttributeError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as exc:  # pragma: no cover - best effort
                     self._log.debug("Failed to set span attribute %s=%r: %s", key, value, exc)
             yield span
 
     def __repr__(self) -> str:
         """Return a concise developer-readable summary of this pipeline."""
-        return (
-            f"OntologyPipeline("
-            f"domain={self._domain!r}, "
-            f"runs={len(self._run_history)})"
-        )
+        return f"OntologyPipeline(domain={self._domain!r}, runs={len(self._run_history)})"
 
     def run(
         self,
@@ -312,7 +330,9 @@ class OntologyPipeline:
             if progress_callback is None:
                 return
             try:
-                progress_callback({"stage": stage, "step": step, "total_steps": total_steps, **extra})
+                progress_callback(
+                    {"stage": stage, "step": step, "total_steps": total_steps, **extra}
+                )
             except (AttributeError, RuntimeError, TypeError, ValueError) as _cb_exc:
                 self._log.debug("progress_callback raised in stage %r: %s", stage, _cb_exc)
 
@@ -337,7 +357,10 @@ class OntologyPipeline:
                 import json as _json
                 from datetime import datetime as _datetime, timezone as _timezone
 
-                from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
+                from ipfs_datasets_py.optimizers.common.structured_logging import (
+                    redact_payload,
+                    with_schema,
+                )
 
                 start_payload = {
                     "timestamp": _datetime.now(_timezone.utc).isoformat(),
@@ -381,7 +404,9 @@ class OntologyPipeline:
 
                 # 1. Extract entities
                 hint = self._adapter.get_extraction_hint()
-                self._log.info("OntologyPipeline.run: threshold_hint=%.3f domain=%s", hint, self.domain)
+                self._log.info(
+                    "OntologyPipeline.run: threshold_hint=%.3f domain=%s", hint, self.domain
+                )
                 _notify("extracting", 1, domain=self.domain, data_source=data_source)
                 stage_start = time.perf_counter()
                 extraction = self._generator.extract_entities(data, ctx)
@@ -393,8 +418,12 @@ class OntologyPipeline:
                 )
 
                 ontology: Dict[str, Any] = ontology_from_extraction_result(extraction)
-                _notify("extracted", 2, entity_count=len(ontology["entities"]),
-                    relationship_count=len(ontology["relationships"]))
+                _notify(
+                    "extracted",
+                    2,
+                    entity_count=len(ontology["entities"]),
+                    relationship_count=len(ontology["relationships"]),
+                )
 
                 actions_applied: List[str] = []
 
@@ -415,10 +444,14 @@ class OntologyPipeline:
                         self._last_refinement_state = state
                     elif refine_mode == "llm":
                         if refinement_agent is None:
-                            self._log.warning("refine_mode=llm requires refinement_agent; falling back to rule_based")
+                            self._log.warning(
+                                "refine_mode=llm requires refinement_agent; falling back to rule_based"
+                            )
                             refined = self._mediator.refine_ontology(ontology, score, ctx)
                             ontology = refined
-                            actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
+                            actions_applied = refined.get("metadata", {}).get(
+                                "refinement_actions", []
+                            )
                             score = self._critic.evaluate_ontology(ontology, ctx)
                             self._last_refinement_state = None
                         else:
@@ -429,7 +462,9 @@ class OntologyPipeline:
                             )
                             ontology = state.current_ontology
                             score = state.critic_scores[-1]
-                            actions_applied = [r.get("action") for r in state.refinement_history[1:]]
+                            actions_applied = [
+                                r.get("action") for r in state.refinement_history[1:]
+                            ]
                             self._last_refinement_state = state
                     else:
                         refined = self._mediator.refine_ontology(ontology, score, ctx)
@@ -438,8 +473,12 @@ class OntologyPipeline:
                         score = self._critic.evaluate_ontology(ontology, ctx)
                         self._last_refinement_state = None
 
-                    _notify("refined", 4, score=getattr(score, "overall", None),
-                            actions_applied=actions_applied)
+                    _notify(
+                        "refined",
+                        4,
+                        score=getattr(score, "overall", None),
+                        actions_applied=actions_applied,
+                    )
                     # Also invoke callback with positional (round_num, max_rounds, score) signature
                     if progress_callback is not None:
                         try:
@@ -481,9 +520,7 @@ class OntologyPipeline:
                     )
                     self._prometheus_metrics.record_round_completion(domain=self.domain)
                     if len(self._run_history) >= 2:
-                        previous_score = float(
-                            getattr(self._run_history[-2].score, "overall", 0.0)
-                        )
+                        previous_score = float(getattr(self._run_history[-2].score, "overall", 0.0))
                         self._prometheus_metrics.record_score_delta(
                             float(getattr(score, "overall", 0.0)) - previous_score,
                             labels=metric_labels,
@@ -514,10 +551,15 @@ class OntologyPipeline:
                     import json as _json
                     from datetime import datetime as _datetime, timezone as _timezone
 
-                    from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
+                    from ipfs_datasets_py.optimizers.common.structured_logging import (
+                        redact_payload,
+                        with_schema,
+                    )
 
                     duration_ms = (time.time() - start_time) * 1000.0
-                    stage_durations_ms = {name: duration * 1000.0 for name, duration in stage_timings.items()}
+                    stage_durations_ms = {
+                        name: duration * 1000.0 for name, duration in stage_timings.items()
+                    }
                     payload = {
                         "timestamp": _datetime.now(_timezone.utc).isoformat(),
                         "level": "INFO",
@@ -558,12 +600,23 @@ class OntologyPipeline:
 
                 if _span is not None:
                     try:
-                        _span.set_attribute("pipeline.entity_count", len(ontology.get("entities", [])))
-                        _span.set_attribute("pipeline.relationship_count", len(ontology.get("relationships", [])))
+                        _span.set_attribute(
+                            "pipeline.entity_count", len(ontology.get("entities", []))
+                        )
+                        _span.set_attribute(
+                            "pipeline.relationship_count", len(ontology.get("relationships", []))
+                        )
                         _span.set_attribute("pipeline.actions_count", len(actions_applied))
                         _span.set_attribute("pipeline.score", float(getattr(score, "overall", 0.0)))
-                        _span.set_attribute("pipeline.duration_ms", (time.time() - start_time) * 1000.0)
-                    except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - best effort
+                        _span.set_attribute(
+                            "pipeline.duration_ms", (time.time() - start_time) * 1000.0
+                        )
+                    except (
+                        AttributeError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ) as exc:  # pragma: no cover - best effort
                         self._log.debug("Failed to set final pipeline span attributes: %s", exc)
 
                 return result
@@ -579,7 +632,10 @@ class OntologyPipeline:
                     import json as _json
                     from datetime import datetime as _datetime, timezone as _timezone
 
-                    from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
+                    from ipfs_datasets_py.optimizers.common.structured_logging import (
+                        redact_payload,
+                        with_schema,
+                    )
 
                     failure_payload = {
                         "timestamp": _datetime.now(_timezone.utc).isoformat(),
@@ -639,7 +695,13 @@ class OntologyPipeline:
             List of :class:`PipelineResult` in the same order as *docs*.
         """
         return [
-            self.run(doc, data_source=data_source, data_type=data_type, refine=refine, progress_callback=progress_callback)
+            self.run(
+                doc,
+                data_source=data_source,
+                data_type=data_type,
+                refine=refine,
+                progress_callback=progress_callback,
+            )
             for doc in docs
         ]
 
@@ -721,6 +783,7 @@ class OntologyPipeline:
             >>> result = await pipeline.run_async("Alice works at ACME.")
         """
         import anyio
+
         return await anyio.to_thread.run_sync(
             lambda: self.run(data, data_source=data_source, data_type=data_type, refine=refine),
         )
@@ -813,13 +876,16 @@ class OntologyPipeline:
             True
         """
         import time
+
         start = time.perf_counter()
         result = self.run(data, data_source=data_source, data_type=data_type, refine=refine)
         latency = time.perf_counter() - start
         return {
             "result": result,
             "latency_seconds": latency,
-            "score": result.score.overall if hasattr(result.score, "overall") else float(result.score),
+            "score": result.score.overall
+            if hasattr(result.score, "overall")
+            else float(result.score),
             "entity_count": len(result.entities),
         }
 
@@ -902,15 +968,17 @@ class OntologyPipeline:
             >>> "legal" in OntologyPipeline().domain_list
             True
         """
-        return sorted([
-            "general",
-            "legal",
-            "medical",
-            "finance",
-            "science",
-            "technology",
-            "news",
-        ])
+        return sorted(
+            [
+                "general",
+                "legal",
+                "medical",
+                "finance",
+                "science",
+                "technology",
+                "news",
+            ]
+        )
 
     @domain_list.setter
     def domain_list(self, value: List[str]) -> None:
@@ -973,10 +1041,7 @@ class OntologyPipeline:
             history = list(state.refinement_history)
         elif self._run_history:
             actions = self._run_history[-1].actions_applied
-            history = [
-                {"round": idx + 1, "action": action}
-                for idx, action in enumerate(actions)
-            ]
+            history = [{"round": idx + 1, "action": action} for idx, action in enumerate(actions)]
 
         fmt = format.lower()
         if fmt == "dict":
@@ -1124,7 +1189,11 @@ class OntologyPipeline:
             import json as _json
             from datetime import datetime as _datetime, timezone as _timezone
 
-            from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
+            from ipfs_datasets_py.optimizers.common.structured_logging import (
+                redact_payload,
+                with_schema,
+            )
+
             payload = {
                 "timestamp": _datetime.now(_timezone.utc).isoformat(),
                 "level": "INFO",
@@ -1337,6 +1406,7 @@ class OntologyPipeline:
             Std-dev as a float; ``0.0`` when fewer than 2 runs are recorded.
         """
         import math as _math
+
         return _math.sqrt(self.score_variance())
 
     def passing_run_count(self, threshold: float = 0.6) -> int:
@@ -1614,8 +1684,7 @@ class OntologyPipeline:
         """
         if not self._run_history:
             return -1
-        return max(range(len(self._run_history)),
-                   key=lambda i: self._run_history[i].score.overall)
+        return max(range(len(self._run_history)), key=lambda i: self._run_history[i].score.overall)
 
     def score_ewma(self, alpha: float = 0.3) -> list:
         """Return a list of exponentially weighted moving averages of run scores.
@@ -1698,8 +1767,7 @@ class OntologyPipeline:
         """
         if not self._run_history:
             return -1
-        return max(range(len(self._run_history)),
-                   key=lambda i: self._run_history[i].score.overall)
+        return max(range(len(self._run_history)), key=lambda i: self._run_history[i].score.overall)
 
     def score_improvement_rate(self) -> float:
         """Return the mean per-step improvement in overall scores.
@@ -1824,9 +1892,7 @@ class OntologyPipeline:
         Returns:
             List of float scores, highest first. Fewer than k if fewer runs.
         """
-        scores = sorted(
-            (r.score.overall for r in self._run_history), reverse=True
-        )
+        scores = sorted((r.score.overall for r in self._run_history), reverse=True)
         return scores[:k]
 
     def worst_k_scores(self, k: int = 3) -> list:
@@ -1853,10 +1919,7 @@ class OntologyPipeline:
         scores = [r.score.overall for r in self._run_history]
         if len(scores) < n:
             return []
-        return [
-            sum(scores[i:i + n]) / n
-            for i in range(len(scores) - n + 1)
-        ]
+        return [sum(scores[i : i + n]) / n for i in range(len(scores) - n + 1)]
 
     def convergence_round(self, variance_threshold: float = 0.01) -> int:
         """Return the first run index where variance of last 3 scores drops below threshold.
@@ -1869,7 +1932,7 @@ class OntologyPipeline:
         """
         scores = [r.score.overall for r in self._run_history]
         for i in range(2, len(scores)):
-            window = scores[i - 2:i + 1]
+            window = scores[i - 2 : i + 1]
             mean = sum(window) / 3
             var = sum((s - mean) ** 2 for s in window) / 3
             if var < variance_threshold:
@@ -1918,7 +1981,7 @@ class OntologyPipeline:
         scores = [r.score.overall for r in self._run_history]
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return variance ** 0.5
+        return variance**0.5
 
     def improvement_count(self) -> int:
         """Return the number of runs that improved on the immediately preceding run.
@@ -2013,7 +2076,7 @@ class OntologyPipeline:
         k = int(n * trim_fraction)
         if k == 0 or k * 2 >= n:
             return sum(scores) / n
-        trimmed = scores[k:n - k]
+        trimmed = scores[k : n - k]
         return sum(trimmed) / len(trimmed)
 
     def run_score_median(self) -> float:
@@ -2114,7 +2177,7 @@ class OntologyPipeline:
         if mean == 0.0:
             return 0.0
         variance = sum((v - mean) ** 2 for v in scores) / n
-        return (variance ** 0.5) / mean
+        return (variance**0.5) / mean
 
     def run_score_range(self) -> tuple:
         """Return (min, max) tuple of run overall scores.
@@ -2154,7 +2217,7 @@ class OntologyPipeline:
         if m2 == 0.0:
             return 0.0
         m4 = sum((s - mean) ** 4 for s in scores) / n
-        return m4 / (m2 ** 2) - 3.0
+        return m4 / (m2**2) - 3.0
 
     def run_score_sum(self) -> float:
         """Return the sum of all run overall scores.
@@ -2266,7 +2329,9 @@ class OntologyPipeline:
         if n < 3:
             return 0
         scores = [r.score.overall for r in self._run_history]
-        return sum(1 for i in range(1, n - 1) if scores[i] > scores[i - 1] and scores[i] > scores[i + 1])
+        return sum(
+            1 for i in range(1, n - 1) if scores[i] > scores[i - 1] and scores[i] > scores[i + 1]
+        )
 
     def run_score_trend_direction(self) -> str:
         """Return "improving", "declining", or "stable" based on recent runs.
@@ -2336,7 +2401,8 @@ class OntologyPipeline:
         if len(self._run_history) < 2:
             return 0.0
         improvements = sum(
-            1 for i in range(len(self._run_history) - 1)
+            1
+            for i in range(len(self._run_history) - 1)
             if self._run_history[i + 1].score.overall > self._run_history[i].score.overall
         )
         return improvements / (len(self._run_history) - 1)
@@ -2362,7 +2428,7 @@ class OntologyPipeline:
         scores = [r.score.overall for r in self._run_history]
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return variance ** 0.5
+        return variance**0.5
 
     def run_score_min(self) -> float:
         """Return the minimum score across all run history.
@@ -2405,6 +2471,7 @@ class OntologyPipeline:
         if not self._run_history:
             return 0.0
         import math
+
         scores = [r.score.overall for r in self._run_history]
         if any(s <= 0 for s in scores):
             return 0.0
@@ -2482,7 +2549,7 @@ class OntologyPipeline:
             return 0.0
         mean = sum(tail) / len(tail)
         var = sum((s - mean) ** 2 for s in tail) / len(tail)
-        return var ** 0.5
+        return var**0.5
 
     def run_improvement_fraction(self) -> float:
         """Return the fraction of runs where the score improved over the previous run.
@@ -2628,6 +2695,7 @@ class OntologyPipeline:
         if first == 0.0:
             return 0.0
         return (last - first) / first
+
     # ------------------------------------------------------------------ #
     # Batch 204: Pipeline run history analysis methods                   #
     # ------------------------------------------------------------------ #
@@ -2688,7 +2756,7 @@ class OntologyPipeline:
         """
         freq = self.run_action_frequency()
         if not freq:
-            return 'none'
+            return "none"
         return max(freq.items(), key=lambda x: x[1])[0]
 
     def run_score_variance(self) -> float:
@@ -2711,7 +2779,7 @@ class OntologyPipeline:
             Score standard deviation, or 0.0 if fewer than 2 runs.
         """
         variance = self.run_score_variance()
-        return variance ** 0.5
+        return variance**0.5
 
     def run_score_coefficient_of_variation(self) -> float:
         """Calculate coefficient of variation (CV) for run scores.
@@ -2798,8 +2866,8 @@ class OntologyPipeline:
         variance = sum((s - mean) ** 2 for s in scores) / n
         if variance == 0.0:
             return 0.0
-        std = variance ** 0.5
-        return sum((s - mean) ** 3 for s in scores) / (n * std ** 3)
+        std = variance**0.5
+        return sum((s - mean) ** 3 for s in scores) / (n * std**3)
 
     def worst_score_decline(self) -> float:
         """Return the maximum single-step score decline across all runs.
@@ -2904,9 +2972,7 @@ class OntologyPipeline:
         if len(self._run_history) < 2:
             return 0.0
         scores = [r.score.overall for r in self._run_history]
-        improvements = sum(
-            1 for i in range(1, len(scores)) if scores[i] > scores[i - 1]
-        )
+        improvements = sum(1 for i in range(1, len(scores)) if scores[i] > scores[i - 1])
         return improvements / (len(scores) - 1)
 
     def run_score_ewma(self, alpha: float = 0.3) -> float:
@@ -2968,10 +3034,7 @@ class OntologyPipeline:
         variance = sum((s - mean) ** 2 for s in scores) / n
         if variance == 0.0:
             return 0.0
-        cov = sum(
-            (scores[i] - mean) * (scores[i - lag] - mean)
-            for i in range(lag, n)
-        ) / n
+        cov = sum((scores[i] - mean) * (scores[i - lag] - mean) for i in range(lag, n)) / n
         return cov / variance
 
     def run_score_quartile_dispersion(self) -> float:
@@ -3168,8 +3231,7 @@ class OntologyPipeline:
         fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
         mean_fd = sum(fd) / len(fd)
         variance = sum((d - mean_fd) ** 2 for d in fd) / len(fd)
-        return variance ** 0.5
-
+        return variance**0.5
 
     def run_score_velocity_skewness(self) -> float:
         """Return the population skewness of run-score first differences (velocity).
@@ -3198,19 +3260,19 @@ class OntologyPipeline:
         n = len(self._run_history)
         if n < 3:
             return 0.0
-        
+
         scores = [r.score.overall for r in self._run_history]
         fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
-        
+
         # Compute mean and std
         mean_fd = sum(fd) / len(fd)
         variance = sum((d - mean_fd) ** 2 for d in fd) / len(fd)
-        std_fd = variance ** 0.5
-        
+        std_fd = variance**0.5
+
         if std_fd == 0.0:
             return 0.0  # no variance = no skewness
-        
+
         # Compute third central moment
         m3 = sum((d - mean_fd) ** 3 for d in fd) / len(fd)
-        
-        return m3 / (std_fd ** 3)
+
+        return m3 / (std_fd**3)

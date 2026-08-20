@@ -5,6 +5,7 @@ from __future__ import annotations
 #   ipfs_datasets_py.mcp_server.tools.logic_tools
 # See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
 import warnings
+
 warnings.warn(
     "legacy_mcp_tools.temporal_deontic_logic_tools is deprecated. "
     "Use ipfs_datasets_py.mcp_server.tools.logic_tools instead.",
@@ -34,7 +35,11 @@ async def check_document_consistency(
         from ...logic.integration.document_consistency_checker import DocumentConsistencyChecker
 
         if not document_text:
-            return {"success": False, "error": "Document text is required", "error_code": "MISSING_DOCUMENT_TEXT"}
+            return {
+                "success": False,
+                "error": "Document text is required",
+                "error_code": "MISSING_DOCUMENT_TEXT",
+            }
 
         doc_id = document_id or f"doc_{int(time.time())}"
         tc = datetime.now()
@@ -58,12 +63,18 @@ async def check_document_consistency(
             "success": True,
             "document_id": analysis.document_id,
             "consistency_analysis": {
-                "is_consistent": analysis.consistency_result.is_consistent if analysis.consistency_result else False,
+                "is_consistent": analysis.consistency_result.is_consistent
+                if analysis.consistency_result
+                else False,
                 "confidence_score": analysis.confidence_score,
                 "formulas_extracted": len(analysis.extracted_formulas),
                 "issues_found": len(analysis.issues_found),
-                "conflicts": len(analysis.consistency_result.conflicts) if analysis.consistency_result else 0,
-                "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts) if analysis.consistency_result else 0,
+                "conflicts": len(analysis.consistency_result.conflicts)
+                if analysis.consistency_result
+                else 0,
+                "temporal_conflicts": len(analysis.consistency_result.temporal_conflicts)
+                if analysis.consistency_result
+                else 0,
                 "processing_time": analysis.processing_time,
             },
             "debug_report": {
@@ -109,7 +120,11 @@ async def query_theorems(
         from ...logic.integration.deontic_logic_core import DeonticOperator
 
         if not query:
-            return {"success": False, "error": "Query string is required", "error_code": "MISSING_QUERY"}
+            return {
+                "success": False,
+                "error": "Query string is required",
+                "error_code": "MISSING_QUERY",
+            }
 
         rag_store = TemporalDeonticRAGStore()
         operator_enum = None
@@ -144,7 +159,9 @@ async def query_theorems(
                     "precedent_strength": r.metadata.precedent_strength,
                     "temporal_scope": {
                         "start": r.metadata.temporal_scope[0].isoformat(),
-                        "end": r.metadata.temporal_scope[1].isoformat() if r.metadata.temporal_scope[1] else None,
+                        "end": r.metadata.temporal_scope[1].isoformat()
+                        if r.metadata.temporal_scope[1]
+                        else None,
                     },
                 },
                 "relevance_score": r.similarity_score,
@@ -185,15 +202,26 @@ async def bulk_process_caselaw(
     """Bulk process caselaw documents to extract deontic logic theorems."""
     try:
         import os
-        from ...logic.integration.domain.caselaw_bulk_processor import CaselawBulkProcessor, BulkProcessingConfig
+        from ...logic.integration.domain.caselaw_bulk_processor import (
+            CaselawBulkProcessor,
+            BulkProcessingConfig,
+        )
 
         directories = caselaw_directories or []
         if not directories:
-            return {"success": False, "error": "At least one caselaw directory is required", "error_code": "MISSING_DIRECTORIES"}
+            return {
+                "success": False,
+                "error": "At least one caselaw directory is required",
+                "error_code": "MISSING_DIRECTORIES",
+            }
 
         valid_dirs = [d.strip() for d in directories if d.strip() and os.path.exists(d.strip())]
         if not valid_dirs:
-            return {"success": False, "error": "No valid caselaw directories found", "error_code": "INVALID_DIRECTORIES"}
+            return {
+                "success": False,
+                "error": "No valid caselaw directories found",
+                "error_code": "INVALID_DIRECTORIES",
+            }
 
         config = BulkProcessingConfig(
             caselaw_directories=valid_dirs,
@@ -228,13 +256,19 @@ async def bulk_process_caselaw(
                     "session_id": session_id,
                     "status": "starting",
                     "start_time": datetime.now().isoformat(),
-                    "config": {"directories": valid_dirs, "output_directory": output_directory, "concurrent_limit": max_concurrent_documents},
+                    "config": {
+                        "directories": valid_dirs,
+                        "output_directory": output_directory,
+                        "concurrent_limit": max_concurrent_documents,
+                    },
                     "progress": 0.0,
                 },
             }
 
         processor = CaselawBulkProcessor(config)
-        result = processor.process_caselaw_directories(directories=valid_dirs, progress_callback=None)
+        result = processor.process_caselaw_directories(
+            directories=valid_dirs, progress_callback=None
+        )
         return {
             "success": True,
             "async_processing": False,
@@ -268,13 +302,25 @@ async def add_theorem(
     """Add a deontic logic theorem to the RAG store."""
     try:
         from ...logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-        from ...logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+        from ...logic.integration.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
+        )
 
         if not proposition:
-            return {"success": False, "error": "Proposition is required", "error_code": "MISSING_PROPOSITION"}
+            return {
+                "success": False,
+                "error": "Proposition is required",
+                "error_code": "MISSING_PROPOSITION",
+            }
 
         if not operator:
-            return {"success": False, "error": "Operator is required", "error_code": "MISSING_OPERATOR"}
+            return {
+                "success": False,
+                "error": "Operator is required",
+                "error_code": "MISSING_OPERATOR",
+            }
 
         op_enum = DeonticOperator[operator]
         agent = LegalAgent(agent_name.lower().replace(" ", "_"), agent_name, "person")
@@ -311,7 +357,10 @@ async def add_theorem(
                 "legal_domain": legal_domain,
                 "source_case": source_case,
                 "precedent_strength": precedent_strength,
-                "temporal_scope": {"start": temporal_scope[0].isoformat(), "end": temporal_scope[1].isoformat() if temporal_scope[1] else None},
+                "temporal_scope": {
+                    "start": temporal_scope[0].isoformat(),
+                    "end": temporal_scope[1].isoformat() if temporal_scope[1] else None,
+                },
             },
         }
     except Exception as e:

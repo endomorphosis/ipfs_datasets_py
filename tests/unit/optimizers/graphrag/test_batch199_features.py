@@ -30,6 +30,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
 
 # ── OntologyOptimizer.history_trimmed_mean ──────────────────────────────────
 
+
 class TestHistoryTrimmedMean:
     """Tests for OntologyOptimizer.history_trimmed_mean()."""
 
@@ -73,10 +74,7 @@ class TestHistoryTrimmedMean:
         """Five entries, trim_fraction=0.2: trim 1 from each end."""
         opt = OntologyOptimizer()
         scores = [0.2, 0.4, 0.5, 0.8, 0.9]
-        opt._history = [
-            OptimizationReport(average_score=s, trend="stable")
-            for s in scores
-        ]
+        opt._history = [OptimizationReport(average_score=s, trend="stable") for s in scores]
         # When sorted: [0.2, 0.4, 0.5, 0.8, 0.9]
         # k = int(5 * 0.2) = 1
         # trimmed = [0.4, 0.5, 0.8]
@@ -108,7 +106,7 @@ class TestHistoryTrimmedMean:
             OptimizationReport(average_score=0.7, trend="stable"),
             OptimizationReport(average_score=0.9, trend="stable"),  # extreme high
         ]
-        # Sorted: [0.1, 0.5, 0.6, 0.7, 0.9]   
+        # Sorted: [0.1, 0.5, 0.6, 0.7, 0.9]
         # k = int(5 * 0.2) = 1
         # trimmed = [0.5, 0.6, 0.7]
         result = opt.history_trimmed_mean(trim_fraction=0.2)
@@ -118,6 +116,7 @@ class TestHistoryTrimmedMean:
 
 # ── OntologyCritic.dimension_z_scores ────────────────────────────────────
 
+
 class TestDimensionZScores:
     """Tests for OntologyCritic.dimension_z_scores()."""
 
@@ -125,11 +124,15 @@ class TestDimensionZScores:
         """Score with all zeros should have negative z-scores."""
         critic = OntologyCritic()
         score = CriticScore(
-            completeness=0.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         z_scores = critic.dimension_z_scores(score)
-        
+
         # z = (0 - 0.5) / 0.2 = -2.5
         for dim, z in z_scores.items():
             assert z == pytest.approx(-2.5)
@@ -138,11 +141,15 @@ class TestDimensionZScores:
         """Score with all 1.0 should have positive z-scores."""
         critic = OntologyCritic()
         score = CriticScore(
-            completeness=1.0, consistency=1.0, clarity=1.0,
-            granularity=1.0, relationship_coherence=1.0, domain_alignment=1.0
+            completeness=1.0,
+            consistency=1.0,
+            clarity=1.0,
+            granularity=1.0,
+            relationship_coherence=1.0,
+            domain_alignment=1.0,
         )
         z_scores = critic.dimension_z_scores(score)
-        
+
         # z = (1.0 - 0.5) / 0.2 = 2.5
         for dim, z in z_scores.items():
             assert z == pytest.approx(2.5)
@@ -151,11 +158,15 @@ class TestDimensionZScores:
         """Score with all 0.5 should have z-score=0."""
         critic = OntologyCritic()
         score = CriticScore(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         z_scores = critic.dimension_z_scores(score)
-        
+
         for dim, z in z_scores.items():
             assert z == pytest.approx(0.0)
 
@@ -163,15 +174,15 @@ class TestDimensionZScores:
         """Mixed dimension values should return varied z-scores."""
         critic = OntologyCritic()
         score = CriticScore(
-            completeness=0.7,       # (0.7 - 0.5) / 0.2 = 1.0
-            consistency=0.3,        # (0.3 - 0.5) / 0.2 = -1.0
-            clarity=0.9,            # (0.9 - 0.5) / 0.2 = 2.0
-            granularity=0.1,        # (0.1 - 0.5) / 0.2 = -2.0
+            completeness=0.7,  # (0.7 - 0.5) / 0.2 = 1.0
+            consistency=0.3,  # (0.3 - 0.5) / 0.2 = -1.0
+            clarity=0.9,  # (0.9 - 0.5) / 0.2 = 2.0
+            granularity=0.1,  # (0.1 - 0.5) / 0.2 = -2.0
             relationship_coherence=0.5,  # 0.0
-            domain_alignment=0.6,   # (0.6 - 0.5) / 0.2 = 0.5
+            domain_alignment=0.6,  # (0.6 - 0.5) / 0.2 = 0.5
         )
         z_scores = critic.dimension_z_scores(score)
-        
+
         assert z_scores["completeness"] == pytest.approx(1.0)
         assert z_scores["consistency"] == pytest.approx(-1.0)
         assert z_scores["clarity"] == pytest.approx(2.0)
@@ -183,14 +194,22 @@ class TestDimensionZScores:
         """Result should contain all 6 dimensions."""
         critic = OntologyCritic()
         score = CriticScore(
-            completeness=0.7, consistency=0.6, clarity=0.8,
-            granularity=0.5, relationship_coherence=0.7, domain_alignment=0.6
+            completeness=0.7,
+            consistency=0.6,
+            clarity=0.8,
+            granularity=0.5,
+            relationship_coherence=0.7,
+            domain_alignment=0.6,
         )
         z_scores = critic.dimension_z_scores(score)
-        
+
         expected_dims = {
-            "completeness", "consistency", "clarity",
-            "granularity", "relationship_coherence", "domain_alignment"
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
         }
         assert set(z_scores.keys()) == expected_dims
 
@@ -198,11 +217,15 @@ class TestDimensionZScores:
         """Z-scores should be rounded to 4 decimal places."""
         critic = OntologyCritic()
         score = CriticScore(
-            completeness=0.7123, consistency=0.6, clarity=0.8,
-            granularity=0.5, relationship_coherence=0.7, domain_alignment=0.6
+            completeness=0.7123,
+            consistency=0.6,
+            clarity=0.8,
+            granularity=0.5,
+            relationship_coherence=0.7,
+            domain_alignment=0.6,
         )
         z_scores = critic.dimension_z_scores(score)
-        
+
         # Each should be a float with <= 4 decimals
         for z in z_scores.values():
             # Check that string representation doesn't exceed 4 decimals
@@ -210,6 +233,7 @@ class TestDimensionZScores:
 
 
 # ── OntologyGenerator.entity_id_list ─────────────────────────────────────
+
 
 class TestEntityIdList:
     """Tests for OntologyGenerator.entity_id_list()."""
@@ -271,7 +295,7 @@ class TestEntityIdList:
         entities = [Entity(id=f"entity_{i}", text=f"Entity {i}", type="obj") for i in range(100)]
         result = EntityExtractionResult(entities=entities, relationships=[], confidence=1.0)
         ids = gen.entity_id_list(result)
-        
+
         assert len(ids) == 100
         assert ids == sorted(ids)
         assert ids[0] == "entity_0"
@@ -279,6 +303,7 @@ class TestEntityIdList:
 
 
 # ── LogicValidator.hub_nodes ────────────────────────────────────────────
+
 
 class TestHubNodes:
     """Tests for LogicValidator.hub_nodes()."""
@@ -298,7 +323,7 @@ class TestHubNodes:
                 {"id": "alice", "text": "Alice"},
                 {"id": "bob", "text": "Bob"},
             ],
-            "relationships": []
+            "relationships": [],
         }
         hubs = validator.hub_nodes(ontology, min_degree=1)
         assert hubs == []
@@ -311,9 +336,7 @@ class TestHubNodes:
                 {"id": "alice", "text": "Alice"},
                 {"id": "bob", "text": "Bob"},
             ],
-            "relationships": [
-                {"source_id": "alice", "target_id": "bob", "type": "knows"}
-            ]
+            "relationships": [{"source_id": "alice", "target_id": "bob", "type": "knows"}],
         }
         hubs = validator.hub_nodes(ontology, min_degree=2)
         assert hubs == []
@@ -326,9 +349,7 @@ class TestHubNodes:
                 {"id": "alice", "text": "Alice"},
                 {"id": "bob", "text": "Bob"},
             ],
-            "relationships": [
-                {"source_id": "alice", "target_id": "bob", "type": "knows"}
-            ]
+            "relationships": [{"source_id": "alice", "target_id": "bob", "type": "knows"}],
         }
         hubs = validator.hub_nodes(ontology, min_degree=1)
         assert set(hubs) == {"alice", "bob"}
@@ -347,7 +368,7 @@ class TestHubNodes:
                 {"source_id": "hub", "target_id": "a", "type": "rel"},
                 {"source_id": "hub", "target_id": "b", "type": "rel"},
                 {"source_id": "hub", "target_id": "c", "type": "rel"},
-            ]
+            ],
         }
         hubs = validator.hub_nodes(ontology, min_degree=2)
         # hub has degree=3, a/b/c have degree=1
@@ -366,7 +387,7 @@ class TestHubNodes:
                 {"source_id": "alice", "target_id": "bob", "type": "rel"},
                 {"source_id": "alice", "target_id": "charlie", "type": "rel"},
                 {"source_id": "bob", "target_id": "charlie", "type": "rel"},
-            ]
+            ],
         }
         hubs = validator.hub_nodes(ontology, min_degree=2)
         # All have degree=2, should be sorted alphabetically
@@ -383,7 +404,7 @@ class TestHubNodes:
             "relationships": [
                 {"source_id": "alice", "target_id": "bob", "type": "rel1"},
                 {"source_id": "bob", "target_id": "alice", "type": "rel2"},
-            ]
+            ],
         }
         hubs = validator.hub_nodes(ontology, min_degree=2)
         assert set(hubs) == {"alice", "bob"}
@@ -397,7 +418,7 @@ class TestHubNodes:
             ],
             "relationships": [
                 {"source_id": "alice", "target_id": "alice", "type": "self"},
-            ]
+            ],
         }
         hubs = validator.hub_nodes(ontology, min_degree=2)
         # alice has degree=2 from self-loop (counts as both source and target)
@@ -430,7 +451,7 @@ class TestHubNodes:
                 {"source_id": "a", "target_id": "d", "type": "rel"},
                 {"source_id": "b", "target_id": "c", "type": "rel"},
                 {"source_id": "c", "target_id": "d", "type": "rel"},
-            ]
+            ],
         }
         # a: degree=3, b: degree=2, c: degree=3, d: degree=2
         hubs = validator.hub_nodes(ontology, min_degree=2)
@@ -440,6 +461,7 @@ class TestHubNodes:
 
 
 # ── Property-based tests (Hypothesis) ──────────────────────────────────
+
 
 @given(
     scores=st.lists(
@@ -452,11 +474,8 @@ class TestHubNodes:
 def test_history_trimmed_mean_in_range(scores):
     """Trimmed mean should be between min and max scores (within floating point tolerance)."""
     opt = OntologyOptimizer()
-    opt._history = [
-        OptimizationReport(average_score=s, trend="stable")
-        for s in scores
-    ]
-    
+    opt._history = [OptimizationReport(average_score=s, trend="stable") for s in scores]
+
     trimmed = opt.history_trimmed_mean(trim_fraction=0.1)
     # Account for floating point precision in comparisons
     assert min(scores) - 1e-9 <= trimmed <= max(scores) + 1e-9
@@ -475,13 +494,21 @@ def test_dimension_z_scores_all_dimensions(comp, cons, clar, gran, relc, doma):
     """dimension_z_scores should always include all 6 dimensions."""
     critic = OntologyCritic()
     score = CriticScore(
-        completeness=comp, consistency=cons, clarity=clar,
-        granularity=gran, relationship_coherence=relc, domain_alignment=doma
+        completeness=comp,
+        consistency=cons,
+        clarity=clar,
+        granularity=gran,
+        relationship_coherence=relc,
+        domain_alignment=doma,
     )
     z_scores = critic.dimension_z_scores(score)
-    
+
     expected = {
-        "completeness", "consistency", "clarity",
-        "granularity", "relationship_coherence", "domain_alignment"
+        "completeness",
+        "consistency",
+        "clarity",
+        "granularity",
+        "relationship_coherence",
+        "domain_alignment",
     }
     assert set(z_scores.keys()) == expected

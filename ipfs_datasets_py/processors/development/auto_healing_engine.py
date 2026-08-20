@@ -3,6 +3,7 @@ Auto-Healing Coordination Engine — canonical package module.
 
 Business logic extracted from mcp_server/tools/software_engineering_tools/auto_healing_coordinator.py.
 """
+
 from __future__ import annotations
 
 import logging
@@ -12,11 +13,36 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 _DEFAULT_HEALING_STRATEGIES: List[Dict[str, Any]] = [
-    {"pattern": "connection_timeout", "action": "retry_with_backoff", "auto_healable": True, "max_retries": 3},
-    {"pattern": "out_of_memory", "action": "restart_service", "auto_healable": True, "escalate_if_failed": True},
-    {"pattern": "permission_denied", "action": "fix_permissions", "auto_healable": True, "requires_sudo": True},
-    {"pattern": "api_rate_limit", "action": "throttle_requests", "auto_healable": True, "backoff_seconds": 60},
-    {"pattern": "disk_full", "action": "cleanup_temp_files", "auto_healable": True, "min_space_gb": 10},
+    {
+        "pattern": "connection_timeout",
+        "action": "retry_with_backoff",
+        "auto_healable": True,
+        "max_retries": 3,
+    },
+    {
+        "pattern": "out_of_memory",
+        "action": "restart_service",
+        "auto_healable": True,
+        "escalate_if_failed": True,
+    },
+    {
+        "pattern": "permission_denied",
+        "action": "fix_permissions",
+        "auto_healable": True,
+        "requires_sudo": True,
+    },
+    {
+        "pattern": "api_rate_limit",
+        "action": "throttle_requests",
+        "auto_healable": True,
+        "backoff_seconds": 60,
+    },
+    {
+        "pattern": "disk_full",
+        "action": "cleanup_temp_files",
+        "auto_healable": True,
+        "min_space_gb": 10,
+    },
 ]
 
 
@@ -30,7 +56,9 @@ def coordinate_auto_healing(
         if not error_report.get("success"):
             return {"success": False, "error": "Invalid error report provided"}
 
-        strategies = healing_strategies if healing_strategies is not None else _DEFAULT_HEALING_STRATEGIES
+        strategies = (
+            healing_strategies if healing_strategies is not None else _DEFAULT_HEALING_STRATEGIES
+        )
 
         result: Dict[str, Any] = {
             "success": True,
@@ -45,9 +73,7 @@ def coordinate_auto_healing(
             pattern_name = pattern_info.get("pattern")
             occurrences = pattern_info.get("occurrences", 0)
 
-            strategy = next(
-                (s for s in strategies if s["pattern"] == pattern_name), None
-            )
+            strategy = next((s for s in strategies if s["pattern"] == pattern_name), None)
 
             if strategy and strategy.get("auto_healable"):
                 action: Dict[str, Any] = {
@@ -56,33 +82,40 @@ def coordinate_auto_healing(
                     "occurrences": occurrences,
                     "priority": "high" if occurrences > 10 else "medium",
                     "parameters": {
-                        k: v for k, v in strategy.items()
+                        k: v
+                        for k, v in strategy.items()
                         if k not in ("pattern", "action", "auto_healable")
                     },
                 }
                 result["healing_actions"].append(action)
 
                 if dry_run:
-                    result["results"].append({
-                        "action": strategy["action"],
-                        "status": "simulated",
-                        "message": f"Would execute {strategy['action']} for {pattern_name}",
-                    })
+                    result["results"].append(
+                        {
+                            "action": strategy["action"],
+                            "status": "simulated",
+                            "message": f"Would execute {strategy['action']} for {pattern_name}",
+                        }
+                    )
                 else:
                     result["results"].append(_execute_healing_action(action))
             else:
-                result["recommendations"].append({
-                    "pattern": pattern_name,
-                    "severity": "high" if occurrences > 10 else "medium",
-                    "message": f"Manual intervention required for {pattern_name}",
-                    "occurrences": occurrences,
-                })
+                result["recommendations"].append(
+                    {
+                        "pattern": pattern_name,
+                        "severity": "high" if occurrences > 10 else "medium",
+                        "message": f"Manual intervention required for {pattern_name}",
+                        "occurrences": occurrences,
+                    }
+                )
 
         if not result["healing_actions"]:
-            result["recommendations"].append({
-                "message": "No auto-healable patterns detected",
-                "action": "Manual investigation recommended",
-            })
+            result["recommendations"].append(
+                {
+                    "message": "No auto-healable patterns detected",
+                    "action": "Manual investigation recommended",
+                }
+            )
 
         return result
 
@@ -110,9 +143,7 @@ def monitor_healing_effectiveness(healing_history: List[Dict[str, Any]]) -> Dict
                 stats["success"] += 1
 
         for stats in action_stats.values():
-            stats["success_rate"] = (
-                stats["success"] / stats["total"] * 100 if stats["total"] else 0
-            )
+            stats["success_rate"] = stats["success"] / stats["total"] * 100 if stats["total"] else 0
 
         recommendations = [
             {
