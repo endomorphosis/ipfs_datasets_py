@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/semantic-governor.base.schema.json",
+  "title": "Semantic-governor artifact base models v1",
+  "description": "Closed, fail-closed JSON Schema for datasets-owned semantic-governor common header, provenance, generator identity, assumptions, and status enums (SCG-006). Unknown fields, unsupported schemas, floats, private data, and model-written authority are rejected. Canonical CIDs are recomputed via software_contracts.content.",
+  "oneOf": [
+    { "$ref": "#/$defs/governorArtifactHeader" },
+    { "$ref": "#/$defs/artifactProvenance" },
+    { "$ref": "#/$defs/generatorIdentity" },
+    { "$ref": "#/$defs/governorAssumption" }
+  ],
+  "$defs": {
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "cidOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cid" }]
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nfcStringOrNull": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nfcString" }]
+    },
+    "token": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:/+-]{0,127}$"
+    },
+    "versionToken": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$"
+    },
+    "artifactKind": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    },
+    "contextSufficiencyState": {
+      "type": "string",
+      "enum": [
+        "sufficient",
+        "sufficient_with_caveats",
+        "expansion_required",
+        "frontier_escalation_required",
+        "human_review_required",
+        "inconclusive",
+        "invalid",
+        "stale",
+        "evaluation_failed"
+      ]
+    },
+    "governorTerminalStatus": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "rejected",
+        "invalid",
+        "stale",
+        "inconclusive",
+        "evaluation_failed",
+        "human_review_required",
+        "unavailable",
+        "cancelled",
+        "simulated"
+      ]
+    },
+    "executionMode": {
+      "type": "string",
+      "enum": ["live", "simulated", "replay"]
+    },
+    "authoritySource": {
+      "type": "string",
+      "enum": [
+        "deterministic",
+        "observed",
+        "human",
+        "policy",
+        "receipt",
+        "schema"
+      ]
+    },
+    "assumptionKind": {
+      "type": "string",
+      "enum": [
+        "coverage",
+        "freshness",
+        "confidence",
+        "budget",
+        "route",
+        "privacy",
+        "verification",
+        "exclusion",
+        "environment",
+        "other"
+      ]
+    },
+    "strictObject": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "not": {
+          "anyOf": [
+            {
+              "pattern": "(?i)(access_token|api_key|authorization|cookie|credential|hidden_witness|password|private_key|private_premise|private_source|private_witness|raw_private_source|raw_source|raw_source_text|refresh_token|secret|session_token|source_bytes|source_text|witness)"
+            },
+            {
+              "pattern": "(?i)(llm_authority|model_authority|model_decision_authority|model_promoted|model_written_authority|provider_authority|self_authorized|self_authorization|trusted_key|trusted_keys|promotion_authority)"
+            }
+          ]
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/strictValue"
+      }
+    },
+    "strictValue": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "integer" },
+        { "type": "string", "maxLength": 16384 },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/strictValue" },
+          "maxItems": 4096
+        },
+        { "$ref": "#/$defs/strictObject" }
+      ]
+    },
+    "generatorIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "generator_id",
+        "generator_version",
+        "interface_id",
+        "generator_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-generator@1"
+        },
+        "generator_id": { "$ref": "#/$defs/token" },
+        "generator_version": { "$ref": "#/$defs/versionToken" },
+        "interface_id": { "$ref": "#/$defs/nfcString" },
+        "generator_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "artifactProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "producer_id",
+        "producer_version",
+        "execution_mode",
+        "authority_source",
+        "input_cids",
+        "tool_ids",
+        "policy_cid",
+        "notes",
+        "provenance_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-provenance@1"
+        },
+        "producer_id": { "$ref": "#/$defs/token" },
+        "producer_version": { "$ref": "#/$defs/versionToken" },
+        "execution_mode": { "$ref": "#/$defs/executionMode" },
+        "authority_source": { "$ref": "#/$defs/authoritySource" },
+        "input_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" },
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "tool_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/token" },
+          "uniqueItems": true,
+          "maxItems": 256
+        },
+        "policy_cid": { "$ref": "#/$defs/cidOrNull" },
+        "notes": { "$ref": "#/$defs/nfcStringOrNull" },
+        "provenance_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "governorAssumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "assumption_id",
+        "kind",
+        "statement",
+        "supporting_cids",
+        "assumption_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-assumption@1"
+        },
+        "assumption_id": { "$ref": "#/$defs/token" },
+        "kind": { "$ref": "#/$defs/assumptionKind" },
+        "statement": { "$ref": "#/$defs/nfcString" },
+        "supporting_cids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cid" },
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "assumption_cid": { "$ref": "#/$defs/cid" }
+      }
+    },
+    "governorArtifactHeader": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "interface_id",
+        "artifact_kind",
+        "repository_state_cid",
+        "context_pack_cid",
+        "verification_bundle_cid",
+        "generator",
+        "provenance",
+        "assumptions",
+        "terminal_status",
+        "metadata",
+        "header_cid"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.semantic-governor-artifact-header@1"
+        },
+        "interface_id": { "const": "GovernorArtifactHeader@1" },
+        "artifact_kind": { "$ref": "#/$defs/artifactKind" },
+        "repository_state_cid": { "$ref": "#/$defs/cid" },
+        "context_pack_cid": { "$ref": "#/$defs/cid" },
+        "verification_bundle_cid": { "$ref": "#/$defs/cid" },
+        "generator": { "$ref": "#/$defs/generatorIdentity" },
+        "provenance": { "$ref": "#/$defs/artifactProvenance" },
+        "assumptions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/governorAssumption" },
+          "maxItems": 512
+        },
+        "terminal_status": { "$ref": "#/$defs/governorTerminalStatus" },
+        "metadata": { "$ref": "#/$defs/strictObject" },
+        "header_cid": { "$ref": "#/$defs/cid" }
+      }
+    }
+  }
+}

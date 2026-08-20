@@ -25,8 +25,18 @@ from pydantic import BaseModel, Field
 
 from . import DataWalletError, WalletService
 from .crypto import sha256_hex
+from ipfs_datasets_py.duckdb_control.authority_transition import AuthorityMode
+
+from .duckdb_repository import (
+    MutationKind,
+    WalletDuckDBRepository,
+    build_wallet_duckdb_repository,
+    new_operation_id,
+)
+from .exceptions import MissingRecordError
 from .manifest import canonical_bytes
 from .models import AnalyticsTemplate, AccessRequest, ApprovalRequest, AuditEvent, GrantReceipt, ProofReceipt
+from .repository import LocalWalletRepository
 from .storage import LocalEncryptedBlobStore
 from .ucan import invocation_from_token, invocation_to_token, resource_for_export, resource_for_record
 
@@ -597,26 +607,101 @@ def _require_magic_ucan(
     raise HTTPException(status_code=403, detail="UCAN does not allow this recovery action")
 
 
+# Process-local DuckDB db-primary event port shared by API persistence (DQK-076).
+# DuckDB is sole runtime authority; JSON is explicit import/export only.
+# Encrypted content stays in the blob backend.
+_API_EVENT_PORT: WalletDuckDBRepository | None = None
+_API_DEFAULT_AUTHORITY_MODE: AuthorityMode = AuthorityMode.DB_PRIMARY
+
+
+def get_api_event_port() -> WalletDuckDBRepository:
+    """Return the process-local API DuckDB event port (idempotent)."""
+
+    global _API_EVENT_PORT
+    if _API_EVENT_PORT is None:
+        _API_EVENT_PORT = build_wallet_duckdb_repository(mode=_API_DEFAULT_AUTHORITY_MODE)
+    return _API_EVENT_PORT
+
+
+def reset_api_event_port(port: WalletDuckDBRepository | None = None) -> WalletDuckDBRepository:
+    """Replace the process-local API event port (tests / reconfiguration)."""
+
+    global _API_EVENT_PORT
+    _API_EVENT_PORT = (
+        port
+        if port is not None
+        else build_wallet_duckdb_repository(mode=_API_DEFAULT_AUTHORITY_MODE)
+    )
+    return _API_EVENT_PORT
+
+
+def _wallet_repository(wallet_dir: Path) -> LocalWalletRepository:
+    return LocalWalletRepository(
+        wallet_dir,
+        shadow=get_api_event_port(),
+        authority_mode=_API_DEFAULT_AUTHORITY_MODE,
+        allow_legacy_json=False,
+    )
+
+
 def _new_service(blob_dir: Path) -> WalletService:
-    return WalletService(storage_backend=LocalEncryptedBlobStore(blob_dir))
+    service = WalletService(storage_backend=LocalEncryptedBlobStore(blob_dir))
+    service.attach_event_port(get_api_event_port())
+    return service
 
 
-def _save_wallet_snapshot(service: WalletService, wallet_dir: Path, wallet_id: str) -> None:
-    wallet_dir.mkdir(parents=True, exist_ok=True)
-    wallet_path(wallet_dir, wallet_id).write_text(
-        json.dumps(service.export_wallet_snapshot(wallet_id), sort_keys=True),
-        encoding="utf-8",
+def _save_wallet_snapshot(
+    service: WalletService,
+    wallet_dir: Path,
+    wallet_id: str,
+    *,
+    operation_id: str | None = None,
+    expected_revision: int | None = None,
+) -> None:
+    """Persist DuckDB-authoritative wallet envelope (no implicit JSON, DQK-076).
+
+    CAS-gated on ``authority_revision`` so stale API service instances cannot
+    overwrite a newer revision written by another concurrent writer (CLI/API).
+    """
+
+    repo = _wallet_repository(wallet_dir)
+    op_id = operation_id or new_operation_id("api-wallet")
+    if expected_revision is None:
+        expected_revision = service.authority_revision(wallet_id)
+    repo.save(
+        service,
+        wallet_id,
+        operation_id=op_id,
+        expected_revision=expected_revision,
+    )
+    # Also record an explicit API-layer mutation envelope for callers that
+    # inspect mutation receipts by kind.
+    get_api_event_port().record_mutation(
+        action="api/wallet_snapshot",
+        resource=f"wallet://{wallet_id}/manifest",
+        wallet_id=wallet_id,
+        kind=MutationKind.API,
+        operation_id=f"{op_id}:api",
+        projection_key=f"wallet:{wallet_id}",
+        projection=repo.shadow.get_wallet_projection(wallet_id) if repo.shadow else None,
+        details={
+            "authority_revision": service.authority_revision(wallet_id),
+            "authority_mode": (
+                repo.authority_mode.value if repo.authority_mode is not None else "legacy"
+            ),
+        },
     )
 
 
 def _load_wallet_service(wallet_id: str, wallet_dir: Path | None = None, blob_dir: Path | None = None) -> WalletService:
     manifest_dir = wallet_dir or default_wallet_dir()
     blob_root = blob_dir or default_blob_dir()
-    path = wallet_path(manifest_dir, wallet_id)
-    if not path.exists():
-        raise HTTPException(status_code=404, detail=f"Wallet not found: {wallet_id}")
     service = _new_service(blob_root)
-    service.import_wallet_snapshot(json.loads(path.read_text(encoding="utf-8")))
+    repo = _wallet_repository(manifest_dir)
+    try:
+        repo.load(service, wallet_id)
+    except MissingRecordError as exc:
+        raise HTTPException(status_code=404, detail=f"Wallet not found: {wallet_id}") from exc
     return service
 
 
@@ -764,38 +849,31 @@ def _send_dead_drop_email(
 
 
 def _inject_shared_analytics_templates(service: WalletService, wallet_dir: Path) -> None:
-    for wallet_snapshot_id in _list_wallet_snapshot_ids(wallet_dir):
-        path = wallet_path(wallet_dir, wallet_snapshot_id)
+    """Load shared analytics templates from DuckDB-authoritative envelopes."""
+
+    repo = _wallet_repository(wallet_dir)
+    for wallet_snapshot_id in repo.list_wallet_ids():
         try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
+            peer = _new_service(default_blob_dir())
+            repo.load(peer, wallet_snapshot_id)
         except Exception:
             continue
-        for template_data in payload.get("analytics_templates", []):
-            if not isinstance(template_data, Mapping):
-                continue
-            template_id = str(template_data.get("template_id") or "").strip()
-            if not template_id or template_id in service.analytics_templates:
-                continue
-            try:
-                service.analytics_templates[template_id] = AnalyticsTemplate(**dict(template_data))
-            except Exception:
-                continue
+        for template_id, template in peer.analytics_templates.items():
+            if template_id not in service.analytics_templates:
+                service.analytics_templates[template_id] = template
 
 
 def _list_shared_analytics_templates(wallet_dir: Path) -> List[Dict[str, Any]]:
     templates: Dict[str, Dict[str, Any]] = {}
-    for wallet_snapshot_id in _list_wallet_snapshot_ids(wallet_dir):
-        path = wallet_path(wallet_dir, wallet_snapshot_id)
+    repo = _wallet_repository(wallet_dir)
+    for wallet_snapshot_id in repo.list_wallet_ids():
         try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
+            peer = _new_service(default_blob_dir())
+            repo.load(peer, wallet_snapshot_id)
         except Exception:
             continue
-        for template_data in payload.get("analytics_templates", []):
-            if not isinstance(template_data, Mapping):
-                continue
-            template_id = str(template_data.get("template_id") or "").strip()
-            if template_id:
-                templates[template_id] = dict(template_data)
+        for template_id, template in peer.analytics_templates.items():
+            templates[template_id] = template.to_dict()
     return [templates[template_id] for template_id in sorted(templates)]
 
 
@@ -869,8 +947,14 @@ def _ops_health_report(*, verify_storage: bool = False) -> Dict[str, Any]:
     add_check(
         "repository",
         "ok",
-        "Wallet snapshot repository is available." if wallet_dir.exists() else "Wallet snapshot repository directory does not exist yet.",
+        (
+            "DuckDB-authoritative wallet repository is available."
+            if wallet_ids or get_api_event_port() is not None
+            else "Wallet repository has no wallets yet."
+        ),
         configured=True,
+        authority_mode=_API_DEFAULT_AUTHORITY_MODE.value,
+        json_authority=False,
         wallet_snapshot_count=len(wallet_ids),
         live_wallet_count=len(wallet_ids),
         missing_snapshot_wallet_ids=[],
@@ -1006,9 +1090,9 @@ def _ops_health_report(*, verify_storage: bool = False) -> Dict[str, Any]:
 
 
 def _list_wallet_snapshot_ids(wallet_dir: Path) -> List[str]:
-    if not wallet_dir.exists():
-        return []
-    return sorted(path.stem for path in wallet_dir.glob("*.json") if path.is_file())
+    """List wallet IDs from DuckDB authority (no JSON glob discovery)."""
+
+    return _wallet_repository(wallet_dir).list_wallet_ids()
 
 
 def _verify_wallet_snapshot_file(wallet_id: str, wallet_dir: Path) -> Dict[str, Any]:

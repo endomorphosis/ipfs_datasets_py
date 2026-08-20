@@ -106,7 +106,11 @@ class IPFSProofCache(ProofCache):
         cache_dir: Optional[Path] = None
     ):
         """Initialize IPFS-backed cache."""
-        super().__init__(maxsize=max_size, ttl=ttl)
+        super().__init__(
+            maxsize=max_size,
+            ttl=ttl,
+            shadow_backend="ipfs_proof_cache",
+        )
         
         self.ipfs_host = ipfs_host
         self.ipfs_port = ipfs_port
@@ -118,6 +122,7 @@ class IPFSProofCache(ProofCache):
         self.ipfs_downloads = 0
         self.ipfs_errors = 0
         self.pinned_count = 0
+        self._shadow_backend = "ipfs_proof_cache"
         
         # Initialize IPFS client
         if self.enable_ipfs:
@@ -455,3 +460,25 @@ def get_global_ipfs_cache(
         )
     
     return _global_ipfs_cache
+
+
+from ...common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
+    UnifiedProofAuthorityRepository,
+    UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
+    build_proof_authority_repository,
+    build_proof_shadow_repository,
+    get_authority_repository,
+    get_shadow_repository,
+    legacy_json_persistence_allowed,
+    set_authority_repository,
+    set_shadow_repository,
+)
+
+IPFS_PROOF_CACHE_LEGACY_BACKEND = LegacyProofBackend.IPFS_PROOF_CACHE

@@ -17,7 +17,46 @@ __all__ = [
     "ProofCache",
     "CachedProof",
     "get_global_cache",
+    "LEGACY_PROOF_BACKENDS",
+    "LegacyProofBackend",
+    "ProofAuthorityJSONRewriteError",
+    "ProofJSONCompatibilityError",
+    "ProofPublicationPolicyError",
+    "UnifiedProofAuthorityRepository",
+    "UnifiedProofShadowRepository",
+    "assert_compatibility_shims_import_unified_repository",
+    "assert_direct_json_persistence_forbidden",
+    "build_proof_authority_repository",
+    "build_proof_shadow_repository",
+    "get_authority_repository",
+    "get_shadow_repository",
+    "legacy_json_persistence_allowed",
+    "set_authority_repository",
+    "set_shadow_repository",
+    "INTEGRATION_CACHING_LEGACY_BACKEND",
 ]
+
+
+from ...common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
+    UnifiedProofAuthorityRepository,
+    UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
+    build_proof_authority_repository,
+    build_proof_shadow_repository,
+    get_authority_repository,
+    get_shadow_repository,
+    legacy_json_persistence_allowed,
+    set_authority_repository,
+    set_shadow_repository,
+)
+
+INTEGRATION_CACHING_LEGACY_BACKEND = LegacyProofBackend.INTEGRATION_CACHING
 
 
 @dataclass
@@ -75,7 +114,13 @@ def __getattr__(name: str) -> Any:
     from ...common.proof_cache import ProofCache, get_global_cache
 
     if name == "ProofCache":
-        return ProofCache
+        # Default shadow backend for this shim path.
+        class _ShadowAwareProofCache(ProofCache):
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                kwargs.setdefault("shadow_backend", "integration_caching")
+                super().__init__(*args, **kwargs)
+
+        return _ShadowAwareProofCache
     return get_global_cache
 
 

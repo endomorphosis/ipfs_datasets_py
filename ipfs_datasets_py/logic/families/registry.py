@@ -34,7 +34,74 @@ from .models import (
 )
 
 
-REGISTRY_VERSION: Final = "1.0.0"
+REGISTRY_VERSION: Final = "2.0.0"
+REGISTRY_INTERFACE: Final = "LogicFamilyRegistry@2"
+
+# Closed baseline family sets (no free-form drift).  Extension families and
+# declaration-only candidates are enumerated here; LFP-040 may project a
+# generated closure over this sealed baseline but never invents silent families.
+FOUNDATION_FAMILY_IDS: Final[frozenset[str]] = frozenset(
+    {
+        "authorization",
+        "concurrency",
+        "cryptographic_protocol",
+        "datalog",
+        "dcec",
+        "deontic",
+        "event_calculus",
+        "first_order",
+        "frame_logic",
+        "higher_order",
+        "horn_chc",
+        "hyperproperty",
+        "modal",
+        "mu_calculus",
+        "program",
+        "propositional",
+        "refinement",
+        "separation_logic",
+        "tdfol",
+        "temporal",
+        "transition_system",
+    }
+)
+
+PLANNED_EXTENSION_FAMILY_IDS: Final[frozenset[str]] = frozenset(
+    {
+        "doxastic",
+        "epistemic",
+        "intention_agency",
+        "session_process",
+    }
+)
+
+DECLARATION_ONLY_FAMILY_IDS: Final[frozenset[str]] = frozenset(
+    {
+        "argumentation",
+        "defeasible_logic",
+        "dependent_type",
+        "description_logic",
+        "finite_field_constraint",
+        "fuzzy_weighted",
+        "mu_calculus",
+        "nonmonotonic_logic",
+        "probabilistic",
+        "relevance_paraconsistent",
+        "situation_calculus",
+    }
+)
+
+# Labels that must remain aliases/profiles — never promoted to families here.
+NON_FAMILY_PROFILE_LABELS: Final[frozenset[str]] = frozenset(
+    {
+        "dynamic_logic",  # alias/profile over program
+        "information_flow",  # profile/property under hyperproperty
+    }
+)
+
+BASELINE_FAMILY_IDS: Final[frozenset[str]] = (
+    FOUNDATION_FAMILY_IDS | PLANNED_EXTENSION_FAMILY_IDS | DECLARATION_ONLY_FAMILY_IDS
+)
 
 
 class LogicFamilyRegistryError(ValueError):
@@ -1187,6 +1254,113 @@ def build_default_registry(*, frozen: bool = True) -> LogicFamilyRegistry:
             properties=("invariant", "liveness", "reachability", "safety"),
             operations=("ic3", "model_check", "pdr", "translate"),
         ),
+        # Planned extension families (Wave-2 additions; not free-form drift).
+        _family(
+            "epistemic",
+            "Epistemic logic",
+            aliases=("knowledge_logic",),
+            fragments=("kripke", "modal", "propositional"),
+            properties=("satisfiability", "theorem", "validity"),
+            operations=("check_satisfiability", "model_check", "prove", "translate"),
+        ),
+        _family(
+            "doxastic",
+            "Doxastic logic",
+            aliases=("belief_logic",),
+            fragments=("kripke", "modal", "propositional"),
+            properties=("satisfiability", "theorem", "validity"),
+            operations=("check_satisfiability", "model_check", "prove", "translate"),
+        ),
+        _family(
+            "intention_agency",
+            "Intention and agency logic",
+            aliases=("bdi", "agency_logic"),
+            fragments=("deontic", "modal", "propositional"),
+            properties=("authorization", "theorem", "validity"),
+            operations=("authorize", "prove", "translate"),
+        ),
+        _family(
+            "session_process",
+            "Session and process logic",
+            aliases=("session_types", "process_logic"),
+            fragments=("concurrency", "session", "transition_system"),
+            properties=("data_race_freedom", "safety", "trace_conformance"),
+            operations=("model_check", "runtime_monitor", "translate"),
+        ),
+        # Declaration-only candidates (no executable operations until reviewed).
+        _family(
+            "dependent_type",
+            "Dependent type theory",
+            aliases=("dependent_type_theory", "dtt"),
+            fragments=("higher_order", "quantifiers"),
+            properties=("theorem", "validity"),
+            declaration_only=True,
+        ),
+        _family(
+            "description_logic",
+            "Description logic",
+            aliases=("dl", "ontology_logic"),
+            fragments=("modal", "propositional", "quantifiers"),
+            properties=("satisfiability", "theorem", "validity"),
+            declaration_only=True,
+        ),
+        _family(
+            "defeasible_logic",
+            "Defeasible logic",
+            fragments=("propositional",),
+            properties=("satisfiability", "theorem"),
+            declaration_only=True,
+        ),
+        _family(
+            "nonmonotonic_logic",
+            "Nonmonotonic logic",
+            fragments=("propositional",),
+            properties=("satisfiability", "theorem"),
+            declaration_only=True,
+        ),
+        _family(
+            "argumentation",
+            "Argumentation frameworks",
+            fragments=("propositional",),
+            properties=("satisfiability", "theorem"),
+            declaration_only=True,
+        ),
+        _family(
+            "situation_calculus",
+            "Situation calculus",
+            fragments=("event_calculus", "quantifiers", "transition_system"),
+            properties=("invariant", "reachability", "theorem"),
+            declaration_only=True,
+        ),
+        _family(
+            "probabilistic",
+            "Probabilistic logic",
+            fragments=("propositional", "quantifiers"),
+            properties=("satisfiability", "theorem"),
+            declaration_only=True,
+        ),
+        _family(
+            "fuzzy_weighted",
+            "Fuzzy and weighted logic",
+            fragments=("propositional",),
+            properties=("satisfiability", "theorem"),
+            declaration_only=True,
+        ),
+        _family(
+            "relevance_paraconsistent",
+            "Relevance and paraconsistent logic",
+            fragments=("modal", "propositional"),
+            properties=("satisfiability", "theorem", "validity"),
+            declaration_only=True,
+        ),
+        _family(
+            "finite_field_constraint",
+            "Finite-field constraint logic",
+            aliases=("ffc", "finite_field"),
+            fragments=("arithmetic", "propositional"),
+            properties=("satisfiability",),
+            declaration_only=True,
+        ),
     )
 
     registry = LogicFamilyRegistry(
@@ -1231,13 +1405,19 @@ CANONICAL_REGISTRY: Final = DEFAULT_REGISTRY
 
 __all__ = [
     "AliasCollisionError",
+    "BASELINE_FAMILY_IDS",
     "CANONICAL_REGISTRY",
+    "DECLARATION_ONLY_FAMILY_IDS",
     "DEFAULT_REGISTRY",
     "DuplicateDescriptorError",
+    "FOUNDATION_FAMILY_IDS",
     "FrozenRegistryError",
     "InvalidCapabilityError",
     "LogicFamilyRegistry",
     "LogicFamilyRegistryError",
+    "NON_FAMILY_PROFILE_LABELS",
+    "PLANNED_EXTENSION_FAMILY_IDS",
+    "REGISTRY_INTERFACE",
     "REGISTRY_VERSION",
     "SemanticEquivalenceError",
     "UnknownDescriptorError",

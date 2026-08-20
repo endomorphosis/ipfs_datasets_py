@@ -271,7 +271,23 @@ class ProofResultCache:
             max_size: Maximum number of cached proofs
         """
         self._cache = LRUCache(max_size=max_size)
-    
+        self._shadow_repository = None
+        self._shadow_backend = "cec_formula"
+
+    def bind_shadow_repository(self, repository, *, backend: str = "cec_formula") -> None:
+        """Bind CEC formula proof cache to the unified shadow repository (DQK-065)."""
+
+        self._shadow_repository = repository
+        self._shadow_backend = backend
+        if repository is not None:
+            repository.register_backend(backend)
+
+    def bind_authority_repository(self, repository, *, backend: str = "cec_formula") -> None:
+        """Bind to dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self.bind_shadow_repository(repository, backend=backend)
+
+
     def get_proof(
         self,
         formula: Any,
@@ -306,6 +322,39 @@ class ProofResultCache:
         """
         key = self._make_key(formula, axioms)
         self._cache.put(key, result)
+        repo = self._shadow_repository
+        if repo is None:
+            try:
+                from ...common.proof_cache import get_shadow_repository
+
+                repo = get_shadow_repository(create=False)
+            except Exception:
+                repo = None
+        if repo is None:
+            return
+        try:
+            unified = repo.project_key(
+                self._shadow_backend,
+                formula=str(formula),
+                prover_name="cec_formula",
+                axioms=axioms,
+                solver_identities={"prover": "cec_formula"},
+                toolchain={"backend": "cec_formula"},
+                policy={"mode": "shadow", "backend": "cec_formula"},
+            )
+            payload = result if isinstance(result, dict) else {"value": str(result)}
+            repo.write(
+                self._shadow_backend,
+                key=unified,
+                result_payload=payload if isinstance(payload, dict) else {"value": payload},
+                status=str(payload.get("status") or "unknown")
+                if isinstance(payload, dict)
+                else "unknown",
+                trust_level="none",
+                legacy_payload={"formula": str(formula), "key": key, "result": payload},
+            )
+        except Exception:
+            pass
     
     def _make_key(self, formula: Any, axioms: Optional[List[Any]]) -> str:
         """
@@ -525,3 +574,37 @@ class CacheManager:
         self.proof_cache.clear()
         self.parse_cache.clear()
         self.memoization.clear()
+
+    def bind_shadow_repository(self, repository, *, backend: str = "cec_formula") -> None:
+        """Propagate shadow repository binding to the proof-result cache (DQK-065)."""
+
+        if hasattr(self.proof_cache, "bind_shadow_repository"):
+            self.proof_cache.bind_shadow_repository(repository, backend=backend)
+
+    def bind_authority_repository(self, repository, *, backend: str = "cec_formula") -> None:
+        """Bind to dual/promoted DuckDB proof authority (DQK-066)."""
+
+        self.bind_shadow_repository(repository, backend=backend)
+
+
+from ...common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    ProofPublicationPolicyError,
+    UnifiedProofAuthorityRepository,
+    UnifiedProofShadowRepository,
+    assert_compatibility_shims_import_unified_repository,
+    assert_direct_json_persistence_forbidden,
+    build_proof_authority_repository,
+    build_proof_shadow_repository,
+    get_authority_repository,
+    get_shadow_repository,
+    legacy_json_persistence_allowed,
+    set_authority_repository,
+    set_shadow_repository,
+)
+
+CEC_FORMULA_LEGACY_BACKEND = LegacyProofBackend.CEC_FORMULA
+

@@ -277,6 +277,7 @@ setup(
             "logic/zkp/provekit/circuits/*/Nargo.toml",
             "logic/zkp/provekit/circuits/*/src/*.nr",
             "logic/legal_ir/schemas/*.json",
+            "logic/software_contracts/semantic_state/schemas/*.json",
         ],
     },
     include_package_data=True,
@@ -296,7 +297,7 @@ setup(
         'requests',
         'boto3',
         'ipfsspec<0.6.0',
-        "duckdb",
+        "duckdb>=1.5.5,<1.6.0",  # DQK-046 / DQK-002 pinned compatibility window
         "aiosqlite>=0.17.0",  # Async SQLite for metadata/auth
         "pyarrow>=23.0.1,<26.0.0; python_version < '3.14'",
         "fsspec>=2023.1.0,<=2024.6.1",
@@ -762,6 +763,7 @@ setup(
     author="IPFS Datasets Contributors",
     entry_points={
         'console_scripts': [
+            'semantic-index=ipfs_datasets_py.cli.semantic_index_cli:main',
             'ipfs-datasets=ipfs_datasets_cli:cli_main',
             'ipfs-datasets-cli=ipfs_datasets_cli:cli_main',
             'netherlands-laws=ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli:main',

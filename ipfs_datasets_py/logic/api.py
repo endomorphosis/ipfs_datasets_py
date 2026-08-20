@@ -693,9 +693,23 @@ _BW133_CONFLICT_LAZY_NAMES = {
     "detect_i18n_conflicts", "I18NConflictResult",
 }
 
+_UI_UX_IR_EXPORT_NAMES = frozenset(
+    {
+        "decode_ui_ir",
+        "canonicalize_ui_ir",
+        "ui_ir_identity",
+        "evaluate_ui_interaction",
+        "UIUXIR_PUBLIC_API_INTERFACE",
+        "UI_UX_IR_SCHEMA_ID",
+        "public_api_manifest",
+    }
+)
+
 # Additive software-verification facade (LFV-G070 / LogicVerificationAPI@1).
 # Symbols are exposed via __getattr__ only so the frozen exact_exports contract
 # in tests/fixtures/logic/api_v1/manifest.json remains unchanged.
+# LFP-044 adds CanonicalLogicDiscovery@1 / VerificationAPI@2 dual-read helpers
+# through the same lazy path so exact_exports remain frozen.
 _VERIFICATION_API_EXPORT_NAMES = {
     "LogicVerificationAPI",
     "VerificationResponse",
@@ -716,6 +730,19 @@ _VERIFICATION_API_EXPORT_NAMES = {
     "probe_provider",
     "install_provider",
     "verification_api",
+    # LFP-044 dual-read / canonical-write migration surface
+    "CanonicalLogicDiscovery",
+    "CANONICAL_LOGIC_DISCOVERY_INTERFACE",
+    "VERIFICATION_API_V2_INTERFACE",
+    "MIGRATION_OPERATIONS",
+    "get_canonical_discovery",
+    "list_namespaces",
+    "list_namespace_identities",
+    "dual_read_label",
+    "canonical_write_label",
+    "migrate_artifact",
+    "inspect_translation_loss",
+    "inspect_provider_authority",
 }
 
 
@@ -728,6 +755,14 @@ def _lazy_verification_api():
 
 def __getattr__(name: str) -> Any:
     """Lazily expose optional API classes without import-time side effects."""
+    if name in _UI_UX_IR_EXPORT_NAMES:
+        from ipfs_datasets_py.logic import ui_ux_ir as _ui_ux_ir
+
+        if hasattr(_ui_ux_ir, name):
+            value = getattr(_ui_ux_ir, name)
+            globals()[name] = value
+            return value
+        raise AttributeError(f"{name} is not available from ui_ux_ir public API")
     if name in _BW133_LAZY_NAMES:
         _probe_bw133_delegation()
         val = globals().get(name)

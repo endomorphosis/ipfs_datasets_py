@@ -252,8 +252,8 @@
         "security_ir"
       ],
       "repository_paths": [
-        "ipfs_accelerate_py/agent_supervisor/code_security_facts.py",
-        "ipfs_accelerate_py/agent_supervisor/program_ast_adapters.py"
+        "ipfs_accelerate_py/agent_supervisor/analysis/program_ast_adapters.py",
+        "ipfs_accelerate_py/agent_supervisor/proof/code_security_facts.py"
       ],
       "states": {
         "declared": true,

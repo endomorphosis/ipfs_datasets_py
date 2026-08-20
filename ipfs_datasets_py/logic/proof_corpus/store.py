@@ -15,6 +15,14 @@ Integrity is fail-closed:
 
 Secondary indexes (family / source digest / profile) support local lookup.
 Full query/rebuild APIs live in LIG-012 (``query.py`` / ``index.py``).
+
+**DQK-066:** the mutable corpus index may promote to DuckDB authority.  When
+promoted, whole-file ``index.json`` rewrites are forbidden; the index rebuilds
+from immutable per-CID envelopes.  Envelope bytes and CIDs remain canonical.
+
+**DQK-067:** ``index.json`` is explicit import/export compatibility only.
+Normal runtime operates with the legacy index file absent; immutable per-CID
+envelopes remain the sole content-addressed evidence on disk.
 """
 
 from __future__ import annotations
@@ -108,12 +116,36 @@ class ProofCorpusStore:
     _lock: threading.RLock = field(
         default_factory=threading.RLock, init=False, repr=False
     )
+    # DQK-066: optional dual/promoted proof authority repository.
+    _authority_repository: Any = field(default=None, init=False, repr=False)
+    _index_rebuilds: int = field(default=0, init=False, repr=False)
+    _json_rewrite_blocks: int = field(default=0, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if self.root is not None:
             object.__setattr__(self, "root", Path(self.root))
             self.root.mkdir(parents=True, exist_ok=True)
             self.reload()
+
+    def bind_authority_repository(self, repository: Any) -> None:
+        """Bind dual/promoted DuckDB proof authority for the corpus index (DQK-066)."""
+
+        with self._lock:
+            self._authority_repository = repository
+            if repository is not None and hasattr(repository, "register_backend"):
+                try:
+                    repository.register_backend("common")
+                except Exception:
+                    pass
+
+    def bind_shadow_repository(self, repository: Any) -> None:
+        """Alias for :meth:`bind_authority_repository` (DQK-065 compatibility)."""
+
+        self.bind_authority_repository(repository)
+
+    @property
+    def authority_repository(self) -> Any:
+        return self._authority_repository
 
     @property
     def interface(self) -> str:
@@ -137,6 +169,9 @@ class ProofCorpusStore:
                 "hits": self._hits,
                 "misses": self._misses,
                 "size": len(self._envelopes),
+                "index_rebuilds": self._index_rebuilds,
+                "json_rewrite_blocks": self._json_rewrite_blocks,
+                "authority_bound": 1 if self._authority_repository is not None else 0,
             }
 
     def _envelopes_dir(self) -> Path | None:
@@ -176,6 +211,29 @@ class ProofCorpusStore:
         path = self._index_path()
         if path is None:
             return
+        # DQK-066/067: after promotion or export-only, whole-file index.json
+        # rewrites are forbidden on the runtime path.  Mutable index authority
+        # lives in DuckDB; rebuild from envelopes instead.  Explicit
+        # export_index_json_compat remains the compatibility export API.
+        repo = self._authority_repository
+        blocked = False
+        try:
+            from ..common.proof_cache import legacy_json_persistence_allowed
+
+            blocked = not legacy_json_persistence_allowed(repo)
+        except Exception:
+            blocked = bool(repo is not None and getattr(repo, "is_promoted", False))
+        if blocked:
+            self._json_rewrite_blocks += 1
+            if repo is not None and hasattr(repo, "assert_json_rewrite_allowed"):
+                repo.assert_json_rewrite_allowed(
+                    "common", path=str(path) if path else "index.json"
+                )
+            raise ProofCorpusStoreError(
+                "whole-file JSON index rewrite forbidden after proof authority "
+                "export-only cutover; rebuild from immutable envelopes or use "
+                "export_index_json_compat"
+            )
         with self._lock:
             families = {
                 family: sorted(cids)
@@ -193,6 +251,21 @@ class ProofCorpusStore:
                 "sources": sources,
                 "store_schema_version": PROOF_CORPUS_STORE_SCHEMA_VERSION,
             }
+        # Dual mode: still dual-write index.json for parity while DuckDB is
+        # authority; project through the repository when bound.
+        if repo is not None and hasattr(repo, "mutate_corpus_index"):
+            try:
+                for cid, envelope in self._envelopes.items():
+                    repo.mutate_corpus_index(
+                        "common",
+                        key=type("K", (), {"digest": envelope.content_digest})(),
+                        envelope_content_id=cid,
+                        envelope_content_digest=envelope.content_digest,
+                        operation="index",
+                        payload={"profile": envelope.profile},
+                    )
+            except Exception:
+                pass
         _atomic_write_json(path, payload)
 
     def _load_envelope_file(self, path: Path) -> ArtifactEnvelope:
@@ -316,7 +389,40 @@ class ProofCorpusStore:
 
             self._index_envelope(envelope)
             self._persist_envelope(envelope)
-            self._persist_index()
+            # DQK-066: promoted authority forbids whole-file index.json rewrites.
+            # Immutable envelopes remain durable; the index is DuckDB-authoritative
+            # and can be rebuilt via rebuild_index_from_envelopes().
+            repo = self._authority_repository
+            if repo is not None and getattr(repo, "is_promoted", False):
+                if hasattr(repo, "mutate_corpus_index"):
+                    try:
+                        repo.mutate_corpus_index(
+                            "common",
+                            key=type(
+                                "K", (), {"digest": envelope.content_digest}
+                            )(),
+                            envelope_content_id=envelope.content_cid,
+                            envelope_content_digest=envelope.content_digest,
+                            operation="index",
+                            payload={"profile": envelope.profile},
+                        )
+                    except Exception:
+                        pass
+                # Seed immutable envelope material for later rebuilds.
+                bag = getattr(repo, "_immutable_envelopes", None)
+                if isinstance(bag, dict):
+                    bag[envelope.content_cid] = {
+                        "content_id": envelope.content_cid,
+                        "content_digest": envelope.content_digest,
+                        "byte_size": 0,
+                        "media_type": "application/json",
+                        "key_digest": envelope.content_digest,
+                        "backend": "common",
+                        "entry_digest": envelope.content_digest,
+                        "created_at": 0.0,
+                    }
+            else:
+                self._persist_index()
             return envelope
 
     def get(self, content_cid: str) -> ArtifactEnvelope:
@@ -529,6 +635,201 @@ class ProofCorpusStore:
             self._profile_index = profile_index
             return len(loaded)
 
+    def rebuild_index_from_envelopes(self) -> dict[str, Any]:
+        """Rebuild the mutable secondary index from immutable envelope material.
+
+        Acceptance (DQK-066): "The corpus index rebuilds from immutable envelopes".
+        Envelope content CIDs and digests are never rewritten.  When promoted,
+        this is the only supported index mutation path (no whole-file JSON
+        rewrite of ``index.json``).
+        """
+
+        with self._lock:
+            # Prefer on-disk envelopes when available; fall back to memory.
+            if self.root is not None:
+                envelopes_dir = self._envelopes_dir()
+                assert envelopes_dir is not None
+                loaded: dict[str, ArtifactEnvelope] = {}
+                for path in sorted(envelopes_dir.glob("*.json")):
+                    envelope = self._load_envelope_file(path)
+                    if envelope.content_cid in loaded:
+                        raise ProofCorpusStoreIntegrityError(
+                            f"duplicate envelope content_cid on disk: "
+                            f"{envelope.content_cid}"
+                        )
+                    loaded[envelope.content_cid] = envelope
+                source_envelopes = loaded
+            else:
+                source_envelopes = {
+                    cid: env.verify_integrity()
+                    for cid, env in self._envelopes.items()
+                }
+
+            family_index: dict[str, set[str]] = {}
+            source_index: dict[str, dict[str, str]] = {}
+            profile_index: dict[str, str] = {}
+            for envelope in source_envelopes.values():
+                family_index.setdefault(envelope.family.value, set()).add(
+                    envelope.content_cid
+                )
+                source_index.setdefault(envelope.source_digest, {})[
+                    envelope.profile
+                ] = envelope.content_cid
+                profile_index[envelope.profile] = envelope.content_cid
+
+            self._envelopes = dict(source_envelopes)
+            self._family_index = family_index
+            self._source_index = source_index
+            self._profile_index = profile_index
+            self._index_rebuilds += 1
+
+            # Project rebuild into bound authority repository when present.
+            repo = self._authority_repository
+            authority_report: dict[str, Any] | None = None
+            if repo is not None:
+                # Seed immutable envelope material then rebuild repository index.
+                for envelope in source_envelopes.values():
+                    bag = getattr(repo, "_immutable_envelopes", None)
+                    if isinstance(bag, dict):
+                        bag[envelope.content_cid] = {
+                            "content_id": envelope.content_cid,
+                            "content_digest": envelope.content_digest,
+                            "byte_size": 0,
+                            "media_type": "application/json",
+                            "key_digest": envelope.content_digest,
+                            "backend": "common",
+                            "entry_digest": envelope.content_digest,
+                            "created_at": 0.0,
+                        }
+                if hasattr(repo, "rebuild_corpus_index_from_envelopes"):
+                    authority_report = repo.rebuild_corpus_index_from_envelopes()
+
+            # When not promoted/export-only, refresh on-disk index.json from
+            # rebuilt state.  After DQK-067 cutover, skip whole-file rewrite
+            # (authority is DuckDB; use export_index_json_compat explicitly).
+            allow_json = True
+            try:
+                from ..common.proof_cache import legacy_json_persistence_allowed
+
+                allow_json = legacy_json_persistence_allowed(repo)
+            except Exception:
+                allow_json = not (
+                    repo is not None and getattr(repo, "is_promoted", False)
+                )
+            if allow_json:
+                path = self._index_path()
+                if path is not None:
+                    families = {
+                        family: sorted(cids)
+                        for family, cids in sorted(family_index.items())
+                    }
+                    sources = {
+                        digest: dict(sorted(profiles.items()))
+                        for digest, profiles in sorted(source_index.items())
+                    }
+                    payload = {
+                        "families": families,
+                        "interface": PROOF_CORPUS_STORE_INTERFACE,
+                        "profiles": dict(sorted(profile_index.items())),
+                        "schema_version": PROOF_CORPUS_INDEX_SCHEMA_VERSION,
+                        "sources": sources,
+                        "store_schema_version": PROOF_CORPUS_STORE_SCHEMA_VERSION,
+                        "rebuilt_from": "immutable_envelopes",
+                    }
+                    _atomic_write_json(path, payload)
+
+            return {
+                "rebuilt": len(source_envelopes),
+                "families": len(family_index),
+                "profiles": len(profile_index),
+                "sources": len(source_index),
+                "index_rebuilds": self._index_rebuilds,
+                "authority": authority_report,
+                "promoted": bool(
+                    repo is not None and getattr(repo, "is_promoted", False)
+                ),
+                "export_only": bool(
+                    repo is not None and getattr(repo, "is_export_only", False)
+                ),
+            }
+
+    def export_index_json_compat(self, path: Path | str | None = None) -> dict[str, Any]:
+        """Explicit export of the secondary index as legacy ``index.json``.
+
+        Allowed after DQK-067 export-only cutover.  The written file is never
+        re-admitted as authority; DuckDB + immutable envelopes remain canonical.
+        """
+
+        target = Path(path) if path is not None else self._index_path()
+        if target is None:
+            raise ProofCorpusStoreError(
+                "export_index_json_compat requires a path or a store root"
+            )
+        with self._lock:
+            families = {
+                family: sorted(cids)
+                for family, cids in sorted(self._family_index.items())
+            }
+            sources = {
+                digest: dict(sorted(profiles.items()))
+                for digest, profiles in sorted(self._source_index.items())
+            }
+            payload = {
+                "families": families,
+                "interface": PROOF_CORPUS_STORE_INTERFACE,
+                "profiles": dict(sorted(self._profile_index.items())),
+                "schema_version": PROOF_CORPUS_INDEX_SCHEMA_VERSION,
+                "sources": sources,
+                "store_schema_version": PROOF_CORPUS_STORE_SCHEMA_VERSION,
+                "export_only": True,
+                "legacy_file_authoritative": False,
+                "owner_task_id": "DQK-067",
+            }
+        _atomic_write_json(target, payload)
+        return {
+            "path": str(target),
+            "families": len(families),
+            "profiles": len(payload["profiles"]),
+            "operation": "export_index_json_compat",
+            "legacy_file_authoritative": False,
+        }
+
+    def import_index_json_compat(self, path: Path | str | None = None) -> dict[str, Any]:
+        """One-time import of a legacy ``index.json`` (rebuild preferred).
+
+        Validates the index against on-disk envelopes when present, then
+        refreshes in-memory secondary indexes.  Does not make the file
+        authoritative after import.
+        """
+
+        target = Path(path) if path is not None else self._index_path()
+        if target is None or not Path(target).is_file():
+            raise ProofCorpusStoreError(
+                f"import_index_json_compat source is not a file: {target}"
+            )
+        # Prefer full reload which validates index against envelopes.
+        if self.root is not None and Path(target) == self._index_path():
+            count = self.reload()
+            return {
+                "path": str(target),
+                "loaded": count,
+                "operation": "import_index_json_compat",
+                "legacy_file_authoritative": False,
+            }
+        # Foreign path: load envelopes from root then overlay index profiles.
+        try:
+            payload = json.loads(Path(target).read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise ProofCorpusStoreError(
+                f"import_index_json_compat unreadable: {exc}"
+            ) from exc
+        report = self.rebuild_index_from_envelopes()
+        report["imported_index"] = str(target)
+        report["operation"] = "import_index_json_compat"
+        report["legacy_file_authoritative"] = False
+        report["index_schema"] = payload.get("schema_version")
+        return report
+
 
 def put_envelope(
     store: ProofCorpusStore,
@@ -571,10 +872,43 @@ def put_family_fixtures(
     return intent_env, legal_env, security_env
 
 
+# DQK-065/066/067: re-export unified repository symbols so static/import
+# guards observe the store as a compatibility surface over DuckDB authority.
+from ..common.proof_cache import (  # noqa: E402
+    LEGACY_PROOF_BACKENDS,
+    LegacyProofBackend,
+    ProofAuthorityJSONRewriteError,
+    ProofJSONCompatibilityError,
+    UnifiedProofAuthorityRepository,
+    UnifiedProofShadowRepository,
+    assert_direct_json_persistence_forbidden,
+    build_proof_authority_repository,
+    build_proof_shadow_repository,
+    get_authority_repository,
+    get_shadow_repository,
+    legacy_json_persistence_allowed,
+    set_authority_repository,
+    set_shadow_repository,
+)
+
 __all__ = [
     "ProofCorpusStore",
     "ProofCorpusStoreError",
     "ProofCorpusStoreIntegrityError",
+    "LEGACY_PROOF_BACKENDS",
+    "LegacyProofBackend",
+    "ProofAuthorityJSONRewriteError",
+    "ProofJSONCompatibilityError",
+    "UnifiedProofAuthorityRepository",
+    "UnifiedProofShadowRepository",
+    "assert_direct_json_persistence_forbidden",
+    "build_proof_authority_repository",
+    "build_proof_shadow_repository",
+    "get_authority_repository",
+    "get_shadow_repository",
+    "legacy_json_persistence_allowed",
+    "set_authority_repository",
+    "set_shadow_repository",
     "get_envelope",
     "put_envelope",
     "put_family_fixtures",

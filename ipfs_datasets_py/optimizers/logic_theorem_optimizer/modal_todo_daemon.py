@@ -1046,6 +1046,8 @@ class ModalLossTodoGenerator:
         "cec_dcec_no_formula_loss": 0.0,
         "cec_dcec_event_formula_invalid_ratio": 0.0,
         "cec_dcec_validation_failure_ratio": 0.0,
+        "compiler_ir_cosine_similarity": 1.0,
+        "compiler_ir_cross_entropy_loss": 0.05,
         "cosine_loss": 0.05,
         "cross_entropy_loss": 0.05,
         "deontic_bridge_evaluation_failure_loss": 0.0,

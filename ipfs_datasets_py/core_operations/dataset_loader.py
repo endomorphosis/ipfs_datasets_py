@@ -134,9 +134,10 @@ class DatasetLoader:
                     "features": str(getattr(info, "features", ""))
                 }
             
-            return {
+            dataset_id = f"dataset_{source}_{id(dataset_obj)}"  # Generate unique ID
+            result = {
                 "status": "success",
-                "dataset_id": f"dataset_{source}_{id(dataset_obj)}",  # Generate unique ID
+                "dataset_id": dataset_id,
                 "metadata": metadata,
                 "summary": {
                     "num_records": len(dataset_obj),
@@ -145,6 +146,73 @@ class DatasetLoader:
                     "format": format if format else "auto-detected"
                 }
             }
+            # DQK-089: optional admitted-lake shadow projection (legacy remains authority).
+            try:
+                from ipfs_datasets_py.ducklake.adapters import (
+                    ParquetProducerId,
+                    maybe_shadow_project,
+                )
+
+                features = (
+                    str(dataset_obj.features)
+                    if hasattr(dataset_obj, "features")
+                    else ""
+                )
+                shadow = maybe_shadow_project(
+                    producer_id=ParquetProducerId.DATASET_LOADER.value,
+                    dataset_id=dataset_id,
+                    source_uri=str(source),
+                    source_kind="parquet" if (format or "").lower() == "parquet" else "dataset",
+                    schema_fields=tuple(
+                        f.strip()
+                        for f in features.replace("{", "").replace("}", "").split(",")
+                        if f.strip()
+                    )[:32],
+                    operation_id=f"op:dataset_loader:{dataset_id}",
+                )
+                if shadow is not None:
+                    result["ducklake_shadow"] = shadow.to_dict()
+            except Exception as shadow_exc:  # noqa: BLE001 — never block legacy load
+                self.logger.debug(
+                    "ducklake shadow projection skipped: %s", shadow_exc
+                )
+            # DQK-100: cutover discovery fence (no-op until lake authority is
+            # process-local promoted; completing DQK-100 never flips production).
+            try:
+                from ipfs_datasets_py.ducklake.cutover import (
+                    maybe_enforce_lake_discovery,
+                )
+                from ipfs_datasets_py.ducklake.adapters import ParquetProducerId as _PPId
+
+                import os as _os
+
+                cutover = maybe_enforce_lake_discovery(
+                    producer_id=_PPId.DATASET_LOADER.value,
+                    source_uri=str(source),
+                    path=str(source),
+                    uses_implicit_directory_scan=_os.path.isdir(str(source)),
+                    uses_mutable_sidecar=str(source).endswith(
+                        (".json", ".manifest", ".manifest.json")
+                    ),
+                )
+                if cutover is not None:
+                    result["ducklake_cutover"] = cutover
+            except Exception as cutover_exc:
+                # Under lake-primary, re-raise discovery rejections; under legacy
+                # the helper is a no-op so this only fires on unexpected errors.
+                from ipfs_datasets_py.ducklake.cutover import (
+                    CutoverBlockedError,
+                    is_lake_authority_active,
+                )
+
+                if is_lake_authority_active() and isinstance(
+                    cutover_exc, CutoverBlockedError
+                ):
+                    raise
+                self.logger.debug(
+                    "ducklake cutover discovery fence skipped: %s", cutover_exc
+                )
+            return result
         except Exception as e:
             self.logger.error(f"Error loading dataset: {e}")
             return {

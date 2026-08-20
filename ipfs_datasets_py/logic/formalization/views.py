@@ -24,6 +24,12 @@ from ipfs_datasets_py.logic.ir_core.identity import (
     CanonicalIdentity,
     canonical_identity,
 )
+from ipfs_datasets_py.logic.syntax_core.ast import (
+    TYPED_EXPRESSION_INTERFACE,
+    TYPED_EXPRESSION_SCHEMA_VERSION,
+    AstError,
+    TypedExpression,
+)
 
 from .samples import (
     FormalizationValidationError,
@@ -43,6 +49,71 @@ FORMALIZATION_VIEW_REGISTRY_SCHEMA_VERSION: Final = (
 FORMAL_SYMBOL_TABLE_SCHEMA_VERSION: Final = "formal-symbol-table/v1"
 FORMAL_FORMULA_SCHEMA_VERSION: Final = "formal-formula/v1"
 FORMAL_CROSS_VIEW_LINK_SCHEMA_VERSION: Final = "formal-cross-view-link/v1"
+# FormalizationArtifact@2 carries versioned typed-expression envelopes on formulas.
+FORMALIZATION_ARTIFACT_V2_INTERFACE: Final = "FormalizationArtifact@2"
+
+
+def _looks_like_typed_expression(value: Any) -> bool:
+    """Return True when *value* claims the TypedExpression@1 wire shape."""
+
+    if isinstance(value, TypedExpression):
+        return True
+    if not isinstance(value, Mapping):
+        return False
+    interface = value.get("interface")
+    schema = value.get("schema_version")
+    return (
+        interface == TYPED_EXPRESSION_INTERFACE
+        or schema == TYPED_EXPRESSION_SCHEMA_VERSION
+        or (
+            isinstance(value.get("root"), Mapping)
+            and isinstance(value.get("signature"), Mapping)
+            and "expression_id" in value
+        )
+    )
+
+
+def coerce_formula_expression(value: Any) -> FrozenJSON | TypedExpression:
+    """Dual-read a formula expression as TypedExpression@1 or legacy JSON.
+
+    Payloads that claim ``TypedExpression@1`` (or its schema) are fully
+    validated — arbitrary JSON/text cannot masquerade as elaborated syntax.
+    Unclaimed legacy maps/strings remain admitted for dual-read compatibility.
+    """
+
+    if isinstance(value, TypedExpression):
+        return value
+    if _looks_like_typed_expression(value):
+        try:
+            return TypedExpression.from_dict(_mapping(value, "expression"))
+        except (AstError, FormalizationValidationError, TypeError, ValueError, KeyError) as exc:
+            raise FormalizationValidationError(
+                f"expression claims TypedExpression but failed validation: {exc}"
+            ) from exc
+    if isinstance(value, (str, bytes, bytearray)):
+        # Bare text is legacy surface only; it is never elaborated syntax.
+        text = value.decode("utf-8") if isinstance(value, (bytes, bytearray)) else value
+        if not isinstance(text, str) or not text.strip():
+            raise FormalizationValidationError("formula expression must not be empty")
+        return freeze_json(text)
+    expression = freeze_json(value)
+    if expression is None or (isinstance(expression, str) and not expression.strip()):
+        raise FormalizationValidationError("formula expression must not be empty")
+    return expression
+
+
+def serialize_formula_expression(value: FrozenJSON | TypedExpression) -> Any:
+    """Canonical write: TypedExpression@1 when typed, else legacy JSON thaw."""
+
+    if isinstance(value, TypedExpression):
+        return value.to_dict()
+    return thaw_json(value)
+
+
+def is_typed_expression(value: Any) -> bool:
+    """Return True when *value* is a validated TypedExpression instance."""
+
+    return isinstance(value, TypedExpression)
 
 
 class CrossViewRelation(str, Enum):
@@ -427,11 +498,16 @@ class SymbolTable:
 
 @dataclass(frozen=True, slots=True)
 class FormalFormula:
-    """One source-grounded formula in a registered formal view."""
+    """One source-grounded formula in a registered formal view.
+
+    ``expression`` dual-reads legacy JSON/text and fully validated
+    :class:`~ipfs_datasets_py.logic.syntax_core.ast.TypedExpression` payloads.
+    Canonical write emits ``TypedExpression@1`` when the expression is typed.
+    """
 
     formula_id: str
     view_id: str
-    expression: FrozenJSON
+    expression: FrozenJSON | TypedExpression
     symbol_ids: tuple[str, ...] = ()
     source_ref_ids: tuple[str, ...] = ()
     span_ids: tuple[str, ...] = ()
@@ -446,10 +522,9 @@ class FormalFormula:
             self, "formula_id", _identifier(self.formula_id, "formula_id")
         )
         object.__setattr__(self, "view_id", _identifier(self.view_id, "view_id"))
-        expression = freeze_json(self.expression)
-        if expression is None or (isinstance(expression, str) and not expression.strip()):
-            raise FormalizationValidationError("formula expression must not be empty")
-        object.__setattr__(self, "expression", expression)
+        object.__setattr__(
+            self, "expression", coerce_formula_expression(self.expression)
+        )
         for name in (
             "symbol_ids",
             "source_ref_ids",
@@ -483,10 +558,16 @@ class FormalFormula:
                 f"unsupported formula schema: {self.schema_version!r}"
             )
 
+    @property
+    def is_typed(self) -> bool:
+        """True when the expression is a validated TypedExpression@1."""
+
+        return isinstance(self.expression, TypedExpression)
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "assumption_ids": list(self.assumption_ids),
-            "expression": thaw_json(self.expression),
+            "expression": serialize_formula_expression(self.expression),
             "formula_id": self.formula_id,
             "input_node_ids": list(self.input_node_ids),
             "metadata": self.metadata.to_dict(),
@@ -761,6 +842,7 @@ def canonical_view_registry_json(registry: ViewRegistry) -> str:
 
 
 __all__ = [
+    "FORMALIZATION_ARTIFACT_V2_INTERFACE",
     "FORMALIZATION_VIEW_SCHEMA_VERSION",
     "FORMALIZATION_VIEW_REGISTRY_SCHEMA_VERSION",
     "FORMAL_SYMBOL_TABLE_SCHEMA_VERSION",
@@ -774,5 +856,8 @@ __all__ = [
     "SymbolTable",
     "ViewRegistry",
     "canonical_view_registry_json",
+    "coerce_formula_expression",
+    "is_typed_expression",
+    "serialize_formula_expression",
     "validate_view_artifacts",
 ]

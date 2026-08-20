@@ -1706,6 +1706,55 @@ class ParquetGraphStore:
         # Post-publish verification (restart-style integrity).
         self.verify_revision(tenant_n, graph_n, rev_n)
 
+        # DQK-089: optional admitted-lake shadow projection (Parquet bytes remain authority).
+        try:
+            from ipfs_datasets_py.ducklake.adapters import (
+                ParquetProducerId,
+                maybe_shadow_project,
+            )
+            from ipfs_datasets_py.duckdb_control.contracts import content_identity as _cid
+
+            source_digest = _cid(
+                {
+                    "path": str(final_dir),
+                    "checksums": dict(sorted((checksums or {}).items())),
+                    "revision_id": rev_n,
+                }
+            )
+            maybe_shadow_project(
+                producer_id=ParquetProducerId.KG_PARQUET_STORAGE.value,
+                dataset_id=f"kg:{tenant_n}:{graph_n}:{rev_n}",
+                source_uri=str(final_dir),
+                source_digest=source_digest,
+                source_kind="parquet",
+                schema_fields=tuple(sorted((partition_results or {}).keys())),
+                operation_id=f"op:kg_parquet:{tenant_n}:{graph_n}:{rev_n}",
+                pre_source_digest=source_digest,
+            )
+            # DQK-100: cutover content-address fence (no-op until lake authority promoted).
+            from ipfs_datasets_py.ducklake.cutover import maybe_enforce_lake_discovery
+
+            maybe_enforce_lake_discovery(
+                producer_id=ParquetProducerId.KG_PARQUET_STORAGE.value,
+                source_uri=str(final_dir),
+                path=str(final_dir),
+                source_digest=source_digest,
+            )
+        except Exception as shadow_exc:  # noqa: BLE001 — never block legacy publish
+            from ipfs_datasets_py.ducklake.cutover import (
+                CutoverBlockedError,
+                is_lake_authority_active,
+            )
+
+            if is_lake_authority_active() and isinstance(
+                shadow_exc, CutoverBlockedError
+            ):
+                raise
+            logger.debug(
+                "ducklake shadow projection skipped for kg parquet publish",
+                exc_info=True,
+            )
+
         return PublishResult(
             tenant=tenant_n,
             graph_id=graph_n,

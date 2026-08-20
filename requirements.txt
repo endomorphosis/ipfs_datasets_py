@@ -97,7 +97,7 @@ python-magic-bin>=0.4.14; platform_system == 'Windows'
 magika>=0.6.1,<0.7.0; python_version < '3.14'
 
 Flask>=3.1.1
-duckdb>=1.3.2
+duckdb>=1.5.5,<1.6.0
 aiosqlite>=0.17.0
 pymupdf>=1.26.3
 pypdf>=5.0.0

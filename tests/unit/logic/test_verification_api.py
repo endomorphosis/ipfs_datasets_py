@@ -12,13 +12,14 @@ Acceptance coverage for ``LogicVerificationAPI@1``:
 
 from __future__ import annotations
 
-import importlib
+import os
+import subprocess
 import sys
-import warnings
+import textwrap
 from dataclasses import FrozenInstanceError
+from pathlib import Path
 
 import pytest
-
 from ipfs_datasets_py.logic.verification_api import (
     LOGIC_VERIFICATION_API_INTERFACE,
     STABLE_OPERATIONS,
@@ -32,36 +33,71 @@ from ipfs_datasets_py.logic.verification_api import (
     list_stable_features,
 )
 
-
-def _fresh_import(module_name: str):
-    root = module_name.split(".", 1)[0]
-    for name in list(sys.modules.keys()):
-        if name == root or name.startswith(root + "."):
-            sys.modules.pop(name, None)
-    importlib.invalidate_caches()
-    return importlib.import_module(module_name)
-
-
-def _ipfs_origin_warnings(recorded: list[warnings.WarningMessage]) -> list[warnings.WarningMessage]:
-    return [
-        warning
-        for warning in recorded
-        if "ipfs_datasets_py" in (getattr(warning, "filename", "") or "")
-    ]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_verification_api_import_is_quiet_and_lightweight(monkeypatch) -> None:
     monkeypatch.delenv("IPFS_DATASETS_PY_WARN_OPTIONAL_IMPORTS", raising=False)
 
-    with warnings.catch_warnings(record=True) as recorded:
-        warnings.simplefilter("always")
-        module = _fresh_import("ipfs_datasets_py.logic.verification_api")
+    parent_module = sys.modules["ipfs_datasets_py.logic.verification_api"]
+    parent_modules = {
+        name: sys.modules[name]
+        for name in (
+            "ipfs_datasets_py",
+            "ipfs_datasets_py.logic",
+            "ipfs_datasets_py.logic.verification_api",
+        )
+    }
+    parent_api_class = LogicVerificationAPI
+    script = textwrap.dedent(
+        """
+        import importlib
+        import sys
+        import warnings
 
-    assert _ipfs_origin_warnings(recorded) == []
-    assert module.LOGIC_VERIFICATION_API_INTERFACE == "LogicVerificationAPI@1"
-    # Discovery-facing import must not pull optional prover / installer stacks.
-    assert "ipfs_datasets_py.logic.integration" not in sys.modules
-    assert "ipfs_datasets_py.logic.external_provers.lazy_installer" not in sys.modules
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            module = importlib.import_module(
+                "ipfs_datasets_py.logic.verification_api"
+            )
+
+        ipfs_warnings = [
+            item
+            for item in recorded
+            if "ipfs_datasets_py" in (getattr(item, "filename", "") or "")
+        ]
+        assert ipfs_warnings == [], [str(item.message) for item in ipfs_warnings]
+        assert module.LOGIC_VERIFICATION_API_INTERFACE == "LogicVerificationAPI@1"
+        assert "ipfs_datasets_py.logic.integration" not in sys.modules
+        assert (
+            "ipfs_datasets_py.logic.external_provers.lazy_installer"
+            not in sys.modules
+        )
+        print("ok")
+        """
+    )
+    env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONPATH"] = os.pathsep.join(
+        part
+        for part in (str(REPO_ROOT), env.get("PYTHONPATH", ""))
+        if part
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=str(REPO_ROOT),
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "ok" in completed.stdout
+    for name, module in parent_modules.items():
+        assert sys.modules.get(name) is module
+    assert parent_module.LogicVerificationAPI is parent_api_class
 
 
 def test_interface_constants_and_stable_operations() -> None:

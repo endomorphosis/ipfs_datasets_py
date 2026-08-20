@@ -65,7 +65,12 @@ def test_runtime_guard_aborts_at_rss_ceiling(
         guard.check()
 
 
-def test_day_soak_requires_explicit_opt_in(tmp_path: Path) -> None:
+def test_day_soak_requires_explicit_opt_in(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("KG_SOAK_24H", raising=False)
+    monkeypatch.delenv("KG_SOAK_DURATION_S", raising=False)
     with pytest.raises(BenchmarkSafetyError, match="KG_SOAK_24H=1"):
         run_soak(
             DAY,

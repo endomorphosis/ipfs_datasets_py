@@ -18,6 +18,10 @@ CRYPTOIR-G600 cutover notes:
   them never enables key storage or unguarded signing.
 * Signing/broadcast must go through :class:`GuardService` with consumed
   admissibility capabilities — there is no ``approved=true`` escape hatch.
+
+DQK-071: registry construction accepts ``shadow`` / ``shadow_store`` /
+``duckdb_wallet_store`` options and attaches the DuckDB ledger/checkpoint
+shadow port so multi-chain processors dual-write at ingestion time.
 """
 
 from __future__ import annotations
@@ -30,6 +34,20 @@ from typing import Any
 
 from .errors import InvalidRequestError, UnsupportedCapabilityError, WalletProcessorError
 from .protocols import Capabilities, Capability
+
+# Option keys recognized for DuckDB shadow ledger injection (DQK-071).
+_SHADOW_OPTION_KEYS = frozenset(
+    {
+        "shadow",
+        "shadow_store",
+        "duckdb_wallet_store",
+        "wallet_store",
+        "enable_shadow",
+    }
+)
+
+# Process-local registry shadow store shared across builders when enabled.
+_REGISTRY_SHADOW_STORE: Any | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -861,6 +879,137 @@ for _spec in _FAMILY_SPECS:
 # ---------------------------------------------------------------------------
 
 
+def get_registry_shadow_store(*, scope: str = "wallet-registry-shadow") -> Any:
+    """Return the process-local registry shadow ledger store (idempotent)."""
+
+    global _REGISTRY_SHADOW_STORE
+    if _REGISTRY_SHADOW_STORE is None:
+        from .duckdb_storage import open_wallet_store
+
+        _REGISTRY_SHADOW_STORE = open_wallet_store(scope=scope, auto_recover=True)
+    return _REGISTRY_SHADOW_STORE
+
+
+def reset_registry_shadow_store() -> None:
+    """Drop the process-local registry shadow store (intended for tests)."""
+
+    global _REGISTRY_SHADOW_STORE
+    _REGISTRY_SHADOW_STORE = None
+
+
+def resolve_shadow_store_from_options(options: Mapping[str, Any]) -> Any | None:
+    """Extract a DuckDB wallet shadow store from registry construction options.
+
+    Recognized keys (first match wins):
+
+    * ``shadow_store`` / ``duckdb_wallet_store`` / ``wallet_store`` — store instance
+    * ``shadow=True`` / ``enable_shadow=True`` — process-local pure-Python store
+    * ``shadow=False`` / ``enable_shadow=False`` — disabled
+    * ``shadow=<store>`` — non-bool treated as store instance
+    """
+
+    for key in ("shadow_store", "duckdb_wallet_store", "wallet_store"):
+        if key in options and options[key] is not None:
+            return options[key]
+    if "shadow" in options:
+        value = options["shadow"]
+        if value is False:
+            return None
+        if value is True:
+            return get_registry_shadow_store()
+        if value is not None:
+            return value
+    if "enable_shadow" in options:
+        if options["enable_shadow"]:
+            return get_registry_shadow_store()
+        return None
+    return None
+
+
+def attach_shadow_ledger(processor: Any, shadow_store: Any | None) -> Any:
+    """Attach a DuckDB shadow ledger/checkpoint port to a constructed processor.
+
+    Supports:
+
+    * :class:`~pipeline.WalletLedgerProcessor` via ``attach_shadow``
+    * Facades that expose ``attach_shadow`` or a writable ``shadow_store``
+    * Facades with nested ``pipeline`` / ``ledger_processor`` attributes
+    """
+
+    if processor is None or shadow_store is None:
+        return processor
+    attach = getattr(processor, "attach_shadow", None)
+    if callable(attach):
+        attach(shadow_store)
+        return processor
+    if hasattr(processor, "shadow_store"):
+        try:
+            processor.shadow_store = shadow_store
+            return processor
+        except Exception:
+            pass
+    for attr in ("pipeline", "ledger_processor", "processor", "wallet_processor"):
+        nested = getattr(processor, attr, None)
+        if nested is not None and nested is not processor:
+            attach_shadow_ledger(nested, shadow_store)
+    # Annotate facade metadata for discovery without requiring a full pipeline.
+    if not hasattr(processor, "_shadow_store"):
+        try:
+            object.__setattr__(processor, "_shadow_store", shadow_store)
+        except Exception:
+            try:
+                processor._shadow_store = shadow_store  # type: ignore[attr-defined]
+            except Exception:
+                pass
+    return processor
+
+
+def build_wallet_ledger_processor_from_options(
+    *,
+    chain: Any,
+    wallet_provider: Any | None = None,
+    ledger_provider: Any | None = None,
+    normalizer: Any,
+    options: Mapping[str, Any] | None = None,
+    **kwargs: Any,
+) -> Any:
+    """Construct a :class:`WalletLedgerProcessor` with shadow options applied.
+
+    Registry builders and API facades use this helper so multi-chain storage,
+    checkpoint, and pipeline paths share one dual-write injection site.
+    """
+
+    from .pipeline import WalletLedgerProcessor
+
+    opts = dict(options or {})
+    opts.update(kwargs)
+    shadow_store = resolve_shadow_store_from_options(opts)
+    # Strip shadow keys so they are not forwarded as unknown kwargs.
+    clean = {k: v for k, v in opts.items() if k not in _SHADOW_OPTION_KEYS}
+    # Allow explicit checkpoint_store / raw_payload_* through.
+    return WalletLedgerProcessor(
+        chain=chain,
+        wallet_provider=wallet_provider,
+        ledger_provider=ledger_provider,
+        normalizer=normalizer,
+        shadow_store=shadow_store,
+        **{
+            k: clean[k]
+            for k in (
+                "checkpoint_store",
+                "raw_payload_store",
+                "raw_payload_encryptor",
+                "provider_name",
+                "normalizer_version",
+                "normalized_schema_major",
+                "raw_payload_policy",
+                "clock",
+            )
+            if k in clean
+        },
+    )
+
+
 class WalletProcessorRegistry:
     """Lazy factory for wallet processor families.
 
@@ -872,6 +1021,8 @@ class WalletProcessorRegistry:
     * Exactly one generic adapter (core ``ProcessorProtocol``) lives under
       ``adapters/processor_protocol.py``; this registry does **not** wire the
       rejected legacy ``can_process`` surface.
+    * Optional ``shadow`` / ``shadow_store`` construction options inject the
+      DuckDB ledger/checkpoint dual-write port (DQK-071).
     """
 
     def __init__(
@@ -879,6 +1030,8 @@ class WalletProcessorRegistry:
         *,
         specs: Sequence[ProcessorFamilySpec] | None = None,
         builders: Mapping[str, _Builder] | None = None,
+        default_shadow: bool | Any | None = None,
+        shadow_store: Any | None = None,
     ) -> None:
         family_specs = tuple(specs) if specs is not None else _FAMILY_SPECS
         self._specs: dict[str, ProcessorFamilySpec] = {
@@ -892,6 +1045,23 @@ class WalletProcessorRegistry:
         self._builders: dict[str, _Builder] = dict(builders or _BUILDERS)
         self._instance_cache: MutableMapping[tuple[str, str | None], Any] = {}
         self._cache_enabled = False
+        if shadow_store is not None:
+            self._default_shadow_store = shadow_store
+        elif default_shadow is True:
+            self._default_shadow_store = get_registry_shadow_store()
+        elif default_shadow is False or default_shadow is None:
+            self._default_shadow_store = None
+        else:
+            self._default_shadow_store = default_shadow
+
+    @property
+    def default_shadow_store(self) -> Any | None:
+        return self._default_shadow_store
+
+    def attach_default_shadow(self, shadow_store: Any | None) -> None:
+        """Set the registry-wide default DuckDB shadow port for new processors."""
+
+        self._default_shadow_store = shadow_store
 
     # -- catalogue ---------------------------------------------------------
 
@@ -1081,7 +1251,14 @@ class WalletProcessorRegistry:
         if self._cache_enabled and cache_key in self._instance_cache:
             return self._instance_cache[cache_key]
 
+        # Resolve shadow before builders so options can still mention store keys
+        # without forcing every chain package to understand DuckDB dual-write.
+        shadow_store = resolve_shadow_store_from_options(options)
+        if shadow_store is None:
+            shadow_store = self._default_shadow_store
         processor = builder(spec, network, MappingProxyType(dict(options)))
+        if shadow_store is not None:
+            attach_shadow_ledger(processor, shadow_store)
         if self._cache_enabled:
             self._instance_cache[cache_key] = processor
         return processor
@@ -1146,7 +1323,12 @@ __all__ = [
     "UnknownProcessorError",
     "WalletProcessorRegistry",
     "WalletRegistry",
+    "attach_shadow_ledger",
+    "build_wallet_ledger_processor_from_options",
     "default_registry",
+    "get_registry_shadow_store",
     "get_wallet_processor",
     "reset_default_registry",
+    "reset_registry_shadow_store",
+    "resolve_shadow_store_from_options",
 ]
