@@ -1,0 +1,263 @@
+{
+  "acceptance": {
+    "boundary_terms_route_once": true,
+    "criteria": "Documents equal admitted searchable chunks; postings reconcile, physical bounds hold, boundary terms route once, and scores match reference BM25.",
+    "documents_equal_admitted_searchable_chunks": true,
+    "hub_upload": false,
+    "physical_bounds_hold": true,
+    "postings_reconcile": true,
+    "scores_match_reference_bm25": true,
+    "secrets_absent": true
+  },
+  "admitted": {
+    "chunk_count": 36,
+    "corpus_count": 14,
+    "document_count": 36,
+    "index_root_cid": "sha256:8da9a632c6cfa74186666c49e5950df7f8b68f0d5b28034213df06a1d970645c",
+    "posting_count": 760,
+    "term_count": 75,
+    "term_shard_count": 38
+  },
+  "adr_path": "docs/architecture/federal_register_document_number_grammar.md",
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "board_namespace": "legal-corpora-reindex-v1",
+  "bounds": {
+    "document_count_ceiling": null,
+    "forbidden_document_ceiling": 250000,
+    "maximum_posting_pointers_per_cell": 4096,
+    "maximum_route_page_rows": 4096,
+    "maximum_rows_per_physical_shard": 4096,
+    "sort_order_documents": "year_month_type_then_document_index",
+    "sort_order_postings": "term_then_chunk_cid",
+    "sort_order_terms": "lexicographic_term"
+  },
+  "bundle": "federal-index-bm25",
+  "checks": {
+    "admitted_chunk_count": 36,
+    "admitted_documents_equal_chunks": true,
+    "boundary_terms_route_once": true,
+    "build_query_tokenizer_terms_equal": true,
+    "demo_document_count": 8,
+    "demo_document_shard_count": 7,
+    "demo_max_document_shard_rows": 2,
+    "demo_max_posting_cell_pointers": 2,
+    "demo_max_route_page_rows": 2,
+    "demo_max_term_shard_rows": 2,
+    "demo_posting_count": 145,
+    "demo_term_count": 87,
+    "demo_term_shard_count": 44,
+    "documents_externally_sorted": true,
+    "every_admitted_chunk_has_document": true,
+    "hierarchical_term_routes_present": true,
+    "legal_tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "no_document_count_ceiling": true,
+    "no_hub_upload": true,
+    "postings_externally_sorted": true,
+    "production_max_posting_pointers": 4096,
+    "production_max_rows_per_shard": 4096,
+    "query_uses_legal_tokenizer": true,
+    "recovery_excluded_from_bm25": true,
+    "scores_match_reference_bm25": true,
+    "term_range_routing_used": true,
+    "terms_externally_sorted": true,
+    "tokenizer_id": "federal-register-bm25-tokenizer/v1",
+    "tokenizer_shared_by": "build_and_query"
+  },
+  "code_version": "1",
+  "currentness_disclaimer": "Federal Register completeness is cutoff-relative. Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the daily register is permanently current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "dataset_repo_id": "justicedao/ipfs_federal_register",
+  "demo": {
+    "average_document_length": 28.0,
+    "chunk_cids": [
+      "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+      "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+    ],
+    "config_digest": "b9f32144167783d50862ae4d177b906ea49a39f324f784b9d4c54bf07d5e4f23",
+    "corpus_root_cid": "sha256:0e85c0c9249fd30087ab6b252cc685a7d046afb12d6cb64fefff867fe4c9c0c1",
+    "document_count": 8,
+    "document_route_page_count": 7,
+    "document_shard_count": 7,
+    "index_root_cid": "sha256:55f9f45198ffcee5e0962269ef58b51ab00f7638f1a48233a53ccb9d6309e542",
+    "k1": 1.2,
+    "posting_count": 145,
+    "query_hit_count": 5,
+    "ranking_top_chunk_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sort_receipts": {
+      "documents": {
+        "externally_sorted": true,
+        "family": "documents",
+        "max_records_in_memory": 3,
+        "peak_resident_records": 3,
+        "records_consumed": 8,
+        "row_count": 8,
+        "run_count": 3,
+        "status": "complete"
+      },
+      "postings": {
+        "externally_sorted": true,
+        "family": "postings",
+        "max_records_in_memory": 3,
+        "peak_resident_records": 3,
+        "records_consumed": 145,
+        "row_count": 145,
+        "run_count": 49,
+        "status": "complete"
+      },
+      "terms": {
+        "externally_sorted": true,
+        "family": "terms",
+        "max_records_in_memory": 3,
+        "peak_resident_records": 3,
+        "records_consumed": 87,
+        "row_count": 87,
+        "run_count": 29,
+        "status": "complete"
+      }
+    },
+    "term_count": 87,
+    "term_route_height": 6,
+    "term_route_page_count": 45,
+    "term_shard_count": 44,
+    "tokenizer_id": "federal-register-bm25-tokenizer/v1"
+  },
+  "depends_on": [
+    "LCR-055"
+  ],
+  "description": "LCR-056 Federal Register term-range BM25. Field-aware document lengths, sorted postings, bounded posting cells, term shards, inclusive range routes, and differential scoring fixtures. Hermetic against the LCR-055 admitted searchable chunks. Does not authorize Hub upload.",
+  "differential": {
+    "fixtures": [
+      {
+        "chunk_cid": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "idf": 0.05715841383994862,
+        "reference_score": 0.057381979995776336,
+        "score": 0.057381979995776336,
+        "term": "emissions"
+      },
+      {
+        "chunk_cid": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "idf": 0.05715841383994862,
+        "reference_score": 0.35921606666436684,
+        "score": 0.35921606666436684,
+        "term": "emissions"
+      },
+      {
+        "chunk_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "idf": 1.791759469228055,
+        "reference_score": 1.598672991084128,
+        "score": 1.598672991084128,
+        "term": "epaemissionsrule"
+      },
+      {
+        "chunk_cid": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "idf": 0.05715841383994862,
+        "reference_score": 0.3620338660363289,
+        "score": 0.3620338660363289,
+        "term": "emissions"
+      },
+      {
+        "chunk_cid": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "idf": 0.05715841383994862,
+        "reference_score": 0.059235502902773136,
+        "score": 0.059235502902773136,
+        "term": "emissions"
+      },
+      {
+        "chunk_cid": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "idf": 0.05715841383994862,
+        "reference_score": 0.059235502902773136,
+        "score": 0.059235502902773136,
+        "term": "emissions"
+      },
+      {
+        "chunk_cid": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "idf": 0.05715841383994862,
+        "reference_score": 0.059235502902773136,
+        "score": 0.059235502902773136,
+        "term": "emissions"
+      },
+      {
+        "chunk_cid": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+        "idf": 0.05715841383994862,
+        "reference_score": 0.059235502902773136,
+        "score": 0.059235502902773136,
+        "term": "emissions"
+      }
+    ],
+    "score_abs_tolerance": 1e-12,
+    "scores_match_reference_bm25": true
+  },
+  "family_counts": {
+    "bm25": 36,
+    "bm25_documents": 36,
+    "bm25_postings": 760,
+    "chunks": 36,
+    "corpus": 14
+  },
+  "field_weights": {
+    "agency": 3.0,
+    "body": 1.0,
+    "citation": 8.0,
+    "document_type": 2.0,
+    "heading": 4.0,
+    "hierarchy": 2.0,
+    "note": 0.5,
+    "title": 5.0
+  },
+  "goal_id": "LCR-G120",
+  "network_required": false,
+  "parameters": {
+    "b": 0.75,
+    "k1": 1.2,
+    "legacy_parameter_delta": {
+      "b": {
+        "changed": false,
+        "delta": 0.0,
+        "evaluation_default": 0.75,
+        "legacy": 0.75
+      },
+      "k1": {
+        "changed": true,
+        "delta": -0.30000000000000004,
+        "evaluation_default": 1.2,
+        "legacy": 1.5
+      },
+      "legacy_field_separation": false,
+      "notes": "Legacy legal BM25 used k1=1.5 with a single unweighted term array. Federal Register uses k1=1.2, explicit multi-field weights, and the sealed legal tokenizer shared by build and query."
+    },
+    "legal_tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "stopword_policy_id": "uscode-legal-stopwords/v1",
+    "tokenizer_id": "federal-register-bm25-tokenizer/v1",
+    "tokenizer_version": "v1"
+  },
+  "producer": "federal_register_bm25.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "proves_software_contract_only": true,
+  "release_profile": "federal-register-ir-graphrag/v2",
+  "report_digest_sha256": "ac00bfb09257a79d1d557f607cea12de74640447d2377528df49d2e36ed27c3c",
+  "report_kind": "fixture_bm25",
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-bm25@1",
+  "schema_version": "federal-register-bm25-v1",
+  "task_id": "LCR-056",
+  "tokenizer": {
+    "federal_register_tokenizer_id": "federal-register-bm25-tokenizer/v1",
+    "goal_id": "USCIR-G040",
+    "legal_tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "release_profile": "publicus-ir-graphrag/v2",
+    "schema_version": "uscode-tokenizer-v1",
+    "shared_by": "build_and_query",
+    "stopword_policy_id": "uscode-legal-stopwords/v1",
+    "task_id": "USCIR-013",
+    "tokenizer_digest": "cd2e8d52fab9cc7d3a7a1f4d853a84e7a3dce95d6828d8edb916bd1dc8f810d6",
+    "tokenizer_id": "federal-register-bm25-tokenizer/v1",
+    "tokenizer_version": "v1",
+    "used_for_build": true,
+    "used_for_query": true
+  }
+}
