@@ -1,0 +1,903 @@
+{
+  "admitted_count": 52,
+  "admitted_record_ids": [
+    "ak-akleg-basis-statutory_text",
+    "al-alison-code-statutory_text",
+    "ar-arkleg-statutory_text",
+    "az-azleg-ars-statutory_text",
+    "ca-leginfo-statutory_text",
+    "co-leg-crs-statutory_text",
+    "ct-cga-titles-statutory_text",
+    "dc-council-code-statutory_text",
+    "de-delcode-statutory_text",
+    "fl-leg-statutes-statutory_text",
+    "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-federal_government_text",
+    "ga-legis-laws-statutory_text",
+    "hi-capitol-hrs-statutory_text",
+    "ia-legis-statutory_text",
+    "id-legislature-statutes-statutory_text",
+    "il-ilga-ilcs-statutory_text",
+    "in-iga-code-statutory_text",
+    "ks-legislature-laws-statutory_text",
+    "ky-apps-statutes-statutory_text",
+    "la-legis-laws-statutory_text",
+    "ma-malegislature-mgl-statutory_text",
+    "md-mga-statutes-statutory_text",
+    "me-legislature-statutory_text",
+    "mi-legislature-mcl-statutory_text",
+    "mn-revisor-statutes-statutory_text",
+    "mo-revisor-statutory_text",
+    "ms-legislature-statutory_text",
+    "mt-leg-mca-statutory_text",
+    "nc-ncleg-gs-statutory_text",
+    "nd-legis-statutory_text",
+    "ne-legislature-statutes-statutory_text",
+    "nh-gencourt-rsa-statutory_text",
+    "nj-lis-statutes-statutory_text",
+    "nm-nmonesource-statutory_text",
+    "nv-leg-nrs-statutory_text",
+    "ny-senate-laws-statutory_text",
+    "oh-codes-orc-statutory_text",
+    "ok-oscn-statutes-statutory_text",
+    "or-legislature-ors-statutory_text",
+    "pa-palegis-statutes-statutory_text",
+    "ri-webserver-statutes-statutory_text",
+    "sc-statehouse-code-statutory_text",
+    "sd-legislature-statutory_text",
+    "tn-tga-statutory_text",
+    "tx-capitol-statutes-statutory_text",
+    "ut-le-code-statutory_text",
+    "va-lis-code-statutory_text",
+    "vt-legislature-statutory_text",
+    "wa-leg-rcw-statutory_text",
+    "wi-docs-statutes-statutory_text",
+    "wv-code-statutory_text",
+    "wy-wyoleg-statutes-statutory_text"
+  ],
+  "artifact_digests": {
+    "expected_scope_frontier_sha256": "2ca232e0670e3fe7126cacdb217efd4e7e3fe6f85ae0003ad10afa5d1921889f",
+    "lcr002_source_catalog_sha256": "c6cef251435bfa5185543c402e24d14b79acd409f5ec904da058ff805e74499c",
+    "lcr048_federal_baseline_sha256": "9d23788763ee7258487c8b01e341837c3743d7edb051e1bbb63f39111c06e596",
+    "policy_module_sha256": "3140fabf917ce18169ed8dcbf11c9784658419b8baf08752248614760d8c7019",
+    "schema_sha256": "fe2bf68d0c8501f8454533d633cba535542d4e0dcb15b0b969f8c7b25412d8b0",
+    "spdx_registry_sha256": "52a539270e3722a612d6a4bf962a9855de6ce0c36bd7d70f85ab2a813da18247"
+  },
+  "audit_producer": "audit_legal_source_rights.py@2",
+  "authority_suppressed": false,
+  "authorizing_for_publication": true,
+  "catalog_digest_sha256": "176a82e3d11379bf0fa92759d7bfeb326cfcc876935fa22d224e256bc216f011",
+  "catalog_path": "data/legal/legal_source_rights_catalog.json",
+  "catalog_schema_version": "legal-source-rights-catalog-v2",
+  "code_version": "2",
+  "currentness_disclaimer": "Rights, terms, robots, review, seal, and conditional acquisition evidence is evaluated against a verifier-owned clock with an immutable maximum age of 90 days and zero future skew; fixture success cannot authorize publication.",
+  "decisions": [
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ak-akleg-basis-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ak-akleg-basis"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "al-alison-code-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "al-alison-code"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ar-arkleg-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ar-arkleg"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current",
+        "conditional_evidence_verified"
+      ],
+      "record_id": "az-azleg-ars-statutory_text",
+      "rights_disposition": "conditional",
+      "source_id": "az-azleg-ars"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current",
+        "conditional_evidence_verified"
+      ],
+      "record_id": "ca-leginfo-statutory_text",
+      "rights_disposition": "conditional",
+      "source_id": "ca-leginfo"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "co-leg-crs-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "co-leg-crs"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ct-cga-titles-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ct-cga-titles"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "dc-council-code-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "dc-council-code"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "de-delcode-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "de-delcode"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "fl-leg-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "fl-leg-statutes"
+    },
+    {
+      "admitted": false,
+      "authorizing": false,
+      "content_scope": "database_content",
+      "message": "presentation, annotation, editorial, and database layers are excluded",
+      "reason_codes": [
+        "out_of_release_scope",
+        "database_content"
+      ],
+      "record_id": "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-database_content",
+      "rights_disposition": "quarantined",
+      "source_id": "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa"
+    },
+    {
+      "admitted": false,
+      "authorizing": false,
+      "content_scope": "editorial_enhancements",
+      "message": "presentation, annotation, editorial, and database layers are excluded",
+      "reason_codes": [
+        "out_of_release_scope",
+        "editorial_enhancements"
+      ],
+      "record_id": "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-editorial_enhancements",
+      "rights_disposition": "prohibited",
+      "source_id": "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "federal_government_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-federal_government_text",
+      "rights_disposition": "allowed",
+      "source_id": "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa"
+    },
+    {
+      "admitted": false,
+      "authorizing": false,
+      "content_scope": "site_presentation",
+      "message": "presentation, annotation, editorial, and database layers are excluded",
+      "reason_codes": [
+        "out_of_release_scope",
+        "site_presentation"
+      ],
+      "record_id": "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-site_presentation",
+      "rights_disposition": "prohibited",
+      "source_id": "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ga-legis-laws-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ga-legis-laws"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "hi-capitol-hrs-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "hi-capitol-hrs"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ia-legis-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ia-legis"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "id-legislature-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "id-legislature-statutes"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "il-ilga-ilcs-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "il-ilga-ilcs"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "in-iga-code-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "in-iga-code"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ks-legislature-laws-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ks-legislature-laws"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ky-apps-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ky-apps-statutes"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "la-legis-laws-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "la-legis-laws"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ma-malegislature-mgl-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ma-malegislature-mgl"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "md-mga-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "md-mga-statutes"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "me-legislature-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "me-legislature"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "mi-legislature-mcl-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "mi-legislature-mcl"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "mn-revisor-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "mn-revisor-statutes"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "mo-revisor-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "mo-revisor"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ms-legislature-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ms-legislature"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "mt-leg-mca-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "mt-leg-mca"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "nc-ncleg-gs-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "nc-ncleg-gs"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "nd-legis-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "nd-legis"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current",
+        "conditional_evidence_verified"
+      ],
+      "record_id": "ne-legislature-statutes-statutory_text",
+      "rights_disposition": "conditional",
+      "source_id": "ne-legislature-statutes"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current",
+        "conditional_evidence_verified"
+      ],
+      "record_id": "nh-gencourt-rsa-statutory_text",
+      "rights_disposition": "conditional",
+      "source_id": "nh-gencourt-rsa"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "nj-lis-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "nj-lis-statutes"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "nm-nmonesource-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "nm-nmonesource"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "nv-leg-nrs-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "nv-leg-nrs"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ny-senate-laws-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ny-senate-laws"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "oh-codes-orc-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "oh-codes-orc"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ok-oscn-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ok-oscn-statutes"
+    },
+    {
+      "admitted": false,
+      "authorizing": false,
+      "content_scope": "annotations",
+      "message": "presentation, annotation, editorial, and database layers are excluded",
+      "reason_codes": [
+        "out_of_release_scope",
+        "annotations"
+      ],
+      "record_id": "or-legislature-ors-annotations",
+      "rights_disposition": "prohibited",
+      "source_id": "or-legislature-ors"
+    },
+    {
+      "admitted": false,
+      "authorizing": false,
+      "content_scope": "site_presentation",
+      "message": "presentation, annotation, editorial, and database layers are excluded",
+      "reason_codes": [
+        "out_of_release_scope",
+        "site_presentation"
+      ],
+      "record_id": "or-legislature-ors-site_presentation",
+      "rights_disposition": "prohibited",
+      "source_id": "or-legislature-ors"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "or-legislature-ors-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "or-legislature-ors"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "pa-palegis-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "pa-palegis-statutes"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "ri-webserver-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "ri-webserver-statutes"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "sc-statehouse-code-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "sc-statehouse-code"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "sd-legislature-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "sd-legislature"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "tn-tga-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "tn-tga"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "tx-capitol-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "tx-capitol-statutes"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current",
+        "conditional_evidence_verified"
+      ],
+      "record_id": "ut-le-code-statutory_text",
+      "rights_disposition": "conditional",
+      "source_id": "ut-le-code"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "va-lis-code-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "va-lis-code"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current",
+        "conditional_evidence_verified"
+      ],
+      "record_id": "vt-legislature-statutory_text",
+      "rights_disposition": "conditional",
+      "source_id": "vt-legislature"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "wa-leg-rcw-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "wa-leg-rcw"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "wi-docs-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "wi-docs-statutes"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "wv-code-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "wv-code"
+    },
+    {
+      "admitted": true,
+      "authorizing": true,
+      "content_scope": "statutory_text",
+      "message": "record admitted by the complete source-rights evaluator",
+      "reason_codes": [
+        "admitted",
+        "all_operations_permitted",
+        "evidence_current"
+      ],
+      "record_id": "wy-wyoleg-statutes-statutory_text",
+      "rights_disposition": "allowed",
+      "source_id": "wy-wyoleg-statutes"
+    }
+  ],
+  "denied_count": 5,
+  "denied_in_scope_record_ids": [],
+  "denied_record_ids": [
+    "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-database_content",
+    "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-editorial_enhancements",
+    "fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-site_presentation",
+    "or-legislature-ors-annotations",
+    "or-legislature-ors-site_presentation"
+  ],
+  "evidence_mode": "live",
+  "expected_frontier_count": 57,
+  "expected_scope_frontier_sha256": "2ca232e0670e3fe7126cacdb217efd4e7e3fe6f85ae0003ad10afa5d1921889f",
+  "fixture_only_non_authorizing": false,
+  "goal_id": "LCR-G141",
+  "mode": "live",
+  "producer": "audit_legal_source_rights.py@2",
+  "program_id": "legal-corpora-reindex-v1",
+  "record_count": 57,
+  "report_digest_sha256": "3495b2d650f69f239822bc3893615aa8bd49ba80b86efb54da0610cb5f1c5029",
+  "report_schema": "ipfs_datasets_py/legal-source-rights-compliance@2",
+  "schema_version": "legal-source-rights-policy-v2",
+  "secret_free": true,
+  "status": "passed",
+  "target_dataset_repo_ids": [
+    "justicedao/ipfs_state_laws",
+    "justicedao/ipfs_federal_register"
+  ],
+  "task_id": "LCR-078",
+  "verified_at": "2026-08-21T16:06:29.873012Z"
+}

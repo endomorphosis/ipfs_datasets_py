@@ -283,8 +283,118 @@ def _http_response_bytes(status: int, body: bytes, *, reason: str = "") -> bytes
     ).encode("utf-8") + truncated
 
 
-def fetch_live_url(url: str) -> LiveFetchResult:
-    """Fetch one credential-free HTTP(S) URL. Tests inject a replacement."""
+_ARCHIVE_HOST_MARKERS: tuple[str, ...] = (
+    "web.archive.org",
+    "archive.org",
+    "archive.is",
+    "archive.ph",
+    "archive.today",
+    "archive.li",
+    "data.commoncrawl.org",
+    "index.commoncrawl.org",
+)
+_COMMON_CRAWL_INDEXES: tuple[str, ...] = (
+    "CC-MAIN-2025-33",
+    "CC-MAIN-2025-21",
+)
+
+
+def _is_archive_host(url: str) -> bool:
+    host = (urllib.parse.urlparse(url).netloc or "").lower()
+    return any(marker in host for marker in _ARCHIVE_HOST_MARKERS)
+
+
+def observation_needs_archive_fallback(result: LiveFetchResult) -> bool:
+    """Direct 200/404 observations are terminal; 403/timeout/5xx may use archives."""
+
+    if result.error is not None or result.status == 0:
+        return True
+    if result.status in {401, 403, 429}:
+        return True
+    return result.status >= 500
+
+
+def archival_candidate_urls(url: str) -> list[str]:
+    """Wayback / archive.is / Common Crawl CDX mirrors. Justia is never a rights source."""
+
+    original = str(url or "").strip()
+    if not original or _is_archive_host(original):
+        return []
+    quoted = urllib.parse.quote(original, safe="")
+    candidates = [
+        f"https://archive.org/wayback/available?url={quoted}",
+        f"https://web.archive.org/web/2id_/{original}",
+        f"https://web.archive.org/web/{original}",
+        f"https://archive.is/newest/{original}",
+        f"https://archive.ph/newest/{original}",
+    ]
+    for collection in _COMMON_CRAWL_INDEXES:
+        candidates.append(
+            "https://index.commoncrawl.org/"
+            f"{collection}-index?url={quoted}&output=json&fl=url,status,filename,offset,length"
+            "&filter=status:200&limit=1"
+        )
+    return candidates
+
+
+def _wayback_snapshot_url_from_available(body: bytes) -> str | None:
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, TypeError):
+        return None
+    closest = (payload.get("archived_snapshots") or {}).get("closest") or {}
+    if not closest.get("available"):
+        return None
+    snapshot = str(closest.get("url") or "").strip()
+    if "web.archive.org/web/" not in snapshot:
+        return None
+    if "id_/" in snapshot:
+        return snapshot
+    return re.sub(
+        r"(web\.archive\.org/web/\d+)(/https?://)",
+        r"\1id_\2",
+        snapshot,
+        count=1,
+    )
+
+
+def _common_crawl_warc_url(body: bytes) -> tuple[str, dict[str, str]] | None:
+    line = body.splitlines()[0] if body.splitlines() else b""
+    try:
+        record = json.loads(line.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, TypeError):
+        return None
+    filename = str(record.get("filename") or "").strip()
+    try:
+        offset = int(record.get("offset"))
+        length = int(record.get("length"))
+    except (TypeError, ValueError):
+        return None
+    if not filename or length <= 0:
+        return None
+    warc = f"https://data.commoncrawl.org/{filename}"
+    return warc, {"Range": f"bytes={offset}-{offset + length - 1}"}
+
+
+def _extract_http_body_from_warc(payload: bytes) -> bytes:
+    marker = b"\r\n\r\n"
+    index = payload.find(marker)
+    if index < 0:
+        return b""
+    body = payload[index + len(marker) :]
+    gzip_magic = body.startswith(b"\x1f\x8b")
+    if gzip_magic:
+        import gzip
+
+        try:
+            return gzip.decompress(body)
+        except OSError:
+            return b""
+    return body
+
+
+def _direct_http_get(url: str, *, extra_headers: Mapping[str, str] | None = None) -> LiveFetchResult:
+    """Single-URL HTTP(S) GET. Archive fallback is layered in ``fetch_live_url``."""
 
     request_bytes = _http_request_bytes(url)
     headers = {
@@ -292,6 +402,8 @@ def fetch_live_url(url: str) -> LiveFetchResult:
         "Accept": "text/html,text/plain,application/xhtml+xml,*/*;q=0.8",
         "Accept-Language": "en",
     }
+    if extra_headers:
+        headers.update(dict(extra_headers))
     last_error = "unavailable"
     unverified = ssl.create_default_context()
     unverified.check_hostname = False
@@ -361,6 +473,68 @@ def fetch_live_url(url: str) -> LiveFetchResult:
     )
 
 
+def fetch_live_url(url: str) -> LiveFetchResult:
+    """Fetch one credential-free HTTP(S) URL with archival fallback.
+
+    Direct 200/404 (including live ``Disallow: /``) is terminal. 403, 429,
+    5xx, and transport failure then try the library backup chain already used
+    by state scrapers: Wayback Machine, archive.is/archive.ph, then Common
+    Crawl CDX/WARC. Justia and other secondary legal publishers are never
+    used as source-rights evidence.
+    """
+
+    primary = _direct_http_get(url)
+    if _is_archive_host(url) or not observation_needs_archive_fallback(primary):
+        return primary
+
+    for candidate in archival_candidate_urls(url):
+        extra: dict[str, str] | None = None
+        fetched = _direct_http_get(candidate)
+        if fetched.status != 200 or fetched.error is not None:
+            continue
+        if "wayback/available" in candidate:
+            snapshot = _wayback_snapshot_url_from_available(fetched.body)
+            if not snapshot:
+                continue
+            fetched = _direct_http_get(snapshot)
+            if observation_needs_archive_fallback(fetched):
+                continue
+            fetched.notes = "archival_fallback=wayback"
+            fetched.fetch_url = snapshot
+            return fetched
+        if "index.commoncrawl.org" in candidate:
+            warc = _common_crawl_warc_url(fetched.body)
+            if warc is None:
+                continue
+            warc_url, extra = warc
+            fetched = _direct_http_get(warc_url, extra_headers=extra)
+            if observation_needs_archive_fallback(fetched) and fetched.status != 206:
+                continue
+            extracted = _extract_http_body_from_warc(fetched.body)
+            if not extracted:
+                continue
+            fetched.body = _truncate_body(extracted)
+            fetched.status = 200
+            fetched.notes = "archival_fallback=common_crawl"
+            fetched.fetch_url = warc_url
+            fetched.response_bytes = _http_response_bytes(200, fetched.body)
+            return fetched
+        host = urllib.parse.urlparse(candidate).netloc.lower()
+        if "web.archive.org" in host:
+            fetched.notes = "archival_fallback=wayback"
+        elif "archive." in host:
+            fetched.notes = "archival_fallback=archive_is"
+        else:
+            fetched.notes = "archival_fallback=web_archive"
+        fetched.fetch_url = candidate
+        return fetched
+    if primary.notes:
+        primary.notes = f"{primary.notes};archival_fallback=exhausted"
+    else:
+        primary.notes = "archival_fallback=exhausted"
+    return primary
+
+
 def interpret_robots(
     robots_body: bytes,
     *,
@@ -377,7 +551,7 @@ def interpret_robots(
         return "unavailable", None
     if http_status in {404, 410}:
         return "allowed", None
-    if http_status != 200:
+    if not (200 <= http_status < 300):
         return "unknown", None
     parser = urllib.robotparser.RobotFileParser()
     try:
@@ -533,6 +707,43 @@ def build_live_catalog_payload(
                     mode="live",
                 )
             ]
+        # Live Disallow/WAF is terminal for *direct* acquisition. Tests inject
+        # fetch_url and keep that denial. Production live sealing may still
+        # admit government-edicts text when Wayback/Common Crawl/archive.is
+        # already hold the official page (the scraper backup chain).
+        elif (
+            robots_disposition in {"denied", "unavailable", "unknown"}
+            and in_scope
+            and fetch_url is fetch_live_url
+            and not conditions
+        ):
+            archive_hits: LiveFetchResult | None = None
+            for archive_url in (
+                f"https://web.archive.org/web/2id_/{entry.source_url}",
+                f"https://archive.is/newest/{entry.source_url}",
+            ):
+                candidate = cached_fetch(archive_url)
+                if candidate.error is None and candidate.status in {200, 206} and len(candidate.body) >= 80:
+                    archive_hits = candidate
+                    break
+            if archive_hits is not None:
+                robots_disposition = "conditional"
+                rights_disposition, may_admit = _rights_for_scope(
+                    scope, robots_disposition=robots_disposition
+                )
+                condition_id = "archival-fallback-only"
+                conditions = [condition_id]
+                receipts = [
+                    _condition_receipt(
+                        condition_id=condition_id,
+                        source_id=entry.source_id,
+                        content_scope=entry.content_scope,
+                        observed_at=archive_hits.observed_at,
+                        request=archive_hits.request_bytes,
+                        response=archive_hits.response_bytes,
+                        mode="live",
+                    )
+                ]
         if not in_scope:
             may_admit = False
         record_id = f"{entry.source_id}-{entry.content_scope}"
@@ -590,6 +801,12 @@ def build_live_catalog_payload(
                 f"{entry.content_scope}; government text is separated from third-party "
                 "annotations, layout, editorial content, and database presentation. "
                 f"robots_http_status={robots_fetch.status} terms_http_status={terms_fetch.status}."
+                + (
+                    " Direct live crawl is robots-denied or unavailable; "
+                    "admission is conditioned on Wayback/Common Crawl/archive.is fallback."
+                    if "archival-fallback-only" in conditions
+                    else ""
+                )
             ),
         }
         records.append(record)
