@@ -1,4 +1,4 @@
-"""Hermetic unit tests for LCR-070 authenticated live baseline provenance."""
+"""Hermetic unit tests for LCR-081 authenticated live baseline provenance."""
 
 from __future__ import annotations
 
@@ -17,19 +17,24 @@ from scripts.ops.legal_data.audit_federal_register_hf_baseline import (
 )
 from scripts.ops.legal_data.audit_legal_corpora_live_baseline import (
     FEDERAL_REPO_ID,
+    GOAL_ID,
     JURISDICTION_COUNT,
     MODE_DRY_RUN,
     MODE_LIVE,
+    PRODUCER,
     REPORT_SCHEMA,
     STATE_CANONICAL_PARQUET,
     STATE_EMBEDDING_PARQUET,
     STATE_PINNED_REVISION,
     STATE_REPO_ID,
+    TASK_ID,
     TRANSPORT_LIVE_HTTPS,
+    VIEWER_ENDPOINTS,
     WHOAMI_ENDPOINT,
     LiveBaselineAuditError,
     LiveHubTransport,
     ScriptedHubTransport,
+    assert_no_path_leakage,
     assert_no_token_leakage,
     build_dry_run_receipt,
     build_receipt,
@@ -40,8 +45,13 @@ from scripts.ops.legal_data.audit_legal_corpora_live_baseline import (
     expected_jurisdiction_codes,
     inventory_salvage_root,
     main,
+    no_self_field_root_digest,
     observe_with_live_hub,
+    persist_and_verify_receipt,
+    require_commit_sha,
+    seal_receipt,
     state_partition_path,
+    validate_nested_digests,
     validate_receipt,
     write_receipt,
 )
@@ -55,7 +65,7 @@ from scripts.ops.legal_data.audit_state_laws_hf_baseline import (
 )
 
 
-SCRIPT_TOKEN = "scripted-lcr070-token-not-an-hf-prefix"
+SCRIPT_TOKEN = "scripted-lcr081-token-not-an-hf-prefix"
 
 # Independently observed Hub partition counts at the sealed pin. Tests replay
 # them through Parquet footers rather than copying sealed constants into the
@@ -164,7 +174,6 @@ def _file(path: str, size: int = 1, blob: str = "a" * 40) -> dict[str, Any]:
         "type": "file",
         "size": size,
         "oid": blob,
-        "lfs": {"sha256": "b" * 64, "size": size},
     }
 
 
@@ -321,12 +330,12 @@ def build_scripted_responses(
 
 def _salvage_roots(tmp_path: Path) -> list[tuple[str, Path]]:
     parallel = tmp_path / "legal_scraper_parallel" / "20260518T072115Z"
-    (parallel / "shard1").mkdir(parents=True)
-    (parallel / "shard2").mkdir()
-    (parallel / "shard3").mkdir()
+    (parallel / "shard1").mkdir(parents=True, exist_ok=True)
+    (parallel / "shard2").mkdir(exist_ok=True)
+    (parallel / "shard3").mkdir(exist_ok=True)
     (parallel / "shard1" / "note.txt").write_text("ok\n", encoding="utf-8")
     state = tmp_path / "state_laws" / "state_laws_parquet_cid"
-    state.mkdir(parents=True)
+    state.mkdir(parents=True, exist_ok=True)
     for code in JURISDICTION_CODES:
         pq.write_table(
             pa.table({"n": [1, 2, 3]}),
@@ -337,9 +346,10 @@ def _salvage_roots(tmp_path: Path) -> list[tuple[str, Path]]:
     outside = tmp_path / "outside_secret.txt"
     outside.write_text("nope", encoding="utf-8")
     link = tmp_path / "state_laws" / "escape_link"
-    link.symlink_to(outside)
+    if not link.exists() and not link.is_symlink():
+        link.symlink_to(outside)
     federal = tmp_path / "federal_register" / "federal_register_parquet"
-    federal.mkdir(parents=True)
+    federal.mkdir(parents=True, exist_ok=True)
     pq.write_table(pa.table({"n": list(range(5))}), federal / "laws.parquet")
     return [
         ("legal_scraper_parallel", tmp_path / "legal_scraper_parallel"),
@@ -386,6 +396,9 @@ def test_scripted_observation_recomputes_sealed_state_totals(
     )
     assert result["ok"] is True
     assert receipt["schema"] == REPORT_SCHEMA
+    assert receipt["task_id"] == TASK_ID == "LCR-081"
+    assert receipt["goal_id"] == GOAL_ID == "LCR-G143"
+    assert receipt["producer"] == PRODUCER
     assert receipt["fixture_only"] is False
     assert receipt["authenticated_identity"]["name"] == "fixture-user"
     assert "email" not in receipt["authenticated_identity"]
@@ -401,7 +414,17 @@ def test_scripted_observation_recomputes_sealed_state_totals(
     assert receipt["state_laws"]["counts"]["viewer_embedding_rows"] == 17_338
     assert receipt["state_laws"]["cid_overlap"]["zero_overlap"] is True
     assert "DC" in receipt["state_laws"]["partitions"]
+    assert receipt["state_laws"]["partitions"]["DC"]["num_rows"] == 62
     assert receipt["state_laws"]["partitions"]["GA"]["num_rows"] == 2
+    assert all(
+        part["content_sha256"] for part in receipt["state_laws"]["partitions"].values()
+    )
+    assert receipt["federal_register"]["parquet"]["content_sha256"]
+    assert "FEDERAL_COUNT_CONTRADICTION" in {
+        item["code"] for item in receipt["dispositions"]
+    }
+    validate_nested_digests(receipt)
+    assert receipt["receipt_sha256"] == no_self_field_root_digest(receipt)
     assert receipt["state_laws"]["summaries"]["missing"] == ["CA", "DC"]
     assert receipt["federal_register"]["counts"]["advertised_documents"] == 993_703
     assert receipt["federal_register"]["counts"]["repository_files"] == 555
@@ -422,7 +445,7 @@ def test_scripted_receipt_cannot_pass_require_live_hub(
 ) -> None:
     receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
     assert receipt["transport"] != TRANSPORT_LIVE_HTTPS
-    with pytest.raises(LiveBaselineAuditError, match="urllib HTTPS"):
+    with pytest.raises(LiveBaselineAuditError, match="fixture|urllib HTTPS"):
         validate_receipt(receipt, require_live_hub=True)
 
 
@@ -687,3 +710,291 @@ def test_write_round_trip(
     assert loaded["pins"]["state_laws"] == STATE_PINNED_REVISION
     assert loaded["pins"]["federal_register"] == FEDERAL_PIN
     assert TRUNCATION_EXAMPLES["GA"] == loaded["state_laws"]["partitions"]["GA"]["num_rows"]
+    persist_and_verify_receipt(
+        loaded,
+        tmp_path / "round_trip_check.json",
+        require_live_hub=False,
+        require_local_salvage_inventory=True,
+    )
+
+
+def test_mutable_revisions_are_rejected() -> None:
+    for value in ("main", "latest", "HEAD", "", "master"):
+        with pytest.raises(LiveBaselineAuditError, match="40-hex|mutable"):
+            require_commit_sha(value, "revision")
+
+
+def test_pagination_truncation_fails_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    responses = build_scripted_responses(partition_parquets, viewer_parquets)
+    tree_url = dataset_tree_url(STATE_REPO_ID, STATE_PIN)
+    nxt = tree_url + "&cursor=truncated"
+    responses[f"GET {tree_url}"] = {
+        "status": 200,
+        "headers": {"Link": f'<{nxt}>; rel="next"'},
+        "body": json.dumps(_state_tree_items()[:20]),
+    }
+    transport = ScriptedHubTransport(responses, token=SCRIPT_TOKEN)
+    with pytest.raises(LiveBaselineAuditError, match="pagination|missing"):
+        build_receipt(
+            transport=transport,
+            token=SCRIPT_TOKEN,
+            token_source="test",
+            salvage_roots=_salvage_roots(tmp_path),
+            observed_at="2026-08-21T12:00:00.000Z",
+            mode=MODE_LIVE,
+        )
+
+
+def test_duplicate_inventory_path_fails_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    tree = _state_tree_items()
+    tree.append(dict(tree[0]))
+    with pytest.raises(LiveBaselineAuditError, match="duplicate"):
+        _observe(
+            partition_parquets,
+            viewer_parquets,
+            tmp_path,
+            state_tree=tree,
+        )
+
+
+def test_missing_inventory_metadata_fails_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    tree = _state_tree_items()
+    tree[0] = {"path": tree[0]["path"], "type": "file"}
+    with pytest.raises(LiveBaselineAuditError, match="missing inventory metadata"):
+        _observe(
+            partition_parquets,
+            viewer_parquets,
+            tmp_path,
+            state_tree=tree,
+        )
+
+
+def test_parquet_parse_failure_fails_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    responses = build_scripted_responses(partition_parquets, viewer_parquets)
+    url = dataset_resolve_url(STATE_REPO_ID, STATE_PIN, state_partition_path("DC"))
+    responses[f"GET {url}"] = {"status": 200, "headers": {}, "body": b"not-a-parquet"}
+    transport = ScriptedHubTransport(responses, token=SCRIPT_TOKEN)
+    with pytest.raises(LiveBaselineAuditError, match="Parquet"):
+        build_receipt(
+            transport=transport,
+            token=SCRIPT_TOKEN,
+            token_source="test",
+            salvage_roots=_salvage_roots(tmp_path),
+            observed_at="2026-08-21T12:00:00.000Z",
+            mode=MODE_LIVE,
+        )
+
+
+def test_viewer_omission_fails_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    responses = build_scripted_responses(partition_parquets, viewer_parquets)
+    url = datasets_server_url("splits", STATE_REPO_ID, STATE_PIN)
+    del responses[f"GET {url}"]
+    transport = ScriptedHubTransport(responses, token=SCRIPT_TOKEN)
+    with pytest.raises(LiveBaselineAuditError, match="Viewer|scripted Hub missing"):
+        build_receipt(
+            transport=transport,
+            token=SCRIPT_TOKEN,
+            token_source="test",
+            salvage_roots=_salvage_roots(tmp_path),
+            observed_at="2026-08-21T12:00:00.000Z",
+            mode=MODE_LIVE,
+        )
+    assert "splits" in VIEWER_ENDPOINTS
+
+
+def test_empty_salvage_fails_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    empty = tmp_path / "empty_root"
+    empty.mkdir()
+    transport = ScriptedHubTransport(
+        build_scripted_responses(partition_parquets, viewer_parquets),
+        token=SCRIPT_TOKEN,
+    )
+    with pytest.raises(LiveBaselineAuditError, match="empty salvage"):
+        build_receipt(
+            transport=transport,
+            token=SCRIPT_TOKEN,
+            token_source="test",
+            salvage_roots=[("empty", empty)],
+            observed_at="2026-08-21T12:00:00.000Z",
+            mode=MODE_LIVE,
+        )
+
+
+def test_all_missing_salvage_fails_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    transport = ScriptedHubTransport(
+        build_scripted_responses(partition_parquets, viewer_parquets),
+        token=SCRIPT_TOKEN,
+    )
+    with pytest.raises(LiveBaselineAuditError, match="empty salvage|all-missing"):
+        build_receipt(
+            transport=transport,
+            token=SCRIPT_TOKEN,
+            token_source="test",
+            salvage_roots=[("missing", tmp_path / "nope")],
+            observed_at="2026-08-21T12:00:00.000Z",
+            mode=MODE_LIVE,
+        )
+
+
+def test_sampled_salvage_fails_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    receipt["local_salvage"]["sampled"] = True
+    receipt["local_salvage"]["roots"][0]["sampled"] = True
+    with pytest.raises(LiveBaselineAuditError, match="sampled or truncated"):
+        validate_receipt(receipt, require_live_hub=False)
+
+
+def test_symlink_escape_fails_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    receipt["local_salvage"]["symlinks_followed"] = True
+    with pytest.raises(LiveBaselineAuditError, match="symlink escape"):
+        validate_receipt(receipt, require_live_hub=False)
+
+
+def test_stale_and_malformed_utc_fail_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    receipt["observed_at"] = "yesterday"
+    with pytest.raises(LiveBaselineAuditError, match="UTC"):
+        validate_receipt(receipt, require_live_hub=False)
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    with pytest.raises(LiveBaselineAuditError, match="stale UTC"):
+        validate_receipt(
+            receipt,
+            require_live_hub=False,
+            require_fresh_observation=True,
+            now="2099-01-01T00:00:00Z",
+        )
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    receipt["observed_at"] = "2099-01-01T00:00:00Z"
+    with pytest.raises(LiveBaselineAuditError, match="future UTC"):
+        validate_receipt(
+            receipt,
+            require_live_hub=False,
+            require_fresh_observation=True,
+            now="2026-08-21T12:00:00.000Z",
+        )
+
+
+def test_absent_on_disk_receipt_fails_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    target = tmp_path / "missing" / "receipt.json"
+    monkeypatch.setattr(
+        "scripts.ops.legal_data.audit_legal_corpora_live_baseline.write_receipt",
+        lambda *_args, **_kwargs: target,
+    )
+    with pytest.raises(LiveBaselineAuditError, match="absent on-disk receipt"):
+        persist_and_verify_receipt(receipt, target)
+
+
+def test_altered_bytes_fail_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    path = tmp_path / "receipt.json"
+
+    def _write_wrong(_payload: object, dest: Path) -> Path:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text('{"schema":"tampered"}\n', encoding="utf-8")
+        return dest
+
+    monkeypatch.setattr(
+        "scripts.ops.legal_data.audit_legal_corpora_live_baseline.write_receipt",
+        _write_wrong,
+    )
+    with pytest.raises(LiveBaselineAuditError, match="altered bytes"):
+        persist_and_verify_receipt(receipt, path)
+
+
+def test_fake_and_truncated_nested_hashes_fail_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    receipt["digests"]["state_inventory_sha256"] = "abc"
+    with pytest.raises(LiveBaselineAuditError, match="fake or truncated nested hash"):
+        validate_receipt(receipt, require_live_hub=False)
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    receipt["digests"]["state_row_counts_sha256"] = "a" * 64
+    with pytest.raises(LiveBaselineAuditError, match="row digest mismatch"):
+        validate_receipt(receipt, require_live_hub=False)
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    receipt["digests"]["state_inventory_sha256"] = "b" * 64
+    with pytest.raises(LiveBaselineAuditError, match="inventory digest mismatch"):
+        validate_receipt(receipt, require_live_hub=False)
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    receipt["receipt_sha256"] = "c" * 64
+    with pytest.raises(LiveBaselineAuditError, match="root digest mismatch"):
+        validate_receipt(receipt, require_live_hub=False)
+
+
+def test_path_leakage_fails_closed(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    assert_no_path_leakage(receipt, _salvage_roots(tmp_path))
+    leaked = dict(receipt)
+    leaked["note"] = str(tmp_path / "state_laws")
+    with pytest.raises(LiveBaselineAuditError, match="path leakage"):
+        assert_no_path_leakage(leaked, _salvage_roots(tmp_path))
+
+
+def test_seal_receipt_round_trip_keeps_nested_digests(
+    partition_parquets: dict[str, bytes],
+    viewer_parquets: dict[str, bytes],
+    tmp_path: Path,
+) -> None:
+    receipt = _observe(partition_parquets, viewer_parquets, tmp_path)
+    sealed = seal_receipt(dict(receipt), SCRIPT_TOKEN)
+    assert sealed["receipt_sha256"] == no_self_field_root_digest(sealed)
+    validate_nested_digests(sealed)

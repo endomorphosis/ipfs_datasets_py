@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
-"""Authenticated live provenance verifier for the legal-corpora Hub pins (LCR-070).
+"""Harden the authenticated live baseline receipt against partial success (LCR-081).
 
-LCR-001 / LCR-048 freeze fixture-consistency snapshots. This additive verifier
-re-observes both exact 40-hex revisions through authenticated Hub HTTPS, hashes
-responses, inventories remote files and per-jurisdiction Parquet row counts,
-records Viewer/config evidence, inventories configured local salvage roots
-without copying secrets, and independently recomputes published baseline totals.
+LCR-070 produced an additive live provenance verifier. This ordered successor
+treats that implementation and any prior receipt as untrusted inputs. Production
+live mode uses authenticated Hub HTTPS only, rejects fixtures and mutable
+revisions, exhausts recursive pagination, downloads and hashes and counts every
+required Parquet, records hashed Viewer responses, inventories salvage roots
+without following symlinks or exposing secrets or absolute paths, and validates
+every nested digest plus the no-self-field root digest.
 
-Live mode cannot be satisfied by constants or fixtures. ``--require-live-hub``
-always constructs the urllib HTTPS transport and calls Hub.
+``--check`` cannot succeed in-memory-only: it writes the receipt, reloads the
+on-disk bytes, and compares them with the fresh live observation.
 
 Validation::
 
-    python -m pytest tests/unit/scripts/test_audit_legal_corpora_live_baseline.py -q
+    python -m pytest tests/unit/scripts/test_audit_legal_corpora_live_baseline.py \\
+        tests/integration/legal_data/test_audit_legal_corpora_live_baseline_fail_closed.py -q
     python scripts/ops/legal_data/audit_legal_corpora_live_baseline.py \\
         --require-live-hub --require-local-salvage-inventory --check
 
-Dry-run receipts are documented observations that cannot pass
-``--require-live-hub``. Tokens are never printed or persisted.
+Tokens are never printed or persisted. Constants define expectations only.
 """
 
 from __future__ import annotations
@@ -33,7 +35,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Callable, Iterable, Mapping, MutableMapping, Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -72,17 +74,22 @@ from scripts.ops.legal_data.audit_state_laws_hf_baseline import (  # noqa: E402
     VIEWER_EMBEDDING_ROW_COUNT,
 )
 
-TASK_ID = "LCR-070"
-GOAL_ID = "LCR-G010"
+TASK_ID = "LCR-081"
+GOAL_ID = "LCR-G143"
 PROGRAM_ID = "legal-corpora-reindex-v1"
-PRODUCER = "audit_legal_corpora_live_baseline.py"
-REPORT_SCHEMA = "ipfs_datasets_py/legal-corpora-reindex-live-baseline-provenance@1"
-CODE_VERSION = "1"
+PRODUCER = "audit_legal_corpora_live_baseline.py@2"
+REPORT_SCHEMA = "ipfs_datasets_py/legal-corpora-reindex-live-baseline-provenance@2"
+CODE_VERSION = "2"
+SCHEMA_VERSION = "2"
 TRANSPORT_LIVE_HTTPS = "urllib_https"
 TRANSPORT_SCRIPTED = "scripted"
 TRANSPORT_DRY_RUN = "dry-run"
 MODE_LIVE = "live"
 MODE_DRY_RUN = "dry-run"
+RECEIPT_SELF_DIGEST_FIELD = "receipt_sha256"
+VIEWER_ENDPOINTS: tuple[str, ...] = ("is-valid", "info", "size", "splits")
+MAX_LIVE_OBSERVATION_AGE_SECONDS = 30 * 60
+MAX_FUTURE_SKEW_SECONDS = 0
 
 HUB_API_ROOT = "https://huggingface.co/api"
 HUB_RESOLVE_ROOT = "https://huggingface.co/datasets"
@@ -92,6 +99,7 @@ WHOAMI_ENDPOINT = f"{HUB_API_ROOT}/whoami-v2"
 DEFAULT_RECEIPT_RELPATH = Path(
     "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json"
 )
+SCHEMA_RELPATH = Path("data/legal/legal_corpora_live_baseline_receipt.schema.json")
 HF_TOKEN_ENV_VARS: tuple[str, ...] = (
     "HF_TOKEN",
     "HUGGING_FACE_HUB_TOKEN",
@@ -99,7 +107,7 @@ HF_TOKEN_ENV_VARS: tuple[str, ...] = (
     "HUGGINGFACE_TOKEN",
 )
 HF_TOKEN_FILE = Path.home() / ".cache" / "huggingface" / "token"
-USER_AGENT = "ipfs_datasets_py-LCR-070"
+USER_AGENT = "ipfs_datasets_py-LCR-081"
 
 STATE_CANONICAL_PARQUET = "state_laws_parquet_cid/state_laws_all_states.parquet"
 STATE_EMBEDDING_PARQUET = (
@@ -109,7 +117,7 @@ STATE_PARTITION_PREFIX = "state_laws_parquet_cid/"
 FEDERAL_PARQUET_PATH = "federal_register.parquet"
 FEDERAL_METADATA_PATH = "metadata.json"
 
-UNPINNED_TOKENS = frozenset({"main", "master", "latest", "HEAD"})
+UNPINNED_TOKENS = frozenset({"main", "master", "latest", "HEAD", "head", ""})
 SECRET_NAME_RE = re.compile(
     r"(secret|token|credential|passwd|password|\.env$|id_rsa|\.pem$)",
     re.IGNORECASE,
@@ -257,11 +265,69 @@ def datasets_server_url(endpoint: str, repo_id: str, revision: str) -> str:
 
 
 def require_commit_sha(value: Any, label: str) -> str:
-    text = _require_str(value, label).casefold()
-    if not COMMIT_SHA_RE.fullmatch(text):
+    if value is None or (isinstance(value, str) and not value.strip()):
         raise LiveBaselineAuditError(f"{label} must be an exact 40-hex revision")
-    if text in UNPINNED_TOKENS:
+    text = _require_str(value, label).strip()
+    if text in UNPINNED_TOKENS or text.casefold() in UNPINNED_TOKENS:
         raise LiveBaselineAuditError(f"{label} must not be a mutable ref")
+    folded = text.casefold()
+    if not COMMIT_SHA_RE.fullmatch(folded):
+        raise LiveBaselineAuditError(f"{label} must be an exact 40-hex revision")
+    return folded
+
+
+def require_hub_https_url(url: str, label: str) -> str:
+    text = _require_str(url, label)
+    if not text.startswith("https://huggingface.co/") and not text.startswith(
+        "https://datasets-server.huggingface.co/"
+    ):
+        raise LiveBaselineAuditError(f"{label} must be authenticated live Hub HTTPS")
+    lowered = text.casefold()
+    for token in UNPINNED_TOKENS:
+        if not token:
+            continue
+        marker = f"/{token}"
+        if (
+            f"/tree/{token}" in lowered
+            or f"/resolve/{token}" in lowered
+            or f"/revision/{token}" in lowered
+            or lowered.endswith(marker)
+            or f"{marker}?" in lowered
+        ):
+            raise LiveBaselineAuditError(f"{label} must not use a mutable revision")
+    return text
+
+
+def parse_utc(value: str) -> datetime:
+    text = _require_utc(value, "timestamp")
+    if "." in text:
+        dt = datetime.strptime(text, "%Y-%m-%dT%H:%M:%S.%fZ")
+    else:
+        dt = datetime.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
+    return dt.replace(tzinfo=UTC)
+
+
+def require_observation_time(
+    value: Any,
+    path: str,
+    *,
+    now: datetime | str | None = None,
+    require_fresh: bool = False,
+) -> str:
+    text = _require_utc(value, path)
+    observed = parse_utc(text)
+    if isinstance(now, str):
+        current = parse_utc(now)
+    elif isinstance(now, datetime):
+        current = now if now.tzinfo is not None else now.replace(tzinfo=UTC)
+    else:
+        current = datetime.now(UTC)
+    if require_fresh:
+        if observed - current > timedelta(seconds=MAX_FUTURE_SKEW_SECONDS):
+            raise LiveBaselineAuditError(f"{path} is a future UTC observation")
+        age = (current - observed).total_seconds()
+        if age > MAX_LIVE_OBSERVATION_AGE_SECONDS:
+            raise LiveBaselineAuditError(f"{path} is a stale UTC observation")
     return text
 
 
@@ -346,13 +412,17 @@ def auth_headers(token: str) -> dict[str, str]:
     }
 
 
-def parse_link_next(link_header: str | None) -> str | None:
+def parse_link_next(link_header: str | None, current_url: str | None = None) -> str | None:
     if not link_header:
         return None
     match = LINK_NEXT_RE.search(link_header)
     if match is None:
         return None
-    return match.group(1)
+    nxt = match.group(1).strip()
+    if nxt.startswith("/") and current_url:
+        parsed = urllib.parse.urlsplit(current_url)
+        nxt = urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, nxt, "", ""))
+    return nxt
 
 
 def open_live_hub_url(
@@ -368,7 +438,7 @@ class LiveHubTransport:
     kind = TRANSPORT_LIVE_HTTPS
     is_live_https = True
 
-    def __init__(self, token: str, *, timeout_seconds: float = 120.0) -> None:
+    def __init__(self, token: str, *, timeout_seconds: float = 600.0) -> None:
         if not token or not str(token).strip():
             raise LiveBaselineAuditError("live Hub transport requires a token")
         self.token = str(token).strip()
@@ -383,12 +453,7 @@ class LiveHubTransport:
         headers: Mapping[str, str] | None = None,
         extra_headers: Mapping[str, str] | None = None,
     ) -> HubResponse:
-        if not url.startswith("https://huggingface.co/") and not url.startswith(
-            "https://datasets-server.huggingface.co/"
-        ):
-            raise LiveBaselineAuditError(
-                f"live transport refuses non-Hub URL: {url.split('?', 1)[0]}"
-            )
+        require_hub_https_url(url, "live transport URL")
         merged = dict(headers or auth_headers(self.token))
         if extra_headers:
             merged.update(extra_headers)
@@ -608,15 +673,38 @@ def _sibling_has(siblings: Any, name: str) -> bool:
     return False
 
 
+def inventory_entry_digest_payload(item: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "path": item["path"],
+        "type": item["type"],
+        "size_bytes": item.get("size_bytes"),
+        "blob_id": item.get("blob_id"),
+        "lfs_sha256": item.get("lfs_sha256"),
+    }
+
+
+def tree_inventory_digest(entries: Sequence[Mapping[str, Any]]) -> str:
+    ordered = sorted(
+        (inventory_entry_digest_payload(item) for item in entries),
+        key=lambda item: (str(item["type"]), str(item["path"])),
+    )
+    return sha256_canonical(ordered)
+
+
 def fetch_repo_tree(
     transport: Any, token: str, repo_id: str, revision: str
 ) -> dict[str, Any]:
-    url: str | None = dataset_tree_url(repo_id, revision)
+    pinned = require_commit_sha(revision, f"{repo_id} tree revision")
+    url: str | None = require_hub_https_url(
+        dataset_tree_url(repo_id, pinned), f"{repo_id} tree URL"
+    )
     pages: list[dict[str, Any]] = []
     files: list[dict[str, Any]] = []
-    directories = 0
+    directories: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
+    seen_paths: set[str] = set()
     while url:
+        url = require_hub_https_url(url, f"{repo_id} tree page")
         if url in seen_urls:
             raise LiveBaselineAuditError(f"tree pagination loop for {repo_id}")
         seen_urls.add(url)
@@ -626,55 +714,76 @@ def fetch_repo_tree(
                 f"tree listing failed for {repo_id}: HTTP {response.status}"
             )
         payload = json_body(response, f"{repo_id} tree")
+        if isinstance(payload, Mapping) and payload.get("truncated") is True:
+            raise LiveBaselineAuditError(f"pagination truncated for {repo_id}")
         if not isinstance(payload, list):
             raise LiveBaselineAuditError(f"{repo_id} tree page must be a JSON array")
         if not payload and not pages:
             raise LiveBaselineAuditError(f"{repo_id} tree is empty")
-        page_records = []
+        if not payload:
+            raise LiveBaselineAuditError(f"pagination truncated for {repo_id}: empty page")
         for item in payload:
             record = normalize_tree_item(item, repo_id)
-            page_records.append(record)
+            path = record["path"]
+            if path in seen_paths:
+                raise LiveBaselineAuditError(
+                    f"duplicate inventory path for {repo_id}: {path}"
+                )
+            seen_paths.add(path)
             if record["type"] == "directory":
-                directories += 1
+                directories.append(record)
             else:
                 files.append(record)
         pages.append(
             {
                 "endpoint": url,
                 "status": response.status,
-                "response_sha256": response.sha256,
+                "response_sha256": _require_sha256(
+                    response.sha256, f"{repo_id} tree page hash"
+                ),
                 "item_count": len(payload),
+                "page_index": len(pages),
             }
         )
         next_url = parse_link_next(
-            response.headers.get("Link") or response.headers.get("link")
+            response.headers.get("Link") or response.headers.get("link"),
+            current_url=url,
         )
         if next_url is None:
             url = None
         else:
             url = next_url
+    if not pages:
+        raise LiveBaselineAuditError(f"pagination truncated for {repo_id}")
     files.sort(key=lambda item: item["path"])
+    directories.sort(key=lambda item: item["path"])
+    entries = [*files, *directories]
+    pages_sha256 = sha256_canonical(
+        [
+            {
+                "endpoint": page["endpoint"],
+                "status": page["status"],
+                "response_sha256": page["response_sha256"],
+                "item_count": page["item_count"],
+                "page_index": page["page_index"],
+            }
+            for page in pages
+        ]
+    )
     return {
         "repo_id": repo_id,
-        "revision": revision,
+        "revision": pinned,
         "file_count": len(files),
-        "directory_count": directories,
+        "directory_count": len(directories),
+        "entry_count": len(entries),
         "page_count": len(pages),
         "pages": pages,
         "files": files,
-        "inventory_sha256": sha256_canonical(
-            [
-                {
-                    "path": item["path"],
-                    "type": item["type"],
-                    "size_bytes": item["size_bytes"],
-                    "blob_id": item["blob_id"],
-                    "lfs_sha256": item["lfs_sha256"],
-                }
-                for item in files
-            ]
-        ),
+        "directories": directories,
+        "inventory_sha256": tree_inventory_digest(entries),
+        "pages_sha256": pages_sha256,
         "pagination_exhausted": True,
+        "pagination_truncated": False,
     }
 
 
@@ -691,7 +800,8 @@ def normalize_tree_item(item: Any, repo_id: str) -> dict[str, Any]:
         item_type = "file"
     size = item.get("size")
     size_bytes = int(size) if isinstance(size, int) and not isinstance(size, bool) else None
-    blob_id = item.get("oid") or item.get("blob_id")
+    blob_raw = item.get("oid") or item.get("blob_id")
+    blob_id = str(blob_raw).strip() if blob_raw not in {None, ""} else None
     lfs = item.get("lfs") if isinstance(item.get("lfs"), Mapping) else None
     lfs_sha256 = None
     if lfs is not None:
@@ -702,6 +812,15 @@ def normalize_tree_item(item: Any, repo_id: str) -> dict[str, Any]:
         lfs_size = lfs.get("size")
         if size_bytes is None and isinstance(lfs_size, int) and not isinstance(lfs_size, bool):
             size_bytes = lfs_size
+    if item_type == "file":
+        if size_bytes is None:
+            raise LiveBaselineAuditError(
+                f"missing inventory metadata for {repo_id}:{path}: size"
+            )
+        if not blob_id and not lfs_sha256:
+            raise LiveBaselineAuditError(
+                f"missing inventory metadata for {repo_id}:{path}: blob or LFS identity"
+            )
     return {
         "path": path,
         "type": item_type,
@@ -711,91 +830,114 @@ def normalize_tree_item(item: Any, repo_id: str) -> dict[str, Any]:
     }
 
 
-def parquet_num_rows_from_footer(footer_blob: bytes) -> int:
+def parquet_footer_bytes(body: bytes, path: str) -> bytes:
+    if len(body) < 8 or body[-4:] != b"PAR1":
+        raise LiveBaselineAuditError(f"Parquet magic missing for {path}")
+    footer_len = int.from_bytes(body[-8:-4], "little")
+    if footer_len <= 0 or footer_len > 16_000_000:
+        raise LiveBaselineAuditError(f"implausible Parquet footer length for {path}")
+    if len(body) < footer_len + 8:
+        raise LiveBaselineAuditError(f"Parquet footer truncated for {path}")
+    return body[-(footer_len + 8) :]
+
+
+def parquet_num_rows_from_footer(footer_blob: bytes, path: str = "parquet") -> int:
     try:
         import pyarrow.parquet as pq
     except ImportError as exc:  # pragma: no cover
         raise LiveBaselineAuditError("pyarrow is required to read Parquet footers") from exc
     if len(footer_blob) < 8 or footer_blob[-4:] != b"PAR1":
-        raise LiveBaselineAuditError("Parquet footer missing PAR1 magic")
+        raise LiveBaselineAuditError(f"Parquet footer missing PAR1 magic for {path}")
     footer_len = int.from_bytes(footer_blob[-8:-4], "little")
     footer = footer_blob[:-8]
     if footer_len != len(footer):
-        # Some range responses include extra prefix bytes; take the tail.
         if len(footer_blob) >= footer_len + 8:
             footer = footer_blob[-(footer_len + 8) : -8]
         else:
-            raise LiveBaselineAuditError("Parquet footer length mismatch")
+            raise LiveBaselineAuditError(f"Parquet footer length mismatch for {path}")
     fake = b"PAR1" + footer + footer_len.to_bytes(4, "little") + b"PAR1"
     try:
         meta = pq.read_metadata(io.BytesIO(fake))
     except Exception as exc:
         raise LiveBaselineAuditError(
-            f"cannot parse Parquet footer: {type(exc).__name__}"
+            f"cannot parse Parquet footer for {path}: {type(exc).__name__}"
         ) from exc
     return int(meta.num_rows)
 
 
 def _parquet_rows_from_bytes(body: bytes, path: str) -> int:
-    if body[-4:] != b"PAR1":
+    if not body or body[-4:] != b"PAR1":
         raise LiveBaselineAuditError(f"Parquet magic missing for {path}")
     try:
         import pyarrow.parquet as pq
 
         return int(pq.read_metadata(io.BytesIO(body)).num_rows)
-    except Exception:
-        return parquet_num_rows_from_footer(body)
+    except Exception as exc:
+        try:
+            return parquet_num_rows_from_footer(body, path)
+        except LiveBaselineAuditError:
+            raise LiveBaselineAuditError(
+                f"cannot parse Parquet {path}: {type(exc).__name__}"
+            ) from exc
+
+
+def fetch_parquet_content(
+    transport: Any,
+    token: str,
+    repo_id: str,
+    revision: str,
+    path: str,
+    *,
+    expected_lfs_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Download, hash, and count a remote Parquet. Footer-only success is forbidden."""
+    url = require_hub_https_url(
+        dataset_resolve_url(repo_id, revision, path), f"{path} resolve URL"
+    )
+    response = transport.request("GET", url, headers=auth_headers(token))
+    if response.status >= 400:
+        raise LiveBaselineAuditError(
+            f"Parquet download failed for {path}: HTTP {response.status}"
+        )
+    body = response.body
+    if not body:
+        raise LiveBaselineAuditError(f"Parquet download empty for {path}")
+    content_sha256 = _require_sha256(response.sha256, f"{path} content hash")
+    try:
+        num_rows = _parquet_rows_from_bytes(body, path)
+    except LiveBaselineAuditError:
+        raise
+    except Exception as exc:
+        raise LiveBaselineAuditError(
+            f"Parquet count failed for {path}: {type(exc).__name__}"
+        ) from exc
+    if not isinstance(num_rows, int) or isinstance(num_rows, bool) or num_rows < 0:
+        raise LiveBaselineAuditError(f"Parquet count failed for {path}")
+    footer = parquet_footer_bytes(body, path)
+    footer_sha256 = sha256_bytes(footer)
+    if expected_lfs_sha256:
+        expected = _require_sha256(expected_lfs_sha256, f"{path} LFS sha256")
+        if content_sha256 != expected:
+            raise LiveBaselineAuditError(
+                f"Parquet content hash mismatch for {path}: "
+                f"downloaded {content_sha256} != LFS {expected}"
+            )
+    return {
+        "path": path,
+        "num_rows": num_rows,
+        "content_sha256": content_sha256,
+        "footer_sha256": footer_sha256,
+        "byte_length": len(body),
+        "endpoint": url,
+        "status": response.status,
+    }
 
 
 def fetch_parquet_footer_rows(
     transport: Any, token: str, repo_id: str, revision: str, path: str
 ) -> dict[str, Any]:
-    url = dataset_resolve_url(repo_id, revision, path)
-    headers = auth_headers(token)
-    tail = transport.request(
-        "GET", url, headers=headers, extra_headers={"Range": "bytes=-8"}
-    )
-    if tail.status not in {200, 206}:
-        raise LiveBaselineAuditError(
-            f"Parquet tail fetch failed for {path}: HTTP {tail.status}"
-        )
-    if tail.status == 200 and len(tail.body) != 8 and tail.body[-4:] == b"PAR1":
-        num_rows = _parquet_rows_from_bytes(tail.body, path)
-        return {
-            "path": path,
-            "num_rows": num_rows,
-            "footer_sha256": tail.sha256,
-            "tail_sha256": tail.sha256,
-            "endpoint": url,
-            "footer_status": tail.status,
-        }
-    if len(tail.body) != 8 or tail.body[-4:] != b"PAR1":
-        raise LiveBaselineAuditError(f"Parquet magic missing for {path}")
-    footer_len = int.from_bytes(tail.body[:4], "little")
-    if footer_len <= 0 or footer_len > 16_000_000:
-        raise LiveBaselineAuditError(f"implausible Parquet footer length for {path}")
-    footer = transport.request(
-        "GET",
-        url,
-        headers=headers,
-        extra_headers={"Range": f"bytes=-{footer_len + 8}"},
-    )
-    if footer.status not in {200, 206}:
-        raise LiveBaselineAuditError(
-            f"Parquet footer fetch failed for {path}: HTTP {footer.status}"
-        )
-    if footer.status == 200 and footer.body[-4:] == b"PAR1" and len(footer.body) != footer_len + 8:
-        num_rows = _parquet_rows_from_bytes(footer.body, path)
-    else:
-        num_rows = parquet_num_rows_from_footer(footer.body)
-    return {
-        "path": path,
-        "num_rows": num_rows,
-        "footer_sha256": footer.sha256,
-        "tail_sha256": tail.sha256,
-        "endpoint": url,
-        "footer_status": footer.status,
-    }
+    """Compatibility wrapper: always downloads and hashes the full Parquet."""
+    return fetch_parquet_content(transport, token, repo_id, revision, path)
 
 
 def fetch_text_file(
@@ -817,17 +959,31 @@ def fetch_parquet_table_columns(
     revision: str,
     path: str,
     columns: Sequence[str],
+    *,
+    expected_lfs_sha256: str | None = None,
 ) -> dict[str, list[Any]]:
     try:
         import pyarrow.parquet as pq
     except ImportError as exc:  # pragma: no cover
         raise LiveBaselineAuditError("pyarrow is required to scan Viewer Parquet") from exc
-    url = dataset_resolve_url(repo_id, revision, path)
+    url = require_hub_https_url(
+        dataset_resolve_url(repo_id, revision, path), f"{path} resolve URL"
+    )
     response = transport.request("GET", url, headers=auth_headers(token))
     if response.status >= 400:
         raise LiveBaselineAuditError(
             f"failed to download {path}: HTTP {response.status}"
         )
+    if not response.body:
+        raise LiveBaselineAuditError(f"Parquet download empty for {path}")
+    content_sha256 = _require_sha256(response.sha256, f"{path} content hash")
+    if expected_lfs_sha256:
+        expected = _require_sha256(expected_lfs_sha256, f"{path} LFS sha256")
+        if content_sha256 != expected:
+            raise LiveBaselineAuditError(
+                f"Parquet content hash mismatch for {path}: "
+                f"downloaded {content_sha256} != LFS {expected}"
+            )
     try:
         table = pq.read_table(io.BytesIO(response.body), columns=list(columns))
     except Exception as exc:
@@ -835,8 +991,8 @@ def fetch_parquet_table_columns(
             f"cannot read Parquet {path}: {type(exc).__name__}"
         ) from exc
     return {
-        "num_rows": table.num_rows,
-        "content_sha256": response.sha256,
+        "num_rows": int(table.num_rows),
+        "content_sha256": content_sha256,
         "endpoint": url,
         **{name: table.column(name).to_pylist() for name in columns if name in table.column_names},
     }
@@ -846,30 +1002,76 @@ def fetch_datasets_server(
     transport: Any, token: str, repo_id: str, revision: str
 ) -> dict[str, Any]:
     evidence: dict[str, Any] = {}
-    for endpoint in ("is-valid", "info", "size", "splits"):
-        url = datasets_server_url(endpoint, repo_id, revision)
+    pinned = require_commit_sha(revision, f"{repo_id} viewer revision")
+    for endpoint in VIEWER_ENDPOINTS:
+        url = require_hub_https_url(
+            datasets_server_url(endpoint, repo_id, pinned),
+            f"{repo_id} viewer {endpoint}",
+        )
         response = transport.request("GET", url, headers=auth_headers(token))
         record = {
             "endpoint": url,
-            "status": response.status,
-            "response_sha256": response.sha256,
+            "status": int(response.status),
+            "response_sha256": _require_sha256(
+                response.sha256, f"{repo_id} viewer {endpoint} hash"
+            ),
         }
         if response.status < 400:
             try:
                 record["payload"] = json.loads(response.body.decode("utf-8"))
-            except (UnicodeError, json.JSONDecodeError):
-                record["payload"] = None
+            except (UnicodeError, json.JSONDecodeError) as exc:
+                raise LiveBaselineAuditError(
+                    f"Viewer {endpoint} response for {repo_id} is not JSON"
+                ) from exc
         else:
             record["payload"] = None
             record["disposition"] = "datasets_server_unavailable"
         evidence[endpoint] = record
+    missing = [name for name in VIEWER_ENDPOINTS if name not in evidence]
+    if missing:
+        raise LiveBaselineAuditError(
+            f"Viewer transport or config omission for {repo_id}: {', '.join(missing)}"
+        )
     return evidence
+
+
+def require_viewer_evidence(evidence: Mapping[str, Any], repo_id: str) -> None:
+    if not isinstance(evidence, Mapping) or not evidence:
+        raise LiveBaselineAuditError(f"Viewer transport or config omission for {repo_id}")
+    for endpoint in VIEWER_ENDPOINTS:
+        record = evidence.get(endpoint)
+        if not isinstance(record, Mapping):
+            raise LiveBaselineAuditError(
+                f"Viewer transport or config omission for {repo_id}: {endpoint}"
+            )
+        _require_str(record.get("endpoint"), f"{repo_id}.viewer.{endpoint}.endpoint")
+        require_hub_https_url(
+            str(record.get("endpoint")), f"{repo_id}.viewer.{endpoint}.endpoint"
+        )
+        _require_int(record.get("status"), f"{repo_id}.viewer.{endpoint}.status")
+        _require_sha256(
+            record.get("response_sha256"), f"{repo_id}.viewer.{endpoint}.response_sha256"
+        )
+
+
+def row_counts_digest(partitions: Mapping[str, Mapping[str, Any]]) -> str:
+    payload = {
+        code: {
+            "num_rows": int(item["num_rows"]),
+            "content_sha256": item.get("content_sha256"),
+            "path": item.get("path"),
+        }
+        for code, item in sorted(partitions.items())
+    }
+    return sha256_canonical(payload)
 
 
 def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
     revision = STATE_PINNED_REVISION
     info = fetch_dataset_revision(transport, token, STATE_REPO_ID, revision)
     tree = fetch_repo_tree(transport, token, STATE_REPO_ID, revision)
+    if tree.get("pagination_exhausted") is not True or tree.get("pagination_truncated"):
+        raise LiveBaselineAuditError("state-law tree pagination truncated")
     files_by_path = {item["path"]: item for item in tree["files"]}
     missing_paths: list[str] = []
     partitions: dict[str, Any] = {}
@@ -878,8 +1080,15 @@ def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
         if path not in files_by_path:
             missing_paths.append(path)
             continue
-        rows = fetch_parquet_footer_rows(transport, token, STATE_REPO_ID, revision, path)
         file_meta = files_by_path[path]
+        rows = fetch_parquet_content(
+            transport,
+            token,
+            STATE_REPO_ID,
+            revision,
+            path,
+            expected_lfs_sha256=file_meta.get("lfs_sha256"),
+        )
         partitions[code] = {
             "code": code,
             "path": path,
@@ -887,6 +1096,7 @@ def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
             "size_bytes": file_meta.get("size_bytes"),
             "blob_id": file_meta.get("blob_id"),
             "lfs_sha256": file_meta.get("lfs_sha256"),
+            "content_sha256": rows["content_sha256"],
             "footer_sha256": rows["footer_sha256"],
             "endpoint": rows["endpoint"],
         }
@@ -912,6 +1122,7 @@ def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
         revision,
         STATE_CANONICAL_PARQUET,
         ("state_code", "ipfs_cid"),
+        expected_lfs_sha256=files_by_path[STATE_CANONICAL_PARQUET].get("lfs_sha256"),
     )
     embeddings = fetch_parquet_table_columns(
         transport,
@@ -920,6 +1131,7 @@ def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
         revision,
         STATE_EMBEDDING_PARQUET,
         ("state_code", "ipfs_cid"),
+        expected_lfs_sha256=files_by_path[STATE_EMBEDDING_PARQUET].get("lfs_sha256"),
     )
     canonical_codes = canonical.get("state_code") or []
     embedding_codes = embeddings.get("state_code") or []
@@ -951,6 +1163,7 @@ def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
     readme_text = readme.body.decode("utf-8", errors="replace")
     claimed = _parse_readme_claimed_rows(readme_text)
     viewer_server = fetch_datasets_server(transport, token, STATE_REPO_ID, revision)
+    require_viewer_evidence(viewer_server, STATE_REPO_ID)
 
     return {
         "repo_id": STATE_REPO_ID,
@@ -966,10 +1179,13 @@ def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
         "tree": {
             "file_count": tree["file_count"],
             "directory_count": tree["directory_count"],
+            "entry_count": tree["entry_count"],
             "page_count": tree["page_count"],
             "pages": tree["pages"],
             "inventory_sha256": tree["inventory_sha256"],
+            "pages_sha256": tree["pages_sha256"],
             "pagination_exhausted": tree["pagination_exhausted"],
+            "pagination_truncated": False,
         },
         "files": [
             {
@@ -980,6 +1196,16 @@ def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
                 "lfs_sha256": item["lfs_sha256"],
             }
             for item in tree["files"]
+        ],
+        "directories": [
+            {
+                "path": item["path"],
+                "type": item["type"],
+                "size_bytes": item.get("size_bytes"),
+                "blob_id": item.get("blob_id"),
+                "lfs_sha256": item.get("lfs_sha256"),
+            }
+            for item in tree["directories"]
         ],
         "partitions": partitions,
         "viewer": {
@@ -1044,6 +1270,7 @@ def observe_state_laws(transport: Any, token: str) -> dict[str, Any]:
             "state_summaries_missing": len(missing_summaries),
             "readme_claimed_canonical_rows": claimed,
         },
+        "row_counts_sha256": row_counts_digest(partitions),
         "truncation_examples": truncation_examples,
         "includes_dc": True,
     }
@@ -1071,14 +1298,21 @@ def observe_federal_register(transport: Any, token: str) -> dict[str, Any]:
     revision = FEDERAL_PINNED_REVISION
     info = fetch_dataset_revision(transport, token, FEDERAL_REPO_ID, revision)
     tree = fetch_repo_tree(transport, token, FEDERAL_REPO_ID, revision)
+    if tree.get("pagination_exhausted") is not True or tree.get("pagination_truncated"):
+        raise LiveBaselineAuditError("Federal Register tree pagination truncated")
     files_by_path = {item["path"]: item for item in tree["files"]}
     for required in (FEDERAL_PARQUET_PATH, FEDERAL_METADATA_PATH):
         if required not in files_by_path:
             raise LiveBaselineAuditError(
                 f"missing required Federal Register path: {required}"
             )
-    parquet = fetch_parquet_footer_rows(
-        transport, token, FEDERAL_REPO_ID, revision, FEDERAL_PARQUET_PATH
+    parquet = fetch_parquet_content(
+        transport,
+        token,
+        FEDERAL_REPO_ID,
+        revision,
+        FEDERAL_PARQUET_PATH,
+        expected_lfs_sha256=files_by_path[FEDERAL_PARQUET_PATH].get("lfs_sha256"),
     )
     metadata_resp = fetch_text_file(
         transport, token, FEDERAL_REPO_ID, revision, FEDERAL_METADATA_PATH
@@ -1100,6 +1334,7 @@ def observe_federal_register(transport: Any, token: str) -> dict[str, Any]:
     )
     include_full_text = metadata.get("include_full_text")
     viewer_server = fetch_datasets_server(transport, token, FEDERAL_REPO_ID, revision)
+    require_viewer_evidence(viewer_server, FEDERAL_REPO_ID)
     legacy_present = [
         artifact
         for artifact in LEGACY_LAYOUT_ARTIFACTS
@@ -1124,10 +1359,13 @@ def observe_federal_register(transport: Any, token: str) -> dict[str, Any]:
         "tree": {
             "file_count": tree["file_count"],
             "directory_count": tree["directory_count"],
+            "entry_count": tree["entry_count"],
             "page_count": tree["page_count"],
             "pages": tree["pages"],
             "inventory_sha256": tree["inventory_sha256"],
+            "pages_sha256": tree["pages_sha256"],
             "pagination_exhausted": tree["pagination_exhausted"],
+            "pagination_truncated": False,
         },
         "files": [
             {
@@ -1139,13 +1377,25 @@ def observe_federal_register(transport: Any, token: str) -> dict[str, Any]:
             }
             for item in tree["files"]
         ],
+        "directories": [
+            {
+                "path": item["path"],
+                "type": item["type"],
+                "size_bytes": item.get("size_bytes"),
+                "blob_id": item.get("blob_id"),
+                "lfs_sha256": item.get("lfs_sha256"),
+            }
+            for item in tree["directories"]
+        ],
         "parquet": {
             "path": FEDERAL_PARQUET_PATH,
             "num_rows": parquet["num_rows"],
+            "content_sha256": parquet["content_sha256"],
             "footer_sha256": parquet["footer_sha256"],
             "endpoint": parquet["endpoint"],
             "size_bytes": files_by_path[FEDERAL_PARQUET_PATH].get("size_bytes"),
             "lfs_sha256": files_by_path[FEDERAL_PARQUET_PATH].get("lfs_sha256"),
+            "byte_length": parquet["byte_length"],
         },
         "metadata": {
             "path": FEDERAL_METADATA_PATH,
@@ -1172,9 +1422,20 @@ def observe_federal_register(transport: Any, token: str) -> dict[str, Any]:
             "repository_files": tree["file_count"],
             "advertised_documents": advertised,
             "hub_parquet_rows": parquet["num_rows"],
+            "materialized_rows": MATERIALIZED_ROW_COUNT,
             "count_mismatch_delta": parquet["num_rows"] - advertised,
+            "advertised_vs_materialized_delta": advertised - MATERIALIZED_ROW_COUNT,
+            "hub_vs_materialized_delta": parquet["num_rows"] - MATERIALIZED_ROW_COUNT,
             "include_full_text": include_full_text,
         },
+        "row_count_sha256": sha256_canonical(
+            {
+                "advertised_documents": advertised,
+                "hub_parquet_rows": parquet["num_rows"],
+                "materialized_rows": MATERIALIZED_ROW_COUNT,
+                "content_sha256": parquet["content_sha256"],
+            }
+        ),
     }
 
 
@@ -1249,6 +1510,10 @@ def inventory_salvage_root(root_id: str, root: Path) -> dict[str, Any]:
         "state_partitions": {},
         "federal_parquet_rows": None,
         "inventory_sha256": None,
+        "sampled": False,
+        "truncated": False,
+        "walk_complete": False,
+        "symlink_escape": False,
     }
     if root.is_symlink():
         record["disposition"] = "symlink_skipped"
@@ -1269,9 +1534,12 @@ def inventory_salvage_root(root_id: str, root: Path) -> dict[str, Any]:
         record["error"] = type(exc).__name__
         return record
     record["accessible"] = True
+    record["walk_complete"] = True
     record["disposition"] = "inventoried"
     record["inventory_sha256"] = sha256_canonical(listing)
     record["has_nonempty_inventory"] = record["file_count"] > 0
+    if record["sampled"] or record["truncated"] or not record["walk_complete"]:
+        record["disposition"] = "truncated"
     return record
 
 
@@ -1345,7 +1613,17 @@ def observe_local_salvage(
 ) -> dict[str, Any]:
     configured = configured_salvage_roots(roots)
     inventories = [inventory_salvage_root(name, path) for name, path in configured]
-    present = [item for item in inventories if item.get("present") and item.get("accessible")]
+    present = [
+        item
+        for item in inventories
+        if item.get("present") and item.get("accessible") and item.get("disposition") == "inventoried"
+    ]
+    sampled = any(item.get("sampled") or item.get("truncated") for item in inventories)
+    all_missing = bool(inventories) and all(
+        item.get("disposition") in {"missing", "inaccessible", "symlink_skipped", "not_a_directory"}
+        for item in inventories
+    )
+    empty = bool(present) and all(item.get("file_count", 0) == 0 for item in present)
     return {
         "configured_root_ids": [name for name, _path in configured],
         "roots": inventories,
@@ -1354,6 +1632,10 @@ def observe_local_salvage(
         "secrets_copied": False,
         "symlinks_followed": False,
         "absolute_paths_persisted": False,
+        "sampled": sampled,
+        "truncated": sampled,
+        "all_missing": all_missing,
+        "empty": empty or not present,
         "three_shard_run_detected": any(
             item.get("three_shard_runs") for item in inventories
         ),
@@ -1364,6 +1646,9 @@ def observe_local_salvage(
                     "disposition": item["disposition"],
                     "inventory_sha256": item.get("inventory_sha256"),
                     "file_count": item.get("file_count"),
+                    "sampled": item.get("sampled"),
+                    "truncated": item.get("truncated"),
+                    "walk_complete": item.get("walk_complete"),
                 }
                 for item in inventories
             ]
@@ -1474,11 +1759,30 @@ def collect_dispositions(
     fed_counts = federal["counts"]
     advertised = fed_counts.get("advertised_documents")
     hub_rows = fed_counts.get("hub_parquet_rows")
+    if advertised != hub_rows or hub_rows != MATERIALIZED_ROW_COUNT or advertised != MATERIALIZED_ROW_COUNT:
+        dispositions.append(
+            typed_disposition(
+                "FEDERAL_COUNT_CONTRADICTION",
+                detail=(
+                    "observed Federal count contradiction: Hub Parquet rows vs "
+                    "sealed materialized rows vs advertised documents"
+                ),
+                expected={
+                    "advertised_documents": ADVERTISED_DOCUMENT_COUNT,
+                    "materialized_rows": MATERIALIZED_ROW_COUNT,
+                },
+                observed={
+                    "advertised_documents": advertised,
+                    "hub_parquet_rows": hub_rows,
+                    "materialized_rows": MATERIALIZED_ROW_COUNT,
+                },
+            )
+        )
     if advertised != hub_rows:
         dispositions.append(
             typed_disposition(
                 "FEDERAL_ADVERTISED_VS_HUB_PARQUET",
-                detail="metadata.json advertised documents differ from Hub Parquet footer rows",
+                detail="metadata.json advertised documents differ from Hub Parquet rows",
                 expected=advertised,
                 observed=hub_rows,
             )
@@ -1487,7 +1791,7 @@ def collect_dispositions(
         dispositions.append(
             typed_disposition(
                 "FEDERAL_HUB_PARQUET_VS_SEALED_LOCAL_MATERIALIZED",
-                detail="Hub Parquet footer rows differ from the sealed local materialized count",
+                detail="Hub Parquet rows differ from the sealed local materialized count",
                 expected=MATERIALIZED_ROW_COUNT,
                 observed=hub_rows,
             )
@@ -1595,6 +1899,7 @@ def unexplained_count_mismatches(
     if (
         federal["counts"].get("hub_parquet_rows") != MATERIALIZED_ROW_COUNT
         and "FEDERAL_HUB_PARQUET_VS_SEALED_LOCAL_MATERIALIZED" not in typed_codes
+        and "FEDERAL_COUNT_CONTRADICTION" not in typed_codes
     ):
         unexplained.append(
             "federal Hub Parquet rows differ from sealed materialized count without typed explanation"
@@ -1603,6 +1908,7 @@ def unexplained_count_mismatches(
         federal["counts"].get("advertised_documents")
         != federal["counts"].get("hub_parquet_rows")
         and "FEDERAL_ADVERTISED_VS_HUB_PARQUET" not in typed_codes
+        and "FEDERAL_COUNT_CONTRADICTION" not in typed_codes
     ):
         unexplained.append(
             "federal advertised vs Hub Parquet mismatch lacks typed explanation"
@@ -1626,18 +1932,165 @@ def assert_no_token_leakage(payload: Mapping[str, Any], token: str | None) -> No
     if "Authorization" in blob and "Bearer " in blob:
         raise LiveBaselineAuditError("token leakage: Authorization header persisted")
     leaked = HF_TOKEN_RE.findall(blob)
-    # Allow the documented scripted test-token pattern only inside unit tests if
-    # it never matches a real hf_ live token. Any hf_ value is a leak.
     if leaked:
         raise LiveBaselineAuditError("token leakage: Hugging Face token pattern in receipt")
 
 
-def seal_receipt(payload: MutableMapping[str, Any], token: str | None) -> dict[str, Any]:
-    payload.pop("receipt_sha256", None)
+def assert_no_path_leakage(
+    payload: Mapping[str, Any], salvage_roots: Sequence[tuple[str, Path]] | None = None
+) -> None:
+    blob = json.dumps(payload, sort_keys=True, default=str)
+    home = str(Path.home())
+    if home and home in blob:
+        raise LiveBaselineAuditError("path leakage: absolute home path persisted")
+    if salvage_roots:
+        for _name, root in salvage_roots:
+            raw = str(Path(root).expanduser())
+            if raw and raw in blob:
+                raise LiveBaselineAuditError("path leakage: absolute salvage path persisted")
+    token_path = str(HF_TOKEN_FILE)
+    if token_path in blob:
+        raise LiveBaselineAuditError("path leakage: token file path persisted")
+
+
+def recompute_nested_digests(receipt: Mapping[str, Any]) -> dict[str, str]:
+    state = _require_mapping(receipt.get("state_laws"), "state_laws")
+    federal = _require_mapping(receipt.get("federal_register"), "federal_register")
+    salvage = _require_mapping(receipt.get("local_salvage"), "local_salvage")
+    tree = _require_mapping(state.get("tree"), "state_laws.tree")
+    fed_tree = _require_mapping(federal.get("tree"), "federal_register.tree")
+    files = state.get("files")
+    dirs = state.get("directories") or []
+    fed_files = federal.get("files")
+    fed_dirs = federal.get("directories") or []
+    if not isinstance(files, list) or not files:
+        raise LiveBaselineAuditError("state remote file inventory missing")
+    if not isinstance(fed_files, list) or not fed_files:
+        raise LiveBaselineAuditError("federal remote file inventory missing")
+    partitions = _require_mapping(state.get("partitions"), "state_laws.partitions")
+    parquet = _require_mapping(federal.get("parquet"), "federal_register.parquet")
+    requests = receipt.get("requests")
+    if not isinstance(requests, list):
+        raise LiveBaselineAuditError("receipt must bind request endpoints")
+    identity = _require_mapping(
+        receipt.get("authenticated_identity"), "authenticated_identity"
+    )
+    dispositions = receipt.get("dispositions")
+    if not isinstance(dispositions, list):
+        raise LiveBaselineAuditError("dispositions must be an array")
+    salvage_roots = salvage.get("roots")
+    if not isinstance(salvage_roots, list):
+        raise LiveBaselineAuditError("local salvage inventory missing roots")
+    state_viewer = _require_mapping(state.get("viewer"), "state_laws.viewer")
+    fed_viewer = _require_mapping(federal.get("viewer"), "federal_register.viewer")
+    return {
+        "state_inventory_sha256": tree_inventory_digest([*files, *dirs]),
+        "state_pages_sha256": sha256_canonical(tree.get("pages") or []),
+        "state_row_counts_sha256": row_counts_digest(partitions),
+        "federal_inventory_sha256": tree_inventory_digest([*fed_files, *fed_dirs]),
+        "federal_pages_sha256": sha256_canonical(fed_tree.get("pages") or []),
+        "federal_row_count_sha256": sha256_canonical(
+            {
+                "advertised_documents": federal["counts"]["advertised_documents"],
+                "hub_parquet_rows": parquet.get("num_rows"),
+                "materialized_rows": MATERIALIZED_ROW_COUNT,
+                "content_sha256": parquet.get("content_sha256"),
+            }
+        ),
+        "salvage_inventory_sha256": sha256_canonical(
+            [
+                {
+                    "root_id": item.get("root_id"),
+                    "disposition": item.get("disposition"),
+                    "inventory_sha256": item.get("inventory_sha256"),
+                    "file_count": item.get("file_count"),
+                    "sampled": item.get("sampled"),
+                    "truncated": item.get("truncated"),
+                    "walk_complete": item.get("walk_complete"),
+                }
+                for item in salvage_roots
+            ]
+        ),
+        "requests_sha256": sha256_canonical(requests),
+        "identity_sha256": sha256_canonical(identity),
+        "dispositions_sha256": sha256_canonical(dispositions),
+        "viewer_responses_sha256": sha256_canonical(
+            {
+                "state_laws": state_viewer.get("datasets_server"),
+                "federal_register": fed_viewer.get("datasets_server"),
+            }
+        ),
+    }
+
+
+def bind_nested_digests(receipt: MutableMapping[str, Any]) -> dict[str, str]:
+    computed = recompute_nested_digests(receipt)
+    receipt["digests"] = dict(computed)
+    state = receipt["state_laws"]
+    federal = receipt["federal_register"]
+    salvage = receipt["local_salvage"]
+    if state["tree"].get("inventory_sha256") != computed["state_inventory_sha256"]:
+        raise LiveBaselineAuditError("state inventory digest mismatch")
+    if state["tree"].get("pages_sha256") != computed["state_pages_sha256"]:
+        raise LiveBaselineAuditError("state page digest mismatch")
+    if state.get("row_counts_sha256") != computed["state_row_counts_sha256"]:
+        raise LiveBaselineAuditError("state row digest mismatch")
+    if federal["tree"].get("inventory_sha256") != computed["federal_inventory_sha256"]:
+        raise LiveBaselineAuditError("federal inventory digest mismatch")
+    if federal["tree"].get("pages_sha256") != computed["federal_pages_sha256"]:
+        raise LiveBaselineAuditError("federal page digest mismatch")
+    if federal.get("row_count_sha256") != computed["federal_row_count_sha256"]:
+        raise LiveBaselineAuditError("federal row digest mismatch")
+    if salvage.get("inventory_sha256") != computed["salvage_inventory_sha256"]:
+        raise LiveBaselineAuditError("salvage inventory digest mismatch")
+    return computed
+
+
+def validate_nested_digests(receipt: Mapping[str, Any]) -> dict[str, str]:
+    declared = _require_mapping(receipt.get("digests"), "digests")
+    computed = recompute_nested_digests(receipt)
+    for key, value in computed.items():
+        observed = declared.get(key)
+        if not isinstance(observed, str) or len(observed) != 64:
+            raise LiveBaselineAuditError(f"fake or truncated nested hash: {key}")
+        _require_sha256(observed, f"digests.{key}")
+        if observed != value:
+            if "row" in key:
+                raise LiveBaselineAuditError(f"row digest mismatch: {key}")
+            if "inventory" in key:
+                raise LiveBaselineAuditError(f"inventory digest mismatch: {key}")
+            raise LiveBaselineAuditError(f"nested digest mismatch: {key}")
+    extra = set(declared) - set(computed)
+    if extra:
+        raise LiveBaselineAuditError(
+            "fake or truncated nested hash: " + ", ".join(sorted(extra))
+        )
+    return computed
+
+
+def no_self_field_root_digest(receipt: Mapping[str, Any]) -> str:
+    body = {
+        key: value
+        for key, value in receipt.items()
+        if key != RECEIPT_SELF_DIGEST_FIELD
+    }
+    return sha256_canonical(body)
+
+
+def seal_receipt(
+    payload: MutableMapping[str, Any],
+    token: str | None,
+    *,
+    salvage_roots: Sequence[tuple[str, Path]] | None = None,
+) -> dict[str, Any]:
+    payload.pop(RECEIPT_SELF_DIGEST_FIELD, None)
+    bind_nested_digests(payload)
     assert_no_token_leakage(payload, token)
-    digest = sha256_canonical(dict(payload))
-    payload["receipt_sha256"] = digest
+    assert_no_path_leakage(payload, salvage_roots)
+    digest = no_self_field_root_digest(payload)
+    payload[RECEIPT_SELF_DIGEST_FIELD] = digest
     assert_no_token_leakage(payload, token)
+    assert_no_path_leakage(payload, salvage_roots)
     return dict(payload)
 
 
@@ -1658,20 +2111,39 @@ def build_receipt(
     state = observe_state_laws(transport, token)
     federal = observe_federal_register(transport, token)
     salvage = observe_local_salvage(salvage_roots)
+    if salvage.get("sampled") or salvage.get("truncated"):
+        raise LiveBaselineAuditError("sampled or truncated salvage inventory")
+    if salvage.get("all_missing"):
+        raise LiveBaselineAuditError("all-missing salvage inventory")
+    if salvage.get("empty"):
+        raise LiveBaselineAuditError("empty salvage inventory")
+    if any(item.get("symlink_escape") for item in salvage.get("roots") or []):
+        raise LiveBaselineAuditError("symlink escape")
+    if any(item.get("disposition") == "inaccessible" for item in salvage.get("roots") or []):
+        if not salvage.get("present_root_count"):
+            raise LiveBaselineAuditError("inaccessible salvage inventory")
     requests = gather_request_records(transport)
     live_contacted = bool(is_live_https and requests and mode != MODE_DRY_RUN)
+    if mode == MODE_LIVE and not is_live_https:
+        # Hermetic builders may use a scripted transport; they cannot claim live Hub contact.
+        live_contacted = False
     for record in requests:
         if not record.get("response_sha256"):
             raise LiveBaselineAuditError("missing response hash on a Hub request")
+        _require_sha256(record.get("response_sha256"), "request response_sha256")
+        require_hub_https_url(str(record.get("endpoint")), "request endpoint")
     dispositions = collect_dispositions(state, federal, salvage)
     unexplained = unexplained_count_mismatches(state, federal, dispositions)
     if unexplained:
         raise LiveBaselineAuditError(
             "contradictory counts without typed explanation: " + "; ".join(unexplained)
         )
+    if mode == MODE_LIVE and is_live_https is False and transport_kind == TRANSPORT_DRY_RUN:
+        raise LiveBaselineAuditError("production live mode rejects dry-run transport")
     receipt: dict[str, Any] = {
         "schema": REPORT_SCHEMA,
-        "schema_version": "1",
+        "schema_version": SCHEMA_VERSION,
+        "schema_file": SCHEMA_RELPATH.as_posix(),
         "task_id": TASK_ID,
         "goal_id": GOAL_ID,
         "program_id": PROGRAM_ID,
@@ -1680,7 +2152,7 @@ def build_receipt(
         "mode": mode,
         "transport": transport_kind,
         "network_required": mode == MODE_LIVE,
-        "live_hub_contacted": live_contacted or mode == MODE_LIVE,
+        "live_hub_contacted": live_contacted,
         "fixture_only": False,
         "observed_at": observed_at or utc_now(),
         "authenticated_identity": identity,
@@ -1709,6 +2181,7 @@ def build_receipt(
             "federal_repository_files": federal["counts"]["repository_files"],
             "federal_advertised_documents": federal["counts"]["advertised_documents"],
             "federal_hub_parquet_rows": federal["counts"]["hub_parquet_rows"],
+            "federal_materialized_rows": MATERIALIZED_ROW_COUNT,
         },
         "acceptance": {
             "live_mode": mode == MODE_LIVE,
@@ -1734,7 +2207,11 @@ def build_receipt(
             "Documented dry-run observation. This receipt cannot satisfy "
             "--require-live-hub because Hub HTTPS was not used."
         )
-    return seal_receipt(receipt, token if mode == MODE_LIVE else None)
+    return seal_receipt(
+        receipt,
+        token if mode == MODE_LIVE else None,
+        salvage_roots=salvage_roots,
+    )
 
 
 def build_dry_run_receipt(
@@ -1763,17 +2240,31 @@ def validate_receipt(
     require_live_hub: bool = False,
     require_local_salvage_inventory: bool = False,
     token: str | None = None,
+    now: datetime | str | None = None,
+    require_fresh_observation: bool = False,
+    salvage_roots: Sequence[tuple[str, Path]] | None = None,
 ) -> dict[str, Any]:
     schema = receipt.get("schema")
     if schema != REPORT_SCHEMA:
         raise LiveBaselineAuditError(f"schema: expected {REPORT_SCHEMA!r}, got {schema!r}")
     if receipt.get("task_id") != TASK_ID:
-        raise LiveBaselineAuditError("task_id must be LCR-070")
+        raise LiveBaselineAuditError("task_id must be LCR-081")
+    if receipt.get("goal_id") != GOAL_ID:
+        raise LiveBaselineAuditError("goal_id must be LCR-G143")
     if receipt.get("producer") != PRODUCER:
         raise LiveBaselineAuditError("producer mismatch")
-    _require_utc(receipt.get("observed_at"), "observed_at")
+    if receipt.get("schema_version") != SCHEMA_VERSION:
+        raise LiveBaselineAuditError("schema_version mismatch")
+    require_observation_time(
+        receipt.get("observed_at"),
+        "observed_at",
+        now=now,
+        require_fresh=require_fresh_observation,
+    )
     if receipt.get("fixture_only") is True:
         raise LiveBaselineAuditError("fixture-only result is forbidden")
+    if require_live_hub and receipt.get("transport") == TRANSPORT_SCRIPTED:
+        raise LiveBaselineAuditError("production live mode rejects fixtures")
     identity = _require_mapping(
         receipt.get("authenticated_identity"), "authenticated_identity"
     )
@@ -1784,6 +2275,8 @@ def validate_receipt(
     _require_sha256(identity.get("whoami_response_sha256"), "whoami_response_sha256")
     if identity.get("whoami_endpoint") != WHOAMI_ENDPOINT:
         raise LiveBaselineAuditError("whoami endpoint mismatch")
+    if "email" in identity or "fullname" in identity or "accessToken" in identity:
+        raise LiveBaselineAuditError("identity projection is not safe")
 
     pins = _require_mapping(receipt.get("pins"), "pins")
     if require_commit_sha(pins.get("state_laws"), "pins.state_laws") != STATE_PINNED_REVISION:
@@ -1799,7 +2292,9 @@ def validate_receipt(
         raise LiveBaselineAuditError("receipt must bind request endpoints")
     for index, record in enumerate(requests):
         mapping = _require_mapping(record, f"requests[{index}]")
-        _require_str(mapping.get("endpoint"), f"requests[{index}].endpoint")
+        require_hub_https_url(
+            str(mapping.get("endpoint")), f"requests[{index}].endpoint"
+        )
         _require_sha256(
             mapping.get("response_sha256"), f"requests[{index}].response_sha256"
         )
@@ -1818,13 +2313,40 @@ def validate_receipt(
     for code in expected_codes:
         part = _require_mapping(partitions.get(code), f"partitions.{code}")
         _require_int(part.get("num_rows"), f"partitions.{code}.num_rows")
+        _require_sha256(part.get("content_sha256"), f"partitions.{code}.content_sha256")
         _require_sha256(part.get("footer_sha256"), f"partitions.{code}.footer_sha256")
         _require_str(part.get("path"), f"partitions.{code}.path")
         _require_str(part.get("endpoint"), f"partitions.{code}.endpoint")
+        if not part.get("blob_id") and not part.get("lfs_sha256"):
+            raise LiveBaselineAuditError(
+                f"missing inventory metadata for partition {code}"
+            )
     files = state.get("files")
     if not isinstance(files, list) or not files:
         raise LiveBaselineAuditError("state remote file inventory missing")
-    _require_sha256(state["tree"]["inventory_sha256"], "state_laws.tree.inventory_sha256")
+    seen_paths: set[str] = set()
+    for item in files:
+        mapping = _require_mapping(item, "state file")
+        path = _require_str(mapping.get("path"), "state file path")
+        if path in seen_paths:
+            raise LiveBaselineAuditError(f"duplicate inventory path: {path}")
+        seen_paths.add(path)
+        if mapping.get("type") != "file":
+            raise LiveBaselineAuditError(f"state file {path} missing type")
+        _require_int(mapping.get("size_bytes"), f"{path} size")
+        if not mapping.get("blob_id") and not mapping.get("lfs_sha256"):
+            raise LiveBaselineAuditError(f"missing inventory metadata for {path}")
+    tree = _require_mapping(state.get("tree"), "state_laws.tree")
+    if tree.get("pagination_exhausted") is not True or tree.get("pagination_truncated"):
+        raise LiveBaselineAuditError("pagination truncated")
+    _require_sha256(tree.get("inventory_sha256"), "state_laws.tree.inventory_sha256")
+    _require_sha256(tree.get("pages_sha256"), "state_laws.tree.pages_sha256")
+    if not tree.get("pages"):
+        raise LiveBaselineAuditError("state tree pages missing")
+    for index, page in enumerate(tree["pages"]):
+        mapping = _require_mapping(page, f"state tree page {index}")
+        _require_sha256(mapping.get("response_sha256"), f"state tree page {index} hash")
+    require_viewer_evidence(state["viewer"].get("datasets_server"), STATE_REPO_ID)
     _require_sha256(
         state["viewer"]["canonical_config"]["content_sha256"],
         "viewer.canonical content hash",
@@ -1840,28 +2362,50 @@ def validate_receipt(
         != FEDERAL_PINNED_REVISION
     ):
         raise LiveBaselineAuditError("federal_register.revision is not the pinned 40-hex SHA")
-    _require_sha256(
-        federal["parquet"]["footer_sha256"], "federal_register.parquet.footer_sha256"
-    )
+    parquet = _require_mapping(federal.get("parquet"), "federal_register.parquet")
+    _require_sha256(parquet.get("content_sha256"), "federal_register.parquet.content_sha256")
+    _require_sha256(parquet.get("footer_sha256"), "federal_register.parquet.footer_sha256")
     _require_sha256(
         federal["metadata"]["response_sha256"],
         "federal_register.metadata.response_sha256",
     )
-    _require_int(federal["parquet"]["num_rows"], "federal parquet rows")
+    _require_int(parquet.get("num_rows"), "federal parquet rows")
     _require_int(
         federal["metadata"]["advertised_documents"], "federal advertised documents"
     )
+    fed_tree = _require_mapping(federal.get("tree"), "federal_register.tree")
+    if fed_tree.get("pagination_exhausted") is not True or fed_tree.get(
+        "pagination_truncated"
+    ):
+        raise LiveBaselineAuditError("pagination truncated")
+    _require_sha256(fed_tree.get("inventory_sha256"), "federal tree inventory hash")
+    _require_sha256(fed_tree.get("pages_sha256"), "federal tree pages hash")
+    require_viewer_evidence(federal["viewer"].get("datasets_server"), FEDERAL_REPO_ID)
+    fed_files = federal.get("files")
+    if not isinstance(fed_files, list) or not fed_files:
+        raise LiveBaselineAuditError("federal remote file inventory missing")
 
     salvage = _require_mapping(receipt.get("local_salvage"), "local_salvage")
     if salvage.get("secrets_copied") is True:
         raise LiveBaselineAuditError("salvage inventory copied secrets")
     if salvage.get("symlinks_followed") is True:
-        raise LiveBaselineAuditError("salvage inventory followed symlinks")
+        raise LiveBaselineAuditError("symlink escape")
     if salvage.get("absolute_paths_persisted") is True:
         raise LiveBaselineAuditError("salvage inventory persisted absolute paths")
+    if salvage.get("sampled") is True or salvage.get("truncated") is True:
+        raise LiveBaselineAuditError("sampled or truncated salvage inventory")
     roots = salvage.get("roots")
     if not isinstance(roots, list) or not roots:
         raise LiveBaselineAuditError("local salvage inventory missing roots")
+    for root in roots:
+        mapping = _require_mapping(root, "salvage root")
+        if mapping.get("symlink_escape") is True:
+            raise LiveBaselineAuditError("symlink escape")
+        if mapping.get("sampled") is True or mapping.get("truncated") is True:
+            raise LiveBaselineAuditError("sampled or truncated salvage inventory")
+        label = str(mapping.get("path_label") or "")
+        if label.startswith("/") or ":\\" in label:
+            raise LiveBaselineAuditError("path leakage: absolute salvage path persisted")
 
     dispositions = receipt.get("dispositions")
     if not isinstance(dispositions, list):
@@ -1879,19 +2423,24 @@ def validate_receipt(
             "contradictory counts without typed explanation: " + "; ".join(unexplained)
         )
 
-    digest = _require_sha256(receipt.get("receipt_sha256"), "receipt_sha256")
-    body = {key: value for key, value in receipt.items() if key != "receipt_sha256"}
-    expected_digest = sha256_canonical(body)
+    validate_nested_digests(receipt)
+    digest = _require_sha256(
+        receipt.get(RECEIPT_SELF_DIGEST_FIELD), RECEIPT_SELF_DIGEST_FIELD
+    )
+    expected_digest = no_self_field_root_digest(receipt)
     if digest != expected_digest:
-        raise LiveBaselineAuditError("receipt_sha256 does not match canonical receipt bytes")
+        raise LiveBaselineAuditError("root digest mismatch")
 
     assert_no_token_leakage(receipt, token)
+    assert_no_path_leakage(receipt, salvage_roots)
 
     if require_live_hub:
         if receipt.get("mode") != MODE_LIVE:
             raise LiveBaselineAuditError(
                 "require-live-hub cannot be satisfied by a dry-run or fixture receipt"
             )
+        if receipt.get("fixture_only") is True:
+            raise LiveBaselineAuditError("production live mode rejects fixtures")
         if receipt.get("live_hub_contacted") is not True:
             raise LiveBaselineAuditError("require-live-hub needs live_hub_contacted=true")
         if receipt.get("transport") != TRANSPORT_LIVE_HTTPS:
@@ -1917,19 +2466,25 @@ def validate_receipt(
     if require_local_salvage_inventory:
         if salvage.get("inventoried") is not True:
             raise LiveBaselineAuditError("local salvage inventory was not taken")
+        if salvage.get("all_missing") is True:
+            raise LiveBaselineAuditError("all-missing salvage inventory")
+        if salvage.get("empty") is True:
+            raise LiveBaselineAuditError("empty salvage inventory")
         present = [
             item
             for item in roots
-            if item.get("present") and item.get("disposition") == "inventoried"
+            if item.get("present")
+            and item.get("disposition") == "inventoried"
+            and item.get("accessible")
         ]
         if not present:
             raise LiveBaselineAuditError(
                 "require-local-salvage-inventory needs at least one present inventoried root"
             )
         if all(item.get("file_count", 0) == 0 for item in present):
-            raise LiveBaselineAuditError(
-                "require-local-salvage-inventory cannot be an empty salvage set"
-            )
+            raise LiveBaselineAuditError("empty salvage inventory")
+        if any(item.get("disposition") == "inaccessible" for item in roots) and not present:
+            raise LiveBaselineAuditError("inaccessible salvage inventory")
 
     return {
         "ok": True,
@@ -1966,10 +2521,53 @@ def load_receipt(path: Path | str) -> dict[str, Any]:
 
 def write_receipt(receipt: Mapping[str, Any], path: Path | str) -> Path:
     receipt_path = Path(path).expanduser().resolve()
+    if receipt_path.is_symlink():
+        raise LiveBaselineAuditError("receipt must be a regular file, not a symlink")
     receipt_path.parent.mkdir(parents=True, exist_ok=True)
     text = json.dumps(dict(receipt), indent=2, sort_keys=True) + "\n"
     receipt_path.write_text(text, encoding="utf-8")
     return receipt_path
+
+
+def persist_and_verify_receipt(
+    receipt: Mapping[str, Any],
+    path: Path | str,
+    *,
+    require_live_hub: bool = False,
+    require_local_salvage_inventory: bool = False,
+    token: str | None = None,
+    now: datetime | str | None = None,
+    require_fresh_observation: bool = False,
+    salvage_roots: Sequence[tuple[str, Path]] | None = None,
+) -> dict[str, Any]:
+    """Write the observation, reload on-disk bytes, and compare. In-memory-only is forbidden."""
+    receipt_path = Path(path).expanduser().resolve()
+    write_receipt(receipt, receipt_path)
+    if not receipt_path.is_file() or receipt_path.is_symlink():
+        raise LiveBaselineAuditError("absent on-disk receipt")
+    try:
+        raw = receipt_path.read_bytes()
+    except OSError as exc:
+        raise LiveBaselineAuditError("absent on-disk receipt") from exc
+    if not raw:
+        raise LiveBaselineAuditError("altered bytes")
+    try:
+        loaded = json.loads(raw.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise LiveBaselineAuditError("altered bytes") from exc
+    if not isinstance(loaded, Mapping):
+        raise LiveBaselineAuditError("altered bytes")
+    if canonical_json_bytes(dict(loaded)) != canonical_json_bytes(dict(receipt)):
+        raise LiveBaselineAuditError("altered bytes")
+    return validate_receipt(
+        loaded,
+        require_live_hub=require_live_hub,
+        require_local_salvage_inventory=require_local_salvage_inventory,
+        token=token,
+        now=now,
+        require_fresh_observation=require_fresh_observation,
+        salvage_roots=salvage_roots,
+    )
 
 
 def render_check_summary(result: Mapping[str, Any]) -> str:
@@ -1999,8 +2597,8 @@ def render_check_summary(result: Mapping[str, Any]) -> str:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Authenticate to Hugging Face Hub and record live provenance for "
-            "the pinned legal-corpora baselines (LCR-070)."
+            "Authenticate to Hugging Face Hub and record a fail-closed live "
+            "baseline receipt for the pinned legal-corpora revisions (LCR-081)."
         )
     )
     parser.add_argument(
@@ -2016,7 +2614,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--check",
         action="store_true",
-        help="Validate the live (or dry-run) observation fail-closed.",
+        help=(
+            "Re-observe live Hub evidence, persist the receipt, reload the "
+            "on-disk bytes, and compare. In-memory-only success is forbidden."
+        ),
     )
     parser.add_argument(
         "--write",
@@ -2069,7 +2670,7 @@ def observe_with_live_hub(
     observed_at: str | None = None,
     token: str | None = None,
     token_source: str | None = None,
-    timeout_seconds: float = 120.0,
+    timeout_seconds: float = 600.0,
 ) -> dict[str, Any]:
     discovered_token, discovered_source = (
         (token, token_source) if token else discover_hf_token()
@@ -2104,34 +2705,39 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "use the library helper in tests. This CLI refuses to fake live Hub success."
             )
         if args.require_live_hub or args.check or args.write:
-            if args.require_live_hub or args.check:
-                receipt = observe_with_live_hub(salvage_roots=salvage_roots)
+            receipt = observe_with_live_hub(salvage_roots=salvage_roots)
+            if args.check:
+                result = persist_and_verify_receipt(
+                    receipt,
+                    receipt_path,
+                    require_live_hub=bool(args.require_live_hub),
+                    require_local_salvage_inventory=bool(
+                        args.require_local_salvage_inventory
+                    ),
+                    require_fresh_observation=True,
+                    salvage_roots=salvage_roots,
+                )
+                print(render_check_summary(result))
+            else:
                 result = validate_receipt(
                     receipt,
                     require_live_hub=bool(args.require_live_hub),
                     require_local_salvage_inventory=bool(
                         args.require_local_salvage_inventory
                     ),
+                    salvage_roots=salvage_roots,
                 )
-            else:
-                receipt = observe_with_live_hub(salvage_roots=salvage_roots)
-                result = validate_receipt(
-                    receipt,
-                    require_live_hub=False,
-                    require_local_salvage_inventory=bool(
-                        args.require_local_salvage_inventory
-                    ),
-                )
-            if args.write or args.check:
-                write_receipt(receipt, receipt_path)
-            if args.check:
-                print(render_check_summary(result))
-            elif args.write:
-                print(f"wrote live baseline receipt: {receipt_path}", file=sys.stderr)
+                if args.write:
+                    write_receipt(receipt, receipt_path)
+                    print(
+                        f"wrote live baseline receipt: {receipt_path}",
+                        file=sys.stderr,
+                    )
             if args.print_json:
                 sys.stdout.write(
                     json.dumps(receipt, indent=2, sort_keys=True) + "\n"
                 )
+            del result
             return 0
         print(
             "hint: pass --require-live-hub --require-local-salvage-inventory --check",
