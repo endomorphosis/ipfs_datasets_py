@@ -60,10 +60,11 @@ class LouisianaScraper(BaseStateScraper):
         """Scrape a specific code from Louisiana's legislative website.
 
         Louisiana live endpoints can be brittle in automation contexts.
-        Prefer archived Law.aspx pages with direct statute body HTML.
+        Prefer official Law.aspx pages; full-corpus mode must not clamp or
+        sole-admit archival/Justia mirrors.
         """
+        # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
-        return_threshold = limit if limit is not None else 1000000
         skip_live_toc = str(
             os.getenv("STATE_SCRAPER_LA_SKIP_LIVE_TOC", "1") or "1"
         ).strip().lower() in {
@@ -79,23 +80,28 @@ class LouisianaScraper(BaseStateScraper):
             )
         else:
             toc = await self._scrape_live_toc_pages(
-                code_name=code_name, max_statutes=return_threshold
+                code_name=code_name, max_statutes=limit
             )
         if toc:
-            return toc[:limit] if limit is not None else toc
-        if not self._full_corpus_enabled() or max_statutes is not None:
-            live = await self._scrape_live_law_pages(
-                code_name=code_name, max_statutes=return_threshold
-            )
-            if live:
-                return live
+            return toc if limit is None else toc[: int(limit)]
 
-        archival = await self._scrape_archived_law_pages(
-            code_name=code_name, max_statutes=max(10, return_threshold)
+        live = await self._scrape_live_law_pages(
+            code_name=code_name, max_statutes=limit
         )
-        if archival and (not self._full_corpus_enabled() or max_statutes is not None):
+        if live:
+            return live if limit is None else live[: int(limit)]
+
+        # Full-corpus runs must not sole-admit Wayback/Justia/generic sources.
+        if self._full_corpus_enabled() and max_statutes is None:
+            return []
+
+        fallback_cap = int(limit) if limit is not None else 160
+        archival = await self._scrape_archived_law_pages(
+            code_name=code_name, max_statutes=max(10, fallback_cap)
+        )
+        if archival:
             self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
-            return archival
+            return archival if limit is None else archival[: int(limit)]
 
         playwright = await self._playwright_scrape(
             code_name,
@@ -103,19 +109,14 @@ class LouisianaScraper(BaseStateScraper):
             "La. Rev. Stat.",
             wait_for_selector="a[href*='RS'], .law-link",
             timeout=45000,
-            max_sections=max(10, return_threshold),
+            max_sections=max(10, fallback_cap),
         )
         if playwright:
-            return playwright
-        if archival:
-            self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
-            if limit is None:
-                return list(archival)
-            return list(archival)
+            return playwright if limit is None else playwright[: int(limit)]
         return []
 
     async def _scrape_live_toc_pages(
-        self, code_name: str, max_statutes: int
+        self, code_name: str, max_statutes: Optional[int] = None
     ) -> List[NormalizedStatute]:
         title_pages = await self._discover_live_toc_title_pages(limit=max_statutes)
         if not title_pages:
@@ -129,18 +130,23 @@ class LouisianaScraper(BaseStateScraper):
         )
 
     async def _scrape_live_law_pages(
-        self, code_name: str, max_statutes: int
+        self, code_name: str, max_statutes: Optional[int] = None
     ) -> List[NormalizedStatute]:
         statutes: List[NormalizedStatute] = []
-        for live_url in [
+        live_urls = [
             "https://legis.la.gov/Legis/Law.aspx?d=100114",
             "https://legis.la.gov/Legis/Law.aspx?d=100115",
-        ][: max(1, int(max_statutes or 1))]:
+        ]
+        if max_statutes is not None:
+            live_urls = live_urls[: max(1, int(max_statutes))]
+        for live_url in live_urls:
             law_html = await self._request_text(
                 law_url=live_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12
             )
             if not law_html:
                 continue
+            if max_statutes is not None and len(statutes) >= int(max_statutes):
+                break
             section_number = self._extract_section_number(law_html)
             body_html = self._extract_law_body_html(law_html)
             full_text = self._clean_html_text(body_html)
@@ -159,13 +165,17 @@ class LouisianaScraper(BaseStateScraper):
                     source_url=live_url,
                     official_cite=f"La. Rev. Stat. {section_number}",
                     metadata=StatuteMetadata(),
-                    structured_data={"source_kind": "official_live_law_page", "skip_hydrate": True},
+                    structured_data={
+                        "source_kind": "official_live_law_page",
+                        "discovery_method": "official_live_law_seed",
+                        "skip_hydrate": True,
+                    },
                 )
             )
         return statutes
 
     async def _scrape_archived_law_pages(
-        self, code_name: str, max_statutes: int
+        self, code_name: str, max_statutes: Optional[int] = None
     ) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
@@ -190,7 +200,7 @@ class LouisianaScraper(BaseStateScraper):
         discovered_total = len(candidate_urls)
 
         for law_index, law_url in enumerate(candidate_urls, start=1):
-            if len(statutes) >= max_statutes:
+            if max_statutes is not None and len(statutes) >= int(max_statutes):
                 break
             if law_index == 1 or law_index % heartbeat_every == 0:
                 self.logger.info(
@@ -260,9 +270,9 @@ class LouisianaScraper(BaseStateScraper):
         *,
         code_name: str,
         law_urls: List[str],
-        max_statutes: int,
-        source_kind: str,
-        discovery_method: str,
+        max_statutes: Optional[int] = None,
+        source_kind: str = "official_louisiana_toc_law_page",
+        discovery_method: str = "live_toc_postback",
     ) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
@@ -284,7 +294,7 @@ class LouisianaScraper(BaseStateScraper):
         discovered_total = len(law_urls)
 
         for law_index, law_url in enumerate(law_urls, start=1):
-            if len(statutes) >= max_statutes:
+            if max_statutes is not None and len(statutes) >= int(max_statutes):
                 break
 
             if law_index == 1 or law_index % heartbeat_every == 0:
@@ -382,7 +392,7 @@ class LouisianaScraper(BaseStateScraper):
         )
         return statutes
 
-    async def _discover_live_toc_title_pages(self, limit: int) -> List[str]:
+    async def _discover_live_toc_title_pages(self, limit: Optional[int] = None) -> List[str]:
         try:
             import requests
             from bs4 import BeautifulSoup
@@ -438,8 +448,8 @@ class LouisianaScraper(BaseStateScraper):
             seen_laws = set()
             title_limit = (
                 len(event_targets)
-                if self._full_corpus_enabled() and limit >= 1000000
-                else min(len(event_targets), max(1, limit))
+                if self._full_corpus_enabled() and (limit is None or int(limit) >= 1000000)
+                else min(len(event_targets), max(1, int(limit or 1)))
             )
             for title_index, target in enumerate(event_targets[:title_limit], start=1):
                 if title_index == 1 or title_index % heartbeat_every == 0:

@@ -304,7 +304,59 @@ class KentuckyScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes else None
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        official = await self._scrape_official_krs_tree(code_name, max_statutes=limit)
+        if official:
+            kept = [
+                statute
+                for statute in official
+                if self._KY_SECTION_URL_RE.search(str(statute.source_url or ""))
+            ] or official
+            return kept if limit is None else kept[: int(limit)]
+
+        # Full-corpus runs must not sole-admit generic/Justia mirrors.
+        if self._full_corpus_enabled() and max_statutes is None:
+            return []
+
+        fallback_limit = int(limit) if limit is not None else 200
+        fallback_candidates = [self._KY_STATUTES_BASE]
+        if code_url and code_url not in fallback_candidates:
+            fallback_candidates.append(code_url)
+
+        best_statutes: List[NormalizedStatute] = []
+        for candidate in fallback_candidates:
+            if "justia.com" in str(candidate).lower() or "findlaw.com" in str(candidate).lower():
+                continue
+            try:
+                generic_statutes = await self._generic_scrape(
+                    code_name,
+                    candidate,
+                    "Ky. Rev. Stat.",
+                    max_sections=fallback_limit,
+                )
+            except Exception:
+                continue
+            filtered = self._filter_section_level(generic_statutes)
+            generic_statutes = [
+                statute
+                for statute in (filtered or generic_statutes)
+                if self._KY_SECTION_URL_RE.search(str(statute.source_url or ""))
+            ][:fallback_limit]
+            if len(generic_statutes) > len(best_statutes):
+                best_statutes = generic_statutes
+            if limit is not None and len(best_statutes) >= limit:
+                break
+
+        return best_statutes[:fallback_limit]
+
+    async def _scrape_official_krs_tree(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        """Walk the official KRS chapter/section tree without silent clamps."""
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
         statutes: List[NormalizedStatute] = []
 
         chapter_links = await self._discover_chapter_links()
@@ -427,33 +479,7 @@ class KentuckyScraper(BaseStateScraper):
                 time.monotonic() - chapter_started_at,
             )
 
-        if statutes:
-            return statutes[:limit] if limit is not None else statutes
-
-        fallback_limit = limit or 200
-        fallback_candidates = [self._KY_STATUTES_BASE]
-        if code_url and code_url not in fallback_candidates:
-            fallback_candidates.append(code_url)
-
-        best_statutes: List[NormalizedStatute] = []
-        for candidate in fallback_candidates:
-            try:
-                generic_statutes = await self._generic_scrape(
-                    code_name,
-                    candidate,
-                    "Ky. Rev. Stat.",
-                    max_sections=fallback_limit,
-                )
-            except Exception:
-                continue
-            filtered = self._filter_section_level(generic_statutes)
-            generic_statutes = (filtered or generic_statutes)[:fallback_limit]
-            if len(generic_statutes) > len(best_statutes):
-                best_statutes = generic_statutes
-            if limit is not None and len(best_statutes) >= limit:
-                break
-
-        return best_statutes[:fallback_limit]
+        return statutes if limit is None else statutes[: int(limit)]
 
     def _official_ssl_context(self, *, unverified: bool = False):
         import ssl

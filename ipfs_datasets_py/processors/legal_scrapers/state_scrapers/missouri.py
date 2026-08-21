@@ -12,6 +12,13 @@ from urllib.parse import parse_qs, urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
+_SECONDARY_HOST_MARKERS = (
+    "justia.com",
+    "findlaw.com",
+    "unicourt.github.io",
+    "law.cornell.edu",
+)
+
 
 class MissouriScraper(BaseStateScraper):
     """Scraper for Missouri state laws from http://www.moga.mo.gov"""
@@ -56,23 +63,26 @@ class MissouriScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
-        # Use custom scraper with Missouri-specific patterns
-        fallback = await self._custom_scrape_missouri(
+        official = await self._custom_scrape_missouri(
             code_name,
             code_url,
             "Mo. Rev. Stat.",
-            max_sections=limit or 1000000,
+            max_sections=limit,
         )
-        if fallback:
-            if limit is not None:
-                return fallback[:limit]
-            return list(fallback)
+        official = self._filter_official_host_statutes(official)
+        if official:
+            return official if limit is None else official[: int(limit)]
 
-        if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_sections(code_name, max_statutes=limit or 2)
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_sections(
+                code_name,
+                max_statutes=max(1, int(limit or 2)),
+            )
+            direct = self._filter_official_host_statutes(direct)
             if direct:
-                return direct
+                return direct if limit is None else direct[: int(limit)]
         return []
 
     async def _scrape_direct_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
@@ -116,13 +126,30 @@ class MissouriScraper(BaseStateScraper):
                 )
             )
         return statutes
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        if any(marker in host for marker in _SECONDARY_HOST_MARKERS):
+            return False
+        return host == "revisor.mo.gov" or host.endswith(".revisor.mo.gov")
+
+    def _filter_official_host_statutes(
+        self, statutes: List[NormalizedStatute]
+    ) -> List[NormalizedStatute]:
+        return [
+            statute
+            for statute in statutes
+            if self._host_is_official(str(statute.source_url or ""))
+        ]
     
     async def _custom_scrape_missouri(
         self,
         code_name: str,
         code_url: str,
         citation_format: str,
-        max_sections: int = 220
+        max_sections: Optional[int] = 220
     ) -> List[NormalizedStatute]:
         """Custom scraper for Missouri's legislative website.
         
@@ -136,6 +163,7 @@ class MissouriScraper(BaseStateScraper):
             return []
         
         statutes = []
+        cap = max(1, int(max_sections)) if max_sections is not None else None
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
                           '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
@@ -170,7 +198,7 @@ class MissouriScraper(BaseStateScraper):
         seen_sections = set()
 
         for chapter_url in chapter_urls:
-            if len(statutes) >= max_sections:
+            if cap is not None and len(statutes) >= cap:
                 break
             chapter_vals = parse_qs(urlparse(chapter_url).query).get('chapter') or []
             chapter_number = (chapter_vals[0].strip() if chapter_vals else '')
@@ -186,7 +214,7 @@ class MissouriScraper(BaseStateScraper):
                 continue
 
             for link in chap_soup.find_all('a', href=True):
-                if len(statutes) >= max_sections:
+                if cap is not None and len(statutes) >= cap:
                     break
                 href = link.get('href', '')
                 if 'OneSection.aspx?section=' not in href:
@@ -228,15 +256,17 @@ class MissouriScraper(BaseStateScraper):
                     structured_data={
                         "source_kind": "official_missouri_section_html",
                         "discovery_method": "official_chapter_index_sections",
+                        "skip_hydrate": True,
                     },
                 )
                 statutes.append(statute)
 
-        # Missouri sometimes serves heavily collapsed chapter pages where only one
-        # repeated section link is visible. Use chapter links as a bounded fallback.
-        if len(statutes) < 10:
+        # Collapsed chapter pages may expose no section links. Never emit
+        # placeholder chapter rows in full-corpus mode; those are not
+        # section-level official text.
+        if not statutes and not self._full_corpus_enabled():
             for chapter_url in chapter_urls:
-                if len(statutes) >= max_sections:
+                if cap is not None and len(statutes) >= cap:
                     break
                 chapter_vals = parse_qs(urlparse(chapter_url).query).get('chapter') or []
                 chapter_number = (chapter_vals[0].strip() if chapter_vals else '')

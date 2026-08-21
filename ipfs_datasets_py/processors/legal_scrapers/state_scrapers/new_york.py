@@ -145,16 +145,29 @@ class NewYorkScraper(BaseStateScraper):
             return []
         
         statutes = []
-        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(160)
-        public_law_structured = await self._scrape_public_law_structured(code_name, max_sections=max(10, limit))
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        official = await self._scrape_official_senate_laws_tree(code_name, max_statutes=limit)
+        if official:
+            return official if limit is None else official[: int(limit)]
+        if self._full_corpus_enabled() and max_statutes is None:
+            self.logger.warning(
+                "NY full-corpus run found zero official nysenate.gov statutes; "
+                "refusing public.law/Justia sole-admission fallback"
+            )
+            return []
+        bounded = limit if limit is not None else 160
+        public_law_structured = await self._scrape_public_law_structured(
+            code_name, max_sections=max(10, bounded)
+        )
         if public_law_structured:
-            return public_law_structured[:limit]
+            return public_law_structured[:bounded]
         if not self._full_corpus_enabled():
-            direct = await self._scrape_jina_senate_seed_sections(code_name, max_statutes=limit)
+            direct = await self._scrape_jina_senate_seed_sections(code_name, max_statutes=bounded)
             if direct:
-                statutes.extend(direct[:limit])
+                statutes.extend(direct[:bounded])
         if statutes:
-            return statutes[:limit]
+            return statutes[:bounded]
         
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(
@@ -163,7 +176,7 @@ class NewYorkScraper(BaseStateScraper):
             )
             if not page_bytes:
                 self.logger.warning(f"NY direct request returned empty content for {code_name}; using public.law fallback")
-                return (await self._scrape_public_law_updates(code_name))[:limit]
+                return (await self._scrape_public_law_updates(code_name))[:bounded]
 
             soup = BeautifulSoup(page_bytes, 'html.parser')
             
@@ -175,7 +188,7 @@ class NewYorkScraper(BaseStateScraper):
             section_links = soup.find_all('a', href=section_href_re)
             
             seen_sections = set()
-            for link in section_links[:limit]:
+            for link in section_links[:bounded]:
                 section_text = link.get_text(strip=True)
                 section_url = link.get('href', '')
                 
@@ -223,6 +236,152 @@ class NewYorkScraper(BaseStateScraper):
         except Exception as e:
             self.logger.error(f"Failed to scrape {code_name}: {e}")
             return await self._scrape_public_law_updates(code_name)
+
+    async def _scrape_official_senate_laws_tree(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        """Walk the live NY Senate consolidated-laws HTML tree."""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        root_url = self.OFFICIAL_ENTRY_URL
+        html = await self._request_text_direct(root_url, timeout=18)
+        if not html:
+            payload = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=18)
+            html = payload.decode("utf-8", errors="replace") if payload else ""
+        if not html:
+            return []
+
+        soup = BeautifulSoup(html, "html.parser")
+        known = {code for code, _name in self.OFFICIAL_LAWS}
+        law_urls: List[tuple[str, str]] = []
+        seen_laws = set()
+        for anchor in soup.find_all("a", href=True):
+            href = str(anchor.get("href") or "").strip()
+            abs_url = urljoin(root_url + "/", href)
+            match = self._NY_LAW_HREF_RE.search(abs_url)
+            if not match:
+                continue
+            law_code = str(match.group("code") or "").strip().upper()
+            if law_code not in known:
+                continue
+            # Index pages are /legislation/laws/PEN; skip section-like tails here.
+            path = urlparse(abs_url).path.rstrip("/")
+            parts = [part for part in path.split("/") if part]
+            if len(parts) != 3 or parts[-1].upper() != law_code:
+                continue
+            law_url = self.official_law_url(law_code)
+            if law_url in seen_laws:
+                continue
+            if not self._host_is_official(law_url):
+                continue
+            seen_laws.add(law_url)
+            law_urls.append((law_code, law_url))
+
+        statutes: List[NormalizedStatute] = []
+        seen_sections: set[str] = set()
+        section_url_re = re.compile(
+            r"/legislation/laws/(?P<code>[A-Z]{2,4})/(?P<section>[0-9A-Za-z.-]*\d[0-9A-Za-z.-]*)$",
+            re.IGNORECASE,
+        )
+        for law_code, law_url in law_urls:
+            if limit is not None and len(statutes) >= limit:
+                break
+            law_html = await self._request_text_direct(law_url, timeout=18)
+            if not law_html:
+                payload = await self._fetch_page_content_with_archival_fallback(law_url, timeout_seconds=18)
+                law_html = payload.decode("utf-8", errors="replace") if payload else ""
+            if not law_html:
+                continue
+            law_soup = BeautifulSoup(law_html, "html.parser")
+            for anchor in law_soup.find_all("a", href=True):
+                if limit is not None and len(statutes) >= limit:
+                    break
+                href = str(anchor.get("href") or "").strip()
+                label = str(anchor.get_text(" ", strip=True) or "").strip()
+                abs_url = urljoin(law_url + "/", href)
+                match = section_url_re.search(urlparse(abs_url).path)
+                if not match:
+                    continue
+                if str(match.group("code") or "").strip().upper() != law_code:
+                    continue
+                section_number = str(match.group("section") or "").strip()
+                if not section_number:
+                    continue
+                if not self._host_is_official(abs_url):
+                    continue
+                section_key = f"{law_code}:{section_number}".lower()
+                if section_key in seen_sections:
+                    continue
+                seen_sections.add(section_key)
+                statute = await self._build_official_senate_section(
+                    code_name,
+                    law_code=law_code,
+                    section_number=section_number,
+                    section_label=label,
+                    section_url=abs_url.split("#", 1)[0],
+                )
+                if statute is not None:
+                    statutes.append(statute)
+        return statutes
+
+    async def _build_official_senate_section(
+        self,
+        code_name: str,
+        *,
+        law_code: str,
+        section_number: str,
+        section_label: str,
+        section_url: str,
+    ) -> Optional[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+
+        html = await self._request_text_direct(section_url, timeout=18)
+        if not html:
+            payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=18)
+            html = payload.decode("utf-8", errors="replace") if payload else ""
+        if not html:
+            return None
+        soup = BeautifulSoup(html, "html.parser")
+        for tag in soup(["script", "style", "nav", "header", "footer", "noscript"]):
+            tag.decompose()
+        heading = soup.find(["h1", "h2"])
+        section_name = self._normalize_legal_text(
+            heading.get_text(" ", strip=True) if heading else section_label
+        )
+        main = soup.find("main") or soup.find("article") or soup.find("body") or soup
+        text = self._normalize_legal_text(main.get_text(" ", strip=True))
+        if len(text) < 80:
+            return None
+        if not section_name:
+            section_name = f"Section {section_number}"
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} § {law_code} {section_number}",
+            code_name=code_name,
+            section_number=section_number,
+            section_name=section_name[:200],
+            full_text=text[:14000],
+            legal_area=self._identify_legal_area(section_name),
+            source_url=section_url,
+            official_cite=f"N.Y. {law_code} § {section_number}",
+            metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "official_new_york_senate_laws_html",
+                "discovery_method": "official_law_code_section",
+                "law_code": law_code,
+                "skip_hydrate": True,
+            },
+        )
 
     async def _scrape_jina_senate_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
         seeds = [
@@ -532,6 +691,19 @@ class NewYorkScraper(BaseStateScraper):
         if not host:
             return False
         return host in {"www.nysenate.gov", "nysenate.gov"} or host.endswith(".nysenate.gov")
+
+    def _looks_like_secondary_url(self, url: str) -> bool:
+        lowered = str(url or "").strip().lower()
+        return any(
+            marker in lowered
+            for marker in (
+                "justia.com",
+                "findlaw.com",
+                "unicourt",
+                "law.cornell.edu",
+                "newyork.public.law",
+            )
+        )
 
     def _official_http_get(self, url: str, timeout_seconds: int = 8) -> bytes:
         timeout = max(2, min(int(timeout_seconds or 8), 8))

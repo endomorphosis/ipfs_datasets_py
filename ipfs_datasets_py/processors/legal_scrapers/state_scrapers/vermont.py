@@ -91,9 +91,23 @@ class VermontScraper(BaseStateScraper):
         """Return list of available codes/statutes for Vermont."""
         return [{
             "name": "Vermont Statutes",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/statutes/",
             "type": "Code"
         }]
+
+    def _filter_official_only(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+        """Drop secondary/Justia rows when full-corpus admission is sealed."""
+        if not self._full_corpus_enabled():
+            return statutes
+        filtered: List[NormalizedStatute] = []
+        for statute in statutes:
+            source_kind = str((statute.structured_data or {}).get("source_kind") or "").lower()
+            if "justia" in source_kind or "findlaw" in source_kind:
+                continue
+            if not self._host_is_official(str(statute.source_url or "")):
+                continue
+            filtered.append(statute)
+        return filtered
     
     async def scrape_code(
         self,
@@ -110,15 +124,25 @@ class VermontScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
         official = await self._scrape_official_index(code_name, max_statutes=limit)
+        official = self._filter_official_only(official)
         if official:
             return official[:limit] if limit is not None else official
 
         if limit is not None:
             direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
+            direct = self._filter_official_only(direct)
             if direct:
                 return direct[:limit]
+
+        if self._full_corpus_enabled() and max_statutes is None:
+            self.logger.warning(
+                "Vermont full-corpus run found zero official statutes; "
+                "refusing secondary Justia/generic sole-admission fallback"
+            )
+            return []
 
         max_sections = limit if limit is not None else 1000000
         return await self._generic_scrape(
@@ -142,7 +166,12 @@ class VermontScraper(BaseStateScraper):
             f"{self.get_base_url()}/statutes/section/01/001/00001",
             f"{self.get_base_url()}/statutes/section/13/053/02301",
         ]
-        return await self._scrape_section_urls(code_name, [(url, "") for url in section_urls], max_statutes=max_statutes)
+        return await self._scrape_section_urls(
+            code_name,
+            [(url, "") for url in section_urls],
+            max_statutes=max_statutes,
+            discovery_method="official_direct_section",
+        )
 
     async def _scrape_official_index(
         self,
@@ -183,6 +212,7 @@ class VermontScraper(BaseStateScraper):
                     code_name,
                     section_links,
                     max_statutes=(None if limit is None else max(0, limit - len(statutes))),
+                    discovery_method="official_title_chapter_section_index",
                 )
                 statutes.extend(parsed)
                 checkpoint.maybe_write(statutes, title_label=title_label or title_url, chapter_label=chapter_label or chapter_url)
@@ -264,6 +294,7 @@ class VermontScraper(BaseStateScraper):
         code_name: str,
         section_urls: List[Tuple[str, str]],
         max_statutes: Optional[int] = None,
+        discovery_method: str = "official_title_chapter_section_index",
     ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
@@ -307,7 +338,11 @@ class VermontScraper(BaseStateScraper):
                     source_url=source_url,
                     official_cite=f"{title_number} V.S.A. § {section_number}" if title_number else f"Vt. Stat. Ann. § {section_number}",
                     metadata=StatuteMetadata(),
-                    structured_data={"source_kind": "official_vermont_statutes_html", "skip_hydrate": True},
+                    structured_data={
+                        "source_kind": "official_vermont_statutes_html",
+                        "discovery_method": discovery_method,
+                        "skip_hydrate": True,
+                    },
                 )
             )
         return statutes

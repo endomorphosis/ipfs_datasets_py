@@ -185,6 +185,20 @@ class WestVirginiaScraper(BaseStateScraper):
                 filtered.append(statute)
         return filtered
 
+    def _filter_official_only(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+        """Drop secondary/Justia rows when full-corpus admission is sealed."""
+        if not self._full_corpus_enabled():
+            return statutes
+        filtered: List[NormalizedStatute] = []
+        for statute in statutes:
+            source_kind = str((statute.structured_data or {}).get("source_kind") or "").lower()
+            if "justia" in source_kind or "findlaw" in source_kind:
+                continue
+            if not self._host_is_official(str(statute.source_url or "")):
+                continue
+            filtered.append(statute)
+        return filtered
+
     def get_base_url(self) -> str:
         """Return the base URL for West Virginia's legislative website."""
         return "https://code.wvlegislature.gov"
@@ -207,20 +221,27 @@ class WestVirginiaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         if not self._full_corpus_enabled() and max_statutes is None:
+            seed_budget = int(limit if limit is not None else 160)
             direct = await self._scrape_direct_seed_sections(
-                code_name, max_statutes=int(return_threshold)
+                code_name, max_statutes=seed_budget
             )
             if direct:
-                return direct[: int(return_threshold)]
+                return direct[:seed_budget]
 
-        official = await self._scrape_official_index(
-            code_name,
-            max_statutes=None if return_threshold == 1000000 else int(return_threshold),
-        )
+        official = await self._scrape_official_index(code_name, max_statutes=limit)
+        official = self._filter_official_only(official)
         if official:
-            return official[: int(return_threshold)]
+            return official[:limit] if limit is not None else official
+
+        if self._full_corpus_enabled() and max_statutes is None:
+            self.logger.warning(
+                "West Virginia full-corpus run found zero official statutes; "
+                "refusing secondary Justia/generic sole-admission fallback"
+            )
+            return []
 
         candidate_urls = [
             code_url,
@@ -233,7 +254,7 @@ class WestVirginiaScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
-        fallback_scan_limit = int(return_threshold)
+        fallback_scan_limit = int(limit if limit is not None else 160)
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -252,8 +273,8 @@ class WestVirginiaScraper(BaseStateScraper):
                     statutes = self._filter_section_level(statutes)
                     if len(statutes) > len(best_statutes):
                         best_statutes = statutes
-                    if len(statutes) >= return_threshold:
-                        return statutes[:return_threshold]
+                    if limit is not None and len(statutes) >= limit:
+                        return statutes[:limit]
                 except Exception:
                     pass
 
@@ -263,10 +284,10 @@ class WestVirginiaScraper(BaseStateScraper):
             statutes = self._filter_section_level(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
-            if len(statutes) >= return_threshold:
-                return statutes[:return_threshold]
+            if limit is not None and len(statutes) >= limit:
+                return statutes[:limit]
 
-        return best_statutes[:return_threshold]
+        return best_statutes[:limit] if limit is not None else best_statutes
 
     async def _scrape_direct_seed_sections(
         self,

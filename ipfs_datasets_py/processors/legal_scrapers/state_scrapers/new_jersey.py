@@ -155,17 +155,23 @@ class NewJerseyScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
-        official = await self._scrape_official_index(
-            code_name,
-            max_statutes=None if return_threshold == 1000000 else int(return_threshold),
-        )
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        official = await self._scrape_official_index(code_name, max_statutes=limit)
         if official:
-            return official[: int(return_threshold)]
-        if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_public_law_pdfs(code_name, max_statutes=return_threshold)
+            return official if limit is None else official[: int(limit)]
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct_limit = limit if limit is not None else 160
+            direct = await self._scrape_direct_public_law_pdfs(code_name, max_statutes=direct_limit)
             if direct:
-                return direct[: int(return_threshold)]
+                return direct if limit is None else direct[: int(direct_limit)]
+        if self._full_corpus_enabled() and max_statutes is None:
+            self.logger.warning(
+                "NJ full-corpus run found zero official LIS statutes; "
+                "refusing generic/Justia sole-admission fallback"
+            )
+            return []
+        return_threshold = limit if limit is not None else 160
         statutes = await self._scrape_via_xhitlist(code_name, max_sections=max(10, return_threshold))
         if len(statutes) >= int(return_threshold):
             return statutes
@@ -181,6 +187,8 @@ class NewJerseyScraper(BaseStateScraper):
         seen = {s.source_url for s in statutes if s.source_url}
         for statute in fallback:
             if statute.source_url in seen:
+                continue
+            if self._looks_like_secondary_url(str(statute.source_url or "")):
                 continue
             seen.add(statute.source_url)
             statutes.append(statute)

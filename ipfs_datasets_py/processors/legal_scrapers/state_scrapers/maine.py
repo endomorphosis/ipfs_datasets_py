@@ -63,24 +63,27 @@ class MaineScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        direct_limit = self._effective_scrape_limit(max_statutes, default=160)
-        return_threshold = self._bounded_return_threshold(160)
-        if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         official = await self._scrape_official_title_chapter_section_tree(
             code_name,
-            max_statutes=max(10, return_threshold),
+            max_statutes=limit,
         )
         if official:
-            return official[:return_threshold]
+            return official if limit is None else official[: int(limit)]
 
-        direct = await self._scrape_direct_seed_sections(
-            code_name,
-            max_statutes=max(1, int(direct_limit or 2)),
-        )
-        if direct and not self._full_corpus_enabled():
-            return direct[: max(1, int(direct_limit or len(direct)))]
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_seed_sections(
+                code_name,
+                max_statutes=max(1, int(limit or 2)),
+            )
+            if direct:
+                return direct if limit is None else direct[: int(limit)]
 
+        if self._full_corpus_enabled() and max_statutes is None:
+            return []
+
+        return_threshold = int(limit) if limit is not None else 160
         candidate_urls = [
             "https://legislature.maine.gov/statutes/1/title1ch1sec0.html",
             "https://legislature.maine.gov/statutes/17-A/title17-Ach1sec0.html",
@@ -94,6 +97,8 @@ class MaineScraper(BaseStateScraper):
             if candidate in seen:
                 continue
             seen.add(candidate)
+            if "justia.com" in str(candidate).lower() or "findlaw.com" in str(candidate).lower():
+                continue
 
             if self.has_playwright():
                 try:
@@ -108,8 +113,8 @@ class MaineScraper(BaseStateScraper):
                     statutes = self._filter_section_level(statutes)
                     if len(statutes) > len(best_statutes):
                         best_statutes = statutes
-                    if len(statutes) >= return_threshold:
-                        return statutes
+                    if limit is not None and len(statutes) >= int(limit):
+                        return statutes[: int(limit)]
                 except Exception:
                     pass
 
@@ -119,21 +124,22 @@ class MaineScraper(BaseStateScraper):
             statutes = self._filter_section_level(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
-            if len(statutes) >= return_threshold:
-                return statutes
+            if limit is not None and len(statutes) >= int(limit):
+                return statutes[: int(limit)]
 
-        return best_statutes
+        return best_statutes if limit is None else best_statutes[: int(limit)]
 
     async def _scrape_official_title_chapter_section_tree(
         self,
         code_name: str,
-        max_statutes: int,
+        max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
         root_url = "https://legislature.maine.gov/statutes/"
         root_raw = await self._fetch_page_content_with_archival_fallback(
             root_url, timeout_seconds=25
@@ -168,7 +174,7 @@ class MaineScraper(BaseStateScraper):
                 if source_url:
                     seen_sections.add(source_url)
                 statutes.append(statute)
-                if len(statutes) >= max_statutes:
+                if limit is not None and len(statutes) >= limit:
                     break
 
         if resumed:
@@ -208,7 +214,7 @@ class MaineScraper(BaseStateScraper):
         self.logger.info(
             "Maine official tree: discovered_titles=%s max_statutes=%s",
             len(title_urls),
-            max_statutes,
+            limit or "unbounded",
         )
         self._write_partial_checkpoint(
             statutes,
@@ -234,7 +240,7 @@ class MaineScraper(BaseStateScraper):
         section_sem = asyncio.Semaphore(section_concurrency)
 
         for title_index, title_url in enumerate(title_urls, start=1):
-            if len(statutes) >= max_statutes:
+            if limit is not None and len(statutes) >= limit:
                 break
             if title_index < resume_title_floor:
                 continue
@@ -286,7 +292,7 @@ class MaineScraper(BaseStateScraper):
             )
 
             for chapter_url in chapter_urls:
-                if len(statutes) >= max_statutes:
+                if limit is not None and len(statutes) >= limit:
                     break
                 processed_chapters += 1
                 if processed_chapters < resume_chapter_floor:
@@ -319,50 +325,69 @@ class MaineScraper(BaseStateScraper):
                     section_candidates.append(section_url)
                 sections_discovered_total += len(section_candidates)
 
-                async def _parse_section_url(section_url: str) -> Optional[NormalizedStatute]:
-                    async with section_sem:
-                        return await self._build_official_section_statute(code_name, section_url)
+                def _record_section(statute: Optional[NormalizedStatute]) -> None:
+                    if statute is None:
+                        return
+                    _extend_unique([statute])
+                    if len(statutes) == 1 or len(statutes) % 25 == 0:
+                        self.logger.info(
+                            "Maine official tree: chapters_processed=%s statutes_so_far=%s",
+                            processed_chapters,
+                            len(statutes),
+                        )
+                        self._write_partial_checkpoint(
+                            statutes,
+                            code_name=code_name,
+                            stage_label="maine:section-scan",
+                            extra={
+                                "titles_scanned": int(title_index),
+                                "discovered_titles": int(len(title_urls)),
+                                "chapters_scanned": int(processed_chapters),
+                                "sections_scanned": int(sections_scanned_total),
+                                "discovered_sections": int(sections_discovered_total),
+                                "codes_completed": 0,
+                                "codes_total": 1,
+                            },
+                        )
 
-                tasks = [
-                    asyncio.create_task(_parse_section_url(section_url))
-                    for section_url in section_candidates
-                ]
+                try:
+                    asyncio.get_running_loop()
+                    parallel = True
+                except RuntimeError:
+                    parallel = False
+
                 scanned_sections = 0
                 cancelled_early = False
-                for task in asyncio.as_completed(tasks):
-                    scanned_sections += 1
-                    sections_scanned_total += 1
-                    statute = await task
-                    if statute is not None:
-                        _extend_unique([statute])
-                        if len(statutes) == 1 or len(statutes) % 25 == 0:
-                            self.logger.info(
-                                "Maine official tree: chapters_processed=%s statutes_so_far=%s",
-                                processed_chapters,
-                                len(statutes),
-                            )
-                            self._write_partial_checkpoint(
-                                statutes,
-                                code_name=code_name,
-                                stage_label="maine:section-scan",
-                                extra={
-                                    "titles_scanned": int(title_index),
-                                    "discovered_titles": int(len(title_urls)),
-                                    "chapters_scanned": int(processed_chapters),
-                                    "sections_scanned": int(sections_scanned_total),
-                                    "discovered_sections": int(sections_discovered_total),
-                                    "codes_completed": 0,
-                                    "codes_total": 1,
-                                },
-                            )
-                    if len(statutes) >= max_statutes:
-                        cancelled_early = True
-                        for pending in tasks:
-                            if not pending.done():
-                                pending.cancel()
-                        break
-                if cancelled_early:
-                    await asyncio.gather(*tasks, return_exceptions=True)
+                if not parallel:
+                    for section_url in section_candidates:
+                        if limit is not None and len(statutes) >= limit:
+                            break
+                        scanned_sections += 1
+                        sections_scanned_total += 1
+                        _record_section(
+                            await self._build_official_section_statute(code_name, section_url)
+                        )
+                else:
+                    async def _parse_section_url(section_url: str) -> Optional[NormalizedStatute]:
+                        async with section_sem:
+                            return await self._build_official_section_statute(code_name, section_url)
+
+                    tasks = [
+                        asyncio.create_task(_parse_section_url(section_url))
+                        for section_url in section_candidates
+                    ]
+                    for task in asyncio.as_completed(tasks):
+                        scanned_sections += 1
+                        sections_scanned_total += 1
+                        _record_section(await task)
+                        if limit is not None and len(statutes) >= limit:
+                            cancelled_early = True
+                            for pending in tasks:
+                                if not pending.done():
+                                    pending.cancel()
+                            break
+                    if cancelled_early:
+                        await asyncio.gather(*tasks, return_exceptions=True)
                 if scanned_sections and (
                     scanned_sections == len(section_candidates) or scanned_sections % 200 == 0
                 ):

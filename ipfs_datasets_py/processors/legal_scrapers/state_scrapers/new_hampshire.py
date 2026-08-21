@@ -164,9 +164,15 @@ class NewHampshireScraper(BaseStateScraper):
             "https://web.archive.org/web/20250101000000/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
             "https://web.archive.org/web/20250101000000/https://gc.nh.gov/rsa/html/NHTOC.htm",
         ]
-        return_threshold = self._bounded_return_threshold(160)
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        official = await self._scrape_official_rsa_tree(code_name, max_statutes=limit)
+        if official:
+            return official if limit is None else official[: int(limit)]
+
+        return_threshold = limit if limit is not None else self._bounded_return_threshold(160)
         if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+            return_threshold = max(1, min(int(return_threshold), int(max_statutes)))
         full_corpus_unbounded = self._full_corpus_enabled() and max_statutes is None
         checkpoint = _NewHampshireCheckpoint(self.state_code)
 
@@ -292,6 +298,12 @@ class NewHampshireScraper(BaseStateScraper):
                 max_sections=max(10, return_threshold),
             )
             statutes = self._filter_section_level(statutes)
+            if self._full_corpus_enabled():
+                statutes = [
+                    row
+                    for row in statutes
+                    if not self._looks_like_secondary_url(str(row.source_url or ""))
+                ]
             _merge(statutes)
             if statutes:
                 checkpoint.maybe_write(merged, code_name=code_name, stage_label=f"candidate:{candidate}")
@@ -332,6 +344,153 @@ class NewHampshireScraper(BaseStateScraper):
             },
         )
         return merged
+
+    async def _scrape_official_rsa_tree(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        """Walk the live gencourt RSA title/chapter/section HTML tree."""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        root_url = self.OFFICIAL_ENTRY_URL
+        html = await self._request_text_direct(root_url, timeout=18)
+        if not html:
+            return []
+
+        soup = BeautifulSoup(html, "html.parser")
+        title_urls: List[str] = []
+        seen_titles = set()
+        for anchor in soup.find_all("a", href=True):
+            href = str(anchor.get("href") or "").strip()
+            text = str(anchor.get_text(" ", strip=True) or "").strip()
+            abs_url = self._normalize_wayback_like_url(urljoin(root_url, href))
+            if not self._host_is_official(abs_url):
+                continue
+            if "/rsa/html/nhtoc/" not in abs_url.lower() and not self._NH_TITLE_TEXT_RE.match(text):
+                continue
+            if "/rsa/html/" not in abs_url.lower() or not abs_url.lower().endswith(".htm"):
+                continue
+            if abs_url in seen_titles:
+                continue
+            seen_titles.add(abs_url)
+            title_urls.append(abs_url)
+
+        statutes: List[NormalizedStatute] = []
+        seen_sections: set[str] = set()
+        for title_url in title_urls:
+            if limit is not None and len(statutes) >= limit:
+                break
+            title_html = await self._request_text_direct(title_url, timeout=18)
+            if not title_html:
+                continue
+            title_soup = BeautifulSoup(title_html, "html.parser")
+            chapter_urls: List[tuple[str, str]] = []
+            seen_chapters = set()
+            for anchor in title_soup.find_all("a", href=True):
+                href = str(anchor.get("href") or "").strip()
+                text = str(anchor.get_text(" ", strip=True) or "").strip()
+                if not href.lower().endswith(".htm"):
+                    continue
+                match = self._NH_CHAPTER_TEXT_RE.match(text)
+                if not match:
+                    continue
+                chapter_id = match.group(1).upper()
+                chapter_url = self._normalize_wayback_like_url(urljoin(title_url, href))
+                if not self._host_is_official(chapter_url) or chapter_url in seen_chapters:
+                    continue
+                seen_chapters.add(chapter_url)
+                chapter_urls.append((chapter_id, chapter_url))
+
+            for chapter_id, chapter_url in chapter_urls:
+                if limit is not None and len(statutes) >= limit:
+                    break
+                chapter_html = await self._request_text_direct(chapter_url, timeout=18)
+                if not chapter_html:
+                    continue
+                chapter_soup = BeautifulSoup(chapter_html, "html.parser")
+                for anchor in chapter_soup.find_all("a", href=True):
+                    if limit is not None and len(statutes) >= limit:
+                        break
+                    href = str(anchor.get("href") or "").strip()
+                    text = str(anchor.get_text(" ", strip=True) or "").strip()
+                    if not href.lower().endswith(".htm"):
+                        continue
+                    section_url = self._normalize_wayback_like_url(urljoin(chapter_url, href))
+                    if not self._host_is_official(section_url):
+                        continue
+                    match = self._NH_SECTION_LINK_RE.match(text)
+                    if match:
+                        section_number = match.group(1).strip()
+                        section_title = match.group(2).strip().rstrip(".")
+                    else:
+                        section_number = self._derive_section_number_from_href(
+                            chapter_id=chapter_id,
+                            section_url=section_url,
+                            href_text=text,
+                        )
+                        section_title = text.strip().rstrip(".")
+                    if not section_number:
+                        continue
+                    section_key = section_number.lower()
+                    if section_key in seen_sections:
+                        continue
+                    seen_sections.add(section_key)
+                    statute = await self._build_official_rsa_section(
+                        code_name,
+                        section_number=section_number,
+                        section_title=section_title,
+                        section_url=section_url,
+                    )
+                    if statute is not None:
+                        statutes.append(statute)
+        return statutes
+
+    async def _build_official_rsa_section(
+        self,
+        code_name: str,
+        *,
+        section_number: str,
+        section_title: str,
+        section_url: str,
+    ) -> Optional[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+
+        html = await self._request_text_direct(section_url, timeout=18)
+        if not html:
+            return None
+        soup = BeautifulSoup(html, "html.parser")
+        for tag in soup(["script", "style", "nav", "header", "footer", "noscript"]):
+            tag.decompose()
+        text = self._normalize_legal_text(soup.get_text(" ", strip=True))
+        if len(text) < 80:
+            return None
+        section_name = f"Section {section_number} {section_title}".strip()
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} § {section_number}",
+            code_name=code_name,
+            section_number=section_number,
+            section_name=section_name[:200],
+            full_text=text[:14000],
+            legal_area=self._identify_legal_area(section_name),
+            source_url=section_url,
+            official_cite=f"N.H. Rev. Stat. § {section_number}",
+            metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "official_new_hampshire_rsa_html",
+                "discovery_method": "official_title_chapter_section",
+                "skip_hydrate": True,
+            },
+        )
 
     async def _scrape_direct_archived_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
         try:
@@ -1177,6 +1336,13 @@ class NewHampshireScraper(BaseStateScraper):
             return False
         return host in {"www.gencourt.state.nh.us", "gencourt.state.nh.us", "gc.nh.gov"} or host.endswith(
             ".gencourt.state.nh.us"
+        )
+
+    def _looks_like_secondary_url(self, url: str) -> bool:
+        lowered = str(url or "").strip().lower()
+        return any(
+            marker in lowered
+            for marker in ("justia.com", "findlaw.com", "unicourt", "law.cornell.edu")
         )
 
     def _official_http_get(self, url: str, timeout_seconds: int = 8) -> bytes:

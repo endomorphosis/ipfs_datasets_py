@@ -1,0 +1,358 @@
+{
+  "acceptance": {
+    "closed_frontier": true,
+    "exact_source_authority": true,
+    "failed_final_zero": true,
+    "non_placeholder_full_text": true,
+    "reconciled_counts_hashes": true,
+    "replay_evidence": true
+  },
+  "cohort": "E",
+  "goal_id": "LCR-G022",
+  "jurisdiction_receipts": {
+    "KY": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "chapter-1/section-1.010",
+        "last_hierarchy_unit": "chapter-1/section-1.020",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:8a8a8300ea8964f10e60d319b8dfa5fa79586be9a7aa1753ec35d19f93081758",
+        "min_full_text_chars": 781,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=50298",
+          "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=50299"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "ky:1.010",
+          "ky:1.020"
+        ],
+        "derived_keys": [
+          "ky:1.010",
+          "ky:1.020"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "KY",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:8a8a8300ea8964f10e60d319b8dfa5fa79586be9a7aa1753ec35d19f93081758",
+        "first_frontier_digest": "sha256:416eb97668e7a6bceaef0e705ae85ecf7e6c19a816c11833a32564fe52f95e83",
+        "second_frontier_digest": "sha256:416eb97668e7a6bceaef0e705ae85ecf7e6c19a816c11833a32564fe52f95e83"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "apps.legislature.ky.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "LA": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "rs-1:1",
+        "last_hierarchy_unit": "rs-1:2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:eb81e8006f9414e608971c1ae0273ca7fbf775419013fedfadfb232acaf15b0f",
+        "min_full_text_chars": 827,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://legis.la.gov/Legis/Law.aspx?d=100114",
+          "https://legis.la.gov/Legis/Law.aspx?d=100115"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "la:RS 1:1",
+          "la:RS 1:2"
+        ],
+        "derived_keys": [
+          "la:RS 1:1",
+          "la:RS 1:2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "LA",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:eb81e8006f9414e608971c1ae0273ca7fbf775419013fedfadfb232acaf15b0f",
+        "first_frontier_digest": "sha256:125c03c53c24b9764edf15de54455046d203d792d8d438cf8d5c14b2ae4467fc",
+        "second_frontier_digest": "sha256:125c03c53c24b9764edf15de54455046d203d792d8d438cf8d5c14b2ae4467fc"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.legis.la.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "MD": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "article-gsg/section-1-101",
+        "last_hierarchy_unit": "article-gsg/section-1-102",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:104a28070c3009fbe351fe0389509dd7be849b40806c6bacdd5b6e4e0805e40e",
+        "min_full_text_chars": 694,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GSG&section=1-101&enactments=false",
+          "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GSG&section=1-102&enactments=false"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "md:1-101",
+          "md:1-102"
+        ],
+        "derived_keys": [
+          "md:1-101",
+          "md:1-102"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "MD",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:104a28070c3009fbe351fe0389509dd7be849b40806c6bacdd5b6e4e0805e40e",
+        "first_frontier_digest": "sha256:ddd69677038c5748e451c248cb2162a657b2aece951c8ee893d06cea3b483d10",
+        "second_frontier_digest": "sha256:ddd69677038c5748e451c248cb2162a657b2aece951c8ee893d06cea3b483d10"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "mgaleg.maryland.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "ME": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-1/section-1",
+        "last_hierarchy_unit": "title-1/section-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:a664580ff1d82f218b1c347bc20895db5e7e6144dc2ce636c9cc452b7bf8d975",
+        "min_full_text_chars": 959,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://legislature.maine.gov/statutes/1/title1sec1.html",
+          "https://legislature.maine.gov/statutes/1/title1sec2.html"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "me:1",
+          "me:2"
+        ],
+        "derived_keys": [
+          "me:1",
+          "me:2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "ME",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:a664580ff1d82f218b1c347bc20895db5e7e6144dc2ce636c9cc452b7bf8d975",
+        "first_frontier_digest": "sha256:4c64677f2dc41ad5a4dfdcfed56c92826a61596934d787bc1a178d9ea8ab9f85",
+        "second_frontier_digest": "sha256:4c64677f2dc41ad5a4dfdcfed56c92826a61596934d787bc1a178d9ea8ab9f85"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "legislature.maine.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "official_domains": {
+    "KY": "apps.legislature.ky.gov",
+    "LA": "www.legis.la.gov",
+    "MD": "mgaleg.maryland.gov",
+    "ME": "legislature.maine.gov"
+  },
+  "production_upload": false,
+  "program_id": "legal-corpora-reindex-v1",
+  "receipt_schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-receipt@1",
+  "repair_work": [],
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-e-report@1",
+  "shared_combined_write": false,
+  "state_results": {
+    "KY": {
+      "content_digest": "sha256:8a8a8300ea8964f10e60d319b8dfa5fa79586be9a7aa1753ec35d19f93081758",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "apps.legislature.ky.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "LA": {
+      "content_digest": "sha256:eb81e8006f9414e608971c1ae0273ca7fbf775419013fedfadfb232acaf15b0f",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.legis.la.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "MD": {
+      "content_digest": "sha256:104a28070c3009fbe351fe0389509dd7be849b40806c6bacdd5b6e4e0805e40e",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "mgaleg.maryland.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "ME": {
+      "content_digest": "sha256:a664580ff1d82f218b1c347bc20895db5e7e6144dc2ce636c9cc452b7bf8d975",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "legislature.maine.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "states": [
+    "KY",
+    "LA",
+    "ME",
+    "MD"
+  ],
+  "status": "success",
+  "statutes_sample_counts": {
+    "KY": 2,
+    "LA": 2,
+    "MD": 2,
+    "ME": 2
+  },
+  "task_id": "LCR-013"
+}

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import re
 import ssl
 import urllib.request
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
+
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -111,13 +112,13 @@ class RhodeIslandScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
-        max_sections = limit if limit is not None else 1000000
         return await self._custom_scrape_rhode_island(
             code_name,
             code_url,
             "R.I. Gen. Laws",
-            max_sections=max_sections,
+            max_sections=limit,
         )
     
     async def _custom_scrape_rhode_island(
@@ -125,7 +126,7 @@ class RhodeIslandScraper(BaseStateScraper):
         code_name: str,
         code_url: str,
         citation_format: str,
-        max_sections: int = 100
+        max_sections: Optional[int] = 100
     ) -> List[NormalizedStatute]:
         """Custom scraper for Rhode Island's legislative website."""
         try:
@@ -199,7 +200,7 @@ class RhodeIslandScraper(BaseStateScraper):
                 },
             )
             for title_num in range(1, max_title + 1):
-                if len(statutes) >= max_sections:
+                if max_sections is not None and len(statutes) >= max_sections:
                     break
                 if title_num < resume_title_floor:
                     continue
@@ -238,7 +239,7 @@ class RhodeIslandScraper(BaseStateScraper):
                 )
 
                 for link, chapter_url in chapter_links:
-                    if len(statutes) >= max_sections:
+                    if max_sections is not None and len(statutes) >= max_sections:
                         break
 
                     chapter_visit_index += 1
@@ -305,22 +306,35 @@ class RhodeIslandScraper(BaseStateScraper):
                             },
                         )
 
-                    tasks = [
-                        asyncio.create_task(_parse_section(section_url, section_label, section_number))
-                        for section_url, section_label, section_number in section_candidates
-                    ]
+                    remaining = (
+                        None
+                        if max_sections is None
+                        else max(0, int(max_sections) - len(statutes))
+                    )
+                    batch = (
+                        section_candidates
+                        if remaining is None
+                        else section_candidates[:remaining]
+                    )
+                    parsed_rows = await asyncio.gather(
+                        *[
+                            _parse_section(section_url, section_label, section_number)
+                            for section_url, section_label, section_number in batch
+                        ],
+                        return_exceptions=True,
+                    ) if batch else []
                     scanned_sections = 0
-                    cancelled_early = False
-                    for task in asyncio.as_completed(tasks):
+                    for statute in parsed_rows:
                         scanned_sections += 1
                         sections_scanned_total += 1
-                        statute = await task
+                        if isinstance(statute, BaseException):
+                            continue
                         if statute is not None:
                             _extend_unique([statute])
                         if (
                             scanned_sections == 1
                             or scanned_sections % 200 == 0
-                            or scanned_sections == len(section_candidates)
+                            or scanned_sections == len(batch)
                         ):
                             self._write_partial_checkpoint(
                                 statutes,
@@ -357,14 +371,7 @@ class RhodeIslandScraper(BaseStateScraper):
                                     "codes_total": 1,
                                 },
                             )
-                        if len(statutes) >= max_sections:
-                            cancelled_early = True
-                            for pending_task in tasks:
-                                if not pending_task.done():
-                                    pending_task.cancel()
-                            break
-                    if cancelled_early:
-                        await asyncio.gather(*tasks, return_exceptions=True)
+                    if max_sections is not None and len(statutes) >= max_sections:
                         break
 
             self.logger.info("Rhode Island custom scraper: Scraped %s sections", len(statutes))
@@ -384,12 +391,22 @@ class RhodeIslandScraper(BaseStateScraper):
                 },
             )
             if not statutes:
+                if self._full_corpus_enabled():
+                    self.logger.warning(
+                        "Rhode Island full-corpus run found zero official sections; "
+                        "refusing secondary Justia/generic sole-admission fallback"
+                    )
+                    return []
                 self.logger.info("Rhode Island custom scraper found no data, falling back to generic scraper")
-                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+                generic_cap = max_sections if max_sections is not None else 1000000
+                return await self._generic_scrape(code_name, code_url, citation_format, generic_cap)
             return statutes
         except Exception as e:
             self.logger.error(f"Rhode Island custom scraper failed: {e}")
-            return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+            if self._full_corpus_enabled():
+                return []
+            generic_cap = max_sections if max_sections is not None else 1000000
+            return await self._generic_scrape(code_name, code_url, citation_format, generic_cap)
 
     def _extract_ri_section_number(self, link_text: str, url: str) -> str:
         match = _SECTION_NUMBER_RE.search(str(link_text or ""))

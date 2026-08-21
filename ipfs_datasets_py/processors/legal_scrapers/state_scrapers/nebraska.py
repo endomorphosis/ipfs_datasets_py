@@ -14,6 +14,13 @@ from urllib.parse import urljoin, urlparse, parse_qs
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
 
+_SECONDARY_HOST_MARKERS = (
+    "justia.com",
+    "findlaw.com",
+    "unicourt.github.io",
+    "law.cornell.edu",
+)
+
 
 class NebraskaScraper(BaseStateScraper):
     """Scraper for Nebraska state laws from https://nebraskalegislature.gov"""
@@ -63,19 +70,29 @@ class NebraskaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=160) or 1000000
-        official = await self._scrape_official_index(
-            code_name,
-            max_statutes=None if limit == 1000000 else int(limit),
-        )
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        official = await self._scrape_official_index(code_name, max_statutes=limit)
+        official = self._filter_official_host_statutes(official)
         if official:
-            return official[: int(limit)]
-        if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=int(limit))
+            return official if limit is None else official[: int(limit)]
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_seed_sections(
+                code_name,
+                max_statutes=max(1, int(limit or 2)),
+            )
+            direct = self._filter_official_host_statutes(direct)
             if direct:
-                return direct[: int(limit)]
-        fallback_limit = max(10, int(limit if limit != 1000000 else 40))
-        return await self._generic_scrape(code_name, code_url, "Neb. Rev. Stat.", max_sections=fallback_limit)
+                return direct if limit is None else direct[: int(limit)]
+        if self._full_corpus_enabled() and max_statutes is None:
+            return []
+        if any(marker in str(code_url).lower() for marker in _SECONDARY_HOST_MARKERS):
+            return []
+        fallback_limit = max(10, int(limit or 40))
+        generic = await self._generic_scrape(
+            code_name, code_url, "Neb. Rev. Stat.", max_sections=fallback_limit
+        )
+        return self._filter_official_host_statutes(generic)
 
     async def _scrape_official_index(
         self,
@@ -237,6 +254,23 @@ class NebraskaScraper(BaseStateScraper):
             discovery_method="official_seed_section",
         )
 
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        if any(marker in host for marker in _SECONDARY_HOST_MARKERS):
+            return False
+        return host == "nebraskalegislature.gov" or host.endswith(".nebraskalegislature.gov")
+
+    def _filter_official_host_statutes(
+        self, statutes: List[NormalizedStatute]
+    ) -> List[NormalizedStatute]:
+        return [
+            statute
+            for statute in statutes
+            if self._host_is_official(str(statute.source_url or ""))
+        ]
+
     async def _discover_chapter_urls(self) -> List[str]:
         try:
             from bs4 import BeautifulSoup
@@ -365,6 +399,23 @@ class NebraskaScraper(BaseStateScraper):
                     return await _parse_source_url(source_url)
                 except Exception:
                     return None
+
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            total_sections = len(section_urls)
+            for scanned_sections, source_url in enumerate(section_urls, start=1):
+                statute = await _bounded_parse(source_url)
+                if statute is not None:
+                    out.append(statute)
+                if progress_hook is not None:
+                    try:
+                        progress_hook(scanned_sections, total_sections, out)
+                    except Exception:
+                        pass
+                if limit is not None and len(out) >= limit:
+                    break
+            return out
 
         tasks = [asyncio.create_task(_bounded_parse(source_url)) for source_url in section_urls]
         total_sections = len(tasks)

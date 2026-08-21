@@ -145,21 +145,31 @@ class NevadaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=160) or 1000000
-        official = await self._scrape_official_index(
-            code_name,
-            max_statutes=None if limit == 1000000 else int(limit),
-        )
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        official = await self._scrape_official_index(code_name, max_statutes=limit)
+        official = self._filter_official_host_statutes(official)
         if official:
-            return official[: int(limit)]
+            return official if limit is None else official[: int(limit)]
 
-        if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=int(limit))
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_seed_sections(
+                code_name,
+                max_statutes=max(1, int(limit or 2)),
+            )
+            direct = self._filter_official_host_statutes(direct)
             if direct:
-                return direct[: int(limit)]
+                return direct if limit is None else direct[: int(limit)]
 
-        fallback_limit = max(10, int(limit if limit != 1000000 else 40))
-        return await self._generic_scrape(code_name, code_url, "Nev. Rev. Stat.", max_sections=fallback_limit)
+        if self._full_corpus_enabled() and max_statutes is None:
+            return []
+        if any(marker in str(code_url).lower() for marker in self._SECONDARY_HOST_MARKERS):
+            return []
+        fallback_limit = max(10, int(limit or 40))
+        generic = await self._generic_scrape(
+            code_name, code_url, "Nev. Rev. Stat.", max_sections=fallback_limit
+        )
+        return self._filter_official_host_statutes(generic)
 
     async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 2) -> List[NormalizedStatute]:
         seeds = [
@@ -428,6 +438,15 @@ class NevadaScraper(BaseStateScraper):
         if any(marker in host for marker in self._SECONDARY_HOST_MARKERS):
             return False
         return host == "leg.state.nv.us" or host.endswith(".leg.state.nv.us")
+
+    def _filter_official_host_statutes(
+        self, statutes: List[NormalizedStatute]
+    ) -> List[NormalizedStatute]:
+        return [
+            statute
+            for statute in statutes
+            if self._host_is_official(str(statute.source_url or ""))
+        ]
 
     def _chapter_from_text(self, value: str) -> str:
         text = str(value or "").strip()

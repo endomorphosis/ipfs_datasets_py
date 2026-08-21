@@ -119,15 +119,31 @@ class PennsylvaniaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
-        return_threshold = limit if limit is not None else 1000000
+        probe_threshold = limit if limit is not None else 160
 
         official_pdf_sections = await self._scrape_consolidated_title_pdfs(
             code_name=code_name,
-            max_statutes=return_threshold,
+            max_statutes=limit,
         )
         if official_pdf_sections:
-            return official_pdf_sections[:return_threshold]
+            return official_pdf_sections if limit is None else official_pdf_sections[: int(limit)]
+
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct_statutes = await self._scrape_direct_titles(
+                code_name,
+                max_statutes=probe_threshold,
+            )
+            if direct_statutes:
+                return direct_statutes if limit is None else direct_statutes[: int(limit)]
+
+        if self._full_corpus_enabled() and max_statutes is None:
+            self.logger.warning(
+                "Pennsylvania full-corpus run found zero official title PDFs; "
+                "refusing secondary Justia/generic sole-admission fallback"
+            )
+            return []
 
         candidate_urls = [
             code_url,
@@ -137,20 +153,15 @@ class PennsylvaniaScraper(BaseStateScraper):
         seen = set()
         merged: List[NormalizedStatute] = []
         merged_keys = set()
-        if not self._full_corpus_enabled():
-            direct_statutes = await self._scrape_direct_titles(
-                code_name,
-                max_statutes=return_threshold,
-            )
-            if direct_statutes:
-                if limit is not None:
-                    return direct_statutes[:limit]
-                return direct_statutes
 
         def _merge(items: List[NormalizedStatute]) -> None:
             for statute in items:
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in merged_keys:
+                    continue
+                if "justia.com" in str(statute.source_url or "").lower():
+                    continue
+                if "findlaw.com" in str(statute.source_url or "").lower():
                     continue
                 merged_keys.add(key)
                 merged.append(statute)
@@ -159,29 +170,39 @@ class PennsylvaniaScraper(BaseStateScraper):
             if candidate in seen:
                 continue
             seen.add(candidate)
+            if "justia.com" in str(candidate).lower() or "findlaw.com" in str(candidate).lower():
+                continue
 
             statutes = await self._generic_scrape(
                 code_name,
                 candidate,
                 "Pa. Cons. Stat.",
-                max_sections=return_threshold,
+                max_sections=probe_threshold,
             )
             _merge(statutes)
-            if len(merged) >= return_threshold:
-                return merged[:return_threshold]
+            if limit is not None and len(merged) >= int(limit):
+                return merged[: int(limit)]
 
-        return merged
+        return merged if limit is None else merged[: int(limit)]
 
-    async def _scrape_consolidated_title_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
-        discovered = await self._discover_consolidated_title_pdfs(limit=max(4, int(max_statutes or 1)))
+    async def _scrape_consolidated_title_pdfs(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        discover_limit = max(4, int(limit)) if limit is not None else None
+        discovered = await self._discover_consolidated_title_pdfs(limit=discover_limit)
         if not discovered:
             return []
 
         statutes: List[NormalizedStatute] = []
         seen_sections: set[Tuple[str, str]] = set()
         for title_number, title_name, pdf_url in discovered:
-            if len(statutes) >= max_statutes:
+            if limit is not None and len(statutes) >= limit:
                 break
+            if pdf_url and not self._host_is_official(pdf_url):
+                continue
             pdf_bytes = await self._request_pdf_bytes(pdf_url, timeout=60)
             if not pdf_bytes:
                 continue
@@ -202,11 +223,13 @@ class PennsylvaniaScraper(BaseStateScraper):
                     continue
                 seen_sections.add(key)
                 statutes.append(statute)
-                if len(statutes) >= max_statutes:
+                if limit is not None and len(statutes) >= limit:
                     break
-        return statutes
+        return statutes if limit is None else statutes[:limit]
 
-    async def _discover_consolidated_title_pdfs(self, limit: int = 120) -> List[Tuple[str, str, str]]:
+    async def _discover_consolidated_title_pdfs(
+        self, limit: Optional[int] = 120
+    ) -> List[Tuple[str, str, str]]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -243,7 +266,7 @@ class PennsylvaniaScraper(BaseStateScraper):
                 parsed._replace(query=urllib.parse.urlencode(pdf_query, doseq=False))
             )
             discovered.append((title_number, text[:240], pdf_url))
-            if len(discovered) >= limit:
+            if limit is not None and len(discovered) >= limit:
                 break
         return discovered
 

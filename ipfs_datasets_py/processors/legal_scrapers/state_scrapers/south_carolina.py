@@ -119,20 +119,30 @@ class SouthCarolinaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._bounded_return_threshold(160)
-        if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        probe_threshold = limit if limit is not None else 160
         official = await self._scrape_official_code_tree(
             code_name,
-            max_statutes=None if self._full_corpus_enabled() and max_statutes is None else return_threshold,
+            max_statutes=limit,
         )
         if official:
-            return official if self._full_corpus_enabled() and max_statutes is None else official[:return_threshold]
-        if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            return official if limit is None else official[: int(limit)]
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=probe_threshold)
             if direct:
-                return direct[:return_threshold]
-        return await self._generic_scrape(code_name, code_url, "S.C. Code Ann.", max_sections=max(10, return_threshold))
+                return direct if limit is None else direct[: int(limit)]
+            return await self._generic_scrape(
+                code_name,
+                code_url,
+                "S.C. Code Ann.",
+                max_sections=max(10, int(probe_threshold)),
+            )
+        self.logger.warning(
+            "South Carolina full-corpus run found zero official sections; "
+            "refusing secondary Justia/generic sole-admission fallback"
+        )
+        return []
 
     async def _scrape_official_code_tree(
         self,

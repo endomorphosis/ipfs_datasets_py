@@ -6,6 +6,7 @@ legislative website.
 
 import asyncio
 import json
+import os
 import re
 from typing import Dict, List, Optional
 import urllib.parse
@@ -91,17 +92,18 @@ class MarylandScraper(BaseStateScraper):
             return ""
 
     async def _scrape_api_sections(
-        self, code_name: str, max_statutes: int
+        self, code_name: str, max_statutes: Optional[int] = None
     ) -> List[NormalizedStatute]:
         articles_url = f"{self.get_base_url()}/mgawebsite/api/Laws/GetArticles?enactments=false"
         articles_payload = await self._fetch_json(articles_url)
         if not isinstance(articles_payload, list):
             return []
 
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
         self.logger.info(
             "Maryland API scrape: discovered_articles=%s max_statutes=%s",
             len(articles_payload),
-            max_statutes,
+            limit or "unbounded",
         )
 
         statutes: List[NormalizedStatute] = []
@@ -140,7 +142,7 @@ class MarylandScraper(BaseStateScraper):
                 )
 
         for article_index, article in enumerate(articles_payload, start=1):
-            if len(statutes) >= max_statutes:
+            if limit is not None and len(statutes) >= limit:
                 break
             if not isinstance(article, dict):
                 continue
@@ -159,13 +161,16 @@ class MarylandScraper(BaseStateScraper):
             if not isinstance(sections_payload, list):
                 continue
 
-            remaining = max_statutes - len(statutes)
-            section_budget_cap = self._env_int(
-                "STATE_SCRAPER_MD_MAX_SECTION_BUDGET_PER_ARTICLE",
-                default=240,
-            )
-            section_budget_cap = max(40, min(2000, int(section_budget_cap or 240)))
-            budget = min(len(sections_payload), max(remaining * 3, 40), section_budget_cap)
+            if limit is None:
+                budget = len(sections_payload)
+            else:
+                remaining = max(0, int(limit) - len(statutes))
+                section_budget_cap = self._env_int(
+                    "STATE_SCRAPER_MD_MAX_SECTION_BUDGET_PER_ARTICLE",
+                    default=240,
+                )
+                section_budget_cap = max(40, min(2000, int(section_budget_cap or 240)))
+                budget = min(len(sections_payload), max(remaining * 3, 40), section_budget_cap)
             discovered_candidates += int(budget)
             section_inputs: List[tuple[str, str, str, str]] = []
             for section in sections_payload[:budget]:
@@ -218,20 +223,42 @@ class MarylandScraper(BaseStateScraper):
 
             section_batch_size = self._env_int("STATE_SCRAPER_MD_SECTION_BATCH_SIZE", default=40)
             section_batch_size = max(8, min(256, int(section_batch_size or 40)))
+            try:
+                asyncio.get_running_loop()
+                parallel = True
+            except RuntimeError:
+                parallel = False
             for batch_start in range(0, len(section_inputs), section_batch_size):
-                if len(statutes) >= max_statutes:
+                if limit is not None and len(statutes) >= limit:
                     break
                 batch_inputs = section_inputs[batch_start : batch_start + section_batch_size]
-                batch_jobs = [
-                    _build_one(
-                        article_display=item[0],
-                        section_label=item[1],
-                        section_code=item[2],
-                        section_url=item[3],
-                    )
-                    for item in batch_inputs
-                ]
-                for statute in await asyncio.gather(*batch_jobs, return_exceptions=True):
+                if parallel:
+                    batch_jobs = [
+                        _build_one(
+                            article_display=item[0],
+                            section_label=item[1],
+                            section_code=item[2],
+                            section_url=item[3],
+                        )
+                        for item in batch_inputs
+                    ]
+                    batch_results = await asyncio.gather(*batch_jobs, return_exceptions=True)
+                else:
+                    batch_results = []
+                    for item in batch_inputs:
+                        try:
+                            batch_results.append(
+                                await self._build_statute_from_section_page(
+                                    code_name=code_name,
+                                    article_label=item[0],
+                                    section_label=item[1],
+                                    section_number=item[2],
+                                    section_url=item[3],
+                                )
+                            )
+                        except Exception as exc:
+                            batch_results.append(exc)
+                for statute in batch_results:
                     scanned_candidates += 1
                     if isinstance(statute, Exception):
                         continue
@@ -248,7 +275,7 @@ class MarylandScraper(BaseStateScraper):
                             "Maryland API scrape: statutes_so_far=%s",
                             len(statutes),
                         )
-                    if len(statutes) >= max_statutes:
+                    if limit is not None and len(statutes) >= limit:
                         break
 
                 self._write_partial_checkpoint(
@@ -264,7 +291,7 @@ class MarylandScraper(BaseStateScraper):
                         "codes_total": 1,
                     },
                 )
-                if len(statutes) >= max_statutes:
+                if limit is not None and len(statutes) >= limit:
                     break
 
         self._write_partial_checkpoint(
@@ -376,30 +403,37 @@ class MarylandScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._bounded_return_threshold(160)
-        if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        allow_justia = str(
+            os.getenv("STATE_SCRAPER_MD_ALLOW_JUSTIA_FALLBACK", "0") or "0"
+        ).strip().lower() in {"1", "true", "yes", "on"}
 
-        api_statutes = await self._scrape_api_sections(
-            code_name, max_statutes=max(10, return_threshold)
-        )
-        if len(api_statutes) >= return_threshold:
-            return api_statutes
+        api_statutes = await self._scrape_api_sections(code_name, max_statutes=limit)
+        if api_statutes:
+            return api_statutes if limit is None else api_statutes[: int(limit)]
 
-        if not self._full_corpus_enabled():
+        if not self._full_corpus_enabled() or max_statutes is not None:
             direct_statutes = await self._scrape_direct_seed_sections(
-                code_name, max_statutes=return_threshold
+                code_name, max_statutes=max(1, int(limit or 2))
             )
             if direct_statutes:
-                return direct_statutes
+                return direct_statutes if limit is None else direct_statutes[: int(limit)]
 
+        if self._full_corpus_enabled() and max_statutes is None and not allow_justia:
+            return []
+
+        return_threshold = int(limit) if limit is not None else 160
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/mgawebsite/Laws/Statutes",
             f"{self.get_base_url()}/mgawebsite/Laws/StatuteText?article=GSG&section=1-101&enactments=false",
             f"{self.get_base_url()}/mgawebsite/Laws/StatuteText?article=GCR&section=1-101&enactments=false",
-            "https://law.justia.com/codes/maryland/",
         ]
+        # Secondary Justia mirrors are never sole full-corpus admission unless
+        # explicitly re-enabled; bounded probes may still use them as last resort.
+        if allow_justia or (not self._full_corpus_enabled()):
+            candidate_urls.append("https://law.justia.com/codes/maryland/")
 
         seen = set()
         merged: List[NormalizedStatute] = []
@@ -410,6 +444,10 @@ class MarylandScraper(BaseStateScraper):
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in merged_keys:
                     continue
+                source = str(statute.source_url or "").lower()
+                if self._full_corpus_enabled() and not allow_justia:
+                    if "justia.com" in source or "findlaw.com" in source:
+                        continue
                 if not self._is_maryland_api_record(
                     statute
                 ) and self._is_low_quality_statute_record(statute):
@@ -417,14 +455,16 @@ class MarylandScraper(BaseStateScraper):
                 merged_keys.add(key)
                 merged.append(statute)
 
-        _merge(api_statutes)
-        if len(merged) >= return_threshold:
-            return merged
-
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
             seen.add(candidate)
+            if (
+                self._full_corpus_enabled()
+                and not allow_justia
+                and ("justia.com" in str(candidate).lower() or "findlaw.com" in str(candidate).lower())
+            ):
+                continue
 
             try:
                 statutes = await self._playwright_scrape(
@@ -440,8 +480,8 @@ class MarylandScraper(BaseStateScraper):
                 statutes = []
 
             _merge(statutes)
-            if len(merged) >= return_threshold:
-                return merged
+            if limit is not None and len(merged) >= int(limit):
+                return merged[: int(limit)]
 
             try:
                 generic = await self._generic_scrape(
@@ -451,10 +491,10 @@ class MarylandScraper(BaseStateScraper):
                 generic = []
 
             _merge(generic)
-            if len(merged) >= return_threshold:
-                return merged
+            if limit is not None and len(merged) >= int(limit):
+                return merged[: int(limit)]
 
-        return merged
+        return merged if limit is None else merged[: int(limit)]
 
     async def _scrape_direct_seed_sections(
         self, code_name: str, max_statutes: int

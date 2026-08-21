@@ -898,6 +898,9 @@ class OregonScraper(BaseStateScraper):
                 "subsections": row.get("subsections"),
                 "parser_warnings": row.get("parser_warnings"),
                 "history_citations": history_citations,
+                "source_kind": "official_oregon_revised_statutes_html",
+                "discovery_method": "official_ors_chapter_html",
+                "skip_hydrate": True,
             }
             statute = NormalizedStatute(
                 state_code=self.state_code,
@@ -955,23 +958,27 @@ class OregonScraper(BaseStateScraper):
         """
         lower_name = str(code_name or "").lower()
         lower_url = str(code_url or "").lower()
+        # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=250)
         max_sections = limit if limit is not None else 1000000
+
+        def _bounded(rows: List[NormalizedStatute]) -> List[NormalizedStatute]:
+            return rows if limit is None else rows[: int(limit)]
 
         if "local court rules" in lower_name or "/rules/pages/slr.aspx" in lower_url:
             self.logger.info("Oregon: using dedicated local-court-rules scraper path")
             statutes = await self._scrape_local_court_rules(code_name, code_url or LOCAL_RULES_INDEX_URL)
-            return statutes[:max_sections]
+            return _bounded(statutes)
 
         if "civil procedure" in lower_name or lower_url.endswith("/pages/orcp.aspx") or lower_url.endswith("/siteassets/orcp.html"):
             self.logger.info("Oregon: using dedicated ORCP scraper path")
             statutes = await self._scrape_civil_procedure_rules(code_name, code_url or ORCP_PRIMARY_URL)
-            return statutes[:max_sections]
+            return _bounded(statutes)
 
         if "criminal procedure" in lower_name:
             self.logger.info("Oregon: using dedicated ORCrP scraper path")
             statutes = await self._scrape_criminal_procedure_rules(code_name)
-            return statutes[:max_sections]
+            return _bounded(statutes)
 
         if "administrative" in lower_name or "displaychapterrules.action" in lower_url:
             self.logger.info("Oregon: using dedicated OAR scraper")
@@ -979,11 +986,29 @@ class OregonScraper(BaseStateScraper):
             oar_statutes = await oar_scraper.scrape(code_name=code_name, code_url=code_url)
             if oar_statutes:
                 self.logger.info(f"Oregon OAR: parsed {len(oar_statutes)} rules")
-                return oar_statutes[:max_sections]
+                return _bounded(oar_statutes)
             self.logger.warning("Oregon OAR scraper produced no rules; falling back to generic parser")
             return await self._generic_scrape(code_name, code_url, "OAR", max_sections=max_sections)
 
         citation_format = "Or. Rev. Stat."
+        official = await self._scrape_official_ors_chapter_tree(
+            code_name,
+            code_url,
+            max_statutes=limit,
+        )
+        if official:
+            self.logger.info("Oregon: parsed %s structured ORS sections", len(official))
+            return _bounded(official)
+
+        # Official ORS tree is the only full-corpus admission path. Justia/FindLaw
+        # generic fallbacks are never sole-admitted when max_statutes is omitted.
+        if self._full_corpus_enabled() and max_statutes is None:
+            self.logger.warning(
+                "Oregon full-corpus run found zero official ORS sections; "
+                "refusing secondary Justia/generic sole-admission fallback"
+            )
+            return []
+
         if not REQUESTS_AVAILABLE:
             self.logger.warning("requests/bs4 unavailable for Oregon parser; falling back to Playwright link scrape")
             return await self._playwright_scrape(
@@ -995,60 +1020,6 @@ class OregonScraper(BaseStateScraper):
                 max_sections=max_sections,
             )
 
-        legal_area = self._identify_legal_area(code_name)
-        statutes: List[NormalizedStatute] = []
-
-        try:
-            chapter_urls: List[str] = []
-
-            seed_bytes = await self._fetch_page_content_with_archival_fallback(code_url, timeout_seconds=90)
-            if seed_bytes:
-                try:
-                    soup = BeautifulSoup(seed_bytes, "html.parser")
-                    discovered: List[str] = []
-                    for anchor in soup.find_all("a", href=True):
-                        href = str(anchor.get("href") or "")
-                        absolute = urljoin(code_url, href)
-                        if ORS_LINK_RE.search(absolute):
-                            discovered.append(absolute)
-                    chapter_urls = _dedupe_keep_order(discovered)
-                except Exception:
-                    chapter_urls = []
-
-            if not chapter_urls:
-                chapter_urls = await self._discover_chapter_urls(code_url)
-
-            self.logger.info(f"Oregon: discovered {len(chapter_urls)} ORS chapter pages")
-
-            for chapter_url in chapter_urls:
-                if len(statutes) >= max_sections:
-                    break
-                try:
-                    chapter_bytes = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=90)
-                    if not chapter_bytes:
-                        self.logger.warning(f"Oregon chapter fetch failed (no content): {chapter_url}")
-                        continue
-
-                    chapter_html = chapter_bytes.decode("utf-8", errors="replace")
-                    statutes.extend(
-                        self._parse_chapter_html(
-                            html=chapter_html,
-                            chapter_url=chapter_url,
-                            code_name=code_name,
-                            citation_format=citation_format,
-                            legal_area=legal_area,
-                        )
-                    )
-                except Exception as chapter_exc:
-                    self.logger.warning(f"Oregon chapter parse error for {chapter_url}: {chapter_exc}")
-                    continue
-        except Exception as exc:
-            self.logger.error(f"Oregon scrape failed: {exc}")
-
-        if statutes:
-            self.logger.info(f"Oregon: parsed {len(statutes)} structured ORS sections")
-            return statutes[:max_sections]
-
         self.logger.warning("Oregon parser produced no structured sections; using Playwright fallback")
         return await self._playwright_scrape(
             code_name,
@@ -1058,6 +1029,86 @@ class OregonScraper(BaseStateScraper):
             timeout=45000,
             max_sections=max_sections,
         )
+
+    async def _scrape_official_ors_chapter_tree(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        """Walk official ORS chapter HTML without silently clamping a None limit."""
+        if not REQUESTS_AVAILABLE:
+            return []
+
+        citation_format = "Or. Rev. Stat."
+        legal_area = self._identify_legal_area(code_name)
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        statutes: List[NormalizedStatute] = []
+        seed_url = str(code_url or "").strip() or self.OFFICIAL_ENTRY_URL
+
+        try:
+            chapter_urls: List[str] = []
+            seed_bytes = await self._fetch_page_content_with_archival_fallback(
+                seed_url, timeout_seconds=90
+            )
+            if seed_bytes:
+                try:
+                    soup = BeautifulSoup(seed_bytes, "html.parser")
+                    discovered: List[str] = []
+                    for anchor in soup.find_all("a", href=True):
+                        href = str(anchor.get("href") or "")
+                        absolute = urljoin(seed_url, href)
+                        if not ORS_LINK_RE.search(absolute):
+                            continue
+                        if not self._host_is_official(absolute):
+                            continue
+                        discovered.append(absolute)
+                    chapter_urls = _dedupe_keep_order(discovered)
+                except Exception:
+                    chapter_urls = []
+
+            if not chapter_urls:
+                chapter_urls = [
+                    url for url in await self._discover_chapter_urls(seed_url)
+                    if self._host_is_official(url) or ORS_LINK_RE.search(url)
+                ]
+
+            self.logger.info("Oregon: discovered %s ORS chapter pages", len(chapter_urls))
+
+            for chapter_url in chapter_urls:
+                if limit is not None and len(statutes) >= limit:
+                    break
+                if not self._host_is_official(chapter_url) and not ORS_LINK_RE.search(chapter_url):
+                    continue
+                try:
+                    chapter_bytes = await self._fetch_page_content_with_archival_fallback(
+                        chapter_url, timeout_seconds=90
+                    )
+                    if not chapter_bytes:
+                        self.logger.warning("Oregon chapter fetch failed (no content): %s", chapter_url)
+                        continue
+                    chapter_html = chapter_bytes.decode("utf-8", errors="replace")
+                    parsed = self._parse_chapter_html(
+                        html=chapter_html,
+                        chapter_url=chapter_url,
+                        code_name=code_name,
+                        citation_format=citation_format,
+                        legal_area=legal_area,
+                    )
+                    for statute in parsed:
+                        source_url = str(statute.source_url or "")
+                        if source_url and not self._host_is_official(source_url):
+                            continue
+                        statutes.append(statute)
+                        if limit is not None and len(statutes) >= limit:
+                            break
+                except Exception as chapter_exc:
+                    self.logger.warning("Oregon chapter parse error for %s: %s", chapter_url, chapter_exc)
+                    continue
+        except Exception as exc:
+            self.logger.error("Oregon official ORS tree scrape failed: %s", exc)
+
+        return statutes if limit is None else statutes[:limit]
 
     def official_chapter_slug(self, chapter: Any) -> str:
         token = str(chapter or "").strip()
