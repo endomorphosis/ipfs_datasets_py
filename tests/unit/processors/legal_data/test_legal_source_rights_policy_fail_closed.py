@@ -1016,6 +1016,179 @@ def test_fixture_only_check_cannot_return_authorizing() -> None:
     assert all(decision["authorizing"] is False for decision in report["decisions"])
 
 
+def test_missing_licenseref_or_registry_digest_denies() -> None:
+    registry = json.loads(policy.default_spdx_registry_path().read_bytes())
+    del registry["license_refs"][0]["definition_digest_sha256"]
+    _seal_registry(registry)
+    with pytest.raises(CatalogSchemaError):
+        SpdxLicenseRegistry.from_mapping(registry)
+    registry = json.loads(policy.default_spdx_registry_path().read_bytes())
+    del registry["registry_digest_sha256"]
+    with pytest.raises(CatalogSchemaError):
+        SpdxLicenseRegistry.from_mapping(registry)
+
+
+def test_mutated_licenseref_or_spdx_source_bytes_with_unchanged_hash_deny() -> None:
+    registry = json.loads(policy.default_spdx_registry_path().read_bytes())
+    definition = registry["license_refs"][0]
+    raw = base64.b64decode(definition["definition_bytes_base64"])
+    definition["definition_bytes_base64"] = base64.b64encode(b"X" + raw[1:]).decode()
+    _seal_registry(registry)
+    with pytest.raises(DigestMismatchError):
+        SpdxLicenseRegistry.from_mapping(registry)
+    registry = json.loads(policy.default_spdx_registry_path().read_bytes())
+    raw = base64.b64decode(registry["active_ids_source_bytes_base64"])
+    registry["active_ids_source_bytes_base64"] = base64.b64encode(b"X" + raw[1:]).decode()
+    _seal_registry(registry)
+    with pytest.raises(DigestMismatchError):
+        SpdxLicenseRegistry.from_mapping(registry)
+
+
+def test_mutated_spdx_registry_bytes_with_unchanged_catalog_digest_binding_deny(
+    payload: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    mutated = tmp_path / "spdx_license_registry.json"
+    mutated.write_bytes(policy.default_spdx_registry_path().read_bytes() + b" ")
+    monkeypatch.setattr(policy, "default_spdx_registry_path", lambda: mutated)
+    with pytest.raises(DigestMismatchError):
+        evaluate_catalog(payload)
+
+
+@pytest.mark.parametrize(
+    "artifact",
+    [
+        "policy_module_sha256",
+        "schema_sha256",
+        "spdx_registry_sha256",
+        "expected_scope_frontier_sha256",
+    ],
+)
+def test_live_missing_or_wrong_artifact_digest_denies(payload: dict, artifact: str) -> None:
+    live = _as_fresh_live(payload)
+    del live["artifact_digests"][artifact]
+    _seal_catalog(live)
+    with pytest.raises(CatalogSchemaError):
+        evaluate_catalog(live)
+    live = _as_fresh_live(json.loads(default_fixture_catalog_path().read_bytes()))
+    live["artifact_digests"][artifact] = "0" * 64
+    _seal_catalog(live)
+    with pytest.raises((DigestMismatchError, FrontierMismatchError)):
+        evaluate_catalog(live)
+
+
+@pytest.mark.parametrize("kind", ["terms", "robots"])
+def test_live_mutated_evidence_bytes_with_unchanged_hash_denies(
+    payload: dict, kind: str
+) -> None:
+    live = _as_fresh_live(payload)
+    evidence = _record(live, "al-alison-code-statutory_text")[kind]
+    raw = base64.b64decode(evidence["content_bytes_base64"])
+    evidence["content_bytes_base64"] = base64.b64encode(b"X" + raw[1:]).decode()
+    _seal_catalog(live)
+    with pytest.raises(DigestMismatchError):
+        evaluate_catalog(live)
+
+
+@pytest.mark.parametrize("kind", ["terms", "robots"])
+def test_live_missing_evidence_digest_denies(payload: dict, kind: str) -> None:
+    live = _as_fresh_live(payload)
+    del _record(live, "al-alison-code-statutory_text")[kind]["evidence_digest_sha256"]
+    _seal_catalog(live)
+    with pytest.raises(CatalogSchemaError):
+        evaluate_catalog(live)
+
+
+@pytest.mark.parametrize("byte_field", ["request_bytes_base64", "response_bytes_base64"])
+def test_live_conditional_receipt_bytes_are_independently_rehashed(
+    payload: dict, byte_field: str
+) -> None:
+    live = _as_fresh_live(payload)
+    receipt = _record(live, "ak-akleg-basis-statutory_text")["condition_evidence"][0]
+    raw = base64.b64decode(receipt[byte_field])
+    receipt[byte_field] = base64.b64encode(b"X" + raw[1:]).decode()
+    _seal_catalog(live)
+    with pytest.raises(DigestMismatchError):
+        evaluate_catalog(live)
+
+
+@pytest.mark.parametrize("field", ["request_sha256", "response_sha256", "receipt_digest_sha256"])
+def test_live_missing_conditional_digest_denies(payload: dict, field: str) -> None:
+    live = _as_fresh_live(payload)
+    del _record(live, "ak-akleg-basis-statutory_text")["condition_evidence"][0][field]
+    _seal_catalog(live)
+    with pytest.raises(CatalogSchemaError):
+        evaluate_catalog(live)
+
+
+def test_live_identity_tuple_cannot_be_swapped_to_fixture(payload: dict) -> None:
+    live = _as_fresh_live(payload)
+    live.update({"task_id": "LCR-082", "goal_id": "LCR-G144"})
+    _seal_catalog(live)
+    with pytest.raises(IdentityError):
+        evaluate_catalog(live)
+
+
+def test_live_bare_condition_name_never_proves_acquisition(payload: dict) -> None:
+    live = _as_fresh_live(payload)
+    record_id = "ak-akleg-basis-statutory_text"
+    _record(live, record_id)["condition_evidence"] = []
+    _remove_admission(live, record_id)
+    _seal_catalog(live)
+    report = evaluate_catalog(live)
+    decision = _decision(report, record_id)
+    assert decision["admitted"] is False
+    assert "conditional_evidence_set_mismatch" in decision["reason_codes"]
+    assert report["authorizing_for_publication"] is False
+
+
+def test_live_mutated_policy_bytes_with_unchanged_binding_deny(
+    payload: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    live = _as_fresh_live(payload)
+    mutated = tmp_path / "policy.py"
+    mutated.write_bytes(policy.default_policy_module_path().read_bytes() + b"\n# mutation\n")
+    monkeypatch.setattr(policy, "default_policy_module_path", lambda: mutated)
+    with pytest.raises(DigestMismatchError):
+        evaluate_catalog(live)
+
+
+def test_live_mutated_schema_bytes_with_unchanged_binding_deny(
+    payload: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    live = _as_fresh_live(payload)
+    mutated = tmp_path / "schema.json"
+    mutated.write_bytes(policy.default_schema_path().read_bytes() + b" ")
+    monkeypatch.setattr(policy, "default_schema_path", lambda: mutated)
+    with pytest.raises(DigestMismatchError):
+        evaluate_catalog(live)
+
+
+def test_live_mutated_spdx_registry_bytes_with_unchanged_binding_deny(
+    payload: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    live = _as_fresh_live(payload)
+    mutated = tmp_path / "spdx_license_registry.json"
+    mutated.write_bytes(policy.default_spdx_registry_path().read_bytes() + b" ")
+    monkeypatch.setattr(policy, "default_spdx_registry_path", lambda: mutated)
+    with pytest.raises(DigestMismatchError):
+        evaluate_catalog(live)
+
+
+def test_live_gate_rejects_digest_mismatched_catalog(
+    payload: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    live = _as_fresh_live(payload)
+    evidence = _record(live, "al-alison-code-statutory_text")["terms"]
+    raw = base64.b64decode(evidence["content_bytes_base64"])
+    evidence["content_bytes_base64"] = base64.b64encode(b"X" + raw[1:]).decode()
+    _seal_catalog(live)
+    path = tmp_path / "legal_source_rights_catalog.json"
+    path.write_text(json.dumps(live, sort_keys=True))
+    monkeypatch.setattr(policy, "default_live_catalog_path", lambda: path)
+    with pytest.raises(LegalSourceRightsPolicyError):
+        require_live_source_evidence()
+
+
 def test_fixture_check_rejects_even_whitespace_only_byte_mutation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
