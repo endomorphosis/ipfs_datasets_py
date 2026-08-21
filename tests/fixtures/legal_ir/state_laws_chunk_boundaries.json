@@ -1,0 +1,214 @@
+{
+  "cases": [
+    {
+      "case_id": "short-whole-section",
+      "chapter": "163",
+      "code_family": "oregon-revised-statutes",
+      "expect": {
+        "exact_reconstruction": true,
+        "max_chunks": 1,
+        "min_chunks": 1,
+        "split_modes": [
+          "whole"
+        ]
+      },
+      "heading": "Definitions",
+      "jurisdiction": "OR",
+      "model_token_limit": 128,
+      "overlap_tokens": 0,
+      "section": "163.005",
+      "text": "As used in this chapter, unless the context requires otherwise, person means a human being and the provisions of this section shall be construed together with the remainder of the chapter.",
+      "title": "16"
+    },
+    {
+      "case_id": "subsection-structure",
+      "chapter": "1",
+      "code_family": "california-codes",
+      "expect": {
+        "exact_reconstruction": true,
+        "min_chunks": 2,
+        "parent_path_prefixes": [
+          [
+            "jurisdiction:CA",
+            "code:california-codes",
+            "title:1",
+            "chapter:1",
+            "section:26"
+          ]
+        ],
+        "require_structure_split": true
+      },
+      "heading": "Persons capable of committing crimes",
+      "jurisdiction": "CA",
+      "model_token_limit": 48,
+      "overlap_tokens": 8,
+      "section": "26",
+      "text": "All persons are capable of committing crimes except those belonging to the following classes:\n(a) Children under the age of 14, in the absence of clear proof that at the time of committing the act charged against them they knew its wrongfulness.\n(b) Persons who are mentally incapacitated.\n(c) Persons who committed the act charged under an ignorance or mistake of fact, which disproves any criminal intent.",
+      "title": "1"
+    },
+    {
+      "case_id": "code-title-chapter-section-subsection",
+      "chapter": "6",
+      "code_family": "texas-statutes",
+      "expect": {
+        "exact_reconstruction": true,
+        "min_chunks": 2,
+        "require_hierarchy_path": true,
+        "require_structure_split": true
+      },
+      "heading": "Requirement of voluntary act or omission",
+      "jurisdiction": "TX",
+      "model_token_limit": 40,
+      "overlap_tokens": 4,
+      "section": "6.01",
+      "text": "PENAL CODE\nTITLE 2. GENERAL PRINCIPLES OF CRIMINAL RESPONSIBILITY\nCHAPTER 6. CULPABILITY GENERALLY\nSECTION 6.01. Requirement of voluntary act or omission\n(a) A person commits an offense only if the person voluntarily engages in conduct, including an act, an omission, or possession.\n(b) Possession is a voluntary act if the possessor knowingly obtains or receives the thing possessed or is aware of the person's control of the thing for a sufficient time to permit the person to terminate control.",
+      "title": "2"
+    },
+    {
+      "case_id": "hard-split-no-markers",
+      "chapter": "775",
+      "code_family": "florida-statutes",
+      "expect": {
+        "exact_reconstruction": true,
+        "min_chunks": 4,
+        "require_hard_or_sentence": true
+      },
+      "heading": "Common law of England",
+      "jurisdiction": "FL",
+      "model_token_limit": 16,
+      "overlap_tokens": 4,
+      "section": "775.01",
+      "text": "Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word Word.",
+      "title": "46"
+    },
+    {
+      "case_id": "huge-section-bounded",
+      "chapter": "40",
+      "code_family": "new-york-consolidated-laws",
+      "expect": {
+        "all_within_limit": true,
+        "bounded": true,
+        "exact_reconstruction": false,
+        "max_chunks": 8
+      },
+      "heading": "Assault in the third degree",
+      "jurisdiction": "NY",
+      "max_chunks_per_section": 8,
+      "model_token_limit": 20,
+      "overlap_tokens": 2,
+      "section": "120.00",
+      "text_recipe": {
+        "kind": "repeat_sentence",
+        "repeat": 200,
+        "sentence": "(a) A person is guilty of assault in the third degree when the actor causes physical injury. "
+      },
+      "title": "1"
+    },
+    {
+      "case_id": "deterministic-boundaries",
+      "chapter": "4",
+      "code_family": "dc-official-code",
+      "expect": {
+        "all_within_limit": true,
+        "deterministic": true,
+        "exact_reconstruction": true
+      },
+      "heading": "Assault or threatened assault in a menacing manner",
+      "jurisdiction": "DC",
+      "model_token_limit": 40,
+      "overlap_tokens": 5,
+      "section": "22-404",
+      "text": "Whoever unlawfully assaults, or threatens another in a menacing manner, shall be fined not more than the amount set forth in section 22-3571.01 or imprisoned not more than 180 days, or both, and in addition thereto, shall be required to execute a bond to keep the peace for a period of not less than six months.",
+      "title": "22"
+    },
+    {
+      "case_id": "nested-paragraph-path",
+      "chapter": "5",
+      "code_family": "illinois-compiled-statutes",
+      "expect": {
+        "exact_reconstruction": true,
+        "min_chunks": 1,
+        "require_parent_paths": true
+      },
+      "heading": "Public information; agency rules",
+      "jurisdiction": "IL",
+      "model_token_limit": 48,
+      "overlap_tokens": 4,
+      "section": "5-1",
+      "text": "Each agency shall make available to the public information as follows:\n(a) Each agency shall separately state and currently publish for the guidance of the public—\n(1) descriptions of its central and field organization; and\n(2) statements of the general course and method by which its functions are channeled and determined.\n(b) This section does not apply to matters that are—\n(1) specifically authorized under criteria established by an Executive order to be kept secret in the interest of national defense; or\n(2) related solely to the internal personnel rules and practices of an agency.",
+      "title": "5"
+    }
+  ],
+  "description": "Compact recipe for structure-aware state statute chunk boundary cases. Named cases supply source text and chunking parameters; per-jurisdiction cases expand from corpus fixture text. Expected boundaries are derived deterministically by the chunker rather than stored as bulk per-chunk envelopes.",
+  "jurisdictions": [
+    "AK",
+    "AL",
+    "AR",
+    "AZ",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "IA",
+    "ID",
+    "IL",
+    "IN",
+    "KS",
+    "KY",
+    "LA",
+    "MA",
+    "MD",
+    "ME",
+    "MI",
+    "MN",
+    "MO",
+    "MS",
+    "MT",
+    "NC",
+    "ND",
+    "NE",
+    "NH",
+    "NJ",
+    "NM",
+    "NV",
+    "NY",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VA",
+    "VT",
+    "WA",
+    "WI",
+    "WV",
+    "WY",
+    "DC"
+  ],
+  "per_jurisdiction": {
+    "chapter": "1",
+    "expect": {
+      "all_within_limit": true,
+      "deterministic": true,
+      "exact_reconstruction": true,
+      "min_chunks": 1
+    },
+    "min_chars": 80,
+    "model_token_limit": 128,
+    "overlap_tokens": 0,
+    "section": "1.01",
+    "title": "1"
+  },
+  "physical_row_limit": 4096,
+  "schema_version": "state-laws-chunk-boundaries-v1",
+  "task_id": "LCR-025",
+  "tokenizer_id": "state-laws-whitespace-v1"
+}
