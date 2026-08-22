@@ -117,13 +117,19 @@ def _try_dcec_prove(goal: str, axioms: List[str], strategy: str, timeout: int) -
         goal_formula = parse_dcec_string(goal)
         axiom_formulas = [parse_dcec_string(a) for a in axioms]
 
+        # ProverStrategy only exposes scheduling modes (auto/parallel/sequential/best).
+        # Solver selection (z3/vampire/e) is handled inside ProverManager; map legacy
+        # solver names onto AUTO so MCP cec_prove does not AttributeError.
         strategy_map = {
             "auto": ProverStrategy.AUTO,
-            "z3": ProverStrategy.Z3,
-            "vampire": ProverStrategy.VAMPIRE,
-            "e_prover": ProverStrategy.E_PROVER,
+            "parallel": getattr(ProverStrategy, "PARALLEL", ProverStrategy.AUTO),
+            "sequential": getattr(ProverStrategy, "SEQUENTIAL", ProverStrategy.AUTO),
+            "best": getattr(ProverStrategy, "BEST", ProverStrategy.AUTO),
+            "z3": ProverStrategy.AUTO,
+            "vampire": ProverStrategy.AUTO,
+            "e_prover": ProverStrategy.AUTO,
         }
-        prover_strategy = strategy_map.get(strategy, ProverStrategy.AUTO)
+        prover_strategy = strategy_map.get(str(strategy or "auto").lower(), ProverStrategy.AUTO)
 
         manager = ProverManager()
         result = manager.prove(
@@ -132,11 +138,35 @@ def _try_dcec_prove(goal: str, axioms: List[str], strategy: str, timeout: int) -
             strategy=prover_strategy,
             timeout=timeout,
         )
+        # UnifiedProofResult and legacy result objects differ; read defensively.
+        proved = bool(
+            getattr(result, "success", None)
+            if getattr(result, "success", None) is not None
+            else getattr(result, "proved", None)
+            if getattr(result, "proved", None) is not None
+            else getattr(result, "is_valid", False)
+        )
+        prover_used = (
+            getattr(result, "prover_name", None)
+            or getattr(result, "prover_used", None)
+            or getattr(result, "backend", None)
+            or "unknown"
+        )
+        steps = (
+            getattr(result, "steps", None)
+            if getattr(result, "steps", None) is not None
+            else getattr(result, "proof_steps", 0)
+        )
+        elapsed = (
+            getattr(result, "time_taken", None)
+            if getattr(result, "time_taken", None) is not None
+            else getattr(result, "execution_time", 0.0)
+        )
         return {
-            "proved": result.success,
-            "prover_used": result.prover_name,
-            "proof_steps": result.steps,
-            "execution_time": result.time_taken,
+            "proved": proved,
+            "prover_used": prover_used,
+            "proof_steps": steps or 0,
+            "execution_time": elapsed or 0.0,
         }
     except ImportError:
         return {
