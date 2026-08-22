@@ -25,10 +25,16 @@ Design invariants
   enter decisions, receipts, or argv surfaces managed here.
 * **Additive only**: delete, force-push, history rewrite, and visibility
   changes are structurally forbidden.
+* **Canonical runtime (LCR-080)**: live mutation authority is derived by
+  ``legal_corpora_publication_runtime`` from fixed repository-relative
+  paths at the actual clean 40-hex HEAD. Caller-asserted statuses,
+  receipts, digests, commits, or seals cannot authorize. LCR-083
+  ``source_rights_binding`` remains a required gate after LCR-082 hardening.
 
 Upload implementations (LCR-040/042/064/065+) must call
 :func:`evaluate_publication_gate` / :func:`require_publication_gate` or
-:func:`authorize_and_mutate` before any Hub write.
+:func:`authorize_and_mutate` before any Hub write. Canonical live
+authority uses ``authorize_and_mutate_canonical`` in the LCR-080 runtime.
 """
 
 from __future__ import annotations
@@ -63,6 +69,11 @@ TASK_ID: Final = "LCR-074"
 GOAL_ID: Final = "LCR-G080"
 PROGRAM_ID: Final = "legal-corpora-reindex-v1"
 PRODUCER: Final = "legal_corpora_publication_gate.py"
+RUNTIME_TASK_ID: Final = "LCR-080"
+RUNTIME_GOAL_ID: Final = "LCR-G142"
+RUNTIME_MODULE: Final = (
+    "ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime"
+)
 
 STATE_DATASET_REPO_ID: Final = "justicedao/ipfs_state_laws"
 FEDERAL_DATASET_REPO_ID: Final = "justicedao/ipfs_federal_register"
@@ -252,6 +263,12 @@ class DirtyEvidenceError(PublicationGateError):
     code = "dirty_evidence_error"
 
 
+class SourceRightsInadmissibleError(PublicationGateError):
+    """Raised when source-rights evidence is missing or does not bind the candidate."""
+
+    code = "source_rights_inadmissible"
+
+
 class PublicationGateDeniedError(PublicationGateError):
     """Raised when :func:`require_publication_gate` fails closed."""
 
@@ -379,6 +396,9 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "LCR-070",
                 "LCR-074",
                 "LCR-079",
+                "LCR-081",
+                "LCR-082",
+                "LCR-083",
                 "LCR-084",
             ),
             required_receipts=(
@@ -412,6 +432,9 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "LCR-072",
                 "LCR-074",
                 "LCR-079",
+                "LCR-081",
+                "LCR-082",
+                "LCR-083",
                 "LCR-084",
             ),
             required_receipts=(
@@ -450,6 +473,9 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "LCR-075",
                 "LCR-076",
                 "LCR-079",
+                "LCR-081",
+                "LCR-082",
+                "LCR-083",
                 "LCR-084",
                 "LCR-085",
             ),
@@ -488,6 +514,9 @@ PHASE_REQUIREMENTS: Final[Mapping[str, Mapping[str, Any]]] = MappingProxyType(
                 "LCR-075",
                 "LCR-076",
                 "LCR-079",
+                "LCR-081",
+                "LCR-082",
+                "LCR-083",
                 "LCR-084",
                 "LCR-085",
             ),
@@ -1159,6 +1188,12 @@ class PublicationGateDecision:
         return self
 
 
+RIGHTS_RECEIPT_RELPATH: Final = (
+    "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json"
+)
+SUCCESSOR_TASK_ID: Final = "LCR-083"
+SUCCESSOR_GOAL_ID: Final = "LCR-G145"
+
 REQUIRED_PUBLICATION_GATES: Final = (
     "phase_target_operation",
     "task_ancestor_closure",
@@ -1168,6 +1203,7 @@ REQUIRED_PUBLICATION_GATES: Final = (
     "prepublication_seal",
     "credential_identity",
     "evidence_cleanliness",
+    "source_rights_binding",
 )
 
 
@@ -1500,6 +1536,131 @@ def check_evidence_cleanliness(request: PublicationGateRequest) -> None:
         )
 
 
+def _card_text(card: Any) -> str:
+    if card is None:
+        return ""
+    if isinstance(card, str):
+        return card
+    if isinstance(card, Mapping):
+        return json.dumps(card, sort_keys=True, ensure_ascii=True)
+    return str(card)
+
+
+def check_source_rights_binding(request: PublicationGateRequest) -> None:
+    """Refuse mutation unless the candidate binds a current authorizing rights receipt.
+
+    LCR-083: missing, stale, unknown, prohibited, target-mismatched,
+    source-mismatched, or digest-mismatched rights evidence must fail
+    before the first network callback.
+    """
+
+    receipt = request.receipts.get(RIGHTS_RECEIPT_RELPATH)
+    if not isinstance(receipt, Mapping) or not receipt:
+        raise SourceRightsInadmissibleError(
+            "source-rights compliance receipt is absent"
+        )
+    if receipt.get("fixture_only") is True:
+        raise SourceRightsInadmissibleError(
+            "fixture-only source-rights receipt cannot authorize publication"
+        )
+    if receipt.get("authorizing_for_publication") is not True:
+        raise SourceRightsInadmissibleError(
+            "source-rights receipt is not authorizing for publication"
+        )
+    if receipt.get("prohibited") is True:
+        raise SourceRightsInadmissibleError(
+            "source-rights receipt marks the candidate as prohibited"
+        )
+    if str(receipt.get("status") or "").strip().lower() in {
+        "unknown",
+        "denied",
+        "rejected",
+        "stale",
+    }:
+        raise SourceRightsInadmissibleError(
+            "source-rights receipt status is inadmissible"
+        )
+
+    actual_digest = str(
+        receipt.get("content_digest") or receipt.get("digest") or ""
+    ).strip()
+    if not actual_digest:
+        raise SourceRightsInadmissibleError(
+            "source-rights receipt is missing content_digest"
+        )
+    actual_digest = normalize_sha256(
+        actual_digest, name="source_rights_receipt.content_digest"
+    )
+
+    payload = dict(request.payload or {})
+    manifest = payload.get("candidate_manifest")
+    if not isinstance(manifest, Mapping) or not manifest:
+        raise SourceRightsInadmissibleError(
+            "candidate manifest is missing source-rights binding"
+        )
+    bound = str(
+        manifest.get("source_rights_receipt_digest")
+        or manifest.get("source_rights_compliance_digest")
+        or ""
+    ).strip()
+    if not bound:
+        raise SourceRightsInadmissibleError(
+            "candidate manifest does not bind the source-rights receipt digest"
+        )
+    bound_norm = normalize_sha256(bound, name="candidate_manifest.source_rights_receipt_digest")
+    if bound_norm != actual_digest:
+        raise SourceRightsInadmissibleError(
+            "candidate manifest source-rights digest does not match the receipt"
+        )
+
+    catalog_bound = str(manifest.get("source_rights_catalog_digest") or "").strip()
+    catalog_actual = str(receipt.get("catalog_digest_sha256") or "").strip()
+    if catalog_bound and catalog_actual and catalog_bound != catalog_actual:
+        raise SourceRightsInadmissibleError(
+            "source-rights catalog digest mismatch between candidate and receipt"
+        )
+
+    receipt_target = str(
+        receipt.get("dataset_repo_id")
+        or receipt.get("target_dataset_repo_id")
+        or ""
+    ).strip()
+    if receipt_target and receipt_target != request.dataset_repo_id:
+        raise SourceRightsInadmissibleError(
+            "source-rights receipt target does not match the mutation dataset"
+        )
+
+    admitted = {
+        str(item).strip()
+        for item in (receipt.get("admitted_record_ids") or ())
+        if str(item).strip()
+    }
+    candidate_sources = {
+        str(item).strip()
+        for item in (
+            manifest.get("admitted_source_ids")
+            or payload.get("admitted_source_ids")
+            or ()
+        )
+        if str(item).strip()
+    }
+    if candidate_sources and admitted and not candidate_sources.issubset(admitted):
+        raise SourceRightsInadmissibleError(
+            "candidate admitted sources are not covered by the source-rights receipt"
+        )
+
+    card = payload.get("dataset_card")
+    card_text = _card_text(card)
+    if not card_text:
+        raise SourceRightsInadmissibleError(
+            "dataset card is missing source-rights binding"
+        )
+    if actual_digest not in card_text and actual_digest[:16] not in card_text:
+        raise SourceRightsInadmissibleError(
+            "dataset card does not bind the source-rights receipt digest"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Public evaluation API
 # ---------------------------------------------------------------------------
@@ -1584,6 +1745,7 @@ def evaluate_publication_gate(
         ("prepublication_seal", check_prepublication_seal),
         ("credential_identity", check_credential_identity),
         ("evidence_cleanliness", check_evidence_cleanliness),
+        ("source_rights_binding", check_source_rights_binding),
     )
 
     for gate_name, checker in gate_checks:
@@ -1718,6 +1880,23 @@ def _receipts_for_phase(
             "fixture_only": fixture_only,
             "dirty": dirty,
         }
+        if path == RIGHTS_RECEIPT_RELPATH:
+            state_phase = str(phase).startswith("state_")
+            admitted_ids = (
+                ("al-alison-code-statutory_text", "ak-akleg-basis-statutory_text")
+                if state_phase
+                else ("fr-hf-baseline-720668ae016cc400916dda884c9005e03618edfa-federal_government_text",)
+            )
+            receipts[path].update(
+                {
+                    "authorizing_for_publication": True,
+                    "catalog_digest_sha256": _stable_digest(
+                        f"{phase}:rights-catalog:{manifest_digest}"
+                    ),
+                    "admitted_record_ids": list(admitted_ids),
+                    "dataset_repo_id": contract["dataset_repo_id"],
+                }
+            )
     return receipts
 
 
@@ -1812,6 +1991,23 @@ def example_authorized_request(
             "release_mode": "additive",
             "credentials_environment_only": True,
             "secret_redacted": True,
+            "candidate_manifest": {
+                "source_rights_receipt_digest": receipts[RIGHTS_RECEIPT_RELPATH][
+                    "content_digest"
+                ],
+                "source_rights_catalog_digest": receipts[RIGHTS_RECEIPT_RELPATH][
+                    "catalog_digest_sha256"
+                ],
+                "admitted_source_ids": list(
+                    receipts[RIGHTS_RECEIPT_RELPATH]["admitted_record_ids"]
+                ),
+            },
+            "dataset_card": (
+                "# Legal corpora release\n\n"
+                "Source-rights compliance digest: "
+                + str(receipts[RIGHTS_RECEIPT_RELPATH]["content_digest"])
+                + "\n"
+            ),
         },
         "argv": [
             "publish-legal-corpora",
@@ -2000,6 +2196,50 @@ def sealed_gate_fixture_payload(*, include_examples: bool = True) -> dict[str, A
             "mutator": {"authorize_mutation": False},
             "reason_fragment": "phase_target_operation",
         },
+        {
+            "id": "rights_receipt_not_authorizing",
+            "phase": "state_staging",
+            "mutator": {
+                "receipts": {
+                    RIGHTS_RECEIPT_RELPATH: {
+                        "authorizing_for_publication": False
+                    }
+                }
+            },
+            "reason_fragment": "source_rights_binding",
+        },
+        {
+            "id": "rights_digest_mismatch",
+            "phase": "federal_staging",
+            "mutator": {
+                "payload": {
+                    "candidate_manifest": {
+                        "source_rights_receipt_digest": "0" * 64
+                    }
+                }
+            },
+            "reason_fragment": "source_rights_binding",
+        },
+        {
+            "id": "rights_card_unbound",
+            "phase": "state_main",
+            "mutator": {
+                "payload": {"dataset_card": "# card without rights digest\n"}
+            },
+            "reason_fragment": "source_rights_binding",
+        },
+        {
+            "id": "rights_source_not_admitted",
+            "phase": "federal_main",
+            "mutator": {
+                "payload": {
+                    "candidate_manifest": {
+                        "admitted_source_ids": ["unknown-prohibited-source"]
+                    }
+                }
+            },
+            "reason_fragment": "source_rights_binding",
+        },
     ]
 
     payload: dict[str, Any] = {
@@ -2027,6 +2267,11 @@ def sealed_gate_fixture_payload(*, include_examples: bool = True) -> dict[str, A
         "prepublication_seal_must_precede_main_mutation": True,
         "prepublication_seal_is_not_required_for_staging": True,
         "uploader_must_invoke_gate_before_first_network_mutation": True,
+        "successor_task_id": SUCCESSOR_TASK_ID,
+        "runtime_task_id": RUNTIME_TASK_ID,
+        "runtime_goal_id": RUNTIME_GOAL_ID,
+        "canonical_runtime_module": RUNTIME_MODULE,
+        "canonical_paths_are_not_caller_overridable": True,
         "denial_cases": denial_cases,
         "example_builder": "example_authorized_request",
         "payload": {
@@ -2151,7 +2396,14 @@ __all__ = [
     "PublicationOperation",
     "PublicationPhase",
     "REQUIRED_PUBLICATION_GATES",
+    "RIGHTS_RECEIPT_RELPATH",
+    "RUNTIME_GOAL_ID",
+    "RUNTIME_MODULE",
+    "RUNTIME_TASK_ID",
     "ReceiptEvidenceError",
+    "SUCCESSOR_GOAL_ID",
+    "SUCCESSOR_TASK_ID",
+    "SourceRightsInadmissibleError",
     "SCHEMA_VERSION",
     "SECRET_ENV_NAMES",
     "STATE_DATASET_REPO_ID",
@@ -2169,6 +2421,7 @@ __all__ = [
     "check_phase_target_operation",
     "check_prepublication_seal",
     "check_receipt_evidence",
+    "check_source_rights_binding",
     "check_task_ancestor_closure",
     "clear_gate_fixture_cache",
     "collect_task_ancestor_closure",

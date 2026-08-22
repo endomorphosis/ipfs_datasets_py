@@ -12,8 +12,8 @@
     "justicedao/ipfs_state_laws"
   ],
   "baseline_revisions": {
-    "justicedao/ipfs_federal_register": "720668ae016cc400916dda884c9005e03618edfa",
-    "justicedao/ipfs_state_laws": "42f0546acc7c6cd55627eaf51fb820d5613b9021"
+    "justicedao/ipfs_state_laws": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
+    "justicedao/ipfs_federal_register": "720668ae016cc400916dda884c9005e03618edfa"
   },
   "authorized_operations": [
     "additive_main_upload",
@@ -45,7 +45,9 @@
   ],
   "generated_work_guard": {
     "task_number_floor": 77,
-    "terminal_statuses": ["completed"],
+    "terminal_statuses": [
+      "completed"
+    ],
     "scope_rule": "task_goal_parent_lineage_intersects_phase_goal_roots",
     "deny_nonterminal_matching_generated_work": true,
     "unscoped_or_unknown_goal_lineage_denies_every_phase": true,
@@ -59,13 +61,23 @@
     "digest_status_binding",
     "prepublication_seal",
     "credential_identity",
-    "evidence_cleanliness"
+    "evidence_cleanliness",
+    "source_rights_binding"
   ],
   "phase_requirements": {
     "state_staging": {
       "dataset_repo_id": "justicedao/ipfs_state_laws",
       "authorized_operation": "additive_staging_upload",
-      "required_task_ids": ["LCR-039", "LCR-070", "LCR-074", "LCR-079", "LCR-084"],
+      "required_task_ids": [
+        "LCR-039",
+        "LCR-070",
+        "LCR-074",
+        "LCR-079",
+        "LCR-081",
+        "LCR-082",
+        "LCR-083",
+        "LCR-084"
+      ],
       "required_receipts": [
         "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
         "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
@@ -76,8 +88,14 @@
       ],
       "prepublication_seal_required": false,
       "generated_work_goal_roots": [
-        "LCR-G010", "LCR-G020", "LCR-G030", "LCR-G040",
-        "LCR-G050", "LCR-G060", "LCR-G070", "LCR-G080"
+        "LCR-G010",
+        "LCR-G020",
+        "LCR-G030",
+        "LCR-G040",
+        "LCR-G050",
+        "LCR-G060",
+        "LCR-G070",
+        "LCR-G080"
       ],
       "previous_public_pin": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
       "seal_receipt_path": null
@@ -85,7 +103,17 @@
     "state_main": {
       "dataset_repo_id": "justicedao/ipfs_state_laws",
       "authorized_operation": "additive_main_upload",
-      "required_task_ids": ["LCR-041", "LCR-070", "LCR-072", "LCR-074", "LCR-079", "LCR-084"],
+      "required_task_ids": [
+        "LCR-041",
+        "LCR-070",
+        "LCR-072",
+        "LCR-074",
+        "LCR-079",
+        "LCR-081",
+        "LCR-082",
+        "LCR-083",
+        "LCR-084"
+      ],
       "required_receipts": [
         "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
         "docs/reports/legal_corpora_reindex/full_scrape_acceptance.json",
@@ -99,8 +127,14 @@
       ],
       "prepublication_seal_required": true,
       "generated_work_goal_roots": [
-        "LCR-G010", "LCR-G020", "LCR-G030", "LCR-G040",
-        "LCR-G050", "LCR-G060", "LCR-G070", "LCR-G080"
+        "LCR-G010",
+        "LCR-G020",
+        "LCR-G030",
+        "LCR-G040",
+        "LCR-G050",
+        "LCR-G060",
+        "LCR-G070",
+        "LCR-G080"
       ],
       "previous_public_pin": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
       "seal_receipt_path": "docs/reports/legal_corpora_reindex/state_prepublication_seal.json"
@@ -109,7 +143,18 @@
       "dataset_repo_id": "justicedao/ipfs_federal_register",
       "authorized_operation": "additive_staging_upload",
       "required_task_ids": [
-        "LCR-063", "LCR-070", "LCR-071", "LCR-074", "LCR-075", "LCR-076", "LCR-079", "LCR-084", "LCR-085"
+        "LCR-063",
+        "LCR-070",
+        "LCR-071",
+        "LCR-074",
+        "LCR-075",
+        "LCR-076",
+        "LCR-079",
+        "LCR-081",
+        "LCR-082",
+        "LCR-083",
+        "LCR-084",
+        "LCR-085"
       ],
       "required_receipts": [
         "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -124,7 +169,12 @@
       ],
       "prepublication_seal_required": false,
       "generated_work_goal_roots": [
-        "LCR-G010", "LCR-G080", "LCR-G100", "LCR-G110", "LCR-G120", "LCR-G130"
+        "LCR-G010",
+        "LCR-G080",
+        "LCR-G100",
+        "LCR-G110",
+        "LCR-G120",
+        "LCR-G130"
       ],
       "previous_public_pin": "720668ae016cc400916dda884c9005e03618edfa",
       "seal_receipt_path": null
@@ -133,8 +183,19 @@
       "dataset_repo_id": "justicedao/ipfs_federal_register",
       "authorized_operation": "additive_main_upload",
       "required_task_ids": [
-        "LCR-064", "LCR-070", "LCR-071", "LCR-073",
-        "LCR-074", "LCR-075", "LCR-076", "LCR-079", "LCR-084", "LCR-085"
+        "LCR-064",
+        "LCR-070",
+        "LCR-071",
+        "LCR-073",
+        "LCR-074",
+        "LCR-075",
+        "LCR-076",
+        "LCR-079",
+        "LCR-081",
+        "LCR-082",
+        "LCR-083",
+        "LCR-084",
+        "LCR-085"
       ],
       "required_receipts": [
         "docs/reports/legal_corpora_reindex/live_baseline_provenance_receipt.json",
@@ -151,8 +212,13 @@
       ],
       "prepublication_seal_required": true,
       "generated_work_goal_roots": [
-        "LCR-G010", "LCR-G080", "LCR-G100", "LCR-G110",
-        "LCR-G120", "LCR-G130", "LCR-G140"
+        "LCR-G010",
+        "LCR-G080",
+        "LCR-G100",
+        "LCR-G110",
+        "LCR-G120",
+        "LCR-G130",
+        "LCR-G140"
       ],
       "previous_public_pin": "720668ae016cc400916dda884c9005e03618edfa",
       "seal_receipt_path": "docs/reports/legal_corpora_reindex/federal_prepublication_seal.json"
@@ -161,18 +227,26 @@
   "prepublication_seal_must_precede_main_mutation": true,
   "prepublication_seal_is_not_required_for_staging": true,
   "uploader_must_invoke_gate_before_first_network_mutation": true,
-  "example_builder": "example_authorized_request",
+  "successor_task_id": "LCR-083",
+  "runtime_task_id": "LCR-080",
+  "runtime_goal_id": "LCR-G142",
+  "canonical_runtime_module": "ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime",
+  "canonical_paths_are_not_caller_overridable": true,
   "denial_cases": [
     {
       "id": "incomplete_required_task",
       "phase": "state_staging",
-      "mutator": {"task_statuses.LCR-039": "todo"},
+      "mutator": {
+        "task_statuses.LCR-039": "todo"
+      },
       "reason_fragment": "task_ancestor_closure"
     },
     {
       "id": "incomplete_ancestor",
       "phase": "state_staging",
-      "mutator": {"task_statuses.LCR-008": "todo"},
+      "mutator": {
+        "task_statuses.LCR-008": "todo"
+      },
       "reason_fragment": "task_ancestor_closure"
     },
     {
@@ -197,7 +271,9 @@
     {
       "id": "fixture_only_evidence",
       "phase": "state_staging",
-      "mutator": {"fixture_only_evidence": true},
+      "mutator": {
+        "fixture_only_evidence": true
+      },
       "reason_fragment": "receipt_evidence"
     },
     {
@@ -225,20 +301,27 @@
     {
       "id": "wrong_repo",
       "phase": "state_staging",
-      "mutator": {"dataset_repo_id": "justicedao/ipfs_federal_register"},
+      "mutator": {
+        "dataset_repo_id": "justicedao/ipfs_federal_register"
+      },
       "reason_fragment": "phase_target_operation"
     },
     {
       "id": "wrong_operation_for_phase",
       "phase": "state_staging",
-      "mutator": {"operation": "additive_main_upload"},
+      "mutator": {
+        "operation": "additive_main_upload"
+      },
       "reason_fragment": "phase_target_operation"
     },
     {
       "id": "main_seal_absent",
       "phase": "state_main",
       "mutator": {
-        "prepublication_seal": {"present": false, "timing": "absent"}
+        "prepublication_seal": {
+          "present": false,
+          "timing": "absent"
+        }
       },
       "reason_fragment": "prepublication_seal"
     },
@@ -277,31 +360,41 @@
     {
       "id": "forbidden_delete",
       "phase": "state_staging",
-      "mutator": {"operation": "delete"},
+      "mutator": {
+        "operation": "delete"
+      },
       "reason_fragment": "request.invalid"
     },
     {
       "id": "forbidden_force_push",
       "phase": "federal_main",
-      "mutator": {"operation": "force_push"},
+      "mutator": {
+        "operation": "force_push"
+      },
       "reason_fragment": "request.invalid"
     },
     {
       "id": "forbidden_history_rewrite",
       "phase": "state_main",
-      "mutator": {"operation": "history_rewrite"},
+      "mutator": {
+        "operation": "history_rewrite"
+      },
       "reason_fragment": "request.invalid"
     },
     {
       "id": "forbidden_visibility_change",
       "phase": "federal_staging",
-      "mutator": {"operation": "visibility_change"},
+      "mutator": {
+        "operation": "visibility_change"
+      },
       "reason_fragment": "request.invalid"
     },
     {
       "id": "dirty_evidence",
       "phase": "federal_staging",
-      "mutator": {"evidence_is_dirty": true},
+      "mutator": {
+        "evidence_is_dirty": true
+      },
       "reason_fragment": "evidence_cleanliness"
     },
     {
@@ -315,10 +408,61 @@
     {
       "id": "authorize_mutation_false",
       "phase": "state_staging",
-      "mutator": {"authorize_mutation": false},
+      "mutator": {
+        "authorize_mutation": false
+      },
       "reason_fragment": "phase_target_operation"
+    },
+    {
+      "id": "rights_receipt_not_authorizing",
+      "phase": "state_staging",
+      "mutator": {
+        "receipts": {
+          "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json": {
+            "authorizing_for_publication": false
+          }
+        }
+      },
+      "reason_fragment": "source_rights_binding"
+    },
+    {
+      "id": "rights_digest_mismatch",
+      "phase": "federal_staging",
+      "mutator": {
+        "payload": {
+          "candidate_manifest": {
+            "source_rights_receipt_digest": "0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        }
+      },
+      "reason_fragment": "source_rights_binding"
+    },
+    {
+      "id": "rights_card_unbound",
+      "phase": "state_main",
+      "mutator": {
+        "payload": {
+          "dataset_card": "# card without rights digest\n"
+        }
+      },
+      "reason_fragment": "source_rights_binding"
+    },
+    {
+      "id": "rights_source_not_admitted",
+      "phase": "federal_main",
+      "mutator": {
+        "payload": {
+          "candidate_manifest": {
+            "admitted_source_ids": [
+              "unknown-prohibited-source"
+            ]
+          }
+        }
+      },
+      "reason_fragment": "source_rights_binding"
     }
   ],
+  "example_builder": "example_authorized_request",
   "payload": {
     "credentials_environment_only": true,
     "secret_redacted": true,

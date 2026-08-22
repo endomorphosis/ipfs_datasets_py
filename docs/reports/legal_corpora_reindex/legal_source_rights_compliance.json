@@ -65,7 +65,7 @@
   "audit_producer": "audit_legal_source_rights.py@2",
   "authority_suppressed": false,
   "authorizing_for_publication": true,
-  "catalog_digest_sha256": "176a82e3d11379bf0fa92759d7bfeb326cfcc876935fa22d224e256bc216f011",
+  "catalog_digest_sha256": "3ba1d10b30598c2145ee0dfa62db42d69d2d664578fce90d5c4ed756ac742a4b",
   "catalog_path": "data/legal/legal_source_rights_catalog.json",
   "catalog_schema_version": "legal-source-rights-catalog-v2",
   "code_version": "2",
@@ -889,7 +889,7 @@
   "producer": "audit_legal_source_rights.py@2",
   "program_id": "legal-corpora-reindex-v1",
   "record_count": 57,
-  "report_digest_sha256": "3495b2d650f69f239822bc3893615aa8bd49ba80b86efb54da0610cb5f1c5029",
+  "report_digest_sha256": "46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee",
   "report_schema": "ipfs_datasets_py/legal-source-rights-compliance@2",
   "schema_version": "legal-source-rights-policy-v2",
   "secret_free": true,
@@ -899,5 +899,5 @@
     "justicedao/ipfs_federal_register"
   ],
   "task_id": "LCR-078",
-  "verified_at": "2026-08-21T16:06:29.873012Z"
+  "verified_at": "2026-08-22T05:37:47.830725Z"
 }

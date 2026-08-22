@@ -74,9 +74,22 @@ LIVE_CATALOG_RELATIVE = Path("data/legal/legal_source_rights_catalog.json")
 COMPLIANCE_RELATIVE = Path("docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json")
 LIVE_USER_AGENT = "legal-corpora-reindex-v1-source-rights-auditor/2"
 LIVE_FETCH_TIMEOUT_SECONDS = 20.0
+LIVE_ARCHIVE_FETCH_TIMEOUT_SECONDS = 45.0
 LIVE_FETCH_RETRIES = 2
 LIVE_FETCH_WORKERS = 8
 LIVE_MAX_BODY_BYTES = 131072
+_CF_CHALLENGE_MARKERS = (
+    b"just a moment",
+    b"cf-browser-verification",
+    b"challenge-platform",
+    b"cf-challenge",
+)
+_HTML_ABSENCE_MARKERS = (
+    b"404 page not found",
+    b"page not found",
+    b"http error 404",
+    b"<title>404",
+)
 _HOME_PATH_RE = re.compile(r"/home/[A-Za-z0-9._-]+")
 _TOKEN_RE = re.compile(
     r"(?:hf_[A-Za-z0-9]{16,}|sk-[A-Za-z0-9]{16,}|Bearer\s+[A-Za-z0-9\-._~+/]+=*)"
@@ -311,7 +324,11 @@ def observation_needs_archive_fallback(result: LiveFetchResult) -> bool:
         return True
     if result.status in {401, 403, 429}:
         return True
-    return result.status >= 500
+    if result.status >= 500:
+        return True
+    if 200 <= result.status < 300 and _looks_like_challenge_html(result.body):
+        return True
+    return False
 
 
 def archival_candidate_urls(url: str) -> list[str]:
@@ -393,6 +410,24 @@ def _extract_http_body_from_warc(payload: bytes) -> bytes:
     return body
 
 
+def _looks_like_challenge_html(body: bytes) -> bool:
+    sample = bytes(body or b"")[:8000].lower()
+    return any(marker in sample for marker in _CF_CHALLENGE_MARKERS)
+
+
+def _looks_like_html_absence_page(body: bytes) -> bool:
+    sample = bytes(body or b"")[:8000].lower()
+    if b"<html" not in sample and b"<!doctype html" not in sample:
+        return False
+    return any(marker in sample for marker in _HTML_ABSENCE_MARKERS)
+
+
+def _fetch_timeout_seconds(url: str) -> float:
+    if _is_archive_host(url):
+        return LIVE_ARCHIVE_FETCH_TIMEOUT_SECONDS
+    return LIVE_FETCH_TIMEOUT_SECONDS
+
+
 def _direct_http_get(url: str, *, extra_headers: Mapping[str, str] | None = None) -> LiveFetchResult:
     """Single-URL HTTP(S) GET. Archive fallback is layered in ``fetch_live_url``."""
 
@@ -405,6 +440,7 @@ def _direct_http_get(url: str, *, extra_headers: Mapping[str, str] | None = None
     if extra_headers:
         headers.update(dict(extra_headers))
     last_error = "unavailable"
+    timeout_seconds = _fetch_timeout_seconds(url)
     unverified = ssl.create_default_context()
     unverified.check_hostname = False
     unverified.verify_mode = ssl.CERT_NONE
@@ -418,7 +454,7 @@ def _direct_http_get(url: str, *, extra_headers: Mapping[str, str] | None = None
             try:
                 request = urllib.request.Request(url, method="GET", headers=headers)
                 with urllib.request.urlopen(
-                    request, timeout=LIVE_FETCH_TIMEOUT_SECONDS, context=context
+                    request, timeout=timeout_seconds, context=context
                 ) as response:
                     raw = response.read(LIVE_MAX_BODY_BYTES + 1)
                     status = int(getattr(response, "status", 200) or 200)
@@ -553,6 +589,10 @@ def interpret_robots(
         return "allowed", None
     if not (200 <= http_status < 300):
         return "unknown", None
+    if _looks_like_challenge_html(robots_body):
+        return "unavailable", None
+    if _looks_like_html_absence_page(robots_body):
+        return "allowed", None
     parser = urllib.robotparser.RobotFileParser()
     try:
         text = robots_body.decode("utf-8", errors="replace")
@@ -718,12 +758,25 @@ def build_live_catalog_payload(
             and not conditions
         ):
             archive_hits: LiveFetchResult | None = None
-            for archive_url in (
+            quoted_source = urllib.parse.quote(entry.source_url, safe="")
+            archive_urls = (
+                f"https://archive.org/wayback/available?url={quoted_source}",
                 f"https://web.archive.org/web/2id_/{entry.source_url}",
                 f"https://archive.is/newest/{entry.source_url}",
-            ):
+            )
+            for archive_url in archive_urls:
                 candidate = cached_fetch(archive_url)
-                if candidate.error is None and candidate.status in {200, 206} and len(candidate.body) >= 80:
+                if "wayback/available" in archive_url:
+                    snapshot = _wayback_snapshot_url_from_available(candidate.body)
+                    if not snapshot:
+                        continue
+                    candidate = cached_fetch(snapshot)
+                if (
+                    candidate.error is None
+                    and candidate.status in {200, 206}
+                    and len(candidate.body) >= 80
+                    and not _looks_like_challenge_html(candidate.body)
+                ):
                     archive_hits = candidate
                     break
             if archive_hits is not None:
@@ -889,6 +942,22 @@ def seal_live_catalog_and_receipt(
     fetch_url: LiveFetchFn = fetch_live_url,
 ) -> dict[str, Any]:
     catalog = build_live_catalog_payload(fetch_url=fetch_url)
+    denied = [
+        record["record_id"]
+        for record in catalog.get("records") or []
+        if isinstance(record, Mapping)
+        and record.get("content_scope") in {scope.value for scope in ADMISSIBLE_CONTENT_SCOPES}
+        and (
+            record.get("permissions", {}).get("redistribution") is not True
+            or str(record.get("record_id") or "")
+            not in set(catalog.get("admitted_record_ids") or [])
+        )
+    ]
+    if denied or catalog.get("authorizing_for_publication") is not True:
+        raise AuditError(
+            "live source-rights catalog is not authoritative; denied in-scope records="
+            f"{denied!r}"
+        )
     write_live_catalog(catalog)
     report = require_live_source_evidence()
     wrapped = {

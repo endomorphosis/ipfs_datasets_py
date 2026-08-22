@@ -28,9 +28,15 @@ Design invariants
 
 from __future__ import annotations
 
+import gzip
 import json
 import re
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
 from html.parser import HTMLParser
 from pathlib import Path
@@ -76,6 +82,7 @@ from ipfs_datasets_py.processors.legal_data.federal_register_source_policy impor
     digest_mapping,
     normalize_sha256,
     observation_cutoff_date,
+    parse_legal_id,
     repository_root,
     require_full_text_authority,
     require_immutable_observation_cutoff,
@@ -106,13 +113,46 @@ MODE_LIVE: Final = "live"
 DEFAULT_REPORT_RELPATH: Final = Path(
     "docs/reports/legal_corpora_reindex/federal_fulltext_coverage.json"
 )
+DEFAULT_LIVE_REPORT_RELPATH: Final = Path(
+    "docs/reports/legal_corpora_reindex/federal_fulltext_coverage.live.json"
+)
 INVENTORY_REPORT_RELPATH: Final = Path(
     "docs/reports/legal_corpora_reindex/federal_inventory.json"
+)
+MAX_FULLTEXT_RESPONSE_BYTES: Final = 8_000_000
+LIVE_REQUEST_TIMEOUT_SECONDS: Final = 45.0
+_DOCNO: Final = r"(?:[A-Z]\d-)?\d{4}-\d{5}"
+_FR_HTML_PATH: Final = re.compile(
+    rf"^/documents/\d{{4}}/\d{{2}}/\d{{2}}/{_DOCNO}$"
+)
+_FR_PDF_PATH: Final = re.compile(
+    rf"^/documents/\d{{4}}/\d{{2}}/\d{{2}}/{_DOCNO}\.pdf$"
+)
+_FR_XML_PATH: Final = re.compile(
+    rf"^/documents/full_text/xml/{_DOCNO}\.xml$"
+)
+_GOVINFO_PDF_PATH: Final = re.compile(
+    rf"^/content/pkg/FR-\d{{4}}-\d{{2}}-\d{{2}}/pdf/{_DOCNO}\.pdf$"
+)
+_GOVINFO_HTML_PATH: Final = re.compile(
+    rf"^/content/pkg/FR-\d{{4}}-\d{{2}}-\d{{2}}/html/{_DOCNO}\.htm$"
+)
+_FR_HTML_SLUG_PATH: Final = re.compile(
+    rf"^/documents/\d{{4}}/\d{{2}}/\d{{2}}/{_DOCNO}(/[a-z0-9\-]+)?$"
+)
+_FR_FULL_TEXT_HTML_PATH: Final = re.compile(
+    rf"^/documents/full_text/html/\d{{4}}/\d{{2}}/\d{{2}}/{_DOCNO}\.html$"
+)
+_FR_FULL_TEXT_XML_PATH: Final = re.compile(
+    rf"^/documents/full_text/xml/\d{{4}}/\d{{2}}/\d{{2}}/{_DOCNO}\.xml$"
+)
+_FR_FULL_TEXT_TEXT_PATH: Final = re.compile(
+    rf"^/documents/full_text/text/\d{{4}}/\d{{2}}/\d{{2}}/{_DOCNO}\.txt$"
 )
 
 FIXTURE_OBSERVED_AT: Final = "2026-08-10T12:00:00Z"
 MIN_ADMITTED_BODY_CHARS: Final = 80
-MAX_BODY_CHARS: Final = 1_000_000
+MAX_BODY_CHARS: Final = 8_000_000
 MAX_NOTES_CHARS: Final = 2048
 
 # Source precedence: first usable official format wins.
@@ -152,6 +192,10 @@ class FailedFinalCoverageError(FederalRegisterFulltextError):
 
 class LiveFulltextDisabledError(FederalRegisterFulltextError):
     """Raised when live network full-text transport is required but disabled."""
+
+
+class FulltextFetchError(FederalRegisterFulltextError):
+    """Raised when an official full-text HTTPS fetch fails or is out of scope."""
 
 
 class InventoryRewriteError(FederalRegisterFulltextError):
@@ -502,7 +546,8 @@ FIXTURE_ROLE_SEQUENCE: Final = (
 # ---------------------------------------------------------------------------
 
 _ANTI_BOT_RE = re.compile(
-    r"(?is)(?:captcha|cloudflare|cf-challenge|are you a robot|"
+    r"(?is)(?:captcha|cf-challenge|cdn-cgi/challenge-platform|"
+    r"cloudflare checking your browser|are you a robot|"
     r"please enable javascript|access denied|unusual traffic|"
     r"attention required|checking your browser before accessing|"
     r"verify you are human|ddos protection)"
@@ -537,7 +582,9 @@ _FORMAT_MEDIA_TYPES: Final = {
     SourceFormat.HTML: frozenset({"text/html", "application/xhtml+xml"}),
     SourceFormat.XML: frozenset({"application/xml", "text/xml"}),
     SourceFormat.PDF: frozenset({"application/pdf", "text/plain"}),
-    SourceFormat.GOVINFO: frozenset({"application/pdf", "text/plain"}),
+    SourceFormat.GOVINFO: frozenset(
+        {"application/pdf", "text/plain", "text/html", "application/xhtml+xml"}
+    ),
 }
 
 
@@ -695,7 +742,11 @@ def _collapse_whitespace(text: str) -> str:
 def normalize_html_body(raw: bytes | str) -> str:
     """Normalize official HTML into retrieval body text."""
 
-    text = raw if isinstance(raw, str) else _decode_payload(raw)
+    if isinstance(raw, (bytes, bytearray)):
+        raw = bytes(raw).replace(b"\x00", b"\n")
+        text = _decode_payload(raw)
+    else:
+        text = str(raw).replace("\x00", "\n")
     extractor = _HTMLTextExtractor()
     try:
         extractor.feed(text)
@@ -761,12 +812,24 @@ def normalize_pdf_body(raw: bytes | str) -> str:
     return _collapse_whitespace("\n".join(lines))
 
 
+def _looks_like_html(raw: bytes | str) -> bool:
+    prefix = raw[:400] if isinstance(raw, (bytes, bytearray)) else str(raw)[:400]
+    if isinstance(prefix, (bytes, bytearray)):
+        text = prefix.decode("utf-8", errors="replace")
+    else:
+        text = prefix
+    lowered = text.lstrip().lower()
+    return lowered.startswith("<!") or lowered.startswith("<html") or "<pre" in lowered
+
+
 def normalize_body(raw: bytes | str, source_format: SourceFormat | str) -> str:
     fmt = SourceFormat.coerce(source_format)
     if fmt is SourceFormat.HTML:
         return normalize_html_body(raw)
     if fmt is SourceFormat.XML:
         return normalize_xml_body(raw)
+    if fmt is SourceFormat.GOVINFO and _looks_like_html(raw):
+        return normalize_html_body(raw)
     return normalize_pdf_body(raw)
 
 
@@ -798,12 +861,23 @@ def detect_content_kind(
         return ParserResult.EMPTY
     if isinstance(raw, str) and not raw.strip():
         return ParserResult.EMPTY
+    if isinstance(raw, (bytes, bytearray)) and b"\x00" in raw:
+        if fmt in {SourceFormat.HTML, SourceFormat.GOVINFO} and _looks_like_html(raw):
+            raw = bytes(raw).replace(b"\x00", b"\n")
+        elif fmt is not SourceFormat.PDF:
+            return ParserResult.PARSE_ERROR
+    if isinstance(raw, str) and "\x00" in raw:
+        if fmt in {SourceFormat.HTML, SourceFormat.GOVINFO} and _looks_like_html(raw):
+            raw = raw.replace("\x00", "\n")
+        else:
+            return ParserResult.PARSE_ERROR
 
     decoded = raw if isinstance(raw, str) else _decode_payload(raw)
     haystack = decoded[:50_000]
+    chrome = decoded[:1500]
     if _ANTI_BOT_RE.search(haystack):
         return ParserResult.ANTI_BOT
-    if _ERROR_PAGE_RE.search(haystack):
+    if _ERROR_PAGE_RE.search(chrome):
         return ParserResult.ERROR_PAGE
 
     try:
@@ -816,6 +890,11 @@ def detect_content_kind(
     navigation_hit = bool(
         _NAVIGATION_RE.search(haystack) or _NAVIGATION_RE.search(normalized)
     )
+    if "\x00" in normalized:
+        if fmt in {SourceFormat.HTML, SourceFormat.GOVINFO}:
+            normalized = normalized.replace("\x00", " ")
+        else:
+            return ParserResult.PARSE_ERROR
     if not normalized:
         if navigation_hit:
             return ParserResult.NAVIGATION
@@ -872,6 +951,12 @@ def official_govinfo_url(document_number: str, publication_date: str) -> str:
     pub = validate_calendar_date(publication_date, name="publication_date")
     doc = validate_document_number(document_number)
     return f"{GOVINFO_SITE}/content/pkg/FR-{pub}/pdf/{doc}.pdf"
+
+
+def official_govinfo_html_url(document_number: str, publication_date: str) -> str:
+    pub = validate_calendar_date(publication_date, name="publication_date")
+    doc = validate_document_number(document_number)
+    return f"{GOVINFO_SITE}/content/pkg/FR-{pub}/html/{doc}.htm"
 
 
 def locators_for_document(document: InventoryDocument) -> dict[SourceFormat, str]:
@@ -1493,6 +1578,364 @@ class FixtureFulltextTransport:
         return _payload_for_role(role, source_format, document)
 
 
+def live_fulltext_url_is_allowed(url: str) -> bool:
+    """Return True when *url* is an exact official HTML/XML/PDF/GovInfo locator."""
+
+    try:
+        target = validate_official_url(url, name="fulltext_url")
+    except FederalRegisterSourcePolicyError:
+        return False
+    parsed = urllib.parse.urlsplit(target)
+    if (
+        parsed.scheme != "https"
+        or parsed.port is not None
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.fragment
+        or parsed.query
+    ):
+        return False
+    host = (parsed.hostname or "").lower()
+    path = parsed.path or ""
+    if host in {"www.federalregister.gov", "federalregister.gov"}:
+        return bool(
+            _FR_HTML_PATH.fullmatch(path)
+            or _FR_HTML_SLUG_PATH.fullmatch(path)
+            or _FR_PDF_PATH.fullmatch(path)
+            or _FR_XML_PATH.fullmatch(path)
+            or _FR_FULL_TEXT_HTML_PATH.fullmatch(path)
+            or _FR_FULL_TEXT_XML_PATH.fullmatch(path)
+            or _FR_FULL_TEXT_TEXT_PATH.fullmatch(path)
+        )
+    if host in {"www.govinfo.gov", "govinfo.gov"}:
+        return bool(
+            _GOVINFO_PDF_PATH.fullmatch(path) or _GOVINFO_HTML_PATH.fullmatch(path)
+        )
+    return False
+
+
+class _SameHostOfficialRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
+        if not live_fulltext_url_is_allowed(newurl):
+            raise FulltextFetchError(
+                f"full-text redirect is outside official locators: HTTP {code}"
+            )
+        return urllib.request.HTTPRedirectHandler.redirect_request(
+            self, req, fp, code, msg, headers, newurl
+        )
+
+
+class BuiltinHttpsFulltextTransport:
+    """Opt-in HTTPS transport for official Federal Register / GovInfo bodies."""
+
+    def __init__(
+        self,
+        *,
+        timeout: float = LIVE_REQUEST_TIMEOUT_SECONDS,
+        max_bytes: int = MAX_FULLTEXT_RESPONSE_BYTES,
+        rate_limit_seconds: float = 0.2,
+    ) -> None:
+        self.timeout = float(timeout)
+        self.max_bytes = int(max_bytes)
+        self.rate_limit_seconds = float(rate_limit_seconds)
+        self._last_request_at = 0.0
+        if self.timeout <= 0 or self.timeout > 120:
+            raise FederalRegisterFulltextError("live full-text timeout is out of bounds")
+        if self.max_bytes < 1024 or self.max_bytes > 32_000_000:
+            raise FederalRegisterFulltextError("live full-text byte bound is out of bounds")
+        if self.rate_limit_seconds < 0 or self.rate_limit_seconds > 10:
+            raise FederalRegisterFulltextError("live full-text rate limit is out of bounds")
+
+    def __call__(self, url: str, headers: Mapping[str, str]) -> tuple[bytes, str]:
+        try:
+            target = validate_official_url(url, name="fulltext_url")
+        except FederalRegisterSourcePolicyError as exc:
+            raise FulltextFetchError(f"full-text URL is not official: {url}") from exc
+        if not live_fulltext_url_is_allowed(target):
+            raise FulltextFetchError(
+                f"full-text URL is outside the official locator set: {target}"
+            )
+        if self.rate_limit_seconds:
+            elapsed = time.monotonic() - self._last_request_at
+            if elapsed < self.rate_limit_seconds:
+                time.sleep(self.rate_limit_seconds - elapsed)
+        merged_headers = {str(k): str(v) for k, v in headers.items()}
+        merged_headers.setdefault("Accept-Encoding", "identity")
+        request = urllib.request.Request(  # noqa: S310 - official HTTPS locator checked above
+            target,
+            headers=merged_headers,
+            method="GET",
+        )
+        opener = urllib.request.build_opener(
+            urllib.request.ProxyHandler({}),
+            _SameHostOfficialRedirectHandler(),
+        )
+        media = ""
+        try:
+            with opener.open(request, timeout=self.timeout) as response:
+                final_url = str(response.geturl() or target)
+                if not live_fulltext_url_is_allowed(final_url):
+                    raise FulltextFetchError(
+                        "full-text response URL drifted outside official locators"
+                    )
+                declared_length = response.headers.get("Content-Length")
+                if declared_length is not None:
+                    try:
+                        length = int(declared_length, 10)
+                    except ValueError as exc:
+                        raise FulltextFetchError("invalid full-text Content-Length") from exc
+                    if length < 0 or length > self.max_bytes:
+                        raise FulltextFetchError(
+                            "full-text Content-Length exceeds the response bound"
+                        )
+                body = response.read(self.max_bytes + 1)
+                media = (response.headers.get_content_type() or "").strip().lower()
+                self._last_request_at = time.monotonic()
+        except FulltextFetchError:
+            raise
+        except urllib.error.HTTPError as exc:
+            raise FulltextFetchError(
+                f"official full-text HTTP {exc.code} for {target}"
+            ) from exc
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            raise FulltextFetchError(
+                f"official full-text transport failed for {target}"
+            ) from exc
+        if len(body) > self.max_bytes:
+            raise FulltextFetchError("full-text response exceeds the byte bound")
+        if body.startswith(b"\x1f\x8b"):
+            try:
+                body = gzip.decompress(body)
+            except OSError as exc:
+                raise FulltextFetchError("gzip full-text payload could not be decoded") from exc
+            if len(body) > self.max_bytes:
+                raise FulltextFetchError("decompressed full-text response exceeds the byte bound")
+        if not media:
+            if target.endswith(".xml"):
+                media = "application/xml"
+            elif target.endswith(".pdf"):
+                media = "application/pdf"
+            else:
+                media = "text/html"
+        return bytes(body), media
+
+
+def default_live_report_path(repo_root: PathLike | None = None) -> Path:
+    root = Path(repo_root) if repo_root is not None else repository_root()
+    return root / DEFAULT_LIVE_REPORT_RELPATH
+
+
+def utc_now_z() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def load_live_inventory_report(
+    *,
+    repo_root: PathLike | None = None,
+) -> dict[str, Any]:
+    """Load the sealed LCR-052 live inventory without rewriting it."""
+
+    root = Path(repo_root) if repo_root is not None else repository_root()
+    path = root / INVENTORY_REPORT_RELPATH
+    payload = load_json_object(path)
+    if payload.get("mode") != MODE_LIVE:
+        raise LiveFulltextDisabledError(
+            f"sealed inventory mode is {payload.get('mode')!r}, not live"
+        )
+    if payload.get("task_id") not in {INVENTORY_TASK_ID, None}:
+        if payload.get("task_id") != INVENTORY_TASK_ID:
+            raise FulltextCoverageError(
+                f"inventory task_id {payload.get('task_id')!r} is not {INVENTORY_TASK_ID}"
+            )
+    return dict(payload)
+
+
+def inventory_documents_from_legal_ids(
+    legal_ids: Sequence[str],
+) -> tuple[InventoryDocument, ...]:
+    """Build official locators from canonical ``fr:<doc>:<date>`` identities."""
+
+    documents: list[InventoryDocument] = []
+    seen: set[str] = set()
+    for raw_id in legal_ids:
+        doc, pub, _qualifier = parse_legal_id(raw_id)
+        legal = build_legal_id(doc, pub)
+        if legal in seen:
+            raise FulltextCoverageError(f"duplicate live inventory legal_id {legal}")
+        seen.add(legal)
+        documents.append(
+            InventoryDocument(
+                document_number=doc,
+                publication_date=pub,
+                legal_id=legal,
+                html_url=official_html_url(doc, pub),
+                xml_url=official_xml_url(doc),
+                pdf_url=official_govinfo_html_url(doc, pub),
+            )
+        )
+    if not documents:
+        raise FulltextCoverageError("live inventory legal_id list is empty")
+    return tuple(documents)
+
+
+def load_live_identity_sample_documents(
+    *,
+    repo_root: PathLike | None = None,
+    limit: int | None = None,
+) -> tuple[tuple[InventoryDocument, ...], dict[str, Any]]:
+    """Load the live inventory identity sample as explicit live documents."""
+
+    report = load_live_inventory_report(repo_root=repo_root)
+    samples = (report.get("identity") or {}).get("sample_legal_ids") or []
+    if not isinstance(samples, list) or not samples:
+        raise FulltextCoverageError("live inventory identity sample is empty")
+    documents = inventory_documents_from_legal_ids(
+        [str(item) for item in samples]
+    )
+    if limit is not None:
+        bound = _require_non_negative_int(limit, "limit")
+        if bound < 1:
+            raise FulltextCoverageError("live sample limit must be >= 1")
+        documents = documents[:bound]
+    return documents, report
+
+
+def sealed_live_inventory_document_numbers(
+    report: Mapping[str, Any],
+) -> tuple[str, ...]:
+    """Return unique official document numbers from the sealed live inventory."""
+
+    payload = _as_mapping(report, "inventory_report")
+    numbers: list[str] = []
+    seen: set[str] = set()
+    for partition in _as_sequence(payload.get("partitions") or (), "partitions"):
+        part = _as_mapping(partition, "partition")
+        for page in _as_sequence(part.get("pages") or (), "pages"):
+            page_map = _as_mapping(page, "page")
+            for raw in _as_sequence(
+                page_map.get("document_numbers") or (), "document_numbers"
+            ):
+                doc = validate_document_number(raw)
+                if doc not in seen:
+                    seen.add(doc)
+                    numbers.append(doc)
+    if not numbers:
+        raise FulltextCoverageError("sealed live inventory has no document numbers")
+    return tuple(numbers)
+
+
+def remap_live_document_to_govinfo_html(
+    document: InventoryDocument,
+) -> InventoryDocument:
+    """Bind GovInfo HTML as the live full-text locator (FR.gov is anti-bot gated)."""
+
+    return InventoryDocument(
+        document_number=document.document_number,
+        publication_date=document.publication_date,
+        title=document.title,
+        html_url=document.html_url
+        or official_html_url(document.document_number, document.publication_date),
+        xml_url=document.xml_url or official_xml_url(document.document_number),
+        pdf_url=official_govinfo_html_url(
+            document.document_number, document.publication_date
+        ),
+        document_type=document.document_type,
+        agencies=document.agencies,
+        disposition=document.disposition,
+        legal_id=document.legal_id,
+        abstract=document.abstract,
+        page_id=document.page_id,
+        partition_id=document.partition_id,
+    )
+
+
+def hydrate_live_inventory_documents(
+    *,
+    repo_root: PathLike | None = None,
+    cache_path: PathLike | None = None,
+    acquisition_result: Any = None,
+) -> tuple[tuple[InventoryDocument, ...], dict[str, Any]]:
+    """Rehydrate sealed live inventory identities into explicit locators.
+
+    Does not rewrite ``federal_inventory.json``. Optional *cache_path* stores
+    locators so a later resume does not re-acquire the API inventory.
+    """
+
+    report = load_live_inventory_report(repo_root=repo_root)
+    expected = set(sealed_live_inventory_document_numbers(report))
+    official_total = int((report.get("acceptance") or {}).get("official_total") or 0)
+    if official_total and len(expected) != official_total:
+        raise FulltextCoverageError(
+            "sealed live inventory document-number count "
+            f"{len(expected)} != official_total {official_total}"
+        )
+    cache = Path(cache_path) if cache_path is not None else None
+    if cache is not None and cache.is_file():
+        cached = load_json_object(cache)
+        if cached.get("inventory_digest") == report.get("inventory_digest"):
+            raw_ids = [
+                str(item["legal_id"])
+                for item in cached.get("documents") or []
+                if isinstance(item, Mapping) and item.get("legal_id")
+            ]
+            if raw_ids:
+                cached_docs = tuple(
+                    remap_live_document_to_govinfo_html(doc)
+                    for doc in inventory_documents_from_legal_ids(raw_ids)
+                )
+                if {doc.document_number for doc in cached_docs} == expected:
+                    return cached_docs, report
+    result = acquisition_result
+    if result is None:
+        result = acquire_federal_register_inventory(
+            config=AcquisitionConfig(
+                mode=AcquisitionMode.LIVE,
+                observation_cutoff=str(
+                    report.get("observation_cutoff") or DEFAULT_OBSERVATION_CUTOFF
+                ),
+                range_start=LEGACY_DELTA_START_INCLUSIVE,
+                range_end=observation_cutoff_date(
+                    report.get("observation_cutoff") or DEFAULT_OBSERVATION_CUTOFF
+                ),
+                resume=False,
+                checkpoint_dir=None,
+            )
+        )
+    acquired = tuple(result.documents_by_legal_id.values())
+    matched = [
+        remap_live_document_to_govinfo_html(doc)
+        for doc in acquired
+        if doc.document_number in expected
+    ]
+    observed_numbers = {doc.document_number for doc in matched}
+    missing = sorted(expected - observed_numbers)
+    extra = sorted(observed_numbers - expected)
+    if missing or extra:
+        raise FulltextCoverageError(
+            "live inventory hydrate drifted from the sealed frontier: "
+            f"missing={len(missing)} extra={len(extra)}"
+        )
+    if cache is not None:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write_json(
+            cache,
+            {
+                "schema": "ipfs_datasets_py/federal-register-fulltext-live-hydrate@1",
+                "inventory_digest": report.get("inventory_digest"),
+                "document_count": len(matched),
+                "documents": [
+                    {
+                        "legal_id": doc.legal_id,
+                        "document_number": doc.document_number,
+                        "publication_date": doc.publication_date,
+                    }
+                    for doc in sorted(matched, key=lambda item: item.legal_id)
+                ],
+            },
+        )
+    return tuple(sorted(matched, key=lambda item: item.legal_id)), report
+
+
 # ---------------------------------------------------------------------------
 # Classification
 # ---------------------------------------------------------------------------
@@ -1505,6 +1948,7 @@ def classify_document(
     cache: ImmutableTextCache,
     fixture_role: FixtureRole | None = None,
     user_agent: str = DEFAULT_USER_AGENT,
+    source_formats: Sequence[str] | None = None,
 ) -> DocumentCoverage:
     """Fetch official locators in source precedence and assign a disposition."""
 
@@ -1513,8 +1957,9 @@ def classify_document(
     attempts: list[FormatAttempt] = []
     winning: Optional[tuple[SourceFormat, str, bytes, str, str]] = None
     quarantine_kind: Optional[ParserResult] = None
+    formats = tuple(source_formats) if source_formats is not None else SOURCE_PRECEDENCE
 
-    for source_format in (SourceFormat.coerce(name) for name in SOURCE_PRECEDENCE):
+    for source_format in (SourceFormat.coerce(name) for name in formats):
         url = locators[source_format]
         try:
             raw, media_type = transport(url, headers)
@@ -1712,6 +2157,8 @@ class FulltextConfig:
     user_agent: str = DEFAULT_USER_AGENT
     dataset_repo_id: str = DEFAULT_DATASET_REPO_ID
     previous_public_pin: str = PREVIOUS_PUBLIC_PIN
+    enable_builtin_https: bool = False
+    source_formats: tuple[str, ...] = SOURCE_PRECEDENCE
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -1739,6 +2186,21 @@ class FulltextConfig:
                 self.previous_public_pin, "previous_public_pin", maximum=64
             ),
         )
+        object.__setattr__(
+            self,
+            "enable_builtin_https",
+            _require_bool(self.enable_builtin_https, "enable_builtin_https"),
+        )
+        if self.enable_builtin_https and self.mode is not FulltextMode.LIVE:
+            raise LiveFulltextDisabledError(
+                "builtin HTTPS full-text transport is live-mode only"
+            )
+        formats = tuple(
+            SourceFormat.coerce(item).value for item in (self.source_formats or SOURCE_PRECEDENCE)
+        )
+        if not formats:
+            raise FederalRegisterFulltextError("source_formats must not be empty")
+        object.__setattr__(self, "source_formats", formats)
 
 
 @dataclass
@@ -1992,10 +2454,13 @@ def enrich_federal_register_fulltext(
     cfg = config or FulltextConfig()
     if cfg.mode is FulltextMode.LIVE:
         if transport is None:
-            raise LiveFulltextDisabledError(
-                "live Federal Register full-text transport is opt-in and is "
-                "not required for the LCR-053 fixture-only CI gate"
-            )
+            if cfg.enable_builtin_https:
+                transport = BuiltinHttpsFulltextTransport()
+            else:
+                raise LiveFulltextDisabledError(
+                    "live Federal Register full-text transport is opt-in and is "
+                    "not required for the LCR-053 fixture-only CI gate"
+                )
         if inventory_documents is None:
             raise LiveFulltextDisabledError(
                 "live full-text enrichment requires explicit inventory documents"
@@ -2004,12 +2469,7 @@ def enrich_federal_register_fulltext(
     observed_at = (
         FIXTURE_OBSERVED_AT
         if cfg.mode is FulltextMode.FIXTURE
-        else _require_non_empty_str(
-            # Live path is injected-transport only; still pin cutoff-relative time.
-            FIXTURE_OBSERVED_AT,
-            "observed_at",
-            maximum=64,
-        )
+        else utc_now_z()
     )
 
     if inventory_documents is None or inventory_report is None:
@@ -2031,6 +2491,8 @@ def enrich_federal_register_fulltext(
     if transport is None:
         if cfg.mode is FulltextMode.FIXTURE:
             transport = FixtureFulltextTransport(documents, roles)
+        elif cfg.enable_builtin_https:
+            transport = BuiltinHttpsFulltextTransport()
         else:
             raise LiveFulltextDisabledError(
                 "no full-text transport available for live mode"
@@ -2049,6 +2511,7 @@ def enrich_federal_register_fulltext(
                     cache=cache,
                     fixture_role=role,
                     user_agent=cfg.user_agent,
+                    source_formats=cfg.source_formats,
                 )
             )
         except FederalRegisterFulltextError as exc:
@@ -2585,9 +3048,11 @@ def render_check_summary(result: Mapping[str, Any]) -> str:
 __all__ = [
     "ADMITTED_DISPOSITIONS",
     "AllowedNonBodyReason",
+    "BuiltinHttpsFulltextTransport",
     "CachedBody",
     "COVERAGE_CATEGORIES",
     "CoverageDisposition",
+    "DEFAULT_LIVE_REPORT_RELPATH",
     "DEFAULT_REPORT_RELPATH",
     "DocumentCoverage",
     "EnrichmentResult",
@@ -2597,6 +3062,7 @@ __all__ = [
     "FixtureRole",
     "FulltextConfig",
     "FulltextCoverageError",
+    "FulltextFetchError",
     "FulltextMode",
     "GOAL_ID",
     "ImmutableTextCache",
@@ -2622,22 +3088,32 @@ __all__ = [
     "build_fixture_coverage_report",
     "check_coverage_report",
     "classify_document",
+    "default_live_report_path",
     "default_report_path",
     "detect_content_kind",
     "enrich_federal_register_fulltext",
     "expand_coverage_payload",
     "find_secret_surfaces",
     "fixture_role_for_index",
+    "hydrate_live_inventory_documents",
+    "inventory_documents_from_legal_ids",
     "is_coverage_recipe",
     "is_placeholder_text",
+    "live_fulltext_url_is_allowed",
     "load_fixture_inventory_documents",
     "load_json_object",
+    "load_live_identity_sample_documents",
+    "load_live_inventory_report",
     "locators_for_document",
     "normalize_body",
+    "official_govinfo_html_url",
     "official_govinfo_url",
     "official_html_url",
     "official_pdf_url",
     "official_xml_url",
+    "remap_live_document_to_govinfo_html",
     "render_check_summary",
+    "sealed_live_inventory_document_numbers",
+    "utc_now_z",
     "write_coverage_report",
 ]

@@ -44,6 +44,22 @@ _LAZY_EXPORTS = {
     "DocketProofAssistantBuilder": (".proof_assistant", "DocketProofAssistantBuilder"),
     "DocumentSection": (".document_structure", "DocumentSection"),
     "ExhibitCaptionConfig": (".court_pdf_rendering", "ExhibitCaptionConfig"),
+    "FederalRegisterQueryClient": (
+        ".federal_register_sparse_query",
+        "FederalRegisterQueryClient",
+    ),
+    "FederalRegisterQueryError": (
+        ".federal_register_sparse_query",
+        "FederalRegisterQueryError",
+    ),
+    "FederalRegisterQueryInputError": (
+        ".federal_register_sparse_query",
+        "FederalRegisterQueryInputError",
+    ),
+    "FederalRegisterQueryResult": (
+        ".federal_register_sparse_query",
+        "FederalRegisterQueryResult",
+    ),
     "FilingSupportReference": (".support_map", "FilingSupportReference"),
     "Frame": (".frames", "Frame"),
     "FrameKnowledgeBase": (".frames", "FrameKnowledgeBase"),
@@ -70,6 +86,11 @@ _LAZY_EXPORTS = {
     "ProofTactician": (".proof_tactician", "ProofTactician"),
     "SourceProvenance": (".reasoner", "SourceProvenance"),
     "StateCourtPleadingConfig": (".court_pdf_rendering", "StateCourtPleadingConfig"),
+    "StateLawsQueryClient": (".state_laws_query", "StateLawsQueryClient"),
+    "StateLawsSparseGraphragClient": (
+        ".state_laws_sparse_graphrag",
+        "StateLawsSparseGraphragClient",
+    ),
     "SupportFact": (".support_map", "SupportFact"),
     "SupportMapBuilder": (".support_map", "SupportMapBuilder"),
     "SupportMapEntry": (".support_map", "SupportMapEntry"),
@@ -903,4 +924,10 @@ __all__ = [
     "load_email_authority_enrichment_catalog",
     "merge_email_authority_enrichment_catalog",
     "summarize_case_graph",
+    "FederalRegisterQueryClient",
+    "FederalRegisterQueryError",
+    "FederalRegisterQueryInputError",
+    "FederalRegisterQueryResult",
+    "StateLawsQueryClient",
+    "StateLawsSparseGraphragClient",
 ]

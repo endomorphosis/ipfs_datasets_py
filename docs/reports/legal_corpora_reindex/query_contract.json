@@ -1,0 +1,202 @@
+{
+  "acceptance": {
+    "bm25_routes_by_lexicographic_term_ranges": true,
+    "dense_retrieval_probes_evaluated_centroids": true,
+    "hub_upload": false,
+    "hybrid_scores_late_fuse_compatible_rankings": true,
+    "immutable_pin_required": true,
+    "no_mutable_main_default": true,
+    "only_justified_routed_shards_are_fetched": true,
+    "secrets_absent": true,
+    "semantic_graph_traversal_hydrates_frontier_through_entry_locator": true,
+    "similarity_and_bm25_neighbors_are_not_legal_authority": true,
+    "traversal_budgets_include_depth_node_edge_shard_byte_time": true
+  },
+  "adr_path": "docs/architecture/legal_corpora_reindex_schema.md",
+  "authorizing_for_publication": false,
+  "authorizing_for_release": false,
+  "authorizing_hub_upload": false,
+  "board_namespace": "legal-corpora-reindex-v1",
+  "bounds": {
+    "acceptance_budget_names": [
+      "depth",
+      "node",
+      "edge",
+      "shard",
+      "byte",
+      "time"
+    ],
+    "budget_dimensions": [
+      "bytes",
+      "shards",
+      "rows",
+      "nodes",
+      "edges",
+      "depth",
+      "time"
+    ],
+    "default_beam_width": 16,
+    "default_bm25_weight": 0.5,
+    "default_candidate_centroids": 4,
+    "default_rrf_k": 60,
+    "default_top_k": 10,
+    "default_vector_weight": 0.5,
+    "fusion_methods": [
+      "rrf",
+      "weighted"
+    ],
+    "fusion_stage": "late",
+    "max_top_k": 1000,
+    "traversal_budgets": [
+      "depth",
+      "nodes",
+      "edges",
+      "shards",
+      "bytes",
+      "time"
+    ],
+    "vector_shard_first_last_keys_are_lexical_ranges": false
+  },
+  "bundle": "remote-query",
+  "checks": {
+    "bm25_primary_key": "chunk_cid",
+    "bm25_route_policy": "lexicographic_term_ranges",
+    "bm25_task_id": "LCR-027",
+    "bm25_tokenizer_id": "state-laws-bm25-tokenizer/v1",
+    "component_scores_preserved": true,
+    "entry_locator_index": "vector_entry_locator",
+    "entry_locator_key": "entry_cid",
+    "frontier_hydration_policy": "entry_locator",
+    "fusion_policy": "late_fuse_compatible_rankings",
+    "fusion_stage": "late",
+    "graph_task_id": "LCR-030",
+    "hf_release_task_id": "LCR-032",
+    "hub_upload": false,
+    "immutable_pin_required": true,
+    "no_hub_upload": true,
+    "no_mutable_main_default": true,
+    "secrets_absent": true,
+    "similarity_never_legal_authority": true,
+    "traversal_budgets_present": true,
+    "vector_primary_key": "chunk_cid",
+    "vector_route_policy": "evaluated_centroid_probe",
+    "vector_shard_keys_are_lexical_ranges": false,
+    "vectors_task_id": "LCR-029"
+  },
+  "code_version": "1",
+  "consumed_modules": {
+    "adjacency": "state_laws_adjacency",
+    "bm25": "state_laws_bm25",
+    "graph": "state_laws_graph",
+    "hf_release": "state_laws_hf_release",
+    "vectors": "state_laws_vectors"
+  },
+  "contract_cid": "sha256:4518e81ced23bcd149522fb34c7136797b6c968155f1be106a6fe60055e2d4cf",
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "dataset_repo_id": "justicedao/ipfs_state_laws",
+  "depends_on": [
+    "LCR-032",
+    "LCR-027",
+    "LCR-029",
+    "LCR-030",
+    "LCR-031"
+  ],
+  "description": "Software-contract for LCR-033 bounded immutable-Hub state-law queries. BM25 routes by lexicographic term ranges, dense retrieval probes evaluated centroids, hybrid scores late-fuse compatible rankings, and semantic graph traversal hydrates frontier vectors through the dedicated entry locator under depth, node, edge, shard, byte, row, and time budgets. Jurisdiction, code, and citation filters overlay every public mode. Similarity and BM25 neighbors are not legal authority. Immutable pins are required; mutable refs such as main are rejected. This contract does not authorize Hub upload or publication.",
+  "filters": [
+    "jurisdiction",
+    "code",
+    "citation"
+  ],
+  "fusion": {
+    "methods": [
+      "rrf",
+      "weighted"
+    ],
+    "policy": "late_fuse_compatible_rankings",
+    "preserves_component_scores": true,
+    "stage": "late"
+  },
+  "goal_id": "LCR-G050",
+  "hub_upload": false,
+  "immutable_pin_required": true,
+  "indexes": {
+    "bm25": "bm25_keyword_shards",
+    "entry_locator": "vector_entry_locator",
+    "vectors": "vector_chunks"
+  },
+  "mode_aliases": {
+    "bounded_graph": "graph_walk",
+    "semantic_graph": "semantic_graph_walk"
+  },
+  "modes": [
+    "bm25",
+    "vector",
+    "hybrid",
+    "neighbors",
+    "graph_walk",
+    "semantic_graph_walk"
+  ],
+  "no_mutable_main_default": true,
+  "pinned_model_id": "thenlper/gte-small",
+  "pinned_model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+  "previous_public_pin": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
+  "producer": "state_laws_query.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "proves_software_contract_only": true,
+  "query_schema_version": "state-laws-query-v1",
+  "release_profile": "state-laws-ir-graphrag/v2",
+  "report_schema": "ipfs_datasets_py/legal-corpora-reindex-query@1",
+  "route_families": [
+    "bm25_postings",
+    "control_plane",
+    "corpus",
+    "graph_adjacency",
+    "graph_edges",
+    "graph_nodes",
+    "routing_index",
+    "vectors"
+  ],
+  "route_reasons": [
+    "adjacency_range",
+    "centroid_probe",
+    "control_plane",
+    "exact_vector_score",
+    "graph_node",
+    "hydrate_hit",
+    "manifest",
+    "replay",
+    "routing_index",
+    "term_range"
+  ],
+  "routing": {
+    "bm25": "lexicographic_term_ranges",
+    "frontier_hydration": "entry_locator",
+    "hybrid": "late_fuse_compatible_rankings",
+    "vector": "evaluated_centroid_probe"
+  },
+  "schema_version": "state-laws-query-contract-v1",
+  "secrets_absent": true,
+  "similarity_edge_semantics": {
+    "authority": "non_authoritative",
+    "edge_class": "similarity",
+    "edge_types": [
+      "BM25_NEIGHBOR_OF",
+      "EMBEDDING_NEIGHBOR_OF",
+      "SIMILAR_TO"
+    ],
+    "legal_authority": false,
+    "notes": "Similarity edges (BM25_NEIGHBOR_OF, SIMILAR_TO, EMBEDDING_NEIGHBOR_OF) are retrieval hints only. They must never be labeled as legal citation, authority, correction, or proof. BM25 neighbors are not legal authority.",
+    "overlay_edge_type": "BM25_NEIGHBOR_OF",
+    "proof_authority": false,
+    "retrieval_hint": true
+  },
+  "task_id": "LCR-033",
+  "traversal_budgets": [
+    "depth",
+    "nodes",
+    "edges",
+    "shards",
+    "bytes",
+    "time"
+  ]
+}

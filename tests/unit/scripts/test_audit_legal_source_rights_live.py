@@ -133,6 +133,20 @@ def test_robots_url_and_parser_cover_missing_deny_and_delay(audit) -> None:
         error=None,
     ) == ("unavailable", None)
     assert audit.interpret_robots(
+        b"<html><title>Hawaii State Legislature</title><h1>404 Page Not Found</h1></html>",
+        user_agent=audit.LIVE_USER_AGENT,
+        source_url="https://www.capitol.hawaii.gov/hrscurrent/",
+        http_status=200,
+        error=None,
+    ) == ("allowed", None)
+    assert audit.interpret_robots(
+        b"<html><title>Just a moment...</title><div id='challenge-platform'></div></html>",
+        user_agent=audit.LIVE_USER_AGENT,
+        source_url="https://www.capitol.hawaii.gov/hrscurrent/",
+        http_status=200,
+        error=None,
+    ) == ("unavailable", None)
+    assert audit.interpret_robots(
         b"",
         user_agent=audit.LIVE_USER_AGENT,
         source_url="https://example.gov/code",
@@ -273,6 +287,48 @@ def test_mocked_live_seal_authorizes_through_evaluator(
     checked = audit.run_live_check()
     assert checked["status"] == "passed"
     assert checked["receipt_digest_sha256"] == receipt["report_digest_sha256"]
+
+
+def test_challenge_html_direct_200_uses_archive_fallback(
+    audit, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original = "https://www.capitol.hawaii.gov/robots.txt"
+    snapshot = "https://web.archive.org/web/20240101120000id_/https://www.capitol.hawaii.gov/robots.txt"
+    absence = b"<html><title>Hawaii State Legislature</title><h1>404 Page Not Found</h1></html>"
+    challenge = b"<html><title>Just a moment...</title><div id='challenge-platform'></div></html>"
+
+    def fake_get(url: str, *, extra_headers=None):
+        if url == original:
+            return _fetch(audit, url, status=200, body=challenge)
+        if "wayback/available" in url:
+            payload = json.dumps(
+                {
+                    "archived_snapshots": {
+                        "closest": {
+                            "available": True,
+                            "url": snapshot.replace("id_/", "/"),
+                            "status": "200",
+                        }
+                    }
+                }
+            ).encode("utf-8")
+            return _fetch(audit, url, status=200, body=payload)
+        if url == snapshot:
+            return _fetch(audit, url, status=200, body=absence)
+        return _fetch(audit, url, status=404, body=b"")
+
+    monkeypatch.setattr(audit, "_direct_http_get", fake_get)
+    result = audit.fetch_live_url(original)
+    assert result.status == 200
+    assert result.body == absence
+    assert result.notes == "archival_fallback=wayback"
+    assert audit.interpret_robots(
+        result.body,
+        user_agent=audit.LIVE_USER_AGENT,
+        source_url="https://www.capitol.hawaii.gov/hrscurrent/",
+        http_status=result.status,
+        error=result.error,
+    ) == ("allowed", None)
 
 
 def test_archival_candidate_urls_cover_wayback_archive_is_and_common_crawl(audit) -> None:

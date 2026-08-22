@@ -1,0 +1,408 @@
+{
+  "acceptance": {
+    "centroid_and_two_shard_bounds_hold": true,
+    "criteria": "Every vector appears exactly once; physical paths match centroid routes; shards <=4096, centroids <=8192 rows/two shards; ordering/determinism/recall gates pass.",
+    "determinism": true,
+    "every_vector_exactly_once": true,
+    "hub_upload": false,
+    "legacy_faiss_not_overwritten": true,
+    "ordering_cosine_desc": true,
+    "physical_paths_match_centroid_routes": true,
+    "physical_shard_bound_4096": true,
+    "recall_gates_pass": true,
+    "secrets_absent": true
+  },
+  "admitted": {
+    "chunk_count": 8,
+    "cluster_count": 3,
+    "config_cid": "sha256:78a4ec130c48cfb624c1e17c845cc1c3e99bc3fee20bdecf166662a7f7ad5d35",
+    "corpus_root_cid": "sha256:c4ad7e02184f6486d59e5879d2638c839ff718afa2b74ac2ba019c3b99604465",
+    "input_receipt_count": 8,
+    "layout_seed": 1431520073,
+    "membership_hash": "sha256:94c40e35630199249a40135387b264e994fd7437fb0bb908258bae17ead62f18",
+    "model_cid": "sha256:fecdf2d30b639858635fcc3d0ea94465526be1e9c299a7853bcd7dd1afafea5d",
+    "shard_count": 5,
+    "vector_count": 8,
+    "vector_root_cid": "sha256:296512f1bc62c209e8fb609bf4ef1497a83d1c0c54b338feac78ef835c653c46",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "adr_path": "docs/architecture/legal_corpora_reindex_schema.md",
+  "authorizing_for_publication": false,
+  "authorizing_for_release": false,
+  "authorizing_hub_upload": false,
+  "board_namespace": "legal-corpora-reindex-v1",
+  "bounds": {
+    "assignment": "deterministic_balanced_spherical_kmeans",
+    "default_candidate_centroids": 4,
+    "layout_seed": 1431520073,
+    "maximum_rows_per_physical_shard": 4096,
+    "maximum_rows_per_vector_centroid": 8192,
+    "maximum_shards_per_centroid": 2,
+    "rows_sorted_by": "cosine_similarity_to_shard_centroid_desc",
+    "target_rows_per_centroid": 2048
+  },
+  "bundle": "dense-routing",
+  "checks": {
+    "admitted_chunk_count": 8,
+    "admitted_max_centroid_rows": 3,
+    "admitted_max_centroid_shards": 2,
+    "admitted_max_shard_rows": 2,
+    "admitted_vector_count": 8,
+    "centroid_specific_physical_shards": true,
+    "default_backend_is_projection": true,
+    "determinism": true,
+    "dimension": 384,
+    "every_vector_exactly_once": true,
+    "gte_small_pin": true,
+    "legacy_faiss_not_overwritten": true,
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "no_hub_upload": true,
+    "normalization": "l2",
+    "off_centroid_direct_cid": true,
+    "ordering_cosine_desc": true,
+    "physical_paths_match_centroid_routes": true,
+    "pooling": "mean",
+    "preprocessing": "nfkc_whitespace_collapse",
+    "production_max_rows_per_centroid": 8192,
+    "production_max_rows_per_shard": 4096,
+    "production_max_shards_per_centroid": 2,
+    "projection_backend_used_for_fixture": true,
+    "recall_gates_pass": true,
+    "recovery_excluded_from_vectors": true,
+    "seed": 1431520073
+  },
+  "code_version": "1",
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "dataset_repo_id": "justicedao/ipfs_state_laws",
+  "demo": {
+    "chunk_cids": [
+      "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    ],
+    "cluster_count": 3,
+    "config_cid": "sha256:78a4ec130c48cfb624c1e17c845cc1c3e99bc3fee20bdecf166662a7f7ad5d35",
+    "corpus_root_cid": "sha256:c4ad7e02184f6486d59e5879d2638c839ff718afa2b74ac2ba019c3b99604465",
+    "input_receipt_count": 8,
+    "layout_seed": 1431520073,
+    "max_centroid_rows": 3,
+    "max_centroid_shards": 2,
+    "max_shard_rows": 2,
+    "membership_hash": "sha256:94c40e35630199249a40135387b264e994fd7437fb0bb908258bae17ead62f18",
+    "model_cid": "sha256:fecdf2d30b639858635fcc3d0ea94465526be1e9c299a7853bcd7dd1afafea5d",
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "routed_shard_count": 2,
+    "shard_count": 5,
+    "shard_relative_paths": [
+      "data/vectors/centroid-000000-part-000000.parquet",
+      "data/vectors/centroid-000000-part-000001.parquet",
+      "data/vectors/centroid-000001-part-000000.parquet",
+      "data/vectors/centroid-000002-part-000000.parquet",
+      "data/vectors/centroid-000002-part-000001.parquet"
+    ],
+    "vector_count": 8,
+    "vector_root_cid": "sha256:296512f1bc62c209e8fb609bf4ef1497a83d1c0c54b338feac78ef835c653c46",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "depends_on": [
+    "LCR-028",
+    "LCR-026",
+    "LCR-025"
+  ],
+  "description": "LCR-029 state-law deterministic centroid-routed vectors. Consumes LCR-028 hashed-projection embeddings, runs balanced spherical clustering with recursive split, packages cosine-sorted physical shards and direct CID locators, and evaluates exhaustive recall plus probe selection. Hermetic fixture evaluation only. Does not authorize Hub upload or overwrite legacy FAISS filenames.",
+  "embedding_contract": {
+    "backend_fixture": "local_deterministic_projection",
+    "backend_production": "sentence_transformers",
+    "dimension": 384,
+    "license": "mit",
+    "max_tokens": 512,
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "normalization": "l2",
+    "pooling": "mean",
+    "preprocessing": "nfkc_whitespace_collapse",
+    "provider_fixture": "local",
+    "provider_production": "huggingface",
+    "seed": 1431520073,
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "evaluation": {
+    "default_probe": {
+      "default_probe_centroids": 1,
+      "evidence_partition": "dev",
+      "meets_recall_gate": true,
+      "preferred_historical_default": 4,
+      "production_searchable": false,
+      "qualifying_probes": [
+        1,
+        2,
+        3
+      ],
+      "reason": "selected minimal probe=1 meeting recall gate 0.95 on dev; historical default 4 did not qualify",
+      "selection_metric": "mean_recall_at_1",
+      "selection_value": 1.0
+    },
+    "dev": {
+      "per_probe": {
+        "1": {
+          "bytes_fetched": {
+            "mean": 5984.0,
+            "p50": 6384.0,
+            "p95": 6384.0
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.115,
+            "p50": 0.13,
+            "p95": 0.13
+          },
+          "meets_recall_gate": true,
+          "probe_centroids": 1,
+          "query_count": 4,
+          "recall_at_1": 1.0,
+          "recall_at_10": 0.34375,
+          "recall_at_5": 0.45,
+          "rows_scored": {
+            "mean": 2.75,
+            "p50": 3.0,
+            "p95": 3.0
+          },
+          "shards_fetched": {
+            "mean": 1.75,
+            "p50": 2.0,
+            "p95": 2.0
+          }
+        },
+        "2": {
+          "bytes_fetched": {
+            "mean": 11568.0,
+            "p50": 11168.0,
+            "p95": 12528.0
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.215,
+            "p50": 0.2,
+            "p95": 0.251
+          },
+          "meets_recall_gate": true,
+          "probe_centroids": 2,
+          "query_count": 4,
+          "recall_at_1": 1.0,
+          "recall_at_10": 0.65625,
+          "recall_at_5": 0.85,
+          "rows_scored": {
+            "mean": 5.25,
+            "p50": 5.0,
+            "p95": 5.85
+          },
+          "shards_fetched": {
+            "mean": 3.25,
+            "p50": 3.0,
+            "p95": 3.85
+          }
+        },
+        "3": {
+          "bytes_fetched": {
+            "mean": 17552.0,
+            "p50": 17552.0,
+            "p95": 17552.0
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.33,
+            "p50": 0.33,
+            "p95": 0.33
+          },
+          "meets_recall_gate": true,
+          "probe_centroids": 3,
+          "query_count": 4,
+          "recall_at_1": 1.0,
+          "recall_at_10": 1.0,
+          "recall_at_5": 1.0,
+          "rows_scored": {
+            "mean": 8.0,
+            "p50": 8.0,
+            "p95": 8.0
+          },
+          "shards_fetched": {
+            "mean": 5.0,
+            "p50": 5.0,
+            "p95": 5.0
+          }
+        }
+      },
+      "primary_top_k": 1,
+      "probe_candidates": [
+        1,
+        2,
+        3
+      ],
+      "query_count": 4,
+      "recall_gate": 0.95,
+      "top_k_values": [
+        1,
+        5,
+        10
+      ]
+    },
+    "primary_top_k": 1,
+    "production_searchable": false,
+    "query_count": 8,
+    "recall_gate": 0.95,
+    "recall_gates_pass": true,
+    "test": {
+      "per_probe": {
+        "1": {
+          "bytes_fetched": {
+            "mean": 5984.0,
+            "p50": 6384.0,
+            "p95": 6384.0
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.115,
+            "p50": 0.13,
+            "p95": 0.13
+          },
+          "meets_recall_gate": true,
+          "probe_centroids": 1,
+          "query_count": 4,
+          "recall_at_1": 1.0,
+          "recall_at_10": 0.34375,
+          "recall_at_5": 0.35,
+          "rows_scored": {
+            "mean": 2.75,
+            "p50": 3.0,
+            "p95": 3.0
+          },
+          "shards_fetched": {
+            "mean": 1.75,
+            "p50": 2.0,
+            "p95": 2.0
+          }
+        },
+        "2": {
+          "bytes_fetched": {
+            "mean": 11168.0,
+            "p50": 11168.0,
+            "p95": 11168.0
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.2,
+            "p50": 0.2,
+            "p95": 0.2
+          },
+          "meets_recall_gate": true,
+          "probe_centroids": 2,
+          "query_count": 4,
+          "recall_at_1": 1.0,
+          "recall_at_10": 0.625,
+          "recall_at_5": 0.75,
+          "rows_scored": {
+            "mean": 5.0,
+            "p50": 5.0,
+            "p95": 5.0
+          },
+          "shards_fetched": {
+            "mean": 3.0,
+            "p50": 3.0,
+            "p95": 3.0
+          }
+        },
+        "3": {
+          "bytes_fetched": {
+            "mean": 17552.0,
+            "p50": 17552.0,
+            "p95": 17552.0
+          },
+          "failure_modes": {},
+          "latency_ms": {
+            "mean": 0.33,
+            "p50": 0.33,
+            "p95": 0.33
+          },
+          "meets_recall_gate": true,
+          "probe_centroids": 3,
+          "query_count": 4,
+          "recall_at_1": 1.0,
+          "recall_at_10": 1.0,
+          "recall_at_5": 1.0,
+          "rows_scored": {
+            "mean": 8.0,
+            "p50": 8.0,
+            "p95": 8.0
+          },
+          "shards_fetched": {
+            "mean": 5.0,
+            "p50": 5.0,
+            "p95": 5.0
+          }
+        }
+      },
+      "primary_top_k": 1,
+      "probe_candidates": [
+        1,
+        2,
+        3
+      ],
+      "query_count": 4,
+      "recall_gate": 0.95,
+      "top_k_values": [
+        1,
+        5,
+        10
+      ]
+    },
+    "test_at_default_probe": {
+      "meets_recall_gate": true,
+      "probe_centroids": 1,
+      "recall_at_1": 1.0,
+      "recall_at_10": 0.34375,
+      "recall_at_5": 0.35
+    }
+  },
+  "family_counts": {
+    "chunks": 8,
+    "vector": 8,
+    "vectors": 8
+  },
+  "goal_id": "LCR-G040",
+  "hub_upload": false,
+  "model_receipt": {
+    "backend": "local_deterministic_projection",
+    "config_cid": "sha256:78a4ec130c48cfb624c1e17c845cc1c3e99bc3fee20bdecf166662a7f7ad5d35",
+    "dimension": 384,
+    "input_fields": [
+      "text"
+    ],
+    "max_tokens": 512,
+    "model_cid": "sha256:fecdf2d30b639858635fcc3d0ea94465526be1e9c299a7853bcd7dd1afafea5d",
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "normalization": "l2",
+    "pooling": "mean",
+    "preprocessing": "nfkc_whitespace_collapse",
+    "seed": 1431520073,
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "network_required": false,
+  "producer": "state_laws_vectors.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "proves_software_contract_only": true,
+  "release_profile": "state-laws-ir-graphrag/v2",
+  "report_digest_sha256": "fa81e9850f59e349b9f30a356f9893fbd13f1024acc57d50211f15c7e7dab8d0",
+  "report_kind": "fixture_vector_evaluation",
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-vector-evaluation@1",
+  "schema_version": "state-laws-vectors-v1",
+  "secrets_absent": true,
+  "task_id": "LCR-029"
+}

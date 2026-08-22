@@ -1,0 +1,15 @@
+{
+  "admitted_target": 11784,
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "corpus_dir": "/var/tmp/lcr-071-fr-corpus",
+  "error_count": 0,
+  "errors": [],
+  "fetched": 11784,
+  "goal_id": "LCR-G130",
+  "mismatches": 0,
+  "schema": "ipfs_datasets_py/federal-register-live-corpus@1",
+  "status": "passed",
+  "task_id": "LCR-071",
+  "verified": 11784
+}

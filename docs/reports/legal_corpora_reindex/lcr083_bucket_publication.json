@@ -1,0 +1,53 @@
+{
+  "additive": true,
+  "authorizing_hub_dataset_upload": false,
+  "bucket_id": "justicedao/open-us-law-bucket",
+  "bucket_url": "https://huggingface.co/buckets/justicedao/open-us-law-bucket",
+  "catalog_bytes_sha256": "f48897543cd143c052172a37a8be0afabf5bffac2b1010127f1686a962bef7d5",
+  "catalog_digest_sha256": "3ba1d10b30598c2145ee0dfa62db42d69d2d664578fce90d5c4ed756ac742a4b",
+  "compliance_bytes_sha256": "ee9a04cd8cd85a0bc139484a337f18556aab2055a2ff53896e6a3db1dd247287",
+  "forbidden_repos": [
+    "justicedao/ipfs_federal_register",
+    "justicedao/ipfs_state_laws"
+  ],
+  "goal_id": "LCR-G145",
+  "mode": "live",
+  "objects": [
+    {
+      "bytes": 5872507,
+      "local_relpath": "data/legal/legal_source_rights_catalog.json",
+      "remote_path": "legal-corpora-reindex/lcr-083/46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee/legal_source_rights_catalog.json",
+      "sha256": "f48897543cd143c052172a37a8be0afabf5bffac2b1010127f1686a962bef7d5"
+    },
+    {
+      "bytes": 29322,
+      "local_relpath": "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+      "remote_path": "legal-corpora-reindex/lcr-083/46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee/legal_source_rights_compliance.json",
+      "sha256": "ee9a04cd8cd85a0bc139484a337f18556aab2055a2ff53896e6a3db1dd247287"
+    }
+  ],
+  "prefix": "legal-corpora-reindex/lcr-083/46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee",
+  "producer": "publish_lcr083_source_rights_to_hf_bucket.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "receipt_digest_sha256": "46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee",
+  "receipt_sha256": "9630ca1c1c732cbc086b55ab03c685bf8bc31e3fe083ea506b4769da4cc65037",
+  "schema": "ipfs_datasets_py/lcr083-hf-bucket-publication@1",
+  "status": "uploaded",
+  "task_id": "LCR-083",
+  "uploaded": [
+    {
+      "bytes": 5872507,
+      "sha256": "f48897543cd143c052172a37a8be0afabf5bffac2b1010127f1686a962bef7d5",
+      "uri": "hf://buckets/justicedao/open-us-law-bucket/legal-corpora-reindex/lcr-083/46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee/legal_source_rights_catalog.json"
+    },
+    {
+      "bytes": 29322,
+      "sha256": "ee9a04cd8cd85a0bc139484a337f18556aab2055a2ff53896e6a3db1dd247287",
+      "uri": "hf://buckets/justicedao/open-us-law-bucket/legal-corpora-reindex/lcr-083/46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee/legal_source_rights_compliance.json"
+    }
+  ],
+  "uris": [
+    "hf://buckets/justicedao/open-us-law-bucket/legal-corpora-reindex/lcr-083/46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee/legal_source_rights_catalog.json",
+    "hf://buckets/justicedao/open-us-law-bucket/legal-corpora-reindex/lcr-083/46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee/legal_source_rights_compliance.json"
+  ]
+}

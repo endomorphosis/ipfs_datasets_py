@@ -1,0 +1,25 @@
+{
+  "bucket_id": "justicedao/open-us-law-bucket",
+  "bucket_url": "https://huggingface.co/buckets/justicedao/open-us-law-bucket",
+  "bundle_sha256": "d5aa43c1d09d8a0f3051fa6426581932841f7b4c0f4dea5c61e019b6378ac946",
+  "goal_id": "LCR-G146",
+  "mode": "live",
+  "objects": [
+    {
+      "name": "lcr084_evidence_bundle.json",
+      "remote_path": "legal-corpora-reindex/lcr-084/d5aa43c1d09d8a0f3051fa6426581932841f7b4c0f4dea5c61e019b6378ac946/lcr084_evidence_bundle.json"
+    }
+  ],
+  "prefix": "legal-corpora-reindex/lcr-084/d5aa43c1d09d8a0f3051fa6426581932841f7b4c0f4dea5c61e019b6378ac946",
+  "producer": "publish_lcr084_evidence_to_hf_bucket.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "schema": "ipfs_datasets_py/lcr084-hf-bucket-publication@1",
+  "status": "uploaded",
+  "task_id": "LCR-084",
+  "uploaded": [
+    {
+      "bytes": 9895,
+      "uri": "hf://buckets/justicedao/open-us-law-bucket/legal-corpora-reindex/lcr-084/d5aa43c1d09d8a0f3051fa6426581932841f7b4c0f4dea5c61e019b6378ac946/lcr084_evidence_bundle.json"
+    }
+  ]
+}

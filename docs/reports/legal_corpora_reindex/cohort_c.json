@@ -23,12 +23,12 @@
         "promoted_success": false
       },
       "content": {
-        "content_digest": "sha256:35b01ea700c87b73581285b4f4d5209a32e5494bf13c89b916fdf4d3eeace43d",
-        "min_full_text_chars": 539,
+        "content_digest": "sha256:d76078dec7a71c6940836f667836c131e7928b7d6a44973b2d77fe2107b234ec",
+        "min_full_text_chars": 518,
         "non_placeholder_full_text": true,
         "official_urls": [
-          "https://www.leg.state.fl.us/Statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0775/Sections/0775.01.html",
-          "https://www.leg.state.fl.us/Statutes/index.cfm?App_mode=Display_Statute&URL=0700-0799/0775/Sections/0775.011.html"
+          "https://www.leg.state.fl.us/Statutes/index.cfm?App_mode=Display_Statute&Search_String=&URL=0700-0799/0775/Sections/775.01.html",
+          "https://www.leg.state.fl.us/Statutes/index.cfm?App_mode=Display_Statute&Search_String=&URL=0700-0799/0775/Sections/775.011.html"
         ]
       },
       "disposition": {
@@ -65,9 +65,9 @@
       "partial_checkpoint_promoted": false,
       "replay": {
         "closed": true,
-        "content_digest": "sha256:35b01ea700c87b73581285b4f4d5209a32e5494bf13c89b916fdf4d3eeace43d",
-        "first_frontier_digest": "sha256:e5ee66d4a952c2df3f2b644d1714d4c3bbcbb509ca6684da86194b57e3986251",
-        "second_frontier_digest": "sha256:e5ee66d4a952c2df3f2b644d1714d4c3bbcbb509ca6684da86194b57e3986251"
+        "content_digest": "sha256:d76078dec7a71c6940836f667836c131e7928b7d6a44973b2d77fe2107b234ec",
+        "first_frontier_digest": "sha256:d4f20f6cf39d3039c82f069db3dacd545f31e3043788b904bc7babc21d0e3b69",
+        "second_frontier_digest": "sha256:d4f20f6cf39d3039c82f069db3dacd545f31e3043788b904bc7babc21d0e3b69"
       },
       "row_count": 2,
       "runtime_caps": null,
@@ -297,7 +297,7 @@
   "shared_combined_write": false,
   "state_results": {
     "FL": {
-      "content_digest": "sha256:35b01ea700c87b73581285b4f4d5209a32e5494bf13c89b916fdf4d3eeace43d",
+      "content_digest": "sha256:d76078dec7a71c6940836f667836c131e7928b7d6a44973b2d77fe2107b234ec",
       "failed_final": 0,
       "frontier_closed": true,
       "partial_checkpoint_promoted": false,

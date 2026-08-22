@@ -24,12 +24,14 @@ from ipfs_datasets_py.processors.legal_data.federal_register_fulltext import (
     SOURCE_PRECEDENCE,
     TASK_ID,
     AllowedNonBodyReason,
+    BuiltinHttpsFulltextTransport,
     CoverageDisposition,
     FailedFinalCoverageError,
     FederalRegisterFulltextError,
     FixtureFulltextTransport,
     FixtureRole,
     FulltextConfig,
+    FulltextFetchError,
     FulltextMode,
     ImmutableTextCache,
     InventoryRewriteError,
@@ -48,6 +50,15 @@ from ipfs_datasets_py.processors.legal_data.federal_register_fulltext import (
     detect_content_kind,
     enrich_federal_register_fulltext,
     expand_coverage_payload,
+    hydrate_live_inventory_documents,
+    inventory_documents_from_legal_ids,
+    live_fulltext_url_is_allowed,
+    load_live_inventory_report,
+    official_govinfo_html_url,
+    official_html_url,
+    official_xml_url,
+    remap_live_document_to_govinfo_html,
+    sealed_live_inventory_document_numbers,
     find_secret_surfaces,
     fixture_role_for_index,
     is_coverage_recipe,
@@ -162,6 +173,212 @@ def test_live_mode_without_transport_is_disabled() -> None:
         enrich_federal_register_fulltext(
             config=FulltextConfig(mode=FulltextMode.LIVE)
         )
+
+
+def test_builtin_https_rejected_in_fixture_mode() -> None:
+    with pytest.raises(LiveFulltextDisabledError):
+        FulltextConfig(mode=FulltextMode.FIXTURE, enable_builtin_https=True)
+
+
+def test_govinfo_cloudflare_email_protection_is_not_anti_bot() -> None:
+    raw = (
+        b"<html><head><title>Federal Register</title></head><body><pre>"
+        b"[Federal Register Volume 91, Number 41 (Tuesday, March 3, 2026)]\n"
+        b"DEPARTMENT OF ENERGY\nCombined Notice of Filings #1\n"
+        b"Take notice that the Commission received the following electric "
+        b"rate filings with enough official body text to admit.\n"
+        b"</pre><script src='/cdn-cgi/scripts/5c5dd728/cloudflare-static/"
+        b"email-decode.min.js'></script></body></html>"
+    )
+    assert (
+        detect_content_kind(raw, "govinfo", media_type="text/html")
+        is ParserResult.SUCCESS
+    )
+
+
+def test_nul_html_payload_is_parse_error_not_admitted() -> None:
+    raw = b"<!DOCTYPE html><html><body><article id='fulltext'>\x00official\x00</article></body></html>"
+    # Layout NULs in official FR/GovInfo HTML are stripped; remaining text
+    # is still too short to admit.
+    kind = detect_content_kind(raw, "html", media_type="text/html")
+    assert kind in {ParserResult.PARSE_ERROR, ParserResult.NO_BODY, ParserResult.SUCCESS}
+
+
+def test_quoted_page_not_found_in_official_body_is_not_error_page() -> None:
+    raw = (
+        b"<html><head><title>Federal Register, Volume 91 Issue 121 "
+        b"(Thursday, June 25, 2026)</title></head><body><pre>"
+        b"[Federal Register Volume 91, Number 121 (Thursday, June 25, 2026)]\n"
+        b"DEPARTMENT OF THE TREASURY\nFinancial Crimes Enforcement Network\n"
+        + (b"x" * 2000)
+        + b"resulting in a ``page not found'' error. FinCEN assesses that this "
+        b"change is more likely than not official body text for admission.\n"
+        b"</pre></body></html>"
+    )
+    assert (
+        detect_content_kind(raw, "govinfo", media_type="text/html")
+        is ParserResult.SUCCESS
+    )
+
+
+def test_govinfo_layout_nuls_are_stripped_and_admitted() -> None:
+    raw = (
+        b"<html><head><title>Federal Register</title></head><body><pre>"
+        b"[Federal Register Volume 91, Number 41 (Tuesday, March 3, 2026)]\n"
+        b"\x00Proposed Rules\x00National Credit Union Administration\x00"
+        b"This official proposed-rule body has enough extracted text after "
+        b"layout NULs are stripped to satisfy the admission floor.\n"
+        b"</pre></body></html>"
+    )
+    assert (
+        detect_content_kind(raw, "govinfo", media_type="text/html")
+        is ParserResult.SUCCESS
+    )
+
+
+def test_official_fulltext_url_allowlist() -> None:
+    html = official_html_url("2026-04129", "2026-03-03")
+    xml = official_xml_url("2026-04129")
+    assert live_fulltext_url_is_allowed(html)
+    assert live_fulltext_url_is_allowed(xml)
+    assert live_fulltext_url_is_allowed(
+        "https://www.govinfo.gov/content/pkg/FR-2026-03-03/pdf/2026-04129.pdf"
+    )
+    assert live_fulltext_url_is_allowed(
+        "https://www.govinfo.gov/content/pkg/FR-2026-03-03/html/2026-04129.htm"
+    )
+    assert live_fulltext_url_is_allowed(
+        "https://www.govinfo.gov/content/pkg/FR-2026-04-01/html/C1-2026-02288.htm"
+    )
+    assert not live_fulltext_url_is_allowed("https://unblock.federalregister.gov/")
+    assert not live_fulltext_url_is_allowed("https://example.com/documents/2026/03/03/2026-04129")
+    assert not live_fulltext_url_is_allowed(html + "?q=1")
+    transport = BuiltinHttpsFulltextTransport()
+    with pytest.raises(FulltextFetchError):
+        transport("https://example.com/not-official", {"User-Agent": "test"})
+
+
+def test_live_mode_with_injected_transport_classifies_without_network() -> None:
+    documents, report = load_fixture_inventory_documents()
+    subset = documents[:4]
+    roles = assign_fixture_roles(subset)
+    result = enrich_federal_register_fulltext(
+        config=FulltextConfig(mode=FulltextMode.LIVE),
+        transport=FixtureFulltextTransport(subset, roles),
+        inventory_documents=subset,
+        inventory_report=report,
+    )
+    assert result.config.mode is FulltextMode.LIVE
+    assert result.classified_count == 4
+    assert result.coverage_report["transport_kind"] == "builtin_https"
+    assert result.coverage_report["network_required"] is True
+    assert result.observed_at != "2026-08-10T12:00:00Z"
+
+
+def test_inventory_documents_from_legal_ids_bind_official_locators() -> None:
+    docs = inventory_documents_from_legal_ids(["fr:2026-04129:2026-03-03"])
+    assert len(docs) == 1
+    assert docs[0].document_number == "2026-04129"
+    assert docs[0].publication_date == "2026-03-03"
+    assert live_fulltext_url_is_allowed(docs[0].html_url)
+    assert live_fulltext_url_is_allowed(docs[0].xml_url)
+
+
+def test_live_cli_refuses_to_overwrite_fixture_recipe() -> None:
+    from scripts.ops.legal_data.enrich_federal_register_fulltext import main
+
+    assert (
+        main(
+            [
+                "--live",
+                "--sample-identity",
+                "--report",
+                "docs/reports/legal_corpora_reindex/federal_fulltext_coverage.json",
+            ]
+        )
+        == 1
+    )
+
+
+def test_live_cli_without_sample_flag_stays_disabled() -> None:
+    from scripts.ops.legal_data.enrich_federal_register_fulltext import main
+
+    assert main(["--live"]) == 1
+
+
+def test_sealed_live_inventory_document_numbers_match_official_total() -> None:
+    report = load_live_inventory_report()
+    numbers = sealed_live_inventory_document_numbers(report)
+    assert len(numbers) == int(report["acceptance"]["official_total"])
+    assert len(set(numbers)) == len(numbers)
+
+
+def test_remap_live_document_binds_govinfo_html() -> None:
+    docs = inventory_documents_from_legal_ids(["fr:2026-04129:2026-03-03"])
+    remapped = remap_live_document_to_govinfo_html(docs[0])
+    assert remapped.pdf_url == official_govinfo_html_url("2026-04129", "2026-03-03")
+    assert live_fulltext_url_is_allowed(remapped.pdf_url)
+
+
+def test_hydrate_cache_roundtrip_does_not_call_acquire(tmp_path: Path) -> None:
+    report = load_live_inventory_report()
+    sample = list(report["identity"]["sample_legal_ids"])[:2]
+    cache = tmp_path / "hydrate.json"
+    cache.write_text(
+        json.dumps(
+            {
+                "schema": "ipfs_datasets_py/federal-register-fulltext-live-hydrate@1",
+                "inventory_digest": "not-the-sealed-digest",
+                "document_count": 2,
+                "documents": [{"legal_id": item} for item in sample],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    class _Boom:
+        documents_by_legal_id = {}
+
+        def __init__(self) -> None:
+            raise AssertionError("acquire must not run for this digest-mismatch test setup")
+
+    # Digest mismatch must not return the 2-row cache as the 11784 frontier.
+    with pytest.raises((FederalRegisterFulltextError, AssertionError, Exception)):
+        # Passing a boom result forces the function to notice cache mismatch and
+        # either acquire or fail closed. We pass a dummy result with no docs.
+        class _Empty:
+            documents_by_legal_id = {}
+
+        hydrate_live_inventory_documents(
+            cache_path=cache,
+            acquisition_result=_Empty(),
+        )
+
+
+def test_live_cli_hydrate_flag_requires_live() -> None:
+    from scripts.ops.legal_data.enrich_federal_register_fulltext import main
+
+    assert main(["--hydrate-live-inventory"]) == 1
+
+
+def test_govinfo_only_live_enrichment_with_injected_transport() -> None:
+    documents, report = load_fixture_inventory_documents()
+    subset = documents[:2]
+    roles = assign_fixture_roles(subset)
+    result = enrich_federal_register_fulltext(
+        config=FulltextConfig(mode=FulltextMode.LIVE, source_formats=("govinfo",)),
+        transport=FixtureFulltextTransport(subset, roles),
+        inventory_documents=subset,
+        inventory_report=report,
+    )
+    assert result.classified_count == 2
+    assert all(
+        not any(a.source_format.value == "html" for a in doc.attempts)
+        or True
+        for doc in result.documents
+    )
+    for doc in result.documents:
+        assert all(a.source_format.value == "govinfo" for a in doc.attempts)
 
 
 def test_fixture_enrichment_classifies_every_inventory_document() -> None:

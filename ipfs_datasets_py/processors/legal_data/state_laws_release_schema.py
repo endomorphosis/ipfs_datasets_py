@@ -55,6 +55,9 @@ DEFAULT_EMBEDDING_MODEL_REVISION: Final = (
 )
 DEFAULT_EMBEDDING_DIMENSION: Final = 384
 TASK_ID: Final = "LCR-004"
+SOURCE_RIGHTS_RECEIPT_RELPATH: Final = (
+    "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json"
+)
 
 # Exact jurisdiction set: 50 postal state codes + DC (no extras, no omissions).
 CANONICAL_JURISDICTIONS: Final = frozenset(
@@ -219,6 +222,10 @@ PathLike = Union[str, PurePosixPath]
 
 class StateLawsReleaseSchemaError(ValueError):
     """Base error for state-law release schema contract failures."""
+
+
+class SourceRightsBindingError(StateLawsReleaseSchemaError):
+    """Raised when a candidate manifest omits or mismatches source-rights evidence."""
 
 
 class PositionalIdentityError(StateLawsReleaseSchemaError):
@@ -2729,6 +2736,10 @@ class ReleaseManifest:
     release_point: Optional[str] = None
     jurisdictions: tuple[str, ...] = ()
     enforce_semantic_family_closure: bool = True
+    source_rights_receipt_path: str = SOURCE_RIGHTS_RECEIPT_RELPATH
+    source_rights_receipt_digest: str = ""
+    source_rights_catalog_digest: str = ""
+    admitted_source_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         repo = _require_non_empty_str(self.dataset_repo_id, "dataset_repo_id")
@@ -2919,6 +2930,10 @@ class ReleaseManifest:
             "release_profile": self.release_profile,
             "schema_version": self.schema_version,
             "source_revision": self.source_revision,
+            "source_rights_catalog_digest": self.source_rights_catalog_digest,
+            "source_rights_receipt_digest": self.source_rights_receipt_digest,
+            "source_rights_receipt_path": self.source_rights_receipt_path,
+            "admitted_source_ids": list(self.admitted_source_ids),
             "tokenizer_id": self.tokenizer_id,
             "vector_space_id": self.vector_space_id,
         }
@@ -2967,12 +2982,67 @@ class ReleaseManifest:
             enforce_semantic_family_closure=bool(
                 value.get("enforce_semantic_family_closure", True)
             ),
+            source_rights_receipt_path=str(
+                value.get("source_rights_receipt_path")
+                or SOURCE_RIGHTS_RECEIPT_RELPATH
+            ),
+            source_rights_receipt_digest=str(
+                value.get("source_rights_receipt_digest") or ""
+            ),
+            source_rights_catalog_digest=str(
+                value.get("source_rights_catalog_digest") or ""
+            ),
+            admitted_source_ids=tuple(
+                str(item)
+                for item in (value.get("admitted_source_ids") or ())
+                if str(item).strip()
+            ),
         )
 
 
 # ---------------------------------------------------------------------------
 # Composite validators / factory helpers
 # ---------------------------------------------------------------------------
+
+
+def require_source_rights_binding(
+    manifest: Mapping[str, Any] | ReleaseManifest,
+    *,
+    receipt_digest: str,
+    catalog_digest: str = "",
+    dataset_card_text: str = "",
+) -> None:
+    """Fail closed when a candidate does not bind the current rights receipt."""
+
+    payload = (
+        manifest.to_dict()
+        if isinstance(manifest, ReleaseManifest)
+        else dict(manifest)
+    )
+    bound = str(payload.get("source_rights_receipt_digest") or "").strip()
+    expected = validate_digest(receipt_digest, name="source_rights_receipt_digest")
+    if not bound:
+        raise SourceRightsBindingError(
+            "candidate manifest does not bind source_rights_receipt_digest"
+        )
+    if validate_digest(bound, name="manifest.source_rights_receipt_digest") != expected:
+        raise SourceRightsBindingError(
+            "candidate manifest source-rights digest does not match the receipt"
+        )
+    path = str(payload.get("source_rights_receipt_path") or "").strip()
+    if path and path != SOURCE_RIGHTS_RECEIPT_RELPATH:
+        raise SourceRightsBindingError(
+            f"source-rights receipt path must be {SOURCE_RIGHTS_RECEIPT_RELPATH}"
+        )
+    catalog_bound = str(payload.get("source_rights_catalog_digest") or "").strip()
+    if catalog_digest and catalog_bound and catalog_bound != catalog_digest:
+        raise SourceRightsBindingError(
+            "candidate catalog digest does not match the source-rights receipt"
+        )
+    if dataset_card_text and expected not in dataset_card_text:
+        raise SourceRightsBindingError(
+            "dataset card does not bind the source-rights receipt digest"
+        )
 
 
 def validate_release_record(

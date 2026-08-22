@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@1",
+  "title": "Legal corpora Hugging Face mutation path audit (LCR-084)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema",
+    "producer",
+    "program_id",
+    "task_id",
+    "goal_id",
+    "status",
+    "authorizing_hub_upload"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@1"
+    },
+    "producer": { "type": "string" },
+    "program_id": { "const": "legal-corpora-reindex-v1" },
+    "task_id": { "const": "LCR-084" },
+    "goal_id": { "const": "LCR-G146" },
+    "status": { "enum": ["passed", "blocked"] },
+    "authorizing_hub_upload": { "const": false }
+  }
+}

@@ -893,3 +893,30 @@ def test_adjacency_normalizes_direction_aliases():
         edge_cids=(_digest("e1"),),
     )
     assert record_out.direction == "out"
+
+
+def test_require_source_rights_binding_matches_receipt_digest():
+    from ipfs_datasets_py.processors.legal_data.state_laws_release_schema import (
+        SOURCE_RIGHTS_RECEIPT_RELPATH,
+        SourceRightsBindingError,
+        require_source_rights_binding,
+    )
+
+    digest = _digest("rights")
+    catalog = _digest("catalog")
+    manifest = {
+        "source_rights_receipt_path": SOURCE_RIGHTS_RECEIPT_RELPATH,
+        "source_rights_receipt_digest": digest,
+        "source_rights_catalog_digest": catalog,
+    }
+    require_source_rights_binding(
+        manifest,
+        receipt_digest=digest,
+        catalog_digest=catalog,
+        dataset_card_text=f"digest {digest}",
+    )
+    with pytest.raises(SourceRightsBindingError):
+        require_source_rights_binding(
+            {"source_rights_receipt_digest": _digest("other")},
+            receipt_digest=digest,
+        )

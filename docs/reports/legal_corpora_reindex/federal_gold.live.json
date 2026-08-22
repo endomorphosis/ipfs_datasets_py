@@ -1,0 +1,618 @@
+{
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "citation_queries": 16,
+  "content_digest": "707bc11e195dec554aceff16036d77042ff9d562a2780d6137f30efb7540f679",
+  "currentness_disclaimer": "Federal Register completeness is cutoff-relative. Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the daily register is permanently current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "documents": 11784,
+  "exact_document_queries": 32,
+  "fixture_only": false,
+  "goal_id": "LCR-G130",
+  "ground_truth_policy": "official_publication_identity_and_extracted_citations",
+  "human_authored": false,
+  "mode": "live",
+  "observation_cutoff": "2026-08-10T00:00:00Z",
+  "producer": "build_federal_register_live_gold.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "queries": [
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-13990",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-13990:2026-07-10"
+      ],
+      "text": "2026-13990"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-04439",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-04439:2026-03-06"
+      ],
+      "text": "2026-04439"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-10249",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-10249:2026-05-22"
+      ],
+      "text": "2026-10249"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-10081",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-10081:2026-05-20"
+      ],
+      "text": "2026-10081"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-05289",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-05289:2026-03-18"
+      ],
+      "text": "2026-05289"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-15385",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-15385:2026-07-30"
+      ],
+      "text": "2026-15385"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-12787",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-12787:2026-06-25"
+      ],
+      "text": "2026-12787"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-12515",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-12515:2026-06-22"
+      ],
+      "text": "2026-12515"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-08644",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-08644:2026-05-04"
+      ],
+      "text": "2026-08644"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-12865",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-12865:2026-06-26"
+      ],
+      "text": "2026-12865"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-09386",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-09386:2026-05-12"
+      ],
+      "text": "2026-09386"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-08867",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-08867:2026-05-06"
+      ],
+      "text": "2026-08867"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-C1-2026-13124",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:C1-2026-13124:2026-07-29"
+      ],
+      "text": "C1-2026-13124"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-11683",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-11683:2026-06-11"
+      ],
+      "text": "2026-11683"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-13002",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-13002:2026-06-29"
+      ],
+      "text": "2026-13002"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-04934",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-04934:2026-03-13"
+      ],
+      "text": "2026-04934"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-09126",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-09126:2026-05-08"
+      ],
+      "text": "2026-09126"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-10769",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-10769:2026-05-29"
+      ],
+      "text": "2026-10769"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-07714",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-07714:2026-04-21"
+      ],
+      "text": "2026-07714"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-15901",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-15901:2026-08-05"
+      ],
+      "text": "2026-15901"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-14721",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-14721:2026-07-22"
+      ],
+      "text": "2026-14721"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-13537",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-13537:2026-07-06"
+      ],
+      "text": "2026-13537"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-06615",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-06615:2026-04-06"
+      ],
+      "text": "2026-06615"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-12573",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-12573:2026-06-23"
+      ],
+      "text": "2026-12573"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-15366",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-15366:2026-07-30"
+      ],
+      "text": "2026-15366"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-08429",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-08429:2026-04-30"
+      ],
+      "text": "2026-08429"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-09746",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-09746:2026-05-15"
+      ],
+      "text": "2026-09746"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-12372",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-12372:2026-06-22"
+      ],
+      "text": "2026-12372"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-10721",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-10721:2026-05-29"
+      ],
+      "text": "2026-10721"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-11352",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-11352:2026-06-05"
+      ],
+      "text": "2026-11352"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-11836",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-11836:2026-06-12"
+      ],
+      "text": "2026-11836"
+    },
+    {
+      "label_kind": "exact_document",
+      "partition": "test",
+      "query_id": "q-live-exact-2026-15240",
+      "query_kind": "exact_document_number",
+      "relevant": [
+        "fr:2026-15240:2026-07-29"
+      ],
+      "text": "2026-15240"
+    },
+    {
+      "citation_node": "citation:cfr:18:385.602",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-18-385.602",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-09995:2026-05-19",
+        "fr:2026-11338:2026-06-05",
+        "fr:2026-16239:2026-08-10"
+      ],
+      "text": "18 CFR 385.602"
+    },
+    {
+      "citation_node": "citation:cfr:21:801.5",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-21-801.5",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-05320:2026-03-18",
+        "fr:2026-05772:2026-03-25",
+        "fr:2026-07366:2026-04-16",
+        "fr:2026-07862:2026-04-22",
+        "fr:2026-08425:2026-04-30",
+        "fr:2026-10675:2026-05-29",
+        "fr:2026-10899:2026-06-01",
+        "fr:2026-10905:2026-06-01",
+        "fr:2026-12165:2026-06-17",
+        "fr:2026-12445:2026-06-22",
+        "fr:2026-12901:2026-06-26",
+        "fr:2026-12903:2026-06-26",
+        "fr:2026-12904:2026-06-26",
+        "fr:2026-13139:2026-06-30",
+        "fr:2026-14986:2026-07-24",
+        "fr:2026-16209:2026-08-10"
+      ],
+      "text": "21 CFR 801.5"
+    },
+    {
+      "citation_node": "citation:cfr:10:1040",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-10-1040",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-04452:2026-03-06",
+        "fr:2026-04455:2026-03-06",
+        "fr:2026-13305:2026-07-01",
+        "fr:2026-13347:2026-07-01"
+      ],
+      "text": "10 CFR 1040"
+    },
+    {
+      "citation_node": "citation:cfr:45:263",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-45-263",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-06632:2026-04-06",
+        "fr:2026-10401:2026-05-26",
+        "fr:2026-15567:2026-07-31"
+      ],
+      "text": "45 CFR 263"
+    },
+    {
+      "citation_node": "citation:cfr:10:52.103",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-10-52.103",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-04187:2026-03-03",
+        "fr:2026-06049:2026-03-30",
+        "fr:2026-07090:2026-04-13",
+        "fr:2026-08550:2026-05-01",
+        "fr:2026-12660:2026-06-24",
+        "fr:2026-12989:2026-06-26",
+        "fr:2026-14341:2026-07-16"
+      ],
+      "text": "10 CFR 52.103"
+    },
+    {
+      "citation_node": "citation:cfr:16:702",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-16-702",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-06056:2026-03-30",
+        "fr:2026-07538:2026-04-17",
+        "fr:2026-12503:2026-06-22",
+        "fr:2026-14038:2026-07-13"
+      ],
+      "text": "16 CFR 702"
+    },
+    {
+      "citation_node": "citation:cfr:10:783",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-10-783",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-10727:2026-05-29",
+        "fr:2026-10729:2026-05-29",
+        "fr:2026-13875:2026-07-09"
+      ],
+      "text": "10 CFR 783"
+    },
+    {
+      "citation_node": "citation:cfr:10:52.79",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-10-52.79",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-06747:2026-04-08",
+        "fr:2026-08015:2026-04-24",
+        "fr:2026-13687:2026-07-07",
+        "fr:2026-14341:2026-07-16"
+      ],
+      "text": "10 CFR 52.79"
+    },
+    {
+      "citation_node": "citation:cfr:19:351.206",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-19-351.206",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-05004:2026-03-16",
+        "fr:2026-05005:2026-03-16",
+        "fr:2026-06450:2026-04-02",
+        "fr:2026-08192:2026-04-28",
+        "fr:2026-08193:2026-04-28",
+        "fr:2026-08194:2026-04-28",
+        "fr:2026-10109:2026-05-20",
+        "fr:2026-10520:2026-05-27",
+        "fr:2026-14610:2026-07-21",
+        "fr:2026-14611:2026-07-21",
+        "fr:2026-14613:2026-07-21",
+        "fr:2026-14614:2026-07-21",
+        "fr:2026-14871:2026-07-23",
+        "fr:2026-15890:2026-08-05"
+      ],
+      "text": "19 CFR 351.206"
+    },
+    {
+      "citation_node": "citation:cfr:5:550",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-5-550",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-07198:2026-04-14",
+        "fr:2026-15650:2026-08-03",
+        "fr:2026-15654:2026-08-03"
+      ],
+      "text": "5 CFR 550"
+    },
+    {
+      "citation_node": "citation:cfr:33:100.1302",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-33-100.1302",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-08726:2026-05-05",
+        "fr:2026-10597:2026-05-28",
+        "fr:2026-12170:2026-06-17",
+        "fr:2026-13029:2026-06-29",
+        "fr:2026-13763:2026-07-08"
+      ],
+      "text": "33 CFR 100.1302"
+    },
+    {
+      "citation_node": "citation:cfr:21:25.34",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-21-25.34",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-05320:2026-03-18",
+        "fr:2026-05322:2026-03-18",
+        "fr:2026-05772:2026-03-25",
+        "fr:2026-06064:2026-03-30",
+        "fr:2026-07365:2026-04-16",
+        "fr:2026-07366:2026-04-16",
+        "fr:2026-07367:2026-04-16",
+        "fr:2026-07860:2026-04-22",
+        "fr:2026-07861:2026-04-22",
+        "fr:2026-07862:2026-04-22",
+        "fr:2026-07863:2026-04-22",
+        "fr:2026-08424:2026-04-30",
+        "fr:2026-08425:2026-04-30",
+        "fr:2026-08426:2026-04-30",
+        "fr:2026-08497:2026-05-01",
+        "fr:2026-08811:2026-05-06",
+        "fr:2026-08812:2026-05-06",
+        "fr:2026-08813:2026-05-06",
+        "fr:2026-09152:2026-05-08",
+        "fr:2026-09335:2026-05-12",
+        "fr:2026-10621:2026-05-28",
+        "fr:2026-10675:2026-05-29",
+        "fr:2026-10894:2026-06-01",
+        "fr:2026-10898:2026-06-01",
+        "fr:2026-10899:2026-06-01"
+      ],
+      "text": "21 CFR 25.34"
+    },
+    {
+      "citation_node": "citation:cfr:34:668",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-34-668",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-04520:2026-03-09",
+        "fr:2026-06777:2026-04-08",
+        "fr:2026-06987:2026-04-10",
+        "fr:2026-07666:2026-04-20",
+        "fr:2026-08556:2026-05-01",
+        "fr:2026-10013:2026-05-19",
+        "fr:2026-12096:2026-06-16",
+        "fr:2026-12462:2026-06-22",
+        "fr:2026-12965:2026-06-26",
+        "fr:2026-13286:2026-07-01"
+      ],
+      "text": "34 CFR 668"
+    },
+    {
+      "citation_node": "citation:cfr:10:50.75",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-10-50.75",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-05153:2026-03-17",
+        "fr:2026-07701:2026-04-21",
+        "fr:2026-08550:2026-05-01",
+        "fr:2026-14341:2026-07-16"
+      ],
+      "text": "10 CFR 50.75"
+    },
+    {
+      "citation_node": "citation:cfr:43:1864.2",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-43-1864.2",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-04782:2026-03-12",
+        "fr:2026-04994:2026-03-16",
+        "fr:2026-04997:2026-03-16"
+      ],
+      "text": "43 CFR 1864.2"
+    },
+    {
+      "citation_node": "citation:cfr:29:2570",
+      "label_kind": "supporting_citation_path",
+      "partition": "test",
+      "query_id": "q-live-cite-citation-cfr-29-2570",
+      "query_kind": "citation",
+      "relevant": [
+        "fr:2026-05165:2026-03-17",
+        "fr:2026-06408:2026-04-02",
+        "fr:2026-08625:2026-05-04",
+        "fr:2026-11063:2026-06-03",
+        "fr:2026-11065:2026-06-03",
+        "fr:2026-11134:2026-06-03",
+        "fr:2026-11222:2026-06-04"
+      ],
+      "text": "29 CFR 2570"
+    }
+  ],
+  "query_count": 48,
+  "schema": "ipfs_datasets_py/federal-register-live-gold@1",
+  "status": "passed",
+  "task_id": "LCR-071"
+}

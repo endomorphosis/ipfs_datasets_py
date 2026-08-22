@@ -35,9 +35,15 @@ from ipfs_datasets_py.processors.legal_data.legal_corpora_publication_gate impor
     PublicationOperation,
     PublicationPhase,
     REQUIRED_PUBLICATION_GATES,
+    RIGHTS_RECEIPT_RELPATH,
+    RUNTIME_GOAL_ID,
+    RUNTIME_MODULE,
+    RUNTIME_TASK_ID,
     SCHEMA_VERSION,
     STATE_DATASET_REPO_ID,
     STATE_PREVIOUS_PUBLIC_PIN,
+    SUCCESSOR_GOAL_ID,
+    SUCCESSOR_TASK_ID,
     TASK_ID,
     apply_denial_mutator,
     authorize_and_mutate,
@@ -103,6 +109,7 @@ def test_schema_and_task_identity_are_stable() -> None:
         "prepublication_seal",
         "credential_identity",
         "evidence_cleanliness",
+        "source_rights_binding",
     )
 
 
@@ -126,6 +133,11 @@ def test_default_fixture_path_exists_and_matches_generator() -> None:
     assert on_disk["prepublication_seal_is_not_required_for_staging"] is True
     assert on_disk["prepublication_seal_must_precede_main_mutation"] is True
     assert on_disk["uploader_must_invoke_gate_before_first_network_mutation"] is True
+    assert on_disk["successor_task_id"] == generated["successor_task_id"] == SUCCESSOR_TASK_ID
+    assert on_disk["runtime_task_id"] == generated["runtime_task_id"] == RUNTIME_TASK_ID
+    assert on_disk["runtime_goal_id"] == generated["runtime_goal_id"] == RUNTIME_GOAL_ID
+    assert on_disk["canonical_runtime_module"] == generated["canonical_runtime_module"] == RUNTIME_MODULE
+    assert on_disk["canonical_paths_are_not_caller_overridable"] is True
     assert len(on_disk["denial_cases"]) == len(generated["denial_cases"])
     loaded = load_gate_fixture()
     assert loaded["schema"] == GATE_SCHEMA
@@ -166,6 +178,10 @@ def test_phase_requirements_match_release_policy_contract() -> None:
     )
     assert all(
         "LCR-084" in contract["required_task_ids"]
+        for contract in PHASE_REQUIREMENTS.values()
+    )
+    assert all(
+        {"LCR-081", "LCR-082", "LCR-083"}.issubset(contract["required_task_ids"])
         for contract in PHASE_REQUIREMENTS.values()
     )
     assert "LCR-085" in PHASE_REQUIREMENTS["federal_staging"]["required_task_ids"]
@@ -567,3 +583,50 @@ def test_fixture_file_is_secret_clean() -> None:
     payload = json.loads(text)
     assert payload["payload"]["credentials_environment_only"] is True
     assert payload["payload"]["secret_redacted"] is True
+
+
+def test_lcr079_successor_identity() -> None:
+    assert SUCCESSOR_TASK_ID == "LCR-083"
+    assert SUCCESSOR_GOAL_ID == "LCR-G145"
+    assert RIGHTS_RECEIPT_RELPATH.endswith("legal_source_rights_compliance.json")
+    assert "source_rights_binding" in REQUIRED_PUBLICATION_GATES
+    assert RUNTIME_TASK_ID == "LCR-080"
+    assert RUNTIME_GOAL_ID == "LCR-G142"
+    assert RUNTIME_MODULE.endswith("legal_corpora_publication_runtime")
+    assert TASK_ID == "LCR-074"
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+def test_lcr079_all_phases_authorize_with_bound_rights(phase: str) -> None:
+    decision = evaluate_publication_gate(example_authorized_request(phase))
+    assert decision.authorized is True
+    assert "source_rights_binding" in decision.passed_gates
+    calls, upload = _callback_tracker()
+    authorize_and_mutate(example_authorized_request(phase), upload)
+    assert calls == [decision] or len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    "phase",
+    ["state_staging", "state_main", "federal_staging", "federal_main"],
+)
+def test_lcr079_missing_rights_binding_denies_before_upload(phase: str) -> None:
+    payload = example_authorized_request(phase)
+    payload["payload"]["candidate_manifest"] = {}
+    calls, upload = _callback_tracker()
+    with pytest.raises(PublicationGateDeniedError) as exc:
+        authorize_and_mutate(payload, upload)
+    assert any("source_rights_binding" in code for code in exc.value.reason_codes)
+    assert calls == []
+
+
+def test_lcr079_stale_or_unknown_rights_deny() -> None:
+    payload = example_authorized_request("state_staging")
+    payload["receipts"][RIGHTS_RECEIPT_RELPATH]["authorizing_for_publication"] = False
+    decision = evaluate_publication_gate(payload)
+    assert decision.authorized is False
+    assert any("source_rights_binding" in code for code in decision.reason_codes)
+    assert decision.network_mutation_permitted is False
