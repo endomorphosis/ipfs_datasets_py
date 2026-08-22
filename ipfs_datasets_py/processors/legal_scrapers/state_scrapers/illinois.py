@@ -50,6 +50,29 @@ class IllinoisScraper(BaseStateScraper):
             }
         ]
 
+    def _scrape_official_bulk_zip(
+        self,
+        *,
+        code_name: str,
+        max_statutes: Optional[int],
+    ) -> List[NormalizedStatute]:
+        """Read the official ILCS FTP zip when ILLINOIS_BULK_ZIP is set."""
+
+        from .illinois_bulk import configured_bulk_zip_path, parse_illinois_bulk_zip
+
+        zip_path = configured_bulk_zip_path()
+        if zip_path is None:
+            return []
+        try:
+            return parse_illinois_bulk_zip(
+                zip_path,
+                code_name=code_name,
+                max_statutes=max_statutes,
+            )
+        except Exception as exc:
+            self.logger.warning("Illinois official bulk zip failed: %s", exc)
+            return []
+
     async def scrape_code(
         self,
         code_name: str,
@@ -58,6 +81,9 @@ class IllinoisScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape Illinois statutes through official Chapters -> Acts -> FullText pages."""
         limit = max(1, int(max_statutes)) if max_statutes else None
+        bulk = self._scrape_official_bulk_zip(code_name=code_name, max_statutes=limit)
+        if bulk:
+            return bulk
         statutes: List[NormalizedStatute] = []
 
         chapter_links = await self._discover_chapter_links(code_url)

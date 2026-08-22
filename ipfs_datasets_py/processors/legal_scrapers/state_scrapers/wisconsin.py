@@ -178,10 +178,38 @@ class WisconsinScraper(BaseStateScraper):
         chapter_links = await self._discover_chapter_links()
         self.logger.info("Wisconsin official index: discovered %s chapter links", len(chapter_links))
         statutes: List[NormalizedStatute] = []
+        seen = set()
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         for chapter_index, (chapter_url, chapter_label) in enumerate(chapter_links, start=1):
             if limit is not None and len(statutes) >= limit:
                 break
+            chapter_match = re.search(r"/document/statutes/([0-9]+)/?$", chapter_url, re.IGNORECASE)
+            chapter_number = chapter_match.group(1) if chapter_match else ""
+            chapter_payload = await self._fetch_page_content_with_archival_fallback(
+                chapter_url, timeout_seconds=20
+            )
+            if chapter_payload and chapter_number:
+                from .wisconsin_chapter import statutes_from_page
+
+                html = (
+                    chapter_payload.decode("utf-8", errors="replace")
+                    if isinstance(chapter_payload, bytes)
+                    else str(chapter_payload)
+                )
+                remaining = None if limit is None else max(0, int(limit) - len(statutes))
+                for row in statutes_from_page(
+                    html,
+                    chapter=chapter_number,
+                    code_name=code_name,
+                    max_statutes=remaining,
+                ):
+                    key = str(row.section_number or "").strip().lower()
+                    if not key or key in seen:
+                        continue
+                    seen.add(key)
+                    statutes.append(row)
+                    if limit is not None and len(statutes) >= limit:
+                        break
             section_links = await self._discover_section_links(chapter_url)
             if chapter_index == 1 or chapter_index % 25 == 0 or chapter_index == len(chapter_links):
                 self.logger.info(
@@ -192,12 +220,22 @@ class WisconsinScraper(BaseStateScraper):
                     len(section_links),
                     len(statutes),
                 )
+            remaining_links = [
+                item
+                for item in section_links
+                if str(item[1] or "").strip().lower() not in seen
+            ]
             parsed = await self._scrape_section_urls(
                 code_name,
-                section_links,
+                remaining_links,
                 max_statutes=(None if limit is None else max(0, limit - len(statutes))),
             )
-            statutes.extend(parsed)
+            for row in parsed:
+                key = str(row.section_number or "").strip().lower()
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                statutes.append(row)
         return statutes[:limit] if limit is not None else statutes
 
     async def _discover_chapter_links(self) -> List[Tuple[str, str]]:
@@ -275,7 +313,23 @@ class WisconsinScraper(BaseStateScraper):
                 continue
             url_section = str(source_url).rstrip("/").rsplit("/", 1)[-1].strip()
             section_number = url_section if re.match(r"^[0-9]+(?:\.[0-9A-Za-z]+)+$", url_section) else str(section_hint or url_section).strip()
-            soup = BeautifulSoup(payload, "html.parser")
+            html = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
+            from .wisconsin_chapter import chapter_of, statutes_from_page
+
+            harvested = statutes_from_page(
+                html,
+                chapter=chapter_of(section_number),
+                code_name=code_name,
+                max_statutes=None,
+            )
+            match = next(
+                (row for row in harvested if str(row.section_number) == section_number),
+                None,
+            )
+            if match is not None:
+                statutes.append(match)
+                continue
+            soup = BeautifulSoup(html, "html.parser")
             section_nodes = soup.select(f'[data-section="{section_number}"]')
             if not section_nodes:
                 section_nodes = soup.select(".box-content, #contentFrame, main, article, body")

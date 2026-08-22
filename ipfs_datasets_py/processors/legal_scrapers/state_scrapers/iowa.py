@@ -70,6 +70,9 @@ class IowaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        local_xml = self._scrape_configured_chapter_xml(code_name, max_statutes)
+        if local_xml:
+            return local_xml
         full_corpus = self._full_corpus_enabled()
         allow_justia = str(
             os.getenv("IOWA_ALLOW_JUSTIA_FALLBACK")
@@ -199,6 +202,28 @@ class IowaScraper(BaseStateScraper):
             return official_only
 
         return best_statutes
+
+    def _scrape_configured_chapter_xml(
+        self,
+        code_name: str,
+        max_statutes: Optional[int],
+    ) -> List[NormalizedStatute]:
+        from .iowa_chapter_xml import configured_chapter_xml_path, parse_iowa_chapter_xml
+
+        path = configured_chapter_xml_path()
+        if path is None:
+            return []
+        try:
+            return parse_iowa_chapter_xml(
+                path.read_bytes(),
+                chapter=path.stem.split("_", 1)[0],
+                year=self.OFFICIAL_CODE_YEAR,
+                code_name=code_name,
+                max_statutes=max_statutes,
+            )
+        except Exception as exc:
+            self.logger.warning("Iowa official chapter XML failed: %s", exc)
+            return []
 
     async def _scrape_official_iowa_sections(self, code_name: str) -> List[NormalizedStatute]:
         """Scrape Iowa Code from title/chapter pages and per-section RTF/PDF files."""
@@ -372,6 +397,34 @@ class IowaScraper(BaseStateScraper):
             chapter_soup = BeautifulSoup(chapter_html, "html.parser")
             chapter_query = parse_qs(urlparse(chapter_url).query or "")
             chapter_number = str((chapter_query.get("codeChapter") or [""])[0]).strip() or None
+            if chapter_number:
+                xml_url = (
+                    f"{self.get_base_url()}/docs/publications/ICC/{year}"
+                    f"/attachments/{chapter_number}_slim.xml"
+                )
+                xml_payload = await self._request_bytes_direct(xml_url, timeout=section_doc_timeout)
+                if xml_payload:
+                    from .iowa_chapter_xml import parse_iowa_chapter_xml
+
+                    remaining = None if section_limit <= 0 else max(0, section_limit - len(official_rows))
+                    xml_rows = parse_iowa_chapter_xml(
+                        xml_payload,
+                        chapter=chapter_number,
+                        year=year,
+                        code_name=code_name,
+                        max_statutes=remaining,
+                    )
+                    for row in xml_rows:
+                        section_key = (
+                            str(row.section_number or "").lower(),
+                            str(row.source_url or "").lower(),
+                        )
+                        if section_key in seen_section_keys:
+                            continue
+                        seen_section_keys.add(section_key)
+                        official_rows.append(row)
+                    if xml_rows:
+                        continue
 
             for row in chapter_soup.find_all("tr"):
                 if section_limit > 0 and len(official_rows) >= section_limit:

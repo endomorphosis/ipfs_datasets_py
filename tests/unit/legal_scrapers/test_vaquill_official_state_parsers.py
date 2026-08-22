@@ -294,3 +294,128 @@ def test_indiana_scrape_code_uses_configured_bulk_zip(tmp_path: Path, monkeypatc
     assert len(rows) == 1
     assert rows[0].section_number == "35-42-1-1"
     assert rows[0].structured_data["source_kind"] == "official_indiana_code_html_zip"
+
+
+WI_PAGE_HTML = """
+<div id="document">
+  <div class="qsatxt_1sect" data-section="940.01">
+    <span class="qsnum_sect">940.01</span>
+    <span class="qstitle_sect">First-degree intentional homicide.</span>
+  </div>
+  <div class="qsatxt_2subsect" data-section="940.01">(1) Whoever causes the death of another human being with intent to kill that person is guilty of a Class A felony.</div>
+  <div class="qsnote_history" data-section="940.01">940.01 History History: 1977 c. 173.</div>
+  <div class="qsnote_annot" data-section="940.01">Case annotation about an unpublished opinion that must not enter the statute body.</div>
+</div>
+"""
+
+IA_CHAPTER_XML = """
+<chapter>
+  <Section id="sec707.1">
+    <div class="heading">
+      <span class="identifier">707.1</span>
+      <span class="headnote">Murder defined.</span>
+    </div>
+    <p>A person who kills another person with malice aforethought commits murder.</p>
+    <div class="history">History: 2025 Acts, ch 1, section 1</div>
+  </Section>
+  <Section id="sec707.2">
+    <div class="heading">
+      <span class="identifier">707.2</span>
+      <span class="headnote">Murder in the first degree. [Repealed]</span>
+    </div>
+    <p>Repealed text that must not be admitted.</p>
+  </Section>
+</chapter>
+"""
+
+IL_SECTION_HTML = """
+<html><body>
+<div align="justify">
+<code><font size="2">(720 ILCS 5/9-1)</font></code>
+(from Ch. 38, par. 9-1)
+Sec. 1. First degree murder. A person who kills an individual without lawful justification commits first degree murder if he either intends to kill or knows that such acts will cause death.
+</div>
+</body></html>
+"""
+
+
+def test_wisconsin_qsatxt_keeps_subsections_drops_annotations() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wisconsin_chapter import (
+        statutes_from_page,
+    )
+
+    rows = statutes_from_page(WI_PAGE_HTML, chapter="940")
+    assert len(rows) == 1
+    assert rows[0].section_number == "940.01"
+    assert "Class A felony" in rows[0].full_text
+    assert "unpublished opinion" not in rows[0].full_text
+    assert "docs.legis.wisconsin.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+
+
+def test_iowa_slim_xml_skips_repealed_and_history() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.iowa_chapter_xml import (
+        chapter_xml_url,
+        parse_iowa_chapter_xml,
+    )
+
+    assert "attachments/707_slim.xml" in chapter_xml_url("707", 2026)
+    rows = parse_iowa_chapter_xml(IA_CHAPTER_XML, chapter="707", year="2026")
+    assert len(rows) == 1
+    assert rows[0].section_number == "707.1"
+    assert "malice aforethought" in rows[0].full_text
+    assert "2025 Acts" not in rows[0].full_text
+    assert "legis.iowa.gov" in rows[0].source_url
+
+
+def test_illinois_ilcs_zip_from_manifest(tmp_path: Path) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.illinois_bulk import (
+        html_to_text,
+        parse_illinois_bulk_zip,
+        parse_manifest,
+        section_url,
+    )
+
+    assert "ilga.gov/ftp/ILCS" in section_url("072000050K9-1")
+    entries = parse_manifest("072000050K9-1\nheader junk\n")
+    assert entries[0].citation() == "720 ILCS 5/9-1"
+    assert "first degree murder" in html_to_text(IL_SECTION_HTML).lower()
+    zip_path = tmp_path / "ilcs.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.writestr("aReadMe/Section Sequence.txt", "072000050K9-1\n")
+        archive.writestr("Ch 0720/Act 0005/072000050K9-1.html", IL_SECTION_HTML)
+    rows = parse_illinois_bulk_zip(zip_path, max_statutes=3)
+    assert len(rows) == 1
+    assert rows[0].official_cite == "720 ILCS 5/9-1"
+    assert rows[0].structured_data["source_kind"] == "official_illinois_ilcs_ftp"
+
+
+def test_illinois_scrape_code_uses_configured_bulk_zip(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.illinois import IllinoisScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    zip_path = tmp_path / "ilcs.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.writestr("aReadMe/Section Sequence.txt", "072000050K9-1\n")
+        archive.writestr("Ch 0720/Act 0005/072000050K9-1.html", IL_SECTION_HTML)
+    monkeypatch.setenv("ILLINOIS_BULK_ZIP", str(zip_path))
+    scraper = IllinoisScraper("IL", "Illinois")
+    rows = asyncio.run(
+        scraper.scrape_code("Illinois Compiled Statutes", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert "720 ILCS 5/9-1" in rows[0].official_cite
+
+
+def test_iowa_scrape_code_uses_configured_chapter_xml(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.iowa import IowaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    xml_path = tmp_path / "707_slim.xml"
+    xml_path.write_text(IA_CHAPTER_XML, encoding="utf-8")
+    monkeypatch.setenv("IOWA_CHAPTER_XML", str(xml_path))
+    scraper = IowaScraper("IA", "Iowa")
+    rows = asyncio.run(scraper.scrape_code("Iowa Code", "https://example.invalid", max_statutes=4))
+    assert len(rows) == 1
+    assert rows[0].section_number == "707.1"
+
