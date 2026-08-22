@@ -121,6 +121,15 @@ class CaliforniaScraper(BaseStateScraper):
             self.logger.warning("No code type mapping for %s", code_name)
             return []
 
+        bulk = self._scrape_official_bulk_zip(
+            code_name=code_name,
+            code_type=code_type,
+            max_statutes=limit,
+        )
+        if bulk:
+            admitted = bulk if limit is None else bulk[: int(limit)]
+            return self._repair_or_type_missing_source_links(admitted)
+
         seeds: List[NormalizedStatute] = []
         # Seed path is for bounded probes only — never sole full-corpus path.
         if not self._full_corpus_enabled() or max_statutes is not None:
@@ -147,6 +156,35 @@ class CaliforniaScraper(BaseStateScraper):
             return self._repair_or_type_missing_source_links(admitted)
 
         return []
+
+    def _scrape_official_bulk_zip(
+        self,
+        *,
+        code_name: str,
+        code_type: str,
+        max_statutes: Optional[int],
+    ) -> List[NormalizedStatute]:
+        """Read the official pubinfo ZIP when CALIFORNIA_BULK_ZIP is set.
+
+        Does not download the 1 GB archive by default. Operators point the env
+        at a local copy from downloads.leginfo.legislature.ca.gov.
+        """
+
+        from .california_bulk import configured_bulk_zip_path, parse_california_bulk_zip
+
+        zip_path = configured_bulk_zip_path()
+        if zip_path is None:
+            return []
+        try:
+            return parse_california_bulk_zip(
+                zip_path,
+                code_type=code_type,
+                max_statutes=max_statutes,
+                code_name=code_name,
+            )
+        except Exception as exc:
+            self.logger.warning("California official bulk zip failed: %s", exc)
+            return []
 
     def official_code_toc_url(self, code_type: str) -> str:
         """Return the official LegInfo TOC URL for one California code family."""

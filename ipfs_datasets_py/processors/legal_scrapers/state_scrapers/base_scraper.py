@@ -1756,7 +1756,9 @@ class BaseStateScraper(ABC):
     def _record_fetch_event(
         self, *, provider: str, success: bool, error: Optional[str] = None
     ) -> None:
+        self._last_fetch_provider = str(provider or "")
         self._fetch_analytics["attempted"] = int(self._fetch_analytics.get("attempted", 0) or 0) + 1
+        self._fetch_analytics["last_provider"] = self._last_fetch_provider
         if success:
             self._fetch_analytics["success"] = int(self._fetch_analytics.get("success", 0) or 0) + 1
 

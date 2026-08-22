@@ -157,6 +157,9 @@ class NewJerseyScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        bulk = self._scrape_official_bulk_zip(code_name=code_name, max_statutes=limit)
+        if bulk:
+            return bulk if limit is None else bulk[: int(limit)]
         official = await self._scrape_official_index(code_name, max_statutes=limit)
         if official:
             return official if limit is None else official[: int(limit)]
@@ -193,6 +196,29 @@ class NewJerseyScraper(BaseStateScraper):
             seen.add(statute.source_url)
             statutes.append(statute)
         return statutes
+
+    def _scrape_official_bulk_zip(
+        self,
+        *,
+        code_name: str,
+        max_statutes: Optional[int],
+    ) -> List[NormalizedStatute]:
+        """Read the official STATUTES-TEXT.zip when NEW_JERSEY_BULK_ZIP is set."""
+
+        from .new_jersey_bulk import configured_bulk_zip_path, parse_new_jersey_bulk_zip
+
+        zip_path = configured_bulk_zip_path()
+        if zip_path is None:
+            return []
+        try:
+            return parse_new_jersey_bulk_zip(
+                zip_path,
+                code_name=code_name,
+                max_statutes=max_statutes,
+            )
+        except Exception as exc:
+            self.logger.warning("New Jersey official bulk zip failed: %s", exc)
+            return []
 
     async def _scrape_official_index(
         self,

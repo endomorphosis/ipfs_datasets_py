@@ -243,6 +243,20 @@ class GeorgiaScraper(BaseStateScraper):
             out.append(statute)
         return out
 
+    _RECOVERY_FETCH_PROVIDERS = (
+        "wayback",
+        "archive_is",
+        "common_crawl",
+        "archival_fallback",
+        "common_crawl_insecure_tls",
+    )
+
+    def _classify_html_transport(self, provider: str) -> Tuple[str, str]:
+        token = str(provider or "").strip().lower()
+        if any(marker in token for marker in self._RECOVERY_FETCH_PROVIDERS):
+            return "recovery", "official_georgia_code_html_via_archive"
+        return "official", "official_georgia_code_html"
+
     async def _fetch_official_ga_html(self, url: str, timeout_seconds: int = 18) -> str:
         cached = await self._load_page_bytes_from_any_cache(url)
         if cached:
@@ -277,6 +291,16 @@ class GeorgiaScraper(BaseStateScraper):
         if payload:
             await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
             return payload.decode("utf-8", errors="replace")
+
+        try:
+            recovered = await self._fetch_page_content_with_archival_fallback(
+                url,
+                timeout_seconds=timeout,
+            )
+        except Exception:
+            recovered = b""
+        if recovered:
+            return recovered.decode("utf-8", errors="replace")
         return ""
 
     async def _scrape_official_georgia_code(
@@ -371,6 +395,8 @@ class GeorgiaScraper(BaseStateScraper):
         html = await self._fetch_official_ga_html(section_url)
         if not html:
             return None
+        provider = str(getattr(self, "_last_fetch_provider", "") or "")
+        authority, source_kind = self._classify_html_transport(provider)
         soup = BeautifulSoup(html, "html.parser")
         for node in soup(["script", "style", "noscript", "nav", "footer", "header"]):
             node.decompose()
@@ -385,6 +411,8 @@ class GeorgiaScraper(BaseStateScraper):
             return None
         full_text = self._normalize_legal_text(main.get_text(" ", strip=True))
         if len(full_text) < 80:
+            return None
+        if self._looks_contaminated(full_text):
             return None
 
         match = self._GA_SECTION_RE.search(section_url.rstrip("/"))
@@ -423,7 +451,9 @@ class GeorgiaScraper(BaseStateScraper):
             official_cite=f"Ga. Code Ann. § {section_number}",
             metadata=StatuteMetadata(),
             structured_data={
-                "source_kind": "official_georgia_code_html",
+                "source_kind": source_kind,
+                "source_authority_class": authority,
+                "fetch_transport": provider or "requests_direct",
                 "discovery_method": "official_title_chapter_section_index",
                 "skip_hydrate": True,
             },
@@ -926,7 +956,32 @@ class GeorgiaScraper(BaseStateScraper):
                 except Exception:
                     return b""
 
-        return _request()
+        payload = _request()
+        if payload:
+            return payload
+        return self._official_http_get_via_archive(url, timeout_seconds=timeout)
+
+    def _official_http_get_via_archive(self, url: str, timeout_seconds: int = 12) -> bytes:
+        """Recover an official legis.ga.gov page through Wayback. Not a Justia path."""
+
+        if not self.is_official_ga_url(url):
+            return b""
+        timeout = max(5, int(timeout_seconds or 12))
+        wayback = f"https://web.archive.org/web/2026/{url}"
+        try:
+            request = urllib.request.Request(
+                wayback,
+                headers={
+                    "User-Agent": "ipfs-datasets-georgia-official-catalog/1.0",
+                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                },
+            )
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                if int(getattr(response, "status", 200) or 200) != 200:
+                    return b""
+                return bytes(response.read() or b"")
+        except Exception:
+            return b""
 
     def _parse_official_title_links(self, html: bytes, page_url: str = "") -> Dict[str, str]:
         found: Dict[str, str] = {}

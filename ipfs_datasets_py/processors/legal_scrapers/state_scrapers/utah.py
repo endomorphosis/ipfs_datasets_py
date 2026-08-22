@@ -195,6 +195,13 @@ class UtahScraper(BaseStateScraper):
             unbounded_full = False
 
         xml_budget = return_threshold if not unbounded_full else 1000000
+        local_xml = self._scrape_configured_title_xml(
+            code_name,
+            max_statutes=None if unbounded_full else max(10, int(xml_budget)),
+        )
+        if local_xml:
+            return local_xml if unbounded_full else local_xml[:return_threshold]
+
         xml_sections = await self._scrape_official_xml_code_tree(
             code_name,
             max_statutes=max(10, int(xml_budget)),
@@ -278,7 +285,75 @@ class UtahScraper(BaseStateScraper):
 
         return merged
 
+    def _scrape_configured_title_xml(
+        self,
+        code_name: str,
+        max_statutes: Optional[int],
+    ) -> List[NormalizedStatute]:
+        """Read a local official title XML when ``UTAH_TITLE_XML`` is set."""
+
+        from .utah_title_xml import configured_title_xml_path, parse_utah_xml_document
+
+        path = configured_title_xml_path()
+        if path is None:
+            return []
+        try:
+            return parse_utah_xml_document(
+                path.read_bytes(),
+                code_name=code_name,
+                source_url=f"{self.get_base_url()}/xcode/",
+                max_statutes=max_statutes,
+            )
+        except Exception as exc:
+            self.logger.warning("Utah official title XML failed: %s", exc)
+            return []
+
     async def _scrape_official_xml_code_tree(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        from .utah_title_xml import (
+            discover_title_xml_urls_from_html,
+            parse_utah_xml_document,
+            title_xml_url,
+            version_default_from_html,
+        )
+
+        wrapper_url = f"{self.get_base_url()}/xcode/code.html"
+        wrapper_html = await self._fetch_text_with_archival(wrapper_url, timeout=25)
+        title_xml_urls = discover_title_xml_urls_from_html(wrapper_html or "", base=self.get_base_url())
+
+        # Title wrappers expose versionDefault without Playwright when the TOC
+        # is JS-only. Bound the probe so sampling stays cheap.
+        if not title_xml_urls:
+            title_budget = len(self.OFFICIAL_TITLES) if self._full_corpus_enabled() else min(6, len(self.OFFICIAL_TITLES))
+            for title_num, _name in self.OFFICIAL_TITLES[:title_budget]:
+                title_wrapper = f"{self.get_base_url()}/xcode/Title{title_num}/{title_num}.html"
+                title_html = await self._fetch_text_with_archival(title_wrapper, timeout=15)
+                versioned = self._resolve_versioned_content_url(title_wrapper, title_html or "")
+                if versioned and versioned.lower().endswith(".html"):
+                    title_xml_urls[str(title_num)] = versioned[:-5] + ".xml"
+                    continue
+                version = version_default_from_html(title_html or "")
+                if version:
+                    title_xml_urls[str(title_num)] = title_xml_url(str(title_num), version)
+
+        statutes: List[NormalizedStatute] = []
+        for _title_num, xml_url in title_xml_urls.items():
+            if len(statutes) >= max_statutes:
+                return statutes[:max_statutes]
+            xml_text = await self._fetch_text_with_archival(xml_url, timeout=35)
+            if not xml_text:
+                continue
+            remaining = max(0, int(max_statutes) - len(statutes))
+            statutes.extend(
+                parse_utah_xml_document(
+                    xml_text.encode("utf-8") if isinstance(xml_text, str) else xml_text,
+                    code_name=code_name,
+                    source_url=xml_url,
+                    max_statutes=remaining,
+                )
+            )
+        if statutes:
+            return statutes[:max_statutes]
+
         root_xml_url = await self._resolve_root_versioned_xml_url()
         if not root_xml_url:
             return []
@@ -287,14 +362,21 @@ class UtahScraper(BaseStateScraper):
         if not xml_text:
             return []
 
+        parsed = parse_utah_xml_document(
+            xml_text.encode("utf-8") if isinstance(xml_text, str) else xml_text,
+            code_name=code_name,
+            source_url=root_xml_url,
+            max_statutes=max_statutes,
+        )
+        if parsed:
+            return parsed
+
         try:
             root = ET.fromstring(xml_text)
         except Exception:
             return []
 
-        statutes: List[NormalizedStatute] = []
-        title_nodes = root.findall(".//title") if root.tag != "title" else [root]
-        for title_node in title_nodes:
+        for title_node in root.findall(".//title") if root.tag != "title" else [root]:
             title_number = str(title_node.attrib.get("number") or "").strip()
             title_name = self._normalize_legal_text(title_node.findtext("catchline", default=""))
             for chapter_node in title_node.findall(".//chapter"):
@@ -344,8 +426,10 @@ class UtahScraper(BaseStateScraper):
             return None
 
         section_name = self._normalize_legal_text(section_node.findtext("catchline", default=""))
-        body = self._normalize_legal_text(" ".join(text.strip() for text in section_node.itertext() if str(text or "").strip()))
-        if len(body) < 120:
+        from .utah_title_xml import _elem_text
+
+        body = self._normalize_legal_text(_elem_text(section_node))
+        if len(body) < 80:
             return None
 
         source_url = root_xml_url

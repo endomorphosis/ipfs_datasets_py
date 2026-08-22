@@ -174,6 +174,8 @@ class OhioScraper(BaseStateScraper):
                 seen_chapters.add(abs_url)
                 chapter_urls.append(abs_url)
 
+            title_match = self._OH_TITLE_URL_RE.search(title_url)
+            title_num = title_match.group(1) if title_match else ""
             for chapter_url in chapter_urls:
                 if limit is not None and len(statutes) >= limit:
                     break
@@ -181,6 +183,26 @@ class OhioScraper(BaseStateScraper):
                     break
                 chapter_payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
                 if not chapter_payload:
+                    continue
+                chapter_match = self._OH_CHAPTER_URL_RE.search(chapter_url)
+                chapter_num = chapter_match.group(1) if chapter_match else ""
+                remaining = None if limit is None else max(0, int(limit) - len(statutes))
+                inline = self._parse_official_chapter_inline(
+                    chapter_payload,
+                    code_name=code_name,
+                    title_num=title_num,
+                    chapter_num=chapter_num,
+                    max_statutes=remaining,
+                )
+                if inline:
+                    for row in inline:
+                        key = str(row.source_url or row.statute_id or "").strip().lower()
+                        if not key or key in seen_sections:
+                            continue
+                        seen_sections.add(key)
+                        statutes.append(row)
+                        if limit is not None and len(statutes) >= limit:
+                            break
                     continue
                 chapter_soup = BeautifulSoup(chapter_payload, "html.parser")
                 for link in chapter_soup.find_all("a", href=True):
@@ -197,6 +219,30 @@ class OhioScraper(BaseStateScraper):
                         if limit is not None and len(statutes) >= limit:
                             break
         return statutes
+
+    def _parse_official_chapter_inline(
+        self,
+        html: Any,
+        *,
+        code_name: str,
+        title_num: str,
+        chapter_num: str,
+        max_statutes: Optional[int],
+    ) -> List[NormalizedStatute]:
+        """Parse inline chapter sections (Vaquill codes.ohio.gov chapter page)."""
+
+        from .ohio_chapter import parse_ohio_chapter_html
+
+        try:
+            return parse_ohio_chapter_html(
+                html,
+                title_num=title_num,
+                chapter_num=chapter_num,
+                code_name=code_name,
+                max_statutes=max_statutes,
+            )
+        except Exception:
+            return []
 
     async def _build_official_section_statute(
         self,

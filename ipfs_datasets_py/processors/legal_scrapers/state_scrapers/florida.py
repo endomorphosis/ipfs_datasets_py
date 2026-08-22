@@ -105,6 +105,16 @@ class FloridaScraper(BaseStateScraper):
         limit = max(1, int(max_statutes)) if max_statutes else None
         statutes: List[NormalizedStatute] = []
         title_links = await self._discover_title_links(code_url)
+        if not title_links:
+            # Vaquill Online Sunshine TOC uses Title_Request=ROMAN even when
+            # the caller handed a generic /Statutes/ landing URL.
+            from .florida_chapter import title_romans
+
+            toc_html = await self._fetch_official_fl_html(
+                f"{self.get_base_url()}/Statutes/index.cfm?Mode=View%20Statutes&Submenu=1&Tab=statutes"
+            )
+            for roman in title_romans(toc_html):
+                title_links.append((self.official_title_url(roman), f"Title {roman}"))
         self.logger.info("Florida official index: discovered %s title links", len(title_links))
 
         for title_index, (title_url, title_label) in enumerate(title_links, start=1):
@@ -228,6 +238,16 @@ class FloridaScraper(BaseStateScraper):
             seen.add(chapter_url)
             label = re.sub(r"\s+", " ", anchor.get_text(" ", strip=True) or "").strip()
             out.append((chapter_url, label or chapter_path))
+        if out:
+            return out
+        from .florida_chapter import chapter_page_url, title_chapters
+
+        for chapter in title_chapters(html):
+            chapter_url = chapter_page_url(chapter)
+            if chapter_url in seen:
+                continue
+            seen.add(chapter_url)
+            out.append((chapter_url, f"Chapter {chapter}"))
         return out
 
     async def _parse_chapter_sections(
@@ -246,11 +266,27 @@ class FloridaScraper(BaseStateScraper):
         html = await self._fetch_official_fl_html(chapter_url)
         if not html:
             return []
+        from .florida_chapter import chapter_number_from_url, parse_florida_chapter_html
+
         soup = BeautifulSoup(html, "html.parser")
         title_number = self._text_or_empty(soup.select_one(".TitleNumber"))
         title_name = self._text_or_empty(soup.select_one(".TitleName"))
-        chapter_number = self._text_or_empty(soup.select_one(".ChapterNumber")) or self._chapter_number_from_url(chapter_url)
+        chapter_number = (
+            self._text_or_empty(soup.select_one(".ChapterNumber"))
+            or chapter_number_from_url(chapter_url)
+            or self._chapter_number_from_url(chapter_url)
+        )
         chapter_name = self._text_or_empty(soup.select_one(".ChapterName")) or chapter_label
+        structured = parse_florida_chapter_html(
+            html,
+            chapter=chapter_number or "0",
+            code_name=code_name,
+            title_roman=title_number,
+            title_name=title_name or chapter_name,
+            max_statutes=max_statutes,
+        )
+        if structured:
+            return structured
 
         statutes: List[NormalizedStatute] = []
         for section in soup.select(".Section"):
@@ -305,8 +341,9 @@ class FloridaScraper(BaseStateScraper):
 
     @staticmethod
     def _chapter_number_from_url(url: str) -> str:
-        match = re.search(r"/([0-9]{4})/\\1\.html", str(url or ""))
-        return match.group(1).lstrip("0") if match else ""
+        from .florida_chapter import chapter_number_from_url
+
+        return chapter_number_from_url(url)
 
     @staticmethod
     def _section_url(chapter_url: str, section_number: str) -> str:

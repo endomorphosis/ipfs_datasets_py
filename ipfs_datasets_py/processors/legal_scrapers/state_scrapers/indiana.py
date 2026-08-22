@@ -144,6 +144,12 @@ class IndianaScraper(BaseStateScraper):
             max_statutes=int(target_statutes),
         )
         self._mark_skip_hydrate_for_archived_justia_records(resumed)
+        bulk = self._scrape_official_bulk_zip(
+            code_name=code_name,
+            max_statutes=target_statutes,
+        )
+        if bulk:
+            return bulk
         # Prefer stable official archived chapter PDFs for small probes and
         # uncapped runs before heavier download-bundle / Justia recovery.
         if target_statutes < 30:
@@ -298,6 +304,30 @@ class IndianaScraper(BaseStateScraper):
             seen_ids.add(statute.statute_id)
             statutes.append(statute)
         return statutes
+
+    def _scrape_official_bulk_zip(
+        self,
+        *,
+        code_name: str,
+        max_statutes: Optional[int],
+    ) -> List[NormalizedStatute]:
+        """Read the official Indiana Code HTML zip when INDIANA_BULK_ZIP is set."""
+
+        from .indiana_bulk import configured_bulk_zip_path, parse_indiana_bulk_zip
+
+        zip_path = configured_bulk_zip_path()
+        if zip_path is None:
+            return []
+        try:
+            return parse_indiana_bulk_zip(
+                zip_path,
+                code_name=code_name,
+                max_statutes=max_statutes,
+                code_year=self.OFFICIAL_CODE_YEAR,
+            )
+        except Exception as exc:
+            self.logger.warning("Indiana official bulk zip failed: %s", exc)
+            return []
 
     async def _scrape_indiana_download_bundle(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         """Scrape section-level Indiana Code rows from official downloadable bundles."""

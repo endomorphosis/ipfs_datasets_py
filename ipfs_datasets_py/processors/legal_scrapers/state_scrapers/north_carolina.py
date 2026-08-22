@@ -15,7 +15,7 @@ import os
 import re
 import ssl
 import urllib.request
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urljoin, urlparse
 
 from .base_scraper import BaseStateScraper, NormalizedStatute
@@ -568,11 +568,15 @@ class NorthCarolinaScraper(BaseStateScraper):
             html = await self._request_text_direct(source_url, timeout=20)
             if not html:
                 return None
+            provider = str(getattr(self, "_last_fetch_provider", "") or "")
+            authority, source_kind = self._classify_html_transport(provider)
             soup = BeautifulSoup(html, "html.parser")
             for tag in soup(["script", "style", "nav", "header", "footer"]):
                 tag.decompose()
             text = self._normalize_legal_text(soup.get_text(" ", strip=True))
             if len(text) < 80:
+                return None
+            if self._looks_contaminated(text):
                 return None
             section_number_match = re.search(r"§\s*([0-9A-Za-z\-\.]+)\.", text)
             section_number = section_number_match.group(1).strip() if section_number_match else ""
@@ -595,7 +599,9 @@ class NorthCarolinaScraper(BaseStateScraper):
                 source_url=source_url,
                 official_cite=f"N.C. Gen. Stat. § {section_number}",
                 structured_data={
-                    "source_kind": "official_north_carolina_general_statutes_html",
+                    "source_kind": source_kind,
+                    "source_authority_class": authority,
+                    "fetch_transport": provider or "archival_fallback",
                     "discovery_method": "official_toc_chapter_section_html",
                     "skip_hydrate": True,
                 },
@@ -645,11 +651,15 @@ class NorthCarolinaScraper(BaseStateScraper):
             html = await self._request_text_direct(source_url, timeout=18)
             if not html:
                 continue
+            provider = str(getattr(self, "_last_fetch_provider", "") or "")
+            authority, source_kind = self._classify_html_transport(provider)
             soup = BeautifulSoup(html, "html.parser")
             for tag in soup(["script", "style", "nav", "header", "footer"]):
                 tag.decompose()
             text = self._normalize_legal_text(soup.get_text(" ", strip=True))
             if len(text) < 80:
+                continue
+            if self._looks_contaminated(text):
                 continue
             name_match = re.search(rf"§\s*{re.escape(section_number)}[.;]?\s*([^§]{{4,180}}?)(?:\.|$)", text)
             section_name = name_match.group(1).strip() if name_match else f"G.S. {section_number}"
@@ -666,7 +676,9 @@ class NorthCarolinaScraper(BaseStateScraper):
                     source_url=source_url,
                     official_cite=f"N.C. Gen. Stat. § {section_number}",
                     structured_data={
-                        "source_kind": "official_north_carolina_general_statutes_html",
+                        "source_kind": source_kind,
+                        "source_authority_class": authority,
+                        "fetch_transport": provider or "requests_direct",
                         "discovery_method": "official_seed_section",
                         "skip_hydrate": True,
                     },
@@ -747,6 +759,20 @@ class NorthCarolinaScraper(BaseStateScraper):
                 "unicourt",
             )
         )
+
+    _RECOVERY_FETCH_PROVIDERS = (
+        "wayback",
+        "archive_is",
+        "common_crawl",
+        "archival_fallback",
+        "common_crawl_insecure_tls",
+    )
+
+    def _classify_html_transport(self, provider: str) -> Tuple[str, str]:
+        token = str(provider or "").strip().lower()
+        if any(marker in token for marker in self._RECOVERY_FETCH_PROVIDERS):
+            return "recovery", "official_north_carolina_general_statutes_html_via_archive"
+        return "official", "official_north_carolina_general_statutes_html"
 
     def _looks_contaminated(self, text: str) -> bool:
         lowered = re.sub(r"\s+", " ", str(text or "")).strip().lower()
@@ -931,6 +957,30 @@ class NorthCarolinaScraper(BaseStateScraper):
             request = urllib.request.Request(url, headers=headers)
             context = ssl.create_default_context()
             with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                if int(getattr(response, "status", 200) or 200) == 200:
+                    payload = bytes(response.read() or b"")
+                    if payload:
+                        return payload
+        except Exception:
+            pass
+        return self._official_http_get_via_archive(url, timeout_seconds=max(8, timeout))
+
+    def _official_http_get_via_archive(self, url: str, timeout_seconds: int = 12) -> bytes:
+        """Recover an official ncleg.gov page through Wayback. Not a Justia path."""
+
+        if not self.is_official_nc_url(url):
+            return b""
+        timeout = max(8, int(timeout_seconds or 12))
+        wayback = f"https://web.archive.org/web/2026/{url}"
+        try:
+            request = urllib.request.Request(
+                wayback,
+                headers={
+                    "User-Agent": "ipfs-datasets-north-carolina-official-catalog/1.0",
+                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                },
+            )
+            with urllib.request.urlopen(request, timeout=timeout) as response:
                 if int(getattr(response, "status", 200) or 200) != 200:
                     return b""
                 return bytes(response.read() or b"")
