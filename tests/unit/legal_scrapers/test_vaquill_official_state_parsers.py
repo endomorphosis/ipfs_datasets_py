@@ -419,3 +419,209 @@ def test_iowa_scrape_code_uses_configured_chapter_xml(tmp_path: Path, monkeypatc
     assert len(rows) == 1
     assert rows[0].section_number == "707.1"
 
+
+def test_idaho_pgbrk_skips_breadcrumb_headers() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.idaho_section import (
+        statute_from_section_html,
+    )
+
+    html = """
+    <div class="pgbrk">
+      <div>Title 18</div><div>Crimes</div><div>Chapter 40</div><div>Homicide</div>
+      <div>18-4001. Murder defined.</div>
+      <div>Murder is the killing of a human being with malice aforethought.</div>
+      <div>History: 1972 c. 1</div>
+    </div>
+    """
+    row = statute_from_section_html(
+        html, section_number="18-4001", source_url="https://legislature.idaho.gov/statutesrules/idstat/Title18/T18CH40/SECT18-4001/"
+    )
+    assert row is not None
+    assert "malice aforethought" in row.full_text
+    assert "Title 18" not in row.full_text
+
+
+def test_missouri_all_tables_and_norm_body() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri_chapter import (
+        chapter_sections,
+        statute_from_section_html,
+    )
+
+    chapter_html = """
+    <table><tr><td><a href="PageSelect.aspx?section=565.020">565.020</a></td><td>First degree murder</td></tr></table>
+    <table><tr><td><a href="PageSelect.aspx?section=565.021">565.021</a></td><td>Second degree murder</td></tr></table>
+    """
+    assert [num for num, _title in chapter_sections(chapter_html, "565")] == ["565.020", "565.021"]
+    section_html = """
+    <div id="TOP"></div>
+    <div>
+      <div>
+        <div class="norm">
+          <p class="norm">The offense of murder in the first degree is committed when a person knowingly causes the death of another.</p>
+          <div class="foot">---- (L. 1983 S.B. 276)</div>
+        </div>
+      </div>
+    </div>
+    <div id="BOTTOM"></div>
+    """
+    row = statute_from_section_html(section_html, section_number="565.020")
+    assert row is not None
+    assert "knowingly causes the death" in row.full_text
+    assert "L. 1983" not in row.full_text
+
+
+def test_michigan_mcl_xml_inner_body(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.michigan import MichiganScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.michigan_chapter_xml import (
+        parse_michigan_chapter_xml,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    xml = """
+    <MCLChapterInfo>
+      <Name>750</Name>
+      <MCLDocumentInfoCollection>
+        <MCLStatuteInfo>
+          <Name>Act 328 of 1931</Name>
+          <MCLDocumentInfoCollection>
+            <MCLSectionInfo>
+              <MCLNumber>750.316</MCLNumber>
+              <CatchLine>First degree murder.</CatchLine>
+              <Repealed>false</Repealed>
+              <BodyText>&lt;Section-Body&gt;&lt;P&gt;(1) A person who commits murder in the first degree is guilty of a felony.&lt;/P&gt;&lt;/Section-Body&gt;</BodyText>
+            </MCLSectionInfo>
+          </MCLDocumentInfoCollection>
+        </MCLStatuteInfo>
+      </MCLDocumentInfoCollection>
+    </MCLChapterInfo>
+    """
+    rows = parse_michigan_chapter_xml(xml, chapter_hint="750")
+    assert len(rows) == 1
+    assert rows[0].section_number == "750.316"
+    assert "first degree" in rows[0].full_text
+    path = tmp_path / "Chapter 750.xml"
+    path.write_text(xml, encoding="utf-8")
+    monkeypatch.setenv("MICHIGAN_CHAPTER_XML", str(path))
+    scraper = MichiganScraper("MI", "Michigan")
+    live = asyncio.run(scraper.scrape_code("Michigan Compiled Laws", "https://example.invalid", max_statutes=2))
+    assert live[0].section_number == "750.316"
+
+
+def test_louisiana_labeldocument_heading_split() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana_law import (
+        statute_from_law_html,
+    )
+
+    html = """
+    <span id="ctl00_PageBody_LabelName">RS 14:30</span>
+    <span id="ctl00_PageBody_LabelDocument">
+      <p>TITLE 14</p>
+      <p>§30.  First degree murder</p>
+      <p>First degree murder is the killing of a human being with specific intent to kill.</p>
+    </span>
+    """
+    row = statute_from_law_html(html, source_url="https://legis.la.gov/Legis/Law.aspx?d=78329")
+    assert row is not None
+    assert row.section_number == "30"
+    assert "specific intent" in row.full_text
+    assert "TITLE 14" not in row.full_text
+
+
+def test_south_dakota_title_html_senu(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_dakota import SouthDakotaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <p class="sabcNormal">22-16-4. Homicide defined.</p>
+    <p class="sabcNormal-000001">Homicide is the killing of one human being by another.</p>
+    """
+    # SENU span is required
+    html = """
+    <p class="sabcNormal"><span class="SENU">22-16-4</span> 22-16-4. Homicide defined.</p>
+    <p class="sabcNormal-000001">Homicide is the killing of one human being by another.</p>
+    """
+    path = tmp_path / "22.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("SOUTH_DAKOTA_TITLE_HTML", str(path))
+    scraper = SouthDakotaScraper("SD", "South Dakota")
+    rows = asyncio.run(scraper.scrape_code("South Dakota Codified Laws", "https://example.invalid", max_statutes=3))
+    assert len(rows) == 1
+    assert rows[0].section_number == "22-16-4"
+    assert "killing of one human being" in rows[0].full_text
+
+
+def test_virginia_drops_sidenote_disclaimer() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.virginia_section import (
+        body_to_paragraphs,
+        statutes_from_section_detail,
+    )
+
+    body = "<p>Murder is the killing of any person with malice aforethought.</p><p class='sidenote'>This sidenote may not constitute a comprehensive list of notes.</p>"
+    paras = body_to_paragraphs(body)
+    assert paras == ["Murder is the killing of any person with malice aforethought."]
+    row = statutes_from_section_detail(
+        {"ChapterList": [{"Body": body, "CatchLine": "Murder."}]},
+        section_number="18.2-32",
+    )
+    assert row is not None
+    assert "malice aforethought" in row.full_text
+    assert "comprehensive list" not in row.full_text
+
+
+def test_new_york_openleg_json(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york import NewYorkScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    payload = {
+        "info": {"lawId": "PEN", "name": "Penal"},
+        "documents": {
+            "docType": "CHAPTER",
+            "documents": {
+                "items": [
+                    {
+                        "docType": "SECTION",
+                        "docLevelId": "125.25",
+                        "locationId": "125.25",
+                        "title": "Murder in the second degree",
+                        "text": "A person is guilty of murder in the second degree when with intent to cause the death of another person, he causes the death of such person.",
+                    }
+                ]
+            },
+        },
+    }
+    path = tmp_path / "PEN.json"
+    path.write_text(__import__("json").dumps(payload), encoding="utf-8")
+    monkeypatch.setenv("NY_OPENLEG_LAW_JSON", str(path))
+    scraper = NewYorkScraper("NY", "New York")
+    rows = asyncio.run(scraper.scrape_code("Penal Law", "https://example.invalid", max_statutes=2))
+    assert len(rows) == 1
+    assert rows[0].section_number == "125.25"
+    assert "intent to cause the death" in rows[0].full_text
+
+
+def test_pennsylvania_last_section_header_wins(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.pennsylvania import PennsylvaniaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+TABLE OF CONTENTS
+§ 2502.
+
+CHAPTER 25
+§ 2502.
+Murder.
+
+(a) A criminal homicide constitutes murder of the first degree when it is committed by an intentional killing.
+"""
+    path = tmp_path / "18.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("PENNSYLVANIA_TITLE_TEXT", str(path))
+    scraper = PennsylvaniaScraper("PA", "Pennsylvania")
+    rows = asyncio.run(
+        scraper.scrape_code("Pennsylvania Consolidated Statutes", "https://example.invalid", max_statutes=3)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "2502"
+    assert "intentional killing" in rows[0].full_text
+
+

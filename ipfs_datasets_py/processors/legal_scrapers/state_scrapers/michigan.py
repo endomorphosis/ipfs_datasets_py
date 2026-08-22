@@ -71,6 +71,21 @@ class MichiganScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .michigan_chapter_xml import configured_chapter_xml_path, parse_michigan_chapter_xml
+
+        xml_path = configured_chapter_xml_path()
+        if xml_path is not None:
+            try:
+                bulk = parse_michigan_chapter_xml(
+                    xml_path.read_bytes(),
+                    chapter_hint=xml_path.stem.replace("Chapter ", ""),
+                    code_name=code_name,
+                    max_statutes=limit,
+                )
+                if bulk:
+                    return bulk
+            except Exception as exc:
+                self.logger.warning("Michigan official chapter XML failed: %s", exc)
         official = await self._scrape_official_chapter_index(code_name, max_statutes=limit)
         if official:
             return official if limit is None else official[: int(limit)]

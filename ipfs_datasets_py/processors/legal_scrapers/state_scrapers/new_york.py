@@ -147,6 +147,11 @@ class NewYorkScraper(BaseStateScraper):
         statutes = []
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .new_york_openleg import parse_configured_law_json
+
+        openleg = parse_configured_law_json(code_name=code_name, max_statutes=limit)
+        if openleg:
+            return openleg
         official = await self._scrape_official_senate_laws_tree(code_name, max_statutes=limit)
         if official:
             return official if limit is None else official[: int(limit)]

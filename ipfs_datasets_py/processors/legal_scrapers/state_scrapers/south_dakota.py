@@ -138,6 +138,21 @@ class SouthDakotaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .south_dakota_title import configured_title_html_path, parse_south_dakota_title_html
+
+        title_path = configured_title_html_path()
+        if title_path is not None:
+            try:
+                bulk = parse_south_dakota_title_html(
+                    title_path.read_text(encoding="utf-8", errors="replace"),
+                    title_label=title_path.stem.split(".")[0] or "22",
+                    code_name=code_name,
+                    max_statutes=limit,
+                )
+                if bulk:
+                    return bulk
+            except Exception as exc:
+                self.logger.warning("South Dakota official title HTML failed: %s", exc)
         max_api_statutes = limit if limit is not None else None
         api_statutes = await self._scrape_statutes_api(
             code_name=code_name,

@@ -311,6 +311,18 @@ class IdahoScraper(BaseStateScraper):
         html = await self._fetch_official_id_html(section_url)
         if not html:
             return None
+        from .idaho_section import statute_from_section_html
+
+        url_match = self._ID_SECTION_NUM_RE.search(section_url)
+        guessed_number = (url_match.group(1) if url_match else section_label).upper().replace(".", "-")
+        parsed = statute_from_section_html(
+            html,
+            section_number=guessed_number,
+            source_url=section_url,
+            code_name=code_name,
+        )
+        if parsed is not None:
+            return parsed
         soup = BeautifulSoup(html, "html.parser")
 
         for node in soup(["script", "style", "noscript", "form", "nav", "footer", "header"]):

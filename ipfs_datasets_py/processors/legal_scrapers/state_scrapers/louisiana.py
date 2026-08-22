@@ -147,6 +147,12 @@ class LouisianaScraper(BaseStateScraper):
                 continue
             if max_statutes is not None and len(statutes) >= int(max_statutes):
                 break
+            from .louisiana_law import statute_from_law_html
+
+            parsed = statute_from_law_html(law_html, source_url=live_url, code_name=code_name)
+            if parsed is not None:
+                statutes.append(parsed)
+                continue
             section_number = self._extract_section_number(law_html)
             body_html = self._extract_law_body_html(law_html)
             full_text = self._clean_html_text(body_html)

@@ -577,7 +577,10 @@ class VirginiaScraper(BaseStateScraper):
                 )
                 if not payload:
                     return None
-                soup = BeautifulSoup(payload, "html.parser")
+                html = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
+                from .virginia_section import body_to_paragraphs
+
+                soup = BeautifulSoup(html, "html.parser")
                 node = (
                     soup.find(id="va_code")
                     or soup.find("article", id="vacode")
@@ -586,7 +589,8 @@ class VirginiaScraper(BaseStateScraper):
                 )
                 for tag in node(["script", "style", "nav", "header", "footer"]):
                     tag.decompose()
-                text = self._normalize_legal_text(node.get_text(" ", strip=True))
+                paras = body_to_paragraphs(str(node))
+                text = self._normalize_legal_text(" ".join(paras) if paras else node.get_text(" ", strip=True))
                 heading = node.find("h2") or soup.find("title")
                 heading_text = heading.get_text(" ", strip=True) if heading else ""
                 match = re.search(

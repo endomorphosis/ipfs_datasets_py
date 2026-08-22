@@ -213,28 +213,53 @@ class MissouriScraper(BaseStateScraper):
             except Exception:
                 continue
 
-            for link in chap_soup.find_all('a', href=True):
+            from .missouri_chapter import chapter_sections as _mo_chapter_sections
+
+            chapter_html = (
+                chapter_bytes.decode("utf-8", errors="replace")
+                if isinstance(chapter_bytes, bytes)
+                else str(chapter_bytes)
+            )
+            section_rows = _mo_chapter_sections(chapter_html, chapter_number)
+            if not section_rows:
+                for link in chap_soup.find_all('a', href=True):
+                    href = link.get('href', '')
+                    if 'OneSection.aspx?section=' not in href:
+                        continue
+                    full_url = urljoin(chapter_url, href)
+                    section_vals = parse_qs(urlparse(full_url).query).get('section') or []
+                    section_number = (section_vals[0].strip() if section_vals else '')
+                    if section_number:
+                        section_rows.append((section_number, link.get_text(' ', strip=True)))
+            for section_number, link_text in section_rows:
                 if cap is not None and len(statutes) >= cap:
                     break
-                href = link.get('href', '')
-                if 'OneSection.aspx?section=' not in href:
-                    continue
-
-                full_url = urljoin(chapter_url, href)
-                parsed = urlparse(full_url)
-                section_vals = parse_qs(parsed.query).get('section') or []
-                section_number = (section_vals[0].strip() if section_vals else '')
                 if not section_number:
                     continue
                 if section_number in seen_sections:
                     continue
                 seen_sections.add(section_number)
-
-                link_text = link.get_text(' ', strip=True) or f"Section {section_number}"
+                full_url = urljoin(chapter_url, f"OneSection.aspx?section={section_number}")
                 section_payload = await self._fetch_page_content_with_archival_fallback(
                     full_url,
                     timeout_seconds=20,
                 )
+                from .missouri_chapter import statute_from_section_html as _mo_section
+
+                section_html = (
+                    section_payload.decode("utf-8", errors="replace")
+                    if isinstance(section_payload, bytes)
+                    else str(section_payload or "")
+                )
+                parsed = _mo_section(
+                    section_html,
+                    section_number=section_number,
+                    code_name=code_name,
+                    section_title=link_text,
+                )
+                if parsed is not None:
+                    statutes.append(parsed)
+                    continue
                 full_text, extracted_name = self._extract_section_text_and_name(section_payload or b"")
                 section_name = (extracted_name or link_text or f"Section {section_number}")[:200]
                 if not full_text:

@@ -122,6 +122,21 @@ class PennsylvaniaScraper(BaseStateScraper):
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
         probe_threshold = limit if limit is not None else 160
+        from .pennsylvania_title import configured_title_text_path, parse_pennsylvania_title_text
+
+        text_path = configured_title_text_path()
+        if text_path is not None:
+            try:
+                bulk = parse_pennsylvania_title_text(
+                    text_path.read_text(encoding="utf-8", errors="replace"),
+                    title_number=text_path.stem.split("_")[0].lstrip("0") or "18",
+                    code_name=code_name,
+                    max_statutes=limit,
+                )
+                if bulk:
+                    return bulk
+            except Exception as exc:
+                self.logger.warning("Pennsylvania official title text failed: %s", exc)
 
         official_pdf_sections = await self._scrape_consolidated_title_pdfs(
             code_name=code_name,
