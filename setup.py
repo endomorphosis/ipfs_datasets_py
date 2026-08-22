@@ -492,6 +492,16 @@ setup(
             'pytest-mock>=3.12.0',  # mocker fixture for knowledge_graphs and other unit tests
             'hypothesis>=6.0.0',
         ],
+        # Exact local-only dependency profile used by the accelerator's
+        # LGCVF scoped validation preflight.  Each requirement reuses an
+        # existing reviewed base/test pin or distribution name; this optional
+        # profile does not broaden the mandatory install and never authorizes
+        # installation during validation.
+        'lgcvf-validation': [
+            'pytest>=9.0.3,<10.0.0',
+            'z3-solver>=4.12.0,<5.0.0',
+            'cvc5==1.3.3',
+        ],
 
         # Multi-chain wallet processors (WALPROC-G050 / WALPROC-010).
         # Shared kernel and chain ingestion use raw REST/JSON-RPC. Chain SDKs
