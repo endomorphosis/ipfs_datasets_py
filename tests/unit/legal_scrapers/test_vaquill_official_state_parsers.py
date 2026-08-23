@@ -1764,3 +1764,42 @@ def test_north_carolina_wayback_engine_harvest_is_recovery(monkeypatch) -> None:
     assert rows[0].structured_data["source_authority_class"] == "recovery"
     assert "poison, lying in wait" in rows[0].full_text
     assert "skip to main" not in rows[0].full_text.lower()
+
+
+def test_north_carolina_live_bychapter_preferred_over_toc(monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <p>&sect; 1-1. Remedies.</p>
+      <p>Remedies in the courts of justice are divided into actions and special proceedings that must be admitted as current law.</p>
+      <p>&sect; 1-2. Actions. (Repealed)</p>
+      <p>Repealed text must not be admitted.</p>
+    </body></html>
+    """
+    fetched: list[str] = []
+
+    async def _fake_request_text_direct(self, url: str, timeout: int = 18) -> str:
+        fetched.append(url)
+        self._last_fetch_provider = "requests_direct"
+        if "/ByChapter/" in url:
+            return html
+        return ""
+
+    monkeypatch.setattr(NorthCarolinaScraper, "_request_text_direct", _fake_request_text_direct)
+    scraper = NorthCarolinaScraper("NC", "North Carolina")
+    rows = asyncio.run(
+        scraper.scrape_code("North Carolina General Statutes", "https://example.invalid", max_statutes=3)
+    )
+    assert fetched and "/ByChapter/Chapter_" in fetched[0]
+    assert len(rows) == 1
+    assert rows[0].section_number == "1-1"
+    assert "actions and special proceedings" in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert rows[0].structured_data["source_kind"] == "official_north_carolina_bychapter_html"
+    assert "ncleg.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url

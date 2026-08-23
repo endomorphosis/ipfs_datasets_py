@@ -4617,6 +4617,8 @@ async def test_north_carolina_bounded_run_prefers_official_toc_chapter_sections(
     )
 
     async def _fake_request_text_direct(self, url: str, timeout: int = 18) -> str:
+        if "/ByChapter/" in url:
+            return ""
         if url.endswith("/Laws/GeneralStatutesTOC"):
             return toc_html
         if url.endswith("/Laws/GeneralStatuteSections/Chapter1"):
@@ -4646,6 +4648,10 @@ async def test_north_carolina_bounded_run_prefers_official_toc_chapter_sections(
 async def test_north_carolina_default_run_uses_realistic_limit(monkeypatch: pytest.MonkeyPatch):
     requested = {}
 
+    async def _fake_bychapter(self, code_name: str, max_statutes=None):
+        requested["bychapter_max_statutes"] = max_statutes
+        return []
+
     async def _fake_official(self, code_name: str, max_statutes=None):
         requested["official_max_statutes"] = max_statutes
         return []
@@ -4660,6 +4666,7 @@ async def test_north_carolina_default_run_uses_realistic_limit(monkeypatch: pyte
         requested.setdefault("generic_max_sections", []).append(max_sections)
         return []
 
+    monkeypatch.setattr(NorthCarolinaScraper, "_scrape_official_bychapter_html", _fake_bychapter)
     monkeypatch.setattr(NorthCarolinaScraper, "_scrape_official_index", _fake_official)
     monkeypatch.setattr(NorthCarolinaScraper, "_scrape_direct_seed_sections", _fake_seed)
     monkeypatch.setattr(NorthCarolinaScraper, "_generic_scrape", _fake_generic)
@@ -4670,6 +4677,7 @@ async def test_north_carolina_default_run_uses_realistic_limit(monkeypatch: pyte
         "North Carolina General Statutes", "https://www.ncleg.gov/Laws/GeneralStatutes"
     )
 
+    assert requested["bychapter_max_statutes"] == 160
     assert requested["official_max_statutes"] == 160
     assert requested["seed_max_statutes"] == 160
     assert all(value == 160 for value in requested["generic_max_sections"])

@@ -352,6 +352,13 @@ class NorthCarolinaScraper(BaseStateScraper):
         if recovered:
             return recovered
         return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
+        if self._bychapter_live_enabled():
+            bychapter = await self._scrape_official_bychapter_html(
+                code_name,
+                max_statutes=None if return_threshold == 1000000 else int(return_threshold),
+            )
+            if bychapter:
+                return bychapter if return_threshold == 1000000 else bychapter[: int(return_threshold)]
         official = await self._scrape_official_index(
             code_name,
             max_statutes=None if return_threshold == 1000000 else int(return_threshold),
@@ -406,6 +413,89 @@ class NorthCarolinaScraper(BaseStateScraper):
                 return statutes
 
         return best_statutes
+
+    def _bychapter_live_enabled(self) -> bool:
+        raw = str(os.getenv("NORTH_CAROLINA_BYCHAPTER_LIVE", "1") or "1").strip().lower()
+        return raw not in {"0", "false", "no", "off"}
+
+    def _bychapter_max_chapters(self) -> Optional[int]:
+        raw = str(os.getenv("NORTH_CAROLINA_BYCHAPTER_MAX_CHAPTERS") or "").strip()
+        if not raw:
+            return None
+        try:
+            value = int(raw)
+        except Exception:
+            return None
+        return value if value > 0 else None
+
+    async def _scrape_official_bychapter_html(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        """Fetch official ByChapter HTML dumps and parse section bodies.
+
+        Live ``/EnactedLegislation/Statutes/HTML/ByChapter/Chapter_{N}.html``
+        pages are the durable official statute text. Archive transport of the
+        same locators is labeled recovery. Disable with
+        ``NORTH_CAROLINA_BYCHAPTER_LIVE=0``.
+        """
+
+        from .north_carolina_archive import parse_north_carolina_archive_html
+        from .north_carolina_chapter import chapter_url, parse_north_carolina_chapter_html
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        max_chapters = self._bychapter_max_chapters()
+        statutes: List[NormalizedStatute] = []
+        seen: set[str] = set()
+        for index, (number, _name) in enumerate(self.OFFICIAL_CHAPTERS, start=1):
+            if limit is not None and len(statutes) >= limit:
+                break
+            if max_chapters is not None and index > max_chapters:
+                break
+            html = await self._request_text_direct(chapter_url(number), timeout=40)
+            if not html or len(html) < 200:
+                continue
+            provider = str(getattr(self, "_last_fetch_provider", "") or "requests_direct")
+            authority, _source_kind = self._classify_html_transport(provider)
+            remaining = None if limit is None else max(0, int(limit) - len(statutes))
+            if remaining is not None and remaining <= 0:
+                break
+            if authority == "recovery":
+                rows = parse_north_carolina_archive_html(
+                    html,
+                    chapter=number,
+                    source_url=chapter_url(number),
+                    code_name=code_name,
+                    max_statutes=remaining,
+                )
+            else:
+                rows = parse_north_carolina_chapter_html(
+                    html,
+                    chapter=number,
+                    code_name=code_name,
+                    max_statutes=remaining,
+                )
+            added = 0
+            for row in rows:
+                key = str(row.section_number or "").strip().lower()
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                statutes.append(row)
+                added += 1
+                if limit is not None and len(statutes) >= limit:
+                    break
+            if added or index == 1 or index % 25 == 0:
+                self.logger.info(
+                    "North Carolina ByChapter: chapter=%s/%s parsed=%s statutes_so_far=%s transport=%s",
+                    number,
+                    len(self.OFFICIAL_CHAPTERS),
+                    added,
+                    len(statutes),
+                    authority,
+                )
+        return statutes
 
     async def _scrape_official_index(
         self,
