@@ -306,6 +306,14 @@ class KentuckyScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .kentucky_constitution import parse_configured_kentucky_constitution
+
+        constitution_rows = parse_configured_kentucky_constitution(
+            code_name=code_name or "Kentucky Constitution",
+            max_statutes=limit,
+        )
+        if constitution_rows:
+            return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .kentucky_section import parse_configured_kentucky_section
 
         local_row = parse_configured_kentucky_section(code_name=code_name)

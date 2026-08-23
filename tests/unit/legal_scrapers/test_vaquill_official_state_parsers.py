@@ -2045,3 +2045,99 @@ Section 3. The right of the people to keep and bear arms for security and defens
     assert "Repealed text" not in "".join(row.full_text for row in rows)
     assert "sos.nm.gov" in rows[0].source_url
     assert "justia" not in rows[0].source_url
+
+
+def test_kentucky_constitution_toc_and_section(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kentucky import KentuckyScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kentucky_constitution import (
+        constitution_toc_links,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <a href="/Law/Constitution/Constitution/ViewConstitution?rsn=1">Section 1. Rights of life, liberty, worship.</a>
+      <a href="/Law/Constitution/Constitution/ViewConstitution?rsn=2">Section 2. Absolute and arbitrary power denied. (Repealed)</a>
+      <main>
+        Section 1. Rights of life, liberty, worship.
+        All men are, by nature, free and equal, and have certain inherent and inalienable rights.
+      </main>
+    </body></html>
+    """
+    links = constitution_toc_links(html)
+    assert [num for num, _title, url in links] == ["1", "2"]
+    assert "ViewConstitution" in links[0][2]
+    path = tmp_path / "ky-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("KENTUCKY_CONSTITUTION_HTML", str(path))
+    scraper = KentuckyScraper("KY", "Kentucky")
+    rows = asyncio.run(
+        scraper.scrape_code("Kentucky Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "1"
+    assert "free and equal" in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "justia" not in rows[0].source_url
+
+
+def test_west_virginia_constitution_keeps_section_one(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.west_virginia import (
+        WestVirginiaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body><main>
+    ARTICLE I
+    1-1. The State of West Virginia is, and shall remain, one of the United States of America.
+    1-2. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    ARTICLE II
+    2-1. The seat of government shall be at the city of Charleston, until otherwise provided by law.
+    </main></body></html>
+    """
+    path = tmp_path / "wv-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("WEST_VIRGINIA_CONSTITUTION_HTML", str(path))
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    rows = asyncio.run(
+        scraper.scrape_code("West Virginia Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert [row.section_number for row in rows] == ["1-1", "2-1"]
+    assert "one of the United States" in rows[0].full_text
+    assert "Repealed text" not in "".join(row.full_text for row in rows)
+    assert "wvlegislature.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+
+
+def test_nevada_constitution_skips_toc_and_suffixes_future_version(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nevada import NevadaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    ARTICLE. 1. - Declaration of Rights
+    Sec.\xa0\xa0\xa0
+    Section. 1. All men are by Nature free and equal and have certain inalienable rights.
+    Section. 1. Future text that is already adopted but not yet effective shall be kept as a second citable version of this section.
+    Section. 2. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    </body></html>
+    """
+    path = tmp_path / "nvconst.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("NEVADA_CONSTITUTION_HTML", str(path))
+    scraper = NevadaScraper("NV", "Nevada")
+    rows = asyncio.run(
+        scraper.scrape_code("Nevada Constitution", "https://example.invalid", max_statutes=6)
+    )
+    numbers = [row.section_number for row in rows]
+    assert "1" in numbers
+    assert "1-v2" in numbers
+    assert "Repealed text" not in "".join(row.full_text for row in rows)
+    assert "inalienable rights" in rows[0].full_text
+    assert "leg.state.nv.us/const" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
