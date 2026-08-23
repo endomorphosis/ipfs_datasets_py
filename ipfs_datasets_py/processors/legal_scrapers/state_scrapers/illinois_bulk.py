@@ -13,7 +13,7 @@ import re
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -158,3 +158,95 @@ def configured_bulk_zip_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+_ILCS_ACT_RE = re.compile(r"(\d+)\s+ILCS\s+(\d+[A-Za-z]?)/")
+_SEC_CITE_RE = re.compile(r"^\((\d+)\s+ILCS\s+(\d+[A-Za-z]?)/([^)]+)\)\s*$")
+
+
+def chapter_links(html: str, *, base_url: str = "https://www.ilga.gov") -> List[Tuple[str, str, str]]:
+    """TOC ``Acts?ChapterID=&ChapterNumber=`` rows."""
+
+    from urllib.parse import parse_qsl, urljoin, urlparse
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "")
+        if "Acts?" not in href or "ChapterID=" not in href or "ChapterNumber=" not in href:
+            continue
+        params = dict(parse_qsl(urlparse(href).query))
+        number = (params.get("ChapterNumber") or "").strip()
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        name = _WS.sub(" ", (anchor.get_text(" ") or "").replace("\xa0", " ")).strip()
+        out.append((number, name or f"Chapter {number}", urljoin(base_url, href)))
+    return out
+
+
+def act_links(html: str, *, base_url: str = "https://www.ilga.gov") -> List[Tuple[str, str, str, str]]:
+    """Chapter page ``Articles?ActID=`` rows: ``(act, chapter, name, url)``."""
+
+    from urllib.parse import parse_qsl, urljoin, urlparse
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "")
+        if "Articles?" not in href or "ActID=" not in href:
+            continue
+        params = dict(parse_qsl(urlparse(href).query))
+        act_id = (params.get("ActID") or "").strip()
+        if not act_id or act_id in seen:
+            continue
+        raw = _WS.sub(" ", (anchor.get_text(" ") or "").replace("\xa0", " ")).strip()
+        match = _ILCS_ACT_RE.match(raw)
+        if not match:
+            continue
+        seen.add(act_id)
+        out.append((match.group(2), match.group(1), raw, urljoin(base_url, href)))
+    return out
+
+
+def section_cites(html: str) -> List[Tuple[str, str, str]]:
+    """FullText ``(5 ILCS 70/0.01)`` cites; skip ``Art. N heading``."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for code in soup.find_all("code"):
+        text = _WS.sub(" ", (code.get_text(" ") or "").replace("\xa0", " ")).strip()
+        match = _SEC_CITE_RE.match(text)
+        if not match:
+            continue
+        chapter, act, path = match.group(1), match.group(2), match.group(3).strip()
+        if "heading" in path.lower() or "art." in path.lower():
+            continue
+        key = f"{chapter}/{act}/{path}"
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append((chapter, act, path))
+    return out
+
+
+def full_text_url(act_id: str, chapter_id: str) -> str:
+    return (
+        "https://www.ilga.gov/legislation/ILCS/details"
+        f"?ActID={act_id}&ChapterID={chapter_id}&SeqStart=&ChapAct=FullText"
+    )

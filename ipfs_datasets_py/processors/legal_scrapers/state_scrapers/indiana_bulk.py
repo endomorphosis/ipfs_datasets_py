@@ -125,3 +125,82 @@ def configured_bulk_zip_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+API_BASE = "https://api.iga.in.gov"
+SITE_BASE = "https://iga.in.gov"
+
+
+def titles_api_url(year: int | str = 2024) -> str:
+    return f"{API_BASE}/{int(year)}/ic/titles"
+
+
+def _payload_list(data, *keys: str) -> list:
+    if isinstance(data, list):
+        return data
+    if not isinstance(data, dict):
+        return []
+    for key in keys:
+        value = data.get(key)
+        if isinstance(value, list):
+            return value
+    return []
+
+
+def _number(obj: dict, *keys: str) -> str:
+    for key in keys:
+        value = obj.get(key)
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return ""
+
+
+def titles_from_payload(data) -> List[Tuple[str, str]]:
+    """``GET /{year}/ic/titles`` rows. No live API call."""
+
+    out: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for item in _payload_list(data, "titles", "items", "data", "results"):
+        if not isinstance(item, dict):
+            continue
+        number = _number(item, "titleNumber", "number", "title", "id")
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        name = str(item.get("name") or item.get("titleName") or item.get("title") or f"Title {number}")
+        out.append((number, name))
+    return out
+
+
+def nested_from_payload(data, *, kind: str) -> List[Tuple[str, str]]:
+    """Articles/chapters/sections lists from an IGA JSON object."""
+
+    key_map = {
+        "article": ("articles", "articleNumber", "article", "articleName"),
+        "chapter": ("chapters", "chapterNumber", "chapter", "chapterName"),
+        "section": ("sections", "sectionNumber", "section", "sectionName"),
+    }
+    list_key, number_key, alt_key, name_key = key_map[kind]
+    out: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for item in _payload_list(data, list_key, "items", "data"):
+        if not isinstance(item, dict):
+            continue
+        number = _number(item, number_key, "number", alt_key, "id")
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        name = str(item.get(name_key) or item.get("name") or item.get(alt_key) or number)
+        out.append((number, name))
+    return out
+
+
+def normalize_section(raw: str, title: str, article: str, chapter: str) -> str:
+    parts = re.split(r"[-.]", str(raw or "").strip())
+    if len(parts) == 4:
+        return "-".join(str(int(part)) if part.isdigit() else part for part in parts)
+    t = str(int(title)) if str(title).isdigit() else title
+    a = str(int(article)) if str(article).isdigit() else article
+    c = str(int(chapter)) if str(chapter).isdigit() else chapter
+    s = str(int(raw)) if str(raw).isdigit() else str(raw or "").strip()
+    return f"{t}-{a}-{c}-{s}"

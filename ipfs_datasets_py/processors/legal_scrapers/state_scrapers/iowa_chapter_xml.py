@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -139,3 +139,53 @@ def configured_chapter_xml_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def iac_list_rows(html: str, *, kind: str, base_url: str = SITE) -> List[Tuple[str, str, str]]:
+    """``#iacList`` tbody rows for titles, chapters, or ``§`` sections."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    table = soup.find(id="iacList")
+    if table is None:
+        return []
+    body = table.find("tbody") or table
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    pattern = {
+        "title": re.compile(r"Title\s+([^\s\-]+)", re.IGNORECASE),
+        "chapter": re.compile(r"Chapter\s+(\S+)", re.IGNORECASE),
+        "section": re.compile(r"§([\d\w\.]+)"),
+    }.get(kind)
+    if pattern is None:
+        return []
+    for row in body.find_all("tr"):
+        cells = row.find_all("td")
+        if not cells:
+            continue
+        label = _WS.sub(" ", (cells[0].get_text(" ") or "").replace("\xa0", " ")).strip()
+        match = pattern.match(label)
+        if not match:
+            continue
+        number = match.group(1).rstrip("-.")
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        anchor = row.find("a", href=True)
+        href = str(anchor.get("href") or "") if anchor is not None else ""
+        if kind == "section" and not href:
+            for cell in cells[1:]:
+                link = cell.find("a", href=True)
+                if link is None:
+                    continue
+                token = str(link.get("href") or "")
+                if token.endswith(".rtf") or token.endswith(".pdf"):
+                    href = token
+                    break
+        out.append((number, label, urljoin(base_url, href) if href else ""))
+    return out

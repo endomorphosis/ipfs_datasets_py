@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -129,3 +129,96 @@ def configured_chapter_xml_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def _absolute(href: str, *, base_url: str = BASE) -> str:
+    token = str(href or "").strip()
+    if token.startswith("http"):
+        return token
+    if token.startswith("/"):
+        return f"{base_url}{token}"
+    return f"{base_url}/{token}"
+
+
+def chapter_index_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str, str]]:
+    """``/Home/GetObject?objectName=mcl-chapN`` rows from ChapterIndex."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    main = soup.find(id="main") or soup
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in main.find_all("a", href=True):
+        href = str(anchor.get("href") or "")
+        match = re.search(r"objectName=mcl-chap(\d+)\b", href, re.IGNORECASE)
+        if not match:
+            continue
+        number = match.group(1).strip()
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        name = _clean(anchor.get_text(" ")) or f"Chapter {number}"
+        out.append((number, name, _absolute(href, base_url=base_url)))
+    return out
+
+
+def act_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str, str]]:
+    """Chapter-page ``objectName=mcl-Act-NNN-of-YYYY`` rows."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    main = soup.find(id="main") or soup
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for row in main.find_all("tr"):
+        anchor = row.find("a", href=True)
+        if anchor is None:
+            continue
+        href = str(anchor.get("href") or "")
+        match = re.search(r"objectName=(mcl-(?!chap)\S+)", href, re.IGNORECASE)
+        if not match:
+            continue
+        slug = re.sub(r"^mcl-", "", match.group(1), flags=re.IGNORECASE)
+        if not slug or slug in seen:
+            continue
+        if re.match(r"^\d+-", slug):
+            continue
+        seen.add(slug)
+        name = _clean(anchor.get_text(" ")) or slug
+        out.append((slug, name, _absolute(href, base_url=base_url)))
+    return out
+
+
+def section_object_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str, str]]:
+    """Act-page ``objectName=mcl-2-1`` rows -> ``2.1``."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    main = soup.find(id="main") or soup
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for row in main.find_all("tr"):
+        anchor = row.find("a", href=True)
+        if anchor is None:
+            continue
+        href = str(anchor.get("href") or "")
+        match = re.search(r"objectName=mcl-([\d]+)-([\w\.]+)$", href, re.IGNORECASE)
+        if not match:
+            continue
+        number = f"{match.group(1)}.{match.group(2)}"
+        if number in seen:
+            continue
+        seen.add(number)
+        cells = row.find_all("td")
+        name = _clean(cells[2].get_text(" ")) if len(cells) > 2 else _clean(anchor.get_text(" "))
+        out.append((number, name or f"§ {number}", _absolute(href, base_url=base_url)))
+    return out

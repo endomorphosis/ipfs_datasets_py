@@ -4750,6 +4750,98 @@ def test_utah_childtbl_and_version_arr_section_hrefs() -> None:
     assert section_number_from_href("Title76/Chapter5/76-5-S203.html") == "76-5-203"
 
 
+def test_iowa_iaclist_title_chapter_section_rows() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.iowa_chapter_xml import (
+        iac_list_rows,
+    )
+
+    titles = iac_list_rows(
+        '<table id="iacList"><tbody><tr><td><a href="/law/iowaCode?title=XVI">'
+        "Title XVI - CRIMINAL LAW</a></td></tr></tbody></table>",
+        kind="title",
+    )
+    assert titles[0][0] == "XVI"
+    chapters = iac_list_rows(
+        '<table id="iacList"><tbody><tr><td><a href="/law/iowaCode/sections?codeChapter=707">'
+        "Chapter 707 - HOMICIDE</a></td></tr></tbody></table>",
+        kind="chapter",
+    )
+    assert chapters[0][0] == "707"
+    sections = iac_list_rows(
+        '<table id="iacList"><tbody><tr><td>§707.1 - Murder.</td>'
+        '<td><a href="/docs/code/2026/707.1.rtf">RTF</a></td></tr></tbody></table>',
+        kind="section",
+    )
+    assert sections[0][0] == "707.1"
+    assert sections[0][2].endswith("707.1.rtf")
+
+
+def test_illinois_ilcs_acts_and_fulltext_cites() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.illinois_bulk import (
+        act_links,
+        chapter_links,
+        full_text_url,
+        section_cites,
+    )
+
+    chapters = chapter_links(
+        '<a href="/Legislation/ILCS/Acts?ChapterID=38&ChapterNumber=720&Chapter=CRIMINAL">'
+        "CHAPTER 720 CRIMINAL OFFENSES</a>"
+    )
+    assert chapters[0][0] == "720"
+    acts = act_links(
+        '<a href="/Legislation/ILCS/Articles?ActID=1876&ChapterID=38">'
+        "720 ILCS 5/ Criminal Code of 2012.</a>"
+    )
+    assert acts[0][:2] == ("5", "720")
+    cites = section_cites(
+        "<code>(720 ILCS 5/9-1)</code><code>(720 ILCS 5/Art. 9 heading)</code>"
+    )
+    assert cites == [("720", "5", "9-1")]
+    assert "ActID=1876" in full_text_url("1876", "38")
+
+
+def test_michigan_chapterindex_act_and_section_objectnames() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.michigan_chapter_xml import (
+        act_links,
+        chapter_index_links,
+        section_object_links,
+    )
+
+    chapters = chapter_index_links(
+        '<main id="main"><a href="/Home/GetObject?objectName=mcl-chap750">Chapter 750</a>'
+        '<a href="/Home/GetObject?objectName=mcl-chapNext">skip</a></main>'
+    )
+    assert chapters[0][0] == "750"
+    acts = act_links(
+        "<table><tr><td><a href=\"/Laws/MCL?objectName=mcl-Act-328-of-1931\">"
+        "The Michigan Penal Code</a></td></tr></table>"
+    )
+    assert acts[0][0] == "Act-328-of-1931"
+    sections = section_object_links(
+        "<table><tr><td><a href=\"/Laws/MCL?objectName=mcl-750-316\">750-316</a></td>"
+        "<td>Statute</td><td>First degree murder</td></tr></table>"
+    )
+    assert sections[0][0] == "750.316"
+
+
+def test_indiana_iga_json_listings_without_api_key() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.indiana_bulk import (
+        nested_from_payload,
+        normalize_section,
+        titles_api_url,
+        titles_from_payload,
+    )
+
+    assert titles_api_url(2024).endswith("/2024/ic/titles")
+    titles = titles_from_payload({"titles": [{"titleNumber": "35", "name": "Criminal Law"}]})
+    assert titles[0] == ("35", "Criminal Law")
+    articles = nested_from_payload({"articles": [{"articleNumber": "42", "name": "Offenses"}]}, kind="article")
+    assert articles[0][0] == "42"
+    assert normalize_section("01-01-01-01", "1", "1", "1") == "1-1-1-1"
+    assert normalize_section("1", "35", "42", "1") == "35-42-1-1"
+
+
 
 
 
