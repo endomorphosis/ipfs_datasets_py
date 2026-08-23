@@ -71,6 +71,20 @@ class MichiganScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .michigan_constitution import (
+            configured_constitution_text_path,
+            parse_michigan_constitution_text,
+        )
+
+        constitution_path = configured_constitution_text_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_michigan_constitution_text(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Michigan Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .michigan_chapter_xml import configured_chapter_xml_path, parse_michigan_chapter_xml
 
         xml_path = configured_chapter_xml_path()

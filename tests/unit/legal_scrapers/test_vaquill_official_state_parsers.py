@@ -2141,3 +2141,216 @@ def test_nevada_constitution_skips_toc_and_suffixes_future_version(
     assert "inalienable rights" in rows[0].full_text
     assert "leg.state.nv.us/const" in rows[0].source_url
     assert "justia" not in rows[0].source_url
+
+
+def test_michigan_constitution_keeps_longest_and_skips_repealed(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.michigan import (
+        MichiganScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+ARTICLE I
+DECLARATION OF RIGHTS
+§ 1. Political power is inherent in the people of this state.
+§ 2. Equal protection of the laws shall not be denied.
+
+ARTICLE II
+ELECTIONS
+§ 1. Qualifications of electors in this state.
+
+ARTICLE I
+DECLARATION OF RIGHTS
+§ 1. Political power is inherent in the people of this state.
+All political power is inherent in the people. Government is instituted for their equal benefit, security and protection.
+§ 2. Equal protection of the laws shall not be denied.
+No person shall be denied the equal protection of the laws; nor shall any person be denied the enjoyment of his civil or political rights.
+§ 3. Repealed.
+Repealed text must not be admitted as current constitutional law.
+
+ARTICLE II
+ELECTIONS
+§ 1. Qualifications of electors in this state.
+Every citizen of the United States who has attained the age of 18 years and who has resided in this state six months shall be an elector.
+"""
+    path = tmp_path / "mi-const.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("MICHIGAN_CONSTITUTION_TEXT", str(path))
+    scraper = MichiganScraper("MI", "Michigan")
+    rows = asyncio.run(
+        scraper.scrape_code("Michigan Constitution", "https://example.invalid", max_statutes=6)
+    )
+    numbers = [(row.title_number, row.section_number) for row in rows]
+    assert ("I", "1") in numbers
+    assert ("I", "2") in numbers
+    assert ("II", "1") in numbers
+    assert ("I", "3") not in numbers
+    bodies = " ".join(row.full_text for row in rows)
+    assert "equal benefit, security and protection" in bodies
+    assert "denied the equal protection of the laws" in bodies
+    assert "attained the age of 18 years" in bodies
+    assert "Repealed text" not in bodies
+    assert "legislature.mi.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_washington_constitution_strips_footer_and_truncates_amendments(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.washington import (
+        WashingtonScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+1/1/2026 12:00 PM [ 1 ] WA Constitution
+ARTICLE I
+DECLARATION OF RIGHTS
+SECTION 1 Political power.
+All political power is inherent in the people and govern-
+ments derive their just powers from the consent of the governed.
+SECTION 2 Repealed.
+Repealed text must not be admitted as current constitutional law.
+
+ARTICLE XXVI
+COMPACT WITH THE UNITED STATES
+First. That perfect toleration of religious sentiment shall be secured and that no inhabitant of this state shall ever be molested in person or property on account of religious worship.
+Second. That the people inhabiting this state do agree and declare that they forever disclaim all right and title to the unappropriated public lands lying within the boundaries thereof.
+Third. That the debts and liabilities of the Territory of Washington shall be assumed and paid by this state according to their just and legal obligation.
+Fourth. That provision shall be made for the establishment and maintenance of systems of public schools which shall be open to all children of this state.
+
+AMENDMENT 1
+ARTICLE XXXII
+This historical amendment dump must not be admitted as current constitutional law because it restates older text.
+"""
+    path = tmp_path / "wa-const.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("WASHINGTON_CONSTITUTION_TEXT", str(path))
+    scraper = WashingtonScraper("WA", "Washington")
+    rows = asyncio.run(
+        scraper.scrape_code("Washington Constitution", "https://example.invalid", max_statutes=8)
+    )
+    numbers = [(row.title_number, row.section_number) for row in rows]
+    assert ("I", "1") in numbers
+    assert ("I", "2") not in numbers
+    assert ("XXVI", "1") in numbers
+    assert ("XXVI", "2") in numbers
+    assert ("XXVI", "3") in numbers
+    assert ("XXVI", "4") in numbers
+    bodies = " ".join(row.full_text for row in rows)
+    assert "governments derive their just powers" in bodies
+    assert "govern-" not in bodies
+    assert "12:00 PM" not in bodies
+    assert "historical amendment dump" not in bodies
+    assert "Repealed text" not in bodies
+    assert "leg.wa.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_minnesota_constitution_stops_preamble_at_article_div(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.minnesota import (
+        MinnesotaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <h2>Preamble</h2>
+    <p>We, the people of the state of Minnesota, grateful to God for our civil and religious liberty, and desiring to perpetuate its blessings, do ordain and establish this Constitution.</p>
+    <div class="article" id="article_1">
+      <h2>ARTICLE I</h2>
+      <h2 class="header">Bill of Rights</h2>
+      <div class="section">
+        <h3 class="section_no">Section 1. <span class="headnote">Object of government.</span></h3>
+        <p>Government is instituted for the security, benefit and protection of the people, in whom all political power is inherent.</p>
+      </div>
+      <div class="section">
+        <h3 class="section_no">Sec. 2. <span class="headnote">Repealed.</span></h3>
+        <p>Repealed text must not be admitted as current constitutional law.</p>
+      </div>
+      <div class="section">
+        <h3 class="section_no">Section 3. <span class="headnote">Liberty of the press.</span></h3>
+        <p>The liberty of the press shall forever remain inviolate, and all persons may freely speak, write and publish their sentiments on all subjects.</p>
+        <div class="note">[Amended, November 8, 1988]</div>
+      </div>
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "mn-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MINNESOTA_CONSTITUTION_HTML", str(path))
+    scraper = MinnesotaScraper("MN", "Minnesota")
+    rows = asyncio.run(
+        scraper.scrape_code("Minnesota Constitution", "https://example.invalid", max_statutes=6)
+    )
+    numbers = [row.section_number for row in rows]
+    assert numbers == ["0", "1", "3"]
+    assert "civil and religious liberty" in rows[0].full_text
+    assert "Object of government" not in rows[0].full_text
+    assert "liberty of the press" not in rows[0].full_text
+    assert "security, benefit and protection" in rows[1].full_text
+    assert "Amended, November 8, 1988" in rows[2].full_text
+    assert "Repealed text" not in "".join(row.full_text for row in rows)
+    assert "revisor.mn.gov/constitution" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_florida_constitution_skips_catchline_index_and_repealed(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.florida import FloridaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <div class="Article">
+      <div class="ArticleNumber">ARTICLE I</div>
+      <div class="ArticleName">DECLARATION OF RIGHTS</div>
+      <div class="CatchlineIndex">
+        <div class="IndexItem">SECTION 1. Political power.</div>
+        <div class="IndexItem">SECTION 99. Index-only catchline that must not become a section.</div>
+      </div>
+      <div class="Section">
+        <span class="SectionNumber">SECTION 1.</span>
+        <span class="CatchlineText">Political power.</span>
+        <span class="SectionBody">All political power is inherent in the people. The enumeration herein of certain rights shall not be construed to deny or impair others retained by the people.</span>
+      </div>
+      <div class="Section">
+        <span class="SectionNumber">SECTION 2.</span>
+        <span class="CatchlineText">Repealed.</span>
+        <span class="SectionBody">Repealed text must not be admitted as current constitutional law.</span>
+      </div>
+      <div class="Section">
+        <span class="SectionNumber">SECTION 3.</span>
+        <span class="CatchlineText">Religious freedom.</span>
+        <span class="SectionBody">There shall be no law respecting the establishment of religion or prohibiting or penalizing the free exercise thereof.</span>
+        <div class="History"><span class="HistoryText">Am. proposed by Constitution Revision Commission, Revision No. 9, 1998, filed with the Secretary of State May 5, 1998; adopted 1998.</span></div>
+      </div>
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "fl-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("FLORIDA_CONSTITUTION_HTML", str(path))
+    scraper = FloridaScraper("FL", "Florida")
+    rows = asyncio.run(
+        scraper.scrape_code("Florida Constitution", "https://example.invalid", max_statutes=6)
+    )
+    assert [row.section_number for row in rows] == ["1", "3"]
+    bodies = " ".join(row.full_text for row in rows)
+    assert "inherent in the people" in bodies
+    assert "no law respecting the establishment of religion" in bodies
+    assert "adopted 1998" in bodies
+    assert "Index-only catchline" not in bodies
+    assert "Repealed text" not in bodies
+    assert "flsenate.gov/Laws/Constitution" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+

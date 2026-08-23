@@ -103,6 +103,20 @@ class FloridaScraper(BaseStateScraper):
         """Scrape Florida statutes directly from official title/chapter indexes."""
         # Uncapped when max_statutes is omitted (full-corpus daemon runs).
         limit = max(1, int(max_statutes)) if max_statutes else None
+        from .florida_constitution import (
+            configured_constitution_html_path,
+            parse_florida_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_florida_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Florida Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         statutes: List[NormalizedStatute] = []
         title_links = await self._discover_title_links(code_url)
         if not title_links:

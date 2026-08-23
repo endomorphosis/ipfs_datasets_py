@@ -78,6 +78,21 @@ class MinnesotaScraper(BaseStateScraper):
         allow_justia = str(
             os.getenv("STATE_SCRAPER_MN_ALLOW_JUSTIA_FALLBACK", "0")
         ).strip().lower() in {"1", "true", "yes", "on"}
+        limit = self._effective_scrape_limit(max_statutes, default=420)
+        from .minnesota_constitution import (
+            configured_constitution_html_path,
+            parse_minnesota_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_minnesota_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Minnesota Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .minnesota_section import configured_section_html_path, parse_minnesota_section_html
 
         local_section = configured_section_html_path()
