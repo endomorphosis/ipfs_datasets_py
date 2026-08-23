@@ -102,6 +102,20 @@ class ColoradoScraper(BaseStateScraper):
         cannot sole-admit a sealed full-corpus run.
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .colorado_constitution import (
+            configured_constitution_text_path,
+            parse_colorado_constitution_text,
+        )
+
+        constitution_path = configured_constitution_text_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_colorado_constitution_text(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Colorado Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .colorado_title import parse_configured_colorado_crs
 
         local_rows = parse_configured_colorado_crs(code_name=code_name, max_statutes=limit)

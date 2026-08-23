@@ -3528,6 +3528,252 @@ Article 1, Section 3  Since equality in the enjoyment of natural and civil right
     assert rows[0].structured_data["source_authority_class"] == "official"
 
 
+def test_new_hampshire_constitution_splits_parts_and_articles(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_hampshire import (
+        NewHampshireScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body><main>
+    Part First
+    Bill of Rights
+    Article 1. All men have certain natural, essential, and inherent rights, among which are the enjoying and defending life and liberty.
+    Article 2. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    Part Second
+    Form of Government
+    [Art.] 1. The people of this state have the sole and exclusive right of governing themselves as a free, sovereign, and independent state.
+    </main></body></html>
+    """
+    path = tmp_path / "nh-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("NEW_HAMPSHIRE_CONSTITUTION_HTML", str(path))
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    rows = asyncio.run(
+        scraper.scrape_code("New Hampshire Constitution", "https://example.invalid", max_statutes=6)
+    )
+    keys = [(row.title_number, row.section_number) for row in rows]
+    assert ("1", "1") in keys
+    assert ("2", "1") in keys
+    assert ("1", "2") not in keys
+    bodies = " ".join(row.full_text for row in rows)
+    assert "enjoying and defending life" in bodies
+    assert "exclusive right of governing" in bodies
+    assert "Repealed text" not in bodies
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_connecticut_constitution_maps_ordinals_and_prefixes_amendments(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.connecticut import (
+        ConnecticutScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    ARTICLE FIRST
+    Declaration of Rights
+    SEC.1. All men when they form a social compact, are equal in rights.
+    SEC.2. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    ARTICLE FOURTEENTH
+    General Provisions
+    SEC.1. The political year shall begin on the Wednesday following the first Monday of January.
+    ARTICLE I.
+    Sec. 18. The amount of general budget expenditures authorized in any fiscal year shall not exceed the level of the preceding year plus inflation.
+    </body></html>
+    """
+    path = tmp_path / "ct-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("CONNECTICUT_CONSTITUTION_HTML", str(path))
+    scraper = ConnecticutScraper("CT", "Connecticut")
+    rows = asyncio.run(
+        scraper.scrape_code("Connecticut Constitution", "https://example.invalid", max_statutes=8)
+    )
+    keys = [(row.title_number, row.section_number) for row in rows]
+    assert ("I", "1") in keys
+    assert ("XIV", "1") in keys
+    assert ("AMENDI", "18") in keys
+    assert ("I", "2") not in keys
+    bodies = " ".join(row.full_text for row in rows)
+    assert "equal in rights" in bodies
+    assert "general budget expenditures" in bodies
+    assert "Repealed text" not in bodies
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_delaware_constitution_uses_section_symbol_not_restatement(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.delaware import DelawareScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    ARTICLE I
+    Bill of Rights
+    § 1. Freedom of religion.
+    Section 1. Although it is the duty of all persons frequently to assemble together for the public worship of Almighty God, no man shall be compelled to attend any religious worship.
+    § 2. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    </body></html>
+    """
+    path = tmp_path / "de-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("DELAWARE_CONSTITUTION_HTML", str(path))
+    scraper = DelawareScraper("DE", "Delaware")
+    rows = asyncio.run(
+        scraper.scrape_code("Delaware Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert [row.section_number for row in rows] == ["1"]
+    assert "public worship of Almighty God" in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert "delcode.delaware.gov" in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_colorado_constitution_keeps_lettered_sections_and_source_notes(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado import ColoradoScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+ARTICLE II
+Bill of Rights
+Section 1. All political power is vested in and derived from the people, and all government of right originates from the people.
+Section 2. Repealed.
+Repealed text must not be admitted as current constitutional law.
+Section 16a. Any person charged with a criminal offense shall have the right to be heard by counsel, and this right shall not be abridged.
+Source: L. 94: Entire section added, p. 1.
+"""
+    path = tmp_path / "co-const.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("COLORADO_CONSTITUTION_TEXT", str(path))
+    scraper = ColoradoScraper("CO", "Colorado")
+    rows = asyncio.run(
+        scraper.scrape_code("Colorado Constitution", "https://example.invalid", max_statutes=6)
+    )
+    assert [row.section_number for row in rows] == ["1", "16a"]
+    bodies = " ".join(row.full_text for row in rows)
+    assert "derived from the people" in bodies
+    assert "heard by counsel" in bodies
+    assert "Source: L. 94" in bodies
+    assert "Repealed text" not in bodies
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_georgia_constitution_uses_roman_sections(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia import GeorgiaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    ARTICLE I
+    Bill of Rights
+    SECTION I. Life, liberty, and property. No person shall be deprived of life, liberty, or property except by due process of law.
+    SECTION II. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    SECTION III. Freedom of conscience. Each person has the natural and inalienable right to worship God according to the dictates of that person's own conscience.
+    </body></html>
+    """
+    path = tmp_path / "ga-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("GEORGIA_CONSTITUTION_HTML", str(path))
+    scraper = GeorgiaScraper("GA", "Georgia")
+    rows = asyncio.run(
+        scraper.scrape_code("Georgia Constitution", "https://example.invalid", max_statutes=6)
+    )
+    assert [row.section_number for row in rows] == ["I", "III"]
+    bodies = " ".join(row.full_text for row in rows)
+    assert "due process of law" in bodies
+    assert "freedom of conscience" in bodies.lower() or "worship God" in bodies
+    assert "Repealed text" not in bodies
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert rows[0].structured_data["source_authority_class"] != "recovery"
+
+
+def test_alaska_constitution_uses_section_symbol(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alaska import AlaskaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    Article 1
+    Declaration of Rights
+    § 1. This constitution is dedicated to the principles that all persons have a natural right to life, liberty, the pursuit of happiness, and the enjoyment of the rewards of their own industry.
+    § 2. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    </body></html>
+    """
+    path = tmp_path / "ak-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("ALASKA_CONSTITUTION_HTML", str(path))
+    scraper = AlaskaScraper("AK", "Alaska")
+    rows = asyncio.run(
+        scraper.scrape_code("Alaska Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert [row.section_number for row in rows] == ["1"]
+    assert "natural right to life" in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_south_dakota_constitution_skips_toc_and_uses_compact_fallback(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_dakota import (
+        SouthDakotaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    Article I
+    Bill of Rights ............... 1
+    Article XXVI
+    Compact with the United States ............... 26
+    Article I
+    Bill of Rights
+    § 1. All men are born equally free and independent, and have certain inherent rights, among which are those of enjoying and defending life and liberty.
+    § 2. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    Article XXVI
+    Compact with the United States
+    First. That perfect toleration of religious sentiment shall be secured and that no inhabitant of this state shall ever be molested in person or property on account of his or her mode of religious worship.
+    Second. That the people inhabiting this state do agree and declare that they forever disclaim all right and title to the unappropriated public lands lying within the boundaries thereof.
+    </body></html>
+    """
+    path = tmp_path / "sd-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("SOUTH_DAKOTA_CONSTITUTION_HTML", str(path))
+    scraper = SouthDakotaScraper("SD", "South Dakota")
+    rows = asyncio.run(
+        scraper.scrape_code("South Dakota Constitution", "https://example.invalid", max_statutes=8)
+    )
+    keys = [(row.title_number, row.section_number) for row in rows]
+    assert ("I", "1") in keys
+    assert ("XXVI", "1") in keys
+    assert ("XXVI", "2") in keys
+    assert ("I", "2") not in keys
+    bodies = " ".join(row.full_text for row in rows)
+    assert "born equally free and independent" in bodies
+    assert "perfect toleration of religious sentiment" in bodies
+    assert "Bill of Rights ............... 1" not in bodies
+    assert "Repealed text" not in bodies
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+
 
 
 

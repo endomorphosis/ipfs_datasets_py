@@ -173,6 +173,20 @@ class GeorgiaScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape Georgia code from the official General Assembly HTML tree first."""
         limit = max(1, int(max_statutes)) if max_statutes else None
+        from .georgia_constitution import (
+            configured_constitution_html_path,
+            parse_georgia_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_georgia_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Georgia Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .georgia_archive import parse_configured_georgia_archive
 
         recovered = parse_configured_georgia_archive(code_name=code_name, max_statutes=limit)

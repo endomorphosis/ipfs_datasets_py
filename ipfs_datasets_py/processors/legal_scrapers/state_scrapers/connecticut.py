@@ -76,6 +76,20 @@ class ConnecticutScraper(BaseStateScraper):
         return_threshold = limit if limit is not None else 1000000
         allow_justia = self._justia_fallback_allowed()
 
+        from .connecticut_constitution import (
+            configured_constitution_html_path,
+            parse_connecticut_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_connecticut_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Connecticut Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .connecticut_chapter import configured_chapter_html_path, parse_connecticut_chapter_html
 
         local_chapter = configured_chapter_html_path()

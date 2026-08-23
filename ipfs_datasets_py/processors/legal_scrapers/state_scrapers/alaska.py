@@ -211,6 +211,20 @@ class AlaskaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=240)
+        from .alaska_constitution import (
+            configured_constitution_html_path,
+            parse_alaska_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_alaska_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Alaska Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .alaska_section import configured_section_html_path, parse_alaska_statute_html
 
         local_section = configured_section_html_path()
