@@ -246,6 +246,21 @@ class ArizonaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=240)
+        from .arizona_constitution import (
+            configured_constitution_html_path,
+            parse_arizona_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_arizona_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Arizona Constitution",
+                    source_url="https://www.azleg.gov/const/1/1.htm",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .arizona_section import configured_section_html_path, parse_arizona_section_html
 
         local_section = configured_section_html_path()

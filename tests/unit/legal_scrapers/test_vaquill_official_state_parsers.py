@@ -2642,4 +2642,270 @@ def test_kansas_constitution_keeps_classless_subsections_and_splits_preamble(
     assert rows[0].structured_data["source_authority_class"] == "official"
 
 
+def test_arizona_constitution_strips_catchline_and_folds_parts(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arizona import ArizonaScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arizona_constitution import (
+        az_article_index_links,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    index = """
+    <a href="viewer.aspx?docName=https://www.azleg.gov/const/4/1.htm">Part 1 - Section 1</a>
+    <a href="viewer.aspx?docName=https://www.azleg.gov/const/4/1p2.htm">Part 2 - Section 1</a>
+    <a href="viewer.aspx?docName=https://www.azleg.gov/const/5/1.htm">Section 1</a>
+    <a href="viewer.aspx?docName=https://www.azleg.gov/const/5/1v.htm">Section 1 Version 2</a>
+    """
+    links = az_article_index_links(index)
+    assert [(num, part) for num, part, _url in links] == [
+        ("1", "1"),
+        ("1", "2"),
+        ("1", ""),
+        ("1-v2", ""),
+    ]
+    html = """
+    <html>
+      <head><title>Article 1 Section 1 - Liberty of conscience</title></head>
+      <body>
+        <p>1. Liberty of conscience All people residing in this state have liberty of conscience to worship as they choose under this constitution.</p>
+      </body>
+    </html>
+    """
+    path = tmp_path / "az-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("ARIZONA_CONSTITUTION_HTML", str(path))
+    scraper = ArizonaScraper("AZ", "Arizona")
+    rows = asyncio.run(
+        scraper.scrape_code("Arizona Constitution", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].title_number == "1"
+    assert rows[0].section_number == "1"
+    assert "liberty of conscience to worship" in rows[0].full_text.lower()
+    assert rows[0].full_text.lower().count("liberty of conscience") == 1
+    assert "azleg.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_montana_constitution_keeps_history_and_skips_non_articles(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana import MontanaScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana_constitution import (
+        constitution_articles,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    toc = """
+    <div class="chapter-toc-content">
+      <li class="line"><a href="./preamble.html">PREAMBLE</a></li>
+      <li class="line"><a href="./chapter_0001/parts_index.html">ARTICLE II. DECLARATION OF RIGHTS</a></li>
+      <li class="line"><a href="./schedule.html">TRANSITION SCHEDULE</a></li>
+    </div>
+    """
+    assert constitution_articles(toc) == [("II", "DECLARATION OF RIGHTS")]
+    html = """
+    <html><body>
+      <h2>ARTICLE II. DECLARATION OF RIGHTS</h2>
+      <h3>1. Popular sovereignty.</h3>
+      <div class="section-content">All political power is vested in and derived from the people. All government of right originates with the people.</div>
+      <div class="history-content">En. Sec. 1, Const. 1972, approved June 6, 1972.</div>
+    </body></html>
+    """
+    path = tmp_path / "mt-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MONTANA_CONSTITUTION_HTML", str(path))
+    scraper = MontanaScraper("MT", "Montana")
+    rows = asyncio.run(
+        scraper.scrape_code("Montana Constitution", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].title_number == "II"
+    assert rows[0].section_number == "1"
+    assert "derived from the people" in rows[0].full_text
+    assert "approved June 6, 1972" in rows[0].full_text
+    assert "mca.legmt.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_hawaii_constitution_bracketed_section_and_next_dir_guard(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.hawaii import HawaiiScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.hawaii_constitution import (
+        next_in_constitution_dir,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    current = "https://capitol.hawaii.gov/hrscurrent/Vol01_Ch0001-0042F/05-CONST/CONST_0001-0001.htm"
+    staying = '<a href="CONST_0001-0002.htm">Next</a>'
+    leaving = '<a href="../HRS0121/HRS_0121-0001.htm">Next</a>'
+    assert next_in_constitution_dir(staying, current).endswith("CONST_0001-0002.htm")
+    assert next_in_constitution_dir(leaving, current) is None
+    html = """
+    <html><body>
+      <p class="RegularParagraphs" align="center">ARTICLE I</p>
+      <p class="RegularParagraphs" align="center">BILL OF RIGHTS</p>
+      <p class="RegularParagraphs">Section [1]. All political power of the State is inherent in the people, and the government is founded on their authority.</p>
+    </body></html>
+    """
+    path = tmp_path / "hi-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("HAWAII_CONSTITUTION_HTML", str(path))
+    scraper = HawaiiScraper("HI", "Hawaii")
+    rows = asyncio.run(
+        scraper.scrape_code("Hawaii Constitution", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].title_number == "I"
+    assert rows[0].section_number == "1"
+    assert "inherent in the people" in rows[0].full_text
+    assert "05-CONST" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_missouri_constitution_excludes_foot_and_reroutes_schedule(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri import MissouriScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri_constitution import (
+        parse_missouri_constitution_html,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    schedule = """
+    <html><body>
+      <div><span id="effdt">Effective - 27 Feb 1945</span></div>
+      <div class="norm" style="background-color:#fffff7">
+        <p class="norm"><span class="bold">XII Section 1. SCHEDULE— Supersession of prior constitutional provisions. —</span> All provisions of the constitution of 1875 remaining in force are superseded by this constitution.</p>
+      </div>
+      <div class="foot">Source: Const. of 1875, Art. II, § 1.</div>
+    </body></html>
+    """
+    parsed = parse_missouri_constitution_html(schedule)
+    assert parsed and parsed[0].title_number == "SCHEDULE"
+    assert "Const. of 1875" not in parsed[0].full_text
+    html = """
+    <html><body>
+      <div><span id="effdt">Effective - 27 Feb 1945 , see footnote</span></div>
+      <div class="norm" style="background-color:#fffff7">
+        <p class="norm"><span class="bold">I Section 1. Source of political power. —</span> That all political power is vested in and derived from the people; that all government of right originates from the people.</p>
+      </div>
+      <div class="foot">Source: Const. of 1875, Art. II, § 1. This predecessor note must not be admitted.</div>
+    </body></html>
+    """
+    path = tmp_path / "mo-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MISSOURI_CONSTITUTION_HTML", str(path))
+    scraper = MissouriScraper("MO", "Missouri")
+    rows = asyncio.run(
+        scraper.scrape_code("Missouri Constitution", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].title_number == "I"
+    assert rows[0].section_number == "1"
+    assert "derived from the people" in rows[0].full_text
+    assert "Effective - 27 Feb 1945" in rows[0].full_text
+    assert "predecessor note" not in rows[0].full_text
+    assert "revisor.mo.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_nebraska_constitution_drops_annotations_and_skips_print_toc(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nebraska import NebraskaScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nebraska_constitution import (
+        constitution_clause_codes,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    toc = """
+    <a href="articles.php?article=Preamble">Preamble</a>
+    <a href="articles.php?article=I-1">I-1</a>
+    <a href="articles.php?article=I-1&amp;print=true">Print I-1</a>
+    <a href="articles.php?article=II-1">II-1</a>
+    """
+    assert constitution_clause_codes(toc) == ["Preamble", "I-1", "II-1"]
+    html = """
+    <html><body>
+      <strong>I-1. Statement of rights</strong>
+      <p>All persons have certain inherent and inalienable rights, among these are life, liberty, and the pursuit of happiness.</p>
+      <div class="source">Source: Neb. Const. art. I, sec. 1 (1875).</div>
+      <div class="anno">Case annotation about a later lawsuit must not be admitted as constitution text.</div>
+    </body></html>
+    """
+    path = tmp_path / "ne-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("NEBRASKA_CONSTITUTION_HTML", str(path))
+    scraper = NebraskaScraper("NE", "Nebraska")
+    rows = asyncio.run(
+        scraper.scrape_code("Nebraska Constitution", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].title_number == "I"
+    assert rows[0].section_number == "1"
+    assert "inherent and inalienable rights" in rows[0].full_text
+    assert "Neb. Const. art. I, sec. 1 (1875)" in rows[0].full_text
+    assert "Case annotation" not in rows[0].full_text
+    assert "nebraskalegislature.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_wisconsin_constitution_drops_toc_articles_and_suffixes_duplicates(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wisconsin import (
+        WisconsinScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+1.
+Declaration of rights.
+2.
+Slavery prohibited.
+Section
+ARTICLE I.
+DECLARATION OF RIGHTS
+Equality. SECTION 1. All people are born equally free and independent and have certain inherent rights.
+Slavery prohibited. SEC-
+TION 2. There shall be neither slavery nor involuntary servitude in this state.
+Repealed. SECTION 5. Repealed April 1977. This repealed stub must not be admitted as current constitutional law.
+Court of appeals. SECTION 5. The court of appeals shall have such appellate jurisdiction as the legislature may provide by law for review of judgments of the circuit court.
+
+ARTICLE XV.
+THIS TOC COPY HAS NO SECTION MARKER IMMEDIATELY AND MUST BE DROPPED
+More filler so the window after this heading contains no Title. SECTION N. marker at all.
+"""
+    path = tmp_path / "wi-const.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("WISCONSIN_CONSTITUTION_TEXT", str(path))
+    scraper = WisconsinScraper("WI", "Wisconsin")
+    rows = asyncio.run(
+        scraper.scrape_code("Wisconsin Constitution", "https://example.invalid", max_statutes=8)
+    )
+    numbers = [(row.title_number, row.section_number) for row in rows]
+    assert ("I", "1") in numbers
+    assert ("I", "2") in numbers
+    assert ("I", "5") in numbers
+    assert ("XV", "1") not in numbers
+    bodies = " ".join(row.full_text for row in rows)
+    assert "born equally free and independent" in bodies
+    assert "neither slavery nor involuntary servitude" in bodies
+    assert "SEC- TION" not in bodies
+    assert "repealed stub" not in bodies.lower()
+    assert "appellate jurisdiction" in bodies
+    assert "docs.legis.wisconsin.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+
 
