@@ -113,6 +113,21 @@ def configured_chapter_html_path() -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("SOUTH_CAROLINA_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> List[Tuple[str, str]]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    return title_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def title_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str]]:
     """Master TOC ``/code/titleN.php`` links."""
 

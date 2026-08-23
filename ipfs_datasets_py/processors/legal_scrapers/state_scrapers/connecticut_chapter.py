@@ -232,3 +232,18 @@ def configured_chapter_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def configured_titles_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("CONNECTICUT_TITLES_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_titles_html() -> List[Tuple[str, str]]:
+    path = configured_titles_html_path()
+    if path is None:
+        return []
+    return titles_from_index(path.read_text(encoding="utf-8", errors="replace"))

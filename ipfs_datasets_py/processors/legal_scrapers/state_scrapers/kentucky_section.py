@@ -112,6 +112,21 @@ def configured_section_path() -> Optional[Path]:
     return None
 
 
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("KENTUCKY_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> List[Tuple[str, str]]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    return title_spans(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def title_spans(html: str) -> List[Tuple[str, str]]:
     """``#Panel1 span#title`` Roman-numeral title labels."""
 

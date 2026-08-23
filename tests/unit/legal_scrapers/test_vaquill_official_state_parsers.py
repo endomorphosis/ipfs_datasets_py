@@ -5524,6 +5524,65 @@ def test_or_az_ar_ma_ks_listing_dumps(tmp_path: Path, monkeypatch) -> None:
     assert parse_configured_statute_table_html()[0][0] == "21"
 
 
+def test_sc_ky_nd_ct_mn_listing_dumps(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.connecticut_chapter import (
+        parse_configured_titles_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kentucky_section import (
+        parse_configured_toc_html as parse_kentucky_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.minnesota_section import (
+        parse_configured_toc_html as parse_minnesota_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_dakota_chapter import (
+        parse_configured_toc_html as parse_north_dakota_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_carolina_chapter import (
+        parse_configured_toc_html as parse_south_carolina_toc,
+    )
+
+    sc = tmp_path / "sc.html"
+    sc.write_text('<a href="/code/title16.php">Title 16</a>', encoding="utf-8")
+    monkeypatch.setenv("SOUTH_CAROLINA_TOC_HTML", str(sc))
+    assert parse_south_carolina_toc()[0][0] == "16"
+
+    ky = tmp_path / "ky.html"
+    ky.write_text(
+        '<div id="Panel1"><span id="title">TITLE L CRIMES AND PUNISHMENTS</span></div>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KENTUCKY_TOC_HTML", str(ky))
+    assert parse_kentucky_toc()[0][0] == "L"
+
+    nd = tmp_path / "nd.html"
+    nd.write_text(
+        '<div class="titles-grid"><div class="title-item">'
+        '<span class="title-number">12.1</span>'
+        '<a href="/cencode/t12-1.html">Criminal Code</a></div></div>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("NORTH_DAKOTA_TOC_HTML", str(nd))
+    assert parse_north_dakota_toc()[0][0] == "12.1"
+
+    ct = tmp_path / "ct.html"
+    ct.write_text(
+        '<td class="left_38pct"><a href="title_53a.htm">'
+        '<span class="toc_ttl_desig">Title 53a</span></a></td>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CONNECTICUT_TITLES_HTML", str(ct))
+    assert parse_configured_titles_html()[0][1] == "53a"
+
+    mn = tmp_path / "mn.html"
+    mn.write_text(
+        '<table id="toc_table"><tr><td><a href="/statutes/cite/609">609 - 624</a></td>'
+        "<td>Crimes</td></tr></table>",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MINNESOTA_TOC_HTML", str(mn))
+    assert parse_minnesota_toc()[0][1] == "609 - 624"
+
+
 
 
 
