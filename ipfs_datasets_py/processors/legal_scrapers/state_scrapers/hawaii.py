@@ -111,6 +111,17 @@ class HawaiiScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape Hawaii Revised Statutes from the official HTML tree first."""
         limit = max(1, int(max_statutes)) if max_statutes else None
+        from .hawaii_section import configured_section_html_path, parse_hawaii_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_hawaii_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.capitol.hawaii.gov/hrscurrent/Vol01_Ch0001-0042F/HRS0707/HRS_0707-0701.HTM",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
 
         official = await self._scrape_official_hrs_tree(
             code_name=code_name,
@@ -312,6 +323,13 @@ class HawaiiScraper(BaseStateScraper):
         if not html:
             return None
         soup = BeautifulSoup(html, "html.parser")
+        from .hawaii_section import parse_hawaii_section_html
+
+        parsed = parse_hawaii_section_html(html, source_url=section_url, code_name=code_name)
+        if parsed is not None:
+            parsed.chapter_name = chapter_label or parsed.chapter_name
+            parsed.title_name = volume_label or parsed.title_name
+            return parsed
         for node in soup(["script", "style", "noscript", "nav", "footer", "header"]):
             node.decompose()
         main = soup.select_one("main") or soup.select_one("article") or soup.select_one("body")

@@ -306,6 +306,11 @@ class KentuckyScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .kentucky_section import parse_configured_kentucky_section
+
+        local_row = parse_configured_kentucky_section(code_name=code_name)
+        if local_row is not None:
+            return [local_row]
         official = await self._scrape_official_krs_tree(code_name, max_statutes=limit)
         if official:
             kept = [

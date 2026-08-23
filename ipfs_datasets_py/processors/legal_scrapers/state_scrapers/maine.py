@@ -65,6 +65,17 @@ class MaineScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .maine_section import configured_section_html_path, parse_maine_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_maine_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://legislature.maine.gov/legis/statutes/17-A/title17-Asec201.html",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         official = await self._scrape_official_title_chapter_section_tree(
             code_name,
             max_statutes=limit,
@@ -438,6 +449,11 @@ class MaineScraper(BaseStateScraper):
             return None
         html = raw.decode("utf-8", errors="replace") if isinstance(raw, bytes) else str(raw)
         soup = BeautifulSoup(html, "html.parser")
+        from .maine_section import parse_maine_section_html
+
+        parsed = parse_maine_section_html(html, source_url=url, code_name=code_name)
+        if parsed is not None:
+            return parsed
         heading = self._normalize_legal_text(
             (soup.select_one(".heading_section") or soup.find("title") or soup).get_text(
                 " ", strip=True

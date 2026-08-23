@@ -153,6 +153,17 @@ class NewHampshireScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        from .new_hampshire_section import configured_section_html_path, parse_new_hampshire_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_new_hampshire_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.gencourt.state.nh.us/rsa/html/LXII/630/630-1.htm",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/rsa/html/NHTOC.htm",
@@ -467,6 +478,13 @@ class NewHampshireScraper(BaseStateScraper):
         if not html:
             return None
         soup = BeautifulSoup(html, "html.parser")
+        from .new_hampshire_section import parse_new_hampshire_section_html
+
+        parsed = parse_new_hampshire_section_html(
+            html, source_url=section_url, code_name=code_name
+        )
+        if parsed is not None:
+            return parsed
         for tag in soup(["script", "style", "nav", "header", "footer", "noscript"]):
             tag.decompose()
         text = self._normalize_legal_text(soup.get_text(" ", strip=True))

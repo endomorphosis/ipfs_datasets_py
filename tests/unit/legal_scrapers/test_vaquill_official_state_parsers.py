@@ -1168,3 +1168,126 @@ def test_montana_section_content_drops_history(tmp_path: Path, monkeypatch) -> N
     assert rows[0].section_number == "45-5-102"
     assert "purposely or knowingly" in rows[0].full_text
     assert "Ch. 513" not in rows[0].full_text
+
+
+def test_kentucky_section_text_drops_history(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kentucky import KentuckyScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+507.020 Murder.
+(1) A person is guilty of murder when, with intent to cause the death of another person, he causes the death of such person.
+Effective: July 15, 1984
+History: Created 1974 Ky. Acts ch. 406, sec. 61.
+"""
+    path = tmp_path / "507.020.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("KENTUCKY_SECTION_TEXT", str(path))
+    scraper = KentuckyScraper("KY", "Kentucky")
+    rows = asyncio.run(
+        scraper.scrape_code("Kentucky Revised Statutes", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "507.020"
+    assert "intent to cause the death" in rows[0].full_text
+    assert "Effective:" not in rows[0].full_text
+    assert "1974 Ky. Acts" not in rows[0].full_text
+
+
+def test_maryland_statute_text_drops_chrome(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maryland import MarylandScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <div id="StatuteText">
+      <div class="row">Print this page</div>
+      <div style="text-align:center">Maryland Code</div>
+      <p>§ 2-201. Murder in the first degree.</p>
+      <p>A murder is in the first degree if it is a deliberate, premeditated, and willful killing.</p>
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "2-201.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MARYLAND_SECTION_HTML", str(path))
+    scraper = MarylandScraper("MD", "Maryland")
+    rows = asyncio.run(scraper.scrape_code("Maryland Code", "https://example.invalid", max_statutes=2))
+    assert len(rows) == 1
+    assert rows[0].section_number == "2-201"
+    assert "deliberate, premeditated" in rows[0].full_text
+    assert "Print this page" not in rows[0].full_text
+
+
+def test_maine_mrssection_drops_history(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maine import MaineScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <div class="MRSSection">
+      <div class="heading_section">§201. Murder.</div>
+      <p>A person is guilty of murder if the person intentionally or knowingly causes the death of another human being.</p>
+      <div class="qhistory">PL 1975, c. 499, §1</div>
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "title17-Asec201.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MAINE_SECTION_HTML", str(path))
+    scraper = MaineScraper("ME", "Maine")
+    rows = asyncio.run(
+        scraper.scrape_code("Maine Revised Statutes", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "201"
+    assert "intentionally or knowingly" in rows[0].full_text
+    assert "PL 1975" not in rows[0].full_text
+
+
+def test_hawaii_section_p_stops_at_notes(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.hawaii import HawaiiScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <p>§707-701 Murder in the first degree. A person commits the offense of murder in the first degree if the person intentionally or knowingly causes the death of another person.</p>
+      <p>Case Notes</p>
+      <p>This annotation is not the statute.</p>
+    </body></html>
+    """
+    path = tmp_path / "HRS_0707-0701.HTM"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("HAWAII_SECTION_HTML", str(path))
+    scraper = HawaiiScraper("HI", "Hawaii")
+    rows = asyncio.run(
+        scraper.scrape_code("Hawaii Revised Statutes", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "707-701"
+    assert "intentionally or knowingly" in rows[0].full_text
+    assert "annotation is not the statute" not in rows[0].full_text
+
+
+def test_new_hampshire_codesect_drops_sourcenote(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_hampshire import (
+        NewHampshireScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <b>630:1 First Degree Murder. –</b>
+      <codesect>A person is guilty of murder in the first degree if he purposely causes the death of another.</codesect>
+      <sourcenote>1971, 518:1, eff. Nov. 1, 1973.</sourcenote>
+    </body></html>
+    """
+    path = tmp_path / "630-1.htm"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("NEW_HAMPSHIRE_SECTION_HTML", str(path))
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    rows = asyncio.run(scraper.scrape_code("New Hampshire RSA", "https://example.invalid", max_statutes=2))
+    assert len(rows) == 1
+    assert rows[0].section_number in {"630:1", "1"}
+    assert "purposely causes the death" in rows[0].full_text
+    assert "1971, 518:1" not in rows[0].full_text

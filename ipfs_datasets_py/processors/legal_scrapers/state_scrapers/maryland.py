@@ -330,6 +330,13 @@ class MarylandScraper(BaseStateScraper):
             return None
 
         soup = BeautifulSoup(html_text, "html.parser")
+        from .maryland_section import parse_maryland_section_html
+
+        parsed = parse_maryland_section_html(
+            html_text, source_url=section_url, code_name=code_name
+        )
+        if parsed is not None:
+            return parsed
         text_node = soup.select_one("#StatuteText") or soup.select_one("#mainBody")
         if text_node is None:
             return None
@@ -405,6 +412,17 @@ class MarylandScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .maryland_section import configured_section_html_path, parse_maryland_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_maryland_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=2-201&enactments=false",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         allow_justia = str(
             os.getenv("STATE_SCRAPER_MD_ALLOW_JUSTIA_FALLBACK", "0") or "0"
         ).strip().lower() in {"1", "true", "yes", "on"}
