@@ -45,10 +45,39 @@ class TaskQueueWrapper:
             queue_path: Optional path to DuckDB queue file
         """
         self.queue_path = queue_path
-        self.available = HAVE_TASK_QUEUE
+        self.available = bool(self.capability_status()["reachable"])
 
         if not self.available:
-            logger.warning("Task queue not available - MCP++ module not installed")
+            logger.warning(
+                "Task queue is not reachable: %s",
+                ", ".join(self.capability_status()["reason_codes"]),
+            )
+
+    def capability_status(self) -> dict[str, Any]:
+        """Report self-tested task-queue reachability.
+
+        The optional MCP++ tool imports are discovery evidence only.  This
+        wrapper does not yet bind them to a durable queue instance, so it must
+        fail closed even when every legacy symbol happens to be importable.
+        """
+        imported_tools = (submit_task, get_task_status, cancel_task, list_tasks)
+        import_ok = bool(HAVE_TASK_QUEUE and all(callable(tool) for tool in imported_tools))
+        reason_codes: list[str] = []
+        if not import_ok:
+            reason_codes.append("import_missing")
+        if not self.queue_path:
+            reason_codes.append("queue_path_missing")
+        reason_codes.append("backend_not_bound")
+
+        return {
+            "capability": "task_queue",
+            "import_ok": import_ok,
+            "queue_path_configured": bool(self.queue_path),
+            "has_durable_instance": False,
+            "self_tested": False,
+            "reachable": False,
+            "reason_codes": reason_codes,
+        }
 
     async def submit(
         self, task_type: str, payload: Dict[str, Any], priority: int = 0, **kwargs: Any
