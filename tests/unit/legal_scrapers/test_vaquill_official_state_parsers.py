@@ -3773,6 +3773,89 @@ def test_south_dakota_constitution_skips_toc_and_uses_compact_fallback(
     assert rows[0].structured_data["source_authority_class"] == "official"
 
 
+def test_remaining_generic_constitution_splits(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.district_of_columbia import (
+        DistrictOfColumbiaScraper,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.iowa import IowaScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maine import MaineScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_dakota import (
+        NorthDakotaScraper,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_carolina import (
+        SouthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body><main>
+    ARTICLE I
+    Declaration of Rights
+    Section 1. All persons are born equally free and independent, and have certain natural, inherent and unalienable rights. (2013-300, s. 1.)
+    Section 2. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    Section 3. The people have a right to assemble together, to consult for their common good, and to apply to those invested with the powers of government for redress of grievances.
+    </main></body></html>
+    """
+    cases = [
+        (IowaScraper, "IA", "Iowa", "IOWA_CONSTITUTION_HTML", "Iowa Constitution", "legis.iowa.gov"),
+        (MaineScraper, "ME", "Maine", "MAINE_CONSTITUTION_HTML", "Maine Constitution", "legislature.maine.gov"),
+        (
+            NorthCarolinaScraper,
+            "NC",
+            "North Carolina",
+            "NORTH_CAROLINA_CONSTITUTION_HTML",
+            "North Carolina Constitution",
+            "ncleg.gov",
+        ),
+        (
+            NorthDakotaScraper,
+            "ND",
+            "North Dakota",
+            "NORTH_DAKOTA_CONSTITUTION_HTML",
+            "North Dakota Constitution",
+            "ndlegis.gov",
+        ),
+        (
+            SouthCarolinaScraper,
+            "SC",
+            "South Carolina",
+            "SOUTH_CAROLINA_CONSTITUTION_HTML",
+            "South Carolina Constitution",
+            "scstatehouse.gov",
+        ),
+        (
+            DistrictOfColumbiaScraper,
+            "DC",
+            "District of Columbia",
+            "DISTRICT_OF_COLUMBIA_CONSTITUTION_HTML",
+            "District of Columbia Home Rule Charter",
+            "dccouncil.gov",
+        ),
+    ]
+    for cls, code, name, env_name, code_name, host in cases:
+        path = tmp_path / f"{code.lower()}-const.html"
+        path.write_text(html, encoding="utf-8")
+        monkeypatch.setenv(env_name, str(path))
+        scraper = cls(code, name)
+        rows = asyncio.run(scraper.scrape_code(code_name, "https://example.invalid", max_statutes=6))
+        assert [row.section_number for row in rows] == ["1", "3"], code
+        bodies = " ".join(row.full_text for row in rows)
+        assert "equally free and independent" in bodies, code
+        assert "assemble together" in bodies, code
+        assert "Repealed text" not in bodies, code
+        if code == "NC":
+            assert "2013-300" in bodies
+        assert host in rows[0].source_url, code
+        assert "justia" not in rows[0].source_url, code
+        assert rows[0].structured_data["source_authority_class"] == "official", code
+        monkeypatch.delenv(env_name, raising=False)
+
+
+
 
 
 

@@ -321,6 +321,20 @@ class NorthCarolinaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        from .north_carolina_constitution import (
+            configured_constitution_html_path,
+            parse_north_carolina_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_north_carolina_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "North Carolina Constitution",
+                    max_statutes=max_statutes,
+                )
+                return constitution_rows
         from .north_carolina_chapter import (
             configured_chapter_html_path,
             parse_configured_north_carolina_chapters,

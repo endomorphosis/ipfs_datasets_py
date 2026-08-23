@@ -135,6 +135,20 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
         generic scrapers remain offline/fallback paths only.
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .district_of_columbia_constitution import (
+            configured_constitution_html_path,
+            parse_district_of_columbia_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower() or "charter" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_district_of_columbia_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "District of Columbia Home Rule Charter",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .district_of_columbia_xml import (
             configured_section_xml_path,
             configured_xml_dir,

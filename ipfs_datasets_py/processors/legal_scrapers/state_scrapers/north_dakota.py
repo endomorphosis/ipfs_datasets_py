@@ -135,6 +135,21 @@ class NorthDakotaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        from .north_dakota_constitution import (
+            configured_constitution_html_path,
+            parse_north_dakota_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                limit = max(1, int(max_statutes)) if max_statutes is not None else None
+                constitution_rows = parse_north_dakota_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "North Dakota Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/",
