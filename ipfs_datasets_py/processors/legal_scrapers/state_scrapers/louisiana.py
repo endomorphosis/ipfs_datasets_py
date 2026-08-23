@@ -79,6 +79,14 @@ class LouisianaScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
                 return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .louisiana_law import parse_configured_louisiana_law
+
+        local_rows = parse_configured_louisiana_law(
+            code_name=code_name or "Louisiana Revised Statutes",
+            max_statutes=limit,
+        )
+        if local_rows:
+            return local_rows if limit is None else local_rows[: int(limit)]
         skip_live_toc = str(
             os.getenv("STATE_SCRAPER_LA_SKIP_LIVE_TOC", "1") or "1"
         ).strip().lower() in {

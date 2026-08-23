@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -18,6 +18,10 @@ from .base_scraper import NormalizedStatute, StatuteMetadata
 BASE = "https://app.leg.wa.gov/RCW"
 _WS = re.compile(r"\s+")
 _CITE_RE = re.compile(r"\b(\d+[A-Za-z]?(?:\.\d+[A-Za-z]?){1,3})\b")
+_TITLE_HREF_RE = re.compile(r"default\.aspx\?Cite=([\w]+)$", re.IGNORECASE)
+_CHAPTER_HREF_RE = re.compile(
+    r"(?:/rcw/)?default\.aspx\?cite=([\w]+\.[\w]+)$", re.IGNORECASE
+)
 _RESERVED = re.compile(
     r"\b(repealed|reserved|expired|renumbered|deleted|transferred|recodified)\b",
     re.IGNORECASE,
@@ -126,3 +130,82 @@ def configured_section_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def title_cites(html: str) -> List[str]:
+    """Title cites from the RCW TOC (``default.aspx?Cite=9A``)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[str] = []
+    seen = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _TITLE_HREF_RE.search(href)
+        if not match:
+            continue
+        cite = match.group(1)
+        if cite in seen or "." in cite:
+            continue
+        seen.add(cite)
+        out.append(cite)
+    return out
+
+
+def chapter_cites(html: str, *, title_cite: str = "") -> List[str]:
+    """Two-segment chapter cites (``/rcw/default.aspx?cite=9A.32``)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    wrapper = soup.find("div", id="contentWrapper") or soup
+    out: List[str] = []
+    seen = set()
+    prefix = f"{title_cite}." if title_cite else ""
+    for anchor in wrapper.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _CHAPTER_HREF_RE.search(href)
+        if not match:
+            continue
+        cite = match.group(1)
+        if prefix and not cite.startswith(prefix):
+            continue
+        if cite.count(".") != 1 or cite in seen:
+            continue
+        seen.add(cite)
+        out.append(cite)
+    return out
+
+
+def chapter_section_rows(html: str) -> List[Tuple[str, str, str]]:
+    """Section cites from chapter table rows (number cell + heading cell)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    wrapper = soup.find("div", id="contentWrapper") or soup
+    out: List[Tuple[str, str, str]] = []
+    seen = set()
+    for row in wrapper.find_all("tr"):
+        cells = row.find_all("td")
+        if len(cells) < 3:
+            continue
+        link = cells[1].find("a", href=True)
+        if link is None:
+            continue
+        cite = _clean(link.get_text(" "))
+        if not cite or not cite[0].isdigit():
+            continue
+        if cite in seen:
+            continue
+        seen.add(cite)
+        heading = _clean(cells[2].get_text(" "))
+        out.append((cite, heading, section_url(cite)))
+    return out

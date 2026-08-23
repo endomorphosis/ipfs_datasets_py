@@ -589,6 +589,43 @@ def test_louisiana_labeldocument_heading_split() -> None:
     assert row.section_number == "30"
     assert "specific intent" in row.full_text
     assert "TITLE 14" not in row.full_text
+    assert row.structured_data["body_prefix"] == "RS"
+
+
+def test_louisiana_civil_code_article_and_toc_folder(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana import LouisianaScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana_law import (
+        folder_body_prefix,
+        toc_docids,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    toc = (
+        '<span id="ctl00_ctl00_PageBody_PageContent_LabelHeader">Civil Code</span>'
+        '<a href="Law.aspx?d=111">Art. 1</a><a href="Law.aspx?d=111">dup</a>'
+        '<a href="Law.aspx?d=222">Art. 2</a>'
+    )
+    assert folder_body_prefix(toc) == "CC"
+    assert toc_docids(toc) == ["111", "222"]
+    html = """
+    <span id="ctl00_PageBody_LabelName">CC 2315</span>
+    <span id="ctl00_PageBody_LabelDocument">
+      <p>Art. 2315.  Liability for acts causing damage</p>
+      <p>Every act whatever of man that causes damage to another obliges him by whose fault it happened to repair it.</p>
+    </span>
+    """
+    path = tmp_path / "cc-2315.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("LOUISIANA_LAW_HTML", str(path))
+    scraper = LouisianaScraper("LA", "Louisiana")
+    rows = asyncio.run(
+        scraper.scrape_code("Louisiana Civil Code", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "2315"
+    assert "causes damage to another" in rows[0].full_text
+    assert rows[0].structured_data["body_prefix"] == "CC"
+    assert rows[0].structured_data["source_authority_class"] == "official"
 
 
 def test_south_dakota_title_html_senu(tmp_path: Path, monkeypatch) -> None:
@@ -1064,6 +1101,39 @@ def test_washington_contentwrapper_drops_history_and_notes(tmp_path: Path, monke
     assert "1970 c 1" not in rows[0].full_text
     assert "editorial note" not in rows[0].full_text.lower()
     assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_washington_title_chapter_and_section_table_listings() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.washington_section import (
+        chapter_cites,
+        chapter_section_rows,
+        title_cites,
+    )
+
+    assert title_cites(
+        '<a href="default.aspx?Cite=9A">Title 9A RCW</a>'
+        '<a href="default.aspx?cite=9A.32">skip chapter</a>'
+    ) == ["9A"]
+    assert chapter_cites(
+        '<div id="contentWrapper"><a href="/rcw/default.aspx?cite=9A.32">9A.32</a></div>',
+        title_cite="9A",
+    ) == ["9A.32"]
+    rows = chapter_section_rows(
+        """
+        <div id="contentWrapper">
+          <table>
+            <tr>
+              <td>HTML</td>
+              <td><a href="/rcw/default.aspx?cite=9A.32.030">9A.32.030</a></td>
+              <td>Murder in the first degree.</td>
+            </tr>
+          </table>
+        </div>
+        """
+    )
+    assert rows[0][0] == "9A.32.030"
+    assert rows[0][1] == "Murder in the first degree."
+    assert "cite=9A.32.030" in rows[0][2]
 
 
 def test_kansas_statute_body_drops_history_table(tmp_path: Path, monkeypatch) -> None:

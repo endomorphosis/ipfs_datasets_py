@@ -498,6 +498,15 @@ class WashingtonScraper(BaseStateScraper):
         raw = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=20)
         if not raw:
             return []
+        html = raw.decode("utf-8", errors="replace") if isinstance(raw, (bytes, bytearray)) else str(raw)
+        from .washington_section import title_cites
+
+        listed = title_cites(html)
+        if listed:
+            return [
+                (f"{self.get_base_url()}/RCW/default.aspx?cite={cite}", f"Title {cite}")
+                for cite in listed
+            ]
         soup = BeautifulSoup(raw, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
@@ -523,6 +532,15 @@ class WashingtonScraper(BaseStateScraper):
         raw = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=20)
         if not raw:
             return []
+        html = raw.decode("utf-8", errors="replace") if isinstance(raw, (bytes, bytearray)) else str(raw)
+        from .washington_section import chapter_cites
+
+        listed = chapter_cites(html, title_cite=title_cite)
+        if listed:
+            return [
+                (f"{self.get_base_url()}/RCW/default.aspx?cite={cite}", cite)
+                for cite in listed
+            ]
         soup = BeautifulSoup(raw, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
@@ -550,6 +568,12 @@ class WashingtonScraper(BaseStateScraper):
         raw = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
         if not raw:
             return []
+        html = raw.decode("utf-8", errors="replace") if isinstance(raw, (bytes, bytearray)) else str(raw)
+        from .washington_section import chapter_section_rows
+
+        rows = chapter_section_rows(html)
+        if rows:
+            return [(url, cite) for cite, _heading, url in rows]
         soup = BeautifulSoup(raw, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
