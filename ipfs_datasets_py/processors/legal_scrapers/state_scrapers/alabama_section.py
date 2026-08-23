@@ -24,6 +24,8 @@ FIELD_SEP = "\u2020"  # †
 _SECTION_LABEL_RE = re.compile(
     r"^Section\s+([0-9]+[A-Za-z]?-[0-9]+[A-Za-z]?-[0-9A-Za-z.]+)\s*(.*)$"
 )
+_TITLE_LABEL_RE = re.compile(r"^Title\s+([0-9]+[A-Za-z]?)\s*(.*)$")
+_CHAPTER_LABEL_RE = re.compile(r"^Chapter\s+([0-9]+[A-Za-z]?)\s*(.*)$")
 _RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered|deleted)\b", re.IGNORECASE)
 _WS = re.compile(r"\s+")
 
@@ -54,6 +56,25 @@ def parse_alabama_titles_blob(raw: str) -> List[Tuple[str, str]]:
             continue
         pairs.append((code_id, label))
     return pairs
+
+
+def hierarchy_rows(raw: str) -> List[Tuple[str, str, str]]:
+    """Title / Chapter / Section rows from the ALISON titles blob."""
+
+    out: List[Tuple[str, str, str]] = []
+    for _code_id, label in parse_alabama_titles_blob(raw):
+        title = _TITLE_LABEL_RE.match(label)
+        if title:
+            out.append(("title", title.group(1), _clean(label)))
+            continue
+        chapter = _CHAPTER_LABEL_RE.match(label)
+        if chapter:
+            out.append(("chapter", chapter.group(1), _clean(label)))
+            continue
+        section = _SECTION_LABEL_RE.match(label)
+        if section:
+            out.append(("section", section.group(1), _clean(label)))
+    return out
 
 
 def parse_alabama_section_payload(

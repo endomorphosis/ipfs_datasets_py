@@ -4842,6 +4842,94 @@ def test_indiana_iga_json_listings_without_api_key() -> None:
     assert normalize_section("1", "35", "42", "1") == "35-42-1-1"
 
 
+def test_california_toccode_and_manylaw_sections() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.california_bulk import (
+        expand_url,
+        manylaw_section_numbers,
+        toc_code_links,
+    )
+
+    assert "tocCode=PEN" in expand_url("pen")
+    codes = toc_code_links(
+        '<a href="/faces/codedisplayexpand.xhtml?tocCode=PEN">Penal Code</a>'
+        '<a href="/faces/codedisplayexpand.xhtml?tocCode=SKIP">skip</a>'
+    )
+    assert codes[0][0] == "PEN"
+    numbers = manylaw_section_numbers(
+        '<div id="manylawsections"><div><a>187.</a></div><div><a>189.</a></div>'
+        "<div><a>Contents</a></div></div>"
+    )
+    assert numbers == ["187", "189"]
+
+
+def test_wisconsin_toc_chapter_links_skip_sections() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wisconsin_chapter import (
+        toc_chapter_links,
+    )
+
+    rows = toc_chapter_links(
+        "<p><a href=\"/document/statutes/940\">Chapter 940 (PDF: ) - Crimes Against Life</a></p>"
+        "<p><a href=\"/document/statutes/940.01\">940.01</a></p>"
+    )
+    assert [number for number, _name, _url in rows] == ["940"]
+    assert rows[0][2].endswith("/document/statutes/940")
+
+
+def test_missouri_details_chapter_links() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri_chapter import (
+        details_chapter_links,
+    )
+
+    rows = details_chapter_links(
+        '<details><a href="OneChapter.aspx?chapter=565">565\u2003Offenses Against the Person</a>'
+        '<a href="OneSection.aspx?section=565.020">skip</a></details>'
+    )
+    assert rows[0][0] == "565"
+    assert rows[0][2].endswith("OneChapter.aspx?chapter=565")
+
+
+def test_alabama_hierarchy_title_chapter_section_rows() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alabama_section import (
+        FIELD_SEP,
+        ROW_SEP,
+        hierarchy_rows,
+    )
+
+    blob = ROW_SEP.join(
+        [
+            f"1{FIELD_SEP}Title 13A Criminal Code.",
+            f"2{FIELD_SEP}Chapter 5 Death Penalty.",
+            f"3{FIELD_SEP}Section 13A-5-40 Capital offenses.",
+        ]
+    )
+    rows = hierarchy_rows(blob)
+    assert rows == [
+        ("title", "13A", "Title 13A Criminal Code."),
+        ("chapter", "5", "Chapter 5 Death Penalty."),
+        ("section", "13A-5-40", "Section 13A-5-40 Capital offenses."),
+    ]
+
+
+def test_nevada_nrs_and_oregon_ors_index_links() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nevada_chapter import (
+        nrs_index_links,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon_chapter import (
+        ors_chapter_links,
+    )
+
+    nrs = nrs_index_links(
+        '<a href="NRS-200.html">CHAPTER 200 - CRIMES AGAINST THE PERSON</a>'
+        '<a href="NRS-index.html">skip</a>'
+    )
+    assert nrs[0][0] == "200"
+    ors = ors_chapter_links(
+        '<a href="ors163.html">Chapter 163 Offenses Against Persons</a>'
+        '<a href="ors163a.html">Chapter 163A</a>'
+    )
+    assert [number for number, _name, _url in ors] == ["163", "163a"]
+
+
 
 
 

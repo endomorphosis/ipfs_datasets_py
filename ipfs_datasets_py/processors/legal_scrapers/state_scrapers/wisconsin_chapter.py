@@ -165,3 +165,41 @@ def statutes_from_page(
             )
         )
     return out
+
+
+_CHAPTER_TOC_RE = re.compile(r"/document/statutes/(\d+)$")
+
+
+def toc_chapter_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str, str]]:
+    """TOC ``/document/statutes/N`` chapter rows (not section ``N.NN``)."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for paragraph in soup.find_all("p"):
+        anchor = None
+        for candidate in paragraph.find_all("a", href=True):
+            href = str(candidate.get("href") or "").strip()
+            if _CHAPTER_TOC_RE.search(href):
+                anchor = candidate
+                break
+        if anchor is None:
+            continue
+        match = _CHAPTER_TOC_RE.search(str(anchor.get("href") or ""))
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(paragraph.get_text(" "))
+        name = re.sub(r"\(PDF:[^)]*\)", "", name)
+        name = _clean(name).strip(" -")
+        out.append((number, name or f"Chapter {number}", urljoin(base_url, f"/document/statutes/{number}")))
+    return out

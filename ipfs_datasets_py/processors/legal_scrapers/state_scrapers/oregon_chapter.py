@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -146,3 +146,27 @@ def configured_chapter_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def ors_chapter_links(html: str, *, base_url: str = f"{BASE}/bills_laws/ors/") -> List[Tuple[str, str, str]]:
+    """Index ``ors163.html`` / ``ors163a.html`` chapter rows."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        slug = chapter_slug_from_url(href)
+        if not slug or slug in seen:
+            continue
+        seen.add(slug)
+        number = chapter_number_display(slug)
+        name = _clean(anchor.get_text(" ")) or f"ORS Chapter {number}"
+        out.append((number, name, urljoin(base_url, href)))
+    return out

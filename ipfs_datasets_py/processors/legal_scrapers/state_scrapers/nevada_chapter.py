@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -123,3 +123,32 @@ def configured_chapter_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+_NRS_INDEX_RE = re.compile(r"NRS-(\d+[A-Za-z]?)\.html?$", re.IGNORECASE)
+
+
+def nrs_index_links(html: str, *, base_url: str = f"{BASE}/") -> List[Tuple[str, str, str]]:
+    """Index ``NRS-XXX.html`` chapter rows."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _NRS_INDEX_RE.search(href)
+        if not match:
+            continue
+        number = str(int(match.group(1))) if match.group(1).isdigit() else match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(anchor.get_text(" ")) or f"NRS {number}"
+        out.append((number, name, urljoin(base_url, href)))
+    return out

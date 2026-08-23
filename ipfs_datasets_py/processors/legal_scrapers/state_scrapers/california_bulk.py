@@ -219,3 +219,68 @@ def configured_bulk_zip_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+LEGINFO = "https://leginfo.legislature.ca.gov"
+CA_CODES = (
+    "BPC", "CIV", "CCP", "COM", "CORP", "EDC", "ELEC", "EVID", "FAM", "FIN",
+    "FGC", "FAC", "GOV", "HNC", "HSC", "INS", "LAB", "MVC", "PEN", "PROB",
+    "PCC", "PRC", "PUC", "RTC", "SHC", "UIC", "VEH", "WAT", "WIC",
+)
+_TOC_CODE_RE = re.compile(r"tocCode=([A-Z]+)", re.IGNORECASE)
+
+
+def expand_url(code: str) -> str:
+    token = str(code or "").strip().upper()
+    return f"{LEGINFO}/faces/codedisplayexpand.xhtml?tocCode={token}"
+
+
+def display_section_url(code: str, section: str) -> str:
+    return OFFICIAL_SECTION_URL.format(code=str(code or "").upper(), section=section)
+
+
+def toc_code_links(html: str, *, base_url: str = LEGINFO) -> List[Tuple[str, str]]:
+    """``tocCode=PEN`` rows from ``codes.xhtml`` / expand pages."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "")
+        match = _TOC_CODE_RE.search(href)
+        if not match:
+            continue
+        code = match.group(1).upper()
+        if code not in CA_CODES or code in seen:
+            continue
+        seen.add(code)
+        out.append((code, urljoin(base_url.rstrip("/") + "/", href)))
+    return out
+
+
+def manylaw_section_numbers(html: str) -> List[str]:
+    """Section numbers from ``#manylawsections`` displayText pages."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    container = soup.find(id="manylawsections") or soup
+    out: List[str] = []
+    seen: set[str] = set()
+    for anchor in container.find_all("a"):
+        number = _WS.sub(" ", (anchor.get_text(" ") or "").replace("\xa0", " ")).strip().rstrip(".")
+        if not number or number.lower() in seen:
+            continue
+        if not re.match(r"^[0-9][0-9A-Za-z.\-]*$", number):
+            continue
+        seen.add(number.lower())
+        out.append(number)
+    return out

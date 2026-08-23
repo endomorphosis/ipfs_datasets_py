@@ -24,6 +24,41 @@ def _clean(raw: str) -> str:
     return _WS.sub(" ", text).strip()
 
 
+def details_chapter_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str, str]]:
+    """Home.aspx ``<details>`` chapter rows (``OneChapter.aspx?chapter=N``)."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    containers = soup.find_all("details") or [soup]
+    for detail in containers:
+        for anchor in detail.find_all("a", href=True):
+            href = str(anchor.get("href") or "")
+            match = _CHAPTER_RE.search(href)
+            if not match:
+                continue
+            number = match.group(1).strip()
+            if not number or number in seen:
+                continue
+            seen.add(number)
+            raw = _clean(anchor.get_text(" "))
+            name = re.sub(rf"^\s*{re.escape(number)}\s*", "", raw).strip()
+            out.append(
+                (
+                    number,
+                    f"Chapter {number} {name}".strip(),
+                    urljoin(base_url.rstrip("/") + "/", f"OneChapter.aspx?chapter={number}"),
+                )
+            )
+    return out
+
+
 def chapter_numbers(home_html: str) -> List[str]:
     seen = {match.group(1).strip() for match in _CHAPTER_RE.finditer(home_html or "")}
 
