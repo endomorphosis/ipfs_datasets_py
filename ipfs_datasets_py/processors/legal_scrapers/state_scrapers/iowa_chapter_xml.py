@@ -175,6 +175,8 @@ def iac_list_rows(html: str, *, kind: str, base_url: str = SITE) -> List[Tuple[s
         number = match.group(1).rstrip("-.")
         if not number or number in seen:
             continue
+        if "RESERVED" in label.upper():
+            continue
         seen.add(number)
         anchor = row.find("a", href=True)
         href = str(anchor.get("href") or "") if anchor is not None else ""

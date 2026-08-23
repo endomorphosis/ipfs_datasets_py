@@ -123,6 +123,23 @@ def configured_title_text_path() -> Optional[Path]:
     return None
 
 
+def configured_titles_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("WYOMING_TITLES_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_titles_html() -> List[Tuple[str, str, str]]:
+    """Local compress-index dump. PDFs are never auto-downloaded."""
+
+    path = configured_titles_html_path()
+    if path is None:
+        return []
+    return title_pdf_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def _extract_pdf_text(pdf_path: Path) -> str:
     try:
         import pdfplumber

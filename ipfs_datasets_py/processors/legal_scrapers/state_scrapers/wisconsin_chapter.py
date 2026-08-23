@@ -9,7 +9,9 @@ Adapted from Vaquill-AI/open-us-law ``wi_bulk.parse`` (Apache-2.0).
 from __future__ import annotations
 
 import copy
+import os
 import re
+from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -229,3 +231,23 @@ def pdf_front_toc_sections(pdf_text: str, chapter: str) -> Set[str]:
             if chapter_of(sec) == str(chapter):
                 out.add(sec)
     return out
+
+
+def configured_chapter_pdf_text_path() -> Optional[Path]:
+    raw = str(os.environ.get("WISCONSIN_CHAPTER_PDF_TEXT") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_chapter_pdf_toc(chapter: str) -> Set[str]:
+    """Local extracted chapter-PDF text. PDFs are never auto-downloaded."""
+
+    path = configured_chapter_pdf_text_path()
+    if path is None:
+        return set()
+    return pdf_front_toc_sections(
+        path.read_text(encoding="utf-8", errors="replace"),
+        chapter,
+    )

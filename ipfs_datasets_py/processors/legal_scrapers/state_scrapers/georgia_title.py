@@ -181,6 +181,25 @@ def configured_title_text_path() -> Optional[Path]:
     return paths[0] if paths else None
 
 
+def covered_title_numbers(paths: Optional[List[Path]] = None) -> List[str]:
+    """Title numbers present in operator ``GEORGIA_TITLE_TEXT`` / ``_PDF`` dumps."""
+
+    out: List[str] = []
+    seen: set[str] = set()
+    for path in paths if paths is not None else configured_title_text_paths():
+        number = _title_number_from_path(path)
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        out.append(number)
+
+    def _key(number: str):
+        match = re.match(r"(\d+)", number)
+        return (int(match.group(1)) if match else 999, number)
+
+    return sorted(out, key=_key)
+
+
 def parse_configured_georgia_title(
     *,
     code_name: str = "Official Code of Georgia Annotated",

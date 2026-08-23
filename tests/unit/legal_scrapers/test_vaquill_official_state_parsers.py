@@ -4763,10 +4763,11 @@ def test_iowa_iaclist_title_chapter_section_rows() -> None:
     assert titles[0][0] == "XVI"
     chapters = iac_list_rows(
         '<table id="iacList"><tbody><tr><td><a href="/law/iowaCode/sections?codeChapter=707">'
-        "Chapter 707 - HOMICIDE</a></td></tr></tbody></table>",
+        "Chapter 707 - HOMICIDE</a></td></tr>"
+        "<tr><td>Chapter 8E - RESERVED</td></tr></tbody></table>",
         kind="chapter",
     )
-    assert chapters[0][0] == "707"
+    assert [number for number, _name, _url in chapters] == ["707"]
     sections = iac_list_rows(
         '<table id="iacList"><tbody><tr><td>§707.1 - Murder.</td>'
         '<td><a href="/docs/code/2026/707.1.rtf">RTF</a></td></tr></tbody></table>',
@@ -5163,6 +5164,77 @@ def test_dc_title_dirs_and_chapter_map_from_index(tmp_path: Path) -> None:
     mapping = chapter_map_from_index(index)
     assert mapping["22-2101"] == "21"
     assert mapping["22-2104"] == "21"
+
+
+def test_env_gated_official_listing_dumps(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado_title import (
+        parse_configured_publication_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia_title import (
+        covered_title_numbers,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.mississippi_section import (
+        parse_configured_title_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma_title import (
+        parse_configured_titles_html as parse_oklahoma_titles,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.pennsylvania_title import (
+        parse_configured_toc_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wisconsin_chapter import (
+        parse_configured_chapter_pdf_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wyoming_title import (
+        parse_configured_titles_html as parse_wyoming_titles,
+    )
+
+    pa = tmp_path / "pa.html"
+    pa.write_text(
+        '<a href="/statutes/consolidated/view-statute?txtType=HTM&ttl=18">Title 18</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("PENNSYLVANIA_TOC_HTML", str(pa))
+    assert parse_configured_toc_html()[0][0] == "18"
+
+    ok = tmp_path / "ok.html"
+    ok.write_text('<a href="/OK_Statutes/CompleteTitles/os21.pdf">Title 21</a>', encoding="utf-8")
+    monkeypatch.setenv("OKLAHOMA_TITLES_HTML", str(ok))
+    assert parse_oklahoma_titles()[0][0] == "21"
+
+    wy = tmp_path / "wy.html"
+    wy.write_text('<a href="title6.pdf">Title 6</a>', encoding="utf-8")
+    monkeypatch.setenv("WYOMING_TITLES_HTML", str(wy))
+    assert parse_wyoming_titles()[0][0] == "6"
+
+    ms = tmp_path / "ms.html"
+    ms.write_text(
+        '<a href="/documents/2024/html/code_sections/097/00030019.htm">97-3-19</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MISSISSIPPI_TITLE_HTML", str(ms))
+    assert parse_configured_title_html()[0][0] == "97-3-19"
+
+    co = tmp_path / "co.html"
+    co.write_text(
+        '<div class="views-row"><a href="/publications/crs-title-18">'
+        "Colorado Revised Statutes Title 18</a></div>",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("COLORADO_PUBLICATION_HTML", str(co))
+    assert parse_configured_publication_html()[0][0] == "18"
+
+    wi = tmp_path / "wi.txt"
+    wi.write_text("940.01 First-degree intentional homicide\nHistory: 1987 a. 399.\n", encoding="utf-8")
+    monkeypatch.setenv("WISCONSIN_CHAPTER_PDF_TEXT", str(wi))
+    assert parse_configured_chapter_pdf_toc("940") == {"940.01"}
+
+    dumps = tmp_path / "ga"
+    dumps.mkdir()
+    (dumps / "title-16.txt").write_text("placeholder", encoding="utf-8")
+    (dumps / "ocga_40.txt").write_text("placeholder", encoding="utf-8")
+    monkeypatch.setenv("GEORGIA_TITLE_TEXT_DIR", str(dumps))
+    assert covered_title_numbers() == ["16", "40"]
 
 
 

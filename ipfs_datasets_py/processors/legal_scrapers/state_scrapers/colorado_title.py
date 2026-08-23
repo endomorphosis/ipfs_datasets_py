@@ -333,6 +333,23 @@ def configured_crs_path() -> Optional[Path]:
     return None
 
 
+def configured_publication_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("COLORADO_PUBLICATION_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_publication_html() -> List[Tuple[str, str, str]]:
+    """Local OLLS publication-search dump. PDFs are never auto-downloaded."""
+
+    path = configured_publication_html_path()
+    if path is None:
+        return []
+    return publication_rows(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def parse_configured_colorado_crs(
     *,
     code_name: str = "Colorado Revised Statutes",
