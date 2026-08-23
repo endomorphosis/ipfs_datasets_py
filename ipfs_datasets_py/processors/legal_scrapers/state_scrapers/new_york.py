@@ -147,6 +147,19 @@ class NewYorkScraper(BaseStateScraper):
         statutes = []
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .new_york_constitution import (
+            configured_constitution_json_path,
+            parse_configured_new_york_constitution,
+        )
+
+        constitution_path = configured_constitution_json_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_configured_new_york_constitution(
+                    code_name=code_name or "New York Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .new_york_openleg import parse_configured_law_json
 
         openleg = parse_configured_law_json(code_name=code_name, max_statutes=limit)

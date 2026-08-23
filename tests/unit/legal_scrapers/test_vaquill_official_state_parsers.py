@@ -3150,6 +3150,385 @@ def test_rhode_island_constitution_reads_article_nine_from_paragraphs(
     assert rows[0].structured_data["source_authority_class"] == "official"
 
 
+def test_new_york_constitution_replaces_literal_newlines_and_preamble(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york import NewYorkScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    payload = r"""
+    {
+      "info": {"lawId": "CNS", "name": "Constitution"},
+      "documents": {
+        "docType": "CHAPTER",
+        "documents": {
+          "items": [
+            {
+              "docType": "SECTION",
+              "docLevelId": "Preamble",
+              "title": "Preamble",
+              "text": "We the People of the State of New York, grateful to Almighty God for our freedom, in order to secure its blessings, do establish this Constitution.\\nMore preamble text."
+            },
+            {
+              "docType": "ARTICLE",
+              "docLevelId": "I",
+              "title": "Bill of Rights",
+              "documents": {
+                "items": [
+                  {
+                    "docType": "SECTION",
+                    "docLevelId": "1",
+                    "title": "Rights of citizens",
+                    "text": "No member of this state shall be disfranchised unless by the law of the land or the judgment of his peers.\\n"
+                  },
+                  {
+                    "docType": "SECTION",
+                    "docLevelId": "2",
+                    "title": "Repealed",
+                    "text": "Repealed text must not be admitted as current constitutional law."
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+    """
+    path = tmp_path / "ny-cns.json"
+    path.write_text(payload, encoding="utf-8")
+    monkeypatch.setenv("NEW_YORK_CONSTITUTION_JSON", str(path))
+    scraper = NewYorkScraper("NY", "New York")
+    rows = asyncio.run(
+        scraper.scrape_code("New York Constitution", "https://example.invalid", max_statutes=6)
+    )
+    keys = [(row.title_number, row.section_number) for row in rows]
+    assert ("0", "0") in keys
+    assert ("I", "1") in keys
+    assert ("I", "2") not in keys
+    bodies = " ".join(row.full_text for row in rows)
+    assert "grateful to Almighty God" in bodies
+    assert "\\n" not in bodies
+    assert "disfranchised" in bodies
+    assert "Repealed text" not in bodies
+    assert "nysenate.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_vermont_constitution_strips_footer_and_splits_chapters(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.vermont import VermontScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body><main>
+    CHAPTER I
+    Article 1. That all persons are born equally free and independent, and have certain natural, inherent, and unalienable rights.
+    Article 2. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    CHAPTER II
+    §1. The Commonwealth or State of Vermont shall be governed by a Governor, Lieutenant-Governor, and General Assembly in the manner hereafter directed.
+    The Vermont General Assembly
+    Montpelier, Vermont
+    Statutes
+    This footer must not be admitted.
+    </main></body></html>
+    """
+    path = tmp_path / "vt-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("VERMONT_CONSTITUTION_HTML", str(path))
+    scraper = VermontScraper("VT", "Vermont")
+    rows = asyncio.run(
+        scraper.scrape_code("Vermont Constitution", "https://example.invalid", max_statutes=6)
+    )
+    keys = [(row.title_number, row.section_number) for row in rows]
+    assert ("I", "1") in keys
+    assert ("II", "1") in keys
+    assert ("I", "2") not in keys
+    bodies = " ".join(row.full_text for row in rows)
+    assert "equally free and independent" in bodies
+    assert "Lieutenant-Governor" in bodies
+    assert "This footer must not be admitted" not in bodies
+    assert "legislature.vermont.gov" in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_mississippi_constitution_keeps_longest_and_drops_global_toc(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.mississippi import (
+        MississippiScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    ARTICLE 1. DISTRIBUTION OF POWERS 1 ARTICLE 2. BORDERS 5
+    PREAMBLE We the people of Mississippi in convention assembled do ordain this constitution.
+    ARTICLE 1 DISTRIBUTION OF POWERS SECTION 1. Powers of government. SECTION 2. Repealed. SECTION 1. The powers of the government of the state of Mississippi shall be divided into three distinct departments, each of them confided to a separate magistracy. SOURCES: 1890. SECTION 2. Repealed. Repealed text must not be admitted as current constitutional law.
+    </body></html>
+    """
+    path = tmp_path / "ms-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MISSISSIPPI_CONSTITUTION_HTML", str(path))
+    scraper = MississippiScraper("MS", "Mississippi")
+    rows = asyncio.run(
+        scraper.scrape_code("Mississippi Constitution", "https://example.invalid", max_statutes=6)
+    )
+    assert [row.section_number for row in rows] == ["1"]
+    assert "three distinct departments" in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert "sos.state.ms.us" in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_massachusetts_constitution_stops_at_amendments_and_keeps_unwrapped_text(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.massachusetts import (
+        MassachusettsScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body><div class="content">
+      <h2>PART THE FIRST</h2>
+      <h4>Article I.</h4>
+      <p>All people are born free and equal and have certain natural, essential, and unalienable rights.</p>
+      <h2>PART THE SECOND</h2>
+      <h3>Chapter IV</h3>
+      <p>Delegates to congress, and the times and places of holding elections, shall be appointed by the general court as they shall judge most convenient.</p>
+      <h3>Chapter II, Section II</h3>
+      <h4>Article III.</h4>
+      Whenever the chair of the governor shall be vacant, the lieutenant governor shall perform the duties of governor during such vacancy.
+      <h2>ARTICLES OF AMENDMENT.</h2>
+      <h3>Article I.</h3>
+      <p>Amendment body that must not be admitted as original constitution text.</p>
+    </div></body></html>
+    """
+    path = tmp_path / "ma-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MASSACHUSETTS_CONSTITUTION_HTML", str(path))
+    scraper = MassachusettsScraper("MA", "Massachusetts")
+    rows = asyncio.run(
+        scraper.scrape_code("Massachusetts Constitution", "https://example.invalid", max_statutes=8)
+    )
+    keys = [(row.title_number, row.section_number) for row in rows]
+    assert ("1", "I") in keys
+    assert ("2.IV", "0") in keys
+    assert ("2.II.II", "III") in keys
+    bodies = " ".join(row.full_text for row in rows)
+    assert "born free and equal" in bodies
+    assert "Delegates to congress" in bodies
+    assert "chair of the governor" in bodies
+    assert "Amendment body" not in bodies
+    assert "malegislature.gov" in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_indiana_constitution_splits_articles_and_keeps_history(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.indiana import IndianaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+ARTICLE 1.
+Bill of Rights
+Section 1. WE DECLARE, That all people are created equal; that they are endowed by their CREATOR with certain inalienable rights. (History: As Amended November 6, 1984.)
+Section 2. Repealed.
+Repealed text must not be admitted as current constitutional law.
+"""
+    path = tmp_path / "in-const.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("INDIANA_CONSTITUTION_TEXT", str(path))
+    scraper = IndianaScraper("IN", "Indiana")
+    rows = asyncio.run(
+        scraper.scrape_code("Indiana Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert [row.section_number for row in rows] == ["1"]
+    assert "created equal" in rows[0].full_text
+    assert "As Amended November 6, 1984" in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert "iga.in.gov" in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_oklahoma_constitution_starts_at_second_preamble(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import OklahomaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+PREAMBLE
+ARTICLE I - TOC only Federal Relations
+SECTION I-1. TOC preview that must not be admitted as current constitutional law.
+PREAMBLE
+Invoking the guidance of Almighty God, in order to secure the blessings of liberty, we the people of Oklahoma do ordain this Constitution.
+ARTICLE II - Bill of Rights
+SECTION II-1. All persons have the inherent right to life, liberty, the pursuit of happiness, and the enjoyment of the gains of their own industry.
+ARTICLE VII-A - Court on the Judiciary
+SECTION VII-A-1. A Court on the Judiciary is hereby created to hear complaints as to the removal of judicial officers in the manner provided by law.
+"""
+    path = tmp_path / "ok-const.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("OKLAHOMA_CONSTITUTION_TEXT", str(path))
+    scraper = OklahomaScraper("OK", "Oklahoma")
+    rows = asyncio.run(
+        scraper.scrape_code("Oklahoma Constitution", "https://example.invalid", max_statutes=6)
+    )
+    keys = [(row.title_number, row.section_number) for row in rows]
+    assert ("II", "1") in keys
+    assert ("VII-A", "1") in keys
+    bodies = " ".join(row.full_text for row in rows)
+    assert "inherent right to life" in bodies
+    assert "Court on the Judiciary" in bodies
+    assert "TOC preview" not in bodies
+    assert "oklegislature.gov" in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_louisiana_constitution_uses_all_caps_articles_not_toc(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana import (
+        LouisianaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+Article I. Declaration of Rights
+§1. Origin and purpose of government
+ARTICLE I.
+DECLARATION OF RIGHTS
+Section 1. All government of right originates with the people, is founded on their will alone, and is instituted solely for the good of the whole.
+Compiled from the La. Senate Statutory Database.
+(As amended through calendar year 2023)
+-1-
+Section 2. Repealed.
+Repealed text must not be admitted as current constitutional law.
+"""
+    path = tmp_path / "la-const.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("LOUISIANA_CONSTITUTION_TEXT", str(path))
+    scraper = LouisianaScraper("LA", "Louisiana")
+    rows = asyncio.run(
+        scraper.scrape_code("Louisiana Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert [row.section_number for row in rows] == ["1"]
+    assert "originates with the people" in rows[0].full_text
+    assert "calendar year 2023" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert "senate.la.gov" in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_arkansas_constitution_splits_schedule_and_amendments(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arkansas import ArkansasScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+TOC Article 1 Declaration 1
+PREAMBLE
+We the people of the State of Arkansas, grateful to Almighty God for the privilege of choosing our own form of government, do establish this Constitution.
+Article 1
+Declaration of Rights
+§ 1. All men are created equally free and independent, and have certain inherent and inalienable rights.
+§ 2. Repealed.
+Repealed text must not be admitted as current constitutional law.
+SCHEDULE
+§ 1. All laws now in force which are not in conflict with this Constitution shall remain in full force until they expire by their own limitation.
+AMEND. 1.
+Initiative and Referendum
+§ 1. The legislative power of the people of this State includes the initiative and referendum as provided in this amendment.
+"""
+    path = tmp_path / "ar-const.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("ARKANSAS_CONSTITUTION_TEXT", str(path))
+    scraper = ArkansasScraper("AR", "Arkansas")
+    rows = asyncio.run(
+        scraper.scrape_code("Arkansas Constitution", "https://example.invalid", max_statutes=8)
+    )
+    keys = [(row.title_number, row.section_number) for row in rows]
+    assert ("1", "1") in keys
+    assert ("SCHED", "1") in keys
+    assert ("AMEND1", "1") in keys
+    assert ("1", "2") not in keys
+    bodies = " ".join(row.full_text for row in rows)
+    assert "equally free and independent" in bodies
+    assert "initiative and referendum" in bodies.lower()
+    assert "Repealed text" not in bodies
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_tennessee_constitution_suffixes_schedule_section_reuse(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.tennessee import (
+        TennesseeScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+ARTICLE XI.
+Miscellaneous Provisions
+Section 1. All laws and ordinances now in force and use in this State, not inconsistent with this Constitution, shall continue in force and use until they shall expire.
+Section 19. The restoration of suffrage to persons convicted of infamous crimes shall be as provided by law.
+Section 1. The Schedule of this Constitution shall take effect at the same time as the rest of this Constitution and shall not revive any lapsed law.
+"""
+    path = tmp_path / "tn-const.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("TENNESSEE_CONSTITUTION_TEXT", str(path))
+    scraper = TennesseeScraper("TN", "Tennessee")
+    rows = asyncio.run(
+        scraper.scrape_code("Tennessee Constitution", "https://example.invalid", max_statutes=6)
+    )
+    numbers = [row.section_number for row in rows]
+    assert "1" in numbers
+    assert "19" in numbers
+    assert "1-v2" in numbers
+    bodies = " ".join(row.full_text for row in rows)
+    assert "not inconsistent with this Constitution" in bodies
+    assert "Schedule of this Constitution" in bodies
+    assert "tnsosfiles.com" in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_wyoming_constitution_uses_article_section_markers(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wyoming import WyomingScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+ARTICLE 1 - DECLARATION OF RIGHTS
+Article 1, Section 1  All power is inherent in the people, and all free governments are founded on their authority and instituted for their peace, safety and happiness.
+Article 1, Section 2  Repealed.
+Repealed text must not be admitted as current constitutional law.
+Article 1, Section 3  Since equality in the enjoyment of natural and civil rights is required by sound morality, discrimination is forbidden.
+"""
+    path = tmp_path / "wy-const.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("WYOMING_CONSTITUTION_TEXT", str(path))
+    scraper = WyomingScraper("WY", "Wyoming")
+    rows = asyncio.run(
+        scraper.scrape_code("Wyoming Constitution", "https://example.invalid", max_statutes=6)
+    )
+    assert [row.section_number for row in rows] == ["1", "3"]
+    bodies = " ".join(row.full_text for row in rows)
+    assert "inherent in the people" in bodies
+    assert "equality in the enjoyment" in bodies
+    assert "Repealed text" not in bodies
+    assert "wyoleg.gov" in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+
 
 
 

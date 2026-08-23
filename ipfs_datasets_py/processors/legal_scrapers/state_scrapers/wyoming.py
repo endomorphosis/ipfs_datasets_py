@@ -80,6 +80,20 @@ class WyomingScraper(BaseStateScraper):
         """
         max_sections = self._effective_scrape_limit(max_statutes, default=160)
         max_sections_value = int(max_sections or 1000000)
+        from .wyoming_constitution import (
+            configured_constitution_text_path,
+            parse_wyoming_constitution_text,
+        )
+
+        constitution_path = configured_constitution_text_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_wyoming_constitution_text(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Wyoming Constitution",
+                    max_statutes=max_sections,
+                )
+                return constitution_rows if max_sections is None else constitution_rows[: int(max_sections)]
         from .wyoming_title import configured_title_text_path, parse_wyoming_title_text
 
         local_title = configured_title_text_path()

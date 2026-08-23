@@ -138,6 +138,20 @@ class IndianaScraper(BaseStateScraper):
         else:
             target_statutes = max(1, int(return_threshold))
         bounded_probe = max_statutes is not None
+        from .indiana_constitution import (
+            configured_constitution_text_path,
+            parse_indiana_constitution_text,
+        )
+
+        constitution_path = configured_constitution_text_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_indiana_constitution_text(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Indiana Constitution",
+                    max_statutes=target_statutes,
+                )
+                return constitution_rows[: int(target_statutes)]
         min_full_corpus_records = int(os.getenv("INDIANA_FULL_CORPUS_MIN_RECORDS", "30") or "30")
         resumed = self._load_partial_checkpoint_statutes(
             code_name=code_name,

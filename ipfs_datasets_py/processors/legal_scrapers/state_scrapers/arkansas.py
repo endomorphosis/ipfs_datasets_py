@@ -372,6 +372,20 @@ class ArkansasScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=180)
+        from .arkansas_constitution import (
+            configured_constitution_text_path,
+            parse_arkansas_constitution_text,
+        )
+
+        constitution_path = configured_constitution_text_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_arkansas_constitution_text(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Arkansas Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .arkansas_section import configured_section_html_path, parse_arkansas_section_html
 
         local_section = configured_section_html_path()

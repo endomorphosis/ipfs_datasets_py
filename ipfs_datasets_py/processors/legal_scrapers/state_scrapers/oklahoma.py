@@ -176,6 +176,20 @@ class OklahomaScraper(BaseStateScraper):
             return_threshold = self._bounded_return_threshold(160)
             unbounded_full = False
 
+        from .oklahoma_constitution import (
+            configured_constitution_text_path,
+            parse_oklahoma_constitution_text,
+        )
+
+        constitution_path = configured_constitution_text_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_oklahoma_constitution_text(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Oklahoma Constitution",
+                    max_statutes=None if unbounded_full else return_threshold,
+                )
+                return constitution_rows if unbounded_full else constitution_rows[:return_threshold]
         from .oklahoma_title import parse_configured_oklahoma_title
 
         local_rows = parse_configured_oklahoma_title(
