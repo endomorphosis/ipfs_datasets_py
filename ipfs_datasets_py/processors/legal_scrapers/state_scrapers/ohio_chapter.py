@@ -22,6 +22,12 @@ _RESERVED_PAT = re.compile(
     r"\[(repealed|expired|reserved|renumbered|amended)\b",
     re.IGNORECASE,
 )
+
+
+def title_url(title_num: str) -> str:
+    return f"{OH_BASE}/ohio-revised-code/title-{title_num}"
+
+
 def chapter_url(chapter_num: str) -> str:
     """Official chapter page that carries every inline section."""
 
@@ -214,4 +220,56 @@ def section_cells(html: str, *, base_url: str = "") -> List[Tuple[str, str, str]
         seen.add(number)
         name = re.sub(r"\s+", " ", (anchor.get_text(" ") or "")).strip() or f"Section {number}"
         out.append((number, name, urljoin(base_url or (OH_BASE + "/"), href)))
+    return out
+
+
+_TITLE_HREF_RE = re.compile(r"(?:^|/)title-(\d+)(?:\?.*)?$")
+_CHAPTER_HREF_RE = re.compile(r"(?:^|/)chapter-([0-9A-Za-z\-]+)(?:\?.*)?$")
+
+
+def toc_href_titles(html: str) -> List[Tuple[str, str, str]]:
+    """Any ``title-N`` href, including relative ``ohio-revised-code/title-1``."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _TITLE_HREF_RE.search(href)
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        name = re.sub(r"\s+", " ", (anchor.get_text(" ") or "")).strip() or f"Title {number}"
+        out.append((number, name, title_url(number)))
+    return out
+
+
+def toc_href_chapters(html: str) -> List[Tuple[str, str, str]]:
+    """Any ``chapter-NNN`` href from a title page (no ``name-cell`` required)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _CHAPTER_HREF_RE.search(href)
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        name = re.sub(r"\s+", " ", (anchor.get_text(" ") or "")).strip() or f"Chapter {number}"
+        out.append((number, name, chapter_url(number)))
     return out

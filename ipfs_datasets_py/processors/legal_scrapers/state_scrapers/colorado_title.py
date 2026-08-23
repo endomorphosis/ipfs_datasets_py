@@ -14,7 +14,7 @@ import os
 import re
 import zipfile
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -35,6 +35,73 @@ _LOCAL_TAG = re.compile(r"\{[^}]*\}")
 
 def _clean(text: str) -> str:
     return _WS.sub(" ", (text or "").replace("\xa0", " ")).strip()
+
+
+def title_search_url(number: str) -> str:
+    token = str(number or "").strip().replace(".", "-")
+    return f"{CONTENT_BASE}/publication-search?search_api_fulltext=crs%20title%20{token}"
+
+
+def publication_rows(html: str) -> List[Tuple[str, str, str]]:
+    """OLLS ``.views-row`` CRS publications. PDFs are never auto-downloaded."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for row in soup.select(".views-row"):
+        row_text = _clean(row.get_text(" "))
+        if "C.R.S." not in row_text and "Colorado Revised Statutes" not in row_text:
+            continue
+        detail_url = ""
+        pdf_url = ""
+        title = ""
+        for link in row.select("a[href]"):
+            href = str(link.get("href") or "").strip()
+            text = _clean(link.get_text(" "))
+            if not href:
+                continue
+            absolute = urljoin(CONTENT_BASE + "/", href)
+            if "/publications/" in href and not title:
+                detail_url = absolute
+                title = text or row_text[:240]
+            if href.lower().endswith(".pdf"):
+                pdf_url = absolute
+        if not detail_url and not pdf_url:
+            continue
+        match = _SECTION_NUM_RE.search(title or row_text)
+        number = match.group(1) if match else ""
+        if not number:
+            title_match = re.search(r"\bTitle\s+(\d{1,2}(?:\.\d+)?)\b", title or row_text, re.I)
+            number = title_match.group(1) if title_match else ""
+        if not number:
+            continue
+        key = detail_url or pdf_url
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append((number, title or row_text[:240], detail_url or pdf_url))
+    return out
+
+
+def crs_zip_member_names(zip_path: Path) -> List[str]:
+    """Local zip namelist only. Never downloads the authenticated SGML zip."""
+
+    path = Path(zip_path)
+    if not path.is_file():
+        return []
+    with zipfile.ZipFile(path) as archive:
+        return [
+            name
+            for name in archive.namelist()
+            if name.lower().endswith((".htm", ".html", ".sgm", ".sgml", ".xml"))
+            and not name.endswith("/")
+        ]
 
 
 def _local(tag: str) -> str:

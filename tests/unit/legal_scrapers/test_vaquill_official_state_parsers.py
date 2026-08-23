@@ -5072,6 +5072,99 @@ def test_new_mexico_chapter_listings_skip_document_do() -> None:
     assert rows[0][2].endswith("#chapter-30")
 
 
+def test_wisconsin_pdf_front_toc_skips_history_body() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wisconsin_chapter import (
+        pdf_front_toc_sections,
+    )
+
+    text = """
+    940.01 First-degree intentional homicide
+    940.02 First-degree reckless homicide
+    Wis. Stats. header
+    History: 1987 a. 399.
+    940.99 Phantom from a renumbering note that must not seed the TOC.
+    """
+    assert pdf_front_toc_sections(text, "940") == {"940.01", "940.02"}
+
+
+def test_ohio_toc_href_titles_and_chapters() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.ohio_chapter import (
+        chapter_url,
+        title_url,
+        toc_href_chapters,
+        toc_href_titles,
+    )
+
+    assert title_url("29").endswith("/ohio-revised-code/title-29")
+    assert chapter_url("2903").endswith("/ohio-revised-code/chapter-2903")
+    titles = toc_href_titles(
+        '<a href="ohio-revised-code/title-29">Title 29 Crimes</a>'
+        '<a href="/title-29?foo=1">dup</a>'
+        '<a href="/other">skip</a>'
+    )
+    assert [number for number, _name, _url in titles] == ["29"]
+    chapters = toc_href_chapters(
+        '<a href="chapter-2903">Chapter 2903 Homicide</a>'
+        '<a href="/ohio-revised-code/chapter-2905">Chapter 2905</a>'
+        '<a href="/section-2903.01">skip</a>'
+    )
+    assert [number for number, _name, _url in chapters] == ["2903", "2905"]
+
+
+def test_colorado_publication_rows_and_local_zip_members(tmp_path: Path) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado_title import (
+        crs_zip_member_names,
+        publication_rows,
+        title_search_url,
+    )
+
+    assert "crs%20title%2018" in title_search_url("18")
+    rows = publication_rows(
+        '<div class="views-row">'
+        '<a href="/publications/crs-title-18">Colorado Revised Statutes Title 18</a>'
+        '<a href="/files/18.pdf">PDF</a></div>'
+        '<div class="views-row"><a href="/other">skip</a></div>'
+        '<div class="views-row">'
+        '<a href="/publications/crs-18-3-102">C.R.S. 18-3-102 Murder</a></div>'
+    )
+    assert [number for number, _name, _url in rows] == ["18", "18-3-102"]
+    assert "/publications/crs-title-18" in rows[0][2]
+
+    zip_path = tmp_path / "crs.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.writestr("title18.sgml", "<section/>")
+        archive.writestr("notes/readme.txt", "skip")
+        archive.writestr("title18.htm", "<html/>")
+    assert crs_zip_member_names(zip_path) == ["title18.sgml", "title18.htm"]
+
+
+def test_dc_title_dirs_and_chapter_map_from_index(tmp_path: Path) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.district_of_columbia_xml import (
+        chapter_map_from_index,
+        title_dirs,
+    )
+
+    titles = tmp_path / "titles"
+    (titles / "22").mkdir(parents=True)
+    (titles / "1").mkdir()
+    (titles / "27A").mkdir()
+    assert title_dirs(tmp_path) == ["1", "22", "27A"]
+
+    index = """
+    <container xmlns:xi="http://www.w3.org/2001/XInclude">
+      <prefix>Chapter</prefix><num>21</num><heading>Homicide</heading>
+      <xi:include href="./sections/22-2101.xml"/>
+      <container>
+        <prefix>Subchapter</prefix><num>I</num>
+        <xi:include href="./sections/22-2104.xml"/>
+      </container>
+    </container>
+    """
+    mapping = chapter_map_from_index(index)
+    assert mapping["22-2101"] == "21"
+    assert mapping["22-2104"] == "21"
+
+
 
 
 

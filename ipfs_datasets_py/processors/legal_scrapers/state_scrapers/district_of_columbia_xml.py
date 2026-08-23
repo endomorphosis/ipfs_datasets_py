@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional
 from xml.etree import ElementTree as ET
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -96,6 +96,61 @@ def include_section_hrefs(index_xml: str) -> List[str]:
 
 def section_source_url(section_number: str) -> str:
     return f"https://code.dccouncil.gov/us/dc/council/code/sections/{section_number}"
+
+
+def title_dirs(root: Path) -> List[str]:
+    """Local ``titles/<N>/`` folders. Never clones the ~130MB law-xml-codified repo."""
+
+    path = Path(root)
+    titles = path / "titles" if (path / "titles").is_dir() else path
+    if not titles.is_dir():
+        return []
+    names = [child.name for child in titles.iterdir() if child.is_dir()]
+    return sorted(names, key=lambda name: (0, int(name)) if name.isdigit() else (1, name))
+
+
+def chapter_map_from_index(index_xml: str) -> Dict[str, str]:
+    """``prefix=chapter`` containers → ``{section_number: chapter_num}``."""
+
+    text = index_xml or ""
+    if not text.strip():
+        return {}
+    try:
+        root = ET.fromstring(text.encode("utf-8") if isinstance(text, str) else text)
+    except ET.ParseError:
+        wrapped = f"<root>{text}</root>"
+        try:
+            root = ET.fromstring(wrapped.encode("utf-8"))
+        except ET.ParseError:
+            return {}
+    mapping: Dict[str, str] = {}
+
+    def walk(elem: ET.Element, chapter_num: str = "") -> None:
+        next_chapter = chapter_num
+        if _strip_ns(elem.tag) == "container":
+            prefix = num = ""
+            for child in elem:
+                tag = _strip_ns(child.tag)
+                if tag == "prefix":
+                    prefix = (child.text or "").strip()
+                elif tag == "num":
+                    num = (child.text or "").strip()
+            if prefix.lower() == "chapter" and num:
+                next_chapter = num
+        if _strip_ns(elem.tag) == "include":
+            href = ""
+            for key, value in (elem.attrib or {}).items():
+                if _strip_ns(key) == "href":
+                    href = value
+                    break
+            match = re.search(r"/([^/]+)\.xml$", href or "")
+            if match and next_chapter:
+                mapping[match.group(1)] = next_chapter
+        for child in elem:
+            walk(child, next_chapter)
+
+    walk(root)
+    return mapping
 
 
 def parse_dc_section_xml(

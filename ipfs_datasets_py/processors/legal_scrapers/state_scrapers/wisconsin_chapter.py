@@ -203,3 +203,29 @@ def toc_chapter_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str
         name = _clean(name).strip(" -")
         out.append((number, name or f"Chapter {number}", urljoin(base_url, f"/document/statutes/{number}")))
     return out
+
+
+_PDF_HEADER_RE = re.compile(
+    r"updated|published and certified|electronically scanned|wis\. stats?\.",
+    re.IGNORECASE,
+)
+
+
+def pdf_front_toc_sections(pdf_text: str, chapter: str) -> Set[str]:
+    """Current sections from a chapter PDF's front TOC (before first ``History:``).
+
+    Local dump only; PDFs are never auto-downloaded here.
+    """
+
+    text = pdf_text or ""
+    cut = text.lower().find("history:")
+    region = text[:cut] if cut != -1 else text
+    out: Set[str] = set()
+    for line in region.splitlines():
+        if _PDF_HEADER_RE.search(line):
+            continue
+        for match in re.finditer(r"\b(\d+\.\d+\w*)\b", line):
+            sec = match.group(1)
+            if chapter_of(sec) == str(chapter):
+                out.add(sec)
+    return out
