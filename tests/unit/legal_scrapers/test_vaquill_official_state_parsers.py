@@ -5410,6 +5410,63 @@ def test_ut_ia_id_mo_wi_toc_dumps(tmp_path: Path, monkeypatch) -> None:
     assert parse_wisconsin_toc()[0][0] == "940"
 
 
+def test_va_tx_ny_mi_nv_listing_dumps(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.michigan_chapter_xml import (
+        parse_configured_chapter_index_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nevada_chapter import (
+        parse_configured_index_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york_openleg import (
+        parse_configured_category_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.texas_chapter import (
+        parse_configured_statute_array,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.virginia_section import (
+        parse_configured_toc_html,
+    )
+
+    va = tmp_path / "va.html"
+    va.write_text(
+        '<div class="number-descrip-list">'
+        '<a href="/vacode/title18.2/">Title 18.2. Crimes</a></div>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("VIRGINIA_TOC_HTML", str(va))
+    assert parse_configured_toc_html()[0][0] == "18.2"
+
+    tx = tmp_path / "pe.json"
+    tx.write_text(
+        '[{"name": "CHAPTER 19. CRIMINAL HOMICIDE", "url": "PE/htm/PE.19.htm"}]',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("TEXAS_STATUTE_ARRAY_JSON", str(tx))
+    monkeypatch.setenv("TEXAS_STATUTE_ARRAY_CODE", "PE")
+    assert parse_configured_statute_array()[0][0] == "19"
+
+    ny = tmp_path / "ny.html"
+    ny.write_text('<a href="/legislation/laws/PEN">Penal Law</a>', encoding="utf-8")
+    monkeypatch.setenv("NY_CATEGORY_HTML", str(ny))
+    assert parse_configured_category_html()[0][0] == "PEN"
+
+    mi = tmp_path / "mi.html"
+    mi.write_text(
+        '<main id="main"><a href="/Home/GetObject?objectName=mcl-chap750">Chapter 750</a></main>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MICHIGAN_CHAPTER_INDEX_HTML", str(mi))
+    assert parse_configured_chapter_index_html()[0][0] == "750"
+
+    nv = tmp_path / "nv.html"
+    nv.write_text(
+        '<a href="NRS-200.html">CHAPTER 200 - CRIMES AGAINST THE PERSON</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("NEVADA_INDEX_HTML", str(nv))
+    assert parse_configured_index_html()[0][0] == "200"
+
+
 
 
 

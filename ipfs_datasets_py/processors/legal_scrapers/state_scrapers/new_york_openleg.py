@@ -136,6 +136,21 @@ def configured_law_json_path() -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def configured_category_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("NY_CATEGORY_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_category_html() -> List[Tuple[str, str, str]]:
+    path = configured_category_html_path()
+    if path is None:
+        return []
+    return category_law_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def parse_configured_law_json(
     *,
     code_name: str = "New York Consolidated Laws",

@@ -131,6 +131,21 @@ def configured_chapter_xml_path() -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def configured_chapter_index_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("MICHIGAN_CHAPTER_INDEX_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_chapter_index_html() -> List[Tuple[str, str, str]]:
+    path = configured_chapter_index_html_path()
+    if path is None:
+        return []
+    return chapter_index_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def _absolute(href: str, *, base_url: str = BASE) -> str:
     token = str(href or "").strip()
     if token.startswith("http"):

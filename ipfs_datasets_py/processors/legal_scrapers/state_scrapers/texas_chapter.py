@@ -7,6 +7,7 @@ indented paragraphs are statutory text, unindented history is dropped.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 from pathlib import Path
@@ -280,3 +281,22 @@ def configured_chapter_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def configured_statute_array_path() -> Optional[Path]:
+    raw = str(os.environ.get("TEXAS_STATUTE_ARRAY_JSON") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_statute_array(*, code: str = "") -> List[Tuple[str, str, str]]:
+    """Local GetStatuteArray dump. Does not call the tcss API."""
+
+    path = configured_statute_array_path()
+    if path is None:
+        return []
+    token = str(code or os.environ.get("TEXAS_STATUTE_ARRAY_CODE") or "PE").strip().upper()
+    payload = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    return chapters_from_statute_array(payload, code=token)

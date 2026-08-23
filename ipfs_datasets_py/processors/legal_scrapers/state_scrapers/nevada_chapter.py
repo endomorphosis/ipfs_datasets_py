@@ -152,3 +152,18 @@ def nrs_index_links(html: str, *, base_url: str = f"{BASE}/") -> List[Tuple[str,
         name = _clean(anchor.get_text(" ")) or f"NRS {number}"
         out.append((number, name, urljoin(base_url, href)))
     return out
+
+
+def configured_index_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("NEVADA_INDEX_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_index_html() -> List[Tuple[str, str, str]]:
+    path = configured_index_html_path()
+    if path is None:
+        return []
+    return nrs_index_links(path.read_text(encoding="utf-8", errors="replace"))

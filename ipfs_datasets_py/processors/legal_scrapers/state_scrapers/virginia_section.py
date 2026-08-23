@@ -157,6 +157,21 @@ def configured_section_json_path() -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("VIRGINIA_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> List[Tuple[str, str, str]]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    return title_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def parse_configured_section_json(code_name: str = "Code of Virginia") -> List[NormalizedStatute]:
     path = configured_section_json_path()
     if path is None:
