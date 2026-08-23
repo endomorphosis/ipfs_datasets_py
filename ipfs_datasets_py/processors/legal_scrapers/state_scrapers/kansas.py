@@ -53,6 +53,17 @@ class KansasScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape Kansas statutes directly from official chapter/article/section pages."""
         limit = max(1, int(max_statutes)) if max_statutes else None
+        from .kansas_section import configured_section_html_path, parse_kansas_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_kansas_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.kslegislature.gov/b2025_26/laws/",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         statutes: List[NormalizedStatute] = []
         chapter_links = await self._discover_chapter_links(code_url)
         self.logger.info("Kansas official index: discovered %s chapter links", len(chapter_links))
@@ -106,6 +117,9 @@ class KansasScraper(BaseStateScraper):
                     headers={
                         "User-Agent": "ipfs-datasets-kansas-statutes-scraper/2.0",
                         "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        # kslegislature.gov serves Brotli unless the client
+                        # omits ``br``; requests cannot decode it without extra deps.
+                        "Accept-Encoding": "gzip, deflate",
                     },
                     timeout=(min(5, timeout), timeout),
                 )
@@ -176,6 +190,15 @@ class KansasScraper(BaseStateScraper):
         html = await self._fetch_official_ks_html(section_url)
         if not html:
             return None
+        from .kansas_section import parse_kansas_section_html
+
+        parsed = parse_kansas_section_html(
+            html,
+            source_url=section_url,
+            code_name=code_name,
+        )
+        if parsed is not None:
+            return parsed
         soup = BeautifulSoup(html, "html.parser")
         # Kansas renders the statute body in paragraph nodes outside an often-empty
         # #main container, so anchor parsing on the statute-specific classes.

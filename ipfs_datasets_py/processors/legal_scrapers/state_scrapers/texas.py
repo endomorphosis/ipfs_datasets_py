@@ -169,6 +169,19 @@ class TexasScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
 
+            from .texas_chapter import configured_chapter_html_path, parse_texas_chapter_html
+
+            local_chapter = configured_chapter_html_path()
+            if local_chapter is not None:
+                local_rows = parse_texas_chapter_html(
+                    local_chapter.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name,
+                    code_abbrev=self._derive_code_abbrev(code_name=code_name, code_url=code_url) or "PE",
+                    max_statutes=limit,
+                )
+                if local_rows:
+                    return local_rows if limit is None else local_rows[: int(limit)]
+
             bundled_statutes = await self._scrape_statute_html_zip(
                 code_name=code_name,
                 code_url=code_url,
@@ -370,6 +383,29 @@ class TexasScraper(BaseStateScraper):
         seen_sections: set[str],
         remaining: Optional[int],
     ) -> List[NormalizedStatute]:
+        from .texas_chapter import parse_texas_chapter_html as parse_vaquill_chapter
+
+        vaquill_rows = parse_vaquill_chapter(
+            html,
+            code_name=code_name,
+            code_abbrev=code_abbrev,
+            member_name=member_name,
+            zip_url=zip_url,
+            max_statutes=remaining,
+        )
+        if vaquill_rows:
+            out: List[NormalizedStatute] = []
+            for row in vaquill_rows:
+                number = str(row.section_number or "")
+                if not number or number in seen_sections:
+                    continue
+                seen_sections.add(number)
+                out.append(row)
+                if remaining is not None and len(out) >= remaining:
+                    break
+            if out:
+                return out
+
         text = self._extract_text_from_html(html, max_chars=1_000_000)
         if len(text) < 280:
             return []

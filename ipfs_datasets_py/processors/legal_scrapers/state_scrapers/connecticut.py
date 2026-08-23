@@ -76,6 +76,19 @@ class ConnecticutScraper(BaseStateScraper):
         return_threshold = limit if limit is not None else 1000000
         allow_justia = self._justia_fallback_allowed()
 
+        from .connecticut_chapter import configured_chapter_html_path, parse_connecticut_chapter_html
+
+        local_chapter = configured_chapter_html_path()
+        if local_chapter is not None:
+            local_rows = parse_connecticut_chapter_html(
+                local_chapter.read_text(encoding="utf-8", errors="replace"),
+                chapter_url="https://www.cga.ct.gov/current/pub/chap_952.htm",
+                code_name=code_name,
+                max_statutes=limit,
+            )
+            if local_rows:
+                return local_rows if limit is None else local_rows[: int(limit)]
+
         # Prefer official CGA title/chapter HTML tree first.
         official_candidates = [
             code_url,
@@ -491,6 +504,21 @@ class ConnecticutScraper(BaseStateScraper):
             return []
 
         soup = BeautifulSoup(payload, "html.parser")
+        from .connecticut_chapter import parse_connecticut_chapter_html
+
+        parsed = parse_connecticut_chapter_html(
+            payload.decode("utf-8", errors="replace") if isinstance(payload, (bytes, bytearray)) else str(payload),
+            chapter_url=chapter_url,
+            code_name=code_name,
+        )
+        if parsed:
+            for row in parsed:
+                row.official_cite = f"{citation_format} § {row.section_number}"
+                data = dict(row.structured_data or {})
+                data["discovery_method"] = "official_title_chapter_section_html"
+                row.structured_data = data
+            return parsed
+
         chapter_title = ""
         title_node = soup.find("title")
         if title_node:

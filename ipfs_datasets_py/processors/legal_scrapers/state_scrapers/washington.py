@@ -191,6 +191,18 @@ class WashingtonScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .washington_section import configured_section_html_path, parse_washington_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_washington_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://app.leg.wa.gov/RCW/default.aspx?cite=9A.32.030",
+                section_number="9A.32.030",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         if not self._full_corpus_enabled() and max_statutes is None:
             seed_budget = int(limit if limit is not None else 160)
             direct = await self._scrape_direct_seed_sections(
@@ -579,6 +591,20 @@ class WashingtonScraper(BaseStateScraper):
                 if not raw:
                     return None
                 soup = BeautifulSoup(raw, "html.parser")
+                from .washington_section import parse_washington_section_html
+
+                html_text = raw.decode("utf-8", errors="replace") if isinstance(raw, (bytes, bytearray)) else str(raw)
+                parsed = parse_washington_section_html(
+                    html_text,
+                    source_url=url,
+                    section_number=section_number,
+                    code_name=code_name,
+                )
+                if parsed is not None:
+                    data = dict(parsed.structured_data or {})
+                    data["discovery_method"] = discovery_method
+                    parsed.structured_data = data
+                    return parsed
                 citation_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h1")
                 caption_node = soup.select_one("#ContentPlaceHolder1_pnlTitleBlock h2")
                 content_node = (

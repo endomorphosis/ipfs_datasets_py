@@ -102,6 +102,11 @@ class ColoradoScraper(BaseStateScraper):
         cannot sole-admit a sealed full-corpus run.
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .colorado_title import parse_configured_colorado_crs
+
+        local_rows = parse_configured_colorado_crs(code_name=code_name, max_statutes=limit)
+        if local_rows:
+            return local_rows if limit is None else local_rows[: int(limit)]
         statutes = await self._scrape_crs_pdfs(code_name, max_statutes=limit)
         if statutes:
             return statutes if limit is None else statutes[: int(limit)]

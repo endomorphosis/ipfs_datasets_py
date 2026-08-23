@@ -727,4 +727,170 @@ def test_west_virginia_code_dump(tmp_path: Path, monkeypatch) -> None:
     assert "willful, deliberate and premeditated" in rows[0].full_text
 
 
+def test_texas_p_left_skips_repealed_and_history(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.texas import TexasScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
 
+    html = """
+    <html><body>
+    <p class="left">CHAPTER 19. CRIMINAL HOMICIDE</p>
+    <p class="left" id="19.02">Sec. 19.02.  MURDER.  (a) A person commits an offense if the person intentionally or knowingly causes the death of an individual.</p>
+    <p class="left" style="text-indent: 0.5in">(b) An offense under this section is a felony of the first degree.</p>
+    <p class="left">Acts 1973, 63rd Leg., p. 883, ch. 399, Sec. 1, eff. Jan. 1, 1974.</p>
+    <p class="left" id="19.03">Sec. 19.03.  CAPITAL MURDER [Repealed].  Repealed text must not be admitted as current law.</p>
+    </body></html>
+    """
+    path = tmp_path / "PE.19.htm"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("TEXAS_CHAPTER_HTML", str(path))
+    scraper = TexasScraper("TX", "Texas")
+    rows = asyncio.run(scraper.scrape_code("Penal Code", "https://statutes.capitol.texas.gov/Docs/PE/htm/PE.19.htm", max_statutes=4))
+    assert len(rows) == 1
+    assert rows[0].section_number == "19.02"
+    assert "intentionally or knowingly" in rows[0].full_text
+    assert "felony of the first degree" in rows[0].full_text
+    assert "Acts 1973" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "justia" not in rows[0].source_url
+
+
+def test_connecticut_sibling_walk_stops_at_next_section(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.connecticut import ConnecticutScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <p class="toc_catchln"><a href="#sec_53a-54a">Sec. 53a-54a. Murder.</a></p>
+    <p class="toc_catchln"><a href="#sec_53a-54b"><b>Sec. 53a-54b. (REPEALED)</b></a></p>
+    <p><span class="catchln" id="sec_53a-54a">Sec. 53a-54a. Murder.</span> A person is guilty of murder when, with intent to cause the death of another person, he causes the death of such person.</p>
+    <p class="source-first">(1969, P.A. 828, S. 55.)</p>
+    <p><span class="catchln" id="sec_53a-54b">Sec. 53a-54b. (REPEALED)</span> Repealed text must not be admitted.</p>
+    <table class="nav_tbl"><tr><td>Next chapter</td></tr></table>
+    </body></html>
+    """
+    path = tmp_path / "chap_952.htm"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("CONNECTICUT_CHAPTER_HTML", str(path))
+    scraper = ConnecticutScraper("CT", "Connecticut")
+    rows = asyncio.run(
+        scraper.scrape_code("Connecticut General Statutes", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "53a-54a"
+    assert "intent to cause the death" in rows[0].full_text
+    assert "1969, P.A. 828" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert "Next chapter" not in rows[0].full_text
+
+
+def test_colorado_sgml_and_title_html(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado import ColoradoScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado_title import (
+        parse_colorado_title_html,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    sgml = """
+    <title n="18">
+      <article n="3">
+        <section n="18-3-102">
+          <catchline>Murder in the first degree.</catchline>
+          <p>(1) A person commits the crime of murder in the first degree if:</p>
+          <p>(a) After deliberation and with the intent to cause the death of a person other than himself, he causes the death of that person.</p>
+          <source>L. 71: p. 1</source>
+        </section>
+        <section n="18-3-103">
+          <catchline>Murder in the second degree. (Repealed)</catchline>
+          <p>Repealed text that must not be admitted as current law.</p>
+        </section>
+      </article>
+    </title>
+    """
+    path = tmp_path / "title-18.sgml"
+    path.write_text(sgml, encoding="utf-8")
+    monkeypatch.setenv("COLORADO_CRS_SGML", str(path))
+    scraper = ColoradoScraper("CO", "Colorado")
+    rows = asyncio.run(
+        scraper.scrape_code("Colorado Revised Statutes", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "18-3-102"
+    assert "after deliberation" in rows[0].full_text.lower()
+    assert "L. 71" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+
+    html_rows = parse_colorado_title_html(
+        """
+        18-3-102. Murder in the first degree.
+        (1) A person commits the crime of murder in the first degree if after deliberation and with the intent to cause the death of a person other than himself, he causes the death of that person.
+        Source: L. 71: p. 1
+        18-3-103. Murder in the second degree. (Repealed)
+        Repealed text that must not be admitted.
+        """
+    )
+    assert [row.section_number for row in html_rows] == ["18-3-102"]
+    assert "after deliberation" in html_rows[0].full_text.lower()
+
+
+def test_washington_contentwrapper_drops_history_and_notes(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.washington import WashingtonScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <div id="contentWrapper">
+      <div></div>
+      <div></div>
+      <div>
+        <div style="text-indent:0.5in">Murder in the first degree.</div>
+        <div style="text-indent:0.5in">(1) A person is guilty of murder in the first degree when with a premeditated intent to cause the death of another person, he or she causes the death of such person.</div>
+      </div>
+      <div style="margin-top:15pt">[1970 c 1 § 1; 1975 1st ex.s. c 260 § 9A.32.030.]</div>
+      <div>Notes:</div>
+      <div>This editorial note is not the statute and must not be admitted.</div>
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "9A.32.030.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("WASHINGTON_SECTION_HTML", str(path))
+    scraper = WashingtonScraper("WA", "Washington")
+    rows = asyncio.run(
+        scraper.scrape_code("Revised Code of Washington", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "9A.32.030"
+    assert "premeditated intent" in rows[0].full_text
+    assert "1970 c 1" not in rows[0].full_text
+    assert "editorial note" not in rows[0].full_text.lower()
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_kansas_statute_body_drops_history_table(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kansas import KansasScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <span class="stat_5f_number">21-5402</span>
+    <span class="stat_5f_caption">Murder in the first degree.</span>
+    <div class="statute-body">
+      <table><tr><td>nav</td></tr></table>
+      <table><tr><td>
+        <p class="p_pt">Murder in the first degree is the killing of a human being committed intentionally and with premeditation.</p>
+      </td></tr></table>
+      <table><tr><td>History: L. 2010, ch. 136, § 37; July 1, 2011.</td></tr></table>
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "21-5402.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("KANSAS_SECTION_HTML", str(path))
+    scraper = KansasScraper("KS", "Kansas")
+    rows = asyncio.run(scraper.scrape_code("Kansas Statutes", "https://example.invalid", max_statutes=2))
+    assert len(rows) == 1
+    assert rows[0].section_number == "21-5402"
+    assert "intentionally and with premeditation" in rows[0].full_text
+    assert "History:" not in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
