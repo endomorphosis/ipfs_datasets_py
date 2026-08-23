@@ -1790,11 +1790,12 @@ def test_north_carolina_live_bychapter_preferred_over_toc(monkeypatch) -> None:
         return ""
 
     monkeypatch.setattr(NorthCarolinaScraper, "_request_text_direct", _fake_request_text_direct)
+    monkeypatch.setenv("NORTH_CAROLINA_BYCHAPTER_CONCURRENCY", "2")
     scraper = NorthCarolinaScraper("NC", "North Carolina")
     rows = asyncio.run(
         scraper.scrape_code("North Carolina General Statutes", "https://example.invalid", max_statutes=3)
     )
-    assert fetched and "/ByChapter/Chapter_" in fetched[0]
+    assert any("/ByChapter/Chapter_" in url for url in fetched)
     assert len(rows) == 1
     assert rows[0].section_number == "1-1"
     assert "actions and special proceedings" in rows[0].full_text

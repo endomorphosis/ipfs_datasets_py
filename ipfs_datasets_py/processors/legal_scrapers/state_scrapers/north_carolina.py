@@ -428,6 +428,23 @@ class NorthCarolinaScraper(BaseStateScraper):
             return None
         return value if value > 0 else None
 
+    def _bychapter_concurrency(self) -> int:
+        raw = str(os.getenv("NORTH_CAROLINA_BYCHAPTER_CONCURRENCY", "4") or "4").strip()
+        try:
+            value = int(raw)
+        except Exception:
+            value = 4
+        return max(1, min(8, value))
+
+    async def _fetch_official_bychapter_page(self, number: str) -> Tuple[str, str]:
+        from .north_carolina_chapter import chapter_url
+
+        html = await self._request_text_direct(chapter_url(number), timeout=40)
+        provider = self._current_fetch_provider() or str(
+            getattr(self, "_last_fetch_provider", "") or "requests_direct"
+        )
+        return html or "", provider
+
     async def _scrape_official_bychapter_html(
         self,
         code_name: str,
@@ -438,7 +455,8 @@ class NorthCarolinaScraper(BaseStateScraper):
         Live ``/EnactedLegislation/Statutes/HTML/ByChapter/Chapter_{N}.html``
         pages are the durable official statute text. Archive transport of the
         same locators is labeled recovery. Disable with
-        ``NORTH_CAROLINA_BYCHAPTER_LIVE=0``.
+        ``NORTH_CAROLINA_BYCHAPTER_LIVE=0``. Chapter fetches run concurrently
+        (``NORTH_CAROLINA_BYCHAPTER_CONCURRENCY``, default 4, max 8).
         """
 
         from .north_carolina_archive import parse_north_carolina_archive_html
@@ -446,56 +464,133 @@ class NorthCarolinaScraper(BaseStateScraper):
 
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         max_chapters = self._bychapter_max_chapters()
-        statutes: List[NormalizedStatute] = []
-        seen: set[str] = set()
-        for index, (number, _name) in enumerate(self.OFFICIAL_CHAPTERS, start=1):
+        catalog = list(self.OFFICIAL_CHAPTERS)
+        if max_chapters is not None:
+            catalog = catalog[: int(max_chapters)]
+
+        statutes = self._load_partial_checkpoint_statutes(
+            code_name=code_name,
+            max_statutes=limit,
+        )
+        if limit is not None and len(statutes) >= limit:
+            return statutes[: int(limit)]
+        progress = self._load_partial_checkpoint_progress()
+        done_raw = progress.get("bychapter_done") if isinstance(progress, dict) else None
+        done: set[str] = {
+            str(item).strip()
+            for item in (done_raw or [])
+            if str(item).strip()
+        }
+        seen: set[str] = {
+            str(row.section_number or "").strip().lower()
+            for row in statutes
+            if str(row.section_number or "").strip()
+        }
+        remaining_catalog = [
+            (number, name) for number, name in catalog if number not in done
+        ]
+        concurrency = self._bychapter_concurrency()
+        total = len(catalog)
+
+        async def _fetch_one(number: str) -> Tuple[str, str, str]:
+            html, provider = await self._fetch_official_bychapter_page(number)
+            return number, html, provider
+
+        index = 0
+        first_batch = True
+        while index < len(remaining_catalog):
             if limit is not None and len(statutes) >= limit:
                 break
-            if max_chapters is not None and index > max_chapters:
-                break
-            html = await self._request_text_direct(chapter_url(number), timeout=40)
-            if not html or len(html) < 200:
-                continue
-            provider = str(getattr(self, "_last_fetch_provider", "") or "requests_direct")
-            authority, _source_kind = self._classify_html_transport(provider)
-            remaining = None if limit is None else max(0, int(limit) - len(statutes))
-            if remaining is not None and remaining <= 0:
-                break
-            if authority == "recovery":
-                rows = parse_north_carolina_archive_html(
-                    html,
-                    chapter=number,
-                    source_url=chapter_url(number),
-                    code_name=code_name,
-                    max_statutes=remaining,
-                )
-            else:
-                rows = parse_north_carolina_chapter_html(
-                    html,
-                    chapter=number,
-                    code_name=code_name,
-                    max_statutes=remaining,
-                )
-            added = 0
-            for row in rows:
-                key = str(row.section_number or "").strip().lower()
-                if not key or key in seen:
+            # Bounded probes often fill from Chapter 1; do not prefetch siblings first.
+            size = 1 if first_batch else concurrency
+            first_batch = False
+            batch = remaining_catalog[index : index + size]
+            index += size
+            fetched = await asyncio.gather(
+                *[_fetch_one(number) for number, _name in batch],
+                return_exceptions=True,
+            )
+            by_number: Dict[str, Tuple[str, str]] = {}
+            for item, (number, _name) in zip(fetched, batch):
+                if isinstance(item, Exception):
+                    self.logger.warning(
+                        "North Carolina ByChapter fetch failed chapter=%s error=%s",
+                        number,
+                        item,
+                    )
                     continue
-                seen.add(key)
-                statutes.append(row)
-                added += 1
+                _number, html, provider = item
+                by_number[_number] = (html, provider)
+            for number, _name in batch:
                 if limit is not None and len(statutes) >= limit:
                     break
-            if added or index == 1 or index % 25 == 0:
+                html, provider = by_number.get(number, ("", "requests_direct"))
+                if not html or len(html) < 200:
+                    continue
+                authority, _source_kind = self._classify_html_transport(provider)
+                remaining = None if limit is None else max(0, int(limit) - len(statutes))
+                if remaining is not None and remaining <= 0:
+                    break
+                if authority == "recovery":
+                    rows = parse_north_carolina_archive_html(
+                        html,
+                        chapter=number,
+                        source_url=chapter_url(number),
+                        code_name=code_name,
+                        max_statutes=remaining,
+                    )
+                else:
+                    rows = parse_north_carolina_chapter_html(
+                        html,
+                        chapter=number,
+                        code_name=code_name,
+                        max_statutes=remaining,
+                    )
+                added = 0
+                for row in rows:
+                    key = str(row.section_number or "").strip().lower()
+                    if not key or key in seen:
+                        continue
+                    seen.add(key)
+                    statutes.append(row)
+                    added += 1
+                    if limit is not None and len(statutes) >= limit:
+                        break
+                done.add(number)
                 self.logger.info(
                     "North Carolina ByChapter: chapter=%s/%s parsed=%s statutes_so_far=%s transport=%s",
                     number,
-                    len(self.OFFICIAL_CHAPTERS),
+                    total,
                     added,
                     len(statutes),
                     authority,
                 )
-        return statutes
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="north-carolina:bychapter",
+                extra={
+                    "chapters_scanned": len(done),
+                    "discovered_chapters": total,
+                    "bychapter_done": sorted(done, key=lambda item: str(item)),
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+            )
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="north-carolina:bychapter-complete",
+            force=True,
+            extra={
+                "chapters_scanned": len(done),
+                "discovered_chapters": total,
+                "bychapter_done": sorted(done, key=lambda item: str(item)),
+                "codes_completed": 1 if (limit is None or len(statutes) >= int(limit or 0)) else 0,
+                "codes_total": 1,
+            },
+        )
+        return statutes[: int(limit)] if limit is not None else statutes
 
     async def _scrape_official_index(
         self,

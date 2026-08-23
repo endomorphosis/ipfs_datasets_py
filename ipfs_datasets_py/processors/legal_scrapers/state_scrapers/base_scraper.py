@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 from abc import ABC, abstractmethod
 from pathlib import Path
+import contextvars
 import hashlib
 import inspect
 from io import BytesIO
@@ -25,6 +26,10 @@ from .citation_history import extract_trailing_history_citations
 from ...playwright_limiter import acquire_playwright_slot
 
 logger = logging.getLogger(__name__)
+_FETCH_PROVIDER: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "state_scraper_fetch_provider",
+    default="",
+)
 
 SUBSEC_TOKEN_RE = re.compile(r"\(([0-9]+|[A-Za-z]{1,6})\)")
 ROMAN_LOWER_RE = re.compile(r"^[ivxlcdm]+$")
@@ -1757,6 +1762,10 @@ class BaseStateScraper(ABC):
         self, *, provider: str, success: bool, error: Optional[str] = None
     ) -> None:
         self._last_fetch_provider = str(provider or "")
+        try:
+            _FETCH_PROVIDER.set(self._last_fetch_provider)
+        except Exception:
+            pass
         self._fetch_analytics["attempted"] = int(self._fetch_analytics.get("attempted", 0) or 0) + 1
         self._fetch_analytics["last_provider"] = self._last_fetch_provider
         if success:
@@ -1770,6 +1779,15 @@ class BaseStateScraper(ABC):
 
         if error:
             self._fetch_analytics["last_error"] = str(error)
+
+    def _current_fetch_provider(self) -> str:
+        """Return the fetch provider for the current task, not a raced sibling."""
+
+        try:
+            value = str(_FETCH_PROVIDER.get() or "").strip()
+        except Exception:
+            value = ""
+        return value or str(getattr(self, "_last_fetch_provider", "") or "")
 
     def get_fetch_analytics_snapshot(self) -> Dict[str, Any]:
         providers = self._fetch_analytics.get("providers")
