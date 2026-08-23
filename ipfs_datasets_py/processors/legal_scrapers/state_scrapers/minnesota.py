@@ -279,8 +279,44 @@ class MinnesotaScraper(BaseStateScraper):
         if not payload:
             return []
 
+        html = (
+            payload.decode("utf-8", errors="replace")
+            if isinstance(payload, (bytes, bytearray))
+            else str(payload)
+        )
+        from .minnesota_section import chapter_table_rows, toc_part_rows
+
+        listed = chapter_table_rows(html)
+        if listed:
+            return [url for _number, _name, url in listed][: max(1, int(max_chapters))]
+        parts = toc_part_rows(html)
+        if parts:
+            chapter_urls: List[str] = []
+            seen = set()
+            for part_url, _range, _name in parts:
+                if len(chapter_urls) >= max(1, int(max_chapters)):
+                    break
+                part_payload = await self._fetch_page_content_with_archival_fallback(
+                    part_url, timeout_seconds=35
+                )
+                if not part_payload:
+                    continue
+                part_html = (
+                    part_payload.decode("utf-8", errors="replace")
+                    if isinstance(part_payload, (bytes, bytearray))
+                    else str(part_payload)
+                )
+                for _number, _name, url in chapter_table_rows(part_html):
+                    if url in seen:
+                        continue
+                    seen.add(url)
+                    chapter_urls.append(url)
+                    if len(chapter_urls) >= max(1, int(max_chapters)):
+                        break
+            if chapter_urls:
+                return chapter_urls
         soup = BeautifulSoup(payload, "html.parser")
-        chapter_urls: List[str] = []
+        chapter_urls = []
         seen = set()
 
         for link in soup.find_all("a", href=True):
@@ -342,6 +378,12 @@ class MinnesotaScraper(BaseStateScraper):
 
     def _extract_section_urls_from_chapter_page(self, soup) -> List[str]:
         urls: List[str] = []
+        from .minnesota_section import chapter_analysis_section_rows
+
+        html = str(soup)
+        analysis_rows = chapter_analysis_section_rows(html)
+        if analysis_rows:
+            return [url for _number, _name, url in analysis_rows]
 
         # Minnesota chapter pages expose the authoritative section list in table rows,
         # which is more reliable than inferring coverage from the link structure alone.

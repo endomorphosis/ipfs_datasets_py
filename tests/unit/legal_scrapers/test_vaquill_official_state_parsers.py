@@ -1507,6 +1507,41 @@ def test_minnesota_section_div_drops_history(tmp_path: Path, monkeypatch) -> Non
     assert "History:" not in rows[0].full_text
 
 
+def test_minnesota_toc_and_chapter_analysis_listings() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.minnesota_section import (
+        chapter_analysis_section_rows,
+        chapter_table_rows,
+        toc_part_rows,
+    )
+
+    parts = toc_part_rows(
+        '<table id="toc_table"><tr><td><a href="/statutes/cite/609">609 - 624</a></td>'
+        "<td>Crimes</td></tr></table>"
+    )
+    assert parts[0][1] == "609 - 624"
+    chapters = chapter_table_rows(
+        '<table id="chapters_table"><tr><td><a href="/statutes/cite/169A">169A</a></td>'
+        "<td>Driving While Impaired</td></tr>"
+        '<tr><td><a href="/statutes/cite/609.185">609.185</a></td><td>skip section</td></tr></table>'
+    )
+    assert chapters[0][0] == "169A"
+    sections = chapter_analysis_section_rows(
+        """
+        <div id="chapter_analysis">
+          <table>
+            <tr class="heading"><td>Definitions</td></tr>
+            <tr>
+              <td><a href="/statutes/cite/609.185">609.185</a></td>
+              <td>Murder in the first degree</td>
+            </tr>
+          </table>
+        </div>
+        """
+    )
+    assert sections[0][0] == "609.185"
+    assert sections[0][2].endswith("/statutes/cite/609.185")
+
+
 def test_montana_section_content_drops_history(tmp_path: Path, monkeypatch) -> None:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana import MontanaScraper
     from ipfs_datasets_py.utils import anyio_compat as asyncio
@@ -1658,6 +1693,27 @@ def test_hawaii_section_p_stops_at_notes(tmp_path: Path, monkeypatch) -> None:
     assert rows[0].section_number == "707-701"
     assert "intentionally or knowingly" in rows[0].full_text
     assert "annotation is not the statute" not in rows[0].full_text
+
+
+def test_hawaii_next_link_stays_in_chapter_prefix() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.hawaii_section import (
+        chapter_prefix,
+        find_next_link,
+    )
+
+    chapter = "https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/HRS0707/HRS_0707-.htm"
+    assert chapter_prefix(chapter).endswith("/HRS0707/")
+    nxt = find_next_link(
+        '<a href="HRS_0707-0701.HTM">Next</a>',
+        current_url=chapter,
+    )
+    assert nxt.endswith("/HRS0707/HRS_0707-0701.HTM")
+    nxt2 = find_next_link(
+        '<a href="HRS_0707-0702.HTM">Next &gt;</a>',
+        current_url=nxt,
+    )
+    assert nxt2.endswith("/HRS0707/HRS_0707-0702.HTM")
+    assert find_next_link('<a href="elsewhere.htm">Continue</a>', current_url=chapter) is None
 
 
 def test_new_hampshire_codesect_drops_sourcenote(tmp_path: Path, monkeypatch) -> None:

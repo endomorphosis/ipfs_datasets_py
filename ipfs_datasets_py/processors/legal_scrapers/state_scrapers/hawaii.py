@@ -294,7 +294,35 @@ class HawaiiScraper(BaseStateScraper):
         return await self._discover_links(volume_url, self._LIVE_CHAPTER_RE)
 
     async def _discover_section_links(self, chapter_url: str) -> List[Tuple[str, str]]:
-        return await self._discover_links(chapter_url, self._LIVE_SECTION_RE)
+        listed = await self._discover_links(chapter_url, self._LIVE_SECTION_RE)
+        if listed:
+            return listed
+        return await self._walk_next_section_links(chapter_url)
+
+    async def _walk_next_section_links(self, chapter_url: str) -> List[Tuple[str, str]]:
+        """Follow Vaquill sequential ``Next`` links when the chapter has no index."""
+
+        from .hawaii_section import chapter_prefix, find_next_link
+
+        html = await self._fetch_official_hi_html(chapter_url)
+        if not html:
+            return []
+        prefix = chapter_prefix(chapter_url)
+        current = find_next_link(html, current_url=chapter_url)
+        out: List[Tuple[str, str]] = []
+        seen: set[str] = set()
+        while current:
+            if current in seen or current.lower().endswith("-.htm"):
+                break
+            if prefix and not current.startswith(prefix):
+                break
+            seen.add(current)
+            out.append((current, current.rsplit("/", 1)[-1]))
+            page = await self._fetch_official_hi_html(current)
+            if not page:
+                break
+            current = find_next_link(page, current_url=current)
+        return out
 
     async def _discover_links(self, page_url: str, pattern: re.Pattern[str]) -> List[Tuple[str, str]]:
         try:

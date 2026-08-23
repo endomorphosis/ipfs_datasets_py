@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -36,10 +36,48 @@ _RESERVED = re.compile(r"\(repealed\)|\(expired\)|\(reserved\)|--repealed", re.I
 _SEC_RE = re.compile(r"§\s*([\d][\w\-.]*)")
 _FILE_RE = re.compile(r"HRS_(\d{4})-(\d{4}(?:_\d{4})?)\.HTM$", re.IGNORECASE)
 _WS = re.compile(r"\s+")
+_NEXT_TEXT_RE = re.compile(r"^\s*next\s*(?:>+|»|&gt;)?\s*$", re.IGNORECASE)
+_CHAPTER_PREFIX_RE = re.compile(r"^(.*/HRS\d+[A-Z]*/)", re.IGNORECASE)
+_MOJIBAKE = ("\xc2", "\xe2\x80", "â€")
+
+
+def _fix_encoding(text: str) -> str:
+    if not text or not any(marker in text for marker in _MOJIBAKE):
+        return text
+    try:
+        fixed = text.encode("latin-1", errors="ignore").decode("utf-8", errors="ignore")
+    except Exception:
+        return text
+    return fixed if sum(m in fixed for m in _MOJIBAKE) < sum(m in text for m in _MOJIBAKE) else text
 
 
 def _clean(text: str) -> str:
-    return _WS.sub(" ", (text or "").replace("\xa0", " ")).strip()
+    return _WS.sub(" ", _fix_encoding((text or "").replace("\xa0", " "))).strip()
+
+
+def chapter_prefix(chapter_url: str) -> Optional[str]:
+    match = _CHAPTER_PREFIX_RE.match(str(chapter_url or ""))
+    return match.group(1) if match else None
+
+
+def find_next_link(html: str, *, current_url: str) -> Optional[str]:
+    """Absolute URL of the chapter/section ``Next`` link, if present."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return None
+    from urllib.parse import urljoin
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    for anchor in soup.find_all("a", href=True):
+        if not _NEXT_TEXT_RE.match(_clean(anchor.get_text(" "))):
+            continue
+        href = str(anchor.get("href") or "").strip()
+        if not href:
+            continue
+        return urljoin(current_url, href)
+    return None
 
 
 def _strip_heading(text: str) -> str:

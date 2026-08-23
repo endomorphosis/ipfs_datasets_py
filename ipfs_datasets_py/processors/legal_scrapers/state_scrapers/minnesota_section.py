@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -18,6 +18,8 @@ BASE = "https://www.revisor.mn.gov/statutes"
 _RESERVED = re.compile(r"\b(repealed|renumbered|expired|reserved)\b", re.IGNORECASE)
 _WS = re.compile(r"\s+")
 _CITE_RE = re.compile(r"/statutes/cite/([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)", re.IGNORECASE)
+_SECTION_ID_RE = re.compile(r"^[\w.\-]+$")
+_CHAPTER_ID_RE = re.compile(r"^[\w.\-]+$")
 
 
 def _clean(text: str) -> str:
@@ -82,6 +84,109 @@ def parse_minnesota_section_html(
             "skip_hydrate": True,
         },
     )
+
+
+def _absolute(href: str, *, base_url: str = BASE) -> str:
+    token = str(href or "").strip()
+    if token.startswith("http"):
+        return token
+    if token.startswith("/"):
+        return f"https://www.revisor.mn.gov{token}"
+    return f"{base_url.rstrip('/')}/{token.lstrip('/')}"
+
+
+def toc_part_rows(html: str) -> List[Tuple[str, str, str]]:
+    """Part rows from ``#toc_table`` (chapter range + name)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    table = soup.find(id="toc_table")
+    if table is None:
+        return []
+    out: List[Tuple[str, str, str]] = []
+    for row in table.find_all("tr"):
+        cells = row.find_all("td")
+        if not cells:
+            continue
+        link = cells[0].find("a", href=True)
+        if link is None:
+            continue
+        chapter_range = _clean(link.get_text(" "))
+        if not chapter_range:
+            continue
+        name = _clean(cells[1].get_text(" ")) if len(cells) > 1 else ""
+        out.append((_absolute(str(link.get("href") or "")), chapter_range, name))
+    return out
+
+
+def chapter_table_rows(html: str) -> List[Tuple[str, str, str]]:
+    """Chapter rows from ``#chapters_table`` (``2A``, ``169A`` included)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    table = soup.find(id="chapters_table")
+    if table is None:
+        return []
+    out: List[Tuple[str, str, str]] = []
+    seen = set()
+    for row in table.find_all("tr"):
+        cells = row.find_all("td")
+        if not cells:
+            continue
+        link = cells[0].find("a", href=True)
+        if link is None:
+            continue
+        number = _clean(link.get_text(" "))
+        if not number or not _CHAPTER_ID_RE.match(number) or "." in number:
+            continue
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(cells[1].get_text(" ")) if len(cells) > 1 else ""
+        out.append((number, name, _absolute(str(link.get("href") or ""))))
+    return out
+
+
+def chapter_analysis_section_rows(html: str) -> List[Tuple[str, str, str]]:
+    """Section rows from ``#chapter_analysis`` tables (skip classed headings)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    analysis = soup.find(id="chapter_analysis") or soup
+    table = analysis.find("table") if analysis is not None else None
+    if table is None:
+        return []
+    out: List[Tuple[str, str, str]] = []
+    seen = set()
+    for row in table.find_all("tr"):
+        if row.get("class"):
+            continue
+        cells = row.find_all("td")
+        if not cells:
+            continue
+        link = cells[0].find("a", href=True)
+        if link is None:
+            continue
+        number = _clean(link.get_text(" "))
+        if not number or not _SECTION_ID_RE.match(number):
+            continue
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(cells[1].get_text(" ")) if len(cells) > 1 else ""
+        href = str(link.get("href") or "").strip()
+        url = _absolute(href) if href else f"{BASE}/cite/{number}"
+        out.append((number, name, url))
+    return out
 
 
 def configured_section_html_path() -> Optional[Path]:
