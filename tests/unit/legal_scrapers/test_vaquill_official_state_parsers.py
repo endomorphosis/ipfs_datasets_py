@@ -1298,6 +1298,7 @@ def test_georgia_archive_strips_nav_and_stays_recovery(tmp_path: Path, monkeypat
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia_archive import (
         official_title_frontier,
         wayback_cdx_query_url,
+        wayback_hyphen_cdx_query_url,
         wayback_identity_url,
     )
     from ipfs_datasets_py.utils import anyio_compat as asyncio
@@ -1310,6 +1311,7 @@ def test_georgia_archive_strips_nav_and_stays_recovery(tmp_path: Path, monkeypat
     assert "id_/" in frontier[0]["wayback_url"]
     assert "justia" not in frontier[0]["wayback_url"]
     assert "web.archive.org/cdx/search/cdx" in wayback_cdx_query_url()
+    assert "georgia-code-title-" in wayback_hyphen_cdx_query_url()
     assert "id_/" in wayback_identity_url("https://www.legis.ga.gov/legislation/georgia-code/title-16")
 
     html = """
@@ -1482,6 +1484,25 @@ def test_georgia_wayback_engine_harvest_is_recovery(monkeypatch) -> None:
     assert rows[0].structured_data["source_authority_class"] == "recovery"
     assert "malice aforethought" in rows[0].full_text
     assert "skip to main" not in rows[0].full_text.lower()
+
+
+def test_georgia_hyphen_title_spa_shell_is_not_statute_text() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia_archive import (
+        looks_like_georgia_spa_shell,
+        parse_georgia_archive_html,
+        wayback_hyphen_cdx_query_url,
+    )
+
+    shell = """<!DOCTYPE html>
+    <html lang="en"><head>
+      <meta charset="utf-8" />
+      <title>Georgia General Assembly</title>
+      <base href="/" />
+    </head><body></body></html>
+    """
+    assert looks_like_georgia_spa_shell(shell)
+    assert parse_georgia_archive_html(shell, source_url="wayback") == []
+    assert "georgia-code-title-" in wayback_hyphen_cdx_query_url()
 
 
 def test_arkansas_content_heading_skips_repealed(tmp_path: Path, monkeypatch) -> None:

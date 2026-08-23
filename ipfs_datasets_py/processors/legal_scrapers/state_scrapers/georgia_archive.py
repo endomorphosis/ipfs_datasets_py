@@ -8,6 +8,9 @@ GA because navigation/footer leaked into section bodies. This module:
   archive.is, Common Crawl CDX) when live HTML is blocked
 * strips nav/header/footer chrome so archive snapshots can be admitted
 * always labels the result ``source_authority_class=recovery``
+* skips Angular SPA shells: the only live hyphenated CDX hit
+  (``georgia-code-title-40`` at ``20250414215500``) is a 1.5KB
+  ``<base href="/" />`` page with no statute text
 
 This does **not** close LCR-084 exact-51 official live scrape.
 
@@ -91,6 +94,27 @@ def wayback_cdx_query_url(*, match_type: str = "prefix") -> str:
     )
 
 
+def wayback_hyphen_cdx_query_url(*, match_type: str = "prefix") -> str:
+    """CDX prefix for the hyphenated title URLs (only title-40 is captured)."""
+
+    return (
+        f"{CDX}?url={quote('www.legis.ga.gov/legislation/georgia-code-title-')}"
+        "&output=json&fl=original,timestamp,statuscode,mimetype,length"
+        "&filter=statuscode:200&filter=mimetype:text/html"
+        f"&matchType={match_type}&collapse=urlkey"
+    )
+
+
+def looks_like_georgia_spa_shell(html: str) -> bool:
+    """True for Angular GAA shells that contain no OCGA body text."""
+
+    text = html or ""
+    if len(text) > 8000:
+        return False
+    lowered = text.lower()
+    return "<base href=\"/\" />" in lowered and "georgia general assembly" in lowered
+
+
 def common_crawl_cdx_query_url() -> str:
     return (
         f"{COMMON_CRAWL_CDX}?url={quote('www.legis.ga.gov/legislation/georgia-code/*')}"
@@ -156,6 +180,8 @@ def parse_georgia_archive_html(
 ) -> List[NormalizedStatute]:
     """Parse stripped official-locator HTML recovered via archive transport."""
 
+    if looks_like_georgia_spa_shell(html):
+        return []
     text = strip_georgia_chrome(html)
     matches = list(_SECTION_RE.finditer(text))
     statutes: List[NormalizedStatute] = []
