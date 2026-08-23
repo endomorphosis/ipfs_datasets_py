@@ -169,6 +169,23 @@ class TexasScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
 
+            from .texas_constitution import (
+                configured_constitution_html_path,
+                parse_texas_constitution_html,
+            )
+
+            constitution_path = configured_constitution_html_path()
+            if constitution_path is not None or "constitution" in lower_name:
+                if constitution_path is not None:
+                    constitution_rows = parse_texas_constitution_html(
+                        constitution_path.read_text(encoding="utf-8", errors="replace"),
+                        article_id="1",
+                        code_name=code_name or "Texas Constitution",
+                        max_statutes=limit,
+                    )
+                    if constitution_rows:
+                        return constitution_rows if limit is None else constitution_rows[: int(limit)]
+
             from .texas_chapter import configured_chapter_html_path, parse_texas_chapter_html
 
             local_chapter = configured_chapter_html_path()

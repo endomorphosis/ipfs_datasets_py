@@ -122,6 +122,23 @@ class PennsylvaniaScraper(BaseStateScraper):
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
         probe_threshold = limit if limit is not None else 160
+        from .pennsylvania_constitution import (
+            configured_constitution_html_path,
+            parse_pennsylvania_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_pennsylvania_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    article_id="I",
+                    article_index=1,
+                    code_name=code_name or "Pennsylvania Constitution",
+                    max_statutes=limit,
+                )
+                if constitution_rows:
+                    return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .pennsylvania_title import configured_title_text_path, parse_pennsylvania_title_text
 
         text_path = configured_title_text_path()

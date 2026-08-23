@@ -1942,3 +1942,106 @@ def test_california_constitution_skips_spa_shell_and_repealed(tmp_path: Path, mo
     assert "leginfo.legislature.ca.gov" in rows[0].source_url
     assert "justia" not in rows[0].source_url
     assert "CONS" in rows[0].source_url or "lawCode=CONS" in rows[0].source_url
+
+
+def test_texas_constitution_skips_spa_shell_and_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.texas import TexasScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.texas_constitution import (
+        looks_like_constitution_spa_shell,
+        parse_texas_constitution_html,
+        tx_article_url,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    assert tx_article_url("1").endswith("/CN.1.htm")
+    shell = """<!DOCTYPE html><html><head><base href="/" /><title>Texas</title></head><body></body></html>"""
+    assert looks_like_constitution_spa_shell(shell)
+    assert parse_texas_constitution_html(shell, article_id="1") == []
+
+    html = """
+    <html><body>
+      ARTICLE 1. BILL OF RIGHTS
+      Sec. 1. Texas is a free and independent State, subject only to the Constitution of the United States.
+      Sec. 2. Repealed.
+      Repealed text must not be admitted as current constitutional law.
+      Sec. 3. All free men when they form a social compact have equal rights, and no man, or set of men, is entitled to exclusive separate public emoluments or privileges.
+    </body></html>
+    """
+    path = tmp_path / "CN.1.htm"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("TEXAS_CONSTITUTION_HTML", str(path))
+    scraper = TexasScraper("TX", "Texas")
+    rows = asyncio.run(
+        scraper.scrape_code("Texas Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert [row.section_number for row in rows] == ["1", "3"]
+    assert "free and independent" in rows[0].full_text
+    assert "Repealed text" not in "".join(row.full_text for row in rows)
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "tcss.legis.texas.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+
+
+def test_pennsylvania_constitution_skips_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.pennsylvania import (
+        PennsylvaniaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    ARTICLE I
+    DECLARATION OF RIGHTS
+    § 1. Inherent rights of mankind.
+    All men are born equally free and independent, and have certain inherent and indefeasible rights.
+    § 2. Political powers. (Repealed)
+    Repealed text must not be admitted.
+    § 3. Religious freedom.
+    All men have a natural and indefeasible right to worship Almighty God according to the dictates of their own consciences.
+    </body></html>
+    """
+    path = tmp_path / "00.001.htm"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("PENNSYLVANIA_CONSTITUTION_HTML", str(path))
+    scraper = PennsylvaniaScraper("PA", "Pennsylvania")
+    rows = asyncio.run(
+        scraper.scrape_code("Pennsylvania Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert [row.section_number for row in rows] == ["1", "3"]
+    assert "inherent and indefeasible" in rows[0].full_text
+    assert "Repealed text" not in "".join(row.full_text for row in rows)
+    assert "legis.state.pa.us" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+
+
+def test_new_mexico_constitution_strips_footer_and_skips_repealed(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_mexico import (
+        NewMexicoScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+ARTICLE II
+Bill of Rights
+Section 1. The state of New Mexico is an inseparable part of the federal union, and the constitution of the United States is the supreme law of the land.
+Article II – Bill of Rights
+© 2025 State of New Mexico. NNMM__CCoonnssttiittuuttiioonn AAMM
+Section 2. Repealed.
+Repealed text must not be admitted as current constitutional law.
+Section 3. The right of the people to keep and bear arms for security and defense, for lawful hunting and recreational use, shall not be impaired.
+"""
+    path = tmp_path / "nm-const.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("NEW_MEXICO_CONSTITUTION_TEXT", str(path))
+    scraper = NewMexicoScraper("NM", "New Mexico")
+    rows = asyncio.run(
+        scraper.scrape_code("New Mexico Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert [row.section_number for row in rows] == ["1", "3"]
+    assert "inseparable part of the federal union" in rows[0].full_text
+    assert "NNMM__CCoonnssttiittuuttiioonn" not in rows[0].full_text
+    assert "Repealed text" not in "".join(row.full_text for row in rows)
+    assert "sos.nm.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
