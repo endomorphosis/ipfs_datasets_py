@@ -4378,6 +4378,119 @@ def test_remaining_generic_constitution_splits(tmp_path: Path, monkeypatch) -> N
         monkeypatch.delenv(env_name, raising=False)
 
 
+def test_nebraska_browse_chapters_keep_alpha_and_dotted_sections() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nebraska_section import (
+        chapter_links,
+        chapter_structure,
+        is_nebraska_section_number,
+        section_links,
+    )
+
+    assert is_nebraska_section_number("25-2740.04")
+    assert is_nebraska_section_number("2-32,113")
+    assert is_nebraska_section_number("76A-101")
+    chapters = chapter_links(
+        '<a href="/laws/browse-chapters.php?chapter=28">Chapter 28</a>'
+        '<a href="/laws/browse-chapters.php?chapter=76A">Chapter 76A</a>'
+        '<a href="/laws/browse-statutes.php">index</a>'
+    )
+    assert [number for number, _name, _url in chapters] == ["28", "76A"]
+    assert chapters[1][2].endswith("chapter=76A")
+    sections = section_links(
+        '<a href="/laws/statutes.php?statute=28-303">28-303</a>'
+        '<a href="/laws/statutes.php?statute=25-2740.04">25-2740.04</a>'
+        '<a href="/laws/statutes.php?statute=28-303&print=true">print</a>'
+    )
+    assert [number for number, _name, _url in sections] == ["28-303", "25-2740.04"]
+    structured = chapter_structure(
+        """
+        <h3>ARTICLE 1 - Offenses against the person</h3>
+        <a href="/laws/statutes.php?statute=28-303">28-303</a>
+        <p>ARTICLE 2. Property</p>
+        <a href="/laws/statutes.php?statute=28-501">28-501</a>
+        """
+    )
+    assert structured[0]["article_number"] == "1"
+    assert structured[1]["article_number"] == "2"
+    assert structured[1]["section_number"] == "28-501"
+
+
+def test_maryland_toc_statute_articles_and_getnext_xml() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maryland_section import (
+        parse_get_next_envelope,
+        parse_section_code,
+        statute_articles,
+    )
+
+    html = """
+    <select id="Articles">
+      <option value="gcr">Criminal Law - (gcr)</option>
+      <option value="gsg">State Government - (gsg)</option>
+      <option value="c0">Declaration of Rights - (c0)</option>
+      <option value="c11a">Article XI-A - (c11a)</option>
+    </select>
+    """
+    rows = statute_articles(html)
+    assert [code for code, _name in rows] == ["gcr", "gsg"]
+    assert parse_get_next_envelope(
+        '<string xmlns="http://schemas.microsoft.com/2003/10/Serialization/">2-201</string>'
+    ) == "2-201"
+    assert parse_get_next_envelope('"2-202"') == "2-202"
+    assert parse_get_next_envelope("null") is None
+    assert parse_section_code("2-201")[0] == "2"
+
+
+def test_texas_statute_array_and_quicksearch_chapter_urls() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.texas_chapter import (
+        chapters_from_quicksearch,
+        chapters_from_statute_array,
+        get_statute_array_url,
+        populate_chapter_list_url,
+    )
+
+    assert "GetStatuteArray/GetStatuteArray/PE/PE/" in get_statute_array_url("PE")
+    assert populate_chapter_list_url("SD").endswith("/33/CH")
+    array_rows = chapters_from_statute_array(
+        [
+            {"name": "CHAPTER 19. CRIMINAL HOMICIDE", "url": "PE/htm/PE.19.htm"},
+            {"name": "Chapter Title Not Found", "url": "PE/htm/PE.1.htm"},
+        ],
+        code="PE",
+    )
+    assert [number for number, _name, _url in array_rows] == ["19", "1"]
+    assert array_rows[0][2].endswith("/PE/htm/PE.19.htm")
+    quick = chapters_from_quicksearch(
+        [{"text": "CHAPTER 1", "url": "SD.1"}, {"text": "skip", "url": "other"}],
+        code="SD",
+    )
+    assert quick[0][0] == "1"
+    assert quick[0][2].endswith("/SD/htm/SD.1.htm")
+
+
+def test_virginia_number_descrip_list_and_ny_category_law_links() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york_openleg import (
+        category_law_links,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.virginia_section import (
+        title_links,
+    )
+
+    titles = title_links(
+        '<div class="number-descrip-list">'
+        '<a href="/vacode/title18.2/">Title 18.2. Crimes</a>'
+        '<a href="/vacode/title8.5A/">Title 8.5A</a>'
+        '<a href="/vacode/title18.2/chapter1/">skip chapter</a>'
+        "</div>"
+    )
+    assert [number for number, _name, _url in titles] == ["18.2", "8.5A"]
+    laws = category_law_links(
+        '<a href="/legislation/laws/PEN">Penal Law</a>'
+        '<a href="/legislation/laws/CONSOLIDATED">skip category</a>'
+        '<a href="/legislation/laws/CPL/">Criminal Procedure</a>'
+    )
+    assert [abbr for abbr, _name, _url in laws] == ["PEN", "CPL"]
+
+
 
 
 

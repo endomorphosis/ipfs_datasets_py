@@ -10,7 +10,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -21,6 +21,35 @@ _SECTION_ANCHOR_RE = re.compile(r"/section([0-9][^/\"']+)/")
 
 def vacode_url(section_number: str) -> str:
     return f"https://law.lis.virginia.gov/vacode/{section_number}/"
+
+
+def title_links(
+    html: str, *, base_url: str = "https://law.lis.virginia.gov"
+) -> List[Tuple[str, str, str]]:
+    """Title rows from ``.number-descrip-list`` on ``/vacode/``."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    from urllib.parse import urljoin
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    container = soup.find(class_="number-descrip-list") or soup
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in container.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = re.search(r"/vacode/title([0-9]+(?:\.[0-9]+)?[A-Za-z]?)/?$", href, re.IGNORECASE)
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _WS.sub(" ", (anchor.get_text(" ") or "").replace("\xa0", " ")).strip()
+        out.append((number, name or f"Title {number}", urljoin(base_url, href)))
+    return out
 
 
 def container_links(html: str, title_number: str) -> List[str]:

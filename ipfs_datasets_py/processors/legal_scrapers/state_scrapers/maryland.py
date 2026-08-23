@@ -76,6 +76,25 @@ class MarylandScraper(BaseStateScraper):
         except Exception:
             return None
 
+    async def _fetch_api_section_code(self, url: str) -> Optional[str]:
+        """Parse GetNext/GetPrevious JSON or the .NET XML ``<string>`` envelope."""
+
+        from .maryland_section import parse_get_next_envelope
+
+        payload = await self._fetch_json(url)
+        if isinstance(payload, str) and payload.strip() and payload.strip().lower() != "null":
+            return payload.strip()
+        text = await self._fetch_text_direct(url, timeout=20)
+        return parse_get_next_envelope(text)
+
+    def _articles_from_toc_html(self, html: str) -> List[Dict[str, str]]:
+        from .maryland_section import statute_articles
+
+        out: List[Dict[str, str]] = []
+        for code, name in statute_articles(html):
+            out.append({"DisplayText": f"{name} - ({code})", "Value": code})
+        return out
+
     async def _fetch_text_direct(self, url: str, timeout: int = 45) -> str:
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -91,12 +110,96 @@ class MarylandScraper(BaseStateScraper):
                 return str(payload)
             return ""
 
+    async def _list_article_payload(self) -> List[Dict[str, str]]:
+        from .maryland_section import TOC_URL, configured_toc_html_path
+
+        toc_path = configured_toc_html_path()
+        if toc_path is not None:
+            return self._articles_from_toc_html(
+                toc_path.read_text(encoding="utf-8", errors="replace")
+            )
+        articles_url = f"{self.get_base_url()}/mgawebsite/api/Laws/GetArticles?enactments=false"
+        articles_payload = await self._fetch_json(articles_url)
+        if isinstance(articles_payload, list) and articles_payload:
+            from .maryland_section import is_statute_article_code
+
+            filtered: List[Dict[str, str]] = []
+            for article in articles_payload:
+                if not isinstance(article, dict):
+                    continue
+                value = str(article.get("Value") or "").strip()
+                display = str(article.get("DisplayText") or "").strip()
+                code = value or self._extract_article_code(display, value)
+                if is_statute_article_code(code.lower()):
+                    filtered.append(article)
+            if filtered:
+                return filtered
+        toc_html = await self._fetch_text_direct(TOC_URL, timeout=45)
+        if not toc_html:
+            return []
+        return self._articles_from_toc_html(toc_html)
+
+    async def _list_section_codes(
+        self,
+        *,
+        article_value: str,
+        article_code: str,
+        budget: int,
+    ) -> List[tuple[str, str]]:
+        """Return ``(label, section_code)`` from GetSections JSON or GetNext XML."""
+
+        from .maryland_section import first_section_seeds, get_next_url, get_previous_url
+
+        sections_url = (
+            f"{self.get_base_url()}/mgawebsite/api/Laws/GetSections"
+            f"?articleCode={article_value or article_code.lower()}&enactments=false"
+        )
+        sections_payload = await self._fetch_json(sections_url)
+        out: List[tuple[str, str]] = []
+        if isinstance(sections_payload, list):
+            for section in sections_payload[: max(0, int(budget))]:
+                if not isinstance(section, dict):
+                    continue
+                section_label = str(section.get("DisplayText") or "").strip()
+                section_code = self._normalize_section_code(
+                    section_label or str(section.get("Value") or "")
+                )
+                if section_code:
+                    out.append((section_label or section_code, section_code))
+            if out:
+                return out
+
+        seed = None
+        article_token = article_value or article_code.lower()
+        for candidate in first_section_seeds():
+            nxt = await self._fetch_api_section_code(get_next_url(article_token, candidate))
+            if nxt:
+                seed = candidate
+                break
+            prev = await self._fetch_api_section_code(get_previous_url(article_token, candidate))
+            if prev:
+                seed = prev
+                break
+        if seed is None:
+            return []
+        current = seed
+        for _ in range(5000):
+            prev = await self._fetch_api_section_code(get_previous_url(article_token, current))
+            if not prev:
+                break
+            current = prev
+        seen: set[str] = set()
+        while current and current not in seen and len(out) < max(0, int(budget)):
+            seen.add(current)
+            out.append((current, current))
+            current = await self._fetch_api_section_code(get_next_url(article_token, current))
+        return out
+
     async def _scrape_api_sections(
         self, code_name: str, max_statutes: Optional[int] = None
     ) -> List[NormalizedStatute]:
-        articles_url = f"{self.get_base_url()}/mgawebsite/api/Laws/GetArticles?enactments=false"
-        articles_payload = await self._fetch_json(articles_url)
-        if not isinstance(articles_payload, list):
+        articles_payload = await self._list_article_payload()
+        if not isinstance(articles_payload, list) or not articles_payload:
             return []
 
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
@@ -153,16 +256,8 @@ class MarylandScraper(BaseStateScraper):
             if not article_code:
                 continue
 
-            sections_url = (
-                f"{self.get_base_url()}/mgawebsite/api/Laws/GetSections"
-                f"?articleCode={article_value or article_code.lower()}&enactments=false"
-            )
-            sections_payload = await self._fetch_json(sections_url)
-            if not isinstance(sections_payload, list):
-                continue
-
             if limit is None:
-                budget = len(sections_payload)
+                budget = 2000
             else:
                 remaining = max(0, int(limit) - len(statutes))
                 section_budget_cap = self._env_int(
@@ -170,17 +265,15 @@ class MarylandScraper(BaseStateScraper):
                     default=240,
                 )
                 section_budget_cap = max(40, min(2000, int(section_budget_cap or 240)))
-                budget = min(len(sections_payload), max(remaining * 3, 40), section_budget_cap)
-            discovered_candidates += int(budget)
+                budget = min(max(remaining * 3, 40), section_budget_cap)
+            section_codes = await self._list_section_codes(
+                article_value=article_value,
+                article_code=article_code,
+                budget=budget,
+            )
+            discovered_candidates += int(len(section_codes))
             section_inputs: List[tuple[str, str, str, str]] = []
-            for section in sections_payload[:budget]:
-                if not isinstance(section, dict):
-                    continue
-
-                section_label = str(section.get("DisplayText") or "").strip()
-                section_code = self._normalize_section_code(
-                    section_label or str(section.get("Value") or "")
-                )
+            for section_label, section_code in section_codes:
                 if not section_code:
                     continue
 

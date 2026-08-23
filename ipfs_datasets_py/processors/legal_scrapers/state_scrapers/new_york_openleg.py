@@ -8,11 +8,15 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Dict, Iterator, List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
+_LAW_HREF_RE = re.compile(r"/legislation/laws/([A-Z][A-Z0-9]{1,5})(?:/|\?|#|$)")
+_SKIP_LAW_SLUGS = {"CONSOLIDATED", "UNCONSOLIDATED", "COURT", "ACTS", "RULES", "MISC"}
+SENATE_BASE = "https://www.nysenate.gov"
 _LEAF_TYPES = {"SECTION", "RULE"}
 _CLS = {
     "ARTICLE": "article",
@@ -94,6 +98,34 @@ def parse_new_york_law_tree(
             )
         )
     return statutes
+
+
+def category_law_links(
+    html: str, *, base_url: str = SENATE_BASE
+) -> List[Tuple[str, str, str]]:
+    """Law slugs from a Senate category index (``/legislation/laws/PEN``)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    from urllib.parse import urljoin
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "")
+        match = _LAW_HREF_RE.search(href)
+        if not match:
+            continue
+        abbr = match.group(1)
+        if abbr in _SKIP_LAW_SLUGS or abbr in seen:
+            continue
+        seen.add(abbr)
+        name = re.sub(r"\s+", " ", (anchor.get_text(" ") or "").replace("\xa0", " ")).strip() or abbr
+        out.append((abbr, name, urljoin(base_url.rstrip("/") + "/", href)))
+    return out
 
 
 def configured_law_json_path() -> Optional[Path]:

@@ -10,7 +10,7 @@ import re
 import ssl
 import urllib.request
 from typing import Any, Callable, Dict, List, Optional
-from urllib.parse import urljoin, urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
 
@@ -35,13 +35,14 @@ class NebraskaScraper(BaseStateScraper):
         66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 79, 80, 81, 82, 83, 84,
         85, 86, 87, 88, 89, 90,
     )
-    _NE_CHAPTER_URL_RE = re.compile(r"/laws/browse-chapters\.php\?chapter=\d+[A-Za-z]?$", re.IGNORECASE)
-    # Nebraska section identifiers frequently include comma-delimited numeric
-    # segments (for example, "2-32,113"). Accept those formats so full-corpus
-    # scans do not silently drop valid sections.
-    _NE_SECTION_NUMBER_RE = re.compile(
-        r"^\d+[A-Za-z]?(?:-\d{1,3}(?:,\d{3})*[A-Za-z]?)+(?:\.\d+)?[A-Za-z]?$"
+    # Vaquill scrapeNE: chapter=[\w\-]+ (76A) and statute=[\w.\-]+ (25-2740.04).
+    _NE_CHAPTER_URL_RE = re.compile(
+        r"/laws/browse-chapters\.php\?chapter=[\w\-]+$", re.IGNORECASE
     )
+    # Comma-thousands (2-32,113), dotted subsections (25-2740.04), and
+    # alpha chapter prefixes (76A-101). The old \d{1,3} cap dropped 4-digit
+    # middle tokens such as 2740.
+    _NE_SECTION_NUMBER_RE = re.compile(r"^[\dA-Za-z]+(?:[-.,][\dA-Za-z]+)+$")
     
     def get_base_url(self) -> str:
         """Return the base URL for Nebraska's legislative website."""
@@ -298,59 +299,29 @@ class NebraskaScraper(BaseStateScraper):
         ]
 
     async def _discover_chapter_urls(self) -> List[str]:
-        try:
-            from bs4 import BeautifulSoup
-        except ImportError:
-            return []
+        from .nebraska_section import chapter_links, configured_toc_html_path
 
         browse_url = f"{self.get_base_url()}/laws/browse-statutes.php"
-        html = await self._request_text_direct(browse_url, timeout=30)
+        toc_path = configured_toc_html_path()
+        if toc_path is not None:
+            html = toc_path.read_text(encoding="utf-8", errors="replace")
+        else:
+            html = await self._request_text_direct(browse_url, timeout=30)
         if not html:
             return []
-        soup = BeautifulSoup(html, "html.parser")
-        out: List[str] = []
-        seen: set[str] = set()
-        for anchor in soup.find_all("a", href=True):
-            href = str(anchor.get("href") or "").strip()
-            absolute = urljoin(browse_url, href)
-            if not self._NE_CHAPTER_URL_RE.search(urlparse(absolute).path + ("?" + urlparse(absolute).query if urlparse(absolute).query else "")):
-                continue
-            if absolute in seen:
-                continue
-            seen.add(absolute)
-            out.append(absolute)
-        return out
+        return [url for _number, _name, url in chapter_links(html, base_url=browse_url)]
 
     async def _discover_section_urls(self, chapter_url: str) -> List[str]:
-        try:
-            from bs4 import BeautifulSoup
-        except ImportError:
-            return []
+        from .nebraska_section import configured_chapter_html_path, section_links
 
-        html = await self._request_text_direct(chapter_url, timeout=30)
+        chapter_path = configured_chapter_html_path()
+        if chapter_path is not None:
+            html = chapter_path.read_text(encoding="utf-8", errors="replace")
+        else:
+            html = await self._request_text_direct(chapter_url, timeout=30)
         if not html:
             return []
-        soup = BeautifulSoup(html, "html.parser")
-        out: List[str] = []
-        seen: set[str] = set()
-        seen_section_numbers: set[str] = set()
-        for anchor in soup.find_all("a", href=True):
-            href = str(anchor.get("href") or "").strip()
-            if "statute=" not in href.lower() or "print=true" in href.lower():
-                continue
-            absolute = urljoin(chapter_url, href)
-            section_number = self._section_number_from_url(absolute)
-            if not self._NE_SECTION_NUMBER_RE.match(section_number):
-                continue
-            section_key = section_number.lower()
-            if section_key in seen_section_numbers:
-                continue
-            if absolute in seen:
-                continue
-            seen_section_numbers.add(section_key)
-            seen.add(absolute)
-            out.append(absolute)
-        return out
+        return [url for _number, _name, url in section_links(html, base_url=chapter_url)]
 
     async def _scrape_section_urls(
         self,
@@ -578,24 +549,12 @@ class NebraskaScraper(BaseStateScraper):
         found: Dict[str, str] = {}
         if not html:
             return found
-        try:
-            from bs4 import BeautifulSoup
-        except ImportError:
-            return found
-        soup = BeautifulSoup(html, "html.parser")
-        for link in soup.find_all("a", href=True):
-            href = str(link.get("href") or "").strip()
-            if not href:
-                continue
-            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
-            parsed = urlparse(absolute)
-            if not self._NE_CHAPTER_URL_RE.search(
-                parsed.path + (("?" + parsed.query) if parsed.query else "")
-            ):
-                continue
-            token = str((parse_qs(parsed.query).get("chapter") or [""])[0]).strip()
+        from .nebraska_section import chapter_links
+
+        text = html.decode("utf-8", errors="replace") if isinstance(html, (bytes, bytearray)) else str(html)
+        for token, _name, url in chapter_links(text, base_url=self.OFFICIAL_ENTRY_URL):
             if token and token not in found:
-                found[token] = self.official_chapter_url(token)
+                found[token] = url or self.official_chapter_url(token)
         return found
 
     def enumerate_official_catalog(

@@ -10,12 +10,22 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
 TCAS_RESOURCES = "https://tcss.legis.texas.gov/resources"
+TCAS_API = "https://tcss.legis.texas.gov/api"
 STATUTE_ORIGIN = "https://statutes.capitol.texas.gov"
+# TLC codeIDs from statutes.capitol.texas.gov/assets/QuickCodes.json (Vaquill scrapeTX).
+TX_CODE_IDS = {
+    "AG": "1", "AL": "2", "BC": "4", "BO": "32", "CN": "5", "CP": "6",
+    "CR": "7", "CV": "29", "ED": "9", "EL": "10", "ES": "35", "FA": "11",
+    "FI": "12", "GV": "13", "HR": "15", "HS": "14", "I1": "37", "IN": "17",
+    "LA": "18", "LG": "19", "NR": "20", "OC": "21", "PB": "23", "PE": "22",
+    "PR": "25", "PW": "26", "SD": "33", "TN": "27", "TX": "28",
+    "UT": "16", "WA": "30", "WL": "31",
+}
 
 _SEC_RE = re.compile(r"^(Sec\.|Art\.)\s+(\d[\d.A-Z-]*)\.", re.IGNORECASE)
 _TITLE_RE = re.compile(
@@ -40,6 +50,88 @@ _WS = re.compile(r"\s+")
 
 def chapter_html_url(code: str, chapter_num: str) -> str:
     return f"{TCAS_RESOURCES}/{code}/htm/{code}.{chapter_num}.htm"
+
+
+def get_statute_array_url(code: str) -> str:
+    token = str(code or "").strip().upper()
+    return (
+        f"{TCAS_API}/GetStatuteArray/GetStatuteArray/"
+        f"{token}/{token}/null/null/null/null/null/null/null/null/htm"
+    )
+
+
+def populate_chapter_list_url(code: str) -> Optional[str]:
+    code_id = TX_CODE_IDS.get(str(code or "").strip().upper())
+    if not code_id:
+        return None
+    return f"{TCAS_API}/QuickSearch/PopulateChapterList/{code_id}/CH"
+
+
+def _chapter_number_from_entry(entry: dict, code: str) -> str:
+    url = str(entry.get("url") or "").strip()
+    url_match = re.search(r"/" + re.escape(code) + r"\.([0-9A-Za-z._-]+?)\.htm", url, re.IGNORECASE)
+    if url_match and url_match.group(1)[:1].isdigit():
+        return url_match.group(1)
+    rel = str(entry.get("url") or "").strip()
+    rel_match = re.match(re.escape(code) + r"\.([0-9A-Za-z._-]+)$", rel, re.IGNORECASE)
+    if rel_match and rel_match.group(1)[:1].isdigit():
+        return rel_match.group(1)
+    name = str(entry.get("name") or entry.get("text") or "")
+    name_match = re.match(r"CHAPTER\s+([\w.]+)", name, re.IGNORECASE)
+    if name_match and name_match.group(1)[:1].isdigit():
+        return name_match.group(1).rstrip(".")
+    return ""
+
+
+def chapters_from_statute_array(payload, *, code: str) -> List[Tuple[str, str, str]]:
+    """Normalize GetStatuteArray JSON to ``(chapter, name, html_url)``."""
+
+    if not isinstance(payload, list):
+        return []
+    token = str(code or "").strip().upper()
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for entry in payload:
+        if not isinstance(entry, dict):
+            continue
+        number = _chapter_number_from_entry(entry, token)
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        name = str(entry.get("name") or f"Chapter {number}").strip()
+        out.append((number, name, chapter_html_url(token, number)))
+    return out
+
+
+def chapters_from_quicksearch(payload, *, code: str) -> List[Tuple[str, str, str]]:
+    """Normalize PopulateChapterList JSON ``{text,value,url}`` rows."""
+
+    if not isinstance(payload, list):
+        return []
+    token = str(code or "").strip().upper()
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for entry in payload:
+        if not isinstance(entry, dict):
+            continue
+        rel = str(entry.get("url") or "").strip()
+        number = ""
+        if rel:
+            rel_match = re.match(
+                re.escape(token) + r"\.([0-9A-Za-z._-]+)$", rel, re.IGNORECASE
+            )
+            if rel_match:
+                number = rel_match.group(1)
+        if not number:
+            number = _chapter_number_from_entry(
+                {"name": entry.get("text") or "", "url": rel}, token
+            )
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        name = str(entry.get("text") or f"Chapter {number}").strip()
+        out.append((number, name, chapter_html_url(token, number)))
+    return out
 
 
 def _clean(text: str) -> str:

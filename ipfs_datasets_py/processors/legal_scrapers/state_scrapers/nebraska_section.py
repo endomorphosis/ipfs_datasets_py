@@ -10,8 +10,8 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Optional
-from urllib.parse import parse_qs, urlparse
+from typing import Dict, List, Optional, Tuple
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -28,6 +28,19 @@ _RESERVED = re.compile(
     re.IGNORECASE,
 )
 _WS = re.compile(r"\s+")
+# Vaquill scrapeNE: chapter tokens include alpha suffixes (76A) and hyphens;
+# section ids include dotted forms such as 25-2740.04. Keep comma-thousands
+# (2-32,113) from the live Nebraska index as well.
+_CHAPTER_HREF_RE = re.compile(
+    r"/laws/browse-chapters\.php\?chapter=([\w\-]+)$", re.IGNORECASE
+)
+_SECTION_HREF_RE = re.compile(
+    r"/laws/statutes\.php\?statute=([\w.\-]+)$", re.IGNORECASE
+)
+_SECTION_NUMBER_RE = re.compile(r"^[\dA-Za-z]+(?:[-.,][\dA-Za-z]+)+$")
+_ARTICLE_HEADING_RE = re.compile(
+    r"^\s*ARTICLE\s+([\w\-]+)\b[\.\s\-:]*(.*)$", re.IGNORECASE
+)
 
 
 def _clean(text: str) -> str:
@@ -112,3 +125,120 @@ def configured_section_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("NEBRASKA_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def configured_chapter_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("NEBRASKA_CHAPTER_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def is_nebraska_section_number(value: str) -> bool:
+    token = str(value or "").strip()
+    return bool(token) and bool(_SECTION_NUMBER_RE.match(token))
+
+
+def chapter_links(html: str, *, base_url: str = f"{BASE}/laws/browse-statutes.php") -> List[Tuple[str, str, str]]:
+    """Chapter rows from browse-statutes.php (includes ``76A``)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _CHAPTER_HREF_RE.search(href)
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(anchor.get_text(" ")) or f"Chapter {number}"
+        out.append((number, name, urljoin(base_url, href)))
+    return out
+
+
+def section_links(html: str, *, base_url: str = f"{BASE}/laws/browse-chapters.php") -> List[Tuple[str, str, str]]:
+    """Section hrefs from a chapter page (dotted ids such as ``25-2740.04``)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        if "print=true" in href.lower():
+            continue
+        match = _SECTION_HREF_RE.search(href.split("&", 1)[0])
+        if not match:
+            continue
+        number = match.group(1)
+        if not is_nebraska_section_number(number) or number.lower() in seen:
+            continue
+        seen.add(number.lower())
+        name = _clean(anchor.get_text(" ")) or f"Section {number}"
+        out.append((number, name, urljoin(base_url, href)))
+    return out
+
+
+def chapter_structure(html: str, *, base_url: str = f"{BASE}/laws/browse-chapters.php") -> List[Dict[str, str]]:
+    """Document-order sections with intervening ``ARTICLE N`` parents."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Dict[str, str]] = []
+    seen: set[str] = set()
+    current_article = ""
+    current_article_name = ""
+    for element in soup.find_all(
+        ["a", "h1", "h2", "h3", "h4", "h5", "h6", "strong", "b", "p", "li"]
+    ):
+        if element.name != "a":
+            text = _clean(element.get_text(" "))
+            if not text:
+                continue
+            match = _ARTICLE_HEADING_RE.match(text)
+            if match:
+                current_article = match.group(1)
+                current_article_name = _clean(match.group(2) or "")
+            continue
+        href = str(element.get("href") or "").strip()
+        if "print=true" in href.lower():
+            continue
+        match = _SECTION_HREF_RE.search(href.split("&", 1)[0])
+        if not match:
+            continue
+        number = match.group(1)
+        if not is_nebraska_section_number(number) or number.lower() in seen:
+            continue
+        seen.add(number.lower())
+        out.append(
+            {
+                "section_number": number,
+                "section_name": _clean(element.get_text(" ")) or f"Section {number}",
+                "source_url": urljoin(base_url, href),
+                "article_number": current_article,
+                "article_name": current_article_name,
+            }
+        )
+    return out
