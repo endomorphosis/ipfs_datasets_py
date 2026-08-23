@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -78,6 +78,24 @@ def _render_node(elem: ET.Element, depth: int) -> List[str]:
             lines.append(f"{indent}{prefix}")
         return lines
     return []
+
+
+def include_section_hrefs(index_xml: str) -> List[str]:
+    """``xi:include href="./sections/1-101.xml"`` stems from a title index."""
+
+    out: List[str] = []
+    seen: set[str] = set()
+    for match in re.finditer(r'href="([^"]+/([^"/]+)\.xml)"', index_xml or ""):
+        number = match.group(2)
+        if not number or number.lower() == "index" or number in seen:
+            continue
+        seen.add(number)
+        out.append(number)
+    return out
+
+
+def section_source_url(section_number: str) -> str:
+    return f"https://code.dccouncil.gov/us/dc/council/code/sections/{section_number}"
 
 
 def parse_dc_section_xml(

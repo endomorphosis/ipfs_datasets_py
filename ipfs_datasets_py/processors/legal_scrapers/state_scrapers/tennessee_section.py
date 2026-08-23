@@ -12,10 +12,11 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
+BASE = "https://www.tn.gov/tga/statutes"
 _SECTION_LABEL_RE = re.compile(
     r"(?:§|Section)?\s*(?P<section>\d{1,2}-\d{1,2}-\d{1,4}(?:\.[0-9A-Za-z]+)?)(?:\s*[.–—-]\s*(?P<title>.+))?",
     re.IGNORECASE,
@@ -24,12 +25,71 @@ _URL_SECTION_RE = re.compile(
     r"section[/_-]?([0-9]+(?:-[0-9A-Za-z.]+)+)",
     re.IGNORECASE,
 )
+_TITLE_HREF_RE = re.compile(r"/title-?(?P<title>\d{1,2})(?:/|$)", re.IGNORECASE)
+_OFFICIAL_SECTION_RE = re.compile(
+    r"(?:/tca/|/statutes?/|/code/)[^?#]*section[/_-]?([0-9]+(?:-[0-9A-Za-z.]+)+)",
+    re.IGNORECASE,
+)
 _RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered)\b", re.IGNORECASE)
 _WS = re.compile(r"\s+")
 
 
 def _clean(text: str) -> str:
     return _WS.sub(" ", (text or "").replace("\xa0", " ")).strip()
+
+
+def title_url(number: str) -> str:
+    return f"{BASE}/title-{int(str(number).strip())}/"
+
+
+def title_links(html: str, *, base_url: str = f"{BASE}.html") -> List[Tuple[str, str, str]]:
+    """Index ``/tga/statutes/title-39/`` rows."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "")
+        match = _TITLE_HREF_RE.search(href)
+        if not match:
+            continue
+        number = str(int(match.group("title")))
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(anchor.get_text(" ")) or f"Title {number}"
+        out.append((number, name, title_url(number)))
+    return out
+
+
+def section_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str, str]]:
+    """Title-page ``/statutes/.../section-39-13-202`` rows."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _OFFICIAL_SECTION_RE.search(href)
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(anchor.get_text(" ")) or f"Section {number}"
+        out.append((number, name, urljoin(base_url.rstrip("/") + "/", href)))
+    return out
 
 
 def parse_tennessee_section_html(

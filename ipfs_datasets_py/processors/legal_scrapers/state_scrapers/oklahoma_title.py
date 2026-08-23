@@ -10,11 +10,13 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
 COMPLETE_TITLE_BASE = "https://www.oklegislature.gov/OK_Statutes/CompleteTitles"
+TITLES_HTML_URL = "https://www.oklegislature.gov/osStatuesTitle.html"
+_OS_PDF_RE = re.compile(r"/os(\d+[A-Ea-e]?)\.pdf$", re.IGNORECASE)
 _SECTION_HEADING_RE = re.compile(
     r"^§\s*([0-9]+[A-Za-z]?)\s*[-‑]\s*([0-9][0-9A-Za-z.\-]*)\s*\.\s*(.*)$"
 )
@@ -138,6 +140,35 @@ def parse_oklahoma_title_pdf(
         source_url=f"{COMPLETE_TITLE_BASE}/os{number}.pdf" if number else COMPLETE_TITLE_BASE,
         max_statutes=max_statutes,
     )
+
+
+def title_pdf_url(number: str) -> str:
+    token = str(number or "").strip().upper()
+    return f"{COMPLETE_TITLE_BASE}/os{token}.pdf"
+
+
+def title_pdf_links(html: str) -> List[Tuple[str, str, str]]:
+    """TOC ``/os21.pdf`` rows. PDFs are never auto-downloaded."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _OS_PDF_RE.search(href)
+        if not match:
+            continue
+        number = match.group(1).upper()
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(anchor.get_text(" ")) or f"Title {number}"
+        out.append((number, name, title_pdf_url(number)))
+    return out
 
 
 def configured_title_path() -> Optional[Path]:

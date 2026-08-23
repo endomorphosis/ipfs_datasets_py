@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -32,6 +32,41 @@ _RESERVED_KEYWORDS = ("(reserved)", "(repealed)", "(expired)", "(renumbered)", "
 def title_html_url(ttl: str) -> str:
     token = str(ttl).zfill(2)
     return f"https://www.palegis.us/statutes/consolidated/view-statute?txtType=HTM&ttl={token}"
+
+
+def title_pdf_url(ttl: str) -> str:
+    token = str(ttl).zfill(2)
+    return f"https://www.palegis.us/statutes/consolidated/view-statute?txtType=PDF&ttl={token}"
+
+
+def consolidated_titles(html: str) -> List[Tuple[str, str, str]]:
+    """Index rows from ``/statutes/consolidated`` (``ttl=18``). PDFs stay env-gated."""
+
+    from urllib.parse import parse_qs, urljoin, urlparse
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "")
+        if "ttl=" not in href.lower() and "view-statute" not in href.lower():
+            continue
+        parsed = urlparse(href)
+        ttl = (parse_qs(parsed.query).get("ttl") or [""])[0].strip()
+        if not ttl:
+            match = re.search(r"[?&]ttl=(\d+)", href, re.IGNORECASE)
+            ttl = match.group(1) if match else ""
+        number = str(int(ttl)) if ttl.isdigit() else ttl.lstrip("0") or ttl
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        name = _WS.sub(" ", (anchor.get_text(" ") or "").replace("\xa0", " ")).strip()
+        out.append((number, name or f"Title {number}", title_html_url(number)))
+    return out
 
 
 def dewrap(text: str) -> List[str]:

@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -20,12 +20,73 @@ BASE = "https://www.arkleg.state.ar.us"
 _HEAD_RE = re.compile(
     r"(?m)^\s*(?:§\s*)?(?P<section>\d+-\d+(?:-\d+)?(?:\.\d+)?)\s*[.–—-]\s*(?P<title>.+)$"
 )
+_SECTION_HREF_RE = re.compile(
+    r"/ArkansasCode/(?P<section>\d+-\d+(?:-\d+)?(?:\.\d+)?)/?$",
+    re.IGNORECASE,
+)
+_TITLE_QUERY_RE = re.compile(r"[?&](?:title|codeTitle)=(\d{1,2})\b", re.IGNORECASE)
 _RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered)\b", re.IGNORECASE)
 _WS = re.compile(r"\s+")
 
 
 def _clean(text: str) -> str:
     return _WS.sub(" ", (text or "").replace("\xa0", " ")).strip()
+
+
+def title_url(number: str) -> str:
+    return f"{BASE}/ArkansasCode/?title={str(number).strip()}"
+
+
+def section_url(number: str) -> str:
+    return f"{BASE}/ArkansasCode/{str(number).strip()}/"
+
+
+def title_links(html: str, *, base_url: str = f"{BASE}/ArkansasCode/") -> List[Tuple[str, str, str]]:
+    """Index ``?title=5`` / ``codeTitle=5`` rows."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "")
+        match = _TITLE_QUERY_RE.search(href)
+        if not match:
+            continue
+        number = str(int(match.group(1)))
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(anchor.get_text(" ")) or f"Title {number}"
+        out.append((number, name, title_url(number)))
+    return out
+
+
+def section_links(html: str, *, base_url: str = f"{BASE}/ArkansasCode/") -> List[Tuple[str, str, str]]:
+    """TOC ``/ArkansasCode/5-10-101/`` rows."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _SECTION_HREF_RE.search(href)
+        if not match:
+            continue
+        number = match.group("section")
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(anchor.get_text(" ")) or f"Section {number}"
+        out.append((number, name, section_url(number)))
+    return out
 
 
 def parse_arkansas_section_html(

@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -81,6 +81,35 @@ def parse_wyoming_title_text(
             )
         )
     return statutes
+
+
+def title_pdf_url(number: str) -> str:
+    token = str(number or "").strip()
+    return f"{COMPRESS}/title{token}.pdf"
+
+
+def title_pdf_links(html: str) -> List[Tuple[str, str, str]]:
+    """Index ``title6.pdf`` rows. PDFs are never auto-downloaded."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = re.search(r"title(\d+)\.pdf$", href, re.IGNORECASE)
+        if not match:
+            continue
+        number = str(int(match.group(1)))
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(anchor.get_text(" ")) or f"Title {number}"
+        out.append((number, name, title_pdf_url(number)))
+    return out
 
 
 def configured_title_text_path() -> Optional[Path]:

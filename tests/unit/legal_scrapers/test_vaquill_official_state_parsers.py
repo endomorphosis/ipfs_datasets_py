@@ -4930,6 +4930,148 @@ def test_nevada_nrs_and_oregon_ors_index_links() -> None:
     assert [number for number, _name, _url in ors] == ["163", "163a"]
 
 
+def test_pennsylvania_consolidated_titles_and_pdf_url() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.pennsylvania_title import (
+        consolidated_titles,
+        title_html_url,
+        title_pdf_url,
+    )
+
+    assert "txtType=PDF" in title_pdf_url("18")
+    assert title_html_url("18").endswith("ttl=18")
+    rows = consolidated_titles(
+        '<a href="/statutes/consolidated/view-statute?txtType=HTM&ttl=18">Title 18 Crimes</a>'
+        '<a href="/statutes/consolidated/view-statute?txtType=PDF&ttl=18">PDF</a>'
+        '<a href="/statutes/consolidated/view-statute?txtType=HTM&ttl=02">Title 2</a>'
+        '<a href="/other">skip</a>'
+    )
+    assert [number for number, _name, _url in rows] == ["18", "2"]
+    assert rows[0][2].endswith("ttl=18")
+    assert "txtType=HTM" in rows[0][2]
+
+
+def test_oklahoma_and_wyoming_title_pdf_listings() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma_title import (
+        TITLES_HTML_URL,
+        title_pdf_links as oklahoma_title_pdf_links,
+        title_pdf_url as oklahoma_title_pdf_url,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wyoming_title import (
+        title_pdf_links as wyoming_title_pdf_links,
+        title_pdf_url as wyoming_title_pdf_url,
+    )
+
+    assert TITLES_HTML_URL.endswith("osStatuesTitle.html")
+    assert oklahoma_title_pdf_url("21").endswith("/os21.pdf")
+    ok_rows = oklahoma_title_pdf_links(
+        '<a href="/OK_Statutes/CompleteTitles/os21.pdf">Title 21 Crimes and Punishments</a>'
+        '<a href="/OK_Statutes/CompleteTitles/os21A.pdf">Title 21A</a>'
+        '<a href="/other.pdf">skip</a>'
+    )
+    assert [number for number, _name, _url in ok_rows] == ["21", "21A"]
+    assert ok_rows[0][2].endswith("/os21.pdf")
+
+    assert wyoming_title_pdf_url("6").endswith("/title6.pdf")
+    wy_rows = wyoming_title_pdf_links(
+        '<a href="https://www.wyoleg.gov/statutes/compress/title6.pdf">Title 6 Crimes</a>'
+        '<a href="title06.pdf">Title 6 padded</a>'
+        '<a href="other.pdf">skip</a>'
+    )
+    assert [number for number, _name, _url in wy_rows] == ["6"]
+    assert wy_rows[0][2].endswith("/title6.pdf")
+
+
+def test_dc_include_section_hrefs_and_mississippi_code_section_links() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.district_of_columbia_xml import (
+        include_section_hrefs,
+        section_source_url,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.mississippi_section import (
+        code_section_links,
+        section_number_from_url,
+    )
+
+    numbers = include_section_hrefs(
+        '<xi:include href="./sections/22-2101.xml"/>'
+        '<xi:include href="./index.xml"/>'
+        '<xi:include href="./sections/22-2104.xml"/>'
+    )
+    assert numbers == ["22-2101", "22-2104"]
+    assert section_source_url("22-2101").endswith("/sections/22-2101")
+
+    assert section_number_from_url("/code_sections/097/00030019.htm") == "97-3-19"
+    rows = code_section_links(
+        '<a href="/documents/2024/html/code_sections/097/00030019.htm">97-3-19 Murder</a>'
+        '<a href="https://billstatus.ls.state.ms.us/documents/2024/html/code_sections/097/00030007.htm">'
+        "97-3-7</a>"
+        '<a href="/other">skip</a>'
+    )
+    assert [number for number, _name, _url in rows] == ["97-3-19", "97-3-7"]
+    assert rows[0][2].endswith("/code_sections/097/00030019.htm")
+
+
+def test_arkansas_title_and_section_listings() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arkansas_section import (
+        section_links,
+        section_url,
+        title_links,
+        title_url,
+    )
+
+    assert title_url("5").endswith("?title=5")
+    assert section_url("5-10-101").endswith("/ArkansasCode/5-10-101/")
+    titles = title_links(
+        '<a href="/ArkansasCode/?title=5">Title 5 Criminal Offenses</a>'
+        '<a href="/ArkansasCode/?codeTitle=05">Title 5 duplicate</a>'
+        '<a href="/other">skip</a>'
+    )
+    assert [number for number, _name, _url in titles] == ["5"]
+    sections = section_links(
+        '<a href="/ArkansasCode/5-10-101/">5-10-101 Murder</a>'
+        '<a href="/ArkansasCode/5-10-102/">5-10-102</a>'
+        '<a href="/ArkansasCode/">skip</a>'
+    )
+    assert [number for number, _name, _url in sections] == ["5-10-101", "5-10-102"]
+
+
+def test_tennessee_title_and_section_listings() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.tennessee_section import (
+        section_links,
+        title_links,
+        title_url,
+    )
+
+    assert title_url("39").endswith("/title-39/")
+    titles = title_links(
+        '<a href="/tga/statutes/title-39/">Title 39 Criminal Offenses</a>'
+        '<a href="/tga/statutes/title-39/chapter-13/">skip nested</a>'
+        '<a href="/other">skip</a>'
+    )
+    assert [number for number, _name, _url in titles] == ["39"]
+    sections = section_links(
+        '<a href="/tga/statutes/title-39/section-39-13-202">39-13-202 First degree murder</a>'
+        '<a href="/tca/section-39-13-210">39-13-210</a>'
+        '<a href="/tga/statutes/title-39/">skip</a>'
+    )
+    assert [number for number, _name, _url in sections] == ["39-13-202", "39-13-210"]
+
+
+def test_new_mexico_chapter_listings_skip_document_do() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_mexico_chapter import (
+        chapter_links,
+        chapter_url,
+    )
+
+    assert chapter_url("30").endswith("#chapter-30")
+    rows = chapter_links(
+        '<a href="#chapter-30">Chapter 30 Criminal Offenses</a>'
+        '<a href="/nmos/nmsa/en/18973/1/document.do">30-2-1 skip</a>'
+        '<a href="?chapter=59A">Chapter 59A Insurance</a>'
+    )
+    assert [number for number, _name, _url in rows] == ["30", "59A"]
+    assert rows[0][2].endswith("#chapter-30")
+
+
 
 
 
