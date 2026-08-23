@@ -135,6 +135,21 @@ class IdahoScraper(BaseStateScraper):
         certification runs.
         """
         limit = max(1, int(max_statutes)) if max_statutes else None
+        from .idaho_constitution import (
+            configured_constitution_html_path,
+            parse_idaho_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_idaho_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Idaho Constitution",
+                    source_url="https://legislature.idaho.gov/statutesrules/idconst/ArtI/Sect1/",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         statutes: List[NormalizedStatute] = []
         checkpoint = _IdahoCheckpoint(self.state_code)
         title_links = await self._discover_title_links(code_url)

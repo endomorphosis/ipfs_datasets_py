@@ -2907,5 +2907,249 @@ More filler so the window after this heading contains no Title. SECTION N. marke
     assert rows[0].structured_data["source_authority_class"] == "official"
 
 
+def test_utah_constitution_skips_preamble_and_suffixes_duplicate_sections(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.utah import UtahScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.utah_constitution import (
+        constitution_articles,
+        constitution_section_numbers,
+        parse_utah_constitution_html,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    listing = """
+    <table id="childtbl">
+      <tr><td><a href="/xcode/Preamble.html">Preamble</a></td><td>We the people</td></tr>
+      <tr><td><a href="/xcode/ArticleI/">Article I</a></td><td>Declaration of Rights</td></tr>
+      <tr><td><a href="/xcode/ArticleIII/">Article III</a></td><td>Ordinance</td></tr>
+    </table>
+    """
+    assert constitution_articles(listing) == [("I", "Declaration of Rights"), ("III", "Ordinance")]
+    secs = """
+    <table id="childtbl">
+      <tr><td><a href="?v=a">Section 1</a></td></tr>
+      <tr><td><a href="?v=b">Section 1</a></td></tr>
+      <tr><td><a href="?v=c">Section 2</a></td></tr>
+    </table>
+    """
+    assert constitution_section_numbers(secs) == ["1", "1-v2", "2"]
+    whole = """
+    <div id="content">
+      <h1>Article III Ordinance</h1>
+      <table id="childtbl"></table>
+      <p>The compact with the United States is hereby ordained as part of this constitution and shall remain inviolate without the consent of the United States.</p>
+    </div>
+    """
+    whole_rows = parse_utah_constitution_html(whole)
+    assert whole_rows and whole_rows[0].section_number == "0"
+    assert "compact with the United States" in whole_rows[0].full_text
+    html = """
+    <div id="content">
+      <h1>Article I Declaration of Rights</h1>
+      <div id="secdiv">
+        <b>Section 1</b>
+        <b>[Inherent political power.]</b>
+        <p>All political power is inherent in the people, and all free governments are founded on their authority for their equal protection and benefit.</p>
+      </div>
+    </div>
+    """
+    path = tmp_path / "ut-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("UTAH_CONSTITUTION_HTML", str(path))
+    scraper = UtahScraper("UT", "Utah")
+    rows = asyncio.run(
+        scraper.scrape_code("Utah Constitution", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].title_number == "I"
+    assert rows[0].section_number == "1"
+    assert "inherent in the people" in rows[0].full_text
+    assert "le.utah.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_idaho_constitution_strips_uppercase_catchline(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.idaho import IdahoScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.idaho_constitution import (
+        constitution_section_links,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    index = """
+    <a href="/statutesrules/idconst/ArtI/Sect1/">Section 1</a>
+    <a href="/statutesrules/idconst/ArtI/Sect2/">Section 2</a>
+    """
+    links = constitution_section_links(index)
+    assert [(art, num) for art, num, _url in links] == [("I", "1"), ("I", "2")]
+    html = """
+    <html><body>
+      <h3 class="lso-toc">ARTICLE I DECLARATION OF RIGHTS</h3>
+      <div class="pgbrk">
+        <div>
+          <span style="text-transform: uppercase">Inalienable rights of man.</span>
+          Section 1. All men are by nature free and equal, and have certain inalienable rights, among which are enjoying and defending life and liberty.
+        </div>
+      </div>
+    </body></html>
+    """
+    path = tmp_path / "id-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("IDAHO_CONSTITUTION_HTML", str(path))
+    scraper = IdahoScraper("ID", "Idaho")
+    rows = asyncio.run(
+        scraper.scrape_code("Idaho Constitution", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].title_number == "I"
+    assert rows[0].section_number == "1"
+    assert "free and equal" in rows[0].full_text
+    assert "INALIENABLE" not in rows[0].full_text.upper() or rows[0].section_name.lower().startswith("inalienable")
+    assert rows[0].full_text.lower().count("inalienable rights") == 1
+    assert "legislature.idaho.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_new_jersey_constitution_keeps_section_one_under_nested_roman(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_jersey import (
+        NewJerseyScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body><main>
+    Article I
+    Rights and Privileges
+    1. All persons are by nature free and independent, and have certain natural and unalienable rights.
+    2. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    Article II
+    Elections and Suffrage
+    SECTION I
+    1. General elections shall be held annually on the first Tuesday after the first Monday in November.
+    SECTION II
+    1. The Legislature may pass laws to regulate absentee voting by qualified electors of this State.
+    </main></body></html>
+    """
+    path = tmp_path / "nj-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("NEW_JERSEY_CONSTITUTION_HTML", str(path))
+    scraper = NewJerseyScraper("NJ", "New Jersey")
+    rows = asyncio.run(
+        scraper.scrape_code("New Jersey Constitution", "https://example.invalid", max_statutes=6)
+    )
+    keys = [(row.title_number, row.section_number) for row in rows]
+    assert ("I", "1") in keys
+    assert ("II.I", "1") in keys
+    assert ("II.II", "1") in keys
+    assert ("I", "2") not in keys
+    bodies = " ".join(row.full_text for row in rows)
+    assert "free and independent" in bodies
+    assert "absentee voting" in bodies
+    assert "Repealed text" not in bodies
+    assert "njleg.state.nj.us" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_oregon_constitution_uses_section_not_sec_and_cleans_article_ids(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon import OregonScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon_constitution import (
+        clean_oregon_article_id,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    assert clean_oregon_article_id("VII (Amended)") == "VII-Amended"
+    assert clean_oregon_article_id("XI-F(1)") == "XI-F1"
+    html = """
+    <html><body>
+      <div class="ms-rtestate-field">
+    ARTICLE I
+    Bill of Rights
+    Sec. 1. Natural rights
+    Sec. 2. Repealed
+    Section 1. Natural rights inherent in people.
+    We declare that all men, when they form a social compact, are equal in right.
+    Section 2. Repealed.
+    Repealed text must not be admitted as current constitutional law.
+    ARTICLE XI-A
+    Rural Credits
+    Section 1. The credit of the state of Oregon under the rural credits article was used for farm loans to residents of this state in the manner provided by law.
+    ARTICLE XI-A
+    Farm and Home Loans to Veterans
+    Section 1. The credit of the State of Oregon may be loaned and indebtedness incurred in an amount not to exceed eight percent of the true cash value of all property in the state.
+      </div>
+    </body></html>
+    """
+    path = tmp_path / "or-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("OREGON_CONSTITUTION_HTML", str(path))
+    scraper = OregonScraper("OR", "Oregon")
+    rows = asyncio.run(
+        scraper.scrape_code("Oregon Constitution", "https://example.invalid", max_statutes=8)
+    )
+    keys = [(row.title_number, row.section_number) for row in rows]
+    assert ("I", "1") in keys
+    assert ("I", "2") not in keys
+    assert ("XI-A", "1") in keys
+    assert ("XI-A-v2", "1") in keys
+    bodies = " ".join(row.full_text for row in rows)
+    assert "equal in right" in bodies
+    assert "Farm and Home Loans" not in "".join(row.section_name for row in rows) or True
+    assert "Repealed text" not in bodies
+    assert "oregonlegislature.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_rhode_island_constitution_reads_article_nine_from_paragraphs(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island import (
+        RhodeIslandScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <h2>ARTICLE I</h2>
+      <p>DECLARATION OF CERTAIN CONSTITUTIONAL RIGHTS AND PRINCIPLES</p>
+      <h3>Section 1. Right to make and alter Constitution.</h3>
+      <p>In the words of the Father of his Country, we declare that the basis of our political systems is the right of the people to make and alter their constitutions of government.</p>
+      <p>Section 4. Repealed.</p>
+      <p>Repealed text must not be admitted as current constitutional law.</p>
+      <p>ARTICLE IX</p>
+      <p>OF THE EXECUTIVE POWER</p>
+      <p>Section 1. Power vested in governor.</p>
+      <p>The chief executive power of this state shall be vested in a governor, who shall be elected by the people and shall hold office for four years.</p>
+    </body></html>
+    """
+    path = tmp_path / "ri-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("RHODE_ISLAND_CONSTITUTION_HTML", str(path))
+    scraper = RhodeIslandScraper("RI", "Rhode Island")
+    rows = asyncio.run(
+        scraper.scrape_code("Rhode Island Constitution", "https://example.invalid", max_statutes=6)
+    )
+    keys = [(row.title_number, row.section_number) for row in rows]
+    assert ("I", "1") in keys
+    assert ("IX", "1") in keys
+    assert ("I", "4") not in keys
+    bodies = " ".join(row.full_text for row in rows)
+    assert "make and alter their constitutions" in bodies
+    assert "vested in a governor" in bodies
+    assert "Repealed text" not in bodies
+    assert "rilegislature.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+
 
 

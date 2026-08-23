@@ -195,6 +195,21 @@ class UtahScraper(BaseStateScraper):
             unbounded_full = False
 
         xml_budget = return_threshold if not unbounded_full else 1000000
+        from .utah_constitution import (
+            configured_constitution_html_path,
+            parse_utah_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_utah_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Utah Constitution",
+                    source_url="https://le.utah.gov/xcode/constitution.html",
+                    max_statutes=None if unbounded_full else return_threshold,
+                )
+                return constitution_rows if unbounded_full else constitution_rows[:return_threshold]
         local_xml = self._scrape_configured_title_xml(
             code_name,
             max_statutes=None if unbounded_full else max(10, int(xml_budget)),

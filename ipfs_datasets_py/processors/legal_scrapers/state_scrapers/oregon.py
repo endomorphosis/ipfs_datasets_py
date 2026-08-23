@@ -965,6 +965,21 @@ class OregonScraper(BaseStateScraper):
         def _bounded(rows: List[NormalizedStatute]) -> List[NormalizedStatute]:
             return rows if limit is None else rows[: int(limit)]
 
+        from .oregon_constitution import (
+            configured_constitution_html_path,
+            parse_oregon_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in lower_name:
+            if constitution_path is not None:
+                constitution_rows = parse_oregon_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Oregon Constitution",
+                    max_statutes=limit,
+                )
+                return _bounded(constitution_rows)
+
         if "local court rules" in lower_name or "/rules/pages/slr.aspx" in lower_url:
             self.logger.info("Oregon: using dedicated local-court-rules scraper path")
             statutes = await self._scrape_local_court_rules(code_name, code_url or LOCAL_RULES_INDEX_URL)
