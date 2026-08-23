@@ -1291,3 +1291,78 @@ def test_new_hampshire_codesect_drops_sourcenote(tmp_path: Path, monkeypatch) ->
     assert rows[0].section_number in {"630:1", "1"}
     assert "purposely causes the death" in rows[0].full_text
     assert "1971, 518:1" not in rows[0].full_text
+
+
+def test_georgia_archive_strips_nav_and_stays_recovery(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia import GeorgiaScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia_archive import (
+        official_title_frontier,
+        wayback_cdx_query_url,
+        wayback_identity_url,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    frontier = official_title_frontier()
+    assert len(frontier) == 53
+    assert frontier[0]["official_url"].startswith("https://www.legis.ga.gov/legislation/georgia-code/title-")
+    assert "id_/" in frontier[0]["wayback_url"]
+    assert "justia" not in frontier[0]["wayback_url"]
+    assert "web.archive.org/cdx/search/cdx" in wayback_cdx_query_url()
+    assert "id_/" in wayback_identity_url("https://www.legis.ga.gov/legislation/georgia-code/title-16")
+
+    html = """
+    <html><body>
+      <nav>Skip to main content Privacy Policy</nav>
+      <header>Georgia General Assembly sitemap</header>
+      <main>
+        <p>§ 16-5-1. Murder.</p>
+        <p>A person commits the offense of murder when he unlawfully and with malice aforethought, either express or implied, causes the death of another human being.</p>
+        <p>§ 16-5-2. Voluntary manslaughter. (Repealed)</p>
+        <p>Repealed text must not be admitted.</p>
+      </main>
+      <footer>Copyright © Footer navigation Cookie Policy</footer>
+    </body></html>
+    """
+    path = tmp_path / "title-16.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("GEORGIA_CHAPTER_HTML", str(path))
+    scraper = GeorgiaScraper("GA", "Georgia")
+    rows = asyncio.run(
+        scraper.scrape_code("Official Code of Georgia Annotated", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "16-5-1"
+    assert "malice aforethought" in rows[0].full_text
+    assert "skip to main" not in rows[0].full_text.lower()
+    assert "privacy policy" not in rows[0].full_text.lower()
+    assert "Repealed text" not in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "recovery"
+    assert "via_archive" in rows[0].structured_data["source_kind"]
+    assert "legis.ga.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+
+
+def test_arizona_content_sidebar_wrap(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arizona import ArizonaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <div class="content-sidebar-wrap">
+      <div class="first">
+        <p>13-1105 - First degree murder</p>
+        <p>A person commits first degree murder if intending or knowing that the person's conduct will cause death, the person causes the death of another person with premeditation.</p>
+      </div>
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "1105.htm"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("ARIZONA_SECTION_HTML", str(path))
+    scraper = ArizonaScraper("AZ", "Arizona")
+    rows = asyncio.run(
+        scraper.scrape_code("Arizona Revised Statutes", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "13-1105"
+    assert "premeditation" in rows[0].full_text

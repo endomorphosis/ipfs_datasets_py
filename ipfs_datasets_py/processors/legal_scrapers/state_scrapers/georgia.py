@@ -173,6 +173,11 @@ class GeorgiaScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape Georgia code from the official General Assembly HTML tree first."""
         limit = max(1, int(max_statutes)) if max_statutes else None
+        from .georgia_archive import parse_configured_georgia_archive
+
+        recovered = parse_configured_georgia_archive(code_name=code_name, max_statutes=limit)
+        if recovered:
+            return recovered if limit is None else recovered[: int(limit)]
         official = await self._scrape_official_georgia_code(
             code_name=code_name,
             code_url=code_url,
@@ -397,6 +402,33 @@ class GeorgiaScraper(BaseStateScraper):
             return None
         provider = str(getattr(self, "_last_fetch_provider", "") or "")
         authority, source_kind = self._classify_html_transport(provider)
+        from .georgia_archive import parse_georgia_archive_html
+
+        recovered_rows = parse_georgia_archive_html(
+            html, source_url=section_url, code_name=code_name, max_statutes=8
+        )
+        if recovered_rows:
+            wanted = str(section_label or "").strip()
+            row = next(
+                (
+                    candidate
+                    for candidate in recovered_rows
+                    if candidate.section_number == wanted
+                    or str(candidate.section_number or "") in section_url
+                ),
+                recovered_rows[0],
+            )
+            if authority == "official":
+                data = dict(row.structured_data or {})
+                data["source_authority_class"] = "official"
+                data["source_kind"] = "official_georgia_code_html"
+                data["discovery_method"] = "official_title_chapter_section_index"
+                row.structured_data = data
+            else:
+                data = dict(row.structured_data or {})
+                data["fetch_transport"] = provider or "archival_fallback"
+                row.structured_data = data
+            return row
         soup = BeautifulSoup(html, "html.parser")
         for node in soup(["script", "style", "noscript", "nav", "footer", "header"]):
             node.decompose()

@@ -182,6 +182,13 @@ class ArizonaScraper(BaseStateScraper):
         html = await self._fetch_official_az_html(section_url)
         if not html:
             return None
+        from .arizona_section import parse_arizona_section_html
+
+        parsed = parse_arizona_section_html(
+            html, source_url=section_url, code_name=code_name
+        )
+        if parsed is not None:
+            return parsed
         soup = BeautifulSoup(html, "html.parser")
         body = soup.find("body") or soup
         full_text = self._normalize_legal_text(body.get_text(" ", strip=True))
@@ -239,6 +246,17 @@ class ArizonaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=240)
+        from .arizona_section import configured_section_html_path, parse_arizona_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_arizona_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.azleg.gov/ars/13/01101.htm",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         statutes: List[NormalizedStatute] = []
         for section_url, section_number, section_title in await self._discover_section_links(code_url):
             if limit is not None and len(statutes) >= limit:
