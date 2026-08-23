@@ -2354,3 +2354,151 @@ def test_florida_constitution_skips_catchline_index_and_repealed(
     assert "justia" not in rows[0].source_url
     assert rows[0].structured_data["source_authority_class"] == "official"
 
+
+def test_illinois_constitution_keeps_decimal_section(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.illinois import IllinoisScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    ARTICLE I
+    BILL OF RIGHTS
+    SECTION 1. INHERENT AND INALIENABLE RIGHTS
+    All men are by nature free and independent and have certain inherent and inalienable rights.
+    SECTION 2. REPEALED
+    Repealed text must not be admitted as current constitutional law.
+    SECTION 8.1. CRIME VICTIMS' RIGHTS.
+    Crime victims, as defined by law, shall have the following rights: the right to be treated with fairness and respect for their dignity.
+    SECTION 9. BAIL AND HABEAS CORPUS
+    All persons shall be bailable by sufficient sureties, except for capital offenses and offenses for which a sentence of life imprisonment may be imposed.
+    </body></html>
+    """
+    path = tmp_path / "con1.htm"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("ILLINOIS_CONSTITUTION_HTML", str(path))
+    scraper = IllinoisScraper("IL", "Illinois")
+    rows = asyncio.run(
+        scraper.scrape_code("Illinois Constitution", "https://example.invalid", max_statutes=6)
+    )
+    assert [row.section_number for row in rows] == ["1", "8.1", "9"]
+    bodies = " ".join(row.full_text for row in rows)
+    assert "inherent and inalienable rights" in bodies
+    assert "treated with fairness and respect" in bodies
+    assert "Repealed text" not in bodies
+    assert "ilga.gov/commission/lrb" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_alabama_constitution_stops_before_local_provisions(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alabama import AlabamaScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alabama_constitution import (
+        constitution_article_groups,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alabama_section import (
+        parse_alabama_titles_blob,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    blob = (
+        "1†Article I Declaration of Rights∫"
+        "2†Section 1 Inherent political power∫"
+        "3†Section 2 Repealed∫"
+        "4†Article II State and County Boundaries∫"
+        "5†Section 37 Boundaries of the state∫"
+        "6†Title Jefferson County Local Provisions∫"
+        "7†Article 1 Local article that must not be admitted∫"
+        "8†Section 1 Local section that must not be admitted∫"
+    )
+    groups = constitution_article_groups(parse_alabama_titles_blob(blob))
+    assert [group["roman"] for group in groups] == ["I", "II"]
+    assert [sec[1] for group in groups for sec in group["sections"]] == ["1", "2", "37"]
+
+    titles_path = tmp_path / "al-const-titles.txt"
+    titles_path.write_text(blob, encoding="utf-8")
+    items_path = tmp_path / "al-const-items.json"
+    items_path.write_text(
+        """
+        [
+          {"codeId": "2", "content": "<p>All political power is inherent in the people, and all free governments are founded on their authority.</p>", "history": "(ratified January 6, 1999, as amendment 622)"},
+          {"codeId": "5", "content": "<p>The boundaries of this state are established as declared in the compact with Georgia, and shall not be altered except by compact.</p>"},
+          {"codeId": "8", "content": "<p>Local section body that must not be admitted as state constitutional law.</p>"}
+        ]
+        """,
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ALABAMA_CONSTITUTION_TITLES_TEXT", str(titles_path))
+    monkeypatch.setenv("ALABAMA_CONSTITUTION_ITEMS_JSON", str(items_path))
+    scraper = AlabamaScraper("AL", "Alabama")
+    rows = asyncio.run(
+        scraper.scrape_code("Alabama Constitution", "https://example.invalid", max_statutes=8)
+    )
+    numbers = [(row.title_number, row.section_number) for row in rows]
+    assert numbers == [("I", "1"), ("II", "37")]
+    bodies = " ".join(row.full_text for row in rows)
+    assert "inherent in the people" in bodies
+    assert "ratified January 6, 1999" in bodies
+    assert "Local section body" not in bodies
+    assert "alison.legislature.state.al.us" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_maryland_constitution_filters_statute_codes_and_decl_of_rights(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maryland import MarylandScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maryland_constitution import (
+        constitution_articles,
+        parse_get_next_envelope,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    assert parse_get_next_envelope('<string xmlns="http://schemas.microsoft.com/2003/10/Serialization/">2A</string>') == "2A"
+    assert parse_get_next_envelope("<string>null</string>") is None
+
+    toc = """
+    <select id="Articles">
+      <option value="gcr">Criminal Law - (gcr)</option>
+      <option value="c0">Declaration of Rights</option>
+      <option value="c1">I - Elective Franchise</option>
+      <option value="c11a">XI-A - Local Legislation</option>
+    </select>
+    """
+    articles = constitution_articles(toc)
+    assert [(code, art_id) for code, art_id, _title in articles] == [
+        ("c0", "DR"),
+        ("c1", "I"),
+        ("c11a", "XI-A"),
+    ]
+
+    html = """
+    <html><body>
+    <input type="hidden" name="article" value="c0" />
+    <input type="hidden" name="section" value="1" />
+    <div id="StatuteText">
+      § 1. That all Government of right originates from the People, is founded in compact only, and is instituted solely for the good of the whole.
+      <div class="row">chrome that must be dropped from the constitution body</div>
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "md-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MARYLAND_CONSTITUTION_HTML", str(path))
+    scraper = MarylandScraper("MD", "Maryland")
+    rows = asyncio.run(
+        scraper.scrape_code("Maryland Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].title_number == "DR"
+    assert rows[0].section_number == "1"
+    assert "Decl. of Rights" in rows[0].official_cite
+    assert "originates from the People" in rows[0].full_text
+    assert "chrome that must be dropped" not in rows[0].full_text
+    assert "mgaleg.maryland.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+

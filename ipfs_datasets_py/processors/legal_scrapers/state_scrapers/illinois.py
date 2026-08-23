@@ -81,6 +81,25 @@ class IllinoisScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape Illinois statutes through official Chapters -> Acts -> FullText pages."""
         limit = max(1, int(max_statutes)) if max_statutes else None
+        from .illinois_constitution import (
+            configured_constitution_html_dir,
+            configured_constitution_html_path,
+            parse_configured_illinois_constitution,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        constitution_dir = configured_constitution_html_dir()
+        if (
+            constitution_path is not None
+            or constitution_dir is not None
+            or "constitution" in str(code_name or "").lower()
+        ):
+            if constitution_path is not None or constitution_dir is not None:
+                constitution_rows = parse_configured_illinois_constitution(
+                    code_name=code_name or "Illinois Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         bulk = self._scrape_official_bulk_zip(code_name=code_name, max_statutes=limit)
         if bulk:
             return bulk

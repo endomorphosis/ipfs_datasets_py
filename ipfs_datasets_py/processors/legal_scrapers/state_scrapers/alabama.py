@@ -103,6 +103,19 @@ class AlabamaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .alabama_constitution import (
+            configured_constitution_titles_path,
+            parse_configured_alabama_constitution,
+        )
+
+        constitution_path = configured_constitution_titles_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_configured_alabama_constitution(
+                    code_name=code_name or "Alabama Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .alabama_section import parse_configured_alabama
 
         local_rows = parse_configured_alabama(code_name=code_name, max_statutes=limit)
