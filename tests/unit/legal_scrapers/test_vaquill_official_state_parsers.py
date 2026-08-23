@@ -5467,6 +5467,63 @@ def test_va_tx_ny_mi_nv_listing_dumps(tmp_path: Path, monkeypatch) -> None:
     assert parse_configured_index_html()[0][0] == "200"
 
 
+def test_or_az_ar_ma_ks_listing_dumps(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arizona_section import (
+        parse_configured_toc_html as parse_arizona_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arkansas_section import (
+        parse_configured_toc_html as parse_arkansas_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kansas_section import (
+        parse_configured_statute_table_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.massachusetts_section import (
+        parse_configured_toc_html as parse_massachusetts_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon_chapter import (
+        parse_configured_index_html,
+    )
+
+    oregon = tmp_path / "ors.html"
+    oregon.write_text(
+        '<a href="ors163.html">Chapter 163 Offenses Against Persons</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("OREGON_ORS_INDEX_HTML", str(oregon))
+    assert parse_configured_index_html()[0][0] == "163"
+
+    az = tmp_path / "az.html"
+    az.write_text('<a href="/arsDetail/?title=13">Title 13</a>', encoding="utf-8")
+    monkeypatch.setenv("ARIZONA_TOC_HTML", str(az))
+    assert parse_arizona_toc()[0][0] == "13"
+
+    ar = tmp_path / "ar.html"
+    ar.write_text(
+        '<a href="/ArkansasCode/?title=5">Title 5 Criminal Offenses</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ARKANSAS_TOC_HTML", str(ar))
+    assert parse_arkansas_toc()[0][0] == "5"
+
+    ma = tmp_path / "ma.html"
+    ma.write_text(
+        '<a href="#titleI" onclick="accordionAjaxLoad(\'1\', \'1\', \'I\')">Title I</a>'
+        '<a href="#titleI" onclick="accordionAjaxLoad(\'1\', \'1\', \'I\')">Jurisdiction</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MASSACHUSETTS_TOC_HTML", str(ma))
+    assert parse_massachusetts_toc()[0][:3] == ("1", "1", "I")
+
+    ks = tmp_path / "ks.html"
+    ks.write_text(
+        '<table id="statute"><tr><td><a href="021_000_0000_chapter/">Chapter 21</a></td>'
+        "<td>Crimes and Punishments</td></tr></table>",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KANSAS_STATUTE_TABLE_HTML", str(ks))
+    assert parse_configured_statute_table_html()[0][0] == "21"
+
+
 
 
 

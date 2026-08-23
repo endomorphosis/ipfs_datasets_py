@@ -148,6 +148,21 @@ def configured_chapter_html_path() -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def configured_index_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("OREGON_ORS_INDEX_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_index_html() -> List[Tuple[str, str, str]]:
+    path = configured_index_html_path()
+    if path is None:
+        return []
+    return ors_chapter_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def ors_chapter_links(html: str, *, base_url: str = f"{BASE}/bills_laws/ors/") -> List[Tuple[str, str, str]]:
     """Index ``ors163.html`` / ``ors163a.html`` chapter rows."""
 
