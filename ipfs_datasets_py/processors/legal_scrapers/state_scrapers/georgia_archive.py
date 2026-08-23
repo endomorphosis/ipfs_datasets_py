@@ -59,6 +59,12 @@ def official_title_url(title_number: str) -> str:
     return f"{OFFICIAL_CODE_ROOT}/title-{title_number}"
 
 
+def official_hyphen_title_url(title_number: str) -> str:
+    """Alternate legis.ga.gov title URL seen in Wayback CDX (Title 40, 2025-04-14)."""
+
+    return f"https://{OFFICIAL_HOST}/legislation/georgia-code-title-{title_number}"
+
+
 def official_section_url(section_number: str) -> str:
     parts = str(section_number or "").split("-")
     title = parts[0] if parts else ""
@@ -98,11 +104,14 @@ def official_title_frontier() -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for number in TITLE_NUMBERS:
         official = official_title_url(number)
+        hyphen = official_hyphen_title_url(number)
         rows.append(
             {
                 "title_number": number,
                 "official_url": official,
+                "hyphen_url": hyphen,
                 "wayback_url": wayback_identity_url(official),
+                "wayback_hyphen_url": wayback_identity_url(hyphen, timestamp="20250414215500"),
                 "archive_is_url": archive_is_url(official),
                 "source_authority_class": "recovery",
             }
