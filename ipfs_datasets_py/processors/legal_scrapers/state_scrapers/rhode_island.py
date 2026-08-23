@@ -224,29 +224,47 @@ class RhodeIslandScraper(BaseStateScraper):
                     "codes_total": 1,
                 },
             )
-            for title_num in range(1, max_title + 1):
+            from .rhode_island_section import (
+                chapter_section_links,
+                title_chapter_links,
+                toc_title_links,
+            )
+
+            title_entries: List[tuple[str, str]] = []
+            root_bytes = await self._fetch_page_content_with_archival_fallback(
+                f"{self.get_base_url()}/Statutes/", timeout_seconds=30
+            )
+            if root_bytes:
+                title_entries = toc_title_links(
+                    root_bytes.decode("utf-8", errors="replace"),
+                    base_url=f"{self.get_base_url()}/Statutes/",
+                )
+            if not title_entries:
+                title_entries = [
+                    (_TITLE_INDEX_URL_TEMPLATE.format(title=number), str(number))
+                    for number, _name in self.OFFICIAL_TITLES
+                ]
+            for title_index, (title_url, title_number) in enumerate(title_entries, start=1):
+                title_num = int(title_number) if str(title_number).isdigit() else title_index
                 if max_sections is not None and len(statutes) >= max_sections:
                     break
-                if title_num < resume_title_floor:
+                if title_num < resume_title_floor and str(title_number).isdigit():
                     continue
 
-                title_url = _TITLE_INDEX_URL_TEMPLATE.format(title=title_num)
                 title_bytes = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=30)
                 title_html = title_bytes.decode("utf-8", errors="replace") if title_bytes else ""
                 if not title_html or "Document Moved" in title_html or "404" in title_html[:200]:
                     consecutive_missing_titles += 1
-                    if consecutive_missing_titles >= 5 and title_num > 47:
+                    if consecutive_missing_titles >= 5 and title_index > 47:
                         break
                     continue
                 consecutive_missing_titles = 0
-                last_title_scanned = max(last_title_scanned, int(title_num))
+                last_title_scanned = max(last_title_scanned, int(title_num) if str(title_num).isdigit() else title_index)
 
-                title_soup = BeautifulSoup(title_html, "html.parser")
-                chapter_links = []
-                for link in title_soup.find_all("a", href=True):
-                    full_url = urljoin(title_url, str(link.get("href") or ""))
-                    if _TITLE_LINK_RE.search(full_url):
-                        chapter_links.append((link, full_url))
+                chapter_links = [
+                    (None, url, number)
+                    for url, number in title_chapter_links(title_html, title_url=title_url)
+                ]
                 self._write_partial_checkpoint(
                     statutes,
                     code_name=code_name,
@@ -263,7 +281,7 @@ class RhodeIslandScraper(BaseStateScraper):
                     },
                 )
 
-                for link, chapter_url in chapter_links:
+                for _link, chapter_url, chapter_token in chapter_links:
                     if max_sections is not None and len(statutes) >= max_sections:
                         break
 
@@ -274,20 +292,22 @@ class RhodeIslandScraper(BaseStateScraper):
                     chapter_bytes = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=30)
                     if not chapter_bytes:
                         continue
-                    chapter_soup = BeautifulSoup(chapter_bytes, "html.parser")
-                    chapter_name = link.get_text(" ", strip=True) or ""
+                    chapter_html = chapter_bytes.decode("utf-8", errors="replace")
+                    chapter_name = chapter_token or ""
                     legal_area = self._identify_legal_area(chapter_name or code_name)
                     section_candidates = []
                     seen_chapter_sections = set()
-                    chapter_number = self._extract_ri_chapter_number(chapter_url)
-                    for section_link in chapter_soup.find_all("a", href=True):
-                        section_url = urljoin(chapter_url, str(section_link.get("href") or ""))
+                    chapter_number = (
+                        self._extract_ri_chapter_number(chapter_url) or chapter_token
+                    )
+                    for section_url, section_label in chapter_section_links(
+                        chapter_html, chapter_url=chapter_url
+                    ):
                         if section_url in seen_urls or section_url in seen_chapter_sections:
                             continue
-                        if not _SECTION_LINK_RE.search(section_url):
-                            continue
-                        section_label = section_link.get_text(" ", strip=True)
-                        section_number = self._extract_ri_section_number(section_label, section_url)
+                        section_number = self._extract_ri_section_number(
+                            section_label, section_url
+                        ) or re.sub(r"\.htm$", "", section_url.rsplit("/", 1)[-1], flags=re.IGNORECASE)
                         if not section_number:
                             continue
                         seen_chapter_sections.add(section_url)

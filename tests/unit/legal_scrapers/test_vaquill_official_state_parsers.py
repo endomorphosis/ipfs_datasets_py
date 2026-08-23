@@ -1238,6 +1238,34 @@ def test_vermont_statutes_detail_splits_added_history(tmp_path: Path, monkeypatc
     assert "Added 1971" not in rows[0].full_text
 
 
+def test_vermont_title_chapter_subchapter_listings() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.vermont_section import (
+        chapter_links,
+        section_links,
+        subchapter_links,
+        title_links,
+    )
+
+    titles = title_links(
+        '<ul class="statutes-list"><li><a href="statutes/title/13">Title 13</a></li>'
+        '<li><a href="/statutes/title/12A">Title 12A</a></li></ul>'
+    )
+    assert [number for _url, number in titles] == ["13", "12A"]
+    chapters = chapter_links(
+        '<a href="/statutes/chapter/13/053">Chapter 53</a>'
+        '<a href="/statutes/chapter/13/053A">Chapter 53A</a>'
+    )
+    assert [number for _url, number in chapters] == ["53", "53A"]
+    subs = subchapter_links(
+        '<a href="/statutes/subchapter/13/053/001">Subchapter 1</a>'
+    )
+    assert subs[0][0].endswith("/statutes/subchapter/13/053/001")
+    sections = section_links(
+        '<a href="/statutes/section/13/053/02301">§ 2301</a>'
+    )
+    assert sections[0][0].endswith("/statutes/section/13/053/02301")
+
+
 def test_rhode_island_content_div_drops_history(tmp_path: Path, monkeypatch) -> None:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island import (
         RhodeIslandScraper,
@@ -1267,6 +1295,35 @@ def test_rhode_island_content_div_drops_history(tmp_path: Path, monkeypatch) -> 
     assert "malice aforethought" in rows[0].full_text
     assert "History of Section" not in rows[0].full_text
     assert "P.L. 1909" not in rows[0].full_text
+
+
+def test_rhode_island_toc_includes_alpha_titles_and_decimal_sections() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island_section import (
+        chapter_section_links,
+        title_chapter_links,
+        toc_title_links,
+    )
+
+    titles = toc_title_links(
+        '<a href="TITLE6A/INDEX.HTM"><b> TITLE 6A  Uniform Commercial Code </b></a>'
+        '<a href="TITLE11/INDEX.HTM"><b> TITLE 11  Criminal Offenses </b></a>'
+    )
+    assert [number for _url, number in titles] == ["6A", "11"]
+    chapters = title_chapter_links(
+        '<p><a href="11-23/INDEX.htm">Chapter 11-23</a></p>',
+        title_url="https://webserver.rilegislature.gov/Statutes/TITLE11/INDEX.HTM",
+    )
+    assert chapters[0][1] == "11-23"
+    assert chapters[0][0].endswith("/TITLE11/11-23/INDEX.htm")
+    sections = chapter_section_links(
+        '<a href="11-23-1.htm">§ 11-23-1</a><a href="11-23-1.1.htm">§ 11-23-1.1</a>'
+        '<a href="INDEX.htm">index</a>',
+        chapter_url="https://webserver.rilegislature.gov/Statutes/TITLE11/11-23/INDEX.htm",
+    )
+    assert [url.rsplit("/", 1)[-1] for url, _name in sections] == [
+        "11-23-1.htm",
+        "11-23-1.1.htm",
+    ]
 
 
 def test_south_carolina_section_walk_drops_history_and_repealed(tmp_path: Path, monkeypatch) -> None:

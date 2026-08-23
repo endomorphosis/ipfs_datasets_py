@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -23,6 +23,14 @@ _RESERVED = re.compile(
 )
 _SECTION_URL_RE = re.compile(
     r"/statutes/section/(?P<title>[\w.\-]+)/(?P<chapter>[\w.\-]+)/(?P<section>[\w.\-]+)/?$",
+    re.IGNORECASE,
+)
+_TITLE_HREF_RE = re.compile(r"(?:^|/)statutes/title/([\w.\-]+)/?$", re.IGNORECASE)
+_CHAPTER_HREF_RE = re.compile(
+    r"(?:^|/)statutes/chapter/([\w.\-]+)/([\w.\-]+)/?$", re.IGNORECASE
+)
+_SUBCHAPTER_HREF_RE = re.compile(
+    r"(?:^|/)statutes/(subchapter|article)/([\w.\-]+)/([\w.\-]+)/([\w.\-]+)/?$",
     re.IGNORECASE,
 )
 _HEAD_RE = re.compile(r"§\s*(?P<num>[0-9A-Za-z.-]+)\.\s*(?P<head>.+)")
@@ -116,3 +124,110 @@ def configured_section_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def _absolute(href: str, *, base_url: str = BASE) -> str:
+    token = str(href or "").strip()
+    if token.startswith("http"):
+        return token
+    if token.startswith("/"):
+        return f"{base_url}{token}"
+    return f"{base_url.rstrip('/')}/{token.lstrip('/')}"
+
+
+def title_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str]]:
+    """Title URLs from ``ul.statutes-list`` (relative ``statutes/title/01`` included)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    toc = soup.find("ul", class_="statutes-list") or soup
+    out: List[Tuple[str, str]] = []
+    seen = set()
+    for anchor in toc.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _TITLE_HREF_RE.search(href.replace("\\", "/"))
+        if not match:
+            continue
+        number = _normalise_number(match.group(1))
+        url = _absolute(href, base_url=base_url).rstrip("/")
+        if url in seen:
+            continue
+        seen.add(url)
+        out.append((url, number))
+    return out
+
+
+def chapter_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str]]:
+    """Chapter URLs ``/statutes/chapter/{title}/{chapter}``."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _CHAPTER_HREF_RE.search(href.replace("\\", "/"))
+        if not match:
+            continue
+        number = _normalise_number(match.group(2))
+        url = _absolute(href, base_url=base_url).rstrip("/")
+        if url in seen:
+            continue
+        seen.add(url)
+        out.append((url, number))
+    return out
+
+
+def subchapter_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str]]:
+    """Subchapter/article URLs nested under a chapter."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _SUBCHAPTER_HREF_RE.search(href.replace("\\", "/"))
+        if not match:
+            continue
+        number = _normalise_number(match.group(4))
+        url = _absolute(href, base_url=base_url).rstrip("/")
+        if url in seen:
+            continue
+        seen.add(url)
+        out.append((url, number))
+    return out
+
+
+def section_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str]]:
+    """Section URLs ``/statutes/section/{title}/{chapter}/{section}``."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _SECTION_URL_RE.search(href.replace("\\", "/"))
+        if not match:
+            continue
+        number = _normalise_number(match.group("section"))
+        url = _absolute(href, base_url=base_url).rstrip("/")
+        if url in seen:
+            continue
+        seen.add(url)
+        name = _clean(anchor.get_text(" "))
+        out.append((url, name or number))
+    return out

@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -108,3 +108,89 @@ def configured_section_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+_TOC_TITLE_RE = re.compile(r"^TITLE([\w.\-]+)/INDEX\.HTM$", re.IGNORECASE)
+_TITLE_CHAPTER_RE = re.compile(r"^([\w.\-]+)/INDEX\.HTM$", re.IGNORECASE)
+_CHAPTER_SECTION_RE = re.compile(r"^([\w.\-]+)\.htm$", re.IGNORECASE)
+
+
+def toc_title_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str]]:
+    """Master TOC ``TITLE{N}/INDEX.HTM`` links, including TITLE6A."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    from urllib.parse import urljoin
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _TOC_TITLE_RE.match(href)
+        if not match:
+            continue
+        number = match.group(1)
+        if number.isdigit():
+            number = str(int(number))
+        url = urljoin(base_url.rstrip("/") + "/", href)
+        if url in seen:
+            continue
+        seen.add(url)
+        out.append((url, number))
+    return out
+
+
+def title_chapter_links(html: str, *, title_url: str) -> List[Tuple[str, str]]:
+    """Chapter index links ``{N}-{M}/INDEX.htm`` from a title page."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    from urllib.parse import urljoin
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _TITLE_CHAPTER_RE.match(href)
+        if not match:
+            continue
+        number = match.group(1)
+        url = urljoin(title_url, href)
+        if url in seen:
+            continue
+        seen.add(url)
+        out.append((url, number))
+    return out
+
+
+def chapter_section_links(html: str, *, chapter_url: str) -> List[Tuple[str, str]]:
+    """Section files including decimal stems like ``1-2-1.1.htm``."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    from urllib.parse import urljoin
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _CHAPTER_SECTION_RE.match(href)
+        if not match or href.upper() == "INDEX.HTM":
+            continue
+        number = re.sub(r"\.htm$", "", href, flags=re.IGNORECASE)
+        url = urljoin(chapter_url, href)
+        if url in seen:
+            continue
+        seen.add(url)
+        name = _clean(anchor.get_text(" "))
+        out.append((url, name or number))
+    return out

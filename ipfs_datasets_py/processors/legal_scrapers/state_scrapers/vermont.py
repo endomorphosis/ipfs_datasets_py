@@ -254,12 +254,22 @@ class VermontScraper(BaseStateScraper):
         payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=20)
         if not payload:
             return []
+        html = (
+            payload.decode("utf-8", errors="replace")
+            if isinstance(payload, (bytes, bytearray))
+            else str(payload)
+        )
+        from .vermont_section import title_links
+
+        listed = title_links(html, base_url=self.get_base_url())
+        if listed:
+            return [(url, number) for url, number in listed]
         soup = BeautifulSoup(payload, "html.parser")
-        out: List[Tuple[str, str]] = []
+        out = []
         seen: set[str] = set()
         for anchor in soup.find_all("a", href=True):
             href = urljoin(f"{self.get_base_url()}/", str(anchor.get("href") or "").strip())
-            if not re.search(r"/statutes/title/[0-9A-Za-z]+/?$", href):
+            if not re.search(r"/statutes/title/[\w.\-]+/?$", href):
                 continue
             normalized = href.rstrip("/")
             if normalized in seen:
@@ -277,12 +287,22 @@ class VermontScraper(BaseStateScraper):
         payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=20)
         if not payload:
             return []
+        html = (
+            payload.decode("utf-8", errors="replace")
+            if isinstance(payload, (bytes, bytearray))
+            else str(payload)
+        )
+        from .vermont_section import chapter_links
+
+        listed = chapter_links(html, base_url=self.get_base_url())
+        if listed:
+            return [(url, number) for url, number in listed]
         soup = BeautifulSoup(payload, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
         for anchor in soup.find_all("a", href=True):
             href = urljoin(f"{self.get_base_url()}/", str(anchor.get("href") or "").strip())
-            if not re.search(r"/statutes/chapter/[0-9A-Za-z]+/[0-9A-Za-z]+/?$", href):
+            if not re.search(r"/statutes/chapter/[\w.\-]+/[\w.\-]+/?$", href):
                 continue
             normalized = href.rstrip("/")
             if normalized in seen:
@@ -300,12 +320,42 @@ class VermontScraper(BaseStateScraper):
         payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
         if not payload:
             return []
-        soup = BeautifulSoup(payload, "html.parser")
+        html = (
+            payload.decode("utf-8", errors="replace")
+            if isinstance(payload, (bytes, bytearray))
+            else str(payload)
+        )
+        from .vermont_section import section_links, subchapter_links
+
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
+        for url, name in section_links(html, base_url=self.get_base_url()):
+            if url in seen:
+                continue
+            seen.add(url)
+            out.append((url, name))
+        for sub_url, _number in subchapter_links(html, base_url=self.get_base_url()):
+            sub_payload = await self._fetch_page_content_with_archival_fallback(
+                sub_url, timeout_seconds=20
+            )
+            if not sub_payload:
+                continue
+            sub_html = (
+                sub_payload.decode("utf-8", errors="replace")
+                if isinstance(sub_payload, (bytes, bytearray))
+                else str(sub_payload)
+            )
+            for url, name in section_links(sub_html, base_url=self.get_base_url()):
+                if url in seen:
+                    continue
+                seen.add(url)
+                out.append((url, name))
+        if out:
+            return out
+        soup = BeautifulSoup(payload, "html.parser")
         for anchor in soup.find_all("a", href=True):
             href = urljoin(f"{self.get_base_url()}/", str(anchor.get("href") or "").strip())
-            if not re.search(r"/statutes/section/[0-9A-Za-z]+/[0-9A-Za-z]+/[0-9A-Za-z]+/?$", href):
+            if not re.search(r"/statutes/section/[\w.\-]+/[\w.\-]+/[\w.\-]+/?$", href):
                 continue
             normalized = href.rstrip("/")
             if normalized in seen:
