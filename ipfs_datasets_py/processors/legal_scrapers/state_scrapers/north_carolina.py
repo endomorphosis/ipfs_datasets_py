@@ -321,6 +321,19 @@ class NorthCarolinaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        from .north_carolina_chapter import configured_chapter_html_path, parse_north_carolina_chapter_html
+
+        chapter_path = configured_chapter_html_path()
+        if chapter_path is not None:
+            chapter_token = chapter_path.stem.replace("Chapter_", "").replace("chapter_", "")
+            bulk = parse_north_carolina_chapter_html(
+                chapter_path.read_text(encoding="utf-8", errors="replace"),
+                chapter=chapter_token or "14",
+                code_name=code_name,
+                max_statutes=max_statutes,
+            )
+            if bulk:
+                return bulk
         return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
         official = await self._scrape_official_index(
             code_name,
@@ -570,6 +583,18 @@ class NorthCarolinaScraper(BaseStateScraper):
                 return None
             provider = str(getattr(self, "_last_fetch_provider", "") or "")
             authority, source_kind = self._classify_html_transport(provider)
+            if self._NC_CHAPTER_BYCHAPTER_RE.search(source_url):
+                from .north_carolina_chapter import parse_north_carolina_chapter_html
+
+                chapter = self._NC_CHAPTER_BYCHAPTER_RE.search(source_url).group(1)
+                chapter_rows = parse_north_carolina_chapter_html(
+                    html,
+                    chapter=chapter,
+                    code_name=code_name,
+                    max_statutes=1,
+                )
+                if chapter_rows:
+                    return chapter_rows[0]
             soup = BeautifulSoup(html, "html.parser")
             for tag in soup(["script", "style", "nav", "header", "footer"]):
                 tag.decompose()

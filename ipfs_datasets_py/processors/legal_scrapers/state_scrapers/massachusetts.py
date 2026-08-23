@@ -105,6 +105,17 @@ class MassachusettsScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        from .massachusetts_section import configured_section_html_path, parse_massachusetts_section_html
+
+        html_path = configured_section_html_path()
+        if html_path is not None:
+            parsed = parse_massachusetts_section_html(
+                html_path.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://malegislature.gov/Laws/GeneralLaws/PartIV/TitleI/Chapter265/Section1",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/Laws/GeneralLaws/PartI",
@@ -288,6 +299,11 @@ class MassachusettsScraper(BaseStateScraper):
         html = await self._request_text_direct(section_url, timeout=20)
         if not html:
             return None
+        from .massachusetts_section import parse_massachusetts_section_html
+
+        parsed = parse_massachusetts_section_html(html, source_url=section_url, code_name=code_name)
+        if parsed is not None:
+            return parsed
         soup = BeautifulSoup(html, "html.parser")
 
         heading = soup.select_one("h2.genLawHeading")

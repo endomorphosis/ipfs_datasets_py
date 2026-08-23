@@ -135,6 +135,23 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
         generic scrapers remain offline/fallback paths only.
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .district_of_columbia_xml import (
+            configured_section_xml_path,
+            configured_xml_dir,
+            parse_dc_section_xml,
+            parse_dc_xml_dir,
+        )
+
+        xml_file = configured_section_xml_path()
+        if xml_file is not None:
+            row = parse_dc_section_xml(xml_file.read_bytes(), code_name=code_name)
+            if row is not None:
+                return [row]
+        xml_dir = configured_xml_dir()
+        if xml_dir is not None:
+            bulk = parse_dc_xml_dir(xml_dir, code_name=code_name, max_statutes=limit)
+            if bulk:
+                return bulk
         seed_statutes: List[NormalizedStatute] = []
 
         # Bounded probes may gather direct seeds; full-corpus never sole-admits seeds.

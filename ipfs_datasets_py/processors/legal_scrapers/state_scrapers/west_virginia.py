@@ -223,6 +223,17 @@ class WestVirginiaScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .west_virginia_dump import configured_code_html_path, parse_west_virginia_code_html
+
+        dump_path = configured_code_html_path()
+        if dump_path is not None:
+            bulk = parse_west_virginia_code_html(
+                dump_path.read_text(encoding="utf-8", errors="replace"),
+                code_name=code_name,
+                max_statutes=limit,
+            )
+            if bulk:
+                return bulk
         if not self._full_corpus_enabled() and max_statutes is None:
             seed_budget = int(limit if limit is not None else 160)
             direct = await self._scrape_direct_seed_sections(

@@ -625,3 +625,106 @@ Murder.
     assert "intentional killing" in rows[0].full_text
 
 
+def test_dc_council_section_xml(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.district_of_columbia import (
+        DistrictOfColumbiaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    xml = """
+    <section xmlns="https://code.dccouncil.us/schemas/dc-library">
+      <num>22-2101</num>
+      <heading>Murder in the first degree.</heading>
+      <text>Whoever, being of sound memory and discretion, kills another with malice aforethought is guilty of murder in the first degree.</text>
+      <para><num>(a)</num><text>The penalty shall be imprisonment for life.</text></para>
+    </section>
+    """
+    path = tmp_path / "22-2101.xml"
+    path.write_text(xml, encoding="utf-8")
+    monkeypatch.setenv("DC_CODE_SECTION_XML", str(path))
+    scraper = DistrictOfColumbiaScraper("DC", "District of Columbia")
+    rows = asyncio.run(scraper.scrape_code("District of Columbia Code", "https://example.invalid", max_statutes=2))
+    assert len(rows) == 1
+    assert rows[0].section_number == "22-2101"
+    assert "malice aforethought" in rows[0].full_text
+    assert "(a) The penalty shall be imprisonment" in rows[0].full_text
+
+
+def test_massachusetts_content_div_drops_nav(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.massachusetts import (
+        MassachusettsScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <p>Skip to main content</p>
+    <h2 class="genLawHeading">Murder defined</h2>
+    <div class="content">
+      <p>Murder is the killing of a human being with malice aforethought.</p>
+      <p>(Added by St.1899, c. 1.)</p>
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "section.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MASSACHUSETTS_SECTION_HTML", str(path))
+    scraper = MassachusettsScraper("MA", "Massachusetts")
+    rows = asyncio.run(
+        scraper.scrape_code("Massachusetts General Laws", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert "malice aforethought" in rows[0].full_text
+    assert "Skip to main" not in rows[0].full_text
+    assert "Added by St." not in rows[0].full_text
+
+
+def test_north_carolina_bychapter_strips_nav(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <nav>Skip to main content Privacy Policy</nav>
+    <p>§ 14-17. Murder in the first and second degree.</p>
+    <p>A murder which shall be perpetrated by means of poison, lying in wait, or other kind of willful, deliberate, and premeditated killing shall be murder in the first degree.</p>
+    <footer>Copyright © North Carolina General Assembly sitemap</footer>
+    </body></html>
+    """
+    path = tmp_path / "Chapter_14.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("NORTH_CAROLINA_CHAPTER_HTML", str(path))
+    scraper = NorthCarolinaScraper("NC", "North Carolina")
+    rows = asyncio.run(
+        scraper.scrape_code("North Carolina General Statutes", "https://example.invalid", max_statutes=3)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "14-17"
+    assert "poison, lying in wait" in rows[0].full_text
+    assert "skip to main" not in rows[0].full_text.lower()
+    assert "privacy policy" not in rows[0].full_text.lower()
+
+
+def test_west_virginia_code_dump(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.west_virginia import (
+        WestVirginiaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <p>§61-2-1. First and second degree murder defined.</p>
+    <p>Murder by poison, lying in wait, imprisonment, starving, or by any willful, deliberate and premeditated killing, is murder of the first degree.</p>
+    """
+    path = tmp_path / "wvcodeentire.htm"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("WEST_VIRGINIA_CODE_HTML", str(path))
+    scraper = WestVirginiaScraper("WV", "West Virginia")
+    rows = asyncio.run(scraper.scrape_code("West Virginia Code", "https://example.invalid", max_statutes=2))
+    assert len(rows) == 1
+    assert rows[0].section_number == "61-2-1"
+    assert "willful, deliberate and premeditated" in rows[0].full_text
+
+
+
