@@ -1,36 +1,27 @@
 """Security package for ipfs_datasets_py.
 
-EAAEF-122 session-poisoning detectors live here.  Unknown names are forwarded
-lazily to the historical ``security.py`` module so ``SecurityManager`` imports
-keep working after this package shadowed that module path.
+EAAEF-122 session-poisoning detectors live here. Unknown names are forwarded
+to the preserved historical module so ``SecurityManager`` imports keep working
+after this package replaced that module path.
 """
 
 from __future__ import annotations
 
-from importlib.util import module_from_spec, spec_from_file_location
-from pathlib import Path
 from typing import Any
 
+from . import _compat as _LEGACY_MODULE
 from .external_session_poisoning import (
     SessionPoisoningError,
     inspect_imported_session,
 )
 
 __all__ = ("SessionPoisoningError", "inspect_imported_session")
-
-_LEGACY_MODULE: Any = None
+__all__ += tuple(
+    name for name in vars(_LEGACY_MODULE) if not name.startswith("_") and name not in __all__
+)
 
 
 def _legacy() -> Any:
-    global _LEGACY_MODULE
-    if _LEGACY_MODULE is None:
-        path = Path(__file__).resolve().parent.parent / "security.py"
-        spec = spec_from_file_location("ipfs_datasets_py._legacy_security_module", path)
-        if spec is None or spec.loader is None:
-            raise ImportError("legacy ipfs_datasets_py.security module is absent")
-        module = module_from_spec(spec)
-        spec.loader.exec_module(module)
-        _LEGACY_MODULE = module
     return _LEGACY_MODULE
 
 

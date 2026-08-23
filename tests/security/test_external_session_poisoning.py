@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
+import ipfs_datasets_py.security as security_package
 import pytest
-
+from ipfs_datasets_py.security import SecurityManager
+from ipfs_datasets_py.security import _compat as legacy_security
 from ipfs_datasets_py.security.external_session_poisoning import (
     SessionPoisoningError,
     inspect_imported_session,
 )
+
+
+def test_security_package_preserves_legacy_module_exports() -> None:
+    assert SecurityManager is legacy_security.SecurityManager
+    assert security_package.SecurityManager is legacy_security.SecurityManager
+    assert "SecurityManager" in security_package.__all__
+    assert "SecurityManager" in dir(security_package)
 
 
 def test_clean_session_is_admitted() -> None:
