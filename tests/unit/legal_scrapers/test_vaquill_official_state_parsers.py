@@ -894,3 +894,140 @@ def test_kansas_statute_body_drops_history_table(tmp_path: Path, monkeypatch) ->
     assert "intentionally and with premeditation" in rows[0].full_text
     assert "History:" not in rows[0].full_text
     assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_alaska_statute_div_drops_heading_and_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alaska import AlaskaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <div class="statute">
+      <b>Sec. 11.41.100. Murder in the first degree.</b><br><br>
+      (a) A person commits the crime of murder in the first degree if the person with intent to cause the death of another person causes the death of any person.
+    </div>
+    <div class="statute">
+      <b>Sec. 11.41.101. [Repealed, Sec. 1 ch 1 SLA 2000].</b>
+      Repealed text must not be admitted as current law.
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "print.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("ALASKA_SECTION_HTML", str(path))
+    scraper = AlaskaScraper("AK", "Alaska")
+    rows = asyncio.run(scraper.scrape_code("Alaska Statutes", "https://example.invalid", max_statutes=3))
+    assert len(rows) == 1
+    assert rows[0].section_number == "11.41.100"
+    assert "intent to cause the death" in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+
+
+def test_delaware_section_div_drops_history_and_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.delaware import DelawareScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body><div id="CodeBody">
+      <div class="Section">
+        <div class="SectionHead" id="635">§ 635. Murder in the first degree; class A felony.</div>
+        <p>A person is guilty of murder in the first degree when the person intentionally causes the death of another person.</p>
+        <a href="#">70 Del. Laws, c. 186, § 1;</a>
+      </div>
+      <div class="Section">
+        <div class="SectionHead" id="636">§ 636. Murder in the second degree [Repealed].</div>
+        <p>Repealed text must not be admitted as current law.</p>
+      </div>
+    </div></body></html>
+    """
+    path = tmp_path / "c005.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("DELAWARE_CHAPTER_HTML", str(path))
+    scraper = DelawareScraper("DE", "Delaware")
+    rows = asyncio.run(scraper.scrape_code("Delaware Code", "https://example.invalid", max_statutes=4))
+    assert len(rows) == 1
+    assert rows[0].section_number == "635"
+    assert "intentionally causes the death" in rows[0].full_text
+    assert "70 Del. Laws" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+
+
+def test_oklahoma_complete_title_text_skips_history_and_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import OklahomaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+Oklahoma Statutes Title 21
+§21-701.7. Murder in the first degree.
+A person commits murder in the first degree when that person unlawfully and with malice aforethought causes the death of another human being.
+Laws 1976, c. 1, § 1.
+§21-701.8. Murder in the second degree (Repealed).
+Repealed text must not be admitted.
+"""
+    path = tmp_path / "os21.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("OKLAHOMA_TITLE_TEXT", str(path))
+    scraper = OklahomaScraper("OK", "Oklahoma")
+    rows = asyncio.run(scraper.scrape_code("Oklahoma Statutes", "https://example.invalid", max_statutes=4))
+    assert len(rows) == 1
+    assert rows[0].section_number == "21-701.7"
+    assert "malice aforethought" in rows[0].full_text
+    assert "Laws 1976" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+
+
+def test_vermont_statutes_detail_splits_added_history(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.vermont import VermontScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <ul class="item-list statutes-detail">
+      <li>
+        <p></p>
+        <p><b>§ 2301. Murder in the first degree</b></p>
+        <p style="text-indent:0.5in">A person who commits murder in the first degree shall be punished by imprisonment for life. (Added 1971, No. 1.)</p>
+      </li>
+    </ul>
+    </body></html>
+    """
+    path = tmp_path / "02301.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("VERMONT_SECTION_HTML", str(path))
+    scraper = VermontScraper("VT", "Vermont")
+    rows = asyncio.run(scraper.scrape_code("Vermont Statutes", "https://example.invalid", max_statutes=2))
+    assert len(rows) == 1
+    assert rows[0].section_number == "2301"
+    assert "imprisonment for life" in rows[0].full_text
+    assert "Added 1971" not in rows[0].full_text
+
+
+def test_rhode_island_content_div_drops_history(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island import (
+        RhodeIslandScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <div><h1>Title 11</h1></div>
+      <div><h2>Chapter 23</h2></div>
+      <div>
+        <p><b>§ 11-23-1. Murder.</b></p>
+        <p><b>(a)</b> The unlawful killing of a human being with malice aforethought is murder.</p>
+        <div><p>History of Section.<br/>P.L. 1909, ch. 1, § 1.</p></div>
+      </div>
+    </body></html>
+    """
+    path = tmp_path / "11-23-1.htm"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("RHODE_ISLAND_SECTION_HTML", str(path))
+    scraper = RhodeIslandScraper("RI", "Rhode Island")
+    rows = asyncio.run(
+        scraper.scrape_code("Rhode Island General Laws", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "11-23-1"
+    assert "malice aforethought" in rows[0].full_text
+    assert "History of Section" not in rows[0].full_text
+    assert "P.L. 1909" not in rows[0].full_text

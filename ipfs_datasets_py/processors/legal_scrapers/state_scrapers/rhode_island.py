@@ -114,6 +114,17 @@ class RhodeIslandScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .rhode_island_section import configured_section_html_path, parse_rhode_island_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_rhode_island_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://webserver.rilegislature.gov/Statutes/TITLE11/11-23/11-23-1.htm",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         return await self._custom_scrape_rhode_island(
             code_name,
             code_url,
@@ -281,6 +292,18 @@ class RhodeIslandScraper(BaseStateScraper):
                                 timeout_seconds=30,
                             )
                         section_html = section_bytes.decode("utf-8", errors="replace") if section_bytes else ""
+                        from .rhode_island_section import parse_rhode_island_section_html
+
+                        parsed = parse_rhode_island_section_html(
+                            section_html,
+                            source_url=section_url,
+                            code_name=code_name,
+                        )
+                        if parsed is not None:
+                            parsed.official_cite = f"{citation_format} § {parsed.section_number}"
+                            parsed.chapter_name = chapter_name[:200] or parsed.chapter_name
+                            parsed.legal_area = legal_area
+                            return parsed
                         full_text, extracted_name = self._extract_ri_section_text_and_name(section_html)
                         section_name = (extracted_name or section_label or f"Section {section_number}")[:200]
                         if not full_text:

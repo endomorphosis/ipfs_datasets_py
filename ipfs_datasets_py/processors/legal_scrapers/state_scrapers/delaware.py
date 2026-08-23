@@ -185,6 +185,20 @@ class DelawareScraper(BaseStateScraper):
         if not html:
             return []
         soup = BeautifulSoup(html, "html.parser")
+        from .delaware_chapter import parse_delaware_chapter_html
+
+        parsed = parse_delaware_chapter_html(
+            html,
+            source_url=chapter_url,
+            code_name=code_name,
+            title_number=self._title_number_from_url(chapter_url),
+            chapter_number=self._chapter_number_from_url(chapter_url),
+            max_statutes=max_statutes,
+        )
+        if parsed:
+            for row in parsed:
+                row.chapter_name = chapter_label or row.chapter_name
+            return parsed
 
         title_number = self._title_number_from_url(chapter_url)
         chapter_number = self._chapter_number_from_url(chapter_url)
@@ -270,6 +284,20 @@ class DelawareScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=None)
+        from .delaware_chapter import configured_chapter_html_path, parse_delaware_chapter_html
+
+        local_chapter = configured_chapter_html_path()
+        if local_chapter is not None:
+            local_rows = parse_delaware_chapter_html(
+                local_chapter.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://delcode.delaware.gov/title11/c005/index.html",
+                code_name=code_name,
+                title_number="11",
+                chapter_number="5",
+                max_statutes=limit,
+            )
+            if local_rows:
+                return local_rows if limit is None else local_rows[: int(limit)]
         if limit is None and max_statutes is not None:
             try:
                 limit = max(1, int(max_statutes))

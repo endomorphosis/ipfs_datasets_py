@@ -176,6 +176,14 @@ class OklahomaScraper(BaseStateScraper):
             return_threshold = self._bounded_return_threshold(160)
             unbounded_full = False
 
+        from .oklahoma_title import parse_configured_oklahoma_title
+
+        local_rows = parse_configured_oklahoma_title(
+            code_name=code_name, max_statutes=return_threshold
+        )
+        if local_rows:
+            return local_rows[: int(return_threshold)]
+
         # Seed recovery is for bounded probes only — never sole full-corpus path.
         if not self._full_corpus_enabled() and max_statutes is None:
             direct = await self._scrape_direct_seed_sections(
