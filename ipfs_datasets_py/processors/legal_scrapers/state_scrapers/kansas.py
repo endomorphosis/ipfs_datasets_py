@@ -53,6 +53,20 @@ class KansasScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape Kansas statutes directly from official chapter/article/section pages."""
         limit = max(1, int(max_statutes)) if max_statutes else None
+        from .kansas_constitution import (
+            configured_constitution_html_path,
+            parse_kansas_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_kansas_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Kansas Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .kansas_section import configured_section_html_path, parse_kansas_section_html
 
         local_section = configured_section_html_path()

@@ -200,6 +200,21 @@ class VirginiaScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .virginia_constitution import (
+            configured_constitution_html_path,
+            parse_virginia_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_virginia_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Virginia Constitution",
+                    source_url="https://law.lis.virginia.gov/constitution/article1/section1/",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         official = await self._scrape_official_index(code_name, max_statutes=limit)
         official = self._filter_official_only(official)
         if official:

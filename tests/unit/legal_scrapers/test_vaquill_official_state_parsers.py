@@ -2502,3 +2502,144 @@ def test_maryland_constitution_filters_statute_codes_and_decl_of_rights(
     assert rows[0].structured_data["source_authority_class"] == "official"
 
 
+def test_ohio_constitution_table_rows_and_toc(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.ohio import OhioScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.ohio_constitution import (
+        constitution_article_ids,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    toc = """
+    <a href="/ohio-constitution/article-1">Article I</a>
+    <a href="/ohio-constitution/article-2">Article II</a>
+    """
+    assert constitution_article_ids(toc) == ["1", "2"]
+    html = """
+    <html><body>
+      <h1>Article I | Bill of Rights</h1>
+      <table class="laws-table">
+        <tr>
+          <td><span class="content-head">Article I, Section 1 | Inalienable Rights</span>
+              <div class="laws-body">All men are, by nature, free and independent, and have certain inalienable rights.</div>
+              <div class="laws-section-info">Effective: September 1, 1851</div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="content-head">Article I, Section 2 | Repealed</span>
+              <div class="laws-body">Repealed text must not be admitted as current constitutional law.</div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="content-head">Article I, Section 3 | Right to assemble</span>
+              <div class="laws-body">The people have the right to assemble together, in a peaceable manner, to consult for their common good.</div>
+          </td>
+        </tr>
+      </table>
+    </body></html>
+    """
+    path = tmp_path / "oh-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("OHIO_CONSTITUTION_HTML", str(path))
+    scraper = OhioScraper("OH", "Ohio")
+    rows = asyncio.run(
+        scraper.scrape_code("Ohio Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert [row.section_number for row in rows] == ["1", "3"]
+    assert "inalienable rights" in rows[0].full_text
+    assert "Effective: September 1, 1851" in rows[0].full_text
+    assert "Repealed text" not in "".join(row.full_text for row in rows)
+    assert "codes.ohio.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_virginia_constitution_schedule_fallback(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.virginia import VirginiaScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.virginia_constitution import (
+        parse_virginia_constitution_html,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    schedule = """
+    <html><body>
+      <span id="va_constitution">
+        <h2>Schedule</h2>
+        <h2>Section 1. Effective date of Constitution.</h2>
+        <section class="body">This Constitution shall take effect at noon on the first day of July, nineteen hundred and seventy-one.</section>
+      </span>
+    </body></html>
+    """
+    parsed = parse_virginia_constitution_html(
+        schedule,
+        source_url="https://law.lis.virginia.gov/constitution/article13/section1/",
+    )
+    assert parsed and parsed[0].title_number == "13"
+    html = """
+    <html><body>
+      <span id="va_constitution">
+        <h2>Article I. Bill of Rights</h2>
+        <h2>Section 1. Equality and rights of men.</h2>
+        <section class="body">That all men are by nature equally free and independent and have certain inherent rights.</section>
+      </span>
+    </body></html>
+    """
+    path = tmp_path / "va-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("VIRGINIA_CONSTITUTION_HTML", str(path))
+    scraper = VirginiaScraper("VA", "Virginia")
+    rows = asyncio.run(
+        scraper.scrape_code("Virginia Constitution", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].title_number == "I"
+    assert rows[0].section_number == "1"
+    assert "equally free and independent" in rows[0].full_text
+    assert "law.lis.virginia.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_kansas_constitution_keeps_classless_subsections_and_splits_preamble(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kansas import KansasScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <h3 class="constitution-subheading">Kansas Constitution - Ordinance and Preamble</h3>
+      <div class="page-content">
+        <p class="constitution-paragraph">§ 1. Perfect toleration of religious sentiment shall be secured, and no inhabitant of this state shall ever be molested in person or property on account of his or her mode of religious worship.</p>
+        <p class="constitution-paragraph">§ 2. Repealed.</p>
+        <p>Repealed text must not be admitted as current constitutional law.</p>
+        <p class="constitution-paragraph">§ 3. The people inhabiting this state do agree and declare that they forever disclaim all right and title to the unappropriated public lands lying within the same.</p>
+        <p>(a) Lands already appropriated remain subject to the laws of the United States.</p>
+        <p class="constitution-history">History: Adopted by convention July 29, 1859; L. 1861, p. 61; November 5, 1974.</p>
+        <p>We, the people of Kansas, grateful to Almighty God for our civil and religious privileges, ordain and establish this constitution of the state of Kansas.</p>
+      </div>
+    </body></html>
+    """
+    path = tmp_path / "ks-const.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("KANSAS_CONSTITUTION_HTML", str(path))
+    scraper = KansasScraper("KS", "Kansas")
+    rows = asyncio.run(
+        scraper.scrape_code("Kansas Constitution", "https://example.invalid", max_statutes=8)
+    )
+    numbers = [(row.title_number, row.section_number) for row in rows]
+    assert ("ORD", "1") in numbers
+    assert ("ORD", "3") in numbers
+    assert ("0", "0") in numbers
+    assert ("ORD", "2") not in numbers
+    bodies = { (row.title_number, row.section_number): row.full_text for row in rows }
+    assert "religious worship" in bodies[("ORD", "1")]
+    assert "already appropriated" in bodies[("ORD", "3")]
+    assert "November 5, 1974" in bodies[("ORD", "3")]
+    assert "grateful to Almighty God" in bodies[("0", "0")]
+    assert "Repealed text" not in "".join(bodies.values())
+    assert "sos.ks.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+
