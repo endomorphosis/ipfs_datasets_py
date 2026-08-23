@@ -7,7 +7,9 @@ Adapted from Vaquill-AI/open-us-law ``fl_bulk`` (Apache-2.0).
 
 from __future__ import annotations
 
+import os
 import re
+from pathlib import Path
 from typing import List, Optional
 from urllib.parse import parse_qs, urlparse
 
@@ -32,6 +34,11 @@ _RESERVED_KEYWORDS = (
     "[former",
 )
 _HIST_LEAD_RE = re.compile(r"^\s*history\.?\s*[—\-:]*\s*", re.IGNORECASE)
+_SENATE_CHAPTER_RE = re.compile(
+    r"/Laws/Statutes/(?P<year>\d{4})/Chapter(?P<chapter>\d+)/All",
+    re.IGNORECASE,
+)
+SENATE_BASE = "https://www.flsenate.gov"
 
 
 def band_for(chapter: str) -> str:
@@ -214,4 +221,162 @@ def parse_florida_chapter_html(
                 },
             )
         )
+    return statutes
+
+
+def senate_chapter_url(chapter: str, year: str = "2025") -> str:
+    return f"{SENATE_BASE}/Laws/Statutes/{year}/Chapter{int(chapter)}/All"
+
+
+def chapter_number_from_senate_url(url: str) -> str:
+    match = _SENATE_CHAPTER_RE.search(str(url or ""))
+    if match:
+        return str(int(match.group("chapter")))
+    return ""
+
+
+def parse_florida_senate_all_html(
+    html: str | bytes,
+    *,
+    chapter: str = "",
+    year: str = "2025",
+    code_name: str = "Florida Statutes",
+    max_statutes: Optional[int] = None,
+    source_url: str = "",
+) -> List[NormalizedStatute]:
+    """Parse flsenate.gov ``/Laws/Statutes/{year}/Chapter{N}/All`` dumps.
+
+    Vaquill listed this as the Online Sunshine alternative. The Senate All
+    page often reuses ``div.Section``; otherwise SectionNumber/Catchline
+    spans are walked until the next section. History paragraphs are dropped.
+    """
+
+    if isinstance(html, bytes):
+        html = html.decode("utf-8", errors="replace")
+    chapter_token = str(chapter or "").strip() or chapter_number_from_senate_url(source_url)
+    structured = parse_florida_chapter_html(
+        html,
+        chapter=chapter_token or "1",
+        code_name=code_name,
+        max_statutes=max_statutes,
+    )
+    if structured:
+        link = source_url or (senate_chapter_url(chapter_token, year) if chapter_token else SENATE_BASE)
+        for row in structured:
+            row.source_url = f"{link}#{row.section_number}" if row.section_number else link
+            row.structured_data["source_kind"] = "official_florida_senate_chapter_html"
+            row.structured_data["discovery_method"] = "flsenate_chapter_all"
+        return structured
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    nodes = soup.find_all(class_=re.compile(r"SectionNumber", re.IGNORECASE))
+    if not nodes:
+        return []
+    statutes: List[NormalizedStatute] = []
+    seen = set()
+    for index, node in enumerate(nodes):
+        if max_statutes is not None and len(statutes) >= int(max_statutes):
+            break
+        number = _clean(node.get_text(" "))
+        if not number or number in seen:
+            continue
+        parent = node.find_parent(["p", "div", "h2", "h3"]) or node
+        catch_el = parent.find(class_=re.compile(r"Catchline", re.IGNORECASE))
+        catchline = _clean(catch_el.get_text(" ")) if catch_el is not None else ""
+        if _has_reserved_marker(catchline) or _has_reserved_marker(number):
+            continue
+        parts: List[str] = []
+        sibling = parent.next_sibling
+        stop = nodes[index + 1] if index + 1 < len(nodes) else None
+        stop_parent = stop.find_parent(["p", "div", "h2", "h3"]) if stop is not None else None
+        while sibling is not None and sibling is not stop_parent:
+            if getattr(sibling, "get_text", None):
+                text = _clean(sibling.get_text(" "))
+                if text and not _HIST_LEAD_RE.match(text) and "history." not in text.lower()[:12]:
+                    parts.append(text)
+            sibling = sibling.next_sibling
+        full_text = " ".join(parts).strip()
+        if len(full_text) < 40:
+            rest = _clean(parent.get_text(" "))
+            rest = rest.replace(number, "", 1).replace(catchline, "", 1).strip()
+            full_text = rest
+        if len(full_text) < 40 or _has_reserved_marker(full_text[:160]):
+            continue
+        seen.add(number)
+        link = source_url or (senate_chapter_url(chapter_token or number.split(".", 1)[0], year))
+        statutes.append(
+            NormalizedStatute(
+                state_code="FL",
+                state_name="Florida",
+                statute_id=f"FL-{number}",
+                code_name=code_name,
+                chapter_number=chapter_token or number.split(".", 1)[0],
+                section_number=number,
+                section_name=(catchline[:200] if catchline else f"Section {number}"),
+                short_title=catchline[:200] if catchline else None,
+                full_text=full_text[:14000],
+                source_url=f"{link}#{number}",
+                official_cite=f"Fla. Stat. § {number}",
+                structured_data={
+                    "source_kind": "official_florida_senate_chapter_html",
+                    "source_authority_class": "official",
+                    "discovery_method": "flsenate_chapter_all",
+                    "skip_hydrate": True,
+                },
+            )
+        )
+    return statutes
+
+
+def configured_florida_chapter_paths() -> List[Path]:
+    paths: List[Path] = []
+    for key in ("FLORIDA_SENATE_CHAPTER_HTML", "FLORIDA_CHAPTER_HTML"):
+        raw = str(os.environ.get(key) or "").strip()
+        if not raw:
+            continue
+        path = Path(raw).expanduser()
+        if path.is_file():
+            paths.append(path)
+    return paths
+
+
+def parse_configured_florida_chapter(
+    *,
+    code_name: str = "Florida Statutes",
+    max_statutes: Optional[int] = None,
+) -> List[NormalizedStatute]:
+    statutes: List[NormalizedStatute] = []
+    seen: set[str] = set()
+    for path in configured_florida_chapter_paths():
+        if max_statutes is not None and len(statutes) >= int(max_statutes):
+            break
+        remaining = None if max_statutes is None else max(0, int(max_statutes) - len(statutes))
+        html = path.read_text(encoding="utf-8", errors="replace")
+        chapter = ""
+        match = re.search(r"(?:chapter[-_ ]?)(\d{1,4})", path.stem, re.IGNORECASE)
+        if match:
+            chapter = str(int(match.group(1)))
+        rows = parse_florida_senate_all_html(
+            html,
+            chapter=chapter,
+            code_name=code_name,
+            max_statutes=remaining,
+            source_url=senate_chapter_url(chapter or "782"),
+        )
+        if not rows:
+            rows = parse_florida_chapter_html(
+                html,
+                chapter=chapter or "782",
+                code_name=code_name,
+                max_statutes=remaining,
+            )
+        for row in rows:
+            key = str(row.section_number or "")
+            if key in seen:
+                continue
+            seen.add(key)
+            statutes.append(row)
     return statutes

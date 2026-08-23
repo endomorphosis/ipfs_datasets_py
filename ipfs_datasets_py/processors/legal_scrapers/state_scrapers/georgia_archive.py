@@ -33,7 +33,15 @@ OFFICIAL_CODE_ROOT = f"https://{OFFICIAL_HOST}/legislation/georgia-code"
 WAYBACK = "https://web.archive.org/web"
 ARCHIVE_IS = "https://archive.is"
 CDX = "https://web.archive.org/cdx/search/cdx"
-COMMON_CRAWL_CDX = "https://index.commoncrawl.org/CC-MAIN-2024-51-index"
+COMMON_CRAWL_INDEXES = (
+    "CC-MAIN-2025-33",
+    "CC-MAIN-2025-21",
+    "CC-MAIN-2025-08",
+    "CC-MAIN-2024-51",
+    "CC-MAIN-2024-33",
+    "CC-MAIN-2023-50",
+)
+COMMON_CRAWL_CDX = f"https://index.commoncrawl.org/{COMMON_CRAWL_INDEXES[3]}-index"
 
 # Titles 1-53 match GeorgiaScraper.OFFICIAL_TITLES.
 TITLE_NUMBERS = tuple(str(number) for number in range(1, 54))
@@ -52,7 +60,10 @@ NAV_MARKERS = (
     "terms of use",
 )
 _SECTION_RE = re.compile(
-    r"(?m)^(?:§|&sect;)\s*(?P<num>\d+[A-Za-z]?-\d+[A-Za-z0-9.-]*)\.\s*(?P<head>[^\n]+)"
+    r"(?m)^(?:(?:O\.C\.G\.A\.|OCGA)\s+)?"
+    r"(?:§|&sect;|&#167;)?\s*"
+    r"(?P<num>\d{1,2}[A-Za-z]?-\d+[A-Za-z0-9.-]*)\.\s+"
+    r"(?P<head>[^\n]+)"
 )
 _RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered)\b", re.IGNORECASE)
 _WS = re.compile(r"\s+")
@@ -115,11 +126,17 @@ def looks_like_georgia_spa_shell(html: str) -> bool:
     return "<base href=\"/\" />" in lowered and "georgia general assembly" in lowered
 
 
-def common_crawl_cdx_query_url() -> str:
+def common_crawl_cdx_query_url(index_id: str = "") -> str:
+    token = str(index_id or COMMON_CRAWL_INDEXES[3]).strip() or COMMON_CRAWL_INDEXES[3]
     return (
-        f"{COMMON_CRAWL_CDX}?url={quote('www.legis.ga.gov/legislation/georgia-code/*')}"
+        f"https://index.commoncrawl.org/{token}-index"
+        f"?url={quote('www.legis.ga.gov/legislation/georgia-code/*')}"
         "&output=json&filter=status:200"
     )
+
+
+def common_crawl_cdx_query_urls() -> List[str]:
+    return [common_crawl_cdx_query_url(index_id) for index_id in COMMON_CRAWL_INDEXES]
 
 
 def official_title_frontier() -> List[Dict[str, str]]:

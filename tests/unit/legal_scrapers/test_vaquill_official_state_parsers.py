@@ -10,6 +10,8 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.florida_chapter i
     chapter_number_from_url,
     padded,
     parse_florida_chapter_html,
+    parse_florida_senate_all_html,
+    senate_chapter_url,
     title_romans,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.indiana_bulk import (
@@ -160,6 +162,37 @@ def test_florida_chapter_parser_skips_repealed_and_history() -> None:
     )
     assert len(sibling) == 1
     assert "full force" in sibling[0].full_text
+    senate_rows = parse_florida_senate_all_html(
+        FL_CHAPTER_HTML,
+        chapter="782",
+        source_url=senate_chapter_url("782"),
+    )
+    assert len(senate_rows) == 1
+    assert senate_rows[0].section_number == "782.04"
+    assert senate_rows[0].structured_data["discovery_method"] == "flsenate_chapter_all"
+    assert "flsenate.gov" in senate_rows[0].source_url
+
+
+def test_florida_senate_dump_is_official(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.florida import FloridaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    path = tmp_path / "Chapter782.html"
+    path.write_text(FL_CHAPTER_HTML, encoding="utf-8")
+    monkeypatch.setenv("FLORIDA_SENATE_CHAPTER_HTML", str(path))
+    scraper = FloridaScraper("FL", "Florida")
+
+    async def _should_not_run(*_args, **_kwargs):
+        raise AssertionError("live Florida index must not run when Senate dump is configured")
+
+    monkeypatch.setattr(scraper, "_discover_title_links", _should_not_run)
+    rows = asyncio.run(
+        scraper.scrape_code("Florida Statutes", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "782.04"
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "flsenate.gov" in rows[0].source_url
 
 
 def test_new_jersey_rtf_zip_parses_style_tagged_sections(tmp_path: Path) -> None:
@@ -745,6 +778,8 @@ def test_north_carolina_bychapter_index_discovers_chapters() -> None:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina_chapter import (
         bychapter_index_links,
         chapter_url,
+        merge_discovered_chapters,
+        toc_chapter_links,
     )
 
     html = """
@@ -757,6 +792,62 @@ def test_north_carolina_bychapter_index_discovers_chapters() -> None:
     """
     assert bychapter_index_links(html) == ["1", "14"]
     assert chapter_url("14").endswith("ByChapter/Chapter_14.html")
+    toc = """
+    <a href="/Laws/GeneralStatuteSections/Chapter7C">Chapter 7C Administrative Office of the Courts</a>
+    <a href="/Laws/GeneralStatuteSections/Chapter14">Chapter 14 Criminal Law</a>
+    """
+    assert toc_chapter_links(toc) == ["7C", "14"]
+    merged = merge_discovered_chapters(
+        [("1", "Civil Procedure"), ("14", "Criminal Law")],
+        ["7C", "14"],
+    )
+    assert merged[0] == ("7C", "Chapter 7C")
+    assert merged[1] == ("14", "Criminal Law")
+    assert ("1", "Civil Procedure") in merged
+
+
+def test_north_carolina_toc_dump_merges_missing_chapter(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    toc = tmp_path / "toc.html"
+    toc.write_text(
+        '<a href="/Laws/GeneralStatuteSections/Chapter7C">Chapter 7C</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("NORTH_CAROLINA_TOC_HTML", str(toc))
+    monkeypatch.setenv("NORTH_CAROLINA_BYCHAPTER_LIVE", "1")
+    monkeypatch.setenv("NORTH_CAROLINA_BYCHAPTER_MAX_CHAPTERS", "1")
+    scraper = NorthCarolinaScraper("NC", "North Carolina")
+
+    async def fake_request(url: str, timeout: int = 18) -> str:
+        if "Chapter_7C" in url:
+            return (
+                "<html><body><nav>North Carolina General Assembly</nav>"
+                "<p>§ 7C-1. Administrative Office of the Courts.</p>"
+                "<p>The Administrative Office of the Courts is created as an official "
+                "agency of the judicial department of the State of North Carolina and "
+                "shall have the duties prescribed by this Chapter, including assisting "
+                "the Chief Justice in the administration of the courts of this State.</p>"
+                "<footer>ncleg.gov</footer></body></html>"
+            )
+        return ""
+
+    monkeypatch.setattr(scraper, "_request_text_direct", fake_request)
+    rows = asyncio.run(
+        scraper.scrape_code(
+            "North Carolina General Statutes",
+            "https://example.invalid",
+            max_statutes=2,
+        )
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "7C-1"
+    assert "judicial department" in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "ncleg.gov" in rows[0].source_url
 
 
 def test_west_virginia_code_dump(tmp_path: Path, monkeypatch) -> None:
@@ -1424,6 +1515,41 @@ Repealed text must not be admitted.
     assert rows[0].structured_data["source_kind"] == "official_georgia_title_text"
     assert "legis.ga.gov" in rows[0].source_url
     assert "justia" not in rows[0].source_url
+
+
+def test_georgia_title_text_accepts_ocga_and_bare_headings(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia import GeorgiaScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia_archive import (
+        COMMON_CRAWL_INDEXES,
+        common_crawl_cdx_query_url,
+        common_crawl_cdx_query_urls,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+O.C.G.A. § 16-5-1. Murder.
+A person commits the offense of murder when he unlawfully and with malice aforethought, either express or implied, causes the death of another human being.
+16-5-20. Simple assault.
+A person commits the offense of simple assault when he or she attempts to commit a violent injury to the person of another.
+"""
+    path = tmp_path / "title-16.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("GEORGIA_TITLE_TEXT", str(path))
+    scraper = GeorgiaScraper("GA", "Georgia")
+    rows = asyncio.run(
+        scraper.scrape_code("Official Code of Georgia Annotated", "https://example.invalid", max_statutes=4)
+    )
+    assert [row.section_number for row in rows] == ["16-5-1", "16-5-20"]
+    assert "malice aforethought" in rows[0].full_text
+    assert "violent injury" in rows[1].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    urls = common_crawl_cdx_query_urls()
+    assert len(urls) == len(COMMON_CRAWL_INDEXES)
+    assert "CC-MAIN-2025-33" in urls[0]
+    assert "CC-MAIN-2024-51" in common_crawl_cdx_query_url()
+    assert "georgia-code" in urls[0]
 
 
 def test_arizona_content_sidebar_wrap(tmp_path: Path, monkeypatch) -> None:

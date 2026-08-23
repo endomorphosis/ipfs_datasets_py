@@ -34,7 +34,15 @@ OFFICIAL_HOST = "www.ncleg.gov"
 WAYBACK = "https://web.archive.org/web"
 ARCHIVE_IS = "https://archive.is"
 CDX = "https://web.archive.org/cdx/search/cdx"
-COMMON_CRAWL_CDX = "https://index.commoncrawl.org/CC-MAIN-2024-51-index"
+COMMON_CRAWL_INDEXES = (
+    "CC-MAIN-2025-33",
+    "CC-MAIN-2025-21",
+    "CC-MAIN-2025-08",
+    "CC-MAIN-2024-51",
+    "CC-MAIN-2024-33",
+    "CC-MAIN-2023-50",
+)
+COMMON_CRAWL_CDX = f"https://index.commoncrawl.org/{COMMON_CRAWL_INDEXES[3]}-index"
 
 # Timestamp with confirmed Chapter_14 capture (355KB+ HTML, 2019-02-24).
 CHAPTER_14_WAYBACK_TS = "20190224180051"
@@ -65,12 +73,17 @@ def wayback_chapter_cdx_query_url(chapter: str) -> str:
     )
 
 
-def common_crawl_cdx_query_url() -> str:
+def common_crawl_cdx_query_url(index_id: str = "") -> str:
+    token = str(index_id or COMMON_CRAWL_INDEXES[3]).strip() or COMMON_CRAWL_INDEXES[3]
     return (
-        f"{COMMON_CRAWL_CDX}?url="
+        f"https://index.commoncrawl.org/{token}-index?url="
         + quote("www.ncleg.gov/EnactedLegislation/Statutes/HTML/ByChapter/*")
         + "&output=json&filter=status:200"
     )
+
+
+def common_crawl_cdx_query_urls() -> List[str]:
+    return [common_crawl_cdx_query_url(index_id) for index_id in COMMON_CRAWL_INDEXES]
 
 
 def official_chapter_frontier() -> List[Dict[str, str]]:

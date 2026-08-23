@@ -474,33 +474,49 @@ class NorthCarolinaScraper(BaseStateScraper):
         """
 
         from .north_carolina_archive import parse_north_carolina_archive_html
-        from .north_carolina_chapter import chapter_url, parse_north_carolina_chapter_html
+        from .north_carolina_chapter import (
+            BYCHAPTER_INDEX_URL,
+            TOC_URL,
+            bychapter_index_links,
+            chapter_url,
+            configured_bychapter_index_path,
+            configured_toc_html_path,
+            merge_discovered_chapters,
+            parse_north_carolina_chapter_html,
+            toc_chapter_links,
+        )
 
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         max_chapters = self._bychapter_max_chapters()
         catalog = list(self.OFFICIAL_CHAPTERS)
-        from .north_carolina_chapter import (
-            bychapter_index_links,
-            configured_bychapter_index_path,
-        )
-
+        discovered: List[str] = []
         index_path = configured_bychapter_index_path()
         if index_path is not None:
-            names = dict(catalog)
-            discovered = bychapter_index_links(
-                index_path.read_text(encoding="utf-8", errors="replace")
+            discovered.extend(
+                bychapter_index_links(
+                    index_path.read_text(encoding="utf-8", errors="replace")
+                )
             )
-            if discovered:
-                leading = [
-                    (number, names.get(number, f"Chapter {number}"))
-                    for number in discovered
-                ]
-                tail = [
-                    (number, name)
-                    for number, name in catalog
-                    if number not in set(discovered)
-                ]
-                catalog = leading + tail
+        toc_path = configured_toc_html_path()
+        if toc_path is not None:
+            discovered.extend(
+                toc_chapter_links(toc_path.read_text(encoding="utf-8", errors="replace"))
+            )
+        if index_path is None and toc_path is None:
+            try:
+                index_html = await self._request_text_direct(BYCHAPTER_INDEX_URL, timeout=20)
+            except Exception:
+                index_html = ""
+            if index_html:
+                discovered.extend(bychapter_index_links(index_html))
+            try:
+                toc_html = await self._request_text_direct(TOC_URL, timeout=20)
+            except Exception:
+                toc_html = ""
+            if toc_html:
+                discovered.extend(toc_chapter_links(toc_html))
+        if discovered:
+            catalog = merge_discovered_chapters(catalog, discovered)
         if max_chapters is not None:
             catalog = catalog[: int(max_chapters)]
 

@@ -5,7 +5,8 @@ An operator-supplied local dump of official title text (PDF extract or
 saved statute bodies) can be admitted as official: no nav/footer SPA chrome,
 no archive transport. This does not auto-download the commercial OCGA.
 
-Local dumps: ``GEORGIA_TITLE_TEXT``, ``GEORGIA_TITLE_TEXT_DIR``.
+Local dumps: ``GEORGIA_TITLE_TEXT``, ``GEORGIA_TITLE_TEXT_DIR``,
+``GEORGIA_TITLE_PDF``, ``GEORGIA_TITLE_PDF_DIR``. PDFs are never auto-downloaded.
 """
 
 from __future__ import annotations
@@ -23,7 +24,10 @@ from .georgia_archive import (
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
 _SECTION_RE = re.compile(
-    r"(?m)^(?:§|&sect;)\s*(?P<num>\d+[A-Za-z]?-\d+[A-Za-z0-9.-]*)\.\s*(?P<head>[^\n]+)"
+    r"(?m)^(?:(?:O\.C\.G\.A\.|OCGA)\s+)?"
+    r"(?:§|&sect;|&#167;)?\s*"
+    r"(?P<num>\d{1,2}[A-Za-z]?-\d+[A-Za-z0-9.-]*)\.\s+"
+    r"(?P<head>[^\n]+)"
 )
 _RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered)\b", re.IGNORECASE)
 _WS = re.compile(r"\s+")
@@ -92,22 +96,81 @@ def parse_georgia_title_text(
     return statutes
 
 
+def _title_number_from_path(path: Path) -> str:
+    stem = path.stem
+    match = re.search(r"(?:title[-_ ]?)(\d{1,2}[A-Za-z]?)\b", stem, re.IGNORECASE)
+    if match:
+        return match.group(1)
+    digits = re.search(r"(\d{1,2}[A-Za-z]?)$", stem)
+    return digits.group(1) if digits else "16"
+
+
+def _extract_pdf_text(pdf_path: Path) -> str:
+    try:
+        import pdfplumber
+    except ImportError:
+        pdfplumber = None
+    if pdfplumber is not None:
+        try:
+            lines: List[str] = []
+            with pdfplumber.open(str(pdf_path)) as pdf:
+                for page in pdf.pages:
+                    lines.append(page.extract_text() or "")
+            return "\n".join(lines)
+        except Exception:
+            pass
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        return ""
+    try:
+        reader = PdfReader(str(pdf_path))
+        return "\n".join((page.extract_text() or "") for page in reader.pages)
+    except Exception:
+        return ""
+
+
+def parse_georgia_title_pdf(
+    pdf_path: Path,
+    *,
+    source_url: str = "",
+    code_name: str = "Official Code of Georgia Annotated",
+    max_statutes: Optional[int] = None,
+) -> List[NormalizedStatute]:
+    text = _extract_pdf_text(pdf_path)
+    if not text.strip():
+        return []
+    title = _title_number_from_path(pdf_path)
+    return parse_georgia_title_text(
+        text,
+        source_url=source_url or official_title_url(title),
+        code_name=code_name,
+        max_statutes=max_statutes,
+    )
+
+
 def configured_title_text_paths() -> List[Path]:
     paths: List[Path] = []
-    raw = str(os.environ.get("GEORGIA_TITLE_TEXT") or "").strip()
-    if raw:
-        path = Path(raw).expanduser()
-        if path.is_file():
-            paths.append(path)
-    raw_dir = str(os.environ.get("GEORGIA_TITLE_TEXT_DIR") or "").strip()
-    if raw_dir:
+    for key in ("GEORGIA_TITLE_TEXT", "GEORGIA_TITLE_PDF"):
+        raw = str(os.environ.get(key) or "").strip()
+        if raw:
+            path = Path(raw).expanduser()
+            if path.is_file():
+                paths.append(path)
+    for key, suffixes in (
+        ("GEORGIA_TITLE_TEXT_DIR", {".txt", ".text"}),
+        ("GEORGIA_TITLE_PDF_DIR", {".pdf"}),
+    ):
+        raw_dir = str(os.environ.get(key) or "").strip()
+        if not raw_dir:
+            continue
         directory = Path(raw_dir).expanduser()
         if directory.is_dir():
             paths.extend(
                 sorted(
                     child
                     for child in directory.iterdir()
-                    if child.is_file() and child.suffix.lower() in {".txt", ".text"}
+                    if child.is_file() and child.suffix.lower() in suffixes
                 )
             )
     return paths
@@ -129,12 +192,22 @@ def parse_configured_georgia_title(
         if max_statutes is not None and len(statutes) >= int(max_statutes):
             break
         remaining = None if max_statutes is None else max(0, int(max_statutes) - len(statutes))
-        rows = parse_georgia_title_text(
-            path.read_text(encoding="utf-8", errors="replace"),
-            source_url=official_title_url(path.stem.split("-")[-1] if "-" in path.stem else "16"),
-            code_name=code_name,
-            max_statutes=remaining,
-        )
+        title = _title_number_from_path(path)
+        source = official_title_url(title)
+        if path.suffix.lower() == ".pdf":
+            rows = parse_georgia_title_pdf(
+                path,
+                source_url=source,
+                code_name=code_name,
+                max_statutes=remaining,
+            )
+        else:
+            rows = parse_georgia_title_text(
+                path.read_text(encoding="utf-8", errors="replace"),
+                source_url=source,
+                code_name=code_name,
+                max_statutes=remaining,
+            )
         for row in rows:
             key = str(row.section_number or "")
             if key in seen:

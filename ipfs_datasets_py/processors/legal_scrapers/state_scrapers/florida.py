@@ -117,6 +117,14 @@ class FloridaScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
                 return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .florida_chapter import parse_configured_florida_chapter
+
+        configured = parse_configured_florida_chapter(
+            code_name=code_name or "Florida Statutes",
+            max_statutes=limit,
+        )
+        if configured:
+            return configured if limit is None else configured[: int(limit)]
         statutes: List[NormalizedStatute] = []
         title_links = await self._discover_title_links(code_url)
         if not title_links:

@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Sequence, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -36,6 +36,12 @@ _RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered)\b", re.IGNOREC
 _WS = re.compile(r"\s+")
 
 
+BYCHAPTER_INDEX_URL = (
+    "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/ByChapter/"
+)
+TOC_URL = "https://www.ncleg.gov/Laws/GeneralStatutesTOC"
+
+
 def chapter_url(chapter: str) -> str:
     return (
         "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/ByChapter/"
@@ -45,6 +51,14 @@ def chapter_url(chapter: str) -> str:
 
 _CHAPTER_HREF_RE = re.compile(
     r"Chapter_([0-9]+[A-Za-z]?)\.html",
+    re.IGNORECASE,
+)
+_TOC_CHAPTER_PATH_RE = re.compile(
+    r"/Laws/GeneralStatuteSections/Chapter([0-9]+[A-Za-z]?)\b",
+    re.IGNORECASE,
+)
+_TOC_CHAPTER_LABEL_RE = re.compile(
+    r"\bChapter\s+([0-9]+[A-Za-z]?)\b",
     re.IGNORECASE,
 )
 
@@ -63,8 +77,61 @@ def bychapter_index_links(html: str) -> List[str]:
     return seen
 
 
+def toc_chapter_links(html: str) -> List[str]:
+    """Chapter numbers from the official GeneralStatutesTOC page.
+
+    Prefers ``/Laws/GeneralStatuteSections/ChapterN`` hrefs; falls back to
+    ``Chapter N`` labels when the listing has no ByChapter files.
+    """
+
+    seen: List[str] = []
+    found = set()
+    for match in _TOC_CHAPTER_PATH_RE.finditer(html or ""):
+        number = match.group(1)
+        if number in found:
+            continue
+        found.add(number)
+        seen.append(number)
+    if seen:
+        return seen
+    for match in _TOC_CHAPTER_LABEL_RE.finditer(html or ""):
+        number = match.group(1)
+        if number in found:
+            continue
+        found.add(number)
+        seen.append(number)
+    return seen
+
+
+def merge_discovered_chapters(
+    catalog: Sequence[Tuple[str, str]],
+    discovered: Sequence[str],
+) -> List[Tuple[str, str]]:
+    """Put discovered ByChapter/TOC numbers first; keep named catalog as tail."""
+
+    names = dict(catalog)
+    leading: List[Tuple[str, str]] = []
+    found = set()
+    for number in discovered:
+        token = str(number or "").strip()
+        if not token or token in found:
+            continue
+        found.add(token)
+        leading.append((token, names.get(token, f"Chapter {token}")))
+    tail = [(number, name) for number, name in catalog if number not in found]
+    return leading + tail
+
+
 def configured_bychapter_index_path() -> Optional[Path]:
     raw = str(os.environ.get("NORTH_CAROLINA_BYCHAPTER_INDEX_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("NORTH_CAROLINA_TOC_HTML") or "").strip()
     if not raw:
         return None
     path = Path(raw).expanduser()
