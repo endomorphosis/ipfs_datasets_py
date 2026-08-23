@@ -372,6 +372,18 @@ class ArkansasScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=180)
+        from .arkansas_section import configured_section_html_path, parse_arkansas_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            local_rows = parse_arkansas_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.arkleg.state.ar.us/ArkansasCode/5-10-101/",
+                code_name=code_name,
+                max_statutes=limit,
+            )
+            if local_rows:
+                return local_rows if limit is None else local_rows[: int(limit)]
         official = await self._scrape_official_arkansas_code(
             code_name, code_url or self.OFFICIAL_CODE_INDEX, max_statutes=limit
         )

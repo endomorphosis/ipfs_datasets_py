@@ -991,6 +991,18 @@ class OregonScraper(BaseStateScraper):
             return await self._generic_scrape(code_name, code_url, "OAR", max_sections=max_sections)
 
         citation_format = "Or. Rev. Stat."
+        from .oregon_chapter import configured_chapter_html_path, parse_oregon_chapter_html
+
+        local_chapter = configured_chapter_html_path()
+        if local_chapter is not None:
+            local_rows = parse_oregon_chapter_html(
+                local_chapter.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.oregonlegislature.gov/bills_laws/ors/ors163.html",
+                code_name=code_name,
+                max_statutes=limit,
+            )
+            if local_rows:
+                return _bounded(local_rows)
         official = await self._scrape_official_ors_chapter_tree(
             code_name,
             code_url,

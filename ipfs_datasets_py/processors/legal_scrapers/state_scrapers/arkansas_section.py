@@ -1,0 +1,99 @@
+"""Official Arkansas Code section HTML parser.
+
+Adapted from the arkleg ``div#content`` / ``5-10-101. heading`` walk in
+``arkansas.py``. Vaquill lists Arkansas as in-progress; this is the
+official HTML-structure parser, env-gated to a local dump.
+
+Local dump: ``ARKANSAS_SECTION_HTML``.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+from pathlib import Path
+from typing import List, Optional
+
+from .base_scraper import NormalizedStatute, StatuteMetadata
+
+BASE = "https://www.arkleg.state.ar.us"
+_HEAD_RE = re.compile(
+    r"(?m)^\s*(?:§\s*)?(?P<section>\d+-\d+(?:-\d+)?(?:\.\d+)?)\s*[.–—-]\s*(?P<title>.+)$"
+)
+_RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered)\b", re.IGNORECASE)
+_WS = re.compile(r"\s+")
+
+
+def _clean(text: str) -> str:
+    return _WS.sub(" ", (text or "").replace("\xa0", " ")).strip()
+
+
+def parse_arkansas_section_html(
+    html: str,
+    *,
+    source_url: str = "",
+    code_name: str = "Arkansas Code",
+    max_statutes: Optional[int] = None,
+) -> List[NormalizedStatute]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    content = (
+        soup.select_one("div#content")
+        or soup.select_one("div.content")
+        or soup.select_one("main")
+        or soup.select_one("article")
+        or soup.find("body")
+        or soup
+    )
+    for tag in content.find_all(["script", "style", "nav", "header", "footer", "noscript", "form"]):
+        tag.decompose()
+    text = content.get_text("\n", strip=True)
+    matches = list(_HEAD_RE.finditer(text))
+    statutes: List[NormalizedStatute] = []
+    for index, match in enumerate(matches):
+        if max_statutes is not None and len(statutes) >= int(max_statutes):
+            break
+        number = match.group("section")
+        heading = match.group("title").strip()
+        if _RESERVED.search(heading):
+            continue
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        body = _clean(text[start:end])
+        if len(body) < 40:
+            continue
+        parts = number.split("-")
+        statutes.append(
+            NormalizedStatute(
+                state_code="AR",
+                state_name="Arkansas",
+                statute_id=f"{code_name} § {number}",
+                code_name=code_name,
+                title_number=parts[0] if parts else None,
+                chapter_number=parts[1] if len(parts) > 1 else None,
+                section_number=number,
+                section_name=heading[:200],
+                full_text=body[:14000],
+                source_url=source_url or f"{BASE}/ArkansasCode/{number}/",
+                official_cite=f"Ark. Code Ann. § {number}",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_arkansas_code_html",
+                    "source_authority_class": "official",
+                    "discovery_method": "arkleg_content_heading",
+                    "skip_hydrate": True,
+                },
+            )
+        )
+    return statutes
+
+
+def configured_section_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("ARKANSAS_SECTION_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None

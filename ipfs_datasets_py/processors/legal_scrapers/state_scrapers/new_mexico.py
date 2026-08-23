@@ -174,6 +174,18 @@ class NewMexicoScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .new_mexico_chapter import configured_chapter_text_path, parse_new_mexico_chapter_text
+
+        local_chapter = configured_chapter_text_path()
+        if local_chapter is not None:
+            local_rows = parse_new_mexico_chapter_text(
+                local_chapter.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://nmonesource.com/nmos/nmsa/en/nav_date.do",
+                code_name=code_name,
+                max_statutes=limit,
+            )
+            if local_rows:
+                return local_rows if limit is None else local_rows[: int(limit)]
         official = await self._scrape_official_nmonesource_tree(code_name, max_statutes=limit)
         if official:
             return official if limit is None else official[: int(limit)]

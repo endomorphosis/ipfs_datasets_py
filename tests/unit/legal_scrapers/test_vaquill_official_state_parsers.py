@@ -1305,6 +1305,8 @@ def test_georgia_archive_strips_nav_and_stays_recovery(tmp_path: Path, monkeypat
     frontier = official_title_frontier()
     assert len(frontier) == 53
     assert frontier[0]["official_url"].startswith("https://www.legis.ga.gov/legislation/georgia-code/title-")
+    assert frontier[39]["hyphen_url"].endswith("georgia-code-title-40")
+    assert "20250414215500id_/" in frontier[39]["wayback_hyphen_url"]
     assert "id_/" in frontier[0]["wayback_url"]
     assert "justia" not in frontier[0]["wayback_url"]
     assert "web.archive.org/cdx/search/cdx" in wayback_cdx_query_url()
@@ -1480,3 +1482,153 @@ def test_georgia_wayback_engine_harvest_is_recovery(monkeypatch) -> None:
     assert rows[0].structured_data["source_authority_class"] == "recovery"
     assert "malice aforethought" in rows[0].full_text
     assert "skip to main" not in rows[0].full_text.lower()
+
+
+def test_arkansas_content_heading_skips_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arkansas import ArkansasScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <nav>Skip to main content Privacy Policy</nav>
+      <div id="content">
+        <h1>5-10-101. Murder.</h1>
+        <p>A person commits murder if with a purpose of causing the death of another person, the person causes the death of another person.</p>
+        <p>5-10-102. Manslaughter. (Repealed)</p>
+        <p>Repealed text must not be admitted.</p>
+      </div>
+      <footer>Copyright © Footer navigation</footer>
+    </body></html>
+    """
+    path = tmp_path / "5-10-101.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("ARKANSAS_SECTION_HTML", str(path))
+    scraper = ArkansasScraper("AR", "Arkansas")
+    rows = asyncio.run(scraper.scrape_code("Arkansas Code", "https://example.invalid", max_statutes=4))
+    assert len(rows) == 1
+    assert rows[0].section_number == "5-10-101"
+    assert "purpose of causing the death" in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "arkleg.state.ar.us" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+
+
+def test_oregon_chapter_section_start_skips_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon import OregonScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <p>Chapter 163 — Offenses Against Persons</p>
+      <p>163.005 Criminal homicide.</p>
+      <p>A person commits criminal homicide if, without justification or excuse, the person intentionally, knowingly, recklessly or with criminal negligence causes the death of another human being.</p>
+      <p>History: 1971 c.743 § 87</p>
+      <p>163.095 Aggravated murder. (Repealed)</p>
+      <p>Repealed text must not be admitted.</p>
+    </body></html>
+    """
+    path = tmp_path / "ors163.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("OREGON_CHAPTER_HTML", str(path))
+    scraper = OregonScraper("OR", "Oregon")
+    rows = asyncio.run(
+        scraper.scrape_code("Oregon Revised Statutes", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "163.005"
+    assert "criminal negligence" in rows[0].full_text
+    assert "1971 c.743" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "oregonlegislature.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+
+
+def test_tennessee_main_content_skips_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.tennessee import TennesseeScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <nav>Skip to main content</nav>
+      <main>
+        <p>39-13-202. First degree murder.</p>
+        <p>First degree murder is: (1) A premeditated and intentional killing of another; (2) A killing of another committed in the perpetration of any first degree murder.</p>
+        <p>39-13-203. Second degree murder. (Repealed)</p>
+        <p>Repealed text must not be admitted.</p>
+      </main>
+      <footer>Cookie Policy</footer>
+    </body></html>
+    """
+    path = tmp_path / "39-13-202.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("TENNESSEE_SECTION_HTML", str(path))
+    scraper = TennesseeScraper("TN", "Tennessee")
+    rows = asyncio.run(
+        scraper.scrape_code("Tennessee Code Annotated", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "39-13-202"
+    assert "premeditated and intentional" in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "tn.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+
+
+def test_new_mexico_chapter_text_skips_history_and_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_mexico import NewMexicoScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+30-2-1. Murder.
+Murder in the first degree is the killing of one human being by another without lawful justification or excuse, by any of the means with which death may be caused.
+History: 1953 Comp., § 40A-2-1
+30-2-2. Manslaughter. (Repealed)
+Repealed text must not be admitted.
+"""
+    path = tmp_path / "chapter-30.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("NEW_MEXICO_CHAPTER_TEXT", str(path))
+    scraper = NewMexicoScraper("NM", "New Mexico")
+    rows = asyncio.run(
+        scraper.scrape_code("New Mexico Statutes Annotated", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "30-2-1"
+    assert "without lawful justification" in rows[0].full_text
+    assert "1953 Comp" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "nmonesource.com" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+
+
+def test_mississippi_billstatus_section_skips_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.mississippi import MississippiScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <p>Code Section 097-0003-0019</p>
+      <p>97-3-19. Homicide; murder defined.</p>
+      <p>The killing of a human being without the authority of law by any means or in any manner shall be murder in the following cases:</p>
+      <p>97-3-20. Homicide; capital murder. (Repealed)</p>
+      <p>Repealed text must not be admitted.</p>
+    </body></html>
+    """
+    path = tmp_path / "00030019.htm"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MISSISSIPPI_SECTION_HTML", str(path))
+    scraper = MississippiScraper("MS", "Mississippi")
+    rows = asyncio.run(
+        scraper.scrape_code("Mississippi Code", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "97-3-19"
+    assert "without the authority of law" in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "billstatus.ls.state.ms.us" in rows[0].source_url
+    assert "justia" not in rows[0].source_url

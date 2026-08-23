@@ -178,6 +178,18 @@ class MississippiScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .mississippi_section import configured_section_html_path, parse_mississippi_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            local_rows = parse_mississippi_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://billstatus.ls.state.ms.us/documents/2024/html/code_sections/097/00030019.htm",
+                code_name=code_name,
+                max_statutes=limit,
+            )
+            if local_rows:
+                return local_rows if limit is None else local_rows[: int(limit)]
         full_corpus_unbounded = self._full_corpus_enabled() and max_statutes is None
 
         common_crawl_timeout_raw = str(

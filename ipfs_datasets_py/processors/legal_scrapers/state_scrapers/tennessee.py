@@ -213,6 +213,18 @@ class TennesseeScraper(BaseStateScraper):
         admission unless ``STATE_SCRAPER_TN_ALLOW_JUSTIA_FALLBACK`` is set.
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .tennessee_section import configured_section_html_path, parse_tennessee_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            local_rows = parse_tennessee_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.tn.gov/tga/statutes/title-39/chapter-13/section-39-13-202.html",
+                code_name=code_name,
+                max_statutes=limit,
+            )
+            if local_rows:
+                return local_rows if limit is None else local_rows[: int(limit)]
         allow_justia = self._justia_fallback_allowed()
         # Bounded probes that explicitly target Justia keep that recovery path
         # offline-friendly; full-corpus always prefers official hosts first.
