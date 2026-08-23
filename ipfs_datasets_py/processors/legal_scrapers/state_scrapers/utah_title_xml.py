@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 from xml.etree import ElementTree as ET
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -54,6 +54,79 @@ def version_default_from_html(html: str) -> Optional[str]:
         return None
     token = str(match.group(1) or "").strip()
     return token or None
+
+
+_VERSION_ARR_FILE_RE = re.compile(r"""\[\s*['"]([^'"]+\.html)['"]""")
+_CHILD_TITLE_RE = re.compile(r"Title\s+(\S+)", re.IGNORECASE)
+_CHILD_CHAPTER_RE = re.compile(r"Chapter([^/]+)/", re.IGNORECASE)
+_SECTION_HREF_RE = re.compile(
+    r"([\d]+(?:-[\w]+)*)-S([\w.]+)\.html$", re.IGNORECASE
+)
+
+
+def version_arr_files(html: str) -> List[str]:
+    """Filenames from the wrapper ``versionArr`` JS array."""
+
+    out: List[str] = []
+    seen: set[str] = set()
+    for match in _VERSION_ARR_FILE_RE.finditer(html or ""):
+        name = match.group(1)
+        if name in seen:
+            continue
+        seen.add(name)
+        out.append(name)
+    return out
+
+
+def childtbl_rows(html: str, *, base_url: str = f"{UT_BASE}/xcode/") -> List[Tuple[str, str, str, str]]:
+    """``#childtbl`` title/chapter rows: ``(kind, number, name, url)``."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    table = soup.find(id="childtbl")
+    if table is None:
+        return []
+    out: List[Tuple[str, str, str, str]] = []
+    seen: set[str] = set()
+    for row in table.find_all("tr"):
+        anchor = row.find("a", href=True)
+        if anchor is None:
+            continue
+        href = str(anchor.get("href") or "").strip().split("?", 1)[0]
+        cells = row.find_all("td")
+        label = _WS.sub(" ", (anchor.get_text(" ") or "").replace("\xa0", " ")).strip()
+        suffix = _WS.sub(" ", (cells[1].get_text(" ") if len(cells) > 1 else "")).strip()
+        name = f"{label} {suffix}".strip()
+        title_match = _CHILD_TITLE_RE.match(label)
+        if title_match:
+            number = title_match.group(1).rstrip(".")
+            kind = "title"
+        else:
+            chapter_match = _CHILD_CHAPTER_RE.search(href)
+            if not chapter_match:
+                continue
+            number = chapter_match.group(1)
+            kind = "chapter"
+        key = f"{kind}:{number}"
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append((kind, number, name or f"{kind} {number}", urljoin(base_url, href)))
+    return out
+
+
+def section_number_from_href(href: str) -> Optional[str]:
+    """``3-1-S1.html`` -> ``3-1-1``."""
+
+    match = _SECTION_HREF_RE.search(str(href or "").split("?", 1)[0])
+    if not match:
+        return None
+    return f"{match.group(1)}-{match.group(2)}"
 
 
 def _elem_text(elem: ET.Element) -> str:

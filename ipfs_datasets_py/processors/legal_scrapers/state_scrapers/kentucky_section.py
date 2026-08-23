@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -110,6 +110,86 @@ def configured_section_path() -> Optional[Path]:
         if path.is_file():
             return path
     return None
+
+
+def title_spans(html: str) -> List[Tuple[str, str]]:
+    """``#Panel1 span#title`` Roman-numeral title labels."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for span in soup.find_all("span", id="title"):
+        raw = _clean(span.get_text(" "))
+        parts = raw.split(None, 2)
+        number = parts[1] if len(parts) >= 2 else raw
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        out.append((number, raw or f"Title {number}"))
+    return out
+
+
+def chapter_links(html: str, *, base_url: str = f"{BASE}/") -> List[Tuple[str, str, str]]:
+    """``a.chapter`` rows (``chapter.aspx?id=N``)."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", class_="chapter", href=True):
+        raw = _clean(anchor.get_text(" "))
+        parts = raw.split(None, 2)
+        number = parts[1].rstrip(".") if len(parts) >= 2 else ""
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        href = str(anchor.get("href") or "").strip()
+        out.append((number, raw or f"Chapter {number}", urljoin(base_url, href)))
+    return out
+
+
+def statute_links(
+    html: str, *, chapter_number: str, base_url: str = f"{BASE}/"
+) -> List[Tuple[str, str, str]]:
+    """``a.statute`` rows; ``.100`` becomes ``{chapter}.100``. PDFs stay env-gated."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    panel = soup.find(id="Panel1") or soup
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in panel.find_all("a", class_="statute", href=True):
+        raw = _clean(anchor.get_text(" "))
+        number = ""
+        dotted = re.match(r"^\.(\d[\w]*)\s", raw)
+        if dotted:
+            number = f"{chapter_number}.{dotted.group(1)}"
+        else:
+            prefixed = re.match(r"^(\d[\w]*\.\d+)\s", raw)
+            if prefixed:
+                number = prefixed.group(1)
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        href = str(anchor.get("href") or "").strip()
+        if not href:
+            continue
+        out.append((number, raw or f"Section {number}", urljoin(base_url, href)))
+    return out
 
 
 def parse_configured_kentucky_section(

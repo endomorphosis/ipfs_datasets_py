@@ -8,7 +8,7 @@ fetch per chapter is the official bulk path, not a secondary mirror.
 from __future__ import annotations
 
 import re
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -122,3 +122,96 @@ def parse_ohio_chapter_html(
             )
         )
     return statutes
+
+
+def title_links(html: str, *, base_url: str = OH_BASE) -> List[Tuple[str, str, str]]:
+    """TOC ``ohio-revised-code/title-N`` rows from ``data-grid laws-table``."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    table = soup.find(class_="data-grid laws-table")
+    anchors = table.find_all("a", href=True) if table is not None else soup.find_all(
+        "a", href=re.compile(r"ohio-revised-code/title-\d+")
+    )
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in anchors:
+        href = str(anchor.get("href") or "").strip()
+        match = re.search(r"ohio-revised-code/title-(\d+)$", href)
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        name = re.sub(r"\s+", " ", (anchor.get_text(" ") or "")).strip() or f"Title {number}"
+        out.append((number, name, urljoin(base_url.rstrip("/") + "/", href)))
+    return out
+
+
+def chapter_cells(html: str, *, base_url: str = "") -> List[Tuple[str, str, str]]:
+    """Title-page ``name-cell`` chapter links (``chapter-101``)."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    table = soup.find(class_="data-grid laws-table") or soup
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for cell in table.find_all(class_="name-cell"):
+        anchor = cell.find("a", href=True)
+        if anchor is None:
+            continue
+        href = str(anchor.get("href") or "").strip()
+        match = re.search(r"chapter-(\d+)$", href)
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        name = re.sub(r"\s+", " ", (anchor.get_text(" ") or "")).strip() or f"Chapter {number}"
+        out.append((number, name, urljoin(base_url or (OH_BASE + "/"), href)))
+    return out
+
+
+def section_cells(html: str, *, base_url: str = "") -> List[Tuple[str, str, str]]:
+    """Chapter-page ``content-head-text`` / ``section-N`` rows."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    table = soup.find(class_="data-grid laws-table") or soup
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for cell in table.find_all(class_="name-cell"):
+        head = cell.find(class_="content-head-text")
+        anchor = head.find("a", href=True) if head is not None else cell.find(
+            "a", href=re.compile(r"/section-")
+        )
+        if anchor is None:
+            continue
+        href = str(anchor.get("href") or "").strip()
+        match = re.search(r"section-([0-9A-Za-z.\-]+)$", href)
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        name = re.sub(r"\s+", " ", (anchor.get_text(" ") or "")).strip() or f"Section {number}"
+        out.append((number, name, urljoin(base_url or (OH_BASE + "/"), href)))
+    return out

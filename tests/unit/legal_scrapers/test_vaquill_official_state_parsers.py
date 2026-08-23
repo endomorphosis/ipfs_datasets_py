@@ -4633,6 +4633,123 @@ def test_west_virginia_sel_chapter_and_heads() -> None:
     assert sections[0][0] == "61-2-1"
 
 
+def test_alaska_toc_fragments_loadtoc_and_section_anchors() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alaska_section import (
+        chapter_toc_links,
+        section_toc_links,
+        toc_url,
+    )
+
+    assert "media=js&type=TOC&title=01" in toc_url("1")
+    chapters = chapter_toc_links(
+        '<li><a onclick=\'loadTOC("01.05");\'>Chapter 05. Alaska Statutes</a></li>'
+        "<li><a href=\"#skip\">not a chapter</a></li>"
+    )
+    assert chapters[0][0] == "01.05"
+    sections = section_toc_links(
+        '<li><a href="statutes.asp?year=2024&title=1#01.05.006">Sec. 01.05.006. Adoption</a></li>'
+    )
+    assert sections[0][0] == "01.05.006"
+
+
+def test_kentucky_panel_titles_chapters_and_statute_labels() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kentucky_section import (
+        chapter_links,
+        statute_links,
+        title_spans,
+    )
+
+    titles = title_spans(
+        '<div id="Panel1"><span id="title">TITLE L CRIMES AND PUNISHMENTS</span></div>'
+    )
+    assert titles[0][0] == "L"
+    chapters = chapter_links(
+        '<a class="chapter" href="chapter.aspx?id=507">CHAPTER 507 HOMICIDE</a>'
+    )
+    assert chapters[0][0] == "507"
+    assert chapters[0][2].endswith("chapter.aspx?id=507")
+    statutes = statute_links(
+        '<div id="Panel1"><a class="statute" href="statute.aspx?id=1">'
+        ".020  Murder.</a></div>",
+        chapter_number="507",
+    )
+    assert statutes[0][0] == "507.020"
+
+
+def test_ohio_laws_table_title_chapter_section_cells() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.ohio_chapter import (
+        chapter_cells,
+        section_cells,
+        title_links,
+    )
+
+    titles = title_links(
+        '<table class="data-grid laws-table"><tr><td>'
+        '<a href="ohio-revised-code/title-29">Title 29 | Crimes</a></td></tr></table>'
+    )
+    assert titles[0][0] == "29"
+    chapters = chapter_cells(
+        '<table class="data-grid laws-table"><div class="name-cell">'
+        '<a href="chapter-2903">Chapter 2903 | Homicide</a></div></table>'
+    )
+    assert chapters[0][0] == "2903"
+    sections = section_cells(
+        '<table class="data-grid laws-table"><div class="name-cell">'
+        '<div class="content-head-text">'
+        '<a href="/ohio-revised-code/section-2903.01">Section 2903.01 | Aggravated murder</a>'
+        "</div></div></table>"
+    )
+    assert sections[0][0] == "2903.01"
+
+
+def test_montana_title_and_section_toc_items() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana_section import (
+        parse_title_numbers,
+        structure_toc_items,
+        title_toc_items,
+    )
+
+    assert parse_title_numbers("TITLES 8 AND 9. Reserved") == ["8", "9"]
+    titles = title_toc_items(
+        '<div class="title-toc-content"><ul>'
+        '<li><a href="./title_0045/">TITLE 45. CRIMES</a></li>'
+        '<li><span class="reserved">TITLES 8 AND 9. Reserved</span></li>'
+        "</ul></div>"
+    )
+    assert [number for number, _name, _url in titles] == ["45", "8", "9"]
+    sections = structure_toc_items(
+        '<div class="section-toc-content"><li class="line">'
+        '<span class="citation">45-5-102</span>'
+        '<a href="./0450-0050-0010-0102.html">Deliberate homicide</a></li></div>',
+        level="section",
+        container_class="section-toc-content",
+    )
+    assert sections[0][0] == "45-5-102"
+
+
+def test_utah_childtbl_and_version_arr_section_hrefs() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.utah_title_xml import (
+        childtbl_rows,
+        section_number_from_href,
+        version_arr_files,
+    )
+
+    rows = childtbl_rows(
+        '<table id="childtbl"><tr><td><a href="Title76/76.html?v=C76_1">Title 76</a></td>'
+        "<td>Utah Criminal Code</td></tr>"
+        '<tr><td><a href="Title76/Chapter5/76-5.html">Chapter 5</a></td>'
+        "<td>Offenses Against the Person</td></tr></table>"
+    )
+    assert [(kind, number) for kind, number, _name, _url in rows] == [
+        ("title", "76"),
+        ("chapter", "5"),
+    ]
+    assert version_arr_files("var versionArr = [['C76_1800010118000101.html', 'x']];") == [
+        "C76_1800010118000101.html"
+    ]
+    assert section_number_from_href("Title76/Chapter5/76-5-S203.html") == "76-5-203"
+
+
 
 
 

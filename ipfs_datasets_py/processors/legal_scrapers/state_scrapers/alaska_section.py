@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -26,6 +26,61 @@ _WS = re.compile(r"\s+")
 
 def print_url(section_number: str) -> str:
     return f"{BASE}?media=print&secStart={section_number}&secEnd={section_number}"
+
+
+def toc_url(title_or_chapter: str) -> str:
+    token = str(title_or_chapter or "").strip()
+    if token.isdigit():
+        token = f"{int(token):02d}"
+    return f"{BASE}?media=js&type=TOC&title={token}"
+
+
+def xref_url(section_number: str) -> str:
+    return f"{BASE}?type=xRef&sec={section_number}"
+
+
+def chapter_toc_links(html: str) -> List[Tuple[str, str]]:
+    """Title TOC fragments: ``loadTOC(\"01.05\")`` chapter rows."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for link in soup.find_all("a", onclick=True):
+        match = re.search(r'loadTOC\("(\d{2}\.\d{2})"\)', str(link.get("onclick") or ""))
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        out.append((number, _clean(link.get_text(" ")) or f"Chapter {number}"))
+    return out
+
+
+def section_toc_links(html: str) -> List[Tuple[str, str]]:
+    """Chapter TOC fragments: ``#01.05.006`` section anchors."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for link in soup.find_all("a", href=True):
+        match = re.search(r"#(\d{2}\.\d{2}\.\d{3}[A-Za-z]?)$", str(link.get("href") or ""))
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        out.append((number, _clean(link.get_text(" ")) or f"Sec. {number}"))
+    return out
 
 
 def _clean(text: str) -> str:

@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -98,3 +98,83 @@ def configured_section_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def parse_title_numbers(text: str) -> List[str]:
+    """Expand ``TITLE 5`` / ``TITLES 8 AND 9`` labels."""
+
+    raw = str(text or "")
+    match = re.match(r"(?i)\s*TITLES\s+(\d+)\s+AND\s+(\d+)\b", raw)
+    if match:
+        return [match.group(1), match.group(2)]
+    match = re.match(r"(?i)\s*TITLES\s+(\d+)\s+THROUGH\s+(\d+)\b", raw)
+    if match:
+        return [str(n) for n in range(int(match.group(1)), int(match.group(2)) + 1)]
+    match = re.match(r"(?i)\s*TITLE\s+(\d+)\b", raw)
+    if match:
+        return [match.group(1)]
+    return []
+
+
+def title_toc_items(html: str, *, base_url: str = f"{BASE}/") -> List[Tuple[str, str, str]]:
+    """``.title-toc-content`` / ``.mca-toc-nav`` title rows."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    nav = soup.find(class_="mca-toc-nav") or soup.find(class_="mca-content mca-toc") or soup
+    container = nav.find(class_="title-toc-content") or nav
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for item in container.find_all("li"):
+        link = item.find("a", href=True)
+        reserved = item.find("span", class_="reserved")
+        raw = _clean((link or reserved or item).get_text(" "))
+        for number in parse_title_numbers(raw):
+            if number in seen:
+                continue
+            seen.add(number)
+            href = str(link.get("href") or "") if link is not None else ""
+            out.append((number, raw or f"Title {number}", urljoin(base_url, href) if href else base_url))
+    return out
+
+
+def structure_toc_items(
+    html: str, *, level: str, container_class: str, base_url: str = f"{BASE}/"
+) -> List[Tuple[str, str, str]]:
+    """Chapter/part/section TOC ``li.line`` / ``li.heading`` rows."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    container = soup.find(class_=container_class) or soup
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for item in container.find_all("li"):
+        link = item.find("a", href=True)
+        citation = item.find("span", class_="citation")
+        raw = _clean((link or item).get_text(" "))
+        if level == "section":
+            number = _clean(citation.get_text(" ")) if citation is not None else ""
+            if not number:
+                match = re.search(r"\b(\d+(?:-\d+){1,3})\b", raw)
+                number = match.group(1) if match else ""
+        else:
+            match = re.search(rf"(?i)\b{re.escape(level)}\s+([\w][\w\-]*?)(?:\.|$|\s)", raw)
+            if not match or re.search(r"(?i)\bthrough\b", raw):
+                continue
+            number = match.group(1).rstrip(".")
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        href = str(link.get("href") or "") if link is not None else ""
+        out.append((number, raw or f"{level} {number}", urljoin(base_url, href) if href else base_url))
+    return out
