@@ -217,6 +217,31 @@ def configured_georgia_html_paths() -> List[Path]:
     return paths
 
 
+async def fetch_official_locator_via_wayback(official_url: str) -> str:
+    """Fetch one official legis.ga.gov locator through the Wayback engine.
+
+    Returns empty string on miss. Callers must still parse with
+    ``parse_georgia_archive_html`` and label the result recovery.
+    """
+
+    try:
+        from ipfs_datasets_py.processors.web_archiving.wayback_machine_engine import (
+            get_wayback_content,
+        )
+    except Exception:
+        return ""
+    try:
+        result = await get_wayback_content(official_url, closest=True)
+    except Exception:
+        return ""
+    if not isinstance(result, dict) or result.get("status") != "success":
+        return ""
+    content = result.get("content")
+    if isinstance(content, bytes):
+        return content.decode("utf-8", errors="replace")
+    return str(content or "")
+
+
 def parse_configured_georgia_archive(
     *,
     code_name: str = "Official Code of Georgia Annotated",

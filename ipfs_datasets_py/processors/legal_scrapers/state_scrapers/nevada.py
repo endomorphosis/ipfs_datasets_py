@@ -147,6 +147,18 @@ class NevadaScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .nevada_chapter import configured_chapter_html_path, parse_nevada_chapter_html
+
+        local_chapter = configured_chapter_html_path()
+        if local_chapter is not None:
+            local_rows = parse_nevada_chapter_html(
+                local_chapter.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.leg.state.nv.us/NRS/NRS-200.html",
+                code_name=code_name,
+                max_statutes=limit,
+            )
+            if local_rows:
+                return local_rows if limit is None else local_rows[: int(limit)]
         official = await self._scrape_official_index(code_name, max_statutes=limit)
         official = self._filter_official_host_statutes(official)
         if official:
@@ -273,6 +285,20 @@ class NevadaScraper(BaseStateScraper):
         html = await self._request_text_direct(chapter_url, timeout=35)
         if not html:
             return []
+        from .nevada_chapter import parse_nevada_chapter_html
+
+        parsed = parse_nevada_chapter_html(
+            html,
+            source_url=chapter_url,
+            code_name=code_name,
+            max_statutes=max_statutes,
+        )
+        if parsed:
+            for row in parsed:
+                data = dict(row.structured_data or {})
+                data["discovery_method"] = discovery_method
+                row.structured_data = data
+            return parsed
         soup = BeautifulSoup(html, "html.parser")
         paragraphs = soup.find_all("p")
         out: List[NormalizedStatute] = []

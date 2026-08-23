@@ -80,6 +80,18 @@ class WyomingScraper(BaseStateScraper):
         """
         max_sections = self._effective_scrape_limit(max_statutes, default=160)
         max_sections_value = int(max_sections or 1000000)
+        from .wyoming_title import configured_title_text_path, parse_wyoming_title_text
+
+        local_title = configured_title_text_path()
+        if local_title is not None:
+            local_rows = parse_wyoming_title_text(
+                local_title.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.wyoleg.gov/statutes/compress/title6.pdf",
+                code_name=code_name,
+                max_statutes=max_sections,
+            )
+            if local_rows:
+                return local_rows[:max_sections_value]
 
         # The official download catalog has stable title PDFs. Prefer it over
         # the JS page so full-corpus runs do not depend on rendered link order.

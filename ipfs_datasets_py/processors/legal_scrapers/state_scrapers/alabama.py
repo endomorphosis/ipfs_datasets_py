@@ -103,6 +103,11 @@ class AlabamaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .alabama_section import parse_configured_alabama
+
+        local_rows = parse_configured_alabama(code_name=code_name, max_statutes=limit)
+        if local_rows:
+            return local_rows if limit is None else local_rows[: int(limit)]
         statutes = await self._scrape_alison_graphql(code_name, limit)
         if statutes:
             return statutes[:limit] if limit is not None else statutes

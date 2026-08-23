@@ -1366,3 +1366,117 @@ def test_arizona_content_sidebar_wrap(tmp_path: Path, monkeypatch) -> None:
     assert len(rows) == 1
     assert rows[0].section_number == "13-1105"
     assert "premeditation" in rows[0].full_text
+
+
+def test_alabama_graphql_section_drops_history(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alabama import AlabamaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    payload = {
+        "displayId": "13A-6-2",
+        "title": "Murder.",
+        "content": "<p>A person commits the crime of murder if he causes the death of another person.</p>",
+        "history": "<p>Acts 1977, No. 607, p. 812, § 2001.</p>",
+    }
+    path = tmp_path / "13A-6-2.json"
+    path.write_text(__import__("json").dumps(payload), encoding="utf-8")
+    monkeypatch.setenv("ALABAMA_SECTION_JSON", str(path))
+    scraper = AlabamaScraper("AL", "Alabama")
+    rows = asyncio.run(scraper.scrape_code("Alabama Code", "https://example.invalid", max_statutes=2))
+    assert len(rows) == 1
+    assert rows[0].section_number == "13A-6-2"
+    assert "causes the death of another" in rows[0].full_text
+    assert "Acts 1977" not in rows[0].full_text
+    assert "alison.legislature.state.al.us" in rows[0].source_url
+
+
+def test_wyoming_title_text_skips_history_and_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wyoming import WyomingScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+6-2-101. Murder in the first degree.
+Whoever purposely and with premeditated malice kills any human being is guilty of murder in the first degree.
+History: Laws 1982, ch. 75, § 1.
+6-2-102. Murder in the second degree. (Repealed)
+Repealed text must not be admitted.
+"""
+    path = tmp_path / "title6.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("WYOMING_TITLE_TEXT", str(path))
+    scraper = WyomingScraper("WY", "Wyoming")
+    rows = asyncio.run(scraper.scrape_code("Wyoming Statutes", "https://example.invalid", max_statutes=4))
+    assert len(rows) == 1
+    assert rows[0].section_number == "6-2-101"
+    assert "premeditated malice" in rows[0].full_text
+    assert "Laws 1982" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+
+
+def test_nevada_section_leadline_drops_history(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nevada import NevadaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <p><a name="NRS200010"></a><span class="Section">200.010</span>
+         <span class="Leadline">“Murder” defined.</span>
+         Murder is the unlawful killing of a human being with malice aforethought, either express or implied.</p>
+      <p>History: [1911 C&amp;P § 1]</p>
+      <p><a name="NRS200020"></a><span class="Section">200.020</span>
+         <span class="Leadline">Malice. (Repealed)</span>
+         Repealed text must not be admitted.</p>
+    </body></html>
+    """
+    path = tmp_path / "NRS-200.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("NEVADA_CHAPTER_HTML", str(path))
+    scraper = NevadaScraper("NV", "Nevada")
+    rows = asyncio.run(
+        scraper.scrape_code("Nevada Revised Statutes", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "200.010"
+    assert "malice aforethought" in rows[0].full_text
+    assert "1911 C&P" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+
+
+def test_georgia_wayback_engine_harvest_is_recovery(monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia_archive import (
+        fetch_official_locator_via_wayback,
+        parse_georgia_archive_html,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <nav>Skip to main content</nav>
+      <p>§ 16-5-1. Murder.</p>
+      <p>A person commits the offense of murder when he unlawfully and with malice aforethought causes the death of another human being.</p>
+    </body></html>
+    """
+
+    async def _fake_get_wayback_content(url, timestamp=None, closest=True):
+        assert "legis.ga.gov" in url
+        return {"status": "success", "content": html}
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.web_archiving.wayback_machine_engine.get_wayback_content",
+        _fake_get_wayback_content,
+    )
+    content = asyncio.run(
+        fetch_official_locator_via_wayback(
+            "https://www.legis.ga.gov/legislation/georgia-code/title-16/chapter-5/section-16-5-1"
+        )
+    )
+    rows = parse_georgia_archive_html(
+        content,
+        source_url="wayback",
+        code_name="Official Code of Georgia Annotated",
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "16-5-1"
+    assert rows[0].structured_data["source_authority_class"] == "recovery"
+    assert "malice aforethought" in rows[0].full_text
+    assert "skip to main" not in rows[0].full_text.lower()
