@@ -99,6 +99,11 @@ class CaliforniaScraper(BaseStateScraper):
             {"name": "Vehicle Code", "url": f"{base_url}/faces/codedisplayexpand.xhtml?tocCode=VEH", "type": "VEH"},
             {"name": "Water Code", "url": f"{base_url}/faces/codedisplayexpand.xhtml?tocCode=WAT", "type": "WAT"},
             {"name": "Welfare and Institutions Code", "url": f"{base_url}/faces/codedisplayexpand.xhtml?tocCode=WIC", "type": "WIC"},
+            {
+                "name": "California Constitution",
+                "url": f"{base_url}/faces/codes_displayText.xhtml?lawCode=CONS&article=I",
+                "type": "CONS",
+            },
         ]
 
         return codes
@@ -116,6 +121,22 @@ class CaliforniaScraper(BaseStateScraper):
         official TOC/section tree.
         """
         limit = self._effective_scrape_limit(max_statutes, default=250)
+        from .california_constitution import (
+            configured_constitution_html_path,
+            parse_california_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_california_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    article_id="I",
+                    code_name=code_name or "California Constitution",
+                    max_statutes=limit,
+                )
+                if constitution_rows:
+                    return constitution_rows if limit is None else constitution_rows[: int(limit)]
         code_type = self.CODE_TYPE_MAP.get(code_name)
         if not code_type:
             self.logger.warning("No code type mapping for %s", code_name)

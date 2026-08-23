@@ -23,6 +23,29 @@ def vacode_url(section_number: str) -> str:
     return f"https://law.lis.virginia.gov/vacode/{section_number}/"
 
 
+def container_links(html: str, title_number: str) -> List[str]:
+    """Sub-container paths under ``/vacode/title{T}/`` (chapter/part/article).
+
+    UCC titles use ``partN`` instead of ``chapterN``. Section links and the
+    title root are excluded so a BFS can reach every section.
+    """
+
+    title = re.escape(str(title_number or ""))
+    root = f"/vacode/title{title_number}/"
+    pattern = re.compile(r"['\"](/vacode/title" + title + r"/(?:[^'\"/]+/)+)['\"]")
+    seen = set()
+    out: List[str] = []
+    for match in pattern.finditer(html or ""):
+        url = match.group(1)
+        if "/section" in url or url == root:
+            continue
+        if url in seen:
+            continue
+        seen.add(url)
+        out.append(url)
+    return out
+
+
 def section_numbers(chapter_html: str) -> List[str]:
     out: List[str] = []
     seen = set()

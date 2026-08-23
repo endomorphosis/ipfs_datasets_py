@@ -7,13 +7,16 @@ Body lives in ``.pgbrk``; the first four child divs are breadcrumbs.
 from __future__ import annotations
 
 import re
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
 BASE = "https://legislature.idaho.gov"
 _HEADER_DIV_COUNT = 4
 _WS = re.compile(r"\s+")
+_WRAPPER_CLASSES = ("vc-column-inner-wrapper", "vc-column-innner-wrapper")
+_SUBCONTAINER_RE = re.compile(r"(?:PT\d|SCH)", re.IGNORECASE)
+_RESERVED_KEYWORDS = ("[repealed]", "[expired]", "[reserved]", "redesignated")
 
 
 def section_paragraphs(html: str) -> List[str]:
@@ -75,3 +78,121 @@ def statute_from_section_html(
             "skip_hydrate": True,
         },
     )
+
+
+def _clean_label(raw: str) -> str:
+    return _WS.sub(" ", (raw or "").replace("\xa0", " ")).strip()
+
+
+def _is_reserved_label(text: str) -> bool:
+    lowered = (text or "").lower()
+    return any(keyword in lowered for keyword in _RESERVED_KEYWORDS)
+
+
+def _abs(href: str) -> str:
+    token = str(href or "").strip()
+    if token.startswith("http"):
+        return token.rstrip("/") + "/"
+    return BASE + token.rstrip("/") + "/"
+
+
+def main_container(html: str):
+    """Second Visual Composer wrapper (canonical spelling, then the three-n typo)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return None
+    soup = BeautifulSoup(html or "", "html.parser")
+    wrappers = []
+    for class_name in _WRAPPER_CLASSES:
+        wrappers.extend(soup.find_all("div", class_=class_name))
+    if len(wrappers) >= 2:
+        return wrappers[1]
+    if len(wrappers) == 1:
+        return wrappers[0]
+    return None
+
+
+def title_rows(html: str) -> List[Tuple[str, str, str]]:
+    """TOC rows: ``(title_number, title_name, title_url)``. Reserved titles skipped."""
+
+    container = main_container(html)
+    if container is None:
+        return []
+    out: List[Tuple[str, str, str]] = []
+    for row in container.find_all("tr"):
+        tds = row.find_all("td")
+        if len(tds) < 3:
+            continue
+        anchor = tds[0].find("a", href=True)
+        if anchor is None:
+            continue
+        label = _clean_label(tds[0].get_text(" "))
+        words = label.split()
+        if len(words) < 2 or words[0].upper() != "TITLE":
+            continue
+        number = words[1]
+        name = f"{label} {_clean_label(tds[2].get_text(' '))}".strip()
+        if _is_reserved_label(name):
+            continue
+        out.append((number, name, _abs(str(anchor.get("href") or ""))))
+    return out
+
+
+def chapter_rows(html: str) -> List[Tuple[str, str]]:
+    """Title page rows: ``(chapter_number, chapter_url)``. Reserved chapters skipped."""
+
+    container = main_container(html)
+    if container is None:
+        return []
+    out: List[Tuple[str, str]] = []
+    for row in container.find_all("tr"):
+        tds = row.find_all("td")
+        if len(tds) < 3:
+            continue
+        anchor = tds[0].find("a", href=True)
+        if anchor is None:
+            continue
+        label = _clean_label(tds[0].get_text(" "))
+        words = label.split()
+        if len(words) < 2 or words[0].upper() != "CHAPTER":
+            continue
+        name = f"{label} {_clean_label(tds[2].get_text(' '))}".strip()
+        if _is_reserved_label(name):
+            continue
+        out.append((words[1], _abs(str(anchor.get("href") or ""))))
+    return out
+
+
+def section_rows(html: str) -> Tuple[List[Tuple[str, str, str]], List[str]]:
+    """Chapter page: ``(sections, subcontainer_urls)``.
+
+    Sections are ``(number, description, url)``. Sub-chapter ``SCH`` and part
+    ``PTn`` URLs flatten into the parent chapter (Vaquill Title 15 UPC walk).
+    """
+
+    container = main_container(html)
+    if container is None:
+        return [], []
+    sections: List[Tuple[str, str, str]] = []
+    subcontainers: List[str] = []
+    for row in container.find_all("tr"):
+        tds = row.find_all("td")
+        if len(tds) < 3:
+            continue
+        label = _clean_label(tds[0].get_text(" "))
+        if not label:
+            continue
+        anchor = tds[0].find("a", href=True)
+        if anchor is None:
+            continue
+        href = str(anchor.get("href") or "")
+        if "SECT" in href.upper():
+            desc = _clean_label(tds[2].get_text(" "))
+            if _is_reserved_label(f"{label} {desc}"):
+                continue
+            sections.append((label, desc, _abs(href)))
+        elif _SUBCONTAINER_RE.search(href):
+            subcontainers.append(_abs(href))
+    return sections, subcontainers

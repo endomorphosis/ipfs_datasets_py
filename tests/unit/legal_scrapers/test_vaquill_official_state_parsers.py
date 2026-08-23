@@ -441,6 +441,37 @@ def test_idaho_pgbrk_skips_breadcrumb_headers() -> None:
     assert "Title 18" not in row.full_text
 
 
+def test_idaho_listing_uses_innner_wrapper_and_skips_reserved() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.idaho_section import (
+        chapter_rows,
+        section_rows,
+        title_rows,
+    )
+
+    html = """
+    <div class="vc-column-inner-wrapper">nav</div>
+    <div class="vc-column-innner-wrapper">
+      <table>
+        <tr><td><a href="/statutesrules/idstat/Title18/">TITLE 18</a></td><td></td><td>Crimes and Punishments</td></tr>
+        <tr><td>TITLE 17</td><td></td><td>Repealed</td></tr>
+        <tr><td><a href="/statutesrules/idstat/Title18/T18CH40/">CHAPTER 40</a></td><td></td><td>Homicide</td></tr>
+        <tr><td><a href="/statutesrules/idstat/Title18/T18CH40/SECT18-4001/">18-4001</a></td><td></td><td>Murder defined.</td></tr>
+        <tr><td><a href="/statutesrules/idstat/Title18/T18CH40/SECT18-4002/">18-4002</a></td><td></td><td>Express malice. [Repealed]</td></tr>
+        <tr><td><a href="/statutesrules/idstat/Title15/T15CH1/PT1/">PART 1</a></td><td></td><td>General Provisions</td></tr>
+      </table>
+    </div>
+    """
+    titles = title_rows(html)
+    assert titles[0][0] == "18"
+    assert titles[0][2].endswith("/Title18/")
+    assert all(row[0] != "17" for row in titles)
+    chapters = chapter_rows(html)
+    assert chapters[0][0] == "40"
+    sections, subs = section_rows(html)
+    assert [num for num, _desc, _url in sections] == ["18-4001"]
+    assert any("/PT1/" in url for url in subs)
+
+
 def test_missouri_all_tables_and_norm_body() -> None:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri_chapter import (
         chapter_sections,
@@ -1851,3 +1882,63 @@ Tabla de Contenido stub that must not outrank the real section.
     assert rows[0].structured_data.get("citation_lpra") == "13 L.P.R.A. § 45001"
     assert "bvirtualogp.pr.gov" in rows[0].source_url
     assert "justia" not in rows[0].source_url
+
+
+def test_virginia_container_links_walk_parts_not_section_shortcuts() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.virginia_section import (
+        container_links,
+        section_numbers,
+    )
+
+    html = """
+    <a href='/vacode/title8.2/part1/'>Part 1</a>
+    <a href="/vacode/title8.2/part1/section8.2-101/">§ 8.2-101</a>
+    <a href='/vacode/title8.2/'>Title root</a>
+    <a href='/vacode/title18.2/chapter4/'>Chapter 4</a>
+    """
+    assert container_links(html, "8.2") == ["/vacode/title8.2/part1/"]
+    assert container_links(html, "18.2") == ["/vacode/title18.2/chapter4/"]
+    assert section_numbers(html) == ["8.2-101"]
+
+
+def test_california_constitution_skips_spa_shell_and_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.california import CaliforniaScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.california_constitution import (
+        ca_article_query,
+        ca_article_url,
+        looks_like_constitution_spa_shell,
+        parse_california_constitution_html,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    assert ca_article_query("XIIIA") == "XIII A"
+    assert "article=XIII%20A" in ca_article_url("XIIIA")
+    shell = """<!DOCTYPE html><html><head><title>California</title><base href="/" /></head><body></body></html>"""
+    assert looks_like_constitution_spa_shell(shell)
+    assert parse_california_constitution_html(shell, article_id="XIIIA") == []
+
+    html = """
+    <html><body>
+      <div id="manylawsections">
+        ARTICLE I DECLARATION OF RIGHTS
+        SECTION 1. All people are by nature free and independent and have inalienable rights.
+        SEC. 2. Repealed.
+        Repealed text must not be admitted as current constitutional law.
+        SECTION 3. The people have the right to instruct their representatives, petition government for redress of grievances, and assemble freely to consult for the common good.
+      </div>
+    </body></html>
+    """
+    path = tmp_path / "article-I.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("CALIFORNIA_CONSTITUTION_HTML", str(path))
+    scraper = CaliforniaScraper("CA", "California")
+    rows = asyncio.run(
+        scraper.scrape_code("California Constitution", "https://example.invalid", max_statutes=4)
+    )
+    assert [row.section_number for row in rows] == ["1", "3"]
+    assert "inalienable rights" in rows[0].full_text
+    assert "Repealed text" not in "".join(row.full_text for row in rows)
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "leginfo.legislature.ca.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+    assert "CONS" in rows[0].source_url or "lawCode=CONS" in rows[0].source_url

@@ -231,6 +231,11 @@ class IdahoScraper(BaseStateScraper):
         html = await self._fetch_official_id_html(index_url)
         if not html:
             return []
+        from .idaho_section import title_rows
+
+        listed = title_rows(html)
+        if listed:
+            return [(url, name) for _number, name, url in listed]
         soup = BeautifulSoup(html, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
@@ -255,6 +260,11 @@ class IdahoScraper(BaseStateScraper):
         html = await self._fetch_official_id_html(title_url)
         if not html:
             return []
+        from .idaho_section import chapter_rows
+
+        listed = chapter_rows(html)
+        if listed:
+            return [(url, number) for number, url in listed]
         soup = BeautifulSoup(html, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
@@ -279,6 +289,26 @@ class IdahoScraper(BaseStateScraper):
         html = await self._fetch_official_id_html(chapter_url)
         if not html:
             return []
+        from .idaho_section import section_rows
+
+        sections, subcontainers = section_rows(html)
+        if sections or subcontainers:
+            out: List[Tuple[str, str]] = [
+                (url, f"{number} {desc}".strip()) for number, desc, url in sections
+            ]
+            seen = {url for url, _label in out}
+            for sub_url in subcontainers:
+                nested_html = await self._fetch_official_id_html(sub_url)
+                if not nested_html:
+                    continue
+                nested_sections, _nested_subs = section_rows(nested_html)
+                for number, desc, url in nested_sections:
+                    if url in seen:
+                        continue
+                    seen.add(url)
+                    out.append((url, f"{number} {desc}".strip()))
+            if out:
+                return out
         soup = BeautifulSoup(html, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
