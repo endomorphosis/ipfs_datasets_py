@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -111,3 +111,60 @@ def configured_chapter_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def title_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str]]:
+    """Master TOC ``/code/titleN.php`` links."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = re.search(r"/code/title(\d+)\.php$", href)
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        out.append((number, urljoin(base_url, href)))
+    return out
+
+
+def chapter_rows(html: str, *, base_url: str = BASE) -> List[Tuple[str, str, str]]:
+    """Title-page ``CHAPTER N`` rows with ``/code/tNNcMMM.php`` HTML links."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    content = soup.find(id="contentsection") or soup
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for row in content.find_all("tr"):
+        cells = row.find_all("td")
+        if len(cells) < 2:
+            continue
+        label = _clean(cells[0].get_text(" "))
+        match = re.match(r"CHAPTER\s+([\w\-]+)", label, re.IGNORECASE)
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        link = cells[1].find("a", href=True)
+        if link is None:
+            continue
+        seen.add(number)
+        out.append((number, label, urljoin(base_url, str(link.get("href") or ""))))
+    return out

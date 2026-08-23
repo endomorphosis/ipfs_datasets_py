@@ -172,6 +172,18 @@ class KansasScraper(BaseStateScraper):
         html = await self._fetch_official_ks_html(page_url)
         if not html:
             return []
+        from .kansas_section import article_rows, chapter_rows, section_rows
+
+        if pattern is self._CHAPTER_RE:
+            listed = chapter_rows(html, base_url=page_url)
+        elif pattern is self._ARTICLE_RE:
+            listed = article_rows(html, base_url=page_url)
+        elif pattern is self._SECTION_RE:
+            listed = section_rows(html, base_url=page_url)
+        else:
+            listed = []
+        if listed:
+            return [(url.rstrip("/") + "/", name or number) for number, name, url in listed]
         soup = BeautifulSoup(html, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()

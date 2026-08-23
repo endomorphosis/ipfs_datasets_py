@@ -9,13 +9,14 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
 BASE = "https://www.azleg.gov"
 _HEAD_RE = re.compile(r"^\s*(\d+-\d+(?:\.\d+)?)\s*[-–]\s*(.+)$")
 _URL_RE = re.compile(r"/ars/(\d+)/([0-9A-Za-z-]+)\.htm$", re.IGNORECASE)
+_ARS_DETAIL_RE = re.compile(r"arsDetail/?\?title=(\d+)", re.IGNORECASE)
 _RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered)\b", re.IGNORECASE)
 _WS = re.compile(r"\s+")
 
@@ -86,3 +87,56 @@ def configured_section_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def title_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str]]:
+    """``arsDetail?title=N`` rows from the ARS TOC."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _ARS_DETAIL_RE.search(href)
+        if not match:
+            continue
+        number = match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        out.append((number, urljoin(base_url.rstrip("/") + "/", href)))
+    out.sort(key=lambda row: int(row[0]))
+    return out
+
+
+def accordion_section_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str, str]]:
+    """Title-page ``.colleft a`` section rows (``13-1101``)."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for left in soup.find_all(class_="colleft"):
+        anchor = left.find("a", href=True)
+        if anchor is None:
+            continue
+        number = _clean(anchor.get_text(" "))
+        if not number or number.lower() in seen:
+            continue
+        seen.add(number.lower())
+        parent = left.parent
+        right = parent.find(class_="colright") if parent is not None else None
+        name = _clean(right.get_text(" ")) if right is not None else ""
+        out.append((number, name, urljoin(base_url, str(anchor.get("href") or ""))))
+    return out

@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -21,6 +21,14 @@ _RESERVED = re.compile(r"\b(repealed|reserved|expired|renumbered)\b", re.IGNOREC
 _KSA_RE = re.compile(r"^([\da-z]+-[\da-z]+(?:-[\da-z]+)*)", re.IGNORECASE)
 _WS = re.compile(r"\s+")
 BROTLI_SAFE_ACCEPT_ENCODING = "gzip, deflate"
+_CHAPTER_HREF_RE = re.compile(r"(?:^|/)(\d+)_\d+_\d+_chapter/?$", re.IGNORECASE)
+_ARTICLE_HREF_RE = re.compile(r"(?:^|/)(\d+)_(\d+)_\d+_article/?$", re.IGNORECASE)
+_SECTION_HREF_RE = re.compile(
+    r"(?:^|/)(\d+)_(\d+)_(\d+)_section/(\d+)_(\d+)_(\d+)_k/?$", re.IGNORECASE
+)
+_KSA_ROW_RE = re.compile(
+    r"^([\da-z]+-[\da-z]+(?:-[\da-z]+)*)\s*[-–]", re.IGNORECASE
+)
 
 
 def _clean(text: str) -> str:
@@ -98,3 +106,78 @@ def configured_section_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def _statute_table_anchors(html: str):
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    table = soup.find(id="statute") or soup
+    return table.find_all("a", href=True)
+
+
+def chapter_rows(html: str, *, base_url: str = f"{BASE}/") -> List[Tuple[str, str, str]]:
+    """``#statute`` chapter rows (``001_000_0000_chapter/``)."""
+
+    from urllib.parse import urljoin
+
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in _statute_table_anchors(html):
+        href = str(anchor.get("href") or "").strip()
+        match = _CHAPTER_HREF_RE.search(href.split("?", 1)[0])
+        if not match:
+            continue
+        number = str(int(match.group(1)))
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(anchor.find_parent("tr").get_text(" ") if anchor.find_parent("tr") else anchor.get_text(" "))
+        out.append((number, name or f"Chapter {number}", urljoin(base_url, href)))
+    return out
+
+
+def article_rows(html: str, *, base_url: str = f"{BASE}/") -> List[Tuple[str, str, str]]:
+    """``#statute`` article rows (``001_002_0000_article/``)."""
+
+    from urllib.parse import urljoin
+
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in _statute_table_anchors(html):
+        href = str(anchor.get("href") or "").strip()
+        match = _ARTICLE_HREF_RE.search(href.split("?", 1)[0])
+        if not match:
+            continue
+        number = str(int(match.group(2)))
+        if number in seen:
+            continue
+        seen.add(number)
+        name = _clean(anchor.find_parent("tr").get_text(" ") if anchor.find_parent("tr") else anchor.get_text(" "))
+        out.append((number, name or f"Article {number}", urljoin(base_url, href)))
+    return out
+
+
+def section_rows(html: str, *, base_url: str = f"{BASE}/") -> List[Tuple[str, str, str]]:
+    """``#statute`` section rows (``..._section/..._k/``, KSA ``1-201``)."""
+
+    from urllib.parse import urljoin
+
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for anchor in _statute_table_anchors(html):
+        href = str(anchor.get("href") or "").strip()
+        if not _SECTION_HREF_RE.search(href.split("?", 1)[0]):
+            continue
+        row = anchor.find_parent("tr")
+        row_text = _clean(row.get_text(" ") if row is not None else anchor.get_text(" "))
+        match = _KSA_ROW_RE.match(row_text) or _KSA_RE.match(row_text)
+        number = match.group(1).rstrip(".") if match else ""
+        if not number or number.lower() in seen:
+            continue
+        seen.add(number.lower())
+        clean_href = re.sub(r"^(?:\.\./)+", "", href)
+        out.append((number, row_text or f"Section {number}", urljoin(base_url, clean_href)))
+    return out

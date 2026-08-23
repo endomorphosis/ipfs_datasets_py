@@ -24,6 +24,17 @@ _CHAPTER_HREF_RE = re.compile(
     r"/Laws/GeneralLaws/Part[IVXLCDM]+/Title[IVXLCDM]+[A-Z]?/Chapter([0-9]+[A-Za-z]?)/?$",
     re.IGNORECASE,
 )
+_SECTION_HREF_RE = re.compile(
+    r"/Laws/GeneralLaws/Part[IVXLCDM]+/Title[IVXLCDM]+[A-Z]?/Chapter[0-9]+[A-Za-z]?/Section([0-9]+[A-Za-z0-9]*)/?$",
+    re.IGNORECASE,
+)
+_TITLE_TOGGLE_HREF_RE = re.compile(r"^#title([A-Z]+)$", re.IGNORECASE)
+_ACCORDION_AJAX_RE = re.compile(
+    r"""accordionAjaxLoad\(\s*['"](?P<partId>\d+)['"]\s*,
+        \s*['"](?P<titleId>\d+)['"]\s*,
+        \s*['"](?P<code>[A-Za-z0-9]+)['"]\s*\)""",
+    re.IGNORECASE | re.VERBOSE,
+)
 _WS = re.compile(r"\s+")
 
 
@@ -32,6 +43,48 @@ def chapters_for_title_url(part_id: str, title_id: str, code: str) -> str:
         f"{BASE}/Laws/GeneralLaws/GetChaptersForTitle"
         f"?partId={part_id}&titleId={title_id}&code={code}"
     )
+
+
+def title_toggles(html: str) -> List[Tuple[str, str, str, str]]:
+    """Part-page accordion titles: ``(partId, titleId, code, label)``."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    discovered: dict[str, dict] = {}
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        if not _TITLE_TOGGLE_HREF_RE.match(href):
+            continue
+        onclick = str(anchor.get("onclick") or "")
+        match = _ACCORDION_AJAX_RE.search(onclick)
+        if not match:
+            continue
+        title_id = match.group("titleId")
+        code = match.group("code").upper()
+        text = _WS.sub(" ", (anchor.get_text(" ") or "").replace("\xa0", " ")).strip()
+        if not text or re.match(r"^Chapters?\b", text, re.IGNORECASE):
+            continue
+        entry = discovered.setdefault(
+            title_id,
+            {
+                "part_id": match.group("partId"),
+                "title_id": title_id,
+                "code": code,
+                "labels": [],
+            },
+        )
+        entry["labels"].append(text)
+    out: List[Tuple[str, str, str, str]] = []
+    for entry in discovered.values():
+        code = entry["code"]
+        short = re.compile(rf"^Title\s+{re.escape(code)}\s*$", re.IGNORECASE)
+        descriptive = next((label for label in entry["labels"] if not short.match(label)), "")
+        label = f"Title {code}" + (f" - {descriptive}" if descriptive else "")
+        out.append((entry["part_id"], entry["title_id"], code, label))
+    return out
 
 
 def extract_chapter_links(fragment_html: str) -> List[Tuple[str, str]]:
@@ -52,6 +105,31 @@ def extract_chapter_links(fragment_html: str) -> List[Tuple[str, str]]:
             continue
         seen.add(number)
         out.append((f"{BASE}{path}", number))
+    return out
+
+
+def section_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str]]:
+    """Chapter-page ``/SectionN`` anchors."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    from urllib.parse import urljoin
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        path = urlparse(str(anchor.get("href") or "")).path
+        match = _SECTION_HREF_RE.search(path)
+        if not match:
+            continue
+        number = match.group(1).upper()
+        if number in seen:
+            continue
+        seen.add(number)
+        out.append((urljoin(base_url, path), number))
     return out
 
 

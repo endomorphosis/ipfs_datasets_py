@@ -4491,6 +4491,148 @@ def test_virginia_number_descrip_list_and_ny_category_law_links() -> None:
     assert [abbr for abbr, _name, _url in laws] == ["PEN", "CPL"]
 
 
+def test_kansas_statute_table_chapter_article_section_rows() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kansas_section import (
+        article_rows,
+        chapter_rows,
+        section_rows,
+    )
+
+    chapters = chapter_rows(
+        '<table id="statute"><tr><td><a href="021_000_0000_chapter/">Chapter 21</a></td>'
+        "<td>Crimes and Punishments</td></tr></table>"
+    )
+    assert chapters[0][0] == "21"
+    articles = article_rows(
+        '<table id="statute"><tr><td><a href="021_054_0000_article/">Article 54</a></td>'
+        "<td>Crimes Against Persons</td></tr></table>"
+    )
+    assert articles[0][0] == "54"
+    sections = section_rows(
+        '<table id="statute"><tr><td><a href="../../021_000_0000_chapter/'
+        '021_054_0000_article/021_054_0101_section/021_054_0101_k/">'
+        "21-5401 - Capital murder</a></td></tr></table>"
+    )
+    assert sections[0][0] == "21-5401"
+    assert sections[0][2].endswith("021_054_0101_k/")
+
+
+def test_massachusetts_accordion_titles_and_section_hrefs() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.massachusetts_section import (
+        chapters_for_title_url,
+        extract_chapter_links,
+        section_links,
+        title_toggles,
+    )
+
+    titles = title_toggles(
+        """
+        <a href="#titleI" onclick="accordionAjaxLoad('1', '1', 'I')">Title I</a>
+        <a href="#titleI" onclick="accordionAjaxLoad('1', '1', 'I')">Jurisdiction</a>
+        <a href="#titleI" onclick="accordionAjaxLoad('1', '1', 'I')">Chapters 1 - 9</a>
+        """
+    )
+    assert titles[0][:3] == ("1", "1", "I")
+    assert "Jurisdiction" in titles[0][3]
+    assert "GetChaptersForTitle" in chapters_for_title_url("1", "1", "I")
+    chapters = extract_chapter_links(
+        '<ul class="generalLawsList"><li>'
+        '<a href="/Laws/GeneralLaws/PartI/TitleI/Chapter1">'
+        '<span class="chapterTitle">Jurisdiction</span></a></li></ul>'
+    )
+    assert chapters[0][1] == "1"
+    sections = section_links(
+        '<a href="/Laws/GeneralLaws/PartIV/TitleI/Chapter265/Section1">Section 1</a>'
+        '<a href="/Laws/GeneralLaws/PartIV/TitleI/Chapter265">chapter</a>'
+    )
+    assert sections[0][1] == "1"
+
+
+def test_arizona_arsdetail_and_accordion_sections() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arizona_section import (
+        accordion_section_links,
+        title_links,
+    )
+
+    titles = title_links(
+        '<a href="/arsDetail/?title=13">Title 13</a>'
+        '<a href="arsDetail?title=4">Title 4</a>'
+        '<a href="/other">skip</a>'
+    )
+    assert [number for number, _url in titles] == ["4", "13"]
+    sections = accordion_section_links(
+        '<div class="colleft"><a href="/ars/13/1105.htm">13-1105</a></div>'
+        '<div class="colright">First degree murder</div>'
+    )
+    assert sections[0][0] == "13-1105"
+    assert sections[0][2].endswith("/ars/13/1105.htm")
+
+
+def test_north_dakota_titles_grid_and_chapter_tables() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_dakota_chapter import (
+        chapter_table_rows,
+        section_meta_rows,
+        title_items,
+    )
+
+    titles = title_items(
+        '<div class="titles-grid"><div class="title-item">'
+        '<span class="title-number">12.1</span>'
+        '<a href="/cencode/t12-1.html">Criminal Code</a></div></div>'
+    )
+    assert titles[0][0] == "12.1"
+    assert titles[0][2].endswith("/cencode/t12-1.html")
+    chapters = chapter_table_rows(
+        '<div class="field--name-field-pwv-custom-content"><table>'
+        "<tr><td>12.1-16</td><td><a href=\"t12-1c16.html\">HTML</a></td>"
+        "<td>Homicide</td></tr></table></div>"
+    )
+    assert chapters[0][0] == "12.1-16"
+    sections = section_meta_rows(
+        '<div class="field--name-field-pwv-custom-content"><table>'
+        "<tr><td><a>12.1-16-01</a></td><td>Murder</td></tr></table></div>"
+    )
+    assert sections[0] == ("12.1-16-01", "Murder")
+
+
+def test_south_carolina_title_and_chapter_listings() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_carolina_chapter import (
+        chapter_rows,
+        title_links,
+    )
+
+    titles = title_links(
+        '<a href="/code/title16.php">Title 16</a><a href="/code/statmast.php">index</a>'
+    )
+    assert titles[0][0] == "16"
+    chapters = chapter_rows(
+        '<div id="contentsection"><table><tr><td>CHAPTER 3 - Offenses Against the Person</td>'
+        '<td><a href="/code/t16c003.php">HTML</a></td></tr></table></div>'
+    )
+    assert chapters[0][0] == "3"
+    assert chapters[0][2].endswith("/code/t16c003.php")
+
+
+def test_west_virginia_sel_chapter_and_heads() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.west_virginia_dump import (
+        article_heads,
+        chapter_options,
+        section_heads,
+    )
+
+    chapters = chapter_options(
+        '<select id="sel-chapter">'
+        '<option value="61">CHAPTER 61. CRIMES</option>'
+        '<option value="17H">CHAPTER 17H. AUTONOMOUS VEHICLES</option>'
+        '<option value="">skip</option></select>'
+    )
+    assert [number for number, _name in chapters] == ["61", "17H"]
+    articles = article_heads('<div class="art-head"><a href="/61-2/">ARTICLE 2</a></div>')
+    assert articles[0][0] == "2"
+    sections = section_heads('<div class="sec-head"><a href="/61-2-1/">§61-2-1</a></div>')
+    assert sections[0][0] == "61-2-1"
+
+
 
 
 

@@ -10,11 +10,12 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
 CENCODE = "https://ndlegis.gov/cencode"
+BASE = "https://ndlegis.gov"
 _SEC_HEADER_RE = re.compile(r"^(\d[\d.]*(?:-[\d.]+)+)\.\s+(.+)$")
 _PAGE_FOOTER_RE = re.compile(r"^Page No\.\s+\d+\s*$", re.IGNORECASE)
 _RUNNING_HEADER_RE = re.compile(
@@ -180,3 +181,91 @@ def parse_configured_north_dakota_chapter(
         code_name=code_name,
         max_statutes=max_statutes,
     )
+
+
+def title_items(html: str, *, base_url: str = BASE) -> List[Tuple[str, str, str]]:
+    """``.titles-grid .title-item`` rows from classic.html."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    grid = soup.find(class_="titles-grid") or soup
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for item in grid.find_all(class_="title-item"):
+        number_node = item.find(class_=re.compile(r"title-number"))
+        anchor = item.find("a", href=True)
+        if number_node is None or anchor is None:
+            continue
+        number = _clean(number_node.get_text(" "))
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        name = _clean(item.get_text(" "))
+        out.append((number, name or f"Title {number}", urljoin(base_url, str(anchor.get("href") or ""))))
+    return out
+
+
+def chapter_table_rows(html: str, *, base_url: str = CENCODE) -> List[Tuple[str, str, str]]:
+    """Title-page chapter table (number | link | name)."""
+
+    from urllib.parse import urljoin
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    field = soup.find(class_=re.compile(r"field--name-field-pwv-custom-content")) or soup
+    table = field.find("table") if field is not None else None
+    if table is None:
+        return []
+    out: List[Tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for row in table.find_all("tr"):
+        cells = row.find_all("td")
+        if len(cells) < 2:
+            continue
+        number = _clean(cells[0].get_text(" "))
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        link = cells[1].find("a", href=True)
+        name_cell = cells[2] if len(cells) > 2 else cells[1]
+        name = _clean(name_cell.get_text(" "))
+        url = urljoin(base_url.rstrip("/") + "/", str(link.get("href") or "")) if link else ""
+        out.append((number, name, url))
+    return out
+
+
+def section_meta_rows(html: str) -> List[Tuple[str, str]]:
+    """Chapter HTML section list ``{number, name}``."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    soup = BeautifulSoup(html or "", "html.parser")
+    field = soup.find(class_=re.compile(r"field--name-field-pwv-custom-content")) or soup
+    table = field.find("table") if field is not None else None
+    if table is None:
+        return []
+    out: List[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for row in table.find_all("tr"):
+        cells = row.find_all("td")
+        if len(cells) < 2:
+            continue
+        link = cells[0].find("a")
+        if link is None:
+            continue
+        number = _clean(link.get_text(" "))
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        out.append((number, _clean(cells[1].get_text(" "))))
+    return out
