@@ -293,6 +293,13 @@ class MaineScraper(BaseStateScraper):
                     continue
                 seen_chapters.add(full_url)
                 chapter_urls.append(full_url)
+            from .maine_section import title_toc_chapter_links
+
+            for href, _name in title_toc_chapter_links(title_html, base_url=title_url):
+                if href in seen_chapters or href.endswith("ch0sec0.html"):
+                    continue
+                seen_chapters.add(href)
+                chapter_urls.append(href)
 
             self.logger.info(
                 "Maine official tree: title_url=%s discovered_chapters=%s statutes_so_far=%s",

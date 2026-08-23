@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -104,6 +104,50 @@ def parse_maine_section_html(
 
 def configured_section_html_path() -> Optional[Path]:
     raw = str(os.environ.get("MAINE_SECTION_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def title_toc_chapter_links(html: str, *, base_url: str = BASE) -> List[Tuple[str, str]]:
+    """Chapter index URLs from a title TOC (``MRSChapter_toclist``).
+
+    Adapted from Vaquill-AI/open-us-law ``scrape_me2`` nested title listing.
+    """
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    from urllib.parse import urljoin
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen = set()
+    containers = soup.find_all("div", class_=re.compile(r"MRSChapter_toclist"))
+    anchors = []
+    for container in containers:
+        anchors.extend(container.find_all("a", href=True))
+    if not anchors:
+        anchors = soup.find_all("a", href=True)
+    for anchor in anchors:
+        href = str(anchor.get("href") or "").strip()
+        if not re.search(r"title[0-9A-Za-z\-]+ch[0-9A-Za-z\-]+sec0\.html$", href, re.IGNORECASE):
+            continue
+        if href.lower().endswith("ch0sec0.html"):
+            continue
+        url = urljoin(base_url.rstrip("/") + "/", href)
+        if url in seen:
+            continue
+        seen.add(url)
+        name = _clean(anchor.get_text(" ")) or url
+        out.append((url, name))
+    return out
+
+
+def configured_title_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("MAINE_TITLE_TOC_HTML") or "").strip()
     if not raw:
         return None
     path = Path(raw).expanduser()

@@ -614,6 +614,44 @@ def test_south_dakota_title_html_senu(tmp_path: Path, monkeypatch) -> None:
     assert "killing of one human being" in rows[0].full_text
 
 
+def test_south_dakota_utf16_and_chapter_toc(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_dakota import (
+        SouthDakotaScraper,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_dakota_title import (
+        chapter_html_url,
+        decode_sdlegislature_bytes,
+        title_chapter_entries,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <p class="sabcB">16Homicide and Suicide</p>
+    <p class="sabcB">16AUnconstitutional Provisions</p>
+    <p class="sabcNormal"><span class="SENU">22-16-4</span> 22-16-4. Homicide defined.</p>
+    <p class="sabcNormal-000001">Homicide is the killing of one human being by another.</p>
+    """
+    encoded = html.encode("utf-16-le")
+    assert encoded[1] == 0x00
+    assert "22-16-4" in decode_sdlegislature_bytes(encoded)
+    assert title_chapter_entries(html) == [
+        ("16", "Homicide and Suicide"),
+        ("16A", "Unconstitutional Provisions"),
+    ]
+    assert chapter_html_url("22", "16A").endswith("22-16A.html?all=true")
+    path = tmp_path / "22-16.html"
+    path.write_bytes(encoded)
+    monkeypatch.setenv("SOUTH_DAKOTA_CHAPTER_HTML", str(path))
+    scraper = SouthDakotaScraper("SD", "South Dakota")
+    rows = asyncio.run(
+        scraper.scrape_code("South Dakota Codified Laws", "https://example.invalid", max_statutes=3)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "22-16-4"
+    assert "killing of one human being" in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
 def test_virginia_drops_sidenote_disclaimer() -> None:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.virginia_section import (
         body_to_paragraphs,
@@ -1095,6 +1133,43 @@ def test_delaware_section_div_drops_history_and_repealed(tmp_path: Path, monkeyp
     assert "Repealed text" not in rows[0].full_text
 
 
+def test_delaware_title_links_and_title_text_dump(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.delaware import DelawareScraper
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.delaware_chapter import (
+        title_link_rows,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    listing = """
+    <div class="title-links"><a href="c005/index.html">Chapter 5. Specific Offenses</a></div>
+    <div class="title-links"><a href="c006/index.html">Part 6. Reserved</a></div>
+    """
+    rows = title_link_rows(listing, base_url="https://delcode.delaware.gov/title11/")
+    assert rows[0]["classifier"] == "chapter"
+    assert rows[0]["number"] == "5"
+    assert rows[0]["url"].endswith("/title11/c005/index.html")
+    text = """
+§ 635. Murder in the first degree; class A felony.
+A person is guilty of murder in the first degree when the person intentionally causes the death of another person.
+70 Del. Laws, c. 186, § 1.
+§ 636. Murder in the second degree [Repealed].
+Repealed text must not be admitted.
+"""
+    path = tmp_path / "title11.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("DELAWARE_TITLE_TEXT", str(path))
+    scraper = DelawareScraper("DE", "Delaware")
+    parsed = asyncio.run(
+        scraper.scrape_code("Delaware Code", "https://example.invalid", max_statutes=4)
+    )
+    assert len(parsed) == 1
+    assert parsed[0].section_number == "635"
+    assert "intentionally causes the death" in parsed[0].full_text
+    assert "70 Del. Laws" not in parsed[0].full_text
+    assert parsed[0].structured_data["source_authority_class"] == "official"
+    assert "delcode.delaware.gov" in parsed[0].source_url
+
+
 def test_oklahoma_complete_title_text_skips_history_and_repealed(tmp_path: Path, monkeypatch) -> None:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import OklahomaScraper
     from ipfs_datasets_py.utils import anyio_compat as asyncio
@@ -1386,6 +1461,34 @@ def test_maine_mrssection_drops_history(tmp_path: Path, monkeypatch) -> None:
     assert rows[0].section_number == "201"
     assert "intentionally or knowingly" in rows[0].full_text
     assert "PL 1975" not in rows[0].full_text
+
+
+def test_maine_title_toc_chapter_links() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maine_section import (
+        title_toc_chapter_links,
+    )
+
+    html = """
+    <div class="title_toc MRSTitle_toclist col-sm-10">
+      <div class="MRSPart_toclist"><h2>Part 1</h2></div>
+      <div class="MRSChapter_toclist">
+        <a href="title17-Ach1sec0.html">Chapter 1: Preliminary</a>
+      </div>
+      <div class="MRSChapter_toclist">
+        <a href="title17-Ach9sec0.html">Chapter 9: Offenses Against the Person</a>
+      </div>
+      <div class="MRSChapter_toclist">
+        <a href="title17-Ach0sec0.html">Chapter 0 skipped</a>
+      </div>
+    </div>
+    """
+    rows = title_toc_chapter_links(
+        html, base_url="https://legislature.maine.gov/statutes/17-A/"
+    )
+    assert [href.split("/")[-1] for href, _name in rows] == [
+        "title17-Ach1sec0.html",
+        "title17-Ach9sec0.html",
+    ]
 
 
 def test_hawaii_section_p_stops_at_notes(tmp_path: Path, monkeypatch) -> None:

@@ -152,6 +152,16 @@ class DelawareScraper(BaseStateScraper):
         html = await self._fetch_official_de_html(title_url)
         if not html:
             return []
+        from .delaware_chapter import title_link_rows
+
+        structured = title_link_rows(html, base_url=title_url)
+        chapter_rows = [
+            (row["url"], row["name"])
+            for row in structured
+            if row.get("classifier") == "chapter"
+        ]
+        if chapter_rows:
+            return chapter_rows
         soup = BeautifulSoup(html, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
@@ -312,6 +322,14 @@ class DelawareScraper(BaseStateScraper):
             )
             if local_rows:
                 return local_rows if limit is None else local_rows[: int(limit)]
+        from .delaware_chapter import parse_configured_delaware_title
+
+        title_rows = parse_configured_delaware_title(
+            code_name=code_name or "Delaware Code",
+            max_statutes=limit,
+        )
+        if title_rows:
+            return title_rows if limit is None else title_rows[: int(limit)]
         if limit is None and max_statutes is not None:
             try:
                 limit = max(1, int(max_statutes))
