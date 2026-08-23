@@ -191,3 +191,21 @@ def iac_list_rows(html: str, *, kind: str, base_url: str = SITE) -> List[Tuple[s
                     break
         out.append((number, label, urljoin(base_url, href) if href else ""))
     return out
+
+
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("IOWA_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> List[Tuple[str, str, str]]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    return iac_list_rows(
+        path.read_text(encoding="utf-8", errors="replace"),
+        kind="title",
+    )

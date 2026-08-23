@@ -6,8 +6,10 @@ Reads every table on OneChapter.aspx (not just the first).
 
 from __future__ import annotations
 
+import os
 import re
-from typing import List, Tuple
+from pathlib import Path
+from typing import List, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -168,3 +170,18 @@ def statute_from_section_html(
             "skip_hydrate": True,
         },
     )
+
+
+def configured_home_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("MISSOURI_HOME_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_home_html() -> List[Tuple[str, str, str]]:
+    path = configured_home_html_path()
+    if path is None:
+        return []
+    return details_chapter_links(path.read_text(encoding="utf-8", errors="replace"))

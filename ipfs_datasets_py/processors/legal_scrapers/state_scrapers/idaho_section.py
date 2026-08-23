@@ -6,7 +6,9 @@ Body lives in ``.pgbrk``; the first four child divs are breadcrumbs.
 
 from __future__ import annotations
 
+import os
 import re
+from pathlib import Path
 from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -196,3 +198,18 @@ def section_rows(html: str) -> Tuple[List[Tuple[str, str, str]], List[str]]:
         elif _SUBCONTAINER_RE.search(href):
             subcontainers.append(_abs(href))
     return sections, subcontainers
+
+
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("IDAHO_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> List[Tuple[str, str, str]]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    return title_rows(path.read_text(encoding="utf-8", errors="replace"))

@@ -5347,6 +5347,69 @@ def test_florida_ohio_toc_dumps_and_south_dakota_section_split(
     assert title_from_section("bad") == ""
 
 
+def test_ut_ia_id_mo_wi_toc_dumps(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.idaho_section import (
+        parse_configured_toc_html as parse_idaho_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.iowa_chapter_xml import (
+        parse_configured_toc_html as parse_iowa_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri_chapter import (
+        parse_configured_home_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.utah_title_xml import (
+        parse_configured_toc_html as parse_utah_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wisconsin_chapter import (
+        parse_configured_toc_html as parse_wisconsin_toc,
+    )
+
+    ut = tmp_path / "ut.html"
+    ut.write_text(
+        '<a href="/xcode/Title76/76.html?v=C76_2025050720250507">Title 76</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("UTAH_TOC_HTML", str(ut))
+    assert parse_utah_toc()["76"].endswith("/Title76/C76_2025050720250507.xml")
+
+    ia = tmp_path / "ia.html"
+    ia.write_text(
+        '<table id="iacList"><tbody><tr><td><a href="/law/iowaCode?title=XVI">'
+        "Title XVI - CRIMINAL LAW</a></td></tr></tbody></table>",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("IOWA_TOC_HTML", str(ia))
+    assert parse_iowa_toc()[0][0] == "XVI"
+
+    idaho = tmp_path / "id.html"
+    idaho.write_text(
+        '<div class="vc-column-inner-wrapper">nav</div>'
+        '<div class="vc-column-innner-wrapper"><table><tr>'
+        '<td><a href="/statutesrules/idstat/Title18/">TITLE 18</a></td>'
+        "<td></td><td>Crimes and Punishments</td></tr></table></div>",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("IDAHO_TOC_HTML", str(idaho))
+    assert parse_idaho_toc()[0][0] == "18"
+
+    mo = tmp_path / "mo.html"
+    mo.write_text(
+        '<details><a href="OneChapter.aspx?chapter=565">565 Offenses Against the Person</a>'
+        "</details>",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MISSOURI_HOME_HTML", str(mo))
+    assert parse_configured_home_html()[0][0] == "565"
+
+    wi = tmp_path / "wi.html"
+    wi.write_text(
+        '<p><a href="/document/statutes/940">Chapter 940 (PDF: ) - Crimes Against Life</a></p>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("WISCONSIN_TOC_HTML", str(wi))
+    assert parse_wisconsin_toc()[0][0] == "940"
+
+
 
 
 

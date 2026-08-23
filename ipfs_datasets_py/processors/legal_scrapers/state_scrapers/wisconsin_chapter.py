@@ -251,3 +251,18 @@ def parse_configured_chapter_pdf_toc(chapter: str) -> Set[str]:
         path.read_text(encoding="utf-8", errors="replace"),
         chapter,
     )
+
+
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("WISCONSIN_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> List[Tuple[str, str, str]]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    return toc_chapter_links(path.read_text(encoding="utf-8", errors="replace"))

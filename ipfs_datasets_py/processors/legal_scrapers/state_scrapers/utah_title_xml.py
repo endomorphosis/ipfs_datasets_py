@@ -294,3 +294,22 @@ def configured_title_xml_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("UTAH_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> Dict[str, str]:
+    """Local TOC dump of Title hrefs. Does not run Playwright discovery."""
+
+    path = configured_toc_html_path()
+    if path is None:
+        return {}
+    return discover_title_xml_urls_from_html(
+        path.read_text(encoding="utf-8", errors="replace")
+    )
