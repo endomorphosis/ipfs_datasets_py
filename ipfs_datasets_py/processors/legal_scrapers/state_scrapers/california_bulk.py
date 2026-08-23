@@ -60,11 +60,47 @@ _ROW = {"tr"}
 _CELL = {"td", "th"}
 
 
+_ZIP_MAGIC = b"PK\x03\x04"
+
+
 def session_zip_url(session: str) -> str:
     """Official pubinfo zip for one two-year legislative session."""
 
     year = str(session or "").strip() or "2025"
     return f"https://{OFFICIAL_DOWNLOADS_HOST}/pubinfo_{year}.zip"
+
+
+def session_zip_url_candidates(session: str) -> List[str]:
+    """Current two-year session then prior. Never auto-downloads the ~1.1GB zip."""
+
+    try:
+        year = int(str(session or "").strip() or "2025")
+    except ValueError:
+        year = 2025
+    return [session_zip_url(str(year)), session_zip_url(str(year - 2))]
+
+
+def looks_like_zip(path: Path) -> bool:
+    try:
+        with Path(path).open("rb") as handle:
+            magic = handle.read(4)
+    except OSError:
+        return False
+    return magic == _ZIP_MAGIC
+
+
+def bulk_zip_table_names(zip_path: Path) -> List[str]:
+    """Local zip namelist of ``*_TBL.dat`` members. Never range-fetches the remote zip."""
+
+    path = Path(zip_path)
+    if not path.is_file() or not looks_like_zip(path):
+        return []
+    with zipfile.ZipFile(path) as archive:
+        return sorted(
+            name
+            for name in archive.namelist()
+            if name.upper().endswith("_TBL.DAT") or name.upper().endswith("_TBL.TXT")
+        )
 
 
 def unquote_field(value: str) -> Optional[str]:
@@ -160,6 +196,8 @@ def parse_california_bulk_zip(
     path = Path(zip_path)
     if not path.is_file():
         raise FileNotFoundError(f"California bulk zip missing: {path}")
+    if not looks_like_zip(path):
+        return []
     statutes: List[NormalizedStatute] = []
     with zipfile.ZipFile(path) as archive:
         names = set(archive.namelist())

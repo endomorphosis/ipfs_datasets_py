@@ -7,7 +7,9 @@ fetch per chapter is the official bulk path, not a secondary mirror.
 
 from __future__ import annotations
 
+import os
 import re
+from pathlib import Path
 from typing import List, Optional, Tuple
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
@@ -273,3 +275,19 @@ def toc_href_chapters(html: str) -> List[Tuple[str, str, str]]:
         name = re.sub(r"\s+", " ", (anchor.get_text(" ") or "")).strip() or f"Chapter {number}"
         out.append((number, name, chapter_url(number)))
     return out
+
+
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("OHIO_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> List[Tuple[str, str, str]]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    html = path.read_text(encoding="utf-8", errors="replace")
+    return toc_href_titles(html) or title_links(html)

@@ -331,6 +331,36 @@ def parse_florida_senate_all_html(
     return statutes
 
 
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("FLORIDA_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def configured_title_index_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("FLORIDA_TITLE_INDEX_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> List[str]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    return title_romans(path.read_text(encoding="utf-8", errors="replace"))
+
+
+def parse_configured_title_index_html() -> List[str]:
+    path = configured_title_index_html_path()
+    if path is None:
+        return []
+    return title_chapters(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def configured_florida_chapter_paths() -> List[Path]:
     paths: List[Path] = []
     for key in ("FLORIDA_SENATE_CHAPTER_HTML", "FLORIDA_CHAPTER_HTML"):

@@ -25,6 +25,20 @@ _HASH_RE = re.compile(r"^(s[0-9a-f]+)")
 _WS = re.compile(r"\s+")
 
 
+def title_from_section(section_number: str) -> str:
+    parts = str(section_number or "").split("-")
+    if len(parts) < 3 or not parts[0]:
+        return ""
+    return parts[0]
+
+
+def chapter_from_section(section_number: str) -> str:
+    parts = str(section_number or "").split("-")
+    if len(parts) < 3 or not parts[1]:
+        return ""
+    return parts[1]
+
+
 def title_html_url(title: str) -> str:
     return f"https://sdlegislature.gov/api/Statutes/{title}.html?all=true"
 

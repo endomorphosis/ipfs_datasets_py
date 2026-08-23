@@ -5279,6 +5279,74 @@ def test_illinois_manifest_text_dump(tmp_path: Path, monkeypatch) -> None:
     assert parse_new_jersey_bulk_zip(shell) == []
 
 
+def test_california_session_zip_candidates_and_table_names(tmp_path: Path) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.california_bulk import (
+        bulk_zip_table_names,
+        looks_like_zip,
+        parse_california_bulk_zip,
+        session_zip_url_candidates,
+    )
+
+    urls = session_zip_url_candidates("2025")
+    assert urls[0].endswith("pubinfo_2025.zip")
+    assert urls[1].endswith("pubinfo_2023.zip")
+    shell = tmp_path / "pubinfo.html"
+    shell.write_bytes(b"<html>Disallow: /</html>")
+    assert looks_like_zip(shell) is False
+    assert parse_california_bulk_zip(shell, code_type="PEN") == []
+    zip_path = tmp_path / "pubinfo.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.writestr("LAW_SECTION_TBL.dat", "x")
+        archive.writestr("notes/readme.txt", "skip")
+        archive.writestr("LAW_TOC_TBL.dat", "y")
+    assert bulk_zip_table_names(zip_path) == ["LAW_SECTION_TBL.dat", "LAW_TOC_TBL.dat"]
+
+
+def test_florida_ohio_toc_dumps_and_south_dakota_section_split(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.florida_chapter import (
+        parse_configured_title_index_html,
+        parse_configured_toc_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.ohio_chapter import (
+        parse_configured_toc_html as parse_ohio_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_dakota_title import (
+        chapter_from_section,
+        title_from_section,
+    )
+
+    toc = tmp_path / "fl-toc.html"
+    toc.write_text(
+        'href="index.cfm?App_mode=Display_Index&Title_Request=XLVI"',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("FLORIDA_TOC_HTML", str(toc))
+    assert parse_configured_toc_html() == ["XLVI"]
+
+    index = tmp_path / "fl-index.html"
+    index.write_text(
+        "URL=0700-0799/0782/0782ContentsIndex.html",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("FLORIDA_TITLE_INDEX_HTML", str(index))
+    assert parse_configured_title_index_html() == ["782"]
+
+    ohio = tmp_path / "oh-toc.html"
+    ohio.write_text(
+        '<a href="ohio-revised-code/title-29">Title 29 Crimes</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("OHIO_TOC_HTML", str(ohio))
+    assert parse_ohio_toc()[0][0] == "29"
+
+    assert title_from_section("22-16-4") == "22"
+    assert chapter_from_section("22-16-4") == "16"
+    assert chapter_from_section("1-1A-1") == "1A"
+    assert title_from_section("bad") == ""
+
+
 
 
 
