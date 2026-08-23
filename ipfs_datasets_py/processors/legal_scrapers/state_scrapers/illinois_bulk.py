@@ -160,6 +160,28 @@ def configured_bulk_zip_path() -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def configured_manifest_path() -> Optional[Path]:
+    raw = str(os.environ.get("ILLINOIS_MANIFEST_TEXT") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_manifest() -> List[Tuple[str, str, str]]:
+    """Local ``Section Sequence.txt`` dump. Does not fetch the ILCS FTP tree."""
+
+    path = configured_manifest_path()
+    if path is None:
+        return []
+    out: List[Tuple[str, str, str]] = []
+    for entry in parse_manifest(path.read_text(encoding="utf-8", errors="replace")):
+        if not entry.is_section:
+            continue
+        out.append((entry.chapter, entry.citation(), section_url(entry.raw)))
+    return out
+
+
 _ILCS_ACT_RE = re.compile(r"(\d+)\s+ILCS\s+(\d+[A-Za-z]?)/")
 _SEC_CITE_RE = re.compile(r"^\((\d+)\s+ILCS\s+(\d+[A-Za-z]?)/([^)]+)\)\s*$")
 

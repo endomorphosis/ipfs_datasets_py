@@ -4934,6 +4934,7 @@ def test_nevada_nrs_and_oregon_ors_index_links() -> None:
 def test_pennsylvania_consolidated_titles_and_pdf_url() -> None:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.pennsylvania_title import (
         consolidated_titles,
+        current_through,
         title_html_url,
         title_pdf_url,
     )
@@ -4944,11 +4945,14 @@ def test_pennsylvania_consolidated_titles_and_pdf_url() -> None:
         '<a href="/statutes/consolidated/view-statute?txtType=HTM&ttl=18">Title 18 Crimes</a>'
         '<a href="/statutes/consolidated/view-statute?txtType=PDF&ttl=18">PDF</a>'
         '<a href="/statutes/consolidated/view-statute?txtType=HTM&ttl=02">Title 2</a>'
+        '<a href="/statutes/consolidated/view-statute?txtType=HTM&ttl=0">Constitution</a>'
         '<a href="/other">skip</a>'
     )
     assert [number for number, _name, _url in rows] == ["18", "2"]
     assert rows[0][2].endswith("ttl=18")
     assert "txtType=HTM" in rows[0][2]
+    assert current_through("Current through Act 15 of 2026.") == "Current through Act 15 of 2026"
+    assert current_through("no currency") is None
 
 
 def test_oklahoma_and_wyoming_title_pdf_listings() -> None:
@@ -5235,6 +5239,44 @@ def test_env_gated_official_listing_dumps(tmp_path: Path, monkeypatch) -> None:
     (dumps / "ocga_40.txt").write_text("placeholder", encoding="utf-8")
     monkeypatch.setenv("GEORGIA_TITLE_TEXT_DIR", str(dumps))
     assert covered_title_numbers() == ["16", "40"]
+
+
+def test_indiana_zip_candidates_and_spa_shell(tmp_path: Path) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.indiana_bulk import (
+        looks_like_zip,
+        parse_indiana_bulk_zip,
+        zip_url_candidates,
+    )
+
+    urls = zip_url_candidates(2026)
+    assert urls[0].endswith("/2026/2026-Indiana-Code-html.zip")
+    assert urls[1].endswith("/2025/2025-Indiana-Code-html.zip")
+    shell = tmp_path / "iga-spa.html"
+    shell.write_bytes(b"<html><base href='/' /></html>")
+    assert looks_like_zip(shell) is False
+    assert parse_indiana_bulk_zip(shell) == []
+
+
+def test_illinois_manifest_text_dump(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.illinois_bulk import (
+        parse_configured_manifest,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_jersey_bulk import (
+        looks_like_zip,
+        parse_new_jersey_bulk_zip,
+    )
+
+    manifest = tmp_path / "Section Sequence.txt"
+    manifest.write_text("072000050K9-1\n004000050A\n", encoding="utf-8")
+    monkeypatch.setenv("ILLINOIS_MANIFEST_TEXT", str(manifest))
+    rows = parse_configured_manifest()
+    assert [citation for _chapter, citation, _url in rows] == ["720 ILCS 5/9-1"]
+    assert rows[0][2].endswith("072000050K9-1.html")
+
+    shell = tmp_path / "statutes-shell.html"
+    shell.write_bytes(b"<html>not a zip</html>")
+    assert looks_like_zip(shell) is False
+    assert parse_new_jersey_bulk_zip(shell) == []
 
 
 

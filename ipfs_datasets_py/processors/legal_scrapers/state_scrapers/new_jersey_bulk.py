@@ -22,6 +22,16 @@ from .base_scraper import NormalizedStatute, StatuteMetadata
 
 OFFICIAL_ZIP_URL = "https://pub.njleg.state.nj.us/Statutes/STATUTES-TEXT.zip"
 RTF_MEMBER = "STATUTES.RTF"
+_ZIP_MAGIC = b"PK\x03\x04"
+
+
+def looks_like_zip(path: Path) -> bool:
+    try:
+        with Path(path).open("rb") as handle:
+            magic = handle.read(4)
+    except OSError:
+        return False
+    return magic == _ZIP_MAGIC
 SECTION_VIEW = "https://www.njleg.state.nj.us/legislative-activity/statutes"
 
 _CIT_RE = re.compile(r"^\s*(\d+[A-Za-z]?):([0-9][0-9A-Za-z.\-]*?)\.?\s")
@@ -174,6 +184,8 @@ def parse_new_jersey_bulk_zip(
     path = Path(zip_path)
     if not path.is_file():
         raise FileNotFoundError(f"New Jersey bulk zip missing: {path}")
+    if not looks_like_zip(path):
+        return []
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
         member = next(

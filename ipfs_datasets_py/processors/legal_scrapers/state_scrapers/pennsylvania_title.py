@@ -61,12 +61,26 @@ def consolidated_titles(html: str) -> List[Tuple[str, str, str]]:
             match = re.search(r"[?&]ttl=(\d+)", href, re.IGNORECASE)
             ttl = match.group(1) if match else ""
         number = str(int(ttl)) if ttl.isdigit() else ttl.lstrip("0") or ttl
-        if not number or number in seen:
+        if not number or number == "0" or number in seen:
             continue
         seen.add(number)
         name = _WS.sub(" ", (anchor.get_text(" ") or "").replace("\xa0", " ")).strip()
         out.append((number, name or f"Title {number}", title_html_url(number)))
     return out
+
+
+def current_through(html: str) -> Optional[str]:
+    """Best-effort ``current through Act N of YYYY`` from the consolidated index."""
+
+    for pattern in (
+        r"current(?:ly)?\s+through[^.<]{0,80}",
+        r"through\s+Act\s+\d+\s+of\s+\d{4}",
+        r"Act\s+\d+\s+of\s+\d{4}",
+    ):
+        match = re.search(pattern, html or "", re.IGNORECASE)
+        if match:
+            return _WS.sub(" ", match.group(0)).strip()
+    return None
 
 
 def dewrap(text: str) -> List[str]:

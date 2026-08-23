@@ -28,9 +28,30 @@ _WS = re.compile(r"\s+")
 _RESERVED = ("repealed", "expired", "renumbered", "transferred", "reserved", "vacated")
 
 
+_ZIP_MAGIC = b"PK\x03\x04"
+
+
 def zip_url(year: int | str) -> str:
     token = str(int(year))
     return f"https://iga.in.gov/ic/{token}/{token}-Indiana-Code-html.zip"
+
+
+def zip_url_candidates(year: int | str) -> List[str]:
+    """Current edition then prior year. Never auto-downloads the geo-fenced zip."""
+
+    base = int(year)
+    return [zip_url(base), zip_url(base - 1)]
+
+
+def looks_like_zip(path: Path) -> bool:
+    """Reject the geo-fence SPA shell (HTTP 200, ~691 bytes, not ``PK``)."""
+
+    try:
+        with Path(path).open("rb") as handle:
+            magic = handle.read(4)
+    except OSError:
+        return False
+    return magic == _ZIP_MAGIC
 
 
 def _text(fragment: str) -> str:
@@ -74,6 +95,8 @@ def parse_indiana_bulk_zip(
     path = Path(zip_path)
     if not path.is_file():
         raise FileNotFoundError(f"Indiana bulk zip missing: {path}")
+    if not looks_like_zip(path):
+        return []
     statutes: List[NormalizedStatute] = []
     with zipfile.ZipFile(path) as archive:
         names = sorted(name for name in archive.namelist() if name.lower().endswith(".html"))
