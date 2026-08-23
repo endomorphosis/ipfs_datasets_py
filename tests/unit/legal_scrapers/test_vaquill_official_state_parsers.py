@@ -965,6 +965,24 @@ def test_connecticut_sibling_walk_stops_at_next_section(tmp_path: Path, monkeypa
     assert "Next chapter" not in rows[0].full_text
 
 
+def test_connecticut_titles_and_chapter_listing() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.connecticut_chapter import (
+        chapters_from_title,
+        titles_from_index,
+    )
+
+    titles = titles_from_index(
+        '<td class="left_38pct"><a href="title_53a.htm"><span class="toc_ttl_desig">Title 53a</span></a></td>'
+    )
+    assert titles[0][1] == "53a"
+    assert titles[0][0].endswith("title_53a.htm")
+    chapters = chapters_from_title(
+        '<a class="toc_ch_link" href="chap_952.htm">Chapter 952</a>'
+    )
+    assert chapters[0][1] == "952"
+    assert chapters[0][0].endswith("chap_952.htm")
+
+
 def test_colorado_sgml_and_title_html(tmp_path: Path, monkeypatch) -> None:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado import ColoradoScraper
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado_title import (
@@ -1537,6 +1555,53 @@ def test_new_hampshire_codesect_drops_sourcenote(tmp_path: Path, monkeypatch) ->
     assert rows[0].section_number in {"630:1", "1"}
     assert "purposely causes the death" in rows[0].full_text
     assert "1971, 518:1" not in rows[0].full_text
+
+
+def test_new_hampshire_nhtoc_listings_and_chapter_toc_dump(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_hampshire import (
+        NewHampshireScraper,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_hampshire_section import (
+        nhtoc_chapter_links,
+        nhtoc_section_links,
+        nhtoc_title_links,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    master = '<a href="NHTOC/NHTOC-LXII.htm">TITLE LXII : Criminal Code</a>'
+    titles = nhtoc_title_links(master)
+    assert titles[0][1] == "LXII"
+    assert titles[0][0].endswith("NHTOC/NHTOC-LXII.htm")
+    assert nhtoc_chapter_links(
+        '<a href="NHTOC-LXII-630.htm">CHAPTER 630</a><a href="other.htm">skip</a>'
+    ) == ["NHTOC-LXII-630.htm"]
+    toc = tmp_path / "NHTOC-LXII-630.htm"
+    toc.write_text(
+        '<a href="../LXII/630/630-1.htm">Section 630:1</a>'
+        '<a href="../LXII/630/630-1-mrg.htm">margin</a>',
+        encoding="utf-8",
+    )
+    section = tmp_path / "630-1.htm"
+    section.write_text(
+        "<html><body><b>630:1 First Degree Murder. –</b>"
+        "<codesect>A person is guilty of murder in the first degree if he "
+        "purposely causes the death of another human being with premeditation.</codesect>"
+        "</body></html>",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("NEW_HAMPSHIRE_CHAPTER_TOC_HTML", str(toc))
+    monkeypatch.setenv("NEW_HAMPSHIRE_SECTION_HTML_DIR", str(tmp_path))
+    assert nhtoc_section_links(toc.read_text(encoding="utf-8")) == ["../LXII/630/630-1.htm"]
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    rows = asyncio.run(
+        scraper.scrape_code("New Hampshire RSA", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert "purposely causes the death" in rows[0].full_text
+    assert "gencourt.state.nh.us" in rows[0].source_url
+    assert rows[0].structured_data["source_authority_class"] == "official"
 
 
 def test_georgia_archive_strips_nav_and_stays_recovery(tmp_path: Path, monkeypatch) -> None:

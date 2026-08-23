@@ -168,8 +168,18 @@ class NewHampshireScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
                 return constitution_rows if limit is None else constitution_rows[: int(limit)]
-        from .new_hampshire_section import configured_section_html_path, parse_new_hampshire_section_html
+        from .new_hampshire_section import (
+            configured_section_html_path,
+            parse_configured_new_hampshire_sections,
+            parse_new_hampshire_section_html,
+        )
 
+        local_rows = parse_configured_new_hampshire_sections(
+            code_name=code_name,
+            max_statutes=limit,
+        )
+        if local_rows:
+            return local_rows if limit is None else local_rows[: int(limit)]
         local_section = configured_section_html_path()
         if local_section is not None:
             parsed = parse_new_hampshire_section_html(
@@ -391,6 +401,14 @@ class NewHampshireScraper(BaseStateScraper):
         soup = BeautifulSoup(html, "html.parser")
         title_urls: List[str] = []
         seen_titles = set()
+        from .new_hampshire_section import nhtoc_chapter_links, nhtoc_section_links, nhtoc_title_links
+
+        for href, _roman in nhtoc_title_links(html, base_url=root_url):
+            abs_url = self._normalize_wayback_like_url(href)
+            if not self._host_is_official(abs_url) or abs_url in seen_titles:
+                continue
+            seen_titles.add(abs_url)
+            title_urls.append(abs_url)
         for anchor in soup.find_all("a", href=True):
             href = str(anchor.get("href") or "").strip()
             text = str(anchor.get_text(" ", strip=True) or "").strip()
@@ -417,6 +435,17 @@ class NewHampshireScraper(BaseStateScraper):
             title_soup = BeautifulSoup(title_html, "html.parser")
             chapter_urls: List[tuple[str, str]] = []
             seen_chapters = set()
+            title_base = title_url.rsplit("/", 1)[0] + "/"
+            for href in nhtoc_chapter_links(title_html):
+                chapter_url = self._normalize_wayback_like_url(urljoin(title_base, href))
+                if not self._host_is_official(chapter_url) or chapter_url in seen_chapters:
+                    continue
+                seen_chapters.add(chapter_url)
+                ch_match = re.search(
+                    r"NHTOC-[A-Z][A-Z\-]*-(\d+[\w\-]*)\.htm", href, re.IGNORECASE
+                )
+                chapter_id = ch_match.group(1) if ch_match else href
+                chapter_urls.append((chapter_id, chapter_url))
             for anchor in title_soup.find_all("a", href=True):
                 href = str(anchor.get("href") or "").strip()
                 text = str(anchor.get_text(" ", strip=True) or "").strip()
@@ -439,6 +468,33 @@ class NewHampshireScraper(BaseStateScraper):
                 if not chapter_html:
                     continue
                 chapter_soup = BeautifulSoup(chapter_html, "html.parser")
+                chapter_base = chapter_url.rsplit("/", 1)[0] + "/"
+                section_hrefs = list(nhtoc_section_links(chapter_html))
+                for href in section_hrefs:
+                    if limit is not None and len(statutes) >= limit:
+                        break
+                    section_url = self._normalize_wayback_like_url(urljoin(chapter_base, href))
+                    if not self._host_is_official(section_url):
+                        continue
+                    section_number = self._derive_section_number_from_href(
+                        chapter_id=chapter_id,
+                        section_url=section_url,
+                        href_text="",
+                    )
+                    if not section_number:
+                        continue
+                    section_key = section_number.lower()
+                    if section_key in seen_sections:
+                        continue
+                    seen_sections.add(section_key)
+                    statute = await self._build_official_rsa_section(
+                        code_name,
+                        section_number=section_number,
+                        section_title="",
+                        section_url=section_url,
+                    )
+                    if statute is not None:
+                        statutes.append(statute)
                 for anchor in chapter_soup.find_all("a", href=True):
                     if limit is not None and len(statutes) >= limit:
                         break

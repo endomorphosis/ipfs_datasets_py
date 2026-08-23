@@ -4,7 +4,8 @@ Wyoming publishes deterministic title PDFs at
 ``https://www.wyoleg.gov/statutes/compress/titleN.pdf``. This parser splits
 ``N-N-N. heading`` blocks and drops History/Source trailers.
 
-Local dump: ``WYOMING_TITLE_TEXT``.
+Local dumps: ``WYOMING_TITLE_TEXT``, ``WYOMING_TITLE_PDF``. PDFs are never
+auto-downloaded here; live harvest uses ``WyomingScraper`` separately.
 """
 
 from __future__ import annotations
@@ -83,8 +84,75 @@ def parse_wyoming_title_text(
 
 
 def configured_title_text_path() -> Optional[Path]:
-    raw = str(os.environ.get("WYOMING_TITLE_TEXT") or "").strip()
-    if not raw:
-        return None
-    path = Path(raw).expanduser()
-    return path if path.is_file() else None
+    for key in ("WYOMING_TITLE_TEXT", "WYOMING_TITLE_PDF"):
+        raw = str(os.environ.get(key) or "").strip()
+        if not raw:
+            continue
+        path = Path(raw).expanduser()
+        if path.is_file():
+            return path
+    return None
+
+
+def _extract_pdf_text(pdf_path: Path) -> str:
+    try:
+        import pdfplumber
+    except ImportError:
+        pdfplumber = None
+    if pdfplumber is not None:
+        try:
+            lines: List[str] = []
+            with pdfplumber.open(str(pdf_path)) as pdf:
+                for page in pdf.pages:
+                    lines.append(page.extract_text() or "")
+            return "\n".join(lines)
+        except Exception:
+            pass
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        return ""
+    try:
+        reader = PdfReader(str(pdf_path))
+        return "\n".join((page.extract_text() or "") for page in reader.pages)
+    except Exception:
+        return ""
+
+
+def parse_wyoming_title_pdf(
+    pdf_path: Path,
+    *,
+    code_name: str = "Wyoming Statutes",
+    max_statutes: Optional[int] = None,
+) -> List[NormalizedStatute]:
+    text = _extract_pdf_text(pdf_path)
+    if not text.strip():
+        return []
+    match = re.search(r"title(\d+)", pdf_path.stem, re.IGNORECASE)
+    title = match.group(1) if match else "6"
+    return parse_wyoming_title_text(
+        text,
+        source_url=f"{COMPRESS}/title{title}.pdf",
+        code_name=code_name,
+        max_statutes=max_statutes,
+    )
+
+
+def parse_configured_wyoming_title(
+    *,
+    code_name: str = "Wyoming Statutes",
+    max_statutes: Optional[int] = None,
+) -> List[NormalizedStatute]:
+    path = configured_title_text_path()
+    if path is None:
+        return []
+    if path.suffix.lower() == ".pdf":
+        return parse_wyoming_title_pdf(path, code_name=code_name, max_statutes=max_statutes)
+    match = re.search(r"title(\d+)", path.stem, re.IGNORECASE)
+    title = match.group(1) if match else "6"
+    return parse_wyoming_title_text(
+        path.read_text(encoding="utf-8", errors="replace"),
+        source_url=f"{COMPRESS}/title{title}.pdf",
+        code_name=code_name,
+        max_statutes=max_statutes,
+    )

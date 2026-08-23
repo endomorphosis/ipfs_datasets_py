@@ -466,6 +466,23 @@ class ConnecticutScraper(BaseStateScraper):
         seen: set[str] = set()
         title_urls: List[str] = []
         out: List[str] = []
+        html_text = (
+            payload.decode("utf-8", errors="replace")
+            if isinstance(payload, (bytes, bytearray))
+            else str(payload)
+        )
+        from .connecticut_chapter import chapters_from_title, titles_from_index
+
+        for href, _number in chapters_from_title(html_text, base_url=code_url):
+            if href in seen:
+                continue
+            seen.add(href)
+            out.append(href)
+            if len(out) >= limit:
+                return out
+        for href, _number in titles_from_index(html_text, base_url=code_url):
+            if href not in title_urls:
+                title_urls.append(href)
 
         for link in soup.find_all("a", href=True):
             href = str(link.get("href") or "").strip()

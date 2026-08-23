@@ -29,6 +29,61 @@ _HEADING_RE = re.compile(
 )
 
 
+_TITLE_HREF_RE = re.compile(r"title_([0-9a-z]+)\.htm$", re.IGNORECASE)
+_CHAPTER_HREF_RE = re.compile(r"chap_([0-9a-z]+)\.htm$", re.IGNORECASE)
+
+
+def titles_from_index(html: str, *, base_url: str = BASE_PUB) -> List[Tuple[str, str]]:
+    """Title numbers and URLs from ``titles.htm`` (``toc_ttl_desig`` / title_N.htm)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    from urllib.parse import urljoin
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _TITLE_HREF_RE.search(href)
+        if not match:
+            continue
+        number = match.group(1).lstrip("0") or match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        out.append((urljoin(base_url.rstrip("/") + "/", href), number))
+    return out
+
+
+def chapters_from_title(html: str, *, base_url: str = BASE_PUB) -> List[Tuple[str, str]]:
+    """Chapter URLs from a title page (``toc_ch_link`` / chap_NNN.htm)."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+    from urllib.parse import urljoin
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    out: List[Tuple[str, str]] = []
+    seen = set()
+    anchors = soup.find_all("a", class_="toc_ch_link") or soup.find_all("a", href=True)
+    for anchor in anchors:
+        href = str(anchor.get("href") or "").strip()
+        match = _CHAPTER_HREF_RE.search(href)
+        if not match:
+            continue
+        number = match.group(1).lstrip("0") or match.group(1)
+        if number in seen:
+            continue
+        seen.add(number)
+        out.append((urljoin(base_url.rstrip("/") + "/", href), number))
+    return out
+
+
 def chapter_url(chapter: str) -> str:
     token = str(chapter or "").strip().lower().zfill(3)
     if token.isdigit():
