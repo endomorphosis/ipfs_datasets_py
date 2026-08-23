@@ -122,6 +122,20 @@ class SouthCarolinaScraper(BaseStateScraper):
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
         probe_threshold = limit if limit is not None else 160
+        from .south_carolina_chapter import configured_chapter_html_path, parse_south_carolina_chapter_html
+
+        local_chapter = configured_chapter_html_path()
+        if local_chapter is not None:
+            local_rows = parse_south_carolina_chapter_html(
+                local_chapter.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.scstatehouse.gov/code/t16c003.php",
+                code_name=code_name,
+                title_number="16",
+                chapter_number="3",
+                max_statutes=limit,
+            )
+            if local_rows:
+                return local_rows if limit is None else local_rows[: int(limit)]
         official = await self._scrape_official_code_tree(
             code_name,
             max_statutes=limit,
@@ -264,6 +278,23 @@ class SouthCarolinaScraper(BaseStateScraper):
             return []
 
         soup = BeautifulSoup(payload, "html.parser")
+        from .south_carolina_chapter import parse_south_carolina_chapter_html
+
+        html_text = (
+            payload.decode("utf-8", errors="replace")
+            if isinstance(payload, (bytes, bytearray))
+            else str(payload)
+        )
+        parsed = parse_south_carolina_chapter_html(
+            html_text,
+            source_url=chapter_url,
+            code_name=code_name,
+            title_number=title_number,
+            chapter_number=chapter_number,
+            max_statutes=max_statutes,
+        )
+        if parsed:
+            return parsed
         text = self._normalize_legal_text(soup.get_text("\n", strip=True))
         matches = list(self._SECTION_START_RE.finditer(text))
         if not matches:

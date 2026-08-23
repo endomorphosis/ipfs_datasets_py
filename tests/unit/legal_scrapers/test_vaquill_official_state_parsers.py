@@ -1031,3 +1031,140 @@ def test_rhode_island_content_div_drops_history(tmp_path: Path, monkeypatch) -> 
     assert "malice aforethought" in rows[0].full_text
     assert "History of Section" not in rows[0].full_text
     assert "P.L. 1909" not in rows[0].full_text
+
+
+def test_south_carolina_section_walk_drops_history_and_repealed(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_carolina import (
+        SouthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body><div id="contentsection">
+      <span style="font-weight: bold;">SECTION 16-3-10.</span>
+      <p>Murder defined.</p>
+      <p>A person who kills another with malice aforethought is guilty of murder.</p>
+      HISTORY: 1962 Code Section 16-51.
+      <span style="font-weight: bold;">SECTION 16-3-11. REPEALED.</span>
+      <p>Repealed text must not be admitted as current law.</p>
+    </div></body></html>
+    """
+    path = tmp_path / "t16c003.php"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("SOUTH_CAROLINA_CHAPTER_HTML", str(path))
+    scraper = SouthCarolinaScraper("SC", "South Carolina")
+    rows = asyncio.run(
+        scraper.scrape_code("South Carolina Code of Laws", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "16-3-10"
+    assert "malice aforethought" in rows[0].full_text
+    assert "1962 Code" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+
+
+def test_north_dakota_chapter_text_skips_toc_and_history(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_dakota import (
+        NorthDakotaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+TABLE OF CONTENTS
+12.1-16-01. Murder.
+12.1-16-02. Manslaughter.
+12.1-16-01. Murder.
+A person is guilty of murder if the person intentionally or knowingly causes the death of another human being.
+Source: S.L. 1973, ch. 116, § 1.
+12.1-16-02. Manslaughter. (Repealed)
+Repealed text must not be admitted.
+"""
+    path = tmp_path / "t12-1c16.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("NORTH_DAKOTA_CHAPTER_TEXT", str(path))
+    scraper = NorthDakotaScraper("ND", "North Dakota")
+    rows = asyncio.run(
+        scraper.scrape_code("North Dakota Century Code", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "12.1-16-01"
+    assert "intentionally or knowingly" in rows[0].full_text
+    assert "S.L. 1973" not in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+
+
+def test_nebraska_statute_text_drops_history(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nebraska import NebraskaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <div id="statute_text">
+      <h2>28-303</h2>
+      <p>Murder in the first degree; penalty.</p>
+      <p>A person commits murder in the first degree if he or she kills another person purposely and with deliberate and premeditated malice.</p>
+      <p class="history">Laws 1977, LB 38, § 18.</p>
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "28-303.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("NEBRASKA_SECTION_HTML", str(path))
+    scraper = NebraskaScraper("NE", "Nebraska")
+    rows = asyncio.run(
+        scraper.scrape_code("Nebraska Revised Statutes", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "28-303"
+    assert "premeditated malice" in rows[0].full_text
+    assert "Laws 1977" not in rows[0].full_text
+
+
+def test_minnesota_section_div_drops_history(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.minnesota import MinnesotaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <div class="section">
+      <h1 class="shn">609.185 MURDER IN THE FIRST DEGREE.</h1>
+      <p>Whoever does any of the following is guilty of murder in the first degree and shall be sentenced to imprisonment for life: causes the death of a human being with premeditation and with intent to effect the death of the person or of another.</p>
+      <p class="history">History: 1963 c 753 art 1 s 609.185</p>
+    </div>
+    </body></html>
+    """
+    path = tmp_path / "609.185.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MINNESOTA_SECTION_HTML", str(path))
+    scraper = MinnesotaScraper("MN", "Minnesota")
+    rows = asyncio.run(scraper.scrape_code("Minnesota Statutes", "https://example.invalid", max_statutes=2))
+    assert len(rows) == 1
+    assert rows[0].section_number == "609.185"
+    assert "premeditation" in rows[0].full_text
+    assert "History:" not in rows[0].full_text
+
+
+def test_montana_section_content_drops_history(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana import MontanaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+    <div class="section-content">
+      <p>45-5-102. Deliberate homicide.</p>
+      <p>A person commits the offense of deliberate homicide if the person purposely or knowingly causes the death of another human being.</p>
+    </div>
+    <div class="history-content">En. 94-5-102 by Sec. 1, Ch. 513, L. 1973.</div>
+    </body></html>
+    """
+    path = tmp_path / "0450-0050-0010-0102.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("MONTANA_SECTION_HTML", str(path))
+    scraper = MontanaScraper("MT", "Montana")
+    rows = asyncio.run(
+        scraper.scrape_code("Montana Code Annotated", "https://example.invalid", max_statutes=2)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "45-5-102"
+    assert "purposely or knowingly" in rows[0].full_text
+    assert "Ch. 513" not in rows[0].full_text

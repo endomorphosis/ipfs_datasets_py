@@ -157,6 +157,14 @@ class NorthDakotaScraper(BaseStateScraper):
             return_threshold = self._bounded_return_threshold(160)
             unbounded = False
 
+        from .north_dakota_chapter import parse_configured_north_dakota_chapter
+
+        local_rows = parse_configured_north_dakota_chapter(
+            code_name=code_name, max_statutes=return_threshold
+        )
+        if local_rows:
+            return local_rows if unbounded else local_rows[: int(return_threshold)]
+
         official_pdf_statutes = await self._scrape_official_index_pdfs(
             code_name,
             max_statutes=None if unbounded else max(10, return_threshold),

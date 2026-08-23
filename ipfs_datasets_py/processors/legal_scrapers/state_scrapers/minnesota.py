@@ -78,6 +78,17 @@ class MinnesotaScraper(BaseStateScraper):
         allow_justia = str(
             os.getenv("STATE_SCRAPER_MN_ALLOW_JUSTIA_FALLBACK", "0")
         ).strip().lower() in {"1", "true", "yes", "on"}
+        from .minnesota_section import configured_section_html_path, parse_minnesota_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_minnesota_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.revisor.mn.gov/statutes/cite/609.185",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/statutes/cite/609.02",
@@ -353,6 +364,13 @@ class MinnesotaScraper(BaseStateScraper):
             html_text = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
         if not html_text:
             return None
+        from .minnesota_section import parse_minnesota_section_html
+
+        parsed = parse_minnesota_section_html(
+            html_text, source_url=section_url, code_name=code_name
+        )
+        if parsed is not None:
+            return parsed
 
         match = self._MN_SECTION_NUMBER_RE.search(section_url)
         section_number = match.group(1) if match else section_url.rsplit("/", 1)[-1]

@@ -72,6 +72,17 @@ class NebraskaScraper(BaseStateScraper):
         """
         # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .nebraska_section import configured_section_html_path, parse_nebraska_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_nebraska_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://nebraskalegislature.gov/laws/statutes.php?statute=28-303",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         official = await self._scrape_official_index(code_name, max_statutes=limit)
         official = self._filter_official_host_statutes(official)
         if official:
@@ -349,6 +360,16 @@ class NebraskaScraper(BaseStateScraper):
             html = await self._request_text_direct(source_url, timeout=20)
             if not html:
                 return None
+            from .nebraska_section import parse_nebraska_section_html
+
+            parsed = parse_nebraska_section_html(
+                html, source_url=source_url, code_name=code_name
+            )
+            if parsed is not None:
+                data = dict(parsed.structured_data or {})
+                data["discovery_method"] = discovery_method
+                parsed.structured_data = data
+                return parsed
             soup = BeautifulSoup(html, "html.parser")
             statute_panel = (
                 soup.select_one("div.statute")
