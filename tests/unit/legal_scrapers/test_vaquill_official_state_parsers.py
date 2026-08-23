@@ -1804,3 +1804,50 @@ def test_north_carolina_live_bychapter_preferred_over_toc(monkeypatch) -> None:
     assert rows[0].structured_data["source_kind"] == "official_north_carolina_bychapter_html"
     assert "ncleg.gov" in rows[0].source_url
     assert "justia" not in rows[0].source_url
+
+
+def test_puerto_rico_ogp_skips_repealed_and_toc(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.puerto_rico import (
+        PuertoRicoScraper,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.puerto_rico_ogp import (
+        official_ogp_frontier,
+        ogp_candidate_pdf_urls,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.registry import (
+        StateScraperRegistry,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    frontier = official_ogp_frontier()
+    assert {row["slug"] for row in frontier} >= {"incentivos", "civil", "electoral"}
+    assert all("bvirtualogp.pr.gov" in row["official_url"] for row in frontier)
+    assert all("justia" not in row["official_url"] for row in frontier)
+    primary, organic = ogp_candidate_pdf_urls("60-2019")
+    assert primary.endswith("/60-2019.pdf")
+    assert "LeyesOrganicas" in organic
+    assert "PR" not in StateScraperRegistry.get_all_registered_states()
+
+    text = """
+Sección 1000.01. - Título del Código. - (13 L.P.R.A. § 45001)
+Este Código se conocerá como el Código de Incentivos de Puerto Rico y aplicará a toda persona que solicite un decreto de incentivos bajo esta ley.
+Sección 1000.02. - Definiciones. (Derogado)
+Texto derogado no se admite como derecho vigente.
+Sección 1000.03. - Vigencia ….. 12
+Tabla de Contenido stub that must not outrank the real section.
+"""
+    path = tmp_path / "60-2019.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("PUERTO_RICO_OGP_TEXT", str(path))
+    scraper = PuertoRicoScraper("PR", "Puerto Rico")
+    rows = asyncio.run(
+        scraper.scrape_code("Código de Incentivos de Puerto Rico", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "1000.01"
+    assert "decreto de incentivos" in rows[0].full_text
+    assert "Texto derogado" not in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert rows[0].structured_data.get("citation_lpra") == "13 L.P.R.A. § 45001"
+    assert "bvirtualogp.pr.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url

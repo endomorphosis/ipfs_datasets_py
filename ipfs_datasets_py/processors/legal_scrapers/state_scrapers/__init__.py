@@ -64,6 +64,7 @@ from . import washington
 from . import west_virginia
 from . import wisconsin
 from . import wyoming
+from . import puerto_rico  # official OGP; not registered in exact-51
 
 # Export scraper classes for direct import
 from .alabama import AlabamaScraper
@@ -118,6 +119,7 @@ from .washington import WashingtonScraper
 from .west_virginia import WestVirginiaScraper
 from .wisconsin import WisconsinScraper
 from .wyoming import WyomingScraper
+from .puerto_rico import PuertoRicoScraper
 
 __all__ = [
     "BaseStateScraper",
@@ -181,4 +183,5 @@ __all__ = [
     "WestVirginiaScraper",
     "WisconsinScraper",
     "WyomingScraper",
+    "PuertoRicoScraper",
 ]
