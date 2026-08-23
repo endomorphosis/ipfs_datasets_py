@@ -705,6 +705,9 @@ def test_north_carolina_bychapter_strips_nav(tmp_path: Path, monkeypatch) -> Non
     assert "poison, lying in wait" in rows[0].full_text
     assert "skip to main" not in rows[0].full_text.lower()
     assert "privacy policy" not in rows[0].full_text.lower()
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert "ncleg.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
 
 
 def test_west_virginia_code_dump(tmp_path: Path, monkeypatch) -> None:
@@ -1653,3 +1656,111 @@ def test_mississippi_billstatus_section_skips_repealed(tmp_path: Path, monkeypat
     assert rows[0].structured_data["source_authority_class"] == "official"
     assert "billstatus.ls.state.ms.us" in rows[0].source_url
     assert "justia" not in rows[0].source_url
+
+
+def test_north_carolina_archive_frontier_and_recovery(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina_archive import (
+        CHAPTER_14_WAYBACK_TS,
+        official_chapter_frontier,
+        wayback_cdx_query_url,
+        wayback_chapter_cdx_query_url,
+        wayback_identity_url,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    frontier = official_chapter_frontier()
+    assert len(frontier) == len(NorthCarolinaScraper.OFFICIAL_CHAPTERS)
+    chapter_14 = next(row for row in frontier if row["chapter_number"] == "14")
+    assert chapter_14["official_url"].endswith("/ByChapter/Chapter_14.html")
+    assert CHAPTER_14_WAYBACK_TS + "id_/" in chapter_14["wayback_url"]
+    assert "justia" not in chapter_14["wayback_url"]
+    assert "ncleg.gov" in wayback_chapter_cdx_query_url("14")
+    assert "ByChapter" in wayback_cdx_query_url()
+    assert "id_/" in wayback_identity_url(chapter_14["official_url"])
+
+    html = """
+    <html><body>
+      <nav>Skip to main content Privacy Policy</nav>
+      <p>&sect; 14-17. Murder in the first and second degree.</p>
+      <p>A murder which shall be perpetrated by means of poison, lying in wait, or other kind of willful, deliberate, and premeditated killing shall be murder in the first degree.</p>
+      <p>&sect; 14-18. Voluntary manslaughter. (Repealed)</p>
+      <p>Repealed text must not be admitted.</p>
+      <footer>Copyright © North Carolina General Assembly sitemap</footer>
+    </body></html>
+    """
+    path = tmp_path / "Chapter_14.html"
+    path.write_text(html, encoding="utf-8")
+    monkeypatch.setenv("NORTH_CAROLINA_ARCHIVE_HTML", str(path))
+    scraper = NorthCarolinaScraper("NC", "North Carolina")
+    rows = asyncio.run(
+        scraper.scrape_code("North Carolina General Statutes", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "14-17"
+    assert "poison, lying in wait" in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert "skip to main" not in rows[0].full_text.lower()
+    assert rows[0].structured_data["source_authority_class"] == "recovery"
+    assert "via_archive" in rows[0].structured_data["source_kind"]
+    assert "ncleg.gov" in rows[0].source_url
+    assert "justia" not in rows[0].source_url
+
+
+def test_north_carolina_word_heading_fallback_skips_repealed() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina_chapter import (
+        parse_north_carolina_chapter_html,
+    )
+
+    html = """
+    <html><body>
+      <p>14-17. Murder in the first and second degree.</p>
+      <p>A murder which shall be perpetrated by means of poison, lying in wait, or other kind of willful, deliberate, and premeditated killing shall be murder in the first degree.</p>
+      <p>14-18. Manslaughter. (Repealed)</p>
+      <p>Repealed text must not be admitted.</p>
+    </body></html>
+    """
+    rows = parse_north_carolina_chapter_html(html, chapter="14")
+    assert len(rows) == 1
+    assert rows[0].section_number == "14-17"
+    assert "poison, lying in wait" in rows[0].full_text
+    assert rows[0].structured_data["source_authority_class"] == "official"
+
+
+def test_north_carolina_wayback_engine_harvest_is_recovery(monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina_archive import (
+        fetch_official_locator_via_wayback,
+        parse_north_carolina_archive_html,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = """
+    <html><body>
+      <nav>Skip to main content</nav>
+      <p>§ 14-17. Murder in the first and second degree.</p>
+      <p>A murder which shall be perpetrated by means of poison, lying in wait, or other kind of willful, deliberate, and premeditated killing shall be murder in the first degree.</p>
+    </body></html>
+    """
+
+    async def _fake_get_wayback_content(url, timestamp=None, closest=True):
+        assert "ncleg.gov" in url
+        assert "ByChapter" in url
+        return {"status": "success", "content": html}
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.web_archiving.wayback_machine_engine.get_wayback_content",
+        _fake_get_wayback_content,
+    )
+    content = asyncio.run(
+        fetch_official_locator_via_wayback(
+            "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/ByChapter/Chapter_14.html"
+        )
+    )
+    rows = parse_north_carolina_archive_html(content, chapter="14", source_url="wayback")
+    assert len(rows) == 1
+    assert rows[0].section_number == "14-17"
+    assert rows[0].structured_data["source_authority_class"] == "recovery"
+    assert "poison, lying in wait" in rows[0].full_text
+    assert "skip to main" not in rows[0].full_text.lower()

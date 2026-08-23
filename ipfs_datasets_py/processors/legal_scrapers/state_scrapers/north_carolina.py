@@ -321,7 +321,12 @@ class NorthCarolinaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        from .north_carolina_chapter import configured_chapter_html_path, parse_north_carolina_chapter_html
+        from .north_carolina_chapter import (
+            configured_chapter_html_path,
+            parse_configured_north_carolina_chapters,
+            parse_north_carolina_chapter_html,
+        )
+        from .north_carolina_archive import parse_configured_north_carolina_archive
 
         chapter_path = configured_chapter_html_path()
         if chapter_path is not None:
@@ -334,6 +339,18 @@ class NorthCarolinaScraper(BaseStateScraper):
             )
             if bulk:
                 return bulk
+        local_rows = parse_configured_north_carolina_chapters(
+            code_name=code_name,
+            max_statutes=max_statutes,
+        )
+        if local_rows:
+            return local_rows
+        recovered = parse_configured_north_carolina_archive(
+            code_name=code_name,
+            max_statutes=max_statutes,
+        )
+        if recovered:
+            return recovered
         return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
         official = await self._scrape_official_index(
             code_name,
