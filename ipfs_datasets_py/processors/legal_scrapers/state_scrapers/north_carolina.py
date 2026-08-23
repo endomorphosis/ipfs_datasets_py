@@ -479,6 +479,28 @@ class NorthCarolinaScraper(BaseStateScraper):
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         max_chapters = self._bychapter_max_chapters()
         catalog = list(self.OFFICIAL_CHAPTERS)
+        from .north_carolina_chapter import (
+            bychapter_index_links,
+            configured_bychapter_index_path,
+        )
+
+        index_path = configured_bychapter_index_path()
+        if index_path is not None:
+            names = dict(catalog)
+            discovered = bychapter_index_links(
+                index_path.read_text(encoding="utf-8", errors="replace")
+            )
+            if discovered:
+                leading = [
+                    (number, names.get(number, f"Chapter {number}"))
+                    for number in discovered
+                ]
+                tail = [
+                    (number, name)
+                    for number, name in catalog
+                    if number not in set(discovered)
+                ]
+                catalog = leading + tail
         if max_chapters is not None:
             catalog = catalog[: int(max_chapters)]
 

@@ -43,6 +43,34 @@ def chapter_url(chapter: str) -> str:
     )
 
 
+_CHAPTER_HREF_RE = re.compile(
+    r"Chapter_([0-9]+[A-Za-z]?)\.html",
+    re.IGNORECASE,
+)
+
+
+def bychapter_index_links(html: str) -> List[str]:
+    """Chapter numbers from an official ByChapter directory listing."""
+
+    seen: List[str] = []
+    found = set()
+    for match in _CHAPTER_HREF_RE.finditer(html or ""):
+        number = match.group(1)
+        if number in found:
+            continue
+        found.add(number)
+        seen.append(number)
+    return seen
+
+
+def configured_bychapter_index_path() -> Optional[Path]:
+    raw = str(os.environ.get("NORTH_CAROLINA_BYCHAPTER_INDEX_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
 def decode_chapter_bytes(payload: bytes) -> str:
     """Decode ByChapter dumps (utf-8 live pages or Word cp1252 Wayback captures)."""
 

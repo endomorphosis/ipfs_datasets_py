@@ -741,6 +741,24 @@ def test_north_carolina_bychapter_strips_nav(tmp_path: Path, monkeypatch) -> Non
     assert "justia" not in rows[0].source_url
 
 
+def test_north_carolina_bychapter_index_discovers_chapters() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina_chapter import (
+        bychapter_index_links,
+        chapter_url,
+    )
+
+    html = """
+    <html><body>
+      <a href="Chapter_1.html">Chapter 1</a>
+      <a href="/EnactedLegislation/Statutes/HTML/ByChapter/Chapter_14.html">Chapter 14</a>
+      <a href="Chapter_1.html">duplicate</a>
+      <a href="privacy.html">Privacy Policy</a>
+    </body></html>
+    """
+    assert bychapter_index_links(html) == ["1", "14"]
+    assert chapter_url("14").endswith("ByChapter/Chapter_14.html")
+
+
 def test_west_virginia_code_dump(tmp_path: Path, monkeypatch) -> None:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.west_virginia import (
         WestVirginiaScraper,
@@ -1376,6 +1394,34 @@ def test_georgia_archive_strips_nav_and_stays_recovery(tmp_path: Path, monkeypat
     assert "Repealed text" not in rows[0].full_text
     assert rows[0].structured_data["source_authority_class"] == "recovery"
     assert "via_archive" in rows[0].structured_data["source_kind"]
+    assert "legis.ga.gov" in rows[0].source_url
+
+
+def test_georgia_title_text_dump_is_official(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia import GeorgiaScraper
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    text = """
+Skip to main content Privacy Policy
+§ 16-5-1. Murder.
+A person commits the offense of murder when he unlawfully and with malice aforethought, either express or implied, causes the death of another human being.
+§ 16-5-2. Voluntary manslaughter. (Repealed)
+Repealed text must not be admitted.
+"""
+    path = tmp_path / "title-16.txt"
+    path.write_text(text, encoding="utf-8")
+    monkeypatch.setenv("GEORGIA_TITLE_TEXT", str(path))
+    scraper = GeorgiaScraper("GA", "Georgia")
+    rows = asyncio.run(
+        scraper.scrape_code("Official Code of Georgia Annotated", "https://example.invalid", max_statutes=4)
+    )
+    assert len(rows) == 1
+    assert rows[0].section_number == "16-5-1"
+    assert "malice aforethought" in rows[0].full_text
+    assert "Repealed text" not in rows[0].full_text
+    assert "skip to main" not in rows[0].full_text.lower()
+    assert rows[0].structured_data["source_authority_class"] == "official"
+    assert rows[0].structured_data["source_kind"] == "official_georgia_title_text"
     assert "legis.ga.gov" in rows[0].source_url
     assert "justia" not in rows[0].source_url
 

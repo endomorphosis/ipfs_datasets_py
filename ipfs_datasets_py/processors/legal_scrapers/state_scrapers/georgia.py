@@ -187,6 +187,18 @@ class GeorgiaScraper(BaseStateScraper):
                     max_statutes=limit,
                 )
                 return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .georgia_title import (
+            configured_title_text_path,
+            parse_configured_georgia_title,
+        )
+
+        title_path = configured_title_text_path()
+        if title_path is not None:
+            official_rows = parse_configured_georgia_title(
+                code_name=code_name or "Official Code of Georgia Annotated",
+                max_statutes=limit,
+            )
+            return official_rows if limit is None else official_rows[: int(limit)]
         from .georgia_archive import parse_configured_georgia_archive
 
         recovered = parse_configured_georgia_archive(code_name=code_name, max_statutes=limit)
