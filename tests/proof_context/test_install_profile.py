@@ -10,6 +10,7 @@ import io
 import json
 import os
 import platform
+import shutil
 import stat
 import subprocess
 import sys
@@ -219,7 +220,9 @@ def _isolated_environment(home: Path) -> dict[str, str]:
     }
 
 
-def _build_artifacts(output: Path) -> ArtifactPair:
+def _build_artifacts(
+    output: Path, *, source_root: Path = PROJECT_ROOT
+) -> ArtifactPair:
     output.mkdir(parents=True)
     _run(
         [
@@ -231,7 +234,7 @@ def _build_artifacts(output: Path) -> ArtifactPair:
             "--sdist",
             "--outdir",
             str(output),
-            str(PROJECT_ROOT),
+            str(source_root),
         ],
         cwd=output.parent,
         env=_build_environment(),
@@ -243,8 +246,49 @@ def _build_artifacts(output: Path) -> ArtifactPair:
     return ArtifactPair(wheel=_evidence(wheels[0]), sdist=_evidence(sdists[0]))
 
 
-def _source_egg_info_snapshot() -> dict[str, tuple[int, int, int, str]]:
-    root = PROJECT_ROOT / "ipfs_datasets_py.egg-info"
+def _linked_source_copy(destination: Path) -> Path:
+    """Create a disposable build source without duplicating large key assets."""
+
+    def link_or_copy(source: str, target: str) -> str:
+        try:
+            os.link(source, target)
+        except OSError:
+            shutil.copy2(source, target)
+        return target
+
+    shutil.copytree(
+        PROJECT_ROOT,
+        destination,
+        copy_function=link_or_copy,
+        ignore=shutil.ignore_patterns(
+            ".git",
+            ".pytest_cache",
+            ".ruff_cache",
+            "__pycache__",
+            "build",
+            "dist",
+        ),
+    )
+    return destination
+
+
+def _restrict_build_tree_modes(root: Path) -> None:
+    """Model a warm build tree created beneath a supervisor umask of 077."""
+
+    for path in sorted(root.rglob("*")):
+        if path.is_symlink():
+            continue
+        if path.is_dir():
+            path.chmod(0o700)
+        elif path.is_file():
+            source_mode = stat.S_IMODE(path.stat().st_mode)
+            path.chmod(0o700 if source_mode & 0o111 else 0o600)
+
+
+def _source_egg_info_snapshot(
+    source_root: Path = PROJECT_ROOT,
+) -> dict[str, tuple[int, int, int, str]]:
+    root = source_root / "ipfs_datasets_py.egg-info"
     snapshot: dict[str, tuple[int, int, int, str]] = {}
     for path in sorted(root.rglob("*")):
         if path.is_file():
@@ -317,12 +361,19 @@ def _assert_receipt_binding(pair: ArtifactPair) -> None:
 @pytest.fixture(scope="module")
 def artifacts(tmp_path_factory: pytest.TempPathFactory) -> ArtifactPair:
     temporary_root = tmp_path_factory.mktemp("package-artifacts")
-    egg_info_before = _source_egg_info_snapshot()
-    first = _build_artifacts(temporary_root / "first")
-    assert _source_egg_info_snapshot() == egg_info_before
-    assert (PROJECT_ROOT / "build" / "egg-info" / "ipfs_datasets_py.egg-info").is_dir()
-    second = _build_artifacts(temporary_root / "second")
-    assert _source_egg_info_snapshot() == egg_info_before
+    source_root = _linked_source_copy(temporary_root / "source")
+    egg_info_before = _source_egg_info_snapshot(source_root)
+    first = _build_artifacts(temporary_root / "first", source_root=source_root)
+    assert _source_egg_info_snapshot(source_root) == egg_info_before
+    build_root = source_root / "build"
+    assert (build_root / "egg-info" / "ipfs_datasets_py.egg-info").is_dir()
+
+    # A supervisor creates its worktree and build outputs under umask 077.
+    # Deliberately make the second build warm *and* permission-restricted;
+    # wheel bytes must not inherit either piece of ambient build state.
+    _restrict_build_tree_modes(build_root)
+    second = _build_artifacts(temporary_root / "second", source_root=source_root)
+    assert _source_egg_info_snapshot(source_root) == egg_info_before
 
     assert first.wheel.path.name == second.wheel.path.name
     assert first.sdist.path.name == second.sdist.path.name
@@ -354,6 +405,16 @@ def test_wheel_and_sdist_preserve_provider_and_packaging_contract(
     )
     with zipfile.ZipFile(wheel) as archive:
         members = set(archive.namelist())
+        member_modes = {
+            member.filename: (member.external_attr >> 16) & 0o777
+            for member in archive.infolist()
+            if not member.is_dir()
+        }
+        (record_name,) = (name for name in members if name.endswith(".dist-info/RECORD"))
+        # wheel 0.42 materializes RECORD directly in the archive with its
+        # fixed 0664 mode; every staging-tree member uses our canonical mode.
+        assert member_modes.pop(record_name) == 0o664
+        assert set(member_modes.values()) <= {0o644, 0o755}
         (metadata_name,) = (name for name in members if name.endswith(".dist-info/METADATA"))
         (wheel_metadata_name,) = (name for name in members if name.endswith(".dist-info/WHEEL"))
         (entry_points_name,) = (

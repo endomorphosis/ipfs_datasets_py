@@ -2,6 +2,7 @@ import gzip
 import os
 import platform
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -119,6 +120,19 @@ def _maybe_build_groth16_backend() -> None:
             "bundled Rust backend to build successfully.",
             file=sys.stderr,
         )
+
+
+def _normalize_wheel_staging_modes(root: Path) -> None:
+    """Make wheel member modes independent of the checkout/build umask."""
+
+    for path in sorted(root.rglob("*")):
+        if path.is_symlink():
+            continue
+        if path.is_dir():
+            path.chmod(0o755)
+        elif path.is_file():
+            source_mode = stat.S_IMODE(path.stat().st_mode)
+            path.chmod(0o755 if source_mode & 0o111 else 0o644)
 
 
 class _PostInstall(_install):
@@ -255,6 +269,15 @@ if _bdist_wheel is not None:
         def finalize_options(self):  # type: ignore[override]
             super().finalize_options()
             self.root_is_pure = False
+
+        def write_wheelfile(self, *args, **kwargs):  # type: ignore[override]
+            super().write_wheelfile(*args, **kwargs)
+            # ``WheelFile.write`` preserves the staging file's permission
+            # bits.  Git only records the executable bit, so otherwise an
+            # operator's checkout/build umask changes otherwise-identical
+            # wheel bytes.  This hook runs after dist-info is materialized and
+            # immediately before the staging tree is archived.
+            _normalize_wheel_staging_modes(Path(self.bdist_dir))
 else:
     _PlatformWheel = None
 
