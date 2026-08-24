@@ -7,73 +7,6 @@ License: MIT
 Requires-Python: >=3.12
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: orbitdb_kit_py
-Requires-Dist: ipfs_kit_py[ai_ml,api,ipld] @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main
-Requires-Dist: ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main
-Requires-Dist: libp2p @ git+https://github.com/libp2p/py-libp2p.git@main
-Requires-Dist: ipfs_model_manager_py
-Requires-Dist: ipfs_faiss_py
-Requires-Dist: transformers
-Requires-Dist: numpy<=2.1.3,>=1.26.4; python_version < "3.14"
-Requires-Dist: numpy>=2.0.0; python_version >= "3.14"
-Requires-Dist: urllib3
-Requires-Dist: requests
-Requires-Dist: boto3
-Requires-Dist: ipfsspec<0.6.0
-Requires-Dist: duckdb
-Requires-Dist: aiosqlite>=0.17.0
-Requires-Dist: pyarrow>=10.0.0; python_version < "3.14"
-Requires-Dist: fsspec<=2024.6.1,>=2023.1.0
-Requires-Dist: datasets<5.0.0,>=4.0.0
-Requires-Dist: huggingface-hub<1.0.0,>=0.34.0
-Requires-Dist: jsonpatch>=1.33
-Requires-Dist: jsonschema>=4.0.0
-Requires-Dist: cffi>=1.16.0
-Requires-Dist: libipld>=3.3.2
-Requires-Dist: ipld-car>=0.0.1
-Requires-Dist: ipld-dag-pb>=0.0.1
-Requires-Dist: dag-cbor>=0.3.3
-Requires-Dist: cachetools>=5.3.0
-Requires-Dist: ipfshttpclient>=0.7.0
-Requires-Dist: pymultihash>=0.8.2
-Requires-Dist: protobuf>=3.20.0
-Requires-Dist: eth-hash>=0.3.2
-Requires-Dist: eth-keys>=0.5.0
-Requires-Dist: multiformats>=0.3.0
-Requires-Dist: networkx>=2.8.0
-Requires-Dist: matplotlib>=3.5.0
-Requires-Dist: seaborn>=0.12.0
-Requires-Dist: anyio>=4.0.0
-Requires-Dist: trio>=0.27.0
-Requires-Dist: pydantic-settings>=2.0.0
-Requires-Dist: PyJWT<3.0.0,>=2.8.0
-Requires-Dist: beautifulsoup4<5.0.0,>=4.12.0
-Requires-Dist: newspaper3k<1.0.0,>=0.2.8
-Requires-Dist: readability-lxml<1.0.0,>=0.8.0
-Requires-Dist: lxml_html_clean>=0.4.0
-Requires-Dist: ddgs>=9.11.2
-Requires-Dist: google-api-python-client>=2.192.0
-Requires-Dist: cloudscraper>=1.2.71
-Requires-Dist: cfscrape>=2.1.1; python_version < "3.12"
-Requires-Dist: click>=8.0.0
-Requires-Dist: Flask>=3.1.1
-Requires-Dist: surya-ocr>=0.14.6; platform_system != "Windows" and python_version < "3.14"
-Requires-Dist: nltk>=3.8.1
-Requires-Dist: pdfplumber>=0.11.7
-Requires-Dist: pymupdf>=1.26.3
-Requires-Dist: pillow<11.0.0,>=10.2.0
-Requires-Dist: PyPDF2>=3.0.0
-Requires-Dist: pypdf>=5.0.0
-Requires-Dist: pytesseract>=0.3.13
-Requires-Dist: striprtf>=0.0.29
-Requires-Dist: tiktoken>=0.6.0
-Requires-Dist: pysbd
-Requires-Dist: markitdown>=0.1.0
-Requires-Dist: python-docx>=1.1.2
-Requires-Dist: yt-dlp>=2025.6.30
-Requires-Dist: ffmpeg-python>=0.2.0
-Requires-Dist: opencv-python<4.12.0,>=4.8.1.78
-Requires-Dist: symbolicai<2.0.0,>=1.14.0
 Provides-Extra: ipld
 Requires-Dist: libipld>=3.3.2; extra == "ipld"
 Requires-Dist: ipld-car>=0.0.1; extra == "ipld"
@@ -93,6 +26,13 @@ Requires-Dist: neo4j>=5.20.0; extra == "knowledge-graphs"
 Provides-Extra: logic
 Requires-Dist: nltk>=3.8.1; extra == "logic"
 Requires-Dist: symbolicai<2.0.0,>=1.14.0; extra == "logic"
+Provides-Extra: theorem-provers
+Requires-Dist: z3-solver<5.0.0,>=4.12.0; extra == "theorem-provers"
+Requires-Dist: cvc5==1.3.3; extra == "theorem-provers"
+Requires-Dist: pysmt<1.0.0,>=0.9.5; extra == "theorem-provers"
+Requires-Dist: beartype<1.0.0,>=0.15.0; extra == "theorem-provers"
+Requires-Dist: jsonschema<5.0.0,>=4.0.0; extra == "theorem-provers"
+Requires-Dist: symbolicai<2.0.0,>=1.14.0; extra == "theorem-provers"
 Provides-Extra: file-conversion
 Requires-Dist: markitdown>=0.1.0; extra == "file-conversion"
 Requires-Dist: aiohttp>=3.8.0; extra == "file-conversion"
@@ -101,6 +41,16 @@ Requires-Dist: striprtf>=0.0.29; extra == "file-conversion"
 Requires-Dist: python-docx>=1.1.2; extra == "file-conversion"
 Requires-Dist: yt-dlp>=2025.6.30; extra == "file-conversion"
 Requires-Dist: ffmpeg-python>=0.2.0; extra == "file-conversion"
+Provides-Extra: multimedia
+Requires-Dist: yt-dlp>=2025.6.30; extra == "multimedia"
+Requires-Dist: ffmpeg-python>=0.2.0; extra == "multimedia"
+Requires-Dist: imageio-ffmpeg>=0.6.0; extra == "multimedia"
+Requires-Dist: pillow<13.0.0,>=12.2.0; extra == "multimedia"
+Requires-Dist: moviepy; extra == "multimedia"
+Provides-Extra: ocr
+Requires-Dist: easyocr>=1.6.0; extra == "ocr"
+Requires-Dist: opencv-python<4.12.0,>=4.8.1.78; extra == "ocr"
+Requires-Dist: pytesseract>=0.3.13; extra == "ocr"
 Provides-Extra: vectors
 Requires-Dist: sentence-transformers<6.0.0,>=3.0.0; extra == "vectors"
 Requires-Dist: faiss-cpu>=1.7.0; platform_system == "Windows" and extra == "vectors"
@@ -110,6 +60,8 @@ Requires-Dist: qdrant-client>=1.0.0; extra == "vectors"
 Requires-Dist: elasticsearch>=8.0.0; extra == "vectors"
 Provides-Extra: groth16
 Requires-Dist: jsonschema>=4.0.0; extra == "groth16"
+Provides-Extra: profile-f-zk
+Requires-Dist: jsonschema>=4.0.0; extra == "profile-f-zk"
 Provides-Extra: provekit
 Requires-Dist: jsonschema>=4.0.0; extra == "provekit"
 Provides-Extra: api
@@ -117,6 +69,36 @@ Requires-Dist: fastapi>=0.100.0; extra == "api"
 Requires-Dist: uvicorn>=0.23.0; extra == "api"
 Requires-Dist: python-multipart>=0.0.6; extra == "api"
 Requires-Dist: jinja2>=3.1.0; extra == "api"
+Provides-Extra: symai-router
+Requires-Dist: opencv-python<4.12.0,>=4.8.1.78; extra == "symai-router"
+Requires-Dist: symbolicai<2.0.0,>=1.14.0; extra == "symai-router"
+Requires-Dist: github-copilot-sdk>=0.1.0; extra == "symai-router"
+Provides-Extra: lazy
+Requires-Dist: z3-solver<5.0.0,>=4.12.0; extra == "lazy"
+Requires-Dist: cvc5==1.3.3; extra == "lazy"
+Requires-Dist: pysmt<1.0.0,>=0.9.5; extra == "lazy"
+Requires-Dist: beartype<1.0.0,>=0.15.0; extra == "lazy"
+Requires-Dist: jsonschema<5.0.0,>=4.0.0; extra == "lazy"
+Requires-Dist: chardet<6.0.0,>=5.0.0; extra == "lazy"
+Requires-Dist: llama-cpp-python; extra == "lazy"
+Requires-Dist: playsound3; extra == "lazy"
+Requires-Dist: pydub>=0.25.0; extra == "lazy"
+Requires-Dist: pymediainfo; extra == "lazy"
+Requires-Dist: pydocx; extra == "lazy"
+Requires-Dist: rouge; extra == "lazy"
+Requires-Dist: openai-whisper; extra == "lazy"
+Requires-Dist: xformers; platform_system != "Darwin" and extra == "lazy"
+Requires-Dist: torch-directml; platform_system == "Windows" and extra == "lazy"
+Requires-Dist: intel-extension-for-pytorch; (platform_system == "Linux" and platform_machine == "x86_64") and extra == "lazy"
+Requires-Dist: rasterio; extra == "lazy"
+Requires-Dist: geopandas; extra == "lazy"
+Requires-Dist: requests-cache>=1.2.0; extra == "lazy"
+Requires-Dist: httpx>=0.27.0; extra == "lazy"
+Requires-Dist: httpx-cache; extra == "lazy"
+Requires-Dist: aiohttp-cache; extra == "lazy"
+Requires-Dist: python-magic>=0.4.27; platform_system != "Windows" and extra == "lazy"
+Requires-Dist: python-magic-bin>=0.4.14; platform_system == "Windows" and extra == "lazy"
+Requires-Dist: lxml>=5.0.0; extra == "lazy"
 Provides-Extra: legal-netherlands
 Requires-Dist: pyarrow>=10.0.0; extra == "legal-netherlands"
 Requires-Dist: huggingface-hub>=0.34.0; extra == "legal-netherlands"
@@ -146,6 +128,18 @@ Requires-Dist: pytest-parallel>=0.1.1; extra == "test"
 Requires-Dist: pytest-benchmark>=4.0.0; extra == "test"
 Requires-Dist: pytest-mock>=3.12.0; extra == "test"
 Requires-Dist: hypothesis>=6.0.0; extra == "test"
+Provides-Extra: wallets
+Provides-Extra: wallets-worldcoin
+Requires-Dist: eth-hash[pycryptodome]<1.0.0,>=0.3.2; extra == "wallets-worldcoin"
+Requires-Dist: eth-keys<1.0.0,>=0.5.0; extra == "wallets-worldcoin"
+Provides-Extra: wallets-ethereum
+Provides-Extra: wallets-xrpl
+Provides-Extra: wallets-xaman
+Provides-Extra: wallets-bitcoin
+Provides-Extra: wallets-solana
+Provides-Extra: wallets-all
+Requires-Dist: eth-hash[pycryptodome]<1.0.0,>=0.3.2; extra == "wallets-all"
+Requires-Dist: eth-keys<1.0.0,>=0.5.0; extra == "wallets-all"
 Provides-Extra: all
 Requires-Dist: spacy>=3.0.0; extra == "all"
 Requires-Dist: networkx>=2.8.0; extra == "all"
@@ -183,7 +177,6 @@ Requires-Dist: internetarchive>=5.5.0; extra == "all"
 Requires-Dist: symbolicai<2.0.0,>=1.14.0; extra == "all"
 Dynamic: author
 Dynamic: license-file
-Dynamic: requires-dist
 Dynamic: requires-python
 
 # 🌐 IPFS Datasets Python
@@ -204,6 +197,7 @@ Dynamic: requires-python
 
 - [Key Features](#-key-features)
 - [Quick Start](#-quick-start)
+- [Wallet Processors](#-wallet-processors)
 - [CLI Tools](#-cli-tools)
 - [Hybrid Legal V2 Ops](#-hybrid-legal-v2-ops)
 - [MCP Server](#-mcp-server)
@@ -234,6 +228,7 @@ Dynamic: requires-python
 - 📊 **Production Monitoring** - Dashboards, analytics, and observability
 - 🔄 **Distributed Compute** - P2P networking and distributed workflows
 - 🛡️ **Enterprise Ready** - Security, audit logging, and provenance tracking
+- 💳 **Multi-Chain Wallet Processors** - Read-only ledger ingest/export for Bitcoin, Ethereum, Solana, XRPL, Xaman, World ID / World Chain (no signing or broadcast)
 
 ## 🚀 Quick Start
 
@@ -261,6 +256,24 @@ Its currently installable release depends on an older `httpx` range that
 conflicts with the MCP/FastMCP stack used by this workspace. If you need Brave
 Search specifically, install it in a separate optional environment.
 
+### Wallet processor extras (optional)
+
+Multi-chain wallet processors are optional and never auto-installed:
+
+```bash
+pip install "ipfs_datasets_py[wallets]"
+pip install "ipfs_datasets_py[wallets-worldcoin]"   # World ID + World Chain
+pip install "ipfs_datasets_py[wallets-ethereum]"
+pip install "ipfs_datasets_py[wallets-xrpl]"
+pip install "ipfs_datasets_py[wallets-xaman]"       # Xaman payloads over XRPL
+pip install "ipfs_datasets_py[wallets-bitcoin]"
+pip install "ipfs_datasets_py[wallets-solana]"
+pip install "ipfs_datasets_py[wallets-all]"
+```
+
+See [docs/wallet_processors/README.md](docs/wallet_processors/README.md) and
+[docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md](docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md).
+
 ### Basic Usage
 
 ```python
@@ -271,6 +284,39 @@ manager = DatasetManager()
 dataset = manager.load_dataset("squad", split="train[:1000]")
 manager.save_dataset(dataset, "output/processed_data.parquet")
 ```
+
+## 💳 Wallet Processors
+
+Read-only multi-chain wallet and public-ledger processors live under
+`ipfs_datasets_py.processors.wallets`. They normalize, checkpoint, and export
+ledger evidence — they **do not** custody keys, sign, submit, or broadcast.
+
+| Concept | Meaning |
+| --- | --- |
+| **World ID** | Proof-of-personhood protocol (IDKit / proofs) — family `worldcoin` |
+| **World Chain** | OP-Stack EVM L2 ledger (chain ids 480 / 4801) — family `world-chain` |
+| **WLD** | ERC-20 asset on World Chain mainnet — not a protocol or chain |
+| **XRPL** | XRP Ledger classic accounts — family `xrpl` |
+| **Xaman** | Payload application surface composed over XRPL — family `xaman` |
+
+```python
+from ipfs_datasets_py.processors.wallets import default_registry, get_wallet_processor
+
+reg = default_registry()
+print(reg.list_families())
+# Construct only after installing the matching optional extra:
+# processor = get_wallet_processor("ethereum", network="ethereum-mainnet")
+```
+
+- **Docs:** [docs/wallet_processors/README.md](docs/wallet_processors/README.md)
+- **Offline examples:** [examples/wallet_processors/](examples/wallet_processors/)
+- **Schemas:** [docs/schemas/wallet-ledger-record-v1.schema.json](docs/schemas/wallet-ledger-record-v1.schema.json)
+- **Changelog:** [CHANGELOG.md](CHANGELOG.md)
+- **Import / schema migration windows and rollback** (package version + outer
+  gitlink/wrapper): see the wallet processors README.
+
+Examples are offline by default. Live network requires both
+`WALLET_PROCESSORS_ALLOW_NETWORK=1` and `--allow-network`.
 
 ## 🔧 CLI Tools
 
@@ -516,11 +562,7 @@ from ipfs_datasets_py.vector_stores.ipld_vector_store import IPLDVectorStore
 from ipfs_datasets_py.vector_stores.config import create_ipld_config
 
 # Create IPLD vector store with distributed sharding
-config = create_ipld_config(
-    use_ipfs_router=True,
-    enable_sharding=True,
-    replication_factor=3
-)
+config = create_ipld_config(use_ipfs_router=True, enable_sharding=True, replication_factor=3)
 store = IPLDVectorStore(config)
 
 # Add vectors
@@ -690,10 +732,10 @@ from ipfs_datasets_py.config import config
 cfg = config()
 
 # Access configuration
-database_url = cfg.baseConfig['database']['url']
+database_url = cfg.baseConfig["database"]["url"]
 
 # Override configuration
-cfg.overrideToml(cfg.baseConfig, {'database': {'url': 'new_url'}})
+cfg.overrideToml(cfg.baseConfig, {"database": {"url": "new_url"}})
 ```
 
 **Features:**
@@ -1086,9 +1128,7 @@ framework.initialize()
 
 # Full pipeline: NL → Logic → Prove
 task = framework.reason_about(
-    "The agent is obligated to perform action X",
-    prove=True,
-    axioms=["rule1", "rule2"]
+    "The agent is obligated to perform action X", prove=True, axioms=["rule1", "rule2"]
 )
 print(f"Formula: {task.dcec_formula}")
 print(f"Proof: {task.proof_result}")
@@ -1117,7 +1157,9 @@ AI-powered optimization systems for knowledge graphs and logic.
 
 ```python
 from ipfs_datasets_py.optimizers.graphrag import (
-    OntologyHarness, MetricsCollector, OntologyVisualizer
+    OntologyHarness,
+    MetricsCollector,
+    OntologyVisualizer,
 )
 
 # Run ontology optimization with parallel execution
@@ -1125,10 +1167,7 @@ harness = OntologyHarness(parallelism=4)
 metrics = MetricsCollector()
 
 cycle_results = harness.run_sgd_cycle(
-    data_sources=documents,
-    contexts=contexts,
-    num_cycles=10,
-    convergence_threshold=0.85
+    data_sources=documents, contexts=contexts, num_cycles=10, convergence_threshold=0.85
 )
 
 # Track and visualize results
@@ -1165,7 +1204,7 @@ Privacy-preserving theorem verification — prove that a theorem follows from pr
 from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
 
 # ⚠️ WARNING: simulation backend — NOT cryptographically secure
-prover = ZKPProver()                          # defaults to "simulated"
+prover = ZKPProver()  # defaults to "simulated"
 proof = prover.generate_proof(
     theorem="Company is compliant with regulation X",
     private_axioms=[
@@ -1196,7 +1235,7 @@ export IPFS_DATASETS_ENABLE_GROTH16=1
 from ipfs_datasets_py.logic.zkp.backends import get_backend
 
 backend = get_backend("groth16")
-backend.ensure_setup(version=1)          # run trusted setup once
+backend.ensure_setup(version=1)  # run trusted setup once
 proof = backend.generate_proof(
     theorem="Q",
     private_axioms=["P", "P -> Q"],
@@ -1214,8 +1253,8 @@ config = EthereumConfig(
     rpc_url="https://sepolia.infura.io/v3/YOUR_KEY",
     network_id=11155111,
     network_name="sepolia",
-    verifier_contract_address="0x...",    # deployed GrothVerifier.sol
-    registry_contract_address="0x...",   # deployed ComplaintRegistry.sol
+    verifier_contract_address="0x...",  # deployed GrothVerifier.sol
+    registry_contract_address="0x...",  # deployed ComplaintRegistry.sol
 )
 client = EthereumProofClient(config)
 result = client.submit_and_verify(proof)
@@ -1281,20 +1320,25 @@ car_cid = create_car_file("data/", "output.car")
 - **[Architecture Overview](docs/architecture/)** - Package structure and design
 
 ### Architecture & Migration (NEW) 🆕
-- **[Three-Tier Architecture](docs/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md)** - Complete architecture documentation
+- **[Three-Tier Architecture](docs/DATA_TRANSFORMATION_MIGRATION_SUMMARY.md)** - Processors and data-transformation architecture and migration details
 - **[Migration Guide v2.0](docs/MIGRATION_GUIDE_V2.md)** - Comprehensive v1.x → v2.0 migration guide
 - **[Deprecation Timeline](docs/DEPRECATION_TIMELINE.md)** - 6-month deprecation schedule (Feb-Aug 2026)
 - **[GraphRAG Consolidation](docs/GRAPHRAG_CONSOLIDATION_GUIDE.md)** - Unified GraphRAG processor guide
 - **[Multimedia Migration](docs/MULTIMEDIA_MIGRATION_GUIDE.md)** - Multimedia processor migration
+- **[Wallet Processors](docs/wallet_processors/README.md)** - Multi-chain wallet ingest/export docs, extras, migration windows, rollback
 
 ### Features & Integration
 - **[Complete Features List](docs/FEATURES.md)** - All capabilities explained
 - **[Hardware Acceleration](docs/guides/IPFS_ACCELERATE_INTEGRATION.md)** - ipfs_accelerate_py (2-20x speedup)
 - **[IPFS Operations](docs/guides/IPFS_KIT_INTEGRATION.md)** - ipfs_kit_py integration
 - **[Best Practices](docs/guides/BEST_PRACTICES.md)** - Performance, security, patterns
+- **[Wallet Processor Threat Model](docs/security/WALLET_PROCESSOR_THREAT_MODEL.md)** - Privacy and denied custody/signing capabilities
+- **[Wallet Processor Dependencies](docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md)** - Optional extras and SBOM notes
 
 ### Migration & CLI
 - **[CLI Tools](docs/guides/CLI_TOOL_MERGE.md)** - Command-line interface guide
+- **[Wallet Processor Examples](examples/wallet_processors/)** - Offline normalize/export and identity distinction examples
+- **[Changelog](CHANGELOG.md)** - Package release notes
 
 ## 📄 License
 

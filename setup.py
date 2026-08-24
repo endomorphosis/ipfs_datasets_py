@@ -21,48 +21,6 @@ IS_LINUX = platform.system() == 'Linux'
 IS_MACOS = platform.system() == 'Darwin'
 IS_64BIT = sys.maxsize > 2**32
 
-def _ipfs_kit_dependency() -> str:
-    """Prefer the vendored submodule checkout when present.
-
-    This keeps `pip install -e .` fast and reproducible (no nested git+submodule
-    fetches) while still allowing installs from source tarballs or non-vendored
-    contexts.
-    """
-
-    local_path = os.path.join(os.path.dirname(__file__), "ipfs_kit_py")
-    local_markers = (
-        os.path.join(local_path, "setup.py"),
-        os.path.join(local_path, "pyproject.toml"),
-        os.path.join(local_path, ".git"),
-    )
-    if os.path.isdir(local_path) and any(os.path.exists(marker) for marker in local_markers):
-        # `file:` URL must be absolute for reliability.
-        return f"ipfs_kit_py[api,ipld,ai_ml] @ file://{os.path.abspath(local_path)}"
-
-    return "ipfs_kit_py[api,ipld,ai_ml] @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main"
-
-
-ipfs_kit_dependency = _ipfs_kit_dependency()
-
-
-def _ipfs_accelerate_dependency() -> str:
-    """Prefer the vendored ipfs_accelerate_py checkout when present."""
-
-    local_path = os.path.join(os.path.dirname(__file__), "ipfs_accelerate_py")
-    local_markers = (
-        os.path.join(local_path, "setup.py"),
-        os.path.join(local_path, "pyproject.toml"),
-        os.path.join(local_path, ".git"),
-    )
-    if os.path.isdir(local_path) and any(os.path.exists(marker) for marker in local_markers):
-        return f"ipfs_accelerate_py @ file://{os.path.abspath(local_path)}"
-
-    return "ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main"
-
-
-ipfs_accelerate_dependency = _ipfs_accelerate_dependency()
-
-
 def _env_truthy(name: str, default: str = "1") -> bool:
     value = os.environ.get(name, default)
     return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
@@ -73,12 +31,6 @@ def _env_explicitly_enabled(name: str) -> bool:
 
     value = os.environ.get(name, "")
     return str(value).strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _include_vcs_dependencies() -> bool:
-    """Allow constrained builds to skip optional VCS-based dependencies."""
-
-    return _env_truthy("IPFS_DATASETS_PY_INCLUDE_VCS_DEPENDENCIES", "1")
 
 
 def _maybe_download_nltk_data() -> None:
@@ -232,20 +184,6 @@ if _PlatformWheel is not None:
     _cmdclass["bdist_wheel"] = _PlatformWheel
 
 
-optional_vcs_dependencies = []
-if _include_vcs_dependencies():
-    optional_vcs_dependencies.extend(
-        [
-            ipfs_kit_dependency,
-            ipfs_accelerate_dependency,
-            "protobuf>=5.27.0",
-            "pymultihash>=0.8.2",
-            "dnspython>=2.2.1",
-            "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
-        ]
-    )
-
-
 setup(
     name="ipfs_datasets_py",
     version='0.2.0',
@@ -282,107 +220,10 @@ setup(
     },
     include_package_data=True,
     py_modules=["ipfs_datasets_cli"],
-    install_requires=[
-        # Core dependencies - all from GitHub main branches
-        'orbitdb_kit_py',
-        # Optional VCS dependencies stay enabled by default, but constrained
-        # container builds can skip them when those backends are not used.
-        *optional_vcs_dependencies,
-        'ipfs_model_manager_py',
-        'ipfs_faiss_py',
-        'transformers',
-        "numpy>=1.26.4,<=2.1.3; python_version < '3.14'",
-        "numpy>=2.0.0; python_version >= '3.14'",
-        'urllib3>=2.5.0,<3.0.0',
-        'requests',
-        'boto3',
-        'ipfsspec<0.6.0',
-        "duckdb>=1.5.5,<1.6.0",  # DQK-046 / DQK-002 pinned compatibility window
-        "aiosqlite>=0.17.0",  # Async SQLite for metadata/auth
-        "pyarrow>=23.0.1,<26.0.0; python_version < '3.14'",
-        "fsspec>=2023.1.0,<=2024.6.1",
-        "datasets>=4.0.0,<5.0.0",
-        "huggingface-hub>=0.34.0,<1.0.0",
-        "jsonpatch>=1.33",
-        "jsonschema>=4.0.0,<5.0.0",
-        "cffi>=1.16.0",
-
-        # Formal logic and theorem-prover Python bindings. ProveKit itself is
-        # an operator-provided, content-addressed CLI binary rather than a
-        # Python distribution.
-        "z3-solver>=4.12.0,<5.0.0",
-        "cvc5==1.3.3",
-        "pysmt>=0.9.5,<1.0.0",
-        "beartype>=0.15.0,<1.0.0",
-
-        # IPLD components (always available)
-        "libipld>=3.3.2",
-        "ipld-car>=0.0.1",
-        "ipld-dag-pb>=0.0.1",
-        "dag-cbor>=0.3.3",
-
-        # Caching for CLI tools
-        "cachetools>=5.3.0",
-
-        # IPFS integration
-        # Note: 0.8.0 stable not available yet, using 0.8.0a2 or fallback to 0.7.0
-        "ipfshttpclient>=0.7.0",
-
-        # libp2p crypto/pubsub dependencies (avoid runtime warnings)
-        "pymultihash>=0.8.2",
-        "protobuf>=5.27.0",
-        "dnspython>=2.2.1",
-        "eth-hash>=0.3.2",
-        "eth-keys>=0.5.0",
-
-        # IPLD components
-        "multiformats>=0.3.0",
-
-        # Data provenance components
-        "networkx>=2.8.0",
-        "matplotlib>=3.5.0",
-        "seaborn>=0.12.0",
-        
-        # Async compatibility (anyio for trio/asyncio interop)
-        "anyio>=4.0.0",
-        "trio>=0.27.0",
-        'pydantic-settings>=2.0.0',
-
-        # Core utilities imported by default modules
-        "PyJWT>=2.8.0,<3.0.0",
-        "beautifulsoup4>=4.12.0,<5.0.0",
-        "newspaper3k>=0.2.8,<1.0.0",
-        "readability-lxml>=0.8.0,<1.0.0",
-        "lxml_html_clean>=0.4.0",
-        "ddgs>=9.11.2",
-        "google-api-python-client>=2.192.0",
-        "cloudscraper>=1.2.71",
-        "cfscrape>=2.1.1; python_version < '3.12'",
-        
-        # CLI framework
-        'click>=8.0.0',
-
-        # Error reporting API (Flask endpoints)
-        'Flask>=3.1.1',
-        # Surya remains runtime-optional until it supports Pillow >= 12.2.0.
-        # PDF / RTF runtime dependencies used by default processors
-        'nltk>=3.8.1',
-        'pdfplumber>=0.11.7',
-        'pymupdf>=1.26.3',
-        'pillow>=12.2.0,<13.0.0',
-        'PyPDF2>=3.0.0',
-        'pypdf>=5.0.0',
-        'pytesseract>=0.3.13',
-        'striprtf>=0.0.29',
-        'tiktoken>=0.6.0',
-        'pysbd',
-        'markitdown>=0.1.0',
-        'python-docx>=1.1.2',
-        'yt-dlp>=2025.6.30',
-        'ffmpeg-python>=0.2.0',
-        # Keep OpenCV on the NumPy 1.x-compatible line used by the rest of this package.
-        'opencv-python>=4.8.1.78,<4.12.0',
-    ],
+    # The installed proof-context core is stdlib-only.  Existing optional
+    # feature groups remain declared in ``extras_require`` / pyproject.toml;
+    # none may cause an implicit sibling checkout, VCS fetch, or heavy install.
+    install_requires=[],
     extras_require={
         # Logic integration / legal reasoning
         # SymbolicAI is imported as `symai` but distributed on PyPI as `symbolicai`.
@@ -471,7 +312,7 @@ setup(
         'p2p': [
             # libp2p networking for distributed inference / cache sharing.
             # Keep this as an extra because py-libp2p is typically installed from git.
-            'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main',
+            'libp2p>=0.2.0,<1.0.0',
             'protobuf>=5.27.0',
             'pymultihash>=0.8.2',
             'dnspython>=2.2.1',
@@ -670,12 +511,11 @@ setup(
             'python-magic>=0.4.27;platform_system=="Darwin"',
         ] if IS_MACOS else [],
         'legal': [
-            # 'scrape_the_law_mk3 @ file:./ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
+            # Legal integrations are published dependencies; no local paths.
         ],
         # Accelerate integration - distributed AI compute
         'accelerate': [
-            # Install from GitHub main branch
-            'ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main',
+            'ipfs_accelerate_py>=0.1.0,<1.0.0',
             'sentence-transformers',
             'torch>=2.13.0,<3.0.0',
             'transformers>=4.46.0',
