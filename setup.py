@@ -1,14 +1,18 @@
+import gzip
 import os
 import platform
 import shutil
 import subprocess
 import sys
+import tarfile
 from pathlib import Path
 
 from setuptools import find_namespace_packages, setup
 from setuptools.command.build_py import build_py as _build_py
 from setuptools.command.develop import develop as _develop
+from setuptools.command.egg_info import egg_info as _egg_info
 from setuptools.command.install import install as _install
+from setuptools.command.sdist import sdist as _sdist
 
 try:
     from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
@@ -166,6 +170,86 @@ class _BuildPyWithFormalVerificationAssets(_build_py):
         )
 
 
+class _BuildTreeEggInfo(_egg_info):
+    """Keep generated package metadata out of the tracked source directory."""
+
+    def finalize_options(self):  # type: ignore[override]
+        if self.egg_base is None:
+            egg_base = Path(__file__).resolve().parent / "build" / "egg-info"
+            egg_base.mkdir(parents=True, exist_ok=True)
+            self.egg_base = str(egg_base)
+        # The repository historically tracks a source-tree egg-info directory.
+        # It is stale build output, not an input to immutable package artifacts.
+        self.ignore_egg_info_in_manifest = True
+        super().finalize_options()
+
+
+class _ReproducibleSdist(_sdist):
+    """Normalize tar and gzip metadata when a source epoch is declared."""
+
+    def make_archive(  # type: ignore[override]
+        self,
+        base_name,
+        format,
+        root_dir=None,
+        base_dir=None,
+        owner=None,
+        group=None,
+    ):
+        raw_epoch = os.environ.get("SOURCE_DATE_EPOCH")
+        if format != "gztar" or raw_epoch is None or base_dir is None:
+            return super().make_archive(
+                base_name,
+                format,
+                root_dir=root_dir,
+                base_dir=base_dir,
+                owner=owner,
+                group=group,
+            )
+
+        epoch = int(raw_epoch)
+        source_root = Path(root_dir or os.curdir) / base_dir
+        output = Path(f"{base_name}.tar.gz")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        members = [source_root, *sorted(source_root.rglob("*"))]
+        with output.open("wb") as raw_stream:
+            with gzip.GzipFile(
+                filename="",
+                mode="wb",
+                compresslevel=9,
+                fileobj=raw_stream,
+                mtime=epoch,
+            ) as gzip_stream:
+                with tarfile.open(
+                    fileobj=gzip_stream,
+                    mode="w",
+                    format=tarfile.PAX_FORMAT,
+                    dereference=False,
+                ) as archive:
+                    for path in members:
+                        relative = path.relative_to(source_root)
+                        archive_name = Path(base_dir) / relative
+                        info = archive.gettarinfo(
+                            str(path), arcname=archive_name.as_posix()
+                        )
+                        info.uid = 0
+                        info.gid = 0
+                        info.uname = ""
+                        info.gname = ""
+                        info.mtime = epoch
+                        info.pax_headers = {}
+                        if info.isdir():
+                            info.mode = 0o755
+                        elif info.isfile():
+                            info.mode = 0o755 if info.mode & 0o111 else 0o644
+                        if info.isfile():
+                            with path.open("rb") as member_stream:
+                                archive.addfile(info, member_stream)
+                        else:
+                            archive.addfile(info)
+        return str(output)
+
+
 if _bdist_wheel is not None:
     class _PlatformWheel(_bdist_wheel):
         def finalize_options(self):  # type: ignore[override]
@@ -179,6 +263,8 @@ _cmdclass = {
     "install": _PostInstall,
     "develop": _PostDevelop,
     "build_py": _BuildPyWithFormalVerificationAssets,
+    "egg_info": _BuildTreeEggInfo,
+    "sdist": _ReproducibleSdist,
 }
 if _PlatformWheel is not None:
     _cmdclass["bdist_wheel"] = _PlatformWheel
