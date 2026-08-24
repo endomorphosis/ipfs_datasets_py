@@ -10,6 +10,7 @@ import io
 import json
 import os
 import platform
+import re
 import shutil
 import stat
 import subprocess
@@ -54,6 +55,7 @@ CANONICAL_EXTRAS = {
     "wallets-xaman",
     "wallets-xrpl",
 }
+_EXTRA_MARKER_COMPARISON = re.compile(r'(\bextra\s*(?:==|!=)\s*")([^"]+)(")')
 
 
 @dataclass(frozen=True)
@@ -220,9 +222,7 @@ def _isolated_environment(home: Path) -> dict[str, str]:
     }
 
 
-def _build_artifacts(
-    output: Path, *, source_root: Path = PROJECT_ROOT
-) -> ArtifactPair:
+def _build_artifacts(output: Path, *, source_root: Path = PROJECT_ROOT) -> ArtifactPair:
     output.mkdir(parents=True)
     _run(
         [
@@ -324,13 +324,29 @@ def _digest_value(value: object) -> str:
 
 def _canonical_requirement(value: str) -> tuple[str, tuple[str, ...], str, str, str | None]:
     requirement = Requirement(value)
+    marker = str(requirement.marker or "")
+    # packaging<26 preserves legacy underscores in ``extra`` marker values,
+    # while newer releases normalize them according to PEP 685.  Both spellings
+    # identify the same extra, so compare their canonical names instead of
+    # making artifact validation depend on the host packaging release.
+    marker = _EXTRA_MARKER_COMPARISON.sub(
+        lambda match: f"{match.group(1)}{canonicalize_name(match.group(2))}{match.group(3)}",
+        marker,
+    )
     return (
         canonicalize_name(requirement.name),
         tuple(sorted(canonicalize_name(extra) for extra in requirement.extras)),
         str(requirement.specifier),
-        str(requirement.marker or ""),
+        marker,
         requirement.url,
     )
+
+
+def test_requirement_comparison_canonicalizes_legacy_extra_markers() -> None:
+    underscored = 'faiss-cpu>=1.7.0; platform_system == "Windows" and extra == "legal_netherlands"'
+    hyphenated = 'faiss-cpu>=1.7.0; platform_system == "Windows" and extra == "legal-netherlands"'
+
+    assert _canonical_requirement(underscored) == _canonical_requirement(hyphenated)
 
 
 def _assert_receipt_binding(pair: ArtifactPair) -> None:
