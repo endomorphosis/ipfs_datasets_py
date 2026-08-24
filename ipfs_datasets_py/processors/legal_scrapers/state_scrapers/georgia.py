@@ -24,6 +24,20 @@ from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
+class GeorgiaFullCorpusIncompleteError(RuntimeError):
+    """Georgia evidence cannot prove a fresh, exhaustive live-code frontier."""
+
+    def __init__(
+        self,
+        reason: str,
+        *,
+        evidence: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        self.reason = str(reason)
+        self.evidence = dict(evidence or {})
+        super().__init__(f"Georgia full-corpus frontier is incomplete: {self.reason}")
+
+
 class GeorgiaScraper(BaseStateScraper):
     """Scraper for Georgia state laws from https://www.legis.ga.gov."""
 
@@ -173,37 +187,75 @@ class GeorgiaScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape Georgia code from the official General Assembly HTML tree first."""
         limit = max(1, int(max_statutes)) if max_statutes else None
+        require_live_full_frontier = self._full_corpus_enabled() and limit is None
         from .georgia_constitution import (
             configured_constitution_html_path,
             parse_georgia_constitution_html,
         )
 
         constitution_path = configured_constitution_html_path()
-        if constitution_path is not None or "constitution" in str(code_name or "").lower():
-            if constitution_path is not None:
-                constitution_rows = parse_georgia_constitution_html(
-                    constitution_path.read_text(encoding="utf-8", errors="replace"),
-                    code_name=code_name or "Georgia Constitution",
-                    max_statutes=limit,
-                )
-                return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        constitution_request = "constitution" in " ".join(
+            (str(code_name or ""), str(code_url or ""))
+        ).lower()
+        if constitution_request and constitution_path is not None:
+            constitution_rows = parse_georgia_constitution_html(
+                constitution_path.read_text(encoding="utf-8", errors="replace"),
+                code_name=code_name or "Georgia Constitution",
+                max_statutes=limit,
+            )
+            return constitution_rows if limit is None else constitution_rows[: int(limit)]
         from .georgia_title import (
-            configured_title_text_path,
+            configured_title_text_paths,
             parse_configured_georgia_title,
         )
 
-        title_path = configured_title_text_path()
-        if title_path is not None:
+        title_paths = configured_title_text_paths()
+        if title_paths:
+            require_complete_title_inventory = require_live_full_frontier
             official_rows = parse_configured_georgia_title(
                 code_name=code_name or "Official Code of Georgia Annotated",
                 max_statutes=limit,
+                paths=title_paths,
+                require_complete_inventory=require_complete_title_inventory,
             )
+            if require_live_full_frontier:
+                raise GeorgiaFullCorpusIncompleteError(
+                    "configured title dumps verify a local Title 1-53 inventory, "
+                    "not a fresh and exhaustive live official frontier",
+                    evidence={
+                        "configured_title_inventory_complete": True,
+                        "configured_title_inventory_count": len(self.OFFICIAL_TITLES),
+                        "configured_statute_count": len(official_rows),
+                        "fresh_live_frontier_verified": False,
+                        "full_corpus_admissible": False,
+                    },
+                )
             return official_rows if limit is None else official_rows[: int(limit)]
-        from .georgia_archive import parse_configured_georgia_archive
+        if not self._full_corpus_enabled():
+            from .georgia_archive import parse_configured_georgia_archive
 
-        recovered = parse_configured_georgia_archive(code_name=code_name, max_statutes=limit)
-        if recovered:
-            return recovered if limit is None else recovered[: int(limit)]
+            recovered = parse_configured_georgia_archive(
+                code_name=code_name,
+                max_statutes=limit,
+            )
+            if recovered:
+                return recovered if limit is None else recovered[: int(limit)]
+
+        # The legacy General Assembly HTML-tree walker has no exhaustive live
+        # manifest and may hydrate individual pages through cache/archive
+        # recovery.  It remains useful for bounded probes, but an uncapped
+        # full-corpus run must fail before that partial route can sole-admit.
+        if require_live_full_frontier:
+            raise GeorgiaFullCorpusIncompleteError(
+                "the legacy General Assembly HTML route cannot prove a fresh "
+                "exhaustive frontier; delegated Lexis discovery is bounded and "
+                "document bodies remain access-gated",
+                evidence={
+                    "fresh_live_frontier_verified": False,
+                    "full_corpus_admissible": False,
+                },
+            )
+
         official = await self._scrape_official_georgia_code(
             code_name=code_name,
             code_url=code_url,

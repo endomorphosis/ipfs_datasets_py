@@ -8,18 +8,192 @@ never sole-admitted for full-corpus certification.
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
+import hmac
 import json
 import os
 import re
 import ssl
 import urllib.request
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+import uuid
+from collections.abc import Callable, Mapping, Sequence
+from datetime import datetime, timezone
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    TypedDict,
+)
 from urllib.parse import urljoin, urlparse
+
+from ipfs_datasets_py.utils import anyio_compat
 
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
+
+NorthCarolinaByChapterDisposition = Literal[
+    "official_parsed",
+    "recovery_transport_only",
+    "fetch_empty",
+    "fetch_short_response",
+    "fetch_exception",
+    "parse_zero_statutes",
+    "parse_exception",
+    "incomplete_html_document",
+    "chapter_identity_mismatch",
+    "unverified_cache_provenance",
+    "nonfresh_transport",
+    "http_status_not_ok",
+    "nonofficial_final_host",
+    "unexpected_final_url",
+    "response_hash_mismatch",
+    "invalid_observation_receipt",
+    "section_frontier_parse_exception",
+    "section_frontier_fetch_exception",
+    "section_frontier_nonfresh_transport",
+    "section_frontier_http_status_not_ok",
+    "section_frontier_nonofficial_final_host",
+    "section_frontier_unexpected_final_url",
+    "section_frontier_response_hash_mismatch",
+    "section_frontier_invalid_observation_receipt",
+    "section_frontier_incomplete_html_document",
+    "section_frontier_empty",
+    "section_frontier_underfill",
+    "section_frontier_mismatch",
+    "not_attempted_chapter_cap",
+    "not_attempted",
+]
+
+NorthCarolinaByChapterFrontierDisposition = Literal[
+    "fresh_toc_verified",
+    "toc_fetch_exception",
+    "toc_http_status_not_ok",
+    "toc_nonofficial_final_host",
+    "toc_unexpected_final_url",
+    "toc_response_hash_mismatch",
+    "toc_invalid_observation_receipt",
+    "toc_incomplete_html_document",
+    "toc_parse_zero_chapters",
+    "toc_catalog_mismatch",
+]
+
+
+class NorthCarolinaByChapterEvidence(TypedDict):
+    """Checkpoint-safe evidence for one attempted ByChapter frontier unit."""
+
+    chapter_number: str
+    chapter_name: str
+    state_code: str
+    code_name: str
+    run_id: str
+    source_url: str
+    disposition: NorthCarolinaByChapterDisposition
+    resolved: bool
+    provider: str
+    source_authority_class: str
+    http_status: int
+    final_url: str
+    final_host: str
+    observed_at: str
+    response_bytes: int
+    response_sha256: str
+    decoded_sha256: str
+    chapter_rows_sha256: str
+    section_frontier_source_url: str
+    section_frontier_provider: str
+    section_frontier_http_status: int
+    section_frontier_final_url: str
+    section_frontier_final_host: str
+    section_frontier_observed_at: str
+    section_frontier_response_bytes: int
+    section_frontier_response_sha256: str
+    section_frontier_decoded_sha256: str
+    section_frontier_document_complete: bool
+    section_frontier_sha256: str
+    document_complete: bool
+    section_frontier_count: int
+    section_active_count: int
+    section_inactive_count: int
+    active_section_numbers: List[str]
+    inactive_section_numbers: List[str]
+    parsed_section_numbers: List[str]
+    parsed_statutes: int
+    admitted_statutes: int
+    evidence_sha256: str
+    checkpoint_hmac_sha256: str
+    error_type: str
+    error_message: str
+
+
+class NorthCarolinaByChapterFetchReceipt(TypedDict):
+    """Transport receipt for one fresh or bounded NC ByChapter fetch."""
+
+    html: str
+    provider: str
+    http_status: int
+    final_url: str
+    final_host: str
+    observed_at: str
+    response_sha256: str
+    decoded_sha256: str
+    error_type: str
+    error_message: str
+
+
+class NorthCarolinaByChapterFrontierEvidence(TypedDict):
+    """Fresh TOC closure evidence for the exhaustive ByChapter frontier."""
+
+    source_url: str
+    disposition: NorthCarolinaByChapterFrontierDisposition
+    resolved: bool
+    provider: str
+    http_status: int
+    final_url: str
+    final_host: str
+    observed_at: str
+    response_bytes: int
+    response_sha256: str
+    decoded_sha256: str
+    document_complete: bool
+    discovered_chapters: List[str]
+    active_chapters: List[str]
+    inactive_chapters: List[str]
+    chapter_dispositions: List[Dict[str, str]]
+    pinned_chapters: List[str]
+    missing_from_live_toc: List[str]
+    unexpected_in_live_toc: List[str]
+    error_type: str
+    error_message: str
+
+
+class NorthCarolinaByChapterIncompleteError(RuntimeError):
+    """Raised when an exhaustive NC ByChapter frontier is not fully official."""
+
+    def __init__(
+        self,
+        *,
+        resolved_count: int,
+        total_count: int,
+        unresolved: Sequence[NorthCarolinaByChapterEvidence],
+    ) -> None:
+        self.resolved_count = int(resolved_count)
+        self.total_count = int(total_count)
+        self.unresolved = tuple(dict(item) for item in unresolved)
+        dispositions = sorted(
+            {
+                str(item.get("disposition") or "unknown")
+                for item in self.unresolved
+            }
+        )
+        super().__init__(
+            "North Carolina ByChapter exhaustive harvest incomplete: "
+            f"resolved={self.resolved_count}/{self.total_count}, "
+            f"unresolved={len(self.unresolved)}, "
+            f"dispositions={','.join(dispositions) or 'unknown'}"
+        )
 
 
 class NorthCarolinaScraper(BaseStateScraper):
@@ -29,6 +203,11 @@ class NorthCarolinaScraper(BaseStateScraper):
     OFFICIAL_ENTRY_PATH = "/Laws/GeneralStatutes"
     OFFICIAL_ENTRY_URL = "https://www.ncleg.gov/Laws/GeneralStatutes"
     OFFICIAL_TOC_URL = "https://www.ncleg.gov/Laws/GeneralStatutesTOC"
+    BYCHAPTER_COMPLETION_SCHEMA = (
+        "ipfs_datasets_py/north-carolina-bychapter-completion@2"
+    )
+    BYCHAPTER_FRESH_PROVIDER = "fresh_live_https"
+    FIRST_BYCHAPTER_STATUTE_LIMIT = 1
     CONTAMINATED_BUCKET_REPLACEMENT_REASON = (
         "contaminated_bucket_replaced_from_official_clean_text"
     )
@@ -326,8 +505,11 @@ class NorthCarolinaScraper(BaseStateScraper):
             parse_north_carolina_constitution_html,
         )
 
+        full_corpus_requested = bool(
+            self._full_corpus_enabled() and max_statutes is None
+        )
         constitution_path = configured_constitution_html_path()
-        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+        if "constitution" in str(code_name or "").lower():
             if constitution_path is not None:
                 constitution_rows = parse_north_carolina_constitution_html(
                     constitution_path.read_text(encoding="utf-8", errors="replace"),
@@ -342,30 +524,36 @@ class NorthCarolinaScraper(BaseStateScraper):
         )
         from .north_carolina_archive import parse_configured_north_carolina_archive
 
-        chapter_path = configured_chapter_html_path()
-        if chapter_path is not None:
-            chapter_token = chapter_path.stem.replace("Chapter_", "").replace("chapter_", "")
-            bulk = parse_north_carolina_chapter_html(
-                chapter_path.read_text(encoding="utf-8", errors="replace"),
-                chapter=chapter_token or "14",
+        if not full_corpus_requested:
+            chapter_path = configured_chapter_html_path()
+            if chapter_path is not None:
+                chapter_token = chapter_path.stem.replace("Chapter_", "").replace("chapter_", "")
+                bulk = parse_north_carolina_chapter_html(
+                    chapter_path.read_text(encoding="utf-8", errors="replace"),
+                    chapter=chapter_token or "14",
+                    code_name=code_name,
+                    max_statutes=max_statutes,
+                )
+                if bulk:
+                    return bulk
+            local_rows = parse_configured_north_carolina_chapters(
                 code_name=code_name,
                 max_statutes=max_statutes,
             )
-            if bulk:
-                return bulk
-        local_rows = parse_configured_north_carolina_chapters(
-            code_name=code_name,
-            max_statutes=max_statutes,
-        )
-        if local_rows:
-            return local_rows
-        recovered = parse_configured_north_carolina_archive(
-            code_name=code_name,
-            max_statutes=max_statutes,
-        )
-        if recovered:
-            return recovered
+            if local_rows:
+                return local_rows
+            recovered = parse_configured_north_carolina_archive(
+                code_name=code_name,
+                max_statutes=max_statutes,
+            )
+            if recovered:
+                return recovered
         return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
+        if full_corpus_requested and not self._bychapter_live_enabled():
+            raise RuntimeError(
+                "North Carolina full-corpus mode requires fresh ByChapter HTTPS; "
+                "NORTH_CAROLINA_BYCHAPTER_LIVE=0 is non-certifying"
+            )
         if self._bychapter_live_enabled():
             bychapter = await self._scrape_official_bychapter_html(
                 code_name,
@@ -373,6 +561,11 @@ class NorthCarolinaScraper(BaseStateScraper):
             )
             if bychapter:
                 return bychapter if return_threshold == 1000000 else bychapter[: int(return_threshold)]
+            if full_corpus_requested:
+                raise RuntimeError(
+                    "North Carolina exhaustive ByChapter path returned no statutes; "
+                    "refusing legacy index or generic fallback sole-admission"
+                )
         official = await self._scrape_official_index(
             code_name,
             max_statutes=None if return_threshold == 1000000 else int(return_threshold),
@@ -450,14 +643,300 @@ class NorthCarolinaScraper(BaseStateScraper):
             value = 4
         return max(1, min(8, value))
 
+    def _bychapter_checkpoint_max_age_seconds(self) -> int:
+        raw = str(
+            os.getenv("NORTH_CAROLINA_BYCHAPTER_CHECKPOINT_MAX_AGE_SECONDS", "21600")
+            or "21600"
+        ).strip()
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            value = 21600
+        return max(300, min(86400, value))
+
+    def _bychapter_observed_at_valid(self, value: object) -> bool:
+        try:
+            observed = datetime.fromisoformat(str(value or ""))
+        except (TypeError, ValueError):
+            return False
+        if observed.tzinfo is None:
+            return False
+        age_seconds = (datetime.now(timezone.utc) - observed).total_seconds()
+        return -300 <= age_seconds <= self._bychapter_checkpoint_max_age_seconds()
+
+    @staticmethod
+    def _bychapter_checkpoint_rows_sha256(
+        statutes: Sequence[NormalizedStatute],
+        chapter_number: str,
+    ) -> str:
+        number = str(chapter_number or "").strip().upper()
+        rows: List[Dict[str, Any]] = []
+        for row in statutes:
+            if str(row.chapter_number or "").strip().upper() != number:
+                continue
+            rows.append(
+                {
+                    "state_code": str(row.state_code or ""),
+                    "statute_id": str(row.statute_id or ""),
+                    "code_name": str(row.code_name or ""),
+                    "chapter_number": str(row.chapter_number or ""),
+                    "section_number": str(row.section_number or ""),
+                    "section_name": str(row.section_name or ""),
+                    "full_text": str(row.full_text or ""),
+                    "source_url": str(row.source_url or ""),
+                    "official_cite": str(row.official_cite or ""),
+                    "structured_data": dict(row.structured_data or {}),
+                }
+            )
+        rows.sort(
+            key=lambda item: (
+                str(item.get("section_number") or ""),
+                str(item.get("statute_id") or ""),
+            )
+        )
+        payload = json.dumps(
+            rows,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
+
+    @staticmethod
+    def _bychapter_evidence_sha256(item: Mapping[str, Any]) -> str:
+        """Return a self-contained integrity digest (not authentication)."""
+
+        canonical = {
+            str(key): value
+            for key, value in item.items()
+            if str(key) not in {"evidence_sha256", "checkpoint_hmac_sha256"}
+        }
+        payload = json.dumps(
+            canonical,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
+
+    @staticmethod
+    def _bychapter_section_frontier_sha256(
+        active_section_numbers: Sequence[str],
+        inactive_section_numbers: Sequence[str],
+    ) -> str:
+        payload = json.dumps(
+            {
+                "active": [str(item) for item in active_section_numbers],
+                "inactive": [str(item) for item in inactive_section_numbers],
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
+
+    @staticmethod
+    def _bychapter_checkpoint_hmac_key() -> Optional[bytes]:
+        """Return an opt-in checkpoint authentication key without persisting it."""
+
+        raw = os.getenv("NORTH_CAROLINA_BYCHAPTER_CHECKPOINT_HMAC_KEY")
+        if raw is None:
+            return None
+        key = str(raw).encode("utf-8")
+        # A short operator typo must not silently authorize resume skipping.
+        return key if len(key) >= 32 else None
+
+    @staticmethod
+    def _bychapter_checkpoint_hmac_sha256(
+        item: Mapping[str, Any],
+        key: bytes,
+    ) -> str:
+        canonical = {
+            str(field): value
+            for field, value in item.items()
+            if str(field) != "checkpoint_hmac_sha256"
+        }
+        payload = json.dumps(
+            canonical,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")
+        return hmac.new(key, payload, hashlib.sha256).hexdigest()
+
+    def _bychapter_cache_provider(self, url: str, provider: str, html: str) -> str:
+        """Recover cache origin without allowing unknown cache bytes to certify live text."""
+
+        token = str(provider or "").strip() or "requests_direct"
+        if token not in {"fetch_cache", "ipfs_page_cache"}:
+            return token
+
+        canonical_url = self._canonical_fetch_url(url)
+        payload = str(html or "").encode("utf-8", errors="replace")
+        payload_sha256 = hashlib.sha256(payload).hexdigest()
+        origin = ""
+
+        if token == "fetch_cache":
+            try:
+                _object_path, meta_path = self._fetch_cache_paths(canonical_url)
+                meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            except Exception:
+                meta = {}
+            if (
+                isinstance(meta, dict)
+                and self._canonical_fetch_url(str(meta.get("url") or ""))
+                == canonical_url
+                and str(meta.get("sha256") or "") == payload_sha256
+                and str(meta.get("state_code") or self.state_code).upper()
+                == self.state_code.upper()
+            ):
+                origin = str(meta.get("provider") or "").strip()
+
+        if token == "ipfs_page_cache" or origin == "ipfs_page_cache":
+            entry = self._ipfs_page_cache_index.get(
+                self._ipfs_page_cache_key(canonical_url)
+            ) or {}
+            try:
+                entry_size = int(entry.get("size") or 0)
+            except (TypeError, ValueError, AttributeError):
+                entry_size = 0
+            if (
+                isinstance(entry, dict)
+                and self._canonical_fetch_url(str(entry.get("url") or ""))
+                == canonical_url
+                and entry_size == len(payload)
+                and str(entry.get("state_code") or self.state_code).upper()
+                == self.state_code.upper()
+            ):
+                ipfs_origin = str(entry.get("provider") or "").strip()
+                if ipfs_origin:
+                    origin = f"ipfs_page_cache:{ipfs_origin}"
+
+        if origin == "requests_direct" or origin.endswith(":requests_direct"):
+            return f"{token}:{origin}"
+        return f"{token}:unverified_cache:{origin or 'unknown'}"
+
     async def _fetch_official_bychapter_page(self, number: str) -> Tuple[str, str]:
         from .north_carolina_chapter import chapter_url
 
-        html = await self._request_text_direct(chapter_url(number), timeout=40)
+        source_url = chapter_url(number)
+        html = await self._request_text_direct(source_url, timeout=40)
         provider = self._current_fetch_provider() or str(
             getattr(self, "_last_fetch_provider", "") or "requests_direct"
         )
-        return html or "", provider
+        return html or "", self._bychapter_cache_provider(source_url, provider, html)
+
+    async def _fetch_official_https_fresh(
+        self,
+        source_url: str,
+        *,
+        timeout: int = 40,
+    ) -> NorthCarolinaByChapterFetchReceipt:
+        """Fetch one official URL over verified HTTPS without fallback/cache."""
+
+        source_url = str(source_url or "").strip()
+        parsed_source = urlparse(source_url)
+        if parsed_source.scheme.lower() != "https" or not self.is_official_nc_url(source_url):
+            observed_at = datetime.now(timezone.utc).isoformat()
+            return NorthCarolinaByChapterFetchReceipt(
+                html="",
+                provider=self.BYCHAPTER_FRESH_PROVIDER,
+                http_status=0,
+                final_url=source_url,
+                final_host=(parsed_source.hostname or "").lower(),
+                observed_at=observed_at,
+                response_sha256=hashlib.sha256(b"").hexdigest(),
+                decoded_sha256=hashlib.sha256(b"").hexdigest(),
+                error_type="InvalidOfficialHttpsUrl",
+                error_message="fresh fetch requires an official ncleg.gov HTTPS URL",
+            )
+
+        def _request() -> Tuple[int, str, bytes]:
+            request = urllib.request.Request(
+                source_url,
+                headers={
+                    "User-Agent": "ipfs-datasets-north-carolina-full-corpus/1.0",
+                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    "Cache-Control": "no-cache",
+                    "Pragma": "no-cache",
+                    "Connection": "close",
+                },
+            )
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(
+                request,
+                timeout=max(5, int(timeout)),
+                context=context,
+            ) as response:
+                status = int(getattr(response, "status", 200) or 200)
+                final_url = str(response.geturl() or source_url)
+                payload = bytes(response.read() or b"")
+            return status, final_url, payload
+
+        status = 0
+        final_url = source_url
+        payload = b""
+        error_type = ""
+        error_message = ""
+        try:
+            status, final_url, payload = await anyio_compat.wait_for(
+                anyio_compat.to_thread(_request),
+                max(7, int(timeout) + 2),
+            )
+        except Exception as exc:
+            status = int(getattr(exc, "code", 0) or 0)
+            final_url = str(getattr(exc, "url", "") or source_url)
+            error_type = type(exc).__name__
+            error_message = str(exc)
+
+        observed_at = datetime.now(timezone.utc).isoformat()
+        html = payload.decode("utf-8", errors="replace") if payload else ""
+        decoded_bytes = html.encode("utf-8", errors="replace")
+        return NorthCarolinaByChapterFetchReceipt(
+            html=html,
+            provider=self.BYCHAPTER_FRESH_PROVIDER,
+            http_status=status,
+            final_url=final_url,
+            final_host=(urlparse(final_url).hostname or "").lower(),
+            observed_at=observed_at,
+            response_sha256=hashlib.sha256(payload).hexdigest(),
+            decoded_sha256=hashlib.sha256(decoded_bytes).hexdigest(),
+            error_type=error_type,
+            error_message=error_message,
+        )
+
+    async def _fetch_official_bychapter_page_fresh(
+        self,
+        number: str,
+        *,
+        timeout: int = 40,
+    ) -> NorthCarolinaByChapterFetchReceipt:
+        """Fetch one ByChapter unit through the non-cached live HTTPS path."""
+
+        from .north_carolina_chapter import chapter_url
+
+        return await self._fetch_official_https_fresh(
+            chapter_url(number),
+            timeout=timeout,
+        )
+
+    async def _fetch_official_chapter_section_index_fresh(
+        self,
+        number: str,
+        *,
+        timeout: int = 40,
+    ) -> NorthCarolinaByChapterFetchReceipt:
+        """Fetch the independent official section inventory without a cache."""
+
+        from .north_carolina_chapter import chapter_sections_url
+
+        return await self._fetch_official_https_fresh(
+            chapter_sections_url(number),
+            timeout=timeout,
+        )
 
     async def _scrape_official_bychapter_html(
         self,
@@ -478,45 +957,227 @@ class NorthCarolinaScraper(BaseStateScraper):
             BYCHAPTER_INDEX_URL,
             TOC_URL,
             bychapter_index_links,
+            chapter_section_index_frontier,
+            chapter_sections_url,
             chapter_url,
             configured_bychapter_index_path,
             configured_toc_html_path,
             merge_discovered_chapters,
             parse_north_carolina_chapter_html,
+            toc_chapter_frontier,
             toc_chapter_links,
         )
 
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        full_corpus_run = bool(self._full_corpus_enabled() and limit is None)
+        checkpoint_payload = self._load_partial_checkpoint_payload()
+        checkpoint_progress_raw = checkpoint_payload.get("progress")
+        checkpoint_progress = (
+            dict(checkpoint_progress_raw)
+            if isinstance(checkpoint_progress_raw, dict)
+            else {}
+        )
+        candidate_run_id = str(
+            checkpoint_progress.get("bychapter_run_id") or ""
+        ).strip()
+        candidate_run_started_at = str(
+            checkpoint_progress.get("bychapter_run_started_at") or ""
+        ).strip()
+        checkpoint_envelope_valid = bool(
+            full_corpus_run
+            and checkpoint_payload.get("state_code") == "NC"
+            and checkpoint_payload.get("code_name") == str(code_name)
+            and checkpoint_progress.get("bychapter_completion_schema")
+            == self.BYCHAPTER_COMPLETION_SCHEMA
+            and checkpoint_progress.get("bychapter_full_corpus_required") is True
+            and re.fullmatch(r"[0-9a-f]{32}", candidate_run_id)
+            and self._bychapter_observed_at_valid(candidate_run_started_at)
+        )
+        bychapter_run_id = (
+            candidate_run_id if checkpoint_envelope_valid else uuid.uuid4().hex
+        )
+        bychapter_run_started_at = (
+            candidate_run_started_at
+            if checkpoint_envelope_valid
+            else datetime.now(timezone.utc).isoformat()
+        )
         max_chapters = self._bychapter_max_chapters()
         catalog = list(self.OFFICIAL_CHAPTERS)
         discovered: List[str] = []
-        index_path = configured_bychapter_index_path()
-        if index_path is not None:
-            discovered.extend(
-                bychapter_index_links(
-                    index_path.read_text(encoding="utf-8", errors="replace")
+        live_active_catalog: List[Tuple[str, str]] = []
+        frontier_evidence: Optional[NorthCarolinaByChapterFrontierEvidence] = None
+        frontier_verified = not full_corpus_run
+        if full_corpus_run:
+            toc_receipt = await self._fetch_official_https_fresh(TOC_URL, timeout=30)
+            toc_html = str(toc_receipt.get("html") or "")
+            toc_provider = str(toc_receipt.get("provider") or "")
+            toc_status = max(0, int(toc_receipt.get("http_status") or 0))
+            toc_final_url = str(toc_receipt.get("final_url") or TOC_URL)
+            toc_final_host = str(
+                toc_receipt.get("final_host")
+                or (urlparse(toc_final_url).hostname or "")
+            ).lower()
+            toc_observed_at = str(toc_receipt.get("observed_at") or "")
+            toc_response_sha256 = str(toc_receipt.get("response_sha256") or "")
+            toc_decoded_sha256 = str(toc_receipt.get("decoded_sha256") or "")
+            toc_error_type = str(toc_receipt.get("error_type") or "")
+            toc_error_message = str(toc_receipt.get("error_message") or "")
+            toc_bytes = toc_html.encode("utf-8", errors="replace")
+            toc_document_complete = bool(
+                re.search(r"</html\s*>\s*$", toc_html, flags=re.IGNORECASE)
+            )
+            chapter_dispositions: List[Dict[str, str]] = []
+            live_chapters: List[str] = []
+            active_live_chapters: List[str] = []
+            inactive_live_chapters: List[str] = []
+            disposition: NorthCarolinaByChapterFrontierDisposition
+            if toc_error_type and not toc_html:
+                disposition = "toc_fetch_exception"
+            elif toc_provider != self.BYCHAPTER_FRESH_PROVIDER:
+                disposition = "toc_fetch_exception"
+            elif toc_status != 200:
+                disposition = "toc_http_status_not_ok"
+            elif (
+                not self.is_official_nc_url(toc_final_url)
+                or toc_final_host != (urlparse(toc_final_url).hostname or "").lower()
+            ):
+                disposition = "toc_nonofficial_final_host"
+            elif toc_final_url != TOC_URL:
+                disposition = "toc_unexpected_final_url"
+            elif (
+                len(toc_response_sha256) != 64
+                or len(toc_decoded_sha256) != 64
+                or toc_decoded_sha256 != hashlib.sha256(toc_bytes).hexdigest()
+            ):
+                disposition = "toc_response_hash_mismatch"
+            elif not self._bychapter_observed_at_valid(toc_observed_at):
+                disposition = "toc_invalid_observation_receipt"
+            elif not toc_document_complete:
+                disposition = "toc_incomplete_html_document"
+            else:
+                toc_records = toc_chapter_frontier(toc_html)
+                chapter_dispositions = [dict(record) for record in toc_records]
+                live_chapters = [record["chapter_number"] for record in toc_records]
+                active_live_chapters = [
+                    record["chapter_number"]
+                    for record in toc_records
+                    if record["disposition"] == "active"
+                ]
+                inactive_live_chapters = [
+                    record["chapter_number"]
+                    for record in toc_records
+                    if record["disposition"] == "inactive"
+                ]
+                disposition = (
+                    "fresh_toc_verified"
+                    if live_chapters and active_live_chapters
+                    else "toc_parse_zero_chapters"
                 )
+
+            pinned_by_upper = {
+                str(number).upper(): str(number) for number, _name in catalog
+            }
+            live_by_upper = {
+                str(number).upper(): str(number) for number in live_chapters
+            }
+            missing_from_live = [
+                number
+                for number, _name in catalog
+                if str(number).upper() not in live_by_upper
+            ]
+            unexpected_in_live = [
+                number
+                for number in active_live_chapters
+                if str(number).upper() not in pinned_by_upper
+            ]
+            if disposition == "fresh_toc_verified" and missing_from_live:
+                disposition = "toc_catalog_mismatch"
+            frontier_verified = disposition == "fresh_toc_verified"
+            if frontier_verified:
+                pinned_names = {
+                    str(number).upper(): str(name) for number, name in catalog
+                }
+                records_by_upper = {
+                    str(record["chapter_number"]).upper(): record
+                    for record in chapter_dispositions
+                }
+                live_active_catalog = [
+                    (
+                        pinned_by_upper.get(str(number).upper(), str(number)),
+                        pinned_names.get(
+                            str(number).upper(),
+                            str(
+                                records_by_upper[str(number).upper()].get(
+                                    "chapter_name"
+                                )
+                                or f"Chapter {number}"
+                            ),
+                        ),
+                    )
+                    for number in active_live_chapters
+                ]
+            frontier_evidence = NorthCarolinaByChapterFrontierEvidence(
+                source_url=TOC_URL,
+                disposition=disposition,
+                resolved=frontier_verified,
+                provider=toc_provider,
+                http_status=toc_status,
+                final_url=toc_final_url,
+                final_host=toc_final_host,
+                observed_at=toc_observed_at,
+                response_bytes=len(toc_bytes),
+                response_sha256=toc_response_sha256,
+                decoded_sha256=toc_decoded_sha256,
+                document_complete=toc_document_complete,
+                discovered_chapters=list(live_chapters),
+                active_chapters=list(active_live_chapters),
+                inactive_chapters=list(inactive_live_chapters),
+                chapter_dispositions=chapter_dispositions,
+                pinned_chapters=[str(number) for number, _name in catalog],
+                missing_from_live_toc=missing_from_live,
+                unexpected_in_live_toc=unexpected_in_live,
+                error_type=toc_error_type,
+                error_message=toc_error_message,
             )
-        toc_path = configured_toc_html_path()
-        if toc_path is not None:
-            discovered.extend(
-                toc_chapter_links(toc_path.read_text(encoding="utf-8", errors="replace"))
-            )
-        if index_path is None and toc_path is None:
-            try:
-                index_html = await self._request_text_direct(BYCHAPTER_INDEX_URL, timeout=20)
-            except Exception:
-                index_html = ""
-            if index_html:
-                discovered.extend(bychapter_index_links(index_html))
-            try:
-                toc_html = await self._request_text_direct(TOC_URL, timeout=20)
-            except Exception:
-                toc_html = ""
-            if toc_html:
-                discovered.extend(toc_chapter_links(toc_html))
-        if discovered:
+        else:
+            index_path = configured_bychapter_index_path()
+            if index_path is not None:
+                discovered.extend(
+                    bychapter_index_links(
+                        index_path.read_text(encoding="utf-8", errors="replace")
+                    )
+                )
+            toc_path = configured_toc_html_path()
+            if toc_path is not None:
+                discovered.extend(
+                    toc_chapter_links(
+                        toc_path.read_text(encoding="utf-8", errors="replace")
+                    )
+                )
+            if index_path is None and toc_path is None:
+                try:
+                    index_html = await self._request_text_direct(
+                        BYCHAPTER_INDEX_URL,
+                        timeout=20,
+                    )
+                except Exception:
+                    index_html = ""
+                if index_html:
+                    discovered.extend(bychapter_index_links(index_html))
+                try:
+                    toc_html = await self._request_text_direct(TOC_URL, timeout=20)
+                except Exception:
+                    toc_html = ""
+                if toc_html:
+                    discovered.extend(toc_chapter_links(toc_html))
+        if full_corpus_run and frontier_verified:
+            # The fresh official TOC is the authoritative current frontier.
+            # The pinned catalog remains a fail-closed omission cross-check,
+            # while newly published active chapters are harvested dynamically.
+            catalog = live_active_catalog
+        elif discovered:
             catalog = merge_discovered_chapters(catalog, discovered)
+        frontier_catalog = list(catalog)
         if max_chapters is not None:
             catalog = catalog[: int(max_chapters)]
 
@@ -524,29 +1185,629 @@ class NorthCarolinaScraper(BaseStateScraper):
             code_name=code_name,
             max_statutes=limit,
         )
+        if full_corpus_run:
+            expected_checkpoint_chapters = {
+                str(number).upper() for number, _name in frontier_catalog
+            }
+            # Only exact official rows from this state/code/frontier can back
+            # a completion receipt. Everything else is purged on the next
+            # replacement checkpoint write.
+            statutes = [
+                row
+                for row in statutes
+                if str(row.state_code or "") == "NC"
+                and str(row.code_name or "") == str(code_name)
+                and str(row.chapter_number or "").strip().upper()
+                in expected_checkpoint_chapters
+                and str(row.section_number or "").strip().upper().startswith(
+                    f"{str(row.chapter_number or '').strip().upper()}-"
+                )
+                and str(
+                    (row.structured_data or {}).get("source_authority_class") or ""
+                )
+                == "official"
+                and self.is_official_nc_url(str(row.source_url or ""))
+                and bool(self._NC_CHAPTER_BYCHAPTER_RE.search(str(row.source_url or "")))
+            ]
         if limit is not None and len(statutes) >= limit:
             return statutes[: int(limit)]
-        progress = self._load_partial_checkpoint_progress()
+        progress = checkpoint_progress
         done_raw = progress.get("bychapter_done") if isinstance(progress, dict) else None
-        done: set[str] = {
+        legacy_done: set[str] = {
             str(item).strip()
             for item in (done_raw or [])
             if str(item).strip()
         }
+        frontier_names = {str(number): str(name) for number, name in frontier_catalog}
+        frontier_numbers = [str(number) for number, _name in frontier_catalog]
+        frontier_number_set = set(frontier_numbers)
+        attempted_number_set = {str(number) for number, _name in catalog}
+        evidence_by_number: Dict[str, NorthCarolinaByChapterEvidence] = {}
+        checkpoint_hmac_key = self._bychapter_checkpoint_hmac_key()
+        authenticated_evidence_numbers: set[str] = set()
+        raw_evidence = (
+            progress.get("bychapter_chapter_evidence")
+            if checkpoint_envelope_valid
+            else None
+        )
+        if isinstance(raw_evidence, list):
+            for raw in raw_evidence:
+                if not isinstance(raw, dict):
+                    continue
+                number = str(raw.get("chapter_number") or "").strip()
+                disposition = str(raw.get("disposition") or "").strip()
+                if number not in frontier_number_set or disposition not in {
+                    "official_parsed",
+                    "recovery_transport_only",
+                    "fetch_empty",
+                    "fetch_short_response",
+                    "fetch_exception",
+                    "parse_zero_statutes",
+                    "parse_exception",
+                    "incomplete_html_document",
+                    "chapter_identity_mismatch",
+                    "unverified_cache_provenance",
+                    "nonfresh_transport",
+                    "http_status_not_ok",
+                    "nonofficial_final_host",
+                    "unexpected_final_url",
+                    "response_hash_mismatch",
+                    "invalid_observation_receipt",
+                    "section_frontier_parse_exception",
+                    "section_frontier_fetch_exception",
+                    "section_frontier_nonfresh_transport",
+                    "section_frontier_http_status_not_ok",
+                    "section_frontier_nonofficial_final_host",
+                    "section_frontier_unexpected_final_url",
+                    "section_frontier_response_hash_mismatch",
+                    "section_frontier_invalid_observation_receipt",
+                    "section_frontier_incomplete_html_document",
+                    "section_frontier_empty",
+                    "section_frontier_underfill",
+                    "section_frontier_mismatch",
+                    "not_attempted_chapter_cap",
+                    "not_attempted",
+                }:
+                    continue
+                if type(raw.get("resolved")) is not bool or type(
+                    raw.get("document_complete")
+                ) is not bool or type(
+                    raw.get("section_frontier_document_complete")
+                ) is not bool:
+                    continue
+                numeric_keys = (
+                    "http_status",
+                    "response_bytes",
+                    "section_frontier_http_status",
+                    "section_frontier_response_bytes",
+                    "section_frontier_count",
+                    "section_active_count",
+                    "section_inactive_count",
+                    "parsed_statutes",
+                    "admitted_statutes",
+                )
+                if any(
+                    type(raw.get(key)) is not int or int(raw.get(key)) < 0
+                    for key in numeric_keys
+                ):
+                    continue
+                expected_source_url = chapter_url(number)
+                source_url = str(raw.get("source_url") or "")
+                final_url = str(raw.get("final_url") or "")
+                final_host = str(raw.get("final_host") or "").lower()
+                if (
+                    raw.get("state_code") != "NC"
+                    or raw.get("code_name") != str(code_name)
+                    or raw.get("run_id") != bychapter_run_id
+                    or source_url != expected_source_url
+                    or not self.is_official_nc_url(source_url)
+                    or not self.is_official_nc_url(final_url)
+                    or final_host != (urlparse(final_url).hostname or "").lower()
+                ):
+                    continue
+                response_sha256 = str(raw.get("response_sha256") or "").lower()
+                decoded_sha256 = str(raw.get("decoded_sha256") or "").lower()
+                chapter_rows_sha256 = str(
+                    raw.get("chapter_rows_sha256") or ""
+                ).lower()
+                section_frontier_source_url = str(
+                    raw.get("section_frontier_source_url") or ""
+                )
+                section_frontier_provider = str(
+                    raw.get("section_frontier_provider") or ""
+                )
+                section_frontier_final_url = str(
+                    raw.get("section_frontier_final_url") or ""
+                )
+                section_frontier_final_host = str(
+                    raw.get("section_frontier_final_host") or ""
+                ).lower()
+                section_frontier_observed_at = str(
+                    raw.get("section_frontier_observed_at") or ""
+                )
+                section_frontier_response_sha256 = str(
+                    raw.get("section_frontier_response_sha256") or ""
+                ).lower()
+                section_frontier_decoded_sha256 = str(
+                    raw.get("section_frontier_decoded_sha256") or ""
+                ).lower()
+                section_frontier_sha256 = str(
+                    raw.get("section_frontier_sha256") or ""
+                ).lower()
+                evidence_sha256 = str(raw.get("evidence_sha256") or "").lower()
+                checkpoint_hmac_sha256 = str(
+                    raw.get("checkpoint_hmac_sha256") or ""
+                ).lower()
+                section_list_keys = (
+                    "active_section_numbers",
+                    "inactive_section_numbers",
+                    "parsed_section_numbers",
+                )
+                if any(
+                    not isinstance(raw.get(key), list)
+                    or any(
+                        not isinstance(value, str) or not value.strip()
+                        for value in raw.get(key, [])
+                    )
+                    for key in section_list_keys
+                ):
+                    continue
+                active_section_numbers = list(raw["active_section_numbers"])
+                inactive_section_numbers = list(raw["inactive_section_numbers"])
+                parsed_section_numbers = list(raw["parsed_section_numbers"])
+                if (
+                    re.fullmatch(r"[0-9a-f]{64}", response_sha256) is None
+                    or re.fullmatch(r"[0-9a-f]{64}", decoded_sha256) is None
+                    or (
+                        chapter_rows_sha256
+                        and re.fullmatch(r"[0-9a-f]{64}", chapter_rows_sha256) is None
+                    )
+                    or (
+                        section_frontier_sha256
+                        and re.fullmatch(r"[0-9a-f]{64}", section_frontier_sha256)
+                        is None
+                    )
+                    or (
+                        section_frontier_response_sha256
+                        and re.fullmatch(
+                            r"[0-9a-f]{64}",
+                            section_frontier_response_sha256,
+                        )
+                        is None
+                    )
+                    or (
+                        section_frontier_decoded_sha256
+                        and re.fullmatch(
+                            r"[0-9a-f]{64}",
+                            section_frontier_decoded_sha256,
+                        )
+                        is None
+                    )
+                    or re.fullmatch(r"[0-9a-f]{64}", evidence_sha256) is None
+                    or (
+                        checkpoint_hmac_sha256
+                        and re.fullmatch(r"[0-9a-f]{64}", checkpoint_hmac_sha256)
+                        is None
+                    )
+                    or raw["section_frontier_count"]
+                    != len(active_section_numbers) + len(inactive_section_numbers)
+                    or raw["section_active_count"] != len(active_section_numbers)
+                    or raw["section_inactive_count"] != len(inactive_section_numbers)
+                    or raw["parsed_statutes"] != len(parsed_section_numbers)
+                    or len(set(active_section_numbers)) != len(active_section_numbers)
+                    or len(set(inactive_section_numbers))
+                    != len(inactive_section_numbers)
+                    or set(active_section_numbers) & set(inactive_section_numbers)
+                    or section_frontier_sha256
+                    != self._bychapter_section_frontier_sha256(
+                        active_section_numbers,
+                        inactive_section_numbers,
+                    )
+                ):
+                    continue
+                item = NorthCarolinaByChapterEvidence(
+                    chapter_number=number,
+                    chapter_name=str(raw.get("chapter_name") or frontier_names.get(number, "")),
+                    state_code="NC",
+                    code_name=str(code_name),
+                    run_id=bychapter_run_id,
+                    source_url=source_url,
+                    disposition=disposition,
+                    resolved=raw["resolved"],
+                    provider=str(raw.get("provider") or ""),
+                    source_authority_class=str(
+                        raw.get("source_authority_class") or ""
+                    ),
+                    http_status=raw["http_status"],
+                    final_url=final_url,
+                    final_host=final_host,
+                    observed_at=str(raw.get("observed_at") or ""),
+                    response_bytes=raw["response_bytes"],
+                    response_sha256=response_sha256,
+                    decoded_sha256=decoded_sha256,
+                    chapter_rows_sha256=chapter_rows_sha256,
+                    section_frontier_source_url=section_frontier_source_url,
+                    section_frontier_provider=section_frontier_provider,
+                    section_frontier_http_status=raw[
+                        "section_frontier_http_status"
+                    ],
+                    section_frontier_final_url=section_frontier_final_url,
+                    section_frontier_final_host=section_frontier_final_host,
+                    section_frontier_observed_at=section_frontier_observed_at,
+                    section_frontier_response_bytes=raw[
+                        "section_frontier_response_bytes"
+                    ],
+                    section_frontier_response_sha256=(
+                        section_frontier_response_sha256
+                    ),
+                    section_frontier_decoded_sha256=(
+                        section_frontier_decoded_sha256
+                    ),
+                    section_frontier_document_complete=raw[
+                        "section_frontier_document_complete"
+                    ],
+                    section_frontier_sha256=section_frontier_sha256,
+                    document_complete=raw["document_complete"],
+                    section_frontier_count=raw["section_frontier_count"],
+                    section_active_count=raw["section_active_count"],
+                    section_inactive_count=raw["section_inactive_count"],
+                    active_section_numbers=active_section_numbers,
+                    inactive_section_numbers=inactive_section_numbers,
+                    parsed_section_numbers=parsed_section_numbers,
+                    parsed_statutes=raw["parsed_statutes"],
+                    admitted_statutes=raw["admitted_statutes"],
+                    evidence_sha256=evidence_sha256,
+                    checkpoint_hmac_sha256=checkpoint_hmac_sha256,
+                    error_type=str(raw.get("error_type") or ""),
+                    error_message=str(raw.get("error_message") or ""),
+                )
+                if self._bychapter_evidence_sha256(item) != evidence_sha256:
+                    continue
+                evidence_by_number[number] = item
+                if (
+                    checkpoint_hmac_key is not None
+                    and checkpoint_hmac_sha256
+                    and hmac.compare_digest(
+                        self._bychapter_checkpoint_hmac_sha256(
+                            item,
+                            checkpoint_hmac_key,
+                        ),
+                        checkpoint_hmac_sha256,
+                    )
+                ):
+                    authenticated_evidence_numbers.add(number)
+
+        official_checkpoint_chapters = {
+            str(row.chapter_number or "").strip()
+            for row in statutes
+            if str(row.chapter_number or "").strip()
+            and str((row.structured_data or {}).get("source_authority_class") or "")
+            == "official"
+        }
+        checkpoint_rows_sha256 = {
+            number: self._bychapter_checkpoint_rows_sha256(statutes, number)
+            for number in official_checkpoint_chapters
+        }
+        checkpoint_row_section_numbers = {
+            number: {
+                str(row.section_number or "").strip()
+                for row in statutes
+                if str(row.chapter_number or "").strip() == number
+                and str(row.section_number or "").strip()
+            }
+            for number in official_checkpoint_chapters
+        }
+        if full_corpus_run:
+            # Bare checkpoint digests are integrity checks, not authentication.
+            # A persisted chapter may suppress a new live GET only when an
+            # operator-supplied HMAC authenticates its complete evidence/row digest.
+            done: set[str] = {
+                number
+                for number, item in evidence_by_number.items()
+                if number in authenticated_evidence_numbers
+                and item["disposition"] == "official_parsed"
+                and item["resolved"]
+                and item["state_code"] == "NC"
+                and item["code_name"] == str(code_name)
+                and item["run_id"] == bychapter_run_id
+                and item["provider"] == self.BYCHAPTER_FRESH_PROVIDER
+                and item["source_authority_class"] == "official"
+                and item["http_status"] == 200
+                and item["source_url"] == chapter_url(number)
+                and item["final_url"] == chapter_url(number)
+                and self.is_official_nc_url(item["final_url"])
+                and item["final_host"]
+                == (urlparse(item["final_url"]).hostname or "").lower()
+                and self._bychapter_observed_at_valid(item["observed_at"])
+                and len(item["response_sha256"]) == 64
+                and len(item["decoded_sha256"]) == 64
+                and len(item["evidence_sha256"]) == 64
+                and self._bychapter_evidence_sha256(item)
+                == item["evidence_sha256"]
+                and item["document_complete"]
+                and item["section_frontier_source_url"]
+                == chapter_sections_url(number)
+                and item["section_frontier_provider"]
+                == self.BYCHAPTER_FRESH_PROVIDER
+                and item["section_frontier_http_status"] == 200
+                and item["section_frontier_final_url"]
+                == chapter_sections_url(number)
+                and item["section_frontier_final_host"]
+                == (urlparse(chapter_sections_url(number)).hostname or "").lower()
+                and self._bychapter_observed_at_valid(
+                    item["section_frontier_observed_at"]
+                )
+                and len(item["section_frontier_response_sha256"]) == 64
+                and len(item["section_frontier_decoded_sha256"]) == 64
+                and item["section_frontier_document_complete"]
+                and item["parsed_statutes"] > 0
+                and item["section_active_count"] == item["parsed_statutes"]
+                and item["section_frontier_count"]
+                == item["section_active_count"] + item["section_inactive_count"]
+                and set(item["active_section_numbers"])
+                == set(item["parsed_section_numbers"])
+                == checkpoint_row_section_numbers.get(number, set())
+                and item["section_frontier_sha256"]
+                == self._bychapter_section_frontier_sha256(
+                    item["active_section_numbers"],
+                    item["inactive_section_numbers"],
+                )
+                and item["chapter_rows_sha256"]
+                == checkpoint_rows_sha256.get(number)
+                and number in official_checkpoint_chapters
+            }
+        else:
+            done = legacy_done | {
+                number
+                for number, item in evidence_by_number.items()
+                if item["resolved"]
+            }
+        authenticated_resume_done = (
+            set(done) if full_corpus_run else set()
+        )
+        if full_corpus_run:
+            # Unauthenticated rows are resume hints only and are replaced from
+            # fresh official response bytes before they can enter final output.
+            statutes = [
+                row
+                for row in statutes
+                if str(row.chapter_number or "").strip() in done
+            ]
         seen: set[str] = {
             str(row.section_number or "").strip().lower()
             for row in statutes
             if str(row.section_number or "").strip()
         }
-        remaining_catalog = [
-            (number, name) for number, name in catalog if number not in done
-        ]
+        remaining_catalog = (
+            []
+            if full_corpus_run and not frontier_verified
+            else [(number, name) for number, name in catalog if number not in done]
+        )
         concurrency = self._bychapter_concurrency()
         total = len(catalog)
+        frontier_total = len(frontier_catalog)
 
-        async def _fetch_one(number: str) -> Tuple[str, str, str]:
+        def _evidence(
+            number: str,
+            name: str,
+            disposition: NorthCarolinaByChapterDisposition,
+            *,
+            resolved: bool,
+            html: str = "",
+            provider: str = "",
+            authority: str = "",
+            parsed_statutes: int = 0,
+            admitted_statutes: int = 0,
+            error: Optional[BaseException] = None,
+            error_type: str = "",
+            error_message: str = "",
+            http_status: int = 0,
+            final_url: str = "",
+            final_host: str = "",
+            observed_at: str = "",
+            response_sha256: str = "",
+            decoded_sha256: str = "",
+            chapter_rows_sha256: str = "",
+            section_frontier_provider: str = "",
+            section_frontier_http_status: int = 0,
+            section_frontier_final_url: str = "",
+            section_frontier_final_host: str = "",
+            section_frontier_observed_at: str = "",
+            section_frontier_response_bytes: int = 0,
+            section_frontier_response_sha256: str = "",
+            section_frontier_decoded_sha256: str = "",
+            section_frontier_document_complete: bool = False,
+            active_section_numbers: Sequence[str] = (),
+            inactive_section_numbers: Sequence[str] = (),
+            parsed_section_numbers: Sequence[str] = (),
+        ) -> NorthCarolinaByChapterEvidence:
+            if error is not None:
+                error_type = type(error).__name__
+                error_message = str(error)
+            html_bytes = str(html or "").encode("utf-8", errors="replace")
+            final_url = str(final_url or chapter_url(number))
+            active_sections = [str(item) for item in active_section_numbers]
+            inactive_sections = [str(item) for item in inactive_section_numbers]
+            parsed_sections = [str(item) for item in parsed_section_numbers]
+            item = NorthCarolinaByChapterEvidence(
+                chapter_number=str(number),
+                chapter_name=str(name),
+                state_code="NC",
+                code_name=str(code_name),
+                run_id=bychapter_run_id,
+                source_url=chapter_url(number),
+                disposition=disposition,
+                resolved=bool(resolved),
+                provider=str(provider or ""),
+                source_authority_class=str(authority or ""),
+                http_status=max(0, int(http_status)),
+                final_url=final_url,
+                final_host=str(final_host or (urlparse(final_url).hostname or "")).lower(),
+                observed_at=str(observed_at or ""),
+                response_bytes=len(html_bytes),
+                response_sha256=str(
+                    response_sha256 or hashlib.sha256(html_bytes).hexdigest()
+                ),
+                decoded_sha256=str(
+                    decoded_sha256 or hashlib.sha256(html_bytes).hexdigest()
+                ),
+                chapter_rows_sha256=str(chapter_rows_sha256 or ""),
+                section_frontier_source_url=chapter_sections_url(number),
+                section_frontier_provider=str(section_frontier_provider or ""),
+                section_frontier_http_status=max(
+                    0,
+                    int(section_frontier_http_status),
+                ),
+                section_frontier_final_url=str(section_frontier_final_url or ""),
+                section_frontier_final_host=str(
+                    section_frontier_final_host or ""
+                ).lower(),
+                section_frontier_observed_at=str(
+                    section_frontier_observed_at or ""
+                ),
+                section_frontier_response_bytes=max(
+                    0,
+                    int(section_frontier_response_bytes),
+                ),
+                section_frontier_response_sha256=str(
+                    section_frontier_response_sha256 or ""
+                ),
+                section_frontier_decoded_sha256=str(
+                    section_frontier_decoded_sha256 or ""
+                ),
+                section_frontier_document_complete=bool(
+                    section_frontier_document_complete
+                ),
+                section_frontier_sha256=self._bychapter_section_frontier_sha256(
+                    active_sections,
+                    inactive_sections,
+                ),
+                document_complete=bool(
+                    re.search(r"</html\s*>\s*$", str(html or ""), flags=re.IGNORECASE)
+                ),
+                section_frontier_count=len(active_sections) + len(inactive_sections),
+                section_active_count=len(active_sections),
+                section_inactive_count=len(inactive_sections),
+                active_section_numbers=active_sections,
+                inactive_section_numbers=inactive_sections,
+                parsed_section_numbers=parsed_sections,
+                parsed_statutes=max(0, int(parsed_statutes)),
+                admitted_statutes=max(0, int(admitted_statutes)),
+                evidence_sha256="",
+                checkpoint_hmac_sha256="",
+                error_type=error_type,
+                error_message=error_message,
+            )
+            item["evidence_sha256"] = self._bychapter_evidence_sha256(item)
+            if checkpoint_hmac_key is not None:
+                item["checkpoint_hmac_sha256"] = (
+                    self._bychapter_checkpoint_hmac_sha256(
+                        item,
+                        checkpoint_hmac_key,
+                    )
+                )
+            return item
+
+        if full_corpus_run and max_chapters is not None:
+            for number, name in frontier_catalog:
+                if number in attempted_number_set:
+                    continue
+                evidence_by_number[number] = _evidence(
+                    number,
+                    name,
+                    "not_attempted_chapter_cap",
+                    resolved=False,
+                )
+
+        def _ordered_evidence() -> List[NorthCarolinaByChapterEvidence]:
+            return [
+                evidence_by_number[number]
+                for number in frontier_numbers
+                if number in evidence_by_number
+            ]
+
+        def _progress_extra(
+            completion_status: str,
+            *,
+            codes_completed: int,
+        ) -> Dict[str, Any]:
+            evidence = _ordered_evidence()
+            unresolved = [item for item in evidence if not item["resolved"]]
+            unresolved_frontier = (
+                [frontier_evidence]
+                if frontier_evidence is not None and not frontier_evidence["resolved"]
+                else []
+            )
+            attempted_count = sum(
+                1
+                for item in evidence
+                if item["disposition"]
+                not in {"not_attempted_chapter_cap", "not_attempted"}
+            )
+            return {
+                "chapters_scanned": attempted_count,
+                "discovered_chapters": frontier_total,
+                "bychapter_completion_schema": self.BYCHAPTER_COMPLETION_SCHEMA,
+                "bychapter_completion_status": completion_status,
+                "bychapter_run_id": bychapter_run_id,
+                "bychapter_run_started_at": bychapter_run_started_at,
+                "bychapter_checkpoint_max_age_seconds": (
+                    self._bychapter_checkpoint_max_age_seconds()
+                ),
+                "bychapter_checkpoint_hmac_enabled": checkpoint_hmac_key is not None,
+                "bychapter_authenticated_resume_count": len(
+                    authenticated_resume_done
+                ),
+                "bychapter_resume_envelope_valid": checkpoint_envelope_valid,
+                "bychapter_full_corpus_required": full_corpus_run,
+                "bychapter_frontier_count": frontier_total,
+                "bychapter_frontier_source": (
+                    "fresh_official_toc_active_frontier_with_pinned_omission_check"
+                    if full_corpus_run
+                    else "bounded_catalog_with_optional_live_discovery"
+                ),
+                "bychapter_frontier_verified": frontier_verified,
+                "bychapter_frontier_evidence": frontier_evidence,
+                "bychapter_attempted_count": attempted_count,
+                "bychapter_resolved_count": len(done & frontier_number_set),
+                "bychapter_unresolved_count": len(unresolved) + len(unresolved_frontier),
+                "bychapter_done": [
+                    number for number in frontier_numbers if number in done
+                ],
+                "bychapter_chapter_evidence": evidence,
+                "bychapter_unresolved_dispositions": unresolved,
+                "bychapter_unresolved_frontier_dispositions": unresolved_frontier,
+                "codes_completed": int(codes_completed),
+                "codes_total": 1,
+            }
+
+        async def _fetch_one(
+            number: str,
+        ) -> Tuple[str, NorthCarolinaByChapterFetchReceipt]:
+            if full_corpus_run:
+                receipt = await self._fetch_official_bychapter_page_fresh(number)
+                return number, receipt
             html, provider = await self._fetch_official_bychapter_page(number)
-            return number, html, provider
+            source_url = chapter_url(number)
+            html_bytes = str(html or "").encode("utf-8", errors="replace")
+            return number, NorthCarolinaByChapterFetchReceipt(
+                html=str(html or ""),
+                provider=str(provider or ""),
+                http_status=200 if html else 0,
+                final_url=source_url,
+                final_host=(urlparse(source_url).hostname or "").lower(),
+                observed_at=datetime.now(timezone.utc).isoformat(),
+                response_sha256=hashlib.sha256(html_bytes).hexdigest(),
+                decoded_sha256=hashlib.sha256(html_bytes).hexdigest(),
+                error_type="",
+                error_message="",
+            )
+
+        async def _fetch_section_frontier_one(
+            number: str,
+        ) -> Tuple[str, NorthCarolinaByChapterFetchReceipt]:
+            receipt = await self._fetch_official_chapter_section_index_fresh(number)
+            return number, receipt
 
         index = 0
         first_batch = True
@@ -558,57 +1819,649 @@ class NorthCarolinaScraper(BaseStateScraper):
             first_batch = False
             batch = remaining_catalog[index : index + size]
             index += size
-            fetched = await asyncio.gather(
-                *[_fetch_one(number) for number, _name in batch],
+            chapter_coroutines = [_fetch_one(number) for number, _name in batch]
+            section_coroutines = (
+                [
+                    _fetch_section_frontier_one(number)
+                    for number, _name in batch
+                ]
+                if full_corpus_run
+                else []
+            )
+            fetched_all = await anyio_compat.gather(
+                *(chapter_coroutines + section_coroutines),
                 return_exceptions=True,
             )
-            by_number: Dict[str, Tuple[str, str]] = {}
+            fetched = fetched_all[: len(batch)]
+            fetched_section_frontiers = fetched_all[len(batch) :]
+            by_number: Dict[str, NorthCarolinaByChapterFetchReceipt] = {}
+            fetch_errors: Dict[str, BaseException] = {}
             for item, (number, _name) in zip(fetched, batch):
-                if isinstance(item, Exception):
+                if isinstance(item, BaseException):
+                    fetch_errors[number] = item
                     self.logger.warning(
                         "North Carolina ByChapter fetch failed chapter=%s error=%s",
                         number,
                         item,
                     )
                     continue
-                _number, html, provider = item
-                by_number[_number] = (html, provider)
+                _number, receipt = item
+                by_number[_number] = receipt
+            section_by_number: Dict[str, NorthCarolinaByChapterFetchReceipt] = {}
+            section_fetch_errors: Dict[str, BaseException] = {}
+            for item, (number, _name) in zip(
+                fetched_section_frontiers,
+                batch,
+            ):
+                if isinstance(item, BaseException):
+                    section_fetch_errors[number] = item
+                    self.logger.warning(
+                        "North Carolina section-frontier fetch failed chapter=%s error=%s",
+                        number,
+                        item,
+                    )
+                    continue
+                _number, receipt = item
+                section_by_number[_number] = receipt
             for number, _name in batch:
                 if limit is not None and len(statutes) >= limit:
                     break
-                html, provider = by_number.get(number, ("", "requests_direct"))
-                if not html or len(html) < 200:
+                fetch_error = fetch_errors.get(number)
+                if fetch_error is not None:
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "fetch_exception",
+                        resolved=False,
+                        provider=(
+                            self.BYCHAPTER_FRESH_PROVIDER
+                            if full_corpus_run
+                            else "requests_direct"
+                        ),
+                        authority="unknown",
+                        error=fetch_error,
+                    )
+                    done.discard(number)
+                    continue
+                receipt = by_number.get(number) or NorthCarolinaByChapterFetchReceipt(
+                    html="",
+                    provider=(
+                        self.BYCHAPTER_FRESH_PROVIDER
+                        if full_corpus_run
+                        else "requests_direct"
+                    ),
+                    http_status=0,
+                    final_url=chapter_url(number),
+                    final_host=self.OFFICIAL_DOMAIN,
+                    observed_at=datetime.now(timezone.utc).isoformat(),
+                    response_sha256=hashlib.sha256(b"").hexdigest(),
+                    decoded_sha256=hashlib.sha256(b"").hexdigest(),
+                    error_type="MissingFetchReceipt",
+                    error_message="fetch task returned no receipt",
+                )
+                html = str(receipt.get("html") or "")
+                provider = str(receipt.get("provider") or "")
+                http_status = max(0, int(receipt.get("http_status") or 0))
+                final_url = str(receipt.get("final_url") or chapter_url(number))
+                final_host = str(
+                    receipt.get("final_host") or (urlparse(final_url).hostname or "")
+                ).lower()
+                observed_at = str(receipt.get("observed_at") or "")
+                response_sha256 = str(receipt.get("response_sha256") or "")
+                decoded_sha256 = str(receipt.get("decoded_sha256") or "")
+                receipt_error_type = str(receipt.get("error_type") or "")
+                receipt_error_message = str(receipt.get("error_message") or "")
+                evidence_kwargs = {
+                    "provider": provider,
+                    "http_status": http_status,
+                    "final_url": final_url,
+                    "final_host": final_host,
+                    "observed_at": observed_at,
+                    "response_sha256": response_sha256,
+                    "decoded_sha256": decoded_sha256,
+                    "error_type": receipt_error_type,
+                    "error_message": receipt_error_message,
+                }
+                if receipt_error_type and not html:
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "fetch_exception",
+                        resolved=False,
+                        authority="unknown",
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                if full_corpus_run and provider != self.BYCHAPTER_FRESH_PROVIDER:
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "nonfresh_transport",
+                        resolved=False,
+                        html=html,
+                        authority="recovery",
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                if full_corpus_run and http_status != 200:
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "http_status_not_ok",
+                        resolved=False,
+                        html=html,
+                        authority="unknown",
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                parsed_final_host = (urlparse(final_url).hostname or "").lower()
+                if full_corpus_run and (
+                    not self.is_official_nc_url(final_url)
+                    or final_host != parsed_final_host
+                ):
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "nonofficial_final_host",
+                        resolved=False,
+                        html=html,
+                        authority="recovery",
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                if full_corpus_run and final_url != chapter_url(number):
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "unexpected_final_url",
+                        resolved=False,
+                        html=html,
+                        authority="unknown",
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                calculated_sha256 = hashlib.sha256(
+                    html.encode("utf-8", errors="replace")
+                ).hexdigest()
+                if full_corpus_run and (
+                    len(response_sha256) != 64
+                    or len(decoded_sha256) != 64
+                    or decoded_sha256 != calculated_sha256
+                ):
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "response_hash_mismatch",
+                        resolved=False,
+                        html=html,
+                        authority="unknown",
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                if full_corpus_run and not self._bychapter_observed_at_valid(observed_at):
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "invalid_observation_receipt",
+                        resolved=False,
+                        html=html,
+                        authority="unknown",
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                if not html:
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "fetch_empty",
+                        resolved=False,
+                        authority="unknown",
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                if len(html.encode("utf-8", errors="replace")) < 200:
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "fetch_short_response",
+                        resolved=False,
+                        html=html,
+                        authority="unknown",
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                if full_corpus_run and not re.search(
+                    r"</html\s*>\s*$",
+                    html,
+                    flags=re.IGNORECASE,
+                ):
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "incomplete_html_document",
+                        resolved=False,
+                        html=html,
+                        authority="unknown",
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
                     continue
                 authority, _source_kind = self._classify_html_transport(provider)
+                active_section_numbers: List[str] = []
+                inactive_section_numbers: List[str] = []
+                if full_corpus_run:
+                    section_fetch_error = section_fetch_errors.get(number)
+                    if section_fetch_error is not None:
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_fetch_exception",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            error=section_fetch_error,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
+                        continue
+                    section_receipt = section_by_number.get(number) or {}
+                    section_html = str(section_receipt.get("html") or "")
+                    section_provider = str(section_receipt.get("provider") or "")
+                    section_status = max(
+                        0,
+                        int(section_receipt.get("http_status") or 0),
+                    )
+                    section_final_url = str(
+                        section_receipt.get("final_url")
+                        or chapter_sections_url(number)
+                    )
+                    section_final_host = str(
+                        section_receipt.get("final_host")
+                        or (urlparse(section_final_url).hostname or "")
+                    ).lower()
+                    section_observed_at = str(
+                        section_receipt.get("observed_at") or ""
+                    )
+                    section_response_sha256 = str(
+                        section_receipt.get("response_sha256") or ""
+                    )
+                    section_decoded_sha256 = str(
+                        section_receipt.get("decoded_sha256") or ""
+                    )
+                    section_error_type = str(
+                        section_receipt.get("error_type") or ""
+                    )
+                    section_error_message = str(
+                        section_receipt.get("error_message") or ""
+                    )
+                    section_bytes = section_html.encode("utf-8", errors="replace")
+                    section_document_complete = bool(
+                        re.search(
+                            r"</html\s*>\s*$",
+                            section_html,
+                            flags=re.IGNORECASE,
+                        )
+                    )
+                    section_evidence_kwargs = {
+                        "section_frontier_provider": section_provider,
+                        "section_frontier_http_status": section_status,
+                        "section_frontier_final_url": section_final_url,
+                        "section_frontier_final_host": section_final_host,
+                        "section_frontier_observed_at": section_observed_at,
+                        "section_frontier_response_bytes": len(section_bytes),
+                        "section_frontier_response_sha256": (
+                            section_response_sha256
+                        ),
+                        "section_frontier_decoded_sha256": (
+                            section_decoded_sha256
+                        ),
+                        "section_frontier_document_complete": (
+                            section_document_complete
+                        ),
+                    }
+                    evidence_kwargs.update(section_evidence_kwargs)
+                    if section_error_type and not section_html:
+                        failure_kwargs = dict(evidence_kwargs)
+                        failure_kwargs["error_type"] = section_error_type
+                        failure_kwargs["error_message"] = section_error_message
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_fetch_exception",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            **failure_kwargs,
+                        )
+                        done.discard(number)
+                        continue
+                    if section_provider != self.BYCHAPTER_FRESH_PROVIDER:
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_nonfresh_transport",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
+                        continue
+                    if section_status != 200:
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_http_status_not_ok",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
+                        continue
+                    parsed_section_final_host = (
+                        urlparse(section_final_url).hostname or ""
+                    ).lower()
+                    if (
+                        not self.is_official_nc_url(section_final_url)
+                        or section_final_host != parsed_section_final_host
+                    ):
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_nonofficial_final_host",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
+                        continue
+                    if section_final_url != chapter_sections_url(number):
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_unexpected_final_url",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
+                        continue
+                    calculated_section_sha256 = hashlib.sha256(
+                        section_bytes
+                    ).hexdigest()
+                    if (
+                        len(section_response_sha256) != 64
+                        or len(section_decoded_sha256) != 64
+                        or section_decoded_sha256 != calculated_section_sha256
+                    ):
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_response_hash_mismatch",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
+                        continue
+                    if not self._bychapter_observed_at_valid(section_observed_at):
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_invalid_observation_receipt",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
+                        continue
+                    if not section_document_complete:
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_incomplete_html_document",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
+                        continue
+                    try:
+                        section_records = chapter_section_index_frontier(
+                            section_html,
+                            chapter=number,
+                        )
+                    except Exception as exc:
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_parse_exception",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            error=exc,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
+                        continue
+                    active_section_numbers = [
+                        record["section_number"]
+                        for record in section_records
+                        if record["disposition"] == "active"
+                    ]
+                    inactive_section_numbers = [
+                        record["section_number"]
+                        for record in section_records
+                        if record["disposition"] == "inactive"
+                    ]
+                    if not section_records or not active_section_numbers:
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_empty",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            active_section_numbers=active_section_numbers,
+                            inactive_section_numbers=inactive_section_numbers,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
+                        continue
                 remaining = None if limit is None else max(0, int(limit) - len(statutes))
                 if remaining is not None and remaining <= 0:
                     break
-                if authority == "recovery":
-                    rows = parse_north_carolina_archive_html(
-                        html,
-                        chapter=number,
-                        source_url=chapter_url(number),
-                        code_name=code_name,
-                        max_statutes=remaining,
+                try:
+                    if authority == "recovery":
+                        rows = parse_north_carolina_archive_html(
+                            html,
+                            chapter=number,
+                            source_url=chapter_url(number),
+                            code_name=code_name,
+                            max_statutes=remaining,
+                        )
+                    else:
+                        rows = parse_north_carolina_chapter_html(
+                            html,
+                            chapter=number,
+                            code_name=code_name,
+                            max_statutes=remaining,
+                        )
+                except Exception as exc:
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "parse_exception",
+                        resolved=False,
+                        html=html,
+                        authority=authority,
+                        error=exc,
+                        active_section_numbers=active_section_numbers,
+                        inactive_section_numbers=inactive_section_numbers,
+                        **evidence_kwargs,
                     )
-                else:
-                    rows = parse_north_carolina_chapter_html(
-                        html,
-                        chapter=number,
-                        code_name=code_name,
-                        max_statutes=remaining,
+                    done.discard(number)
+                    self.logger.warning(
+                        "North Carolina ByChapter parse failed chapter=%s error=%s",
+                        number,
+                        exc,
                     )
-                added = 0
-                for row in rows:
-                    key = str(row.section_number or "").strip().lower()
-                    if not key or key in seen:
+                    continue
+                if not rows:
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "parse_zero_statutes",
+                        resolved=False,
+                        html=html,
+                        authority=authority,
+                        active_section_numbers=active_section_numbers,
+                        inactive_section_numbers=inactive_section_numbers,
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                if full_corpus_run and not active_section_numbers:
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "section_frontier_empty",
+                        resolved=False,
+                        html=html,
+                        authority=authority,
+                        parsed_statutes=len(rows),
+                        parsed_section_numbers=[
+                            str(row.section_number or "").strip() for row in rows
+                        ],
+                        active_section_numbers=active_section_numbers,
+                        inactive_section_numbers=inactive_section_numbers,
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                parsed_section_numbers = [
+                    str(row.section_number or "").strip() for row in rows
+                ]
+                expected_section_prefix = f"{number}-".upper()
+                if any(
+                    not str(row.section_number or "").strip().upper().startswith(
+                        expected_section_prefix
+                    )
+                    for row in rows
+                ):
+                    evidence_by_number[number] = _evidence(
+                        number,
+                        _name,
+                        "chapter_identity_mismatch",
+                        resolved=False,
+                        html=html,
+                        authority=authority,
+                        parsed_statutes=len(rows),
+                        active_section_numbers=active_section_numbers,
+                        inactive_section_numbers=inactive_section_numbers,
+                        parsed_section_numbers=parsed_section_numbers,
+                        **evidence_kwargs,
+                    )
+                    done.discard(number)
+                    continue
+                if full_corpus_run:
+                    active_set = set(active_section_numbers)
+                    parsed_set = set(parsed_section_numbers)
+                    missing_active_sections = active_set - parsed_set
+                    if missing_active_sections:
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_underfill",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            parsed_statutes=len(rows),
+                            active_section_numbers=active_section_numbers,
+                            inactive_section_numbers=inactive_section_numbers,
+                            parsed_section_numbers=parsed_section_numbers,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
                         continue
-                    seen.add(key)
-                    statutes.append(row)
-                    added += 1
-                    if limit is not None and len(statutes) >= limit:
-                        break
-                done.add(number)
+                    if (
+                        parsed_set != active_set
+                        or len(parsed_section_numbers) != len(parsed_set)
+                    ):
+                        evidence_by_number[number] = _evidence(
+                            number,
+                            _name,
+                            "section_frontier_mismatch",
+                            resolved=False,
+                            html=html,
+                            authority=authority,
+                            parsed_statutes=len(rows),
+                            active_section_numbers=active_section_numbers,
+                            inactive_section_numbers=inactive_section_numbers,
+                            parsed_section_numbers=parsed_section_numbers,
+                            **evidence_kwargs,
+                        )
+                        done.discard(number)
+                        continue
+                added = 0
+                admit_rows = authority != "recovery" or not full_corpus_run
+                if admit_rows:
+                    for row in rows:
+                        key = str(row.section_number or "").strip().lower()
+                        if not key or key in seen:
+                            continue
+                        seen.add(key)
+                        statutes.append(row)
+                        added += 1
+                        if limit is not None and len(statutes) >= limit:
+                            break
+                resolved = authority == "official" or not full_corpus_run
+                disposition: NorthCarolinaByChapterDisposition = (
+                    "official_parsed"
+                    if authority == "official"
+                    else (
+                        "unverified_cache_provenance"
+                        if "unverified_cache" in provider.lower()
+                        else "recovery_transport_only"
+                    )
+                )
+                evidence_by_number[number] = _evidence(
+                    number,
+                    _name,
+                    disposition,
+                    resolved=resolved,
+                    html=html,
+                    authority=authority,
+                    parsed_statutes=len(rows),
+                    admitted_statutes=added,
+                    active_section_numbers=active_section_numbers,
+                    inactive_section_numbers=inactive_section_numbers,
+                    parsed_section_numbers=parsed_section_numbers,
+                    chapter_rows_sha256=self._bychapter_checkpoint_rows_sha256(
+                        statutes,
+                        number,
+                    ),
+                    **evidence_kwargs,
+                )
+                if resolved:
+                    done.add(number)
+                else:
+                    done.discard(number)
                 self.logger.info(
                     "North Carolina ByChapter: chapter=%s/%s parsed=%s statutes_so_far=%s transport=%s",
                     number,
@@ -617,30 +2470,77 @@ class NorthCarolinaScraper(BaseStateScraper):
                     len(statutes),
                     authority,
                 )
+            batch_unresolved = any(
+                number in evidence_by_number and not evidence_by_number[number]["resolved"]
+                for number, _name in batch
+            )
             self._write_partial_checkpoint(
                 statutes,
                 code_name=code_name,
                 stage_label="north-carolina:bychapter",
-                extra={
-                    "chapters_scanned": len(done),
-                    "discovered_chapters": total,
-                    "bychapter_done": sorted(done, key=lambda item: str(item)),
-                    "codes_completed": 0,
-                    "codes_total": 1,
-                },
+                force=batch_unresolved,
+                extra=_progress_extra("in_progress", codes_completed=0),
+                replace_existing_rows=full_corpus_run,
             )
+
+        if full_corpus_run:
+            for number, name in frontier_catalog:
+                if number in evidence_by_number:
+                    continue
+                evidence_by_number[number] = _evidence(
+                    number,
+                    name,
+                    (
+                        "not_attempted_chapter_cap"
+                        if max_chapters is not None
+                        else "not_attempted"
+                    ),
+                    resolved=False,
+                )
+            unresolved = [
+                item for item in _ordered_evidence() if not item["resolved"]
+            ]
+            fully_resolved = (
+                frontier_verified
+                and not unresolved
+                and done == frontier_number_set
+            )
+            if not fully_resolved:
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="north-carolina:bychapter-incomplete",
+                    force=True,
+                    extra=_progress_extra("incomplete", codes_completed=0),
+                    replace_existing_rows=True,
+                )
+                raise NorthCarolinaByChapterIncompleteError(
+                    resolved_count=len(done & frontier_number_set),
+                    total_count=frontier_total,
+                    unresolved=unresolved,
+                )
+            completion_status = "complete"
+            codes_completed = 1
+        else:
+            target_reached = limit is None or len(statutes) >= int(limit)
+            completion_status = (
+                "bounded_target_reached" if target_reached else "bounded_incomplete"
+            )
+            # Bounded output is useful for probes but is never corpus authority.
+            codes_completed = 0
+
+        final_stage_label = (
+            "north-carolina:bychapter-complete"
+            if full_corpus_run
+            else "north-carolina:bychapter-bounded"
+        )
         self._write_partial_checkpoint(
             statutes,
             code_name=code_name,
-            stage_label="north-carolina:bychapter-complete",
+            stage_label=final_stage_label,
             force=True,
-            extra={
-                "chapters_scanned": len(done),
-                "discovered_chapters": total,
-                "bychapter_done": sorted(done, key=lambda item: str(item)),
-                "codes_completed": 1 if (limit is None or len(statutes) >= int(limit or 0)) else 0,
-                "codes_total": 1,
-            },
+            extra=_progress_extra(completion_status, codes_completed=codes_completed),
+            replace_existing_rows=full_corpus_run,
         )
         return statutes[: int(limit)] if limit is not None else statutes
 
@@ -829,7 +2729,7 @@ class NorthCarolinaScraper(BaseStateScraper):
         out: List[NormalizedStatute] = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         concurrency = max(1, int(os.getenv("NORTH_CAROLINA_SECTION_CONCURRENCY", "8") or "8"))
-        sem = asyncio.Semaphore(concurrency)
+        sem = anyio_compat.Semaphore(concurrency)
 
         async def _parse_source_url(source_url: str) -> Optional[NormalizedStatute]:
             html = await self._request_text_direct(source_url, timeout=20)
@@ -845,7 +2745,7 @@ class NorthCarolinaScraper(BaseStateScraper):
                     html,
                     chapter=chapter,
                     code_name=code_name,
-                    max_statutes=1,
+                    max_statutes=self.FIRST_BYCHAPTER_STATUTE_LIMIT,
                 )
                 if chapter_rows:
                     return chapter_rows[0]
@@ -893,11 +2793,13 @@ class NorthCarolinaScraper(BaseStateScraper):
                 except Exception:
                     return None
 
-        tasks = [asyncio.create_task(_bounded_parse(source_url)) for source_url in section_urls]
-        total_sections = len(tasks)
-        cancelled_early = False
-        for scanned_sections, task in enumerate(asyncio.as_completed(tasks), start=1):
-            statute = await task
+        results = await anyio_compat.gather(
+            *[_bounded_parse(source_url) for source_url in section_urls],
+            return_exceptions=True,
+        )
+        total_sections = len(results)
+        for scanned_sections, result in enumerate(results, start=1):
+            statute = None if isinstance(result, BaseException) else result
             if statute is not None:
                 out.append(statute)
             if progress_hook is not None:
@@ -906,13 +2808,7 @@ class NorthCarolinaScraper(BaseStateScraper):
                 except Exception:
                     pass
             if limit is not None and len(out) >= limit:
-                cancelled_early = True
-                for pending_task in tasks:
-                    if not pending_task.done():
-                        pending_task.cancel()
                 break
-        if cancelled_early:
-            await asyncio.gather(*tasks, return_exceptions=True)
         return out
 
     async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
@@ -980,7 +2876,7 @@ class NorthCarolinaScraper(BaseStateScraper):
                     return payload.decode("utf-8", errors="replace")
                 except Exception:
                     return ""
-            await asyncio.sleep(0.2)
+            await anyio_compat.sleep(0.2)
 
         def _request() -> str:
             try:
@@ -991,7 +2887,10 @@ class NorthCarolinaScraper(BaseStateScraper):
                 return ""
 
         try:
-            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+            return await anyio_compat.wait_for(
+                anyio_compat.to_thread(_request),
+                timeout + 2,
+            )
         except Exception:
             return ""
 
@@ -1045,6 +2944,7 @@ class NorthCarolinaScraper(BaseStateScraper):
         "common_crawl",
         "archival_fallback",
         "common_crawl_insecure_tls",
+        "unverified_cache",
     )
 
     def _classify_html_transport(self, provider: str) -> Tuple[str, str]:

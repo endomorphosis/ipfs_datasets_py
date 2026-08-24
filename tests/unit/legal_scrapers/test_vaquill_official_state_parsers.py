@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
+
+import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.florida_chapter import (
     band_for,
@@ -2358,6 +2363,1083 @@ def test_north_carolina_live_bychapter_preferred_over_toc(monkeypatch) -> None:
     assert rows[0].structured_data["source_kind"] == "official_north_carolina_bychapter_html"
     assert "ncleg.gov" in rows[0].source_url
     assert "justia" not in rows[0].source_url
+
+
+def _north_carolina_completion_test_html(chapter: str) -> str:
+    return f"""
+    <html><body>
+      <p>&sect; {chapter}-1. Completion evidence.</p>
+      <p>This official statutory body is deliberately long enough to be admitted
+      as current North Carolina law and to exercise exhaustive completion checks.</p>
+      <p>{'supporting statutory text ' * 12}</p>
+    </body></html>
+    """
+
+
+def _north_carolina_fresh_receipt(
+    html: str,
+    *,
+    provider: str = "fresh_live_https",
+    http_status: int = 200,
+    final_url: str = (
+        "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/ByChapter/Chapter_1.html"
+    ),
+) -> dict[str, object]:
+    payload = html.encode("utf-8")
+    return {
+        "html": html,
+        "provider": provider,
+        "http_status": http_status,
+        "final_url": final_url,
+        "final_host": "www.ncleg.gov",
+        "observed_at": datetime.now(timezone.utc).isoformat(),
+        "response_sha256": hashlib.sha256(payload).hexdigest(),
+        "decoded_sha256": hashlib.sha256(payload).hexdigest(),
+        "error_type": "",
+        "error_message": "",
+    }
+
+
+async def _north_carolina_fresh_toc(self, url: str, *, timeout: int = 30):
+    section_marker = "/Laws/GeneralStatuteSections/Chapter"
+    if section_marker in url:
+        number = url.rsplit(section_marker, 1)[1]
+        html = f"""
+        <html><body>
+          <div class="row">
+            <a href="/EnactedLegislation/Statutes/HTML/BySection/Chapter_{number}/GS_{number}-1.html">HTML</a>
+            <span>&sect; {number}-1. Completion evidence.</span>
+          </div>
+          <p>{'independent official section inventory ' * 12}</p>
+        </body></html>
+        """
+        return _north_carolina_fresh_receipt(html, final_url=url)
+    links = "".join(
+        (
+            "<a href='/Laws/GeneralStatuteSections/"
+            f"Chapter{number}'>Chapter {number}</a>"
+        )
+        for number, _name in self.OFFICIAL_CHAPTERS
+    )
+    html = f"<html><body>{links}<p>{'official toc evidence ' * 12}</p></body></html>"
+    return _north_carolina_fresh_receipt(html, final_url=url)
+
+
+@pytest.mark.parametrize(
+    ("failure_mode", "expected_disposition"),
+    (
+        ("exception", "fetch_exception"),
+        ("empty", "fetch_empty"),
+        ("short", "fetch_short_response"),
+        ("zero", "parse_zero_statutes"),
+        ("truncated", "incomplete_html_document"),
+        ("mismatch", "chapter_identity_mismatch"),
+    ),
+)
+def test_north_carolina_full_bychapter_fails_closed_with_typed_checkpoint_evidence(
+    tmp_path: Path,
+    monkeypatch,
+    failure_mode: str,
+    expected_disposition: str,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaByChapterIncompleteError,
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    async def _no_discovery(self, url: str, timeout: int = 18) -> str:
+        return ""
+
+    async def _failed_fetch(self, number: str, *, timeout: int = 40):
+        if failure_mode == "exception":
+            raise TimeoutError("sealed chapter timeout")
+        if failure_mode == "empty":
+            return _north_carolina_fresh_receipt("")
+        if failure_mode == "short":
+            return _north_carolina_fresh_receipt("<html>short</html>")
+        if failure_mode == "truncated":
+            return _north_carolina_fresh_receipt(
+                _north_carolina_completion_test_html(number).removesuffix(
+                    "</html>\n    "
+                )
+            )
+        if failure_mode == "mismatch":
+            return _north_carolina_fresh_receipt(
+                _north_carolina_completion_test_html("2")
+            )
+        return _north_carolina_fresh_receipt(
+            f"<html><body>{'navigation only ' * 30}</body></html>"
+        )
+
+    monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
+    monkeypatch.setattr(NorthCarolinaScraper, "_request_text_direct", _no_discovery)
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _failed_fetch,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _north_carolina_fresh_toc,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+
+    scraper = NorthCarolinaScraper("NC", "North Carolina")
+    with pytest.raises(NorthCarolinaByChapterIncompleteError) as caught:
+        asyncio.run(
+            scraper._scrape_official_bychapter_html("North Carolina General Statutes")
+        )
+
+    checkpoint = json.loads((tmp_path / "STATE-NC-partial.json").read_text())
+    progress = checkpoint["progress"]
+    unresolved = progress["bychapter_unresolved_dispositions"]
+    assert checkpoint["stage_label"] == "north-carolina:bychapter-incomplete"
+    assert checkpoint["statutes_count"] == 0
+    assert progress["bychapter_completion_status"] == "incomplete"
+    assert progress["bychapter_completion_schema"].endswith("@2")
+    assert progress["bychapter_done"] == []
+    assert progress["bychapter_attempted_count"] == 1
+    assert progress["bychapter_resolved_count"] == 0
+    assert progress["bychapter_unresolved_count"] == 1
+    assert progress["codes_completed"] == 0
+    assert unresolved[0]["chapter_number"] == "1"
+    assert unresolved[0]["disposition"] == expected_disposition
+    assert unresolved[0]["resolved"] is False
+    assert len(unresolved[0]["evidence_sha256"]) == 64
+    assert caught.value.unresolved[0]["disposition"] == expected_disposition
+
+
+def test_north_carolina_full_bychapter_resume_retries_only_unresolved_chapter(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaByChapterIncompleteError,
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    phase = {"value": 1}
+    fetched: list[tuple[int, str]] = []
+
+    async def _no_discovery(self, url: str, timeout: int = 18) -> str:
+        return ""
+
+    async def _fetch(self, number: str, *, timeout: int = 40):
+        fetched.append((phase["value"], number))
+        if phase["value"] == 1 and number == "2":
+            return _north_carolina_fresh_receipt("")
+        if phase["value"] == 2 and number == "1":
+            raise AssertionError("resolved chapter 1 must not be fetched on resume")
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number),
+            final_url=(
+                "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/ByChapter/"
+                f"Chapter_{number}.html"
+            ),
+        )
+
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "OFFICIAL_CHAPTERS",
+        (("1", "Civil"), ("2", "Clerks")),
+    )
+    monkeypatch.setattr(NorthCarolinaScraper, "_request_text_direct", _no_discovery)
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _fetch,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _north_carolina_fresh_toc,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv(
+        "NORTH_CAROLINA_BYCHAPTER_CHECKPOINT_HMAC_KEY",
+        "test-only-resume-authentication-key-0001",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+
+    first = NorthCarolinaScraper("NC", "North Carolina")
+    with pytest.raises(NorthCarolinaByChapterIncompleteError):
+        asyncio.run(first._scrape_official_bychapter_html("North Carolina General Statutes"))
+
+    phase["value"] = 2
+    resumed = NorthCarolinaScraper("NC", "North Carolina")
+    rows = asyncio.run(
+        resumed._scrape_official_bychapter_html("North Carolina General Statutes")
+    )
+
+    assert fetched == [(1, "1"), (1, "2"), (2, "2")]
+    assert {row.section_number for row in rows} == {"1-1", "2-1"}
+    checkpoint = json.loads((tmp_path / "STATE-NC-partial.json").read_text())
+    progress = checkpoint["progress"]
+    assert checkpoint["stage_label"] == "north-carolina:bychapter-complete"
+    assert progress["bychapter_completion_status"] == "complete"
+    assert progress["bychapter_done"] == ["1", "2"]
+    assert progress["bychapter_resolved_count"] == 2
+    assert progress["bychapter_unresolved_count"] == 0
+    assert progress["bychapter_unresolved_dispositions"] == []
+    assert progress["bychapter_checkpoint_hmac_enabled"] is True
+    assert progress["bychapter_authenticated_resume_count"] == 1
+    assert all(
+        len(item["checkpoint_hmac_sha256"]) == 64
+        for item in progress["bychapter_chapter_evidence"]
+    )
+    assert progress["codes_completed"] == 1
+
+
+def test_north_carolina_recovery_transport_cannot_certify_full_but_remains_bounded(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaByChapterIncompleteError,
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    async def _no_discovery(self, url: str, timeout: int = 18) -> str:
+        return ""
+
+    async def _recovery_fetch(self, number: str):
+        return _north_carolina_completion_test_html(number), "wayback"
+
+    async def _nonfresh_full_fetch(self, number: str, *, timeout: int = 40):
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number),
+            provider="wayback",
+        )
+
+    monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
+    monkeypatch.setattr(NorthCarolinaScraper, "_request_text_direct", _no_discovery)
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page",
+        _recovery_fetch,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _nonfresh_full_fetch,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _north_carolina_fresh_toc,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    full_dir = tmp_path / "full"
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(full_dir))
+
+    full = NorthCarolinaScraper("NC", "North Carolina")
+    with pytest.raises(NorthCarolinaByChapterIncompleteError):
+        asyncio.run(full._scrape_official_bychapter_html("North Carolina General Statutes"))
+    full_checkpoint = json.loads((full_dir / "STATE-NC-partial.json").read_text())
+    full_evidence = full_checkpoint["progress"]["bychapter_unresolved_dispositions"][0]
+    assert full_checkpoint["statutes_count"] == 0
+    assert full_evidence["disposition"] == "nonfresh_transport"
+    assert full_evidence["source_authority_class"] == "recovery"
+    assert full_evidence["parsed_statutes"] == 0
+    assert full_evidence["admitted_statutes"] == 0
+
+    monkeypatch.delenv("STATE_SCRAPER_FULL_CORPUS")
+    bounded_dir = tmp_path / "bounded"
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(bounded_dir))
+    bounded = NorthCarolinaScraper("NC", "North Carolina")
+    rows = asyncio.run(
+        bounded._scrape_official_bychapter_html(
+            "North Carolina General Statutes",
+            max_statutes=1,
+        )
+    )
+    bounded_checkpoint = json.loads(
+        (bounded_dir / "STATE-NC-partial.json").read_text()
+    )
+    bounded_progress = bounded_checkpoint["progress"]
+    assert len(rows) == 1
+    assert rows[0].structured_data["source_authority_class"] == "recovery"
+    assert bounded_checkpoint["stage_label"] == "north-carolina:bychapter-bounded"
+    assert bounded_progress["bychapter_completion_status"] == "bounded_target_reached"
+    assert bounded_progress["bychapter_unresolved_count"] == 0
+    assert bounded_progress["codes_completed"] == 0
+    assert bounded_progress["bychapter_chapter_evidence"][0]["disposition"] == (
+        "recovery_transport_only"
+    )
+
+
+def test_north_carolina_full_bychapter_rejects_configured_chapter_cap(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaByChapterIncompleteError,
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    async def _no_discovery(self, url: str, timeout: int = 18) -> str:
+        return ""
+
+    async def _official_fetch(self, number: str, *, timeout: int = 40):
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number)
+        )
+
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "OFFICIAL_CHAPTERS",
+        (("1", "Civil"), ("2", "Clerks")),
+    )
+    monkeypatch.setattr(NorthCarolinaScraper, "_request_text_direct", _no_discovery)
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _official_fetch,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _north_carolina_fresh_toc,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("NORTH_CAROLINA_BYCHAPTER_MAX_CHAPTERS", "1")
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+
+    scraper = NorthCarolinaScraper("NC", "North Carolina")
+    with pytest.raises(NorthCarolinaByChapterIncompleteError):
+        asyncio.run(
+            scraper._scrape_official_bychapter_html("North Carolina General Statutes")
+        )
+
+    checkpoint = json.loads((tmp_path / "STATE-NC-partial.json").read_text())
+    progress = checkpoint["progress"]
+    assert progress["bychapter_frontier_count"] == 2
+    assert progress["bychapter_attempted_count"] == 1
+    assert progress["bychapter_resolved_count"] == 1
+    assert progress["bychapter_unresolved_count"] == 1
+    assert progress["bychapter_unresolved_dispositions"][0]["chapter_number"] == "2"
+    assert progress["bychapter_unresolved_dispositions"][0]["disposition"] == (
+        "not_attempted_chapter_cap"
+    )
+
+
+def test_north_carolina_full_bychapter_fails_before_chapters_on_fresh_toc_mismatch(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaByChapterIncompleteError,
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    chapter_fetches: list[str] = []
+
+    async def _incomplete_toc(self, url: str, *, timeout: int = 30):
+        html = (
+            "<html><body>"
+            "<a href='/Laws/GeneralStatuteSections/Chapter1'>Chapter 1</a>"
+            f"<p>{'official toc evidence ' * 12}</p>"
+            "</body></html>"
+        )
+        return _north_carolina_fresh_receipt(html, final_url=url)
+
+    async def _forbidden_chapter_fetch(self, number: str, *, timeout: int = 40):
+        chapter_fetches.append(number)
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number)
+        )
+
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "OFFICIAL_CHAPTERS",
+        (("1", "Civil"), ("2", "Clerks")),
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _incomplete_toc,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _forbidden_chapter_fetch,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+
+    scraper = NorthCarolinaScraper("NC", "North Carolina")
+    with pytest.raises(NorthCarolinaByChapterIncompleteError):
+        asyncio.run(
+            scraper._scrape_official_bychapter_html("North Carolina General Statutes")
+        )
+
+    checkpoint = json.loads((tmp_path / "STATE-NC-partial.json").read_text())
+    progress = checkpoint["progress"]
+    frontier = progress["bychapter_frontier_evidence"]
+    assert chapter_fetches == []
+    assert progress["bychapter_frontier_verified"] is False
+    assert frontier["disposition"] == "toc_catalog_mismatch"
+    assert frontier["http_status"] == 200
+    assert frontier["final_host"] == "www.ncleg.gov"
+    assert len(frontier["response_sha256"]) == 64
+    assert frontier["missing_from_live_toc"] == ["2"]
+    assert progress["bychapter_unresolved_frontier_dispositions"] == [frontier]
+    assert progress["codes_completed"] == 0
+
+
+def test_north_carolina_toc_frontier_uses_exact_inactive_words_not_title_substrings() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina_chapter import (
+        toc_chapter_frontier,
+    )
+
+    html = """
+    <html><body>
+      <div class="row"><a href="/Laws/GeneralStatuteSections/Chapter2">Chapter 2</a><span>Clerk [Repealed and Transferred.]</span></div>
+      <div class="row"><a href="/Laws/GeneralStatuteSections/Chapter33A">Chapter 33A</a><span>Uniform Transfers to Minors Act</span></div>
+      <div class="row"><a href="/Laws/GeneralStatuteSections/Chapter39A">Chapter 39A</a><span>Transfer Fee Covenants Prohibited</span></div>
+    </body></html>
+    """
+
+    dispositions = {
+        item["chapter_number"]: item["disposition"]
+        for item in toc_chapter_frontier(html)
+    }
+    assert dispositions == {"2": "inactive", "33A": "active", "39A": "active"}
+
+
+def test_north_carolina_full_bychapter_rejects_same_host_toc_redirect(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaByChapterIncompleteError,
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    chapter_fetches: list[str] = []
+
+    async def _redirected_toc(self, url: str, *, timeout: int = 30):
+        receipt = await _north_carolina_fresh_toc(self, url, timeout=timeout)
+        receipt["final_url"] = "https://www.ncleg.gov/Laws/GeneralStatutes"
+        return receipt
+
+    async def _forbidden_chapter_fetch(self, number: str, *, timeout: int = 40):
+        chapter_fetches.append(number)
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number)
+        )
+
+    monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _redirected_toc,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _forbidden_chapter_fetch,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+
+    with pytest.raises(NorthCarolinaByChapterIncompleteError):
+        asyncio.run(
+            NorthCarolinaScraper("NC", "North Carolina")._scrape_official_bychapter_html(
+                "North Carolina General Statutes"
+            )
+        )
+
+    checkpoint = json.loads((tmp_path / "STATE-NC-partial.json").read_text())
+    frontier = checkpoint["progress"]["bychapter_frontier_evidence"]
+    assert chapter_fetches == []
+    assert frontier["disposition"] == "toc_unexpected_final_url"
+    assert checkpoint["progress"]["codes_completed"] == 0
+
+
+def test_north_carolina_full_bychapter_uses_fresh_toc_active_frontier(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    fetched: list[str] = []
+
+    async def _dynamic_toc(self, url: str, *, timeout: int = 30):
+        if "/Laws/GeneralStatuteSections/Chapter" in url:
+            return await _north_carolina_fresh_toc(self, url, timeout=timeout)
+        html = """
+        <html><body>
+          <div class="row"><a href="/Laws/GeneralStatuteSections/Chapter1">Chapter 1</a><span>Civil</span></div>
+          <div class="row"><a href="/Laws/GeneralStatuteSections/Chapter169">Chapter 169</a><span>Mind-Altering Substances</span></div>
+          <div class="row"><a href="/Laws/GeneralStatuteSections/Chapter2">Chapter 2</a><span>Clerks [Repealed and Transferred.]</span></div>
+          <p>fresh official TOC closure evidence</p>
+        </body></html>
+        """
+        return _north_carolina_fresh_receipt(html, final_url=url)
+
+    async def _fresh_fetch(self, number: str, *, timeout: int = 40):
+        fetched.append(number)
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number),
+            final_url=(
+                "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/ByChapter/"
+                f"Chapter_{number}.html"
+            ),
+        )
+
+    monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _dynamic_toc,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _fresh_fetch,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+
+    rows = asyncio.run(
+        NorthCarolinaScraper("NC", "North Carolina")._scrape_official_bychapter_html(
+            "North Carolina General Statutes"
+        )
+    )
+
+    checkpoint = json.loads((tmp_path / "STATE-NC-partial.json").read_text())
+    frontier = checkpoint["progress"]["bychapter_frontier_evidence"]
+    assert fetched == ["1", "169"]
+    assert {row.section_number for row in rows} == {"1-1", "169-1"}
+    assert frontier["discovered_chapters"] == ["1", "169", "2"]
+    assert frontier["active_chapters"] == ["1", "169"]
+    assert frontier["inactive_chapters"] == ["2"]
+    assert frontier["unexpected_in_live_toc"] == ["169"]
+    assert checkpoint["progress"]["bychapter_frontier_count"] == 2
+
+
+def test_north_carolina_full_bychapter_rejects_same_host_chapter_redirect(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaByChapterIncompleteError,
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    async def _redirected_fetch(self, number: str, *, timeout: int = 40):
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number),
+            final_url="https://www.ncleg.gov/Laws/GeneralStatutes",
+        )
+
+    monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _north_carolina_fresh_toc,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _redirected_fetch,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+
+    with pytest.raises(NorthCarolinaByChapterIncompleteError):
+        asyncio.run(
+            NorthCarolinaScraper("NC", "North Carolina")._scrape_official_bychapter_html(
+                "North Carolina General Statutes"
+            )
+        )
+
+    checkpoint = json.loads((tmp_path / "STATE-NC-partial.json").read_text())
+    evidence = checkpoint["progress"]["bychapter_unresolved_dispositions"][0]
+    assert checkpoint["statutes_count"] == 0
+    assert evidence["disposition"] == "unexpected_final_url"
+    assert evidence["final_url"] == "https://www.ncleg.gov/Laws/GeneralStatutes"
+
+
+def test_north_carolina_full_bychapter_rejects_independent_section_underfill(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaByChapterIncompleteError,
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    async def _toc_and_two_section_inventory(self, url: str, *, timeout: int = 30):
+        if "/Laws/GeneralStatuteSections/Chapter1" in url:
+            html = """
+            <html><body>
+              <div class="row"><a href="/EnactedLegislation/Statutes/HTML/BySection/Chapter_1/GS_1-1.html">HTML</a><span>&sect; 1-1. First.</span></div>
+              <div class="row"><a href="/EnactedLegislation/Statutes/HTML/BySection/Chapter_1/GS_1-2.html">HTML</a><span>&sect; 1-2. Second.</span></div>
+              <p>independent official two-section inventory evidence</p>
+            </body></html>
+            """
+            return _north_carolina_fresh_receipt(html, final_url=url)
+        return await _north_carolina_fresh_toc(self, url, timeout=timeout)
+
+    async def _one_section_fetch(self, number: str, *, timeout: int = 40):
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number)
+        )
+
+    monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _toc_and_two_section_inventory,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _one_section_fetch,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+
+    with pytest.raises(NorthCarolinaByChapterIncompleteError):
+        asyncio.run(
+            NorthCarolinaScraper("NC", "North Carolina")._scrape_official_bychapter_html(
+                "North Carolina General Statutes"
+            )
+        )
+
+    checkpoint = json.loads((tmp_path / "STATE-NC-partial.json").read_text())
+    evidence = checkpoint["progress"]["bychapter_unresolved_dispositions"][0]
+    assert checkpoint["statutes_count"] == 0
+    assert evidence["disposition"] == "section_frontier_underfill"
+    assert evidence["section_frontier_source_url"].endswith(
+        "/Laws/GeneralStatuteSections/Chapter1"
+    )
+    assert evidence["section_frontier_provider"] == "fresh_live_https"
+    assert evidence["section_frontier_http_status"] == 200
+    assert evidence["section_active_count"] == 2
+    assert evidence["active_section_numbers"] == ["1-1", "1-2"]
+    assert evidence["parsed_section_numbers"] == ["1-1"]
+    assert len(evidence["section_frontier_response_sha256"]) == 64
+    assert len(evidence["section_frontier_sha256"]) == 64
+
+
+def test_north_carolina_full_bychapter_rejects_same_host_section_index_redirect(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaByChapterIncompleteError,
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    async def _toc_and_redirected_inventory(self, url: str, *, timeout: int = 30):
+        receipt = await _north_carolina_fresh_toc(self, url, timeout=timeout)
+        if "/Laws/GeneralStatuteSections/Chapter1" in url:
+            receipt["final_url"] = "https://www.ncleg.gov/Laws/GeneralStatutes"
+        return receipt
+
+    async def _fresh_fetch(self, number: str, *, timeout: int = 40):
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number)
+        )
+
+    monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _toc_and_redirected_inventory,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _fresh_fetch,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+
+    with pytest.raises(NorthCarolinaByChapterIncompleteError):
+        asyncio.run(
+            NorthCarolinaScraper("NC", "North Carolina")._scrape_official_bychapter_html(
+                "North Carolina General Statutes"
+            )
+        )
+
+    checkpoint = json.loads((tmp_path / "STATE-NC-partial.json").read_text())
+    evidence = checkpoint["progress"]["bychapter_unresolved_dispositions"][0]
+    assert checkpoint["statutes_count"] == 0
+    assert evidence["disposition"] == "section_frontier_unexpected_final_url"
+    assert evidence["section_frontier_final_url"] == (
+        "https://www.ncleg.gov/Laws/GeneralStatutes"
+    )
+
+
+def test_north_carolina_fresh_fetch_bypasses_shared_fallback_and_records_receipt(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    html = _north_carolina_completion_test_html("1")
+    payload = html.encode("utf-8")
+    calls: list[str] = []
+
+    class _Response:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def geturl(self) -> str:
+            return (
+                "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/ByChapter/"
+                "Chapter_1.html"
+            )
+
+        def read(self) -> bytes:
+            return payload
+
+    def _urlopen(request, *, timeout: int, context):
+        calls.append(request.full_url)
+        return _Response()
+
+    async def _forbidden_fallback(self, url: str, timeout: int = 18) -> str:
+        raise AssertionError("fresh full-corpus fetch must bypass shared fallback")
+
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen)
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_request_text_direct",
+        _forbidden_fallback,
+    )
+    scraper = NorthCarolinaScraper("NC", "North Carolina")
+    receipt = asyncio.run(scraper._fetch_official_bychapter_page_fresh("1"))
+
+    assert calls == [
+        "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/ByChapter/Chapter_1.html"
+    ]
+    assert receipt["provider"] == "fresh_live_https"
+    assert receipt["http_status"] == 200
+    assert receipt["final_host"] == "www.ncleg.gov"
+    assert receipt["observed_at"].endswith("+00:00")
+    assert receipt["response_sha256"] == hashlib.sha256(payload).hexdigest()
+    assert receipt["decoded_sha256"] == hashlib.sha256(payload).hexdigest()
+
+
+def test_north_carolina_authoritative_retry_purges_checkpointed_recovery_rows(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    async def _no_discovery(self, url: str, timeout: int = 18) -> str:
+        return ""
+
+    async def _recovery_fetch(self, number: str):
+        return _north_carolina_completion_test_html(number), "wayback"
+
+    async def _fresh_fetch(self, number: str, *, timeout: int = 40):
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number)
+        )
+
+    monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
+    monkeypatch.setattr(NorthCarolinaScraper, "_request_text_direct", _no_discovery)
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page",
+        _recovery_fetch,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _fresh_fetch,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _north_carolina_fresh_toc,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+
+    bounded = NorthCarolinaScraper("NC", "North Carolina")
+    bounded_rows = asyncio.run(
+        bounded._scrape_official_bychapter_html(
+            "North Carolina General Statutes",
+            max_statutes=1,
+        )
+    )
+    assert bounded_rows[0].structured_data["source_authority_class"] == "recovery"
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    full = NorthCarolinaScraper("NC", "North Carolina")
+    full_rows = asyncio.run(
+        full._scrape_official_bychapter_html("North Carolina General Statutes")
+    )
+
+    checkpoint = json.loads((tmp_path / "STATE-NC-partial.json").read_text())
+    checkpoint_authorities = {
+        row["structured_data"]["source_authority_class"]
+        for row in checkpoint["statutes"]
+    }
+    assert len(full_rows) == 1
+    assert full_rows[0].structured_data["source_authority_class"] == "official"
+    assert checkpoint["stage_label"] == "north-carolina:bychapter-complete"
+    assert checkpoint["statutes_count"] == 1
+    assert checkpoint_authorities == {"official"}
+    assert checkpoint["progress"]["codes_completed"] == 1
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    (
+        "string_false",
+        "stale_observation",
+        "off_host",
+        "row_hash_mismatch",
+        "evidence_hash_mismatch",
+    ),
+)
+def test_north_carolina_full_resume_rejects_forged_or_stale_checkpoint_evidence(
+    tmp_path: Path,
+    monkeypatch,
+    tamper: str,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    fetches: list[str] = []
+
+    async def _fresh_fetch(self, number: str, *, timeout: int = 40):
+        fetches.append(number)
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number)
+        )
+
+    monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _fresh_fetch,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _north_carolina_fresh_toc,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv(
+        "NORTH_CAROLINA_BYCHAPTER_CHECKPOINT_HMAC_KEY",
+        "test-only-adversarial-authentication-key-0001",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+
+    first = NorthCarolinaScraper("NC", "North Carolina")
+    asyncio.run(first._scrape_official_bychapter_html("North Carolina General Statutes"))
+    checkpoint_path = tmp_path / "STATE-NC-partial.json"
+    forged = json.loads(checkpoint_path.read_text())
+    evidence = forged["progress"]["bychapter_chapter_evidence"][0]
+
+    if tamper == "string_false":
+        evidence["resolved"] = "false"
+        evidence["evidence_sha256"] = first._bychapter_evidence_sha256(evidence)
+    elif tamper == "stale_observation":
+        evidence["observed_at"] = "1999-01-01T00:00:00+00:00"
+        evidence["evidence_sha256"] = first._bychapter_evidence_sha256(evidence)
+    elif tamper == "off_host":
+        forged["statutes"][0]["source_url"] = "https://evil.example/Chapter_1.html"
+        evidence["source_url"] = "https://evil.example/Chapter_1.html"
+        evidence["final_url"] = "https://evil.example/Chapter_1.html"
+        evidence["final_host"] = "evil.example"
+        evidence["evidence_sha256"] = first._bychapter_evidence_sha256(evidence)
+    elif tamper == "row_hash_mismatch":
+        forged["statutes"][0]["full_text"] = "forged checkpoint text"
+    elif tamper == "evidence_hash_mismatch":
+        evidence["parsed_statutes"] = 999
+    checkpoint_path.write_text(json.dumps(forged), encoding="utf-8")
+
+    resumed = NorthCarolinaScraper("NC", "North Carolina")
+    rows = asyncio.run(
+        resumed._scrape_official_bychapter_html("North Carolina General Statutes")
+    )
+    repaired = json.loads(checkpoint_path.read_text())
+
+    assert fetches == ["1", "1"]
+    assert len(rows) == 1
+    assert "forged checkpoint text" not in rows[0].full_text
+    assert rows[0].source_url.startswith("https://www.ncleg.gov/")
+    assert repaired["statutes_count"] == 1
+    assert repaired["progress"]["bychapter_completion_status"] == "complete"
+    assert repaired["progress"]["bychapter_unresolved_count"] == 0
+    assert repaired["statutes"][0]["source_url"].startswith("https://www.ncleg.gov/")
+
+
+def test_north_carolina_full_resume_refetches_recomputed_self_hashes_without_hmac(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    fetches: list[str] = []
+
+    async def _fresh_fetch(self, number: str, *, timeout: int = 40):
+        fetches.append(number)
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number)
+        )
+
+    monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _fresh_fetch,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _north_carolina_fresh_toc,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path))
+    monkeypatch.delenv(
+        "NORTH_CAROLINA_BYCHAPTER_CHECKPOINT_HMAC_KEY",
+        raising=False,
+    )
+
+    first = NorthCarolinaScraper("NC", "North Carolina")
+    asyncio.run(first._scrape_official_bychapter_html("North Carolina General Statutes"))
+    checkpoint_path = tmp_path / "STATE-NC-partial.json"
+    forged = json.loads(checkpoint_path.read_text())
+    forged["statutes"][0]["full_text"] = "forged but self-consistently rehashed text"
+    checkpoint_path.write_text(json.dumps(forged), encoding="utf-8")
+
+    hash_builder = NorthCarolinaScraper("NC", "North Carolina")
+    forged_rows = hash_builder._load_partial_checkpoint_statutes(
+        code_name="North Carolina General Statutes"
+    )
+    evidence = forged["progress"]["bychapter_chapter_evidence"][0]
+    evidence["chapter_rows_sha256"] = hash_builder._bychapter_checkpoint_rows_sha256(
+        forged_rows,
+        "1",
+    )
+    evidence["evidence_sha256"] = hash_builder._bychapter_evidence_sha256(evidence)
+    checkpoint_path.write_text(json.dumps(forged), encoding="utf-8")
+
+    resumed = NorthCarolinaScraper("NC", "North Carolina")
+    rows = asyncio.run(
+        resumed._scrape_official_bychapter_html("North Carolina General Statutes")
+    )
+
+    assert fetches == ["1", "1"]
+    assert len(rows) == 1
+    assert "forged but self-consistently rehashed text" not in rows[0].full_text
+    repaired = json.loads(checkpoint_path.read_text())
+    assert repaired["progress"]["bychapter_checkpoint_hmac_enabled"] is False
+    assert repaired["progress"]["bychapter_authenticated_resume_count"] == 0
+    assert repaired["progress"]["bychapter_completion_status"] == "complete"
+
+
+def test_north_carolina_full_scrape_code_does_not_sole_admit_configured_partial_or_archive(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    configured = tmp_path / "Chapter_999.html"
+    configured.write_text(
+        _north_carolina_completion_test_html("999"),
+        encoding="utf-8",
+    )
+
+    async def _fresh_fetch(self, number: str, *, timeout: int = 40):
+        return _north_carolina_fresh_receipt(
+            _north_carolina_completion_test_html(number)
+        )
+
+    monkeypatch.setattr(NorthCarolinaScraper, "OFFICIAL_CHAPTERS", (("1", "Civil"),))
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_bychapter_page_fresh",
+        _fresh_fetch,
+    )
+    monkeypatch.setattr(
+        NorthCarolinaScraper,
+        "_fetch_official_https_fresh",
+        _north_carolina_fresh_toc,
+    )
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("NORTH_CAROLINA_CHAPTER_HTML", str(configured))
+    monkeypatch.setenv("NORTH_CAROLINA_ARCHIVE_HTML", str(configured))
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(tmp_path / "checkpoint"))
+
+    scraper = NorthCarolinaScraper("NC", "North Carolina")
+    rows = asyncio.run(
+        scraper.scrape_code(
+            "North Carolina General Statutes",
+            "https://www.ncleg.gov/Laws/GeneralStatutes",
+        )
+    )
+
+    assert {row.section_number for row in rows} == {"1-1"}
+    assert all(row.structured_data["source_authority_class"] == "official" for row in rows)
+    assert all("999" not in row.statute_id for row in rows)
+
+
+def test_north_carolina_full_scrape_code_rejects_disabled_bychapter_without_fallback(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import (
+        NorthCarolinaScraper,
+    )
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
+
+    async def _forbidden_fallback(*args, **kwargs):
+        raise AssertionError("full mode must not fall through to a non-certifying scraper")
+
+    monkeypatch.setattr(NorthCarolinaScraper, "_scrape_official_index", _forbidden_fallback)
+    monkeypatch.setattr(NorthCarolinaScraper, "_generic_scrape", _forbidden_fallback)
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setenv("NORTH_CAROLINA_BYCHAPTER_LIVE", "0")
+    scraper = NorthCarolinaScraper("NC", "North Carolina")
+
+    with pytest.raises(RuntimeError, match="requires fresh ByChapter HTTPS"):
+        asyncio.run(
+            scraper.scrape_code(
+                "North Carolina General Statutes",
+                "https://www.ncleg.gov/Laws/GeneralStatutes",
+            )
+        )
 
 
 def test_puerto_rico_ogp_skips_repealed_and_toc(tmp_path: Path, monkeypatch) -> None:
@@ -5777,10 +6859,3 @@ def test_me_ne_hi_wa_vt_ri_nh_la_listing_dumps(tmp_path: Path, monkeypatch) -> N
     )
     monkeypatch.setenv("LOUISIANA_TOC_HTML", str(la))
     assert parse_louisiana_toc() == ["111", "222"]
-
-
-
-
-
-
-

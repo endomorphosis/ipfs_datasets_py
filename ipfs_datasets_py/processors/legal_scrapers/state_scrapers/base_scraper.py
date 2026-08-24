@@ -578,6 +578,7 @@ class BaseStateScraper(ABC):
         stage_label: str,
         force: bool = False,
         extra: Optional[Dict[str, Any]] = None,
+        replace_existing_rows: bool = False,
     ) -> bool:
         checkpoint_path = self._partial_checkpoint_path()
         if checkpoint_path is None:
@@ -635,24 +636,27 @@ class BaseStateScraper(ABC):
 
         # Preserve prior statutes when a progress-only write would otherwise
         # clear the checkpoint corpus, and prevent regressions where a smaller
-        # intermediate scrape path overwrites a larger recovered corpus.
-        if not serialized_rows and existing_rows:
-            serialized_rows = list(existing_rows)
-        elif serialized_rows and existing_rows and len(serialized_rows) < len(existing_rows):
-            merged_rows = list(existing_rows)
-            merged_keys = {
-                self._checkpoint_payload_row_key(row)
-                for row in merged_rows
-                if self._checkpoint_payload_row_key(row)
-            }
-            for row in serialized_rows:
-                row_key = self._checkpoint_payload_row_key(row)
-                if row_key and row_key in merged_keys:
-                    continue
-                if row_key:
-                    merged_keys.add(row_key)
-                merged_rows.append(row)
-            serialized_rows = merged_rows
+        # intermediate scrape path overwrites a larger recovered corpus. A
+        # state-specific authoritative retry may opt into exact replacement to
+        # purge previously checkpointed recovery rows.
+        if not replace_existing_rows:
+            if not serialized_rows and existing_rows:
+                serialized_rows = list(existing_rows)
+            elif serialized_rows and existing_rows and len(serialized_rows) < len(existing_rows):
+                merged_rows = list(existing_rows)
+                merged_keys = {
+                    self._checkpoint_payload_row_key(row)
+                    for row in merged_rows
+                    if self._checkpoint_payload_row_key(row)
+                }
+                for row in serialized_rows:
+                    row_key = self._checkpoint_payload_row_key(row)
+                    if row_key and row_key in merged_keys:
+                        continue
+                    if row_key:
+                        merged_keys.add(row_key)
+                    merged_rows.append(row)
+                serialized_rows = merged_rows
 
         if not serialized_rows and not progress_payload:
             return False

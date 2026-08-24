@@ -10,7 +10,8 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Literal, Optional, Sequence, Tuple, TypedDict
+from urllib.parse import urljoin
 
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
@@ -49,6 +50,10 @@ def chapter_url(chapter: str) -> str:
     )
 
 
+def chapter_sections_url(chapter: str) -> str:
+    return f"https://www.ncleg.gov/Laws/GeneralStatuteSections/Chapter{chapter}"
+
+
 _CHAPTER_HREF_RE = re.compile(
     r"Chapter_([0-9]+[A-Za-z]?)\.html",
     re.IGNORECASE,
@@ -61,6 +66,27 @@ _TOC_CHAPTER_LABEL_RE = re.compile(
     r"\bChapter\s+([0-9]+[A-Za-z]?)\b",
     re.IGNORECASE,
 )
+_TOC_INACTIVE_CHAPTER_RE = re.compile(
+    r"\b(repealed|recodified|transferred|expired|unconstitutional|abolished)\b",
+    re.IGNORECASE,
+)
+
+
+class NorthCarolinaTocChapterRecord(TypedDict):
+    chapter_number: str
+    chapter_name: str
+    label: str
+    disposition: Literal["active", "inactive"]
+    source_url: str
+
+
+class NorthCarolinaChapterSectionRecord(TypedDict):
+    """One section advertised by an official chapter-section index."""
+
+    section_number: str
+    section_name: str
+    disposition: Literal["active", "inactive"]
+    source_url: str
 
 
 def bychapter_index_links(html: str) -> List[str]:
@@ -101,6 +127,50 @@ def toc_chapter_links(html: str) -> List[str]:
         found.add(number)
         seen.append(number)
     return seen
+
+
+def toc_chapter_frontier(html: str) -> List[NorthCarolinaTocChapterRecord]:
+    """Return deduplicated live TOC chapters with explicit inactive dispositions."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError as exc:
+        raise RuntimeError("BeautifulSoup is required for NC TOC closure") from exc
+
+    soup = BeautifulSoup(html or "", "html.parser")
+    records: List[NorthCarolinaTocChapterRecord] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = _TOC_CHAPTER_PATH_RE.search(href)
+        if not match:
+            continue
+        number = match.group(1)
+        canonical_number = number.upper()
+        if canonical_number in seen:
+            continue
+        seen.add(canonical_number)
+        row = anchor.find_parent("div", class_="row")
+        label = _WS.sub(" ", (row or anchor).get_text(" ", strip=True)).strip()
+        name = re.sub(
+            rf"^Chapter\s+{re.escape(number)}\s*",
+            "",
+            label,
+            flags=re.IGNORECASE,
+        ).strip()
+        disposition: Literal["active", "inactive"] = (
+            "inactive" if _TOC_INACTIVE_CHAPTER_RE.search(label) else "active"
+        )
+        records.append(
+            NorthCarolinaTocChapterRecord(
+                chapter_number=number,
+                chapter_name=name or f"Chapter {number}",
+                label=label,
+                disposition=disposition,
+                source_url=chapter_url(number),
+            )
+        )
+    return records
 
 
 def merge_discovered_chapters(
@@ -165,6 +235,59 @@ def _clean_soup_text(html: str) -> str:
         if any(marker in text and len(text) < 180 for marker in NAV_MARKERS):
             node.decompose()
     return soup.get_text("\n", strip=True).replace("\xa0", " ")
+
+
+def chapter_section_index_frontier(
+    html: str,
+    *,
+    chapter: str,
+) -> List[NorthCarolinaChapterSectionRecord]:
+    """Parse the independent official ChapterN listing's HTML section links."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError as exc:
+        raise RuntimeError("BeautifulSoup is required for NC section closure") from exc
+
+    section_href_re = re.compile(
+        rf"/EnactedLegislation/Statutes/HTML/BySection/Chapter_{re.escape(chapter)}/"
+        r"GS_(?P<num>[0-9A-Za-z.\-]+)\.html$",
+        re.IGNORECASE,
+    )
+    soup = BeautifulSoup(html or "", "html.parser")
+    records: List[NorthCarolinaChapterSectionRecord] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        match = section_href_re.search(href)
+        if not match:
+            continue
+        number = match.group("num").strip()
+        canonical_number = number.upper()
+        if not number or canonical_number in seen:
+            continue
+        seen.add(canonical_number)
+        row = anchor.find_parent("div", class_="row")
+        label = _WS.sub(" ", (row or anchor).get_text(" ", strip=True)).strip()
+        heading_match = re.search(
+            rf"(?:§|G\.S\.)\s*{re.escape(number)}[.:]?\s*(?P<head>.*)$",
+            label,
+            flags=re.IGNORECASE,
+        )
+        heading = (
+            str(heading_match.group("head") or "").strip()
+            if heading_match
+            else label
+        )
+        records.append(
+            NorthCarolinaChapterSectionRecord(
+                section_number=number,
+                section_name=heading,
+                disposition=("inactive" if _RESERVED.search(label) else "active"),
+                source_url=urljoin("https://www.ncleg.gov", href),
+            )
+        )
+    return records
 
 
 def parse_north_carolina_chapter_html(
