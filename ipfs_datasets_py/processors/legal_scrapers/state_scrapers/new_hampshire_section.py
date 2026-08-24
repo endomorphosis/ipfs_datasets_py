@@ -204,6 +204,13 @@ def configured_chapter_toc_html_path() -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def parse_configured_chapter_toc_html() -> List[str]:
+    path = configured_chapter_toc_html_path()
+    if path is None:
+        return []
+    return nhtoc_section_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def configured_section_html_paths() -> List[Path]:
     paths: List[Path] = []
     single = configured_section_html_path()

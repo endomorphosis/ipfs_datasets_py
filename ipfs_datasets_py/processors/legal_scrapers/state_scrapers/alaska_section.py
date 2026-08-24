@@ -155,3 +155,33 @@ def configured_section_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("ALASKA_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> List[Tuple[str, str]]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    return chapter_toc_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
+def configured_section_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("ALASKA_SECTION_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_section_toc_html() -> List[Tuple[str, str]]:
+    path = configured_section_toc_html_path()
+    if path is None:
+        return []
+    return section_toc_links(path.read_text(encoding="utf-8", errors="replace"))

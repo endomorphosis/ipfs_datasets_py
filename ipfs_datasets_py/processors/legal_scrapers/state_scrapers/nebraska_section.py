@@ -143,6 +143,20 @@ def configured_chapter_html_path() -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def parse_configured_toc_html() -> List[Tuple[str, str, str]]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    return chapter_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
+def parse_configured_chapter_html() -> List[Tuple[str, str, str]]:
+    path = configured_chapter_html_path()
+    if path is None:
+        return []
+    return section_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def is_nebraska_section_number(value: str) -> bool:
     token = str(value or "").strip()
     return bool(token) and bool(_SECTION_NUMBER_RE.match(token))

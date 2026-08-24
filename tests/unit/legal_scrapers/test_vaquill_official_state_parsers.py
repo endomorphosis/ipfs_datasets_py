@@ -5583,6 +5583,201 @@ def test_sc_ky_nd_ct_mn_listing_dumps(tmp_path: Path, monkeypatch) -> None:
     assert parse_minnesota_toc()[0][1] == "609 - 624"
 
 
+def test_ak_mt_al_wv_de_listing_dumps(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alaska_section import (
+        parse_configured_section_toc_html,
+        parse_configured_toc_html as parse_alaska_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alabama_section import (
+        FIELD_SEP,
+        ROW_SEP,
+        parse_configured_titles_text,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.delaware_chapter import (
+        parse_configured_title_links_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana_section import (
+        parse_configured_toc_html as parse_montana_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.west_virginia_dump import (
+        parse_configured_chapter_options,
+    )
+
+    ak = tmp_path / "ak.html"
+    ak.write_text(
+        '<li><a onclick=\'loadTOC("01.05");\'>Chapter 05. Alaska Statutes</a></li>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ALASKA_TOC_HTML", str(ak))
+    assert parse_alaska_toc()[0][0] == "01.05"
+
+    ak_sec = tmp_path / "ak-sec.html"
+    ak_sec.write_text(
+        '<li><a href="statutes.asp?year=2024&title=1#01.05.006">Sec. 01.05.006. Adoption</a></li>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ALASKA_SECTION_TOC_HTML", str(ak_sec))
+    assert parse_configured_section_toc_html()[0][0] == "01.05.006"
+
+    mt = tmp_path / "mt.html"
+    mt.write_text(
+        '<div class="title-toc-content"><ul>'
+        '<li><a href="./title_0045/">TITLE 45. CRIMES</a></li>'
+        '<li><span class="reserved">TITLES 8 AND 9. Reserved</span></li>'
+        "</ul></div>",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MONTANA_TOC_HTML", str(mt))
+    assert [number for number, _name, _url in parse_montana_toc()] == ["45", "8", "9"]
+
+    al = tmp_path / "al.txt"
+    al.write_text(
+        ROW_SEP.join(
+            [
+                f"1{FIELD_SEP}Title 13A Criminal Code.",
+                f"2{FIELD_SEP}Chapter 5 Death Penalty.",
+                f"3{FIELD_SEP}Section 13A-5-40 Capital offenses.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ALABAMA_TITLES_TEXT", str(al))
+    assert parse_configured_titles_text()[0] == ("title", "13A", "Title 13A Criminal Code.")
+    assert parse_configured_titles_text()[2][1] == "13A-5-40"
+
+    wv = tmp_path / "wv.html"
+    wv.write_text(
+        '<select id="sel-chapter">'
+        '<option value="61">CHAPTER 61. CRIMES</option>'
+        '<option value="17H">CHAPTER 17H. AUTONOMOUS VEHICLES</option>'
+        '<option value="">skip</option></select>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("WEST_VIRGINIA_CHAPTER_HTML", str(wv))
+    assert [number for number, _name in parse_configured_chapter_options()] == ["61", "17H"]
+
+    de = tmp_path / "de.html"
+    de.write_text(
+        '<div class="title-links"><a href="c005/index.html">Chapter 5. Specific Offenses</a></div>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("DELAWARE_TITLE_LINKS_HTML", str(de))
+    rows = parse_configured_title_links_html()
+    assert rows[0]["classifier"] == "chapter"
+    assert rows[0]["number"] == "5"
+
+
+def test_me_ne_hi_wa_vt_ri_nh_la_listing_dumps(tmp_path: Path, monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.hawaii_section import (
+        parse_configured_next_link,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana_law import (
+        parse_configured_toc_html as parse_louisiana_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maine_section import (
+        parse_configured_title_toc_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nebraska_section import (
+        parse_configured_chapter_html as parse_nebraska_chapter,
+        parse_configured_toc_html as parse_nebraska_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_hampshire_section import (
+        parse_configured_chapter_toc_html,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island_section import (
+        parse_configured_toc_html as parse_rhode_island_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.vermont_section import (
+        parse_configured_toc_html as parse_vermont_toc,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.washington_section import (
+        parse_configured_toc_html as parse_washington_toc,
+    )
+
+    me = tmp_path / "me.html"
+    me.write_text(
+        '<div class="MRSChapter_toclist">'
+        '<a href="title17-Ach1sec0.html">Chapter 1: Preliminary</a></div>'
+        '<div class="MRSChapter_toclist">'
+        '<a href="title17-Ach0sec0.html">Chapter 0 skipped</a></div>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MAINE_TITLE_TOC_HTML", str(me))
+    assert parse_configured_title_toc_html()[0][0].endswith("title17-Ach1sec0.html")
+
+    ne = tmp_path / "ne.html"
+    ne.write_text(
+        '<a href="/laws/browse-chapters.php?chapter=28">Chapter 28</a>'
+        '<a href="/laws/browse-chapters.php?chapter=76A">Chapter 76A</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("NEBRASKA_TOC_HTML", str(ne))
+    assert [number for number, _name, _url in parse_nebraska_toc()] == ["28", "76A"]
+
+    ne_chapter = tmp_path / "ne-chapter.html"
+    ne_chapter.write_text(
+        '<a href="/laws/statutes.php?statute=28-303">28-303 Murder in the first degree</a>'
+        '<a href="/laws/statutes.php?statute=25-2740.04">25-2740.04 Appeal</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("NEBRASKA_CHAPTER_HTML", str(ne_chapter))
+    assert [number for number, _name, _url in parse_nebraska_chapter()] == [
+        "28-303",
+        "25-2740.04",
+    ]
+
+    hi = tmp_path / "hi.html"
+    hi.write_text('<a href="HRS_0707-0701.HTM">Next</a>', encoding="utf-8")
+    monkeypatch.setenv("HAWAII_CHAPTER_HTML", str(hi))
+    monkeypatch.setenv(
+        "HAWAII_CHAPTER_URL",
+        "https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/HRS0707/HRS_0707-.htm",
+    )
+    assert parse_configured_next_link().endswith("/HRS0707/HRS_0707-0701.HTM")
+
+    wa = tmp_path / "wa.html"
+    wa.write_text(
+        '<a href="default.aspx?Cite=9A">Title 9A RCW</a>'
+        '<a href="default.aspx?cite=9A.32">skip chapter</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("WASHINGTON_TOC_HTML", str(wa))
+    assert parse_washington_toc() == ["9A"]
+
+    vt = tmp_path / "vt.html"
+    vt.write_text(
+        '<ul class="statutes-list"><li><a href="statutes/title/13">Title 13</a></li></ul>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("VERMONT_TOC_HTML", str(vt))
+    assert parse_vermont_toc()[0][1] == "13"
+
+    ri = tmp_path / "ri.html"
+    ri.write_text(
+        '<a href="TITLE6A/INDEX.HTM"><b> TITLE 6A  Uniform Commercial Code </b></a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("RHODE_ISLAND_TOC_HTML", str(ri))
+    assert parse_rhode_island_toc()[0][1] == "6A"
+
+    nh = tmp_path / "nh.html"
+    nh.write_text(
+        '<a href="../LXII/630/630-1.htm">Section 630:1</a>'
+        '<a href="../LXII/630/630-1-mrg.htm">margin</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("NEW_HAMPSHIRE_CHAPTER_TOC_HTML", str(nh))
+    assert parse_configured_chapter_toc_html()[0].endswith("630-1.htm")
+
+    la = tmp_path / "la.html"
+    la.write_text(
+        '<a href="Law.aspx?d=111">Art. 1</a><a href="Law.aspx?d=111">dup</a>'
+        '<a href="Law.aspx?d=222">Art. 2</a>',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LOUISIANA_TOC_HTML", str(la))
+    assert parse_louisiana_toc() == ["111", "222"]
+
 
 
 

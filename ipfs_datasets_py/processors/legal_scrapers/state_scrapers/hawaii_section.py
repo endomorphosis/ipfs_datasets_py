@@ -161,3 +161,22 @@ def configured_section_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def configured_chapter_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("HAWAII_CHAPTER_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_next_link(*, current_url: str = "") -> Optional[str]:
+    path = configured_chapter_html_path()
+    if path is None:
+        return None
+    url = str(current_url or os.environ.get("HAWAII_CHAPTER_URL") or "").strip() or BASE
+    return find_next_link(
+        path.read_text(encoding="utf-8", errors="replace"),
+        current_url=url,
+    )

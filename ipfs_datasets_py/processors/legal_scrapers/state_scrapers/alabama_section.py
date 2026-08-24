@@ -167,6 +167,21 @@ def parse_alabama_titles_sections(
     return statutes
 
 
+def configured_titles_text_path() -> Optional[Path]:
+    raw = str(os.environ.get("ALABAMA_TITLES_TEXT") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_titles_text() -> List[Tuple[str, str, str]]:
+    path = configured_titles_text_path()
+    if path is None:
+        return []
+    return hierarchy_rows(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def parse_configured_alabama(
     *,
     code_name: str = "Alabama Code",

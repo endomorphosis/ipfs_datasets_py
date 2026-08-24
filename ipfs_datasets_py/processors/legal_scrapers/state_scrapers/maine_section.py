@@ -152,3 +152,10 @@ def configured_title_toc_html_path() -> Optional[Path]:
         return None
     path = Path(raw).expanduser()
     return path if path.is_file() else None
+
+
+def parse_configured_title_toc_html() -> List[Tuple[str, str]]:
+    path = configured_title_toc_html_path()
+    if path is None:
+        return []
+    return title_toc_chapter_links(path.read_text(encoding="utf-8", errors="replace"))

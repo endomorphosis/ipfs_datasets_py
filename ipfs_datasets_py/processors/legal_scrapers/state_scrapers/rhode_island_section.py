@@ -110,6 +110,21 @@ def configured_section_html_path() -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("RHODE_ISLAND_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> List[Tuple[str, str]]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    return toc_title_links(path.read_text(encoding="utf-8", errors="replace"))
+
+
 _TOC_TITLE_RE = re.compile(r"^TITLE([\w.\-]+)/INDEX\.HTM$", re.IGNORECASE)
 _TITLE_CHAPTER_RE = re.compile(r"^([\w.\-]+)/INDEX\.HTM$", re.IGNORECASE)
 _CHAPTER_SECTION_RE = re.compile(r"^([\w.\-]+)\.htm$", re.IGNORECASE)

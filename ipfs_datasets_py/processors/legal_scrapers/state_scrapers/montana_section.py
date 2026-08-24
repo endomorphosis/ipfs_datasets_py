@@ -100,6 +100,21 @@ def configured_section_html_path() -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def configured_toc_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("MONTANA_TOC_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_toc_html() -> List[Tuple[str, str, str]]:
+    path = configured_toc_html_path()
+    if path is None:
+        return []
+    return title_toc_items(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def parse_title_numbers(text: str) -> List[str]:
     """Expand ``TITLE 5`` / ``TITLES 8 AND 9`` labels."""
 

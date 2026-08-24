@@ -118,6 +118,21 @@ def configured_chapter_html_path() -> Optional[Path]:
     return path if path.is_file() else None
 
 
+def configured_title_links_html_path() -> Optional[Path]:
+    raw = str(os.environ.get("DELAWARE_TITLE_LINKS_HTML") or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    return path if path.is_file() else None
+
+
+def parse_configured_title_links_html() -> List[Dict[str, str]]:
+    path = configured_title_links_html_path()
+    if path is None:
+        return []
+    return title_link_rows(path.read_text(encoding="utf-8", errors="replace"))
+
+
 def title_link_rows(html: str, *, base_url: str = BASE) -> List[Dict[str, str]]:
     """Structure rows from Vaquill ``div.title-links`` containers."""
 
