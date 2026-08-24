@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
+import stat
 import threading
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
@@ -22,10 +24,19 @@ from types import MappingProxyType
 from typing import Any, Final, Protocol
 
 from .capabilities import (
+    ATTACH_SAFE_OPTIONS,
+    CONFIGURATION_LOCK_SETTINGS,
+    ENVIRONMENT_RECEIPT_SCHEMA,
+    EXPLICIT_LOAD_ORDER,
+    LOAD_BEFORE_CONFIGURATION_LOCK,
     PINNED_DUCKLAKE_EXTENSION_BUILD,
     PINNED_HTTPFS_EXTENSION_BUILD,
+    PINNED_PLATFORM_DIGESTS,
     PINNED_QUACK_EXTENSION_BUILD,
     REQUIRED_DUCKDB_VERSION_TEXT,
+    REQUIRED_DUCKLAKE_CATALOG_VERSION,
+    REQUIRED_DUCKLAKE_SPECIFICATION_VERSION,
+    SUPPORTED_PLATFORMS,
 )
 
 HISTORY_SCHEMA: Final[str] = "ipfs_datasets_py/ducklake/external-agent-history@1"
@@ -60,6 +71,9 @@ HISTORY_CONTROL_ACK_SCHEMA: Final[str] = (
 HISTORY_QUACK_REQUEST_SCHEMA: Final[str] = (
     "ipfs_datasets_py/ducklake/external-agent-history-quack-request@1"
 )
+HISTORY_OWNER_LOCK_SCHEMA: Final[str] = (
+    "ipfs_datasets_py/ducklake/external-agent-history-owner-lock@1"
+)
 
 CONTROL_HISTORY_CURSOR_READ_OPERATION: Final[str] = "history.projection.cursor.read"
 CONTROL_HISTORY_OUTBOX_READ_OPERATION: Final[str] = "history.outbox.read.committed"
@@ -85,7 +99,6 @@ REQUIRED_LAKE_HISTORY_OPERATIONS: Final[frozenset[str]] = frozenset(
 
 MAX_HISTORY_BATCH_EVENTS: Final[int] = 5_000
 MAX_HISTORY_BATCH_BYTES: Final[int] = 16 * 1024 * 1024
-MAX_HISTORY_BATCH_SECONDS: Final[int] = 10
 
 EVENT_KINDS: Final[frozenset[str]] = frozenset(
     {
@@ -197,8 +210,53 @@ class HistoryReceiptError(HistoryError):
     """A lake projection or control acknowledgement receipt is inconsistent."""
 
 
+def _json_tree(value: Any, *, name: str = "history value") -> Any:
+    """Return a strict, detached JSON tree suitable for content identity.
+
+    ``default=str`` is deliberately forbidden here: arbitrary object string
+    representations are neither immutable nor deterministic across processes.
+    """
+
+    if value is None or isinstance(value, (str, bool, int)):
+        return value
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise HistoryError(f"{name} must not contain non-finite floats")
+        return value
+    if isinstance(value, Mapping):
+        result: dict[str, Any] = {}
+        for raw_key, item in value.items():
+            if not isinstance(raw_key, str):
+                raise HistoryError(f"{name} keys must be strings")
+            result[raw_key] = _json_tree(item, name=name)
+        return result
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray, memoryview)):
+        return [_json_tree(item, name=name) for item in value]
+    raise HistoryError(f"{name} must contain only strict JSON values")
+
+
+def _deep_freeze(value: Any, *, name: str = "history value") -> Any:
+    normalized = _json_tree(value, name=name)
+    if isinstance(normalized, dict):
+        return MappingProxyType(
+            {key: _deep_freeze(item, name=name) for key, item in normalized.items()}
+        )
+    if isinstance(normalized, list):
+        return tuple(_deep_freeze(item, name=name) for item in normalized)
+    return normalized
+
+
+def _deep_thaw(value: Any, *, name: str = "history value") -> Any:
+    return _json_tree(value, name=name)
+
+
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+    return json.dumps(
+        _json_tree(payload),
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
 
 
 def _sha256_text(text: str) -> str:
@@ -322,7 +380,10 @@ def _reject_remote_bypass_fields(value: Any, *, name: str) -> None:
 
 
 def _freeze_mapping(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
-    return MappingProxyType(dict(value or {}))
+    frozen = _deep_freeze(dict(value or {}))
+    if not isinstance(frozen, Mapping):  # pragma: no cover - dict input is a mapping
+        raise HistoryError("history mapping did not normalize to an object")
+    return frozen
 
 
 def _authority_denied(action: str) -> None:
@@ -449,7 +510,7 @@ class HistoryEvent:
                 "kind": self.kind,
                 "sequence": self.sequence,
                 "identities": dict(self.identities),
-                "payload": dict(self.payload),
+                "payload": _deep_thaw(self.payload, name="history event payload"),
             }
         )
 
@@ -525,6 +586,8 @@ class HistoryEpoch:
             raise HistoryError("epoch snapshot must be HistorySnapshot")
         if self.snapshot.epoch_id != self.epoch_id:
             raise HistoryError("snapshot epoch_id must match the epoch")
+        if self.snapshot.cursor != self.cursor:
+            raise HistoryContinuityError("snapshot cursor must match the epoch cursor")
         events = tuple(self.events)
         seen: set[str] = set()
         for event in events:
@@ -550,6 +613,16 @@ class HistoryEpoch:
         digest = _require_nonempty(self.content_digest, field_name="content_digest")
         if not _SHA256_RE.fullmatch(digest):
             raise HistoryError("content_digest must be sha256:<64-hex>")
+        expected = _digest_of(
+            {
+                "cursor": dict(self.cursor.as_mapping()),
+                "events": [dict(event.as_mapping()) for event in self.events],
+            }
+        )
+        if digest != expected:
+            raise HistoryReceiptError("epoch content digest does not match cursor and events")
+        if self.snapshot.content_digest != digest:
+            raise HistoryReceiptError("snapshot content digest must match the epoch")
         object.__setattr__(self, "content_digest", digest)
 
     def as_mapping(self) -> Mapping[str, Any]:
@@ -562,8 +635,13 @@ class HistoryEpoch:
                 "events": [dict(event.as_mapping()) for event in self.events],
                 "snapshot": dict(self.snapshot.as_mapping()),
                 "lineage": list(self.lineage),
-                "benchmarks": [dict(item) for item in self.benchmarks],
-                "recovery_manifest": dict(self.recovery_manifest),
+                "benchmarks": [
+                    _deep_thaw(item, name="history benchmark") for item in self.benchmarks
+                ],
+                "recovery_manifest": _deep_thaw(
+                    self.recovery_manifest,
+                    name="history recovery manifest",
+                ),
                 "content_digest": self.content_digest,
                 "grants_current_authority": False,
                 "authoritative": False,
@@ -650,10 +728,10 @@ def _split_events(
         elif event.kind == "benchmark":
             benchmarks.append(event.payload or {"benchmark_id": event.event_id})
         elif event.kind == "recovery":
-            recovery = dict(event.payload)
+            recovery = _deep_thaw(event.payload, name="history recovery event")
             recovery.setdefault("manifest_id", event.event_id)
         history.append(event)
-    return tuple(history), tuple(lineage), tuple(benchmarks), MappingProxyType(recovery)
+    return tuple(history), tuple(lineage), tuple(benchmarks), _freeze_mapping(recovery)
 
 
 class HistoryProjector:
@@ -740,16 +818,14 @@ def project_outbox(
 
 @dataclass(frozen=True, slots=True)
 class HistoryProjectionLimits:
-    """Hard projection bounds. Callers may lower but never raise them."""
+    """Hard row/byte bounds. No wall-clock admission is claimed yet."""
 
     max_events: int = MAX_HISTORY_BATCH_EVENTS
     max_bytes: int = MAX_HISTORY_BATCH_BYTES
-    timeout_seconds: int = MAX_HISTORY_BATCH_SECONDS
 
     def __post_init__(self) -> None:
         events = _require_pos_int(self.max_events, field_name="max_events")
         byte_count = _require_pos_int(self.max_bytes, field_name="max_bytes")
-        seconds = _require_pos_int(self.timeout_seconds, field_name="timeout_seconds")
         if events > MAX_HISTORY_BATCH_EVENTS:
             raise HistoryActivationError(
                 f"max_events exceeds the hard {MAX_HISTORY_BATCH_EVENTS} row bound"
@@ -758,19 +834,50 @@ class HistoryProjectionLimits:
             raise HistoryActivationError(
                 f"max_bytes exceeds the hard {MAX_HISTORY_BATCH_BYTES} byte bound"
             )
-        if seconds > MAX_HISTORY_BATCH_SECONDS:
-            raise HistoryActivationError(
-                f"timeout_seconds exceeds the hard {MAX_HISTORY_BATCH_SECONDS}s bound"
-            )
 
     def as_mapping(self) -> Mapping[str, int]:
         return MappingProxyType(
             {
                 "max_events": self.max_events,
                 "max_bytes": self.max_bytes,
-                "timeout_seconds": self.timeout_seconds,
             }
         )
+
+
+def _outbox_event_mapping(item: HistoryEvent | Mapping[str, Any]) -> Mapping[str, Any]:
+    if isinstance(item, HistoryEvent):
+        return _deep_thaw(item.as_mapping(), name="outbox history event")
+    if not isinstance(item, Mapping):
+        raise HistoryError("outbox events must be typed history events or mappings")
+    value = _deep_thaw(item, name="outbox history event")
+    if not isinstance(value, Mapping):  # pragma: no cover - mapping input remains mapping
+        raise HistoryError("outbox event did not normalize to an object")
+    return value
+
+
+def _snapshot_outbox_event(
+    item: HistoryEvent | Mapping[str, Any],
+) -> HistoryEvent | Mapping[str, Any]:
+    if isinstance(item, HistoryEvent):
+        return item
+    return _freeze_mapping(_outbox_event_mapping(item))
+
+
+def _outbox_batch_body(
+    *,
+    batch_id: str,
+    previous_outbox_ordinal: int,
+    cursor: HistoryCursor,
+    events: Sequence[HistoryEvent | Mapping[str, Any]],
+) -> Mapping[str, Any]:
+    return {
+        "schema": HISTORY_OUTBOX_BATCH_SCHEMA,
+        "batch_id": batch_id,
+        "previous_outbox_ordinal": previous_outbox_ordinal,
+        "cursor": dict(cursor.as_mapping()),
+        "events": [_outbox_event_mapping(item) for item in events],
+        "committed": True,
+    }
 
 
 @dataclass(frozen=True, slots=True)
@@ -802,23 +909,18 @@ class HistoryOutboxBatch:
             raise HistoryCursorError("outbox batch cursor must be HistoryCursor")
         if self.cursor.outbox_ordinal <= before:
             raise HistoryContinuityError("committed outbox batch must advance its previous ordinal")
-        rows = tuple(self.events)
+        rows = tuple(_snapshot_outbox_event(item) for item in self.events)
         if not rows:
             raise HistoryContinuityError("committed outbox batch must not be empty")
         if len(rows) > MAX_HISTORY_BATCH_EVENTS:
             raise HistoryError(f"outbox batch exceeds {MAX_HISTORY_BATCH_EVENTS} events")
         _reject_forbidden_keys(rows, name="outbox batch")
-        body = {
-            "schema": HISTORY_OUTBOX_BATCH_SCHEMA,
-            "batch_id": self.batch_id,
-            "previous_outbox_ordinal": before,
-            "cursor": dict(self.cursor.as_mapping()),
-            "events": [
-                dict(item.as_mapping()) if isinstance(item, HistoryEvent) else dict(item)
-                for item in rows
-            ],
-            "committed": True,
-        }
+        body = _outbox_batch_body(
+            batch_id=self.batch_id,
+            previous_outbox_ordinal=before,
+            cursor=self.cursor,
+            events=rows,
+        )
         if _json_size(body) > MAX_HISTORY_BATCH_BYTES:
             raise HistoryError(f"outbox batch exceeds {MAX_HISTORY_BATCH_BYTES} bytes")
         expected = _digest_of(body)
@@ -848,18 +950,13 @@ class HistoryOutboxBatch:
     ) -> HistoryOutboxBatch:
         """Build test/adapter content; never creates the control receipt CID."""
 
-        rows = tuple(events)
-        body = {
-            "schema": HISTORY_OUTBOX_BATCH_SCHEMA,
-            "batch_id": batch_id,
-            "previous_outbox_ordinal": previous_outbox_ordinal,
-            "cursor": dict(cursor.as_mapping()),
-            "events": [
-                dict(item.as_mapping()) if isinstance(item, HistoryEvent) else dict(item)
-                for item in rows
-            ],
-            "committed": True,
-        }
+        rows = tuple(_snapshot_outbox_event(item) for item in events)
+        body = _outbox_batch_body(
+            batch_id=batch_id,
+            previous_outbox_ordinal=previous_outbox_ordinal,
+            cursor=cursor,
+            events=rows,
+        )
         return cls(
             batch_id=batch_id,
             previous_outbox_ordinal=previous_outbox_ordinal,
@@ -870,6 +967,20 @@ class HistoryOutboxBatch:
             committed=True,
         )
 
+    def require_digest_valid(self) -> None:
+        expected = _digest_of(
+            _outbox_batch_body(
+                batch_id=self.batch_id,
+                previous_outbox_ordinal=self.previous_outbox_ordinal,
+                cursor=self.cursor,
+                events=self.events,
+            )
+        )
+        if self.batch_digest != expected:
+            raise HistoryReceiptError(
+                "outbox batch changed after its authoritative digest was bound"
+            )
+
     def as_mapping(self) -> Mapping[str, Any]:
         return MappingProxyType(
             {
@@ -877,10 +988,7 @@ class HistoryOutboxBatch:
                 "batch_id": self.batch_id,
                 "previous_outbox_ordinal": self.previous_outbox_ordinal,
                 "cursor": dict(self.cursor.as_mapping()),
-                "events": [
-                    dict(item.as_mapping()) if isinstance(item, HistoryEvent) else dict(item)
-                    for item in self.events
-                ],
+                "events": [_outbox_event_mapping(item) for item in self.events],
                 "batch_digest": self.batch_digest,
                 "control_receipt_cid": self.control_receipt_cid,
                 "committed": True,
@@ -953,6 +1061,14 @@ class HistoryLakeOwnerIdentity:
             raise HistoryActivationError(
                 "DuckLake catalog, companion registry, and owner lock paths must differ"
             )
+        expected_lock_path = str(
+            Path(normalized["catalog_metadata_path"] + ".history-owner.lock").resolve(strict=False)
+        )
+        if normalized["owner_lock_path"] != expected_lock_path:
+            raise HistoryActivationError(
+                "DuckLake owner lock path must be deterministically derived from "
+                "the catalog metadata path"
+            )
         control_paths = tuple(
             str(
                 Path(_require_nonempty(item, field_name="control_database_path"))
@@ -970,6 +1086,16 @@ class HistoryLakeOwnerIdentity:
             raise HistoryActivationError(
                 "DuckLake catalog/registry/lock must not reuse a control database path"
             )
+        for private_path in normalized.values():
+            private = Path(private_path)
+            if not private.exists():
+                continue
+            for control_path in control_paths:
+                control = Path(control_path)
+                if control.exists() and private.samefile(control):
+                    raise HistoryActivationError(
+                        "DuckLake catalog/registry/lock must not alias a control database inode"
+                    )
         for name, value in normalized.items():
             object.__setattr__(self, name, value)
         object.__setattr__(self, "control_database_paths", control_paths)
@@ -1045,7 +1171,15 @@ class ExclusiveHistoryOwnerLease:
                     "DuckLake history owner lock is already held in this process"
                 )
             Path(path).parent.mkdir(parents=True, exist_ok=True)
-            fd = os.open(path, os.O_CREAT | os.O_RDWR, 0o600)
+            flags = os.O_CREAT | os.O_RDWR
+            flags |= getattr(os, "O_CLOEXEC", 0)
+            flags |= getattr(os, "O_NOFOLLOW", 0)
+            try:
+                fd = os.open(path, flags, 0o600)
+            except OSError as exc:
+                raise HistoryContentionError(
+                    "DuckLake history owner lock cannot be opened safely"
+                ) from exc
             try:
                 import fcntl
 
@@ -1055,12 +1189,82 @@ class ExclusiveHistoryOwnerLease:
                 raise HistoryContentionError(
                     "DuckLake history owner lock is already held by another process"
                 ) from exc
+            try:
+                metadata = os.fstat(fd)
+                if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+                    raise HistoryContentionError(
+                        "DuckLake history owner lock must be one private regular file"
+                    )
+                os.fchmod(fd, 0o600)
+                previous = self._read_marker(fd)
+                if previous is not None:
+                    if previous.get("catalog_id") != self.identity.catalog_id:
+                        raise HistoryContentionError(
+                            "DuckLake history owner lock is bound to another catalog"
+                        )
+                    prior_generation = _require_pos_int(
+                        previous.get("owner_generation"),
+                        field_name="prior owner_generation",
+                    )
+                    prior_fence = _require_pos_int(
+                        previous.get("fencing_epoch"),
+                        field_name="prior fencing_epoch",
+                    )
+                    if self.identity.owner_generation <= prior_generation:
+                        raise HistoryContentionError(
+                            "DuckLake owner generation must advance after owner release or crash"
+                        )
+                    if self.identity.fencing_epoch <= prior_fence:
+                        raise HistoryContentionError(
+                            "DuckLake fencing epoch must advance after owner release or crash"
+                        )
+                self._write_marker(fd)
+            except Exception:
+                try:
+                    import fcntl
+
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+                finally:
+                    os.close(fd)
+                raise
             _ACTIVE_HISTORY_OWNER_LOCKS[path] = (
                 self.identity.owner_id,
                 os.getpid(),
             )
             self._fd = fd
         return self
+
+    @staticmethod
+    def _read_marker(fd: int) -> Mapping[str, Any] | None:
+        os.lseek(fd, 0, os.SEEK_SET)
+        raw = os.read(fd, 16 * 1024 + 1)
+        if len(raw) > 16 * 1024:
+            raise HistoryContentionError("DuckLake owner lock marker is oversized")
+        if not raw.strip():
+            return None
+        try:
+            value = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise HistoryContentionError("DuckLake owner lock marker is malformed") from exc
+        if not isinstance(value, Mapping) or value.get("schema") != HISTORY_OWNER_LOCK_SCHEMA:
+            raise HistoryContentionError("DuckLake owner lock marker schema mismatch")
+        return value
+
+    def _write_marker(self, fd: int) -> None:
+        marker = {
+            "schema": HISTORY_OWNER_LOCK_SCHEMA,
+            "catalog_id": self.identity.catalog_id,
+            "owner_id": self.identity.owner_id,
+            "owner_generation": self.identity.owner_generation,
+            "fencing_epoch": self.identity.fencing_epoch,
+            "binding_digest": self.identity.binding_digest,
+            "process_id": os.getpid(),
+        }
+        payload = _canonical_json(marker).encode("utf-8")
+        os.lseek(fd, 0, os.SEEK_SET)
+        os.ftruncate(fd, 0)
+        os.write(fd, payload)
+        os.fsync(fd)
 
     def release(self) -> None:
         fd = self._fd
@@ -1151,7 +1355,39 @@ def _capability_cid_matches(value: Mapping[str, Any]) -> bool:
         return False
     body = dict(value)
     body.pop("capability_cid", None)
-    return supplied == _digest_of(body)
+    try:
+        return supplied == _digest_of(body)
+    except HistoryError:
+        return False
+
+
+def _has_sha256_field(value: Mapping[str, Any], field_name: str) -> bool:
+    return _SHA256_RE.fullmatch(str(value.get(field_name) or "")) is not None
+
+
+def _positive_capability_integer(value: Mapping[str, Any], field_name: str) -> bool:
+    item = value.get(field_name)
+    return not isinstance(item, bool) and isinstance(item, int) and item > 0
+
+
+def _artifact_profile_matches(value: Any, expected: Any) -> bool:
+    if not isinstance(value, Mapping) or expected is None:
+        return False
+    try:
+        return _json_tree(value) == _json_tree(expected)
+    except HistoryError:
+        return False
+
+
+def _pinned_artifact_profile(platform: str) -> Mapping[str, Any] | None:
+    if platform not in SUPPORTED_PLATFORMS:
+        return None
+    try:
+        return {
+            name: dict(platforms[platform]) for name, platforms in PINNED_PLATFORM_DIGESTS.items()
+        }
+    except KeyError:
+        return None
 
 
 def evaluate_history_activation(
@@ -1160,10 +1396,11 @@ def evaluate_history_activation(
 ) -> HistoryActivationDecision:
     """Require the exact two-owner, Quack-only, history-only topology.
 
-    The current EAAEF control gateway has no history outbox/cursor operations,
-    so passing ``None`` (the production default) returns a typed held decision.
-    Capability documents are provided by their respective owners; this
-    function neither fabricates signatures nor promotes either document.
+    The current EAAEF control gateway has no independently signed history
+    outbox/cursor binding and this module has no qualified wall-clock deadline
+    runner. Therefore even otherwise exact self-reports remain held. A future
+    owner/verifier integration must replace those two explicit blockers; this
+    function neither fabricates signatures nor promotes hashes to signatures.
     """
 
     blockers: list[str] = []
@@ -1192,6 +1429,21 @@ def evaluate_history_activation(
             blockers.append("control_direct_database_access_not_denied")
         if not REQUIRED_CONTROL_HISTORY_OPERATIONS.issubset(_capability_operations(control)):
             blockers.append("typed_control_outbox_cursor_operations_missing")
+        for key in ("owner_id", "endpoint_id", "owner_process_birth_id"):
+            if not str(control.get(key) or "").strip():
+                blockers.append(f"control_{key}_missing")
+        for key in ("owner_generation", "fencing_epoch"):
+            if not _positive_capability_integer(control, key):
+                blockers.append(f"control_{key}_missing")
+        for key in (
+            "database_binding_cid",
+            "independent_capability_receipt_cid",
+        ):
+            if not _has_sha256_field(control, key):
+                blockers.append(f"control_{key}_missing")
+        for key in ("generation_namespace", "fence_namespace"):
+            if not str(control.get(key) or "").strip():
+                blockers.append(f"control_{key}_missing")
 
     if not lake:
         blockers.append("ducklake_quack_owner_unavailable")
@@ -1212,6 +1464,13 @@ def evaluate_history_activation(
             blockers.append("lake_database_role_mismatch")
         if str(lake.get("duckdb_version") or "") != REQUIRED_DUCKDB_VERSION_TEXT:
             blockers.append("lake_duckdb_profile_mismatch")
+        if lake.get("ducklake_specification_version") != REQUIRED_DUCKLAKE_SPECIFICATION_VERSION:
+            blockers.append("lake_ducklake_specification_mismatch")
+        if lake.get("ducklake_catalog_version") != REQUIRED_DUCKLAKE_CATALOG_VERSION:
+            blockers.append("lake_ducklake_catalog_mismatch")
+        platform = str(lake.get("platform") or "")
+        if platform not in SUPPORTED_PLATFORMS:
+            blockers.append("lake_platform_profile_mismatch")
         extension_builds = lake.get("extension_builds")
         if not isinstance(extension_builds, Mapping) or dict(extension_builds) != {
             "quack": PINNED_QUACK_EXTENSION_BUILD,
@@ -1219,17 +1478,36 @@ def evaluate_history_activation(
             "httpfs": PINNED_HTTPFS_EXTENSION_BUILD,
         }:
             blockers.append("lake_extension_profile_mismatch")
+        expected_artifacts = _pinned_artifact_profile(platform)
+        supplied_artifacts = lake.get("extension_artifact_digests")
+        if not _artifact_profile_matches(supplied_artifacts, expected_artifacts):
+            blockers.append("lake_extension_artifact_digest_mismatch")
+        if tuple(lake.get("explicit_load_order") or ()) != tuple(EXPLICIT_LOAD_ORDER):
+            blockers.append("lake_explicit_load_order_mismatch")
+        if lake.get("load_before_configuration_lock") is not LOAD_BEFORE_CONFIGURATION_LOCK:
+            blockers.append("lake_configuration_lock_order_mismatch")
+        if lake.get("configuration_lock_settings") != dict(CONFIGURATION_LOCK_SETTINGS):
+            blockers.append("lake_configuration_lock_settings_mismatch")
+        if lake.get("allow_unsigned_extensions") is not False:
+            blockers.append("lake_unsigned_extensions_not_denied")
+        if lake.get("environment_receipt_schema") != ENVIRONMENT_RECEIPT_SCHEMA:
+            blockers.append("lake_environment_receipt_schema_mismatch")
+        for key in (
+            "environment_receipt_cid",
+            "native_runtime_receipt_cid",
+            "database_binding_cid",
+            "owner_lock_binding_cid",
+            "independent_capability_receipt_cid",
+        ):
+            if not _has_sha256_field(lake, key):
+                blockers.append(f"lake_{key}_missing")
         if lake.get("automatic_extension_install") is not False:
             blockers.append("lake_automatic_extension_install_not_disabled")
         if lake.get("automatic_extension_load") is not False:
             blockers.append("lake_automatic_extension_load_not_disabled")
         if lake.get("automatic_catalog_migration") is not False:
             blockers.append("lake_automatic_catalog_migration_not_disabled")
-        if lake.get("safe_attach_options") != {
-            "CREATE_IF_NOT_EXISTS": False,
-            "OVERRIDE_DATA_PATH": False,
-            "AUTOMATIC_MIGRATION": False,
-        }:
+        if lake.get("safe_attach_options") != dict(ATTACH_SAFE_OPTIONS):
             blockers.append("lake_safe_attach_options_mismatch")
         for key, reason in (
             ("exclusive_owner", "lake_exclusive_owner_missing"),
@@ -1238,6 +1516,7 @@ def evaluate_history_activation(
             ("separate_owner_lock", "lake_control_lock_overlap"),
             ("separate_generation_fence", "lake_control_fence_overlap"),
             ("remote_clients_quack_only", "lake_clients_not_quack_only"),
+            ("owner_verifies_signed_envelopes", "lake_signed_envelope_verification_missing"),
         ):
             if lake.get(key) is not True:
                 blockers.append(reason)
@@ -1247,15 +1526,40 @@ def evaluate_history_activation(
             blockers.append("lake_owner_opens_control_database")
         if lake.get("authoritative") is not False:
             blockers.append("ducklake_claims_current_authority")
-        if not REQUIRED_LAKE_HISTORY_OPERATIONS.issubset(_capability_operations(lake)):
-            blockers.append("typed_lake_history_operations_missing")
+        if _capability_operations(lake) != REQUIRED_LAKE_HISTORY_OPERATIONS:
+            blockers.append("typed_lake_history_operations_not_exact")
         for key in ("owner_generation", "fencing_epoch"):
             value = lake.get(key)
             if isinstance(value, bool) or not isinstance(value, int) or value < 1:
                 blockers.append(f"lake_{key}_missing")
-        for key in ("catalog_id", "endpoint_id"):
+        for key in (
+            "owner_id",
+            "catalog_id",
+            "endpoint_id",
+            "owner_process_birth_id",
+            "generation_namespace",
+            "fence_namespace",
+        ):
             if not str(lake.get(key) or "").strip():
                 blockers.append(f"lake_{key}_missing")
+
+    if control and lake:
+        for key, reason in (
+            ("owner_id", "control_and_lake_owner_not_distinct"),
+            ("endpoint_id", "control_and_lake_endpoint_not_distinct"),
+            ("owner_process_birth_id", "control_and_lake_process_birth_not_distinct"),
+            ("database_binding_cid", "control_and_lake_database_not_distinct"),
+            ("generation_namespace", "control_and_lake_generation_namespace_not_distinct"),
+            ("fence_namespace", "control_and_lake_fence_namespace_not_distinct"),
+        ):
+            control_value = str(control.get(key) or "")
+            lake_value = str(lake.get(key) or "")
+            if not control_value or control_value == lake_value:
+                blockers.append(reason)
+        if str(lake.get("database_binding_cid") or "") == str(
+            lake.get("owner_lock_binding_cid") or ""
+        ):
+            blockers.append("lake_database_and_owner_lock_binding_not_distinct")
 
     control_cid = str(control.get("capability_cid") or "")
     lake_cid = str(lake.get("capability_cid") or "")
@@ -1263,9 +1567,13 @@ def evaluate_history_activation(
         blockers.append("control_capability_cid_mismatch")
     if lake and not _capability_cid_matches(lake):
         blockers.append("lake_capability_cid_mismatch")
+    # These are current, truthful production blockers. Content hashes above
+    # establish integrity only; they are not independently verified signatures.
+    blockers.append("independent_signed_capability_binding_unavailable")
+    blockers.append("bounded_projection_deadline_enforcement_unavailable")
     unique = tuple(dict.fromkeys(blockers))
     return HistoryActivationDecision(
-        activated=not unique,
+        activated=False,
         blockers=unique,
         control_capability_cid=control_cid,
         lake_capability_cid=lake_cid,
@@ -1277,7 +1585,9 @@ class HistoryControlQuackGateway(Protocol):
 
     def capability(self) -> Mapping[str, Any]: ...
 
-    def projection_cursor(self) -> HistoryCursor | Mapping[str, Any] | None: ...
+    def projection_cursor(
+        self,
+    ) -> HistoryProjectionReceipt | Mapping[str, Any] | None: ...
 
     def read_committed_history(
         self,
@@ -1421,6 +1731,24 @@ class HistoryProjectionReceipt:
         payload["receipt_digest"] = self.receipt_digest
         return MappingProxyType(payload)
 
+    def semantic_mapping(self) -> Mapping[str, Any]:
+        """Stable projection identity, excluding restart-local observation fields."""
+
+        return MappingProxyType(
+            {
+                "operation_id": self.operation_id,
+                "batch_id": self.batch_id,
+                "batch_digest": self.batch_digest,
+                "control_receipt_cid": self.control_receipt_cid,
+                "epoch_id": self.epoch_id,
+                "cursor": dict(self.cursor.as_mapping()),
+                "content_digest": self.content_digest,
+                "lake_snapshot": self.lake_snapshot,
+                "catalog_id": self.catalog_id,
+                "row_count": self.row_count,
+            }
+        )
+
     def grant_claim(self, *args: Any, **kwargs: Any) -> None:
         del args, kwargs
         _authority_denied("grant claims")
@@ -1498,7 +1826,10 @@ class HistoryLakeQuackClient:
             return None
         if not isinstance(receipt, Mapping):
             raise HistoryReceiptError("lake cursor receipt must be an object")
-        return HistoryProjectionReceipt.from_mapping(receipt)
+        parsed = HistoryProjectionReceipt.from_mapping(receipt)
+        if parsed.catalog_id != self.catalog_id:
+            raise HistoryReceiptError("lake cursor receipt belongs to another catalog")
+        return parsed
 
     def append_epoch(
         self,
@@ -1507,9 +1838,19 @@ class HistoryLakeQuackClient:
         batch: HistoryOutboxBatch,
         epoch: HistoryEpoch,
         expected_previous_outbox_ordinal: int,
+        prior_receipt: HistoryProjectionReceipt | None = None,
     ) -> HistoryProjectionReceipt:
+        batch.require_digest_valid()
         if epoch.cursor != batch.cursor:
             raise HistoryContinuityError("epoch cursor differs from outbox batch")
+        expected_epoch_digest = _digest_of(
+            {
+                "cursor": dict(epoch.cursor.as_mapping()),
+                "events": [dict(event.as_mapping()) for event in epoch.events],
+            }
+        )
+        if epoch.content_digest != expected_epoch_digest:
+            raise HistoryReceiptError("epoch changed after its content digest was bound")
         response = self._request(
             LAKE_HISTORY_APPEND_OPERATION,
             {
@@ -1539,14 +1880,19 @@ class HistoryLakeQuackClient:
             raise HistoryReceiptError("lake receipt cursor mismatch")
         if receipt.content_digest != epoch.content_digest:
             raise HistoryReceiptError("lake receipt content digest mismatch")
-        if receipt.owner_generation != self.owner_generation:
-            raise HistoryReceiptError("lake receipt owner generation is stale")
-        if receipt.fencing_epoch != self.fencing_epoch:
-            raise HistoryReceiptError("lake receipt fencing epoch is stale")
         if receipt.catalog_id != self.catalog_id:
             raise HistoryReceiptError("lake receipt catalog identity mismatch")
-        if receipt.endpoint_id != self.endpoint_id:
-            raise HistoryReceiptError("lake receipt endpoint identity mismatch")
+        if prior_receipt is None:
+            if receipt.owner_generation != self.owner_generation:
+                raise HistoryReceiptError("new lake receipt owner generation is stale")
+            if receipt.fencing_epoch != self.fencing_epoch:
+                raise HistoryReceiptError("new lake receipt fencing epoch is stale")
+            if receipt.endpoint_id != self.endpoint_id:
+                raise HistoryReceiptError("new lake receipt endpoint identity mismatch")
+        elif dict(receipt.as_mapping()) != dict(prior_receipt.as_mapping()):
+            raise HistoryReceiptError(
+                "idempotent replay must return the exact immutable prior receipt"
+            )
         return receipt
 
 
@@ -1582,12 +1928,18 @@ class HistoryProjectionResult:
         )
 
 
-def _coerce_optional_cursor(
-    value: HistoryCursor | Mapping[str, Any] | None,
-) -> HistoryCursor | None:
+def _coerce_optional_projection_receipt(
+    value: HistoryProjectionReceipt | Mapping[str, Any] | None,
+) -> HistoryProjectionReceipt | None:
     if value is None:
         return None
-    return _coerce_cursor(value)
+    if isinstance(value, HistoryProjectionReceipt):
+        return value
+    if isinstance(value, Mapping):
+        return HistoryProjectionReceipt.from_mapping(value)
+    raise HistoryReceiptError(
+        "control projection cursor must be the exact recorded lake projection receipt"
+    )
 
 
 def _validate_cursor_chain(previous: HistoryCursor | None, current: HistoryCursor) -> None:
@@ -1599,8 +1951,88 @@ def _validate_cursor_chain(previous: HistoryCursor | None, current: HistoryCurso
         raise HistoryContinuityError("control owner epoch regressed")
     if current.owner_epoch == previous.owner_epoch and current.fence < previous.fence:
         raise HistoryContinuityError("control owner fence regressed")
+    if (
+        current.owner_epoch == previous.owner_epoch
+        and previous.owner_id
+        and current.owner_id != previous.owner_id
+    ):
+        raise HistoryContinuityError("control owner identity changed inside one owner epoch")
     if previous.shard_id and current.shard_id != previous.shard_id:
         raise HistoryContinuityError("control outbox shard changed")
+
+
+def history_projection_operation_id(
+    *,
+    batch: HistoryOutboxBatch,
+    epoch: HistoryEpoch,
+    catalog_id: str,
+) -> str:
+    """Return a restart-stable semantic append id.
+
+    Generation and fence belong to the authenticated request envelope. They
+    must not change the idempotency key for an epoch already committed before
+    a lost control acknowledgement.
+    """
+
+    batch.require_digest_valid()
+    if batch.cursor != epoch.cursor or batch.batch_id != epoch.epoch_id:
+        raise HistoryContinuityError("projection operation inputs are not one batch")
+    return _digest_of(
+        {
+            "operation": LAKE_HISTORY_APPEND_OPERATION,
+            "batch_id": batch.batch_id,
+            "batch_digest": batch.batch_digest,
+            "control_receipt_cid": batch.control_receipt_cid,
+            "epoch_id": epoch.epoch_id,
+            "content_digest": epoch.content_digest,
+            "catalog_id": _require_identity(catalog_id, field_name="catalog_id"),
+        }
+    )
+
+
+def require_acknowledged_history_head_matches(
+    checkpoint: HistoryProjectionReceipt,
+    lake_head: HistoryProjectionReceipt,
+) -> None:
+    if checkpoint.receipt_digest != lake_head.receipt_digest:
+        raise HistoryContinuityError(
+            "control checkpoint and DuckLake head bind different projection receipts"
+        )
+    if dict(checkpoint.semantic_mapping()) != dict(lake_head.semantic_mapping()):
+        raise HistoryContinuityError(
+            "control checkpoint and DuckLake head differ at one acknowledged cursor"
+        )
+
+
+def require_history_replay_head_matches(
+    lake_head: HistoryProjectionReceipt,
+    *,
+    batch: HistoryOutboxBatch,
+    epoch: HistoryEpoch,
+    operation_id: str,
+) -> None:
+    expected = {
+        "operation_id": operation_id,
+        "batch_id": batch.batch_id,
+        "batch_digest": batch.batch_digest,
+        "control_receipt_cid": batch.control_receipt_cid,
+        "epoch_id": epoch.epoch_id,
+        "cursor": batch.cursor,
+        "content_digest": epoch.content_digest,
+    }
+    observed = {
+        "operation_id": lake_head.operation_id,
+        "batch_id": lake_head.batch_id,
+        "batch_digest": lake_head.batch_digest,
+        "control_receipt_cid": lake_head.control_receipt_cid,
+        "epoch_id": lake_head.epoch_id,
+        "cursor": lake_head.cursor,
+        "content_digest": lake_head.content_digest,
+    }
+    if observed != expected:
+        raise HistoryContinuityError(
+            "unacknowledged DuckLake replay differs from the exact control batch"
+        )
 
 
 class HistoryProjectionService:
@@ -1655,7 +2087,8 @@ class HistoryProjectionService:
             if control is None or lake is None:  # pragma: no cover - preflight closes
                 raise HistoryActivationError("history projection gateways are absent")
 
-            control_cursor = _coerce_optional_cursor(control.projection_cursor())
+            control_checkpoint = _coerce_optional_projection_receipt(control.projection_cursor())
+            control_cursor = control_checkpoint.cursor if control_checkpoint is not None else None
             lake_head = lake.projection_head()
             prior_ordinal = control_cursor.outbox_ordinal if control_cursor is not None else 0
             if control_cursor is not None and lake_head is None:
@@ -1667,11 +2100,11 @@ class HistoryProjectionService:
                     )
                 if (
                     lake_head.cursor.outbox_ordinal == prior_ordinal
-                    and control_cursor is not None
-                    and lake_head.cursor != control_cursor
+                    and control_checkpoint is not None
                 ):
-                    raise HistoryContinuityError(
-                        "control cursor and DuckLake head disagree at one ordinal"
+                    require_acknowledged_history_head_matches(
+                        control_checkpoint,
+                        lake_head,
                     )
 
             batch = control.read_committed_history(
@@ -1686,6 +2119,7 @@ class HistoryProjectionService:
                 return None
             if not isinstance(batch, HistoryOutboxBatch):
                 raise HistoryTransportError("control gateway must return typed HistoryOutboxBatch")
+            batch.require_digest_valid()
             if batch.previous_outbox_ordinal != prior_ordinal:
                 raise HistoryContinuityError(
                     "outbox batch does not continue the acknowledged control cursor"
@@ -1713,35 +2147,40 @@ class HistoryProjectionService:
                 batch.events,
                 epoch_id=batch.batch_id,
             )
-            if (
-                lake_head is not None
-                and lake_head.cursor.outbox_ordinal == batch.cursor.outbox_ordinal
-                and (
-                    lake_head.batch_id != batch.batch_id
-                    or lake_head.cursor != batch.cursor
-                    or lake_head.content_digest != epoch.content_digest
-                )
-            ):
-                raise HistoryContinuityError(
-                    "unacknowledged DuckLake replay differs from the control batch"
-                )
-            operation_id = _digest_of(
-                {
-                    "operation": LAKE_HISTORY_APPEND_OPERATION,
-                    "batch_digest": batch.batch_digest,
-                    "epoch_id": epoch.epoch_id,
-                    "content_digest": epoch.content_digest,
-                    "catalog_id": lake.catalog_id,
-                    "owner_generation": lake.owner_generation,
-                    "fencing_epoch": lake.fencing_epoch,
-                }
+            operation_id = history_projection_operation_id(
+                batch=batch,
+                epoch=epoch,
+                catalog_id=lake.catalog_id,
             )
+            replay_head = (
+                lake_head
+                if lake_head is not None
+                and lake_head.cursor.outbox_ordinal == batch.cursor.outbox_ordinal
+                else None
+            )
+            if replay_head is not None:
+                require_history_replay_head_matches(
+                    replay_head,
+                    batch=batch,
+                    epoch=epoch,
+                    operation_id=operation_id,
+                )
             projection = lake.append_epoch(
                 operation_id=operation_id,
                 batch=batch,
                 epoch=epoch,
                 expected_previous_outbox_ordinal=prior_ordinal,
+                prior_receipt=replay_head,
             )
+            if replay_head is None and projection.replayed:
+                raise HistoryContinuityError(
+                    "lake owner reported a replay without an existing projection head"
+                )
+            if replay_head is not None:
+                require_acknowledged_history_head_matches(
+                    replay_head,
+                    projection,
+                )
             acknowledgement = control.record_projection_cursor(projection.as_mapping())
             ack_cid = self._validate_control_ack(
                 acknowledgement,
@@ -1796,6 +2235,7 @@ __all__ = (
     "HISTORY_LAKE_CAPABILITY_SCHEMA",
     "HISTORY_OUTBOX_BATCH_SCHEMA",
     "HISTORY_OWNER_IDENTITY_SCHEMA",
+    "HISTORY_OWNER_LOCK_SCHEMA",
     "HISTORY_PROJECTION_RECEIPT_SCHEMA",
     "HISTORY_PROJECTION_RESULT_SCHEMA",
     "HISTORY_QUACK_REQUEST_SCHEMA",
@@ -1806,7 +2246,6 @@ __all__ = (
     "LAKE_HISTORY_CURSOR_OPERATION",
     "MAX_HISTORY_BATCH_BYTES",
     "MAX_HISTORY_BATCH_EVENTS",
-    "MAX_HISTORY_BATCH_SECONDS",
     "REQUIRED_CONTROL_HISTORY_OPERATIONS",
     "REQUIRED_LAKE_HISTORY_OPERATIONS",
     "DuplicateEpochError",
@@ -1835,5 +2274,8 @@ __all__ = (
     "HistorySnapshot",
     "HistoryTransportError",
     "evaluate_history_activation",
+    "history_projection_operation_id",
     "project_outbox",
+    "require_acknowledged_history_head_matches",
+    "require_history_replay_head_matches",
 )
