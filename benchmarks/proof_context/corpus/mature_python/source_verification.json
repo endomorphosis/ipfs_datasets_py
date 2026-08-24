@@ -1,0 +1,80 @@
+{
+  "archive": {
+    "bytes_cid": "bafkreidabjda3nswrgmwtr65jmohbtrgr2w2pre7uc2x5fbnu6idb6vhv4",
+    "path": "source/django-5.2.5-a3b1107.tar.gz",
+    "sha256": "600a460db656899969c7dd4b1c70ce268eada7c49fa0b57e942da79030faa7af",
+    "size": 10551627,
+    "url": "https://codeload.github.com/django/django/tar.gz/a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+    "verified": true
+  },
+  "baseline_full_test": {
+    "command": "python3.12 -P tests/runtests.py --parallel 4 --verbosity 1",
+    "discovered_tests": 18098,
+    "duration_milliseconds": 98182,
+    "errors": 0,
+    "expected_failures": 5,
+    "failures": 0,
+    "network_used": false,
+    "passed": true,
+    "ran_tests": 18096,
+    "skipped": 1912,
+    "source_edits": false
+  },
+  "dependencies": [
+    {
+      "bytes_cid": "bafkreib6dy7mzbeygl7ffthszntinn5fl6blwhlk5zzklcbgi4jzam26i4",
+      "name": "asgiref",
+      "path": "dependencies/asgiref-3.8.1-py3-none-any.whl",
+      "sha256": "3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47",
+      "size": 23828,
+      "version": "3.8.1"
+    },
+    {
+      "bytes_cid": "bafkreigpeglo2nay6o5f3zvpp2bmnffj7pn75tgn7rzofakuqulqqhywzi",
+      "name": "sqlparse",
+      "path": "dependencies/sqlparse-0.5.3-py3-none-any.whl",
+      "sha256": "cf2196ed3418f3ba5de6af7e82c694a9fbdbfecccdfc72e281548517081f16ca",
+      "size": 44415,
+      "version": "0.5.3"
+    }
+  ],
+  "historical_cutoff": {
+    "future_commits_or_pr_patches_accessed": false,
+    "network_during_task_execution": false
+  },
+  "license": {
+    "bytes_cid": "bafkreifyizav2g2rj2ob37yuuiw6xednpff4krwkmeu7sufbrtijdyvgne",
+    "path": "LICENSE.django-5.2.5",
+    "sha256": "b846415d1b514e9c1dff14a22deb906d794bc546ca6129f950a18cd091e2a669",
+    "size": 1552,
+    "spdx": "BSD-3-Clause",
+    "verified": true
+  },
+  "limitations": {
+    "historical_answer_materialized": false,
+    "historical_task_disposition": "unavailable-no-future-patch-access",
+    "live_provider_qualification": false
+  },
+  "observed_at": "2026-08-24T23:16:40Z",
+  "permit": {
+    "authority": "operator-confirmed-resume-after-narrow-fetch-disclosure",
+    "network_scope": "exact-source-archive-and-two-pinned-runtime-dependency-wheels-only"
+  },
+  "reconstructed_repository": {
+    "commit": "a3b1107a4955bdd994908efb4c6e1d03c281e69f",
+    "method": "archive-root-git-add-force-write-tree",
+    "tree": "0d45857fbbe288b56ddd4d8e124a1657421f9c48",
+    "verified": true
+  },
+  "runtime": {
+    "container_image": "python:3.12.3-slim-bookworm@sha256:c27c26153fdf6863da2a1d85b474d1be004c42cc8ea2fd647004a8d4007a34d5",
+    "html_parser_sha256": "ab5a0a2fce2bec75d969dbe057b490ef574f9ac57cce9e0eaaf7a220b301e838",
+    "libpython_sha256": "cd8768ab1575197cbefcda5ddd3ed16ef3c3baa1de8739e060feeef124a540fd",
+    "purpose": "isolated-historical-replay-baseline-only",
+    "python_binary_sha256": "01546f67998cb9e41d014fee4e1df67c86273b3cf40cb692fe435f4027ec7c2d",
+    "python_build": "Python 3.12.3 (main, May 14 2024, 05:51:03) [GCC 12.2.0]"
+  },
+  "schema": "ipfs-datasets.proof-context.mature-python-source-verification@1",
+  "source_pin_id": "django-django-5.2.5",
+  "verification_result": "passed"
+}
