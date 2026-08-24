@@ -1,0 +1,358 @@
+{
+  "acceptance": {
+    "closed_frontier": true,
+    "exact_source_authority": true,
+    "failed_final_zero": true,
+    "non_placeholder_full_text": true,
+    "reconciled_counts_hashes": true,
+    "replay_evidence": true
+  },
+  "cohort": "L",
+  "goal_id": "LCR-G023",
+  "jurisdiction_receipts": {
+    "VA": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-1/chapter-1/section-1-1",
+        "last_hierarchy_unit": "title-1/chapter-1/section-1-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:a1374afdfdb5bd0b19ac5e8b4466b5fe446fb658368c13b0105c7e24b52204b5",
+        "min_full_text_chars": 762,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://law.lis.virginia.gov/vacode/title1/chapter1/section1-1/",
+          "https://law.lis.virginia.gov/vacode/title1/chapter1/section1-2/"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "va:1-1",
+          "va:1-2"
+        ],
+        "derived_keys": [
+          "va:1-1",
+          "va:1-2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "VA",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:a1374afdfdb5bd0b19ac5e8b4466b5fe446fb658368c13b0105c7e24b52204b5",
+        "first_frontier_digest": "sha256:ec934740761b3e98218e7191f30319caccbcbb06706f444c1d130a6e2b948324",
+        "second_frontier_digest": "sha256:ec934740761b3e98218e7191f30319caccbcbb06706f444c1d130a6e2b948324"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "law.lis.virginia.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "VT": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-1/chapter-1/section-1",
+        "last_hierarchy_unit": "title-1/chapter-1/section-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:1f2f1e262cfd5a33764b3dc849dea5e0afa2d6dc3bca326812ce51eb5367dadc",
+        "min_full_text_chars": 566,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://legislature.vermont.gov/statutes/section/01/001/00001",
+          "https://legislature.vermont.gov/statutes/section/01/001/00002"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "vt:1.",
+          "vt:2."
+        ],
+        "derived_keys": [
+          "vt:1.",
+          "vt:2."
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "VT",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:1f2f1e262cfd5a33764b3dc849dea5e0afa2d6dc3bca326812ce51eb5367dadc",
+        "first_frontier_digest": "sha256:e2dd5602cffea1c86defa0ff457d65a66877aaf1666fabb9c966991370985031",
+        "second_frontier_digest": "sha256:e2dd5602cffea1c86defa0ff457d65a66877aaf1666fabb9c966991370985031"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "legislature.vermont.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "WA": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-9a/chapter-9a.32/section-9a.32.010",
+        "last_hierarchy_unit": "title-9a/chapter-9a.32/section-9a.32.030",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:98a1576cd532b46fcbf4812cb3ef61457d14799e4704ff9fbf39958c1a3ffa25",
+        "min_full_text_chars": 722,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.32.010",
+          "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.32.030"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "wa:9A.32.010",
+          "wa:9A.32.030"
+        ],
+        "derived_keys": [
+          "wa:9A.32.010",
+          "wa:9A.32.030"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "WA",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:98a1576cd532b46fcbf4812cb3ef61457d14799e4704ff9fbf39958c1a3ffa25",
+        "first_frontier_digest": "sha256:d7290707d0b62774312c50ba6c704feae22c3807a05b0f4e181e21a7689054b9",
+        "second_frontier_digest": "sha256:d7290707d0b62774312c50ba6c704feae22c3807a05b0f4e181e21a7689054b9"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "app.leg.wa.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "WV": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "chapter-61/article-2/section-61-2-1",
+        "last_hierarchy_unit": "chapter-61/article-2/section-61-2-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:2dde4a476cb65327bb01a8b8dbcf76fc5da2e3f013bc74d70453a4361a3973e0",
+        "min_full_text_chars": 640,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://code.wvlegislature.gov/61-2-1/",
+          "https://code.wvlegislature.gov/61-2-2/"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "wv:61-2-1",
+          "wv:61-2-2"
+        ],
+        "derived_keys": [
+          "wv:61-2-1",
+          "wv:61-2-2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "WV",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:2dde4a476cb65327bb01a8b8dbcf76fc5da2e3f013bc74d70453a4361a3973e0",
+        "first_frontier_digest": "sha256:54a5f336201ca8bc8be21a59dd07d9485431c9d00a850673b4cf280eec77f223",
+        "second_frontier_digest": "sha256:54a5f336201ca8bc8be21a59dd07d9485431c9d00a850673b4cf280eec77f223"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "code.wvlegislature.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "official_domains": {
+    "VA": "law.lis.virginia.gov",
+    "VT": "legislature.vermont.gov",
+    "WA": "app.leg.wa.gov",
+    "WV": "code.wvlegislature.gov"
+  },
+  "production_upload": false,
+  "program_id": "legal-corpora-reindex-v1",
+  "receipt_schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-receipt@1",
+  "repair_work": [],
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-l-report@1",
+  "shared_combined_write": false,
+  "state_results": {
+    "VA": {
+      "content_digest": "sha256:a1374afdfdb5bd0b19ac5e8b4466b5fe446fb658368c13b0105c7e24b52204b5",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "law.lis.virginia.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "VT": {
+      "content_digest": "sha256:1f2f1e262cfd5a33764b3dc849dea5e0afa2d6dc3bca326812ce51eb5367dadc",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "legislature.vermont.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "WA": {
+      "content_digest": "sha256:98a1576cd532b46fcbf4812cb3ef61457d14799e4704ff9fbf39958c1a3ffa25",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "app.leg.wa.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "WV": {
+      "content_digest": "sha256:2dde4a476cb65327bb01a8b8dbcf76fc5da2e3f013bc74d70453a4361a3973e0",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "code.wvlegislature.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "states": [
+    "VT",
+    "VA",
+    "WA",
+    "WV"
+  ],
+  "status": "success",
+  "statutes_sample_counts": {
+    "VA": 2,
+    "VT": 2,
+    "WA": 2,
+    "WV": 2
+  },
+  "task_id": "LCR-020"
+}

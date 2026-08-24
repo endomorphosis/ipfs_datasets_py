@@ -1,8 +1,11 @@
 """Scraper for Kansas state laws from the official legislature website."""
 
 import re
+import ssl
+import urllib.error
+import urllib.request
 from typing import Dict, List, Optional, Tuple
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 
@@ -13,11 +16,15 @@ from .registry import StateScraperRegistry
 class KansasScraper(BaseStateScraper):
     """Scraper for Kansas state laws from https://www.kslegislature.gov."""
 
+    OFFICIAL_DOMAIN = "www.kslegislature.gov"
+    OFFICIAL_ENTRY_PATH = "/laws/"
+    OFFICIAL_ENTRY_URL = "https://www.kslegislature.gov/laws/"
     _CHAPTER_RE = re.compile(r"/laws/[0-9a-z]{3,4}_000_0000_chapter/?$", re.IGNORECASE)
-    _ARTICLE_RE = re.compile(
-        r"/[0-9a-z]{3,4}_000_0000_chapter/[0-9a-z]{3,4}_[0-9a-z]{3,4}_0000_article/?$",
+    _CHAPTER_TOKEN_RE = re.compile(
+        r"/laws/(?P<token>[0-9a-z]{3,4})_000_0000_chapter/?$",
         re.IGNORECASE,
     )
+    _ARTICLE_RE = re.compile(r"/[0-9a-z]{3,4}_000_0000_chapter/[0-9a-z]{3,4}_[0-9a-z]{3,4}_0000_article/?$", re.IGNORECASE)
     _SECTION_RE = re.compile(
         r"/[0-9a-z]{3,4}_000_0000_chapter/[0-9a-z]{3,4}_[0-9a-z]{3,4}_0000_article/"
         r"[0-9a-z]{3,4}_[0-9a-z]{3,4}_[0-9a-z]{4}_section/[0-9a-z]{3,4}_[0-9a-z]{3,4}_[0-9a-z]{4}_k/?$",
@@ -46,6 +53,31 @@ class KansasScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape Kansas statutes directly from official chapter/article/section pages."""
         limit = max(1, int(max_statutes)) if max_statutes else None
+        from .kansas_constitution import (
+            configured_constitution_html_path,
+            parse_kansas_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_kansas_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Kansas Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .kansas_section import configured_section_html_path, parse_kansas_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_kansas_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://www.kslegislature.gov/b2025_26/laws/",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
         statutes: List[NormalizedStatute] = []
         chapter_links = await self._discover_chapter_links(code_url)
         self.logger.info("Kansas official index: discovered %s chapter links", len(chapter_links))
@@ -80,9 +112,7 @@ class KansasScraper(BaseStateScraper):
                         statutes.append(statute)
 
         if not statutes:
-            self.logger.warning(
-                "Kansas official direct crawl returned no statutes; skipping generic recovery fallback"
-            )
+            self.logger.warning("Kansas official direct crawl returned no statutes; skipping generic recovery fallback")
         return statutes[:limit] if limit is not None else statutes
 
     async def _fetch_official_ks_html(self, url: str, timeout_seconds: int = 18) -> str:
@@ -101,6 +131,9 @@ class KansasScraper(BaseStateScraper):
                     headers={
                         "User-Agent": "ipfs-datasets-kansas-statutes-scraper/2.0",
                         "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        # kslegislature.gov serves Brotli unless the client
+                        # omits ``br``; requests cannot decode it without extra deps.
+                        "Accept-Encoding": "gzip, deflate",
                     },
                     timeout=(min(5, timeout), timeout),
                 )
@@ -117,9 +150,7 @@ class KansasScraper(BaseStateScraper):
 
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(
-                url=url, payload=payload, provider="requests_direct"
-            )
+            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
             return payload.decode("utf-8", errors="replace")
         return ""
 
@@ -132,9 +163,7 @@ class KansasScraper(BaseStateScraper):
     async def _discover_section_links(self, article_url: str) -> List[Tuple[str, str]]:
         return await self._discover_links(article_url, self._SECTION_RE)
 
-    async def _discover_links(
-        self, page_url: str, pattern: re.Pattern[str]
-    ) -> List[Tuple[str, str]]:
+    async def _discover_links(self, page_url: str, pattern: re.Pattern[str]) -> List[Tuple[str, str]]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -143,6 +172,18 @@ class KansasScraper(BaseStateScraper):
         html = await self._fetch_official_ks_html(page_url)
         if not html:
             return []
+        from .kansas_section import article_rows, chapter_rows, section_rows
+
+        if pattern is self._CHAPTER_RE:
+            listed = chapter_rows(html, base_url=page_url)
+        elif pattern is self._ARTICLE_RE:
+            listed = article_rows(html, base_url=page_url)
+        elif pattern is self._SECTION_RE:
+            listed = section_rows(html, base_url=page_url)
+        else:
+            listed = []
+        if listed:
+            return [(url.rstrip("/") + "/", name or number) for number, name, url in listed]
         soup = BeautifulSoup(html, "html.parser")
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
@@ -175,13 +216,24 @@ class KansasScraper(BaseStateScraper):
         html = await self._fetch_official_ks_html(section_url)
         if not html:
             return None
+        from .kansas_section import parse_kansas_section_html
+
+        parsed = parse_kansas_section_html(
+            html,
+            source_url=section_url,
+            code_name=code_name,
+        )
+        if parsed is not None:
+            return parsed
         soup = BeautifulSoup(html, "html.parser")
         # Kansas renders the statute body in paragraph nodes outside an often-empty
         # #main container, so anchor parsing on the statute-specific classes.
         number = self._text_or_empty(soup.select_one(".stat_5f_number")).rstrip(".")
         caption = self._text_or_empty(soup.select_one(".stat_5f_caption"))
         statute_paragraphs = [
-            self._text_or_empty(node) for node in soup.select("p.p_pt") if self._text_or_empty(node)
+            self._text_or_empty(node)
+            for node in soup.select("p.p_pt")
+            if self._text_or_empty(node)
         ]
         if statute_paragraphs:
             body = self._normalize_legal_text(" ".join(statute_paragraphs))
@@ -240,6 +292,170 @@ class KansasScraper(BaseStateScraper):
     def _article_number_from_label(label: str) -> str:
         match = re.search(r"\bArticle\s+([0-9a-z]+)", str(label or ""), flags=re.IGNORECASE)
         return match.group(1) if match else ""
+
+    def _official_ssl_context(self, *, unverified: bool = False):
+        if unverified:
+            return ssl._create_unverified_context()
+        return ssl.create_default_context()
+
+    def _official_http_get(self, url: str, timeout: int = 20) -> Tuple[bytes, bytes, bytes]:
+        """Fetch one official Kansas URL and retain request/response/body bytes."""
+
+        parsed = urlparse(url)
+        host = parsed.netloc
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        request_bytes = (
+            f"GET {path} HTTP/1.1\n"
+            f"host: {host}\n"
+            "accept: text/html,application/xhtml+xml;q=0.9,*/*;q=0.8\n"
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-open-us-law-kansas/1.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            method="GET",
+        )
+        last_exc: Exception | None = None
+        body = b""
+        status = 0
+        header_block = ""
+        for unverified in (True, False):
+            try:
+                with urllib.request.urlopen(
+                    req,
+                    timeout=max(5, int(timeout)),
+                    context=self._official_ssl_context(unverified=unverified),
+                ) as resp:
+                    body = bytes(resp.read() or b"")
+                    status = int(getattr(resp, "status", 200) or 200)
+                    header_block = "".join(
+                        f"{key}: {value}\n" for key, value in resp.headers.items()
+                    )
+                last_exc = None
+                break
+            except (urllib.error.URLError, ssl.SSLError, TimeoutError, OSError) as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None:
+            raise RuntimeError(f"official Kansas GET failed for {url}: {last_exc}") from last_exc
+        if status != 200 or not body:
+            raise RuntimeError(f"official Kansas GET returned HTTP {status} for {url}")
+        response_bytes = f"HTTP/1.1 {status} OK\n{header_block}\n".encode("utf-8") + body
+        return request_bytes, response_bytes, body
+
+    def _parse_official_chapter_index(self, html: str, index_url: str) -> List[Dict[str, str]]:
+        """Parse every official Kansas Statutes chapter unit from the live laws index."""
+
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:
+            raise RuntimeError("BeautifulSoup is required for official Kansas discovery") from exc
+
+        soup = BeautifulSoup(html, "html.parser")
+        units: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        for link in soup.find_all("a", href=True):
+            href = urljoin(index_url, str(link.get("href") or "").strip())
+            normalized = href.rstrip("/") + "/"
+            token_match = self._CHAPTER_TOKEN_RE.search(normalized)
+            if not token_match:
+                token_match = re.search(
+                    r"(?P<token>[0-9a-z]{3,4})_000_0000_chapter/?",
+                    normalized,
+                    flags=re.IGNORECASE,
+                )
+            if not token_match:
+                continue
+            if normalized in seen:
+                continue
+            token = token_match.group("token")
+            chapter_number = token.lstrip("0") or "0"
+            label = self._normalize_legal_text(link.get_text(" ", strip=True))
+            if not label:
+                label = f"Chapter {chapter_number}"
+            seen.add(normalized)
+            units.append(
+                {
+                    "canonical_key": f"ks:chapter-{chapter_number.lower()}",
+                    "source_url": normalized,
+                    "label": label,
+                    "chapter_number": chapter_number,
+                    "text": (
+                        f"Kansas Statutes {label} official chapter index entry "
+                        f"retained from {normalized}"
+                    ),
+                }
+            )
+        return units
+
+    def fetch_official(self, code: str = "KS"):
+        """Acquire the uncapped official Kansas Statutes chapter frontier.
+
+        Returns an ``OfficialFetch`` whose rows enumerate every official
+        chapter unit discovered from ``www.kslegislature.gov``. The
+        retained body is the compact official catalog derived from the
+        live index.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or self.state_code or "KS").strip().upper()
+        if normalized != "KS":
+            raise ValueError(f"KansasScraper cannot acquire {normalized}")
+        index_url = self.OFFICIAL_ENTRY_URL
+        request_bytes, response_bytes, index_body = self._official_http_get(index_url)
+        html = index_body.decode("utf-8", errors="replace")
+        units = self._parse_official_chapter_index(html, index_url)
+        if len(units) < 3:
+            raise RuntimeError(
+                f"official Kansas chapter index is incomplete: {len(units)} units"
+            )
+        rows = tuple(
+            {
+                "canonical_key": unit["canonical_key"],
+                "source_url": unit["source_url"],
+                "text": unit["text"],
+            }
+            for unit in units
+        )
+        catalog = "\n".join(
+            f"{unit['canonical_key']}\t{unit['source_url']}\t{unit['label']}"
+            for unit in units
+        ).encode("utf-8")
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code="KS",
+            request_bytes=request_bytes,
+            response_bytes=response_bytes,
+            body_bytes=catalog,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=rows,
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=rows[0]["canonical_key"],
+            last_hierarchy_unit=rows[-1]["canonical_key"],
+        )
 
 
 # Register this scraper with the registry

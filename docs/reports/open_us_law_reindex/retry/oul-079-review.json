@@ -1,0 +1,35 @@
+{
+  "acceptance": "Main checkout dirt was only untracked data/agent_supervisor/plan_evaluations.json. Quarantined to discovery. Checkout is clean.",
+  "authorizing_for_publication": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "canonical_board_task": false,
+  "checks": {
+    "authorizing_for_publication": false,
+    "claims_live_corpus": false,
+    "no_authorized_edit_targets": true,
+    "planner_gap_is_not_new_implementation": true,
+    "producing_tasks_completed": true,
+    "review_only": true
+  },
+  "code_version": "1",
+  "content_digest": "1cfea297dddceadd921ec8d2090f7b4db00e0ef5984698af405ae931920978eb",
+  "digest": "1cfea297dddceadd921ec8d2090f7b4db00e0ef5984698af405ae931920978eb",
+  "discovery": "workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-16-oul-079-reconciliation-567bebba82a0.md",
+  "finding": "Main checkout dirt was only untracked data/agent_supervisor/plan_evaluations.json. Quarantined to discovery. Checkout is clean.",
+  "goal_id": "OUL-G000",
+  "kind": "reconciliation",
+  "operator_resolution": "workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-19-oul-079-operator-resolved.md",
+  "producer": "operator_close_uscir_oul_boards.py",
+  "producing_task_status": {
+    "OUL-030": "completed",
+    "OUL-036": "completed",
+    "OUL-045": "completed"
+  },
+  "program_id": "open-us-law-reindex-v1",
+  "report_digest_sha256": "1cfea297dddceadd921ec8d2090f7b4db00e0ef5984698af405ae931920978eb",
+  "review_only": true,
+  "reviewed_at": "2026-08-19T03:36:28Z",
+  "schema": "ipfs_datasets_py/open-us-law-review-receipt@1",
+  "status": "passed",
+  "task_id": "OUL-079"
+}

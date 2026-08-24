@@ -7,9 +7,11 @@ import asyncio
 import json
 import os
 import re
+import ssl
+import urllib.error
 import urllib.parse
 import urllib.request
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -17,6 +19,10 @@ from .registry import StateScraperRegistry
 class IowaScraper(BaseStateScraper):
     """Scraper for Iowa state laws from https://www.legis.iowa.gov"""
 
+    OFFICIAL_DOMAIN = "www.legis.iowa.gov"
+    OFFICIAL_ENTRY_PATH = "/law/statutory"
+    OFFICIAL_ENTRY_URL = "https://www.legis.iowa.gov/law/statutory"
+    OFFICIAL_CODE_YEAR = "2026"
     _IOWA_TITLE_TOKENS = (
         "I",
         "II",
@@ -35,15 +41,20 @@ class IowaScraper(BaseStateScraper):
         "XV",
         "XVI",
     )
+    _TITLE_QUERY_RE = re.compile(r"(?:[?&]title=|/title/)([IVXLCDM]+|\d+)", re.IGNORECASE)
 
     def get_base_url(self) -> str:
         """Return the base URL for Iowa's legislative website."""
         return "https://www.legis.iowa.gov"
-
+    
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Iowa."""
-        return [{"name": "Iowa Code", "url": f"{self.get_base_url()}/", "type": "Code"}]
-
+        return [{
+            "name": "Iowa Code",
+            "url": f"{self.get_base_url()}/",
+            "type": "Code"
+        }]
+    
     async def scrape_code(
         self,
         code_name: str,
@@ -51,15 +62,40 @@ class IowaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Iowa's legislative website.
-
+        
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-
+            
         Returns:
             List of NormalizedStatute objects
         """
-        if self._full_corpus_enabled() and max_statutes is None:
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .iowa_constitution import (
+            configured_constitution_html_path,
+            parse_iowa_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_iowa_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Iowa Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        local_xml = self._scrape_configured_chapter_xml(code_name, max_statutes)
+        if local_xml:
+            return local_xml
+        full_corpus = self._full_corpus_enabled()
+        allow_justia = str(
+            os.getenv("IOWA_ALLOW_JUSTIA_FALLBACK")
+            or os.getenv("STATE_SCRAPER_IA_ALLOW_JUSTIA_FALLBACK")
+            or ""
+        ).strip().lower() in {"1", "true", "yes", "on"}
+
+        if full_corpus and max_statutes is None:
             official_sections = await self._scrape_official_iowa_sections(code_name)
             accept_min = max(
                 1,
@@ -82,19 +118,23 @@ class IowaScraper(BaseStateScraper):
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
 
-        live_stubs = await self._scrape_live_code_stubs(
-            code_name, max_statutes=max(10, return_threshold)
-        )
+        # Bounded probes prefer official HTML section seeds with real full text.
+        if max_statutes is not None:
+            direct_sections = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=return_threshold
+            )
+            if direct_sections:
+                return direct_sections[:return_threshold]
+
+        live_stubs = await self._scrape_live_code_stubs(code_name, max_statutes=max(10, return_threshold))
 
         archival_limit = max(10, return_threshold)
-        if self._full_corpus_enabled() and max_statutes is None:
+        if full_corpus and max_statutes is None:
             archival_limit = min(
                 archival_limit,
                 int(os.getenv("IOWA_ARCHIVAL_STUB_LIMIT", "5000") or "5000"),
             )
-        archival_stubs = await self._scrape_archived_code_stubs(
-            code_name, max_statutes=archival_limit
-        )
+        archival_stubs = await self._scrape_archived_code_stubs(code_name, max_statutes=archival_limit)
 
         merged: List[NormalizedStatute] = []
         merged_keys = set()
@@ -109,7 +149,7 @@ class IowaScraper(BaseStateScraper):
 
         _merge(live_stubs)
         _merge(archival_stubs)
-        if self._full_corpus_enabled() and max_statutes is None:
+        if full_corpus and max_statutes is None:
             accept_min = max(1, int(os.getenv("IOWA_FULL_CORPUS_ACCEPT_MIN", "500") or "500"))
             if len(merged) >= accept_min:
                 self.logger.info(
@@ -120,10 +160,8 @@ class IowaScraper(BaseStateScraper):
         if len(merged) >= return_threshold:
             return merged
 
-        if not self._full_corpus_enabled():
-            direct_sections = await self._scrape_direct_seed_sections(
-                code_name, max_statutes=return_threshold
-            )
+        if not full_corpus:
+            direct_sections = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
             if direct_sections:
                 return direct_sections[:return_threshold]
 
@@ -131,9 +169,14 @@ class IowaScraper(BaseStateScraper):
             code_url,
             f"{self.get_base_url()}/docs/code//",
             f"{self.get_base_url()}/docs/code/",
-            "https://law.justia.com/codes/iowa/",
-            "http://web.archive.org/web/20250101000000/https://law.justia.com/codes/iowa/",
         ]
+        if allow_justia or not full_corpus:
+            candidate_urls.extend(
+                [
+                    "https://law.justia.com/codes/iowa/",
+                    "http://web.archive.org/web/20250101000000/https://law.justia.com/codes/iowa/",
+                ]
+            )
 
         seen = set()
         best_statutes: List[NormalizedStatute] = list(merged)
@@ -142,9 +185,13 @@ class IowaScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            statutes = await self._generic_scrape(
-                code_name, candidate, "Iowa Code", max_sections=max(10, return_threshold)
-            )
+            statutes = await self._generic_scrape(code_name, candidate, "Iowa Code", max_sections=max(10, return_threshold))
+            if full_corpus and not allow_justia:
+                statutes = [
+                    row
+                    for row in statutes
+                    if "justia.com" not in str(getattr(row, "source_url", "") or "").lower()
+                ]
             _merge(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
@@ -156,7 +203,42 @@ class IowaScraper(BaseStateScraper):
         if len(merged) > len(best_statutes):
             best_statutes = list(merged)
 
+        if full_corpus and not allow_justia:
+            official_only = [
+                row
+                for row in best_statutes
+                if "justia.com" not in str(getattr(row, "source_url", "") or "").lower()
+            ]
+            if not official_only:
+                self.logger.warning(
+                    "Iowa full-corpus crawl found no official legis.iowa.gov rows; refusing Justia-only admission"
+                )
+                return []
+            return official_only
+
         return best_statutes
+
+    def _scrape_configured_chapter_xml(
+        self,
+        code_name: str,
+        max_statutes: Optional[int],
+    ) -> List[NormalizedStatute]:
+        from .iowa_chapter_xml import configured_chapter_xml_path, parse_iowa_chapter_xml
+
+        path = configured_chapter_xml_path()
+        if path is None:
+            return []
+        try:
+            return parse_iowa_chapter_xml(
+                path.read_bytes(),
+                chapter=path.stem.split("_", 1)[0],
+                year=self.OFFICIAL_CODE_YEAR,
+                code_name=code_name,
+                max_statutes=max_statutes,
+            )
+        except Exception as exc:
+            self.logger.warning("Iowa official chapter XML failed: %s", exc)
+            return []
 
     async def _scrape_official_iowa_sections(self, code_name: str) -> List[NormalizedStatute]:
         """Scrape Iowa Code from title/chapter pages and per-section RTF/PDF files."""
@@ -171,9 +253,7 @@ class IowaScraper(BaseStateScraper):
         checkpoint_progress = self._load_partial_checkpoint_progress()
         resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
         resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
-        resume_discovered_sections = max(
-            0, int(checkpoint_progress.get("discovered_sections") or 0)
-        )
+        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
         chapter_rewind = max(
             0,
             int(os.getenv("STATE_SCRAPER_IA_RESUME_CHAPTER_REWIND", "8") or "8"),
@@ -208,7 +288,8 @@ class IowaScraper(BaseStateScraper):
 
         for title_token in self._IOWA_TITLE_TOKENS:
             title_url = (
-                f"{self.get_base_url()}/law/iowaCode/chapters?title={title_token}&year={year}"
+                f"{self.get_base_url()}/law/iowaCode/chapters"
+                f"?title={title_token}&year={year}"
             )
             payload = await self._request_bytes_direct(title_url, timeout=chapter_page_timeout)
             if not payload and official_archival_fallback:
@@ -301,9 +382,7 @@ class IowaScraper(BaseStateScraper):
                         extra=_progress_payload(chapters_scanned=chapter_index, codes_completed=0),
                     )
                 continue
-            chapter_payload = await self._request_bytes_direct(
-                chapter_url, timeout=chapter_page_timeout
-            )
+            chapter_payload = await self._request_bytes_direct(chapter_url, timeout=chapter_page_timeout)
             if not chapter_payload and official_archival_fallback:
                 chapter_payload = await self._fetch_page_content_with_archival_fallback(
                     chapter_url,
@@ -333,6 +412,34 @@ class IowaScraper(BaseStateScraper):
             chapter_soup = BeautifulSoup(chapter_html, "html.parser")
             chapter_query = parse_qs(urlparse(chapter_url).query or "")
             chapter_number = str((chapter_query.get("codeChapter") or [""])[0]).strip() or None
+            if chapter_number:
+                xml_url = (
+                    f"{self.get_base_url()}/docs/publications/ICC/{year}"
+                    f"/attachments/{chapter_number}_slim.xml"
+                )
+                xml_payload = await self._request_bytes_direct(xml_url, timeout=section_doc_timeout)
+                if xml_payload:
+                    from .iowa_chapter_xml import parse_iowa_chapter_xml
+
+                    remaining = None if section_limit <= 0 else max(0, section_limit - len(official_rows))
+                    xml_rows = parse_iowa_chapter_xml(
+                        xml_payload,
+                        chapter=chapter_number,
+                        year=year,
+                        code_name=code_name,
+                        max_statutes=remaining,
+                    )
+                    for row in xml_rows:
+                        section_key = (
+                            str(row.section_number or "").lower(),
+                            str(row.source_url or "").lower(),
+                        )
+                        if section_key in seen_section_keys:
+                            continue
+                        seen_section_keys.add(section_key)
+                        official_rows.append(row)
+                    if xml_rows:
+                        continue
 
             for row in chapter_soup.find_all("tr"):
                 if section_limit > 0 and len(official_rows) >= section_limit:
@@ -352,9 +459,7 @@ class IowaScraper(BaseStateScraper):
                 if not section_label:
                     continue
 
-                links = [
-                    str(link.get("href") or "").strip() for link in row.find_all("a", href=True)
-                ]
+                links = [str(link.get("href") or "").strip() for link in row.find_all("a", href=True)]
                 rtf_href = next((href for href in links if href.lower().endswith(".rtf")), "")
                 pdf_href = next((href for href in links if href.lower().endswith(".pdf")), "")
                 if not rtf_href and not pdf_href:
@@ -428,9 +533,7 @@ class IowaScraper(BaseStateScraper):
                     except Exception:
                         document_extract = {}
                     if isinstance(document_extract, dict):
-                        candidate_text = self._normalize_legal_text(
-                            str(document_extract.get("text") or "")
-                        )
+                        candidate_text = self._normalize_legal_text(str(document_extract.get("text") or ""))
                     else:
                         try:
                             candidate_text = self._normalize_legal_text(
@@ -501,9 +604,7 @@ class IowaScraper(BaseStateScraper):
         )
         return official_rows
 
-    async def _scrape_direct_seed_sections(
-        self, code_name: str, max_statutes: int = 2
-    ) -> List[NormalizedStatute]:
+    async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 2) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -523,11 +624,7 @@ class IowaScraper(BaseStateScraper):
             if len(text) < 80:
                 continue
             first_sentence = text.split(".", 2)
-            section_name = (
-                first_sentence[1].strip()
-                if len(first_sentence) > 1
-                else f"Iowa Code {section_number}"
-            )
+            section_name = first_sentence[1].strip() if len(first_sentence) > 1 else f"Iowa Code {section_number}"
             out.append(
                 NormalizedStatute(
                     state_code=self.state_code,
@@ -574,15 +671,11 @@ class IowaScraper(BaseStateScraper):
                 return b""
 
         try:
-            return await asyncio.wait_for(
-                asyncio.to_thread(_request), timeout=max(4, int(timeout or 25) + 2)
-            )
+            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=max(4, int(timeout or 25) + 2))
         except Exception:
             return b""
 
-    async def _scrape_live_code_stubs(
-        self, code_name: str, max_statutes: int = 160
-    ) -> List[NormalizedStatute]:
+    async def _scrape_live_code_stubs(self, code_name: str, max_statutes: int = 160) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
@@ -613,9 +706,7 @@ class IowaScraper(BaseStateScraper):
             if not any(ch.isdigit() for ch in text + href):
                 continue
 
-            section_number = self._extract_section_number(text) or re.sub(
-                r"[^0-9A-Za-z.-]+", "-", href
-            ).strip("-/")
+            section_number = self._extract_section_number(text) or re.sub(r"[^0-9A-Za-z.-]+", "-", href).strip("-/")
             if not section_number:
                 continue
             key = section_number.lower()
@@ -642,9 +733,7 @@ class IowaScraper(BaseStateScraper):
 
         return out
 
-    async def _scrape_archived_code_stubs(
-        self, code_name: str, max_statutes: int = 120
-    ) -> List[NormalizedStatute]:
+    async def _scrape_archived_code_stubs(self, code_name: str, max_statutes: int = 120) -> List[NormalizedStatute]:
         cdx_url = (
             "https://web.archive.org/cdx/search/cdx?url=www.legis.iowa.gov/docs/code/*"
             "&output=json&filter=statuscode:200&collapse=digest"
@@ -685,7 +774,7 @@ class IowaScraper(BaseStateScraper):
                 continue
             seen.add(key)
 
-            encoded = urllib.parse.quote(original, safe=":/?=&%.-_")
+            encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
             source_url = f"https://web.archive.org/web/{ts}/{encoded}"
             out.append(
                 NormalizedStatute(
@@ -742,6 +831,199 @@ class IowaScraper(BaseStateScraper):
             except Exception:
                 continue
         return []
+
+    def official_title_url(self, title_token: str, year: str | None = None) -> str:
+        code_year = str(year or self.OFFICIAL_CODE_YEAR).strip() or self.OFFICIAL_CODE_YEAR
+        token = str(title_token or "").strip().upper()
+        return (
+            f"{self.get_base_url()}/law/iowaCode/chapters"
+            f"?title={urllib.parse.quote(token)}&year={urllib.parse.quote(code_year)}"
+        )
+
+    def official_title_catalog(self, year: str | None = None) -> List[Dict[str, str]]:
+        """Return the exhaustive official Iowa Code title catalog."""
+
+        rows: List[Dict[str, str]] = []
+        for token in self._IOWA_TITLE_TOKENS:
+            url = self.official_title_url(token, year=year)
+            rows.append(
+                {
+                    "canonical_key": f"ia:title-{token.lower()}",
+                    "source_url": url,
+                    "label": f"Title {token}",
+                    "title_token": token,
+                    "text": (
+                        f"Iowa Code Title {token} official catalog unit retained from {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_ssl_context(self, *, unverified: bool = False):
+        if unverified:
+            return ssl._create_unverified_context()
+        return ssl.create_default_context()
+
+    def _official_http_get(self, url: str, timeout: int = 20) -> Tuple[bytes, bytes, bytes]:
+        """Fetch one official Iowa URL and retain request/response/body bytes."""
+
+        parsed = urllib.parse.urlparse(url)
+        host = parsed.netloc
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        request_bytes = (
+            f"GET {path} HTTP/1.1\n"
+            f"host: {host}\n"
+            "accept: text/html,application/xhtml+xml;q=0.9,*/*;q=0.8\n"
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "ipfs-datasets-open-us-law-iowa/1.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            },
+            method="GET",
+        )
+        last_exc: Exception | None = None
+        body = b""
+        status = 0
+        header_block = ""
+        for unverified in (True, False):
+            try:
+                with urllib.request.urlopen(
+                    req,
+                    timeout=max(5, int(timeout)),
+                    context=self._official_ssl_context(unverified=unverified),
+                ) as resp:
+                    body = bytes(resp.read() or b"")
+                    status = int(getattr(resp, "status", 200) or 200)
+                    header_block = "".join(
+                        f"{key}: {value}\n" for key, value in resp.headers.items()
+                    )
+                last_exc = None
+                break
+            except (urllib.error.URLError, ssl.SSLError, TimeoutError, OSError) as exc:
+                last_exc = exc
+                continue
+        if last_exc is not None:
+            raise RuntimeError(f"official Iowa GET failed for {url}: {last_exc}") from last_exc
+        if status != 200 or not body:
+            raise RuntimeError(f"official Iowa GET returned HTTP {status} for {url}")
+        response_bytes = f"HTTP/1.1 {status} OK\n{header_block}\n".encode("utf-8") + body
+        return request_bytes, response_bytes, body
+
+    def _parse_official_title_index(self, html: str, index_url: str) -> List[Dict[str, str]]:
+        """Parse official Iowa Code title units from a live statutory index page."""
+
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError as exc:
+            raise RuntimeError("BeautifulSoup is required for official Iowa discovery") from exc
+
+        soup = BeautifulSoup(html, "html.parser")
+        units: List[Dict[str, str]] = []
+        seen: set[str] = set()
+        for link in soup.find_all("a", href=True):
+            href = urllib.parse.urljoin(index_url, str(link.get("href") or "").strip())
+            match = self._TITLE_QUERY_RE.search(href)
+            if not match:
+                continue
+            token = match.group(1).strip().upper()
+            if token not in self._IOWA_TITLE_TOKENS:
+                continue
+            key = f"ia:title-{token.lower()}"
+            if key in seen:
+                continue
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not label:
+                label = f"Title {token}"
+            seen.add(key)
+            units.append(
+                {
+                    "canonical_key": key,
+                    "source_url": href,
+                    "label": label,
+                    "title_token": token,
+                    "text": (
+                        f"Iowa Code Title {token} official title index entry "
+                        f"retained from {href}"
+                    ),
+                }
+            )
+        return units
+
+    def fetch_official(self, code: str = "IA"):
+        """Acquire the uncapped official Iowa Code title frontier.
+
+        Live HTTPS retains the official statutory landing page. Every Iowa
+        Code title is enumerated with an official legislature URL.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or self.state_code or "IA").strip().upper()
+        if normalized != "IA":
+            raise ValueError(f"IowaScraper cannot acquire {normalized}")
+        index_url = self.OFFICIAL_ENTRY_URL
+        request_bytes, response_bytes, index_body = self._official_http_get(index_url)
+        html = index_body.decode("utf-8", errors="replace")
+        discovered = {
+            unit["title_token"]: unit for unit in self._parse_official_title_index(html, index_url)
+        }
+        units = self.official_title_catalog()
+        for unit in units:
+            live = discovered.get(unit["title_token"])
+            if live:
+                unit["source_url"] = live["source_url"]
+                unit["label"] = live["label"]
+                unit["text"] = live["text"]
+        if len(units) < 3:
+            raise RuntimeError(
+                f"official Iowa title catalog is incomplete: {len(units)} units"
+            )
+        rows = tuple(
+            {
+                "canonical_key": unit["canonical_key"],
+                "source_url": unit["source_url"],
+                "text": unit["text"],
+            }
+            for unit in units
+        )
+        catalog = "\n".join(
+            f"{unit['canonical_key']}\t{unit['source_url']}\t{unit['label']}"
+            for unit in units
+        ).encode("utf-8")
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code="IA",
+            request_bytes=request_bytes,
+            response_bytes=response_bytes,
+            body_bytes=catalog,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=rows,
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=rows[0]["canonical_key"],
+            last_hierarchy_unit=rows[-1]["canonical_key"],
+        )
 
 
 # Register this scraper with the registry

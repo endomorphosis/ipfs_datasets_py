@@ -3,14 +3,13 @@
 This tool scrapes state statutes and regulations from various state
 legislative websites and legal databases.
 """
-
 import logging
 import asyncio
 import threading
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 import inspect
 import time
-from typing import Callable, Dict, List, Optional, Any, Mapping
+from typing import Callable, Dict, List, Optional, Any, Mapping, Sequence
 from datetime import datetime, timezone
 import json
 import os
@@ -102,9 +101,7 @@ def _derive_bounded_scraper_timeouts(per_state_timeout_seconds: float) -> Dict[s
     code_cap = bounded_timeout if raw_code_cap <= 0.0 else max(45.0, raw_code_cap)
     code_timeout = max(0.1, min(bounded_timeout * code_fraction, code_cap))
 
-    fetch_fraction = max(
-        0.05, min(0.99, _env_float("STATE_SCRAPER_FETCH_TIMEOUT_FRACTION", 1.0 / 3.0))
-    )
+    fetch_fraction = max(0.05, min(0.99, _env_float("STATE_SCRAPER_FETCH_TIMEOUT_FRACTION", 1.0 / 3.0)))
     fetch_cap = max(12.0, _env_float("STATE_SCRAPER_FETCH_TIMEOUT_CAP_SECONDS", 120.0))
     fetch_timeout = max(0.1, min(code_timeout * fetch_fraction, fetch_cap))
 
@@ -163,9 +160,7 @@ def _partial_checkpoint_path_for_state(state_code: str) -> Optional[Path]:
     if not checkpoint_dir:
         return None
     try:
-        return (
-            Path(checkpoint_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
-        )
+        return Path(checkpoint_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
     except Exception:
         return None
 
@@ -578,9 +573,7 @@ def _extract_statute_quality_fields(statute: Any) -> Dict[str, str]:
     if isinstance(statute, dict):
         return {
             "full_text": str(statute.get("full_text") or statute.get("text") or ""),
-            "section_number": str(
-                statute.get("section_number") or statute.get("sectionNumber") or ""
-            ),
+            "section_number": str(statute.get("section_number") or statute.get("sectionNumber") or ""),
             "section_name": str(statute.get("section_name") or statute.get("sectionName") or ""),
             "source_url": str(statute.get("source_url") or statute.get("sourceUrl") or ""),
         }
@@ -639,61 +632,61 @@ def _has_quality_legal_signal(statute: Any) -> bool:
         return True
     return False
 
-
 # US States and territories
 US_STATES = {
-    "AL": "Alabama",
-    "AK": "Alaska",
-    "AZ": "Arizona",
-    "AR": "Arkansas",
-    "CA": "California",
-    "CO": "Colorado",
-    "CT": "Connecticut",
-    "DE": "Delaware",
-    "FL": "Florida",
-    "GA": "Georgia",
-    "HI": "Hawaii",
-    "ID": "Idaho",
-    "IL": "Illinois",
-    "IN": "Indiana",
-    "IA": "Iowa",
-    "KS": "Kansas",
-    "KY": "Kentucky",
-    "LA": "Louisiana",
-    "ME": "Maine",
-    "MD": "Maryland",
-    "MA": "Massachusetts",
-    "MI": "Michigan",
-    "MN": "Minnesota",
-    "MS": "Mississippi",
-    "MO": "Missouri",
-    "MT": "Montana",
-    "NE": "Nebraska",
-    "NV": "Nevada",
-    "NH": "New Hampshire",
-    "NJ": "New Jersey",
-    "NM": "New Mexico",
-    "NY": "New York",
-    "NC": "North Carolina",
-    "ND": "North Dakota",
-    "OH": "Ohio",
-    "OK": "Oklahoma",
-    "OR": "Oregon",
-    "PA": "Pennsylvania",
-    "RI": "Rhode Island",
-    "SC": "South Carolina",
-    "SD": "South Dakota",
-    "TN": "Tennessee",
-    "TX": "Texas",
-    "UT": "Utah",
-    "VT": "Vermont",
-    "VA": "Virginia",
-    "WA": "Washington",
-    "WV": "West Virginia",
-    "WI": "Wisconsin",
-    "WY": "Wyoming",
-    "DC": "District of Columbia",
+    "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas",
+    "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware",
+    "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho",
+    "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas",
+    "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
+    "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi",
+    "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada",
+    "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York",
+    "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma",
+    "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
+    "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah",
+    "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia",
+    "WI": "Wisconsin", "WY": "Wyoming", "DC": "District of Columbia"
 }
+
+CANONICAL_PRODUCTION_JURISDICTIONS = frozenset(US_STATES.keys())
+EXPECTED_PRODUCTION_JURISDICTION_COUNT = 51
+
+
+class SubsetReleaseError(ValueError):
+    """Raised when a production release path is asked to accept a subset corpus."""
+
+
+def reject_subset_release(
+    states: Sequence[str],
+    *,
+    context: str = "state_laws_scraper production release",
+) -> List[str]:
+    """Fail closed unless ``states`` is exactly the sealed 51-jurisdiction set.
+
+    A nonzero, error-free requested subset must never authorize a production
+    full-corpus release (LCR-007).
+    """
+    normalized: List[str] = []
+    seen = set()
+    for item in states:
+        code = str(item or "").strip().upper()
+        if not code or code in seen:
+            continue
+        normalized.append(code)
+        seen.add(code)
+    observed = set(normalized)
+    if observed != CANONICAL_PRODUCTION_JURISDICTIONS:
+        missing = sorted(CANONICAL_PRODUCTION_JURISDICTIONS - observed)
+        extra = sorted(observed - CANONICAL_PRODUCTION_JURISDICTIONS)
+        raise SubsetReleaseError(
+            f"subset release rejected for {context}: "
+            f"count={len(observed)} (expected {EXPECTED_PRODUCTION_JURISDICTION_COUNT}); "
+            f"missing={missing}; extra={extra}"
+        )
+    if "DC" not in observed:
+        raise SubsetReleaseError(f"subset release rejected for {context}: DC is required")
+    return normalized
 
 
 def _get_justia_state_slug(state_code: str) -> str:
@@ -707,7 +700,7 @@ def _get_justia_state_slug(state_code: str) -> str:
 
 async def list_state_jurisdictions() -> Dict[str, Any]:
     """Get list of all US state jurisdictions.
-
+    
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -720,11 +713,16 @@ async def list_state_jurisdictions() -> Dict[str, Any]:
             "status": "success",
             "states": US_STATES,
             "count": len(US_STATES),
-            "note": "Includes all 50 US states and DC",
+            "note": "Includes all 50 US states and DC"
         }
     except Exception as e:
         logger.error(f"Failed to get state jurisdictions: {e}")
-        return {"status": "error", "error": str(e), "states": {}, "count": 0}
+        return {
+            "status": "error",
+            "error": str(e),
+            "states": {},
+            "count": 0
+        }
 
 
 async def scrape_state_laws(
@@ -749,11 +747,11 @@ async def scrape_state_laws(
     retain_state_data: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """Scrape state statutes and build a structured dataset.
-
+    
     This function now uses state-specific scrapers that go directly to
     each state's official legislative website and normalize the data
     into a consistent schema.
-
+    
     Args:
         states: List of state codes to scrape (e.g., ["CA", "NY", "TX"]).
                 If None or ["all"], scrapes all states.
@@ -764,7 +762,7 @@ async def scrape_state_laws(
         max_statutes: Maximum number of statutes to scrape
         use_state_specific_scrapers: Use state-specific scrapers (True) or fallback to Justia (False)
         allow_justia_fallback: Whether empty/failed state-specific runs may fall back to Justia
-
+    
     Returns:
         Dict containing:
             - status: "success" or "error"
@@ -784,12 +782,12 @@ async def scrape_state_laws(
                     "status": "error",
                     "error": "No valid states specified",
                     "data": [],
-                    "metadata": {},
+                    "metadata": {}
                 }
-
+        
         logger.info(f"Starting state laws scraping for states: {selected_states}")
         start_time = time.time()
-
+        
         # Import required libraries
         try:
             import requests
@@ -799,9 +797,9 @@ async def scrape_state_laws(
                 "status": "error",
                 "error": f"Required library not available: {ie}. Install with: pip install requests beautifulsoup4",
                 "data": [],
-                "metadata": {},
+                "metadata": {}
             }
-
+        
         scraped_statutes = []
         statutes_count = 0
         errors = []
@@ -814,49 +812,34 @@ async def scrape_state_laws(
         parallel_workers = max(1, int(parallel_workers or 1))
         per_state_retry_attempts = max(0, int(per_state_retry_attempts or 0))
         if retain_state_data is None:
-            retain_state_data = str(
-                os.getenv("STATE_SCRAPER_RETAIN_STATE_DATA", "1")
-            ).strip().lower() not in {
+            retain_state_data = str(os.getenv("STATE_SCRAPER_RETAIN_STATE_DATA", "1")).strip().lower() not in {
                 "0",
                 "false",
                 "no",
                 "off",
             }
-
+        
         # Try to use state-specific scrapers if enabled
         if use_state_specific_scrapers:
             try:
                 prior_bounded_env = {
-                    "STATE_SCRAPER_CODE_TIMEOUT_SECONDS": os.environ.get(
-                        "STATE_SCRAPER_CODE_TIMEOUT_SECONDS"
-                    ),
-                    "STATE_SCRAPER_FETCH_TIMEOUT_SECONDS": os.environ.get(
-                        "STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"
-                    ),
+                    "STATE_SCRAPER_CODE_TIMEOUT_SECONDS": os.environ.get("STATE_SCRAPER_CODE_TIMEOUT_SECONDS"),
+                    "STATE_SCRAPER_FETCH_TIMEOUT_SECONDS": os.environ.get("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"),
                     "STATE_SCRAPER_MAX_STATUTES": os.environ.get("STATE_SCRAPER_MAX_STATUTES"),
-                    "STATE_SCRAPER_BOUNDED_DIRECT_ONLY": os.environ.get(
-                        "STATE_SCRAPER_BOUNDED_DIRECT_ONLY"
-                    ),
-                    "STATE_SCRAPER_GLOBAL_BOUNDED_ENV": os.environ.get(
-                        "STATE_SCRAPER_GLOBAL_BOUNDED_ENV"
-                    ),
+                    "STATE_SCRAPER_BOUNDED_DIRECT_ONLY": os.environ.get("STATE_SCRAPER_BOUNDED_DIRECT_ONLY"),
+                    "STATE_SCRAPER_GLOBAL_BOUNDED_ENV": os.environ.get("STATE_SCRAPER_GLOBAL_BOUNDED_ENV"),
                 }
                 bounded_timeout = max(0.0, float(per_state_timeout_seconds or 0.0))
-                use_global_bounded_env = bool(
-                    max_statutes and int(max_statutes) > 0 and bounded_timeout > 0
-                )
+                use_global_bounded_env = bool(max_statutes and int(max_statutes) > 0 and bounded_timeout > 0)
                 if use_global_bounded_env:
                     timeouts = _derive_bounded_scraper_timeouts(bounded_timeout)
                     code_timeout = max(0.1, float(timeouts.get("code_timeout_seconds") or 0.0))
                     fetch_timeout = max(0.1, float(timeouts.get("fetch_timeout_seconds") or 0.0))
                     disable_code_timeout_with_checkpoint = str(
-                        os.environ.get("STATE_SCRAPER_DISABLE_CODE_TIMEOUT_WITH_CHECKPOINT", "1")
-                        or "1"
+                        os.environ.get("STATE_SCRAPER_DISABLE_CODE_TIMEOUT_WITH_CHECKPOINT", "1") or "1"
                     ).strip().lower() in {"1", "true", "yes", "on"}
                     checkpoint_dir_configured = bool(
-                        str(
-                            os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", "") or ""
-                        ).strip()
+                        str(os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", "") or "").strip()
                     )
                     if disable_code_timeout_with_checkpoint and checkpoint_dir_configured:
                         code_timeout = 0.0
@@ -903,9 +886,7 @@ async def scrape_state_laws(
                         async with semaphore:
                             return await _run_state(state_code)
 
-                    state_results = await asyncio.gather(
-                        *[_guarded_run(code) for code in selected_states]
-                    )
+                    state_results = await asyncio.gather(*[_guarded_run(code) for code in selected_states])
 
                 if use_global_bounded_env:
                     for key, value in prior_bounded_env.items():
@@ -914,9 +895,7 @@ async def scrape_state_laws(
                         else:
                             os.environ[key] = value
 
-                result_by_state = {
-                    str(item.get("state_code") or ""): item for item in state_results
-                }
+                result_by_state = {str(item.get("state_code") or ""): item for item in state_results}
                 for state_code in selected_states:
                     item = result_by_state.get(state_code) or {
                         "state_code": state_code,
@@ -977,96 +956,86 @@ async def scrape_state_laws(
                         for block in scraped_statutes
                         if isinstance(block, dict) and bool(block.get("quality_flag"))
                     ]
-
+                
             except ImportError as e:
-                logger.warning(
-                    f"State-specific scrapers not available: {e}, falling back to Justia"
-                )
+                logger.warning(f"State-specific scrapers not available: {e}, falling back to Justia")
                 use_state_specific_scrapers = False
-
+        
         # Fallback to Justia-based scraping if state-specific scrapers are disabled or failed
         if allow_justia_fallback and (not use_state_specific_scrapers or not scraped_statutes):
             logger.info("Using Justia fallback scraper")
-
+            
             # State code sources mapping - using Justia as a reliable aggregator
             state_sources = {
                 state_code: {
                     "name": US_STATES[state_code],
                     "justia_url": f"https://law.justia.com/codes/{_get_justia_state_slug(state_code)}/",
-                    "official_url": _get_official_state_url(state_code),
+                    "official_url": _get_official_state_url(state_code)
                 }
                 for state_code in US_STATES.keys()
             }
-
+            
             # Scrape each selected state
             for state_code in selected_states:
                 if max_statutes and statutes_count >= max_statutes:
                     logger.info(f"Reached max_statutes limit of {max_statutes}")
                     break
-
+                
                 state_name = US_STATES[state_code]
                 logger.info(f"Scraping {state_code}: {state_name}")
-
+                
                 try:
                     # Fetch state code overview from Justia
                     state_info = state_sources[state_code]
                     justia_url = state_info["justia_url"]
-
+                    
                     headers = {
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                     }
-
+                    
                     response = requests.get(justia_url, headers=headers, timeout=30)
                     response.raise_for_status()
-
-                    soup = BeautifulSoup(response.content, "html.parser")
-
+                    
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    
                     # Extract code titles/sections
                     statutes = []
-                    code_links = soup.find_all("a", href=True)
-
+                    code_links = soup.find_all('a', href=True)
+                    
                     for link in code_links:
-                        href = link.get("href", "")
+                        href = link.get('href', '')
                         text = link.get_text(strip=True)
-
+                        
                         # Look for statute/code links
-                        if (
-                            text
-                            and len(text) > 10
-                            and (
-                                "/codes/" in href
-                                or "title" in text.lower()
-                                or "chapter" in text.lower()
-                                or "article" in text.lower()
-                            )
+                        if text and len(text) > 10 and (
+                            '/codes/' in href or 
+                            'title' in text.lower() or 
+                            'chapter' in text.lower() or
+                            'article' in text.lower()
                         ):
                             # Filter by legal area if specified
                             if legal_areas:
-                                area_match = any(
-                                    area.lower() in text.lower() for area in legal_areas
-                                )
+                                area_match = any(area.lower() in text.lower() for area in legal_areas)
                                 if not area_match:
                                     continue
-
+                            
                             statute = {
                                 "statute_number": text[:100],
                                 "title": text[:200],
-                                "url": href
-                                if href.startswith("http")
-                                else f"https://law.justia.com{href}",
+                                "url": href if href.startswith('http') else f"https://law.justia.com{href}",
                                 "legal_area": _identify_legal_area(text, legal_areas),
                             }
-
+                            
                             if include_metadata:
                                 statute["scraped_at"] = datetime.now().isoformat()
                                 statute["source"] = "Justia"
-
+                            
                             statutes.append(statute)
                             statutes_count += 1
-
+                            
                             if max_statutes and statutes_count >= max_statutes:
                                 break
-
+                    
                     statute_data = {
                         "state_code": state_code,
                         "state_name": state_name,
@@ -1076,17 +1045,17 @@ async def scrape_state_laws(
                         "official_url": state_info["official_url"],
                         "scraped_at": datetime.now().isoformat(),
                         "statutes": statutes[:max_statutes] if max_statutes else statutes,
-                        "normalized": False,
+                        "normalized": False
                     }
-
+                    
                     scraped_statutes.append(statute_data)
                     logger.info(f"Successfully scraped {len(statutes)} statutes for {state_name}")
-
+                    
                 except Exception as e:
                     error_msg = f"Failed to scrape {state_name}: {str(e)}"
                     logger.error(error_msg)
                     errors.append(error_msg)
-
+                    
                     # Add minimal data even on error
                     state_info = state_sources.get(state_code, {})
                     statute_data = {
@@ -1098,19 +1067,17 @@ async def scrape_state_laws(
                         "official_url": state_info.get("official_url", ""),
                         "error": str(e),
                         "scraped_at": datetime.now().isoformat(),
-                        "statutes": [],
+                        "statutes": []
                     }
                     scraped_statutes.append(statute_data)
-
+                
                 # Rate limiting to be respectful to servers
                 time.sleep(rate_limit_delay)
-
+        
         elapsed_time = time.time() - start_time
-
-        scraper_info = (
-            "State-specific scrapers" if use_state_specific_scrapers else "Justia fallback scraper"
-        )
-
+        
+        scraper_info = "State-specific scrapers" if use_state_specific_scrapers else "Justia fallback scraper"
+        
         canonical_corpus = get_canonical_legal_corpus("state_laws")
         jsonld_paths: List[str] = []
         if use_state_specific_scrapers and write_jsonld:
@@ -1132,9 +1099,7 @@ async def scrape_state_laws(
             "elapsed_time_seconds": elapsed_time,
             "scraped_at": datetime.now().isoformat(),
             "scraper_type": scraper_info,
-            "sources": "Official State Legislative Websites"
-            if use_state_specific_scrapers
-            else "Justia Legal Database (https://law.justia.com)",
+            "sources": "Official State Legislative Websites" if use_state_specific_scrapers else "Justia Legal Database (https://law.justia.com)",
             "rate_limit_delay": rate_limit_delay,
             "parallel_workers": parallel_workers,
             "per_state_retry_attempts": per_state_retry_attempts,
@@ -1151,37 +1116,52 @@ async def scrape_state_laws(
                 errors=errors,
             ),
             "fetch_analytics": _aggregate_fetch_analytics(fetch_analytics_by_state),
-            "fetch_analytics_by_state": fetch_analytics_by_state
-            if fetch_analytics_by_state
-            else None,
+            "fetch_analytics_by_state": fetch_analytics_by_state if fetch_analytics_by_state else None,
             "etl_readiness": _compute_etl_readiness_summary(scraped_statutes),
             "schema_normalized": use_state_specific_scrapers,
             "canonical_dataset": canonical_corpus.key,
             "canonical_hf_dataset_id": canonical_corpus.hf_dataset_id,
-            "jsonld_dir": str(canonical_corpus.jsonld_dir(output_dir))
-            if (use_state_specific_scrapers and write_jsonld)
-            else None,
+            "jsonld_dir": str(canonical_corpus.jsonld_dir(output_dir)) if (use_state_specific_scrapers and write_jsonld) else None,
             "jsonld_files": jsonld_paths if jsonld_paths else None,
             "strict_full_text": strict_full_text,
             "min_full_text_chars": int(min_full_text_chars),
             "strict_removed_total": strict_removed_total,
             "hydrate_statute_text": hydrate_statute_text,
         }
-
-        logger.info(
-            f"Completed state laws scraping: {statutes_count} statutes in {elapsed_time:.2f}s using {scraper_info}"
-        )
+        
+        logger.info(f"Completed state laws scraping: {statutes_count} statutes in {elapsed_time:.2f}s using {scraper_info}")
+        
+        coverage_summary = metadata.get("coverage_summary") or {}
+        requested_closed = bool(coverage_summary.get("full_coverage"))
+        full_corpus = bool(coverage_summary.get("full_corpus_coverage"))
+        # LCR-007: partial_success must never promote to production full-corpus success.
+        if errors or warnings or not requested_closed:
+            run_status = "partial_success"
+        elif full_corpus:
+            run_status = "success"
+        else:
+            # Requested subset closed cleanly — success for the request only,
+            # never a production full-corpus claim.
+            run_status = "success"
+            metadata["production_release_eligible"] = False
+            metadata["coverage_claim"] = "requested_scope_only"
 
         return {
-            "status": "success" if (not errors and not warnings) else "partial_success",
+            "status": run_status,
             "data": scraped_statutes,
             "metadata": metadata,
             "output_format": output_format,
+            "production_release_eligible": bool(full_corpus),
         }
-
+        
     except Exception as e:
         logger.error(f"State laws scraping failed: {e}")
-        return {"status": "error", "error": str(e), "data": [], "metadata": {}}
+        return {
+            "status": "error",
+            "error": str(e),
+            "data": [],
+            "metadata": {}
+        }
 
 
 def _get_official_state_url(state_code: str) -> str:
@@ -1199,7 +1179,7 @@ def _get_official_state_url(state_code: str) -> str:
         "NC": "https://www.ncleg.gov/",
         "MI": "https://www.legislature.mi.gov/",
     }
-
+    
     return official_urls.get(state_code, f"https://legislature.{state_code.lower()}.gov/")
 
 
@@ -1223,47 +1203,23 @@ def build_state_law_section_url(
 
     known_section_urls = {
         ("AL", "13A-6-2"): "https://alison.legislature.state.al.us/code-of-alabama?section=13A-6-2",
-        (
-            "AR",
-            "5-13-201",
-        ): "https://law.justia.com/codes/arkansas/title-5/subtitle-2/chapter-13/subchapter-2/section-5-13-201/",
+        ("AR", "5-13-201"): "https://law.justia.com/codes/arkansas/title-5/subtitle-2/chapter-13/subchapter-2/section-5-13-201/",
         ("CO", "18-3-204"): "https://colorado.public.law/statutes/crs_18-3-204",
         ("CT", "53a-61"): "https://www.cga.ct.gov/current/pub/chap_952.htm#sec_53a-61",
         ("DE", "11-601"): "https://delcode.delaware.gov/title11/c005/sc02/index.html#601",
-        (
-            "GA",
-            "16-5-23",
-        ): "https://law.justia.com/codes/georgia/title-16/chapter-5/article-2/section-16-5-23/",
-        (
-            "HI",
-            "707-712",
-        ): "https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/HRS0707/HRS_0707-0712.htm",
+        ("GA", "16-5-23"): "https://law.justia.com/codes/georgia/title-16/chapter-5/article-2/section-16-5-23/",
+        ("HI", "707-712"): "https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/HRS0707/HRS_0707-0712.htm",
         ("KY", "508.030"): "https://law.justia.com/codes/kentucky/chapter-508/section-508-030/",
         ("LA", "14:35"): "https://legis.la.gov/legis/Law.aspx?d=78452",
-        (
-            "MD",
-            "3-203",
-        ): "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
-        (
-            "IN",
-            "35-42-2-1",
-        ): "https://law.justia.com/codes/indiana/title-35/article-42/chapter-2/section-35-42-2-1/",
-        (
-            "MS",
-            "97-3-7",
-        ): "https://law.justia.com/codes/mississippi/2024/title-97/chapter-3/section-97-3-7/",
+        ("MD", "3-203"): "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
+        ("IN", "35-42-2-1"): "https://law.justia.com/codes/indiana/title-35/article-42/chapter-2/section-35-42-2-1/",
+        ("MS", "97-3-7"): "https://law.justia.com/codes/mississippi/2024/title-97/chapter-3/section-97-3-7/",
         ("NH", "631:2-a"): "https://gc.nh.gov/rsa/html/LXII/631/631-2-a.htm",
         ("NJ", "2C:12-1"): "https://law.justia.com/codes/new-jersey/title-2c/section-2c-12-1/",
-        (
-            "NM",
-            "30-3-4",
-        ): "https://law.justia.com/codes/new-mexico/chapter-30/article-3/section-30-3-4/",
+        ("NM", "30-3-4"): "https://law.justia.com/codes/new-mexico/chapter-30/article-3/section-30-3-4/",
         ("ND", "12.1-17-01"): "https://ndlegis.gov/cencode/t12-1c17.pdf",
         ("OK", "21-644"): "https://www.oklegislature.gov/OK_Statutes/CompleteTitles/os21.pdf",
-        (
-            "TN",
-            "39-13-101",
-        ): "https://law.justia.com/codes/tennessee/title-39/chapter-13/part-1/section-39-13-101/",
+        ("TN", "39-13-101"): "https://law.justia.com/codes/tennessee/title-39/chapter-13/part-1/section-39-13-101/",
         ("VA", "18.2-57"): "https://law.lis.virginia.gov/vacode/title18.2/chapter4/section18.2-57/",
         ("VT", "13-1023"): "https://legislature.vermont.gov/statutes/section/13/019/01023",
         ("WY", "6-2-501"): "https://wyoleg.gov/statutes/compress/title06.pdf",
@@ -1296,9 +1252,7 @@ def build_state_law_section_url(
     if state == "DC" or "code.dccouncil.gov" in host_hint:
         return f"https://code.dccouncil.gov/us/dc/council/code/sections/{normalized_section}"
     if state == "NY" or "nysenate.gov" in host_hint:
-        law_code = (
-            "FCT" if re.search(r"\bFam\.\s+Ct\.\s+Act\b", code_hint, re.IGNORECASE) else "DOM"
-        )
+        law_code = "FCT" if re.search(r"\bFam\.\s+Ct\.\s+Act\b", code_hint, re.IGNORECASE) else "DOM"
         return f"https://www.nysenate.gov/legislation/laws/{law_code}/{normalized_section}"
     if state == "TX" or "statutes.capitol.texas.gov" in host_hint:
         law_code = "FA"
@@ -1399,9 +1353,7 @@ def build_state_law_section_url(
     if state == "WI" or "docs.legis.wisconsin.gov" in host_hint:
         chapter, _, section_tail = normalized_section.partition(".")
         if chapter and section_tail:
-            return (
-                f"https://docs.legis.wisconsin.gov/statutes/statutes/{chapter}#{normalized_section}"
-            )
+            return f"https://docs.legis.wisconsin.gov/statutes/statutes/{chapter}#{normalized_section}"
         return ""
     if state == "WV" or "code.wvlegislature.gov" in host_hint:
         return f"https://code.wvlegislature.gov/{normalized_section}/"
@@ -1476,16 +1428,15 @@ def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, 
             nav_like += 1
         if _QUALITY_SECTION_FALLBACK_RE.match(section_number):
             fallback_section += 1
-        if _QUALITY_SECTION_SIGNAL_RE.search(section_name) or _QUALITY_SECTION_NUMBER_RE.match(
-            section_number
-        ):
+        if _QUALITY_SECTION_SIGNAL_RE.search(section_name) or _QUALITY_SECTION_NUMBER_RE.match(section_number):
             numeric_section_name += 1
         if _is_scaffold_or_navigation_record(statute):
             scaffold += 1
         history_text = bool(_QUALITY_BILL_HISTORY_RE.search(text))
         bill_number_text = bool(_QUALITY_BILL_NUMBER_RE.search(text))
         bill_history_url = "/history/" in source_url and (
-            "billstatus.ls.state.ms.us" in source_url or "legislature.ms.gov" in source_url
+            "billstatus.ls.state.ms.us" in source_url
+            or "legislature.ms.gov" in source_url
         )
         if history_text and (bill_number_text or bill_history_url):
             bill_history += 1
@@ -1508,7 +1459,7 @@ def _should_flag_quality(quality_metrics: Dict[str, Any]) -> bool:
     scaffold_q = float(quality_metrics.get("scaffold_ratio", 0.0) or 0.0)
     bill_history_q = float(quality_metrics.get("bill_history_ratio", 0.0) or 0.0)
 
-    fallback_problem = total_q >= 10 and fallback_q >= 0.7 and numeric_q <= 0.2
+    fallback_problem = (total_q >= 10 and fallback_q >= 0.7 and numeric_q <= 0.2)
     if total_q >= 10 and (
         nav_q >= 0.2
         or fallback_problem
@@ -1621,9 +1572,7 @@ def _scrape_state_once_sync(
     }
 
 
-def _load_partial_checkpoint_state_result(
-    state_code: str, error_msg: str
-) -> Optional[Dict[str, Any]]:
+def _load_partial_checkpoint_state_result(state_code: str, error_msg: str) -> Optional[Dict[str, Any]]:
     checkpoint_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
     if not checkpoint_dir:
         return None
@@ -1674,7 +1623,9 @@ def _load_partial_checkpoint_state_result(
             "no statutes yet persisted"
         )
     else:
-        recovery_note = f"{state_code} recovered {len(statutes)} statutes from partial checkpoint after timeout/error"
+        recovery_note = (
+            f"{state_code} recovered {len(statutes)} statutes from partial checkpoint after timeout/error"
+        )
     warnings = [
         recovery_note,
         error_msg,
@@ -1722,9 +1673,7 @@ def _load_partial_checkpoint_state_success_result(
     promoted = dict(recovered)
     promoted["error"] = None
     promoted["zero_statute"] = False
-    warnings = [
-        str(item) for item in list(promoted.get("warnings") or []) if str(item) != synthetic_error
-    ]
+    warnings = [str(item) for item in list(promoted.get("warnings") or []) if str(item) != synthetic_error]
     warnings.append(f"{state} promoted from checkpoint-complete state")
     promoted["warnings"] = warnings
 
@@ -1792,9 +1741,7 @@ async def _run_sync_scrape_on_daemon_thread(
             result_future.set_exception(exc)
 
     def _worker() -> None:
-        global_bounded_env = str(
-            os.environ.get("STATE_SCRAPER_GLOBAL_BOUNDED_ENV") or ""
-        ).strip().lower() in {
+        global_bounded_env = str(os.environ.get("STATE_SCRAPER_GLOBAL_BOUNDED_ENV") or "").strip().lower() in {
             "1",
             "true",
             "yes",
@@ -1805,12 +1752,7 @@ async def _run_sync_scrape_on_daemon_thread(
         prior_max_statutes = os.environ.get("STATE_SCRAPER_MAX_STATUTES")
         prior_direct_only = os.environ.get("STATE_SCRAPER_BOUNDED_DIRECT_ONLY")
         bounded_timeout = max(0.0, float(timeout_seconds or 0.0))
-        if (
-            not global_bounded_env
-            and max_statutes
-            and int(max_statutes) > 0
-            and bounded_timeout > 0
-        ):
+        if not global_bounded_env and max_statutes and int(max_statutes) > 0 and bounded_timeout > 0:
             timeouts = _derive_bounded_scraper_timeouts(bounded_timeout)
             code_timeout = max(0.1, float(timeouts.get("code_timeout_seconds") or 0.0))
             fetch_timeout = max(0.1, float(timeouts.get("fetch_timeout_seconds") or 0.0))
@@ -1908,11 +1850,7 @@ async def _run_sync_scrape_on_daemon_thread(
             else:
                 progress_grace_seconds = max(60.0, min(900.0, float(timeout_seconds) * 0.35))
         except Exception:
-            progress_grace_seconds = (
-                0.0
-                if float(timeout_seconds) <= 60.0
-                else max(60.0, min(900.0, float(timeout_seconds) * 0.35))
-            )
+            progress_grace_seconds = 0.0 if float(timeout_seconds) <= 60.0 else max(60.0, min(900.0, float(timeout_seconds) * 0.35))
         progress_grace_seconds = max(0.0, progress_grace_seconds)
 
         hard_timeout_raw = str(os.getenv("STATE_SCRAPER_HARD_TIMEOUT_SECONDS", "") or "").strip()
@@ -1920,22 +1858,14 @@ async def _run_sync_scrape_on_daemon_thread(
             if hard_timeout_raw:
                 hard_timeout_seconds = float(hard_timeout_raw)
             elif float(timeout_seconds) <= 60.0:
-                hard_timeout_seconds = float(timeout_seconds) + max(
-                    0.02, float(timeout_seconds) * 0.25
-                )
+                hard_timeout_seconds = float(timeout_seconds) + max(0.02, float(timeout_seconds) * 0.25)
             else:
-                hard_timeout_seconds = max(
-                    float(timeout_seconds) + progress_grace_seconds, float(timeout_seconds) * 6.0
-                )
+                hard_timeout_seconds = max(float(timeout_seconds) + progress_grace_seconds, float(timeout_seconds) * 6.0)
         except Exception:
             if float(timeout_seconds) <= 60.0:
-                hard_timeout_seconds = float(timeout_seconds) + max(
-                    0.02, float(timeout_seconds) * 0.25
-                )
+                hard_timeout_seconds = float(timeout_seconds) + max(0.02, float(timeout_seconds) * 0.25)
             else:
-                hard_timeout_seconds = max(
-                    float(timeout_seconds) + progress_grace_seconds, float(timeout_seconds) * 6.0
-                )
+                hard_timeout_seconds = max(float(timeout_seconds) + progress_grace_seconds, float(timeout_seconds) * 6.0)
         if hard_timeout_seconds <= 0.0:
             hard_timeout_seconds = float(timeout_seconds) + progress_grace_seconds
 
@@ -1970,13 +1900,14 @@ async def _run_sync_scrape_on_daemon_thread(
             signature_changed = bool(
                 signature_reliable
                 and signature
-                and ((not last_signature_reliable) or signature != last_signature)
+                and (
+                    (not last_signature_reliable)
+                    or signature != last_signature
+                )
             )
             checkpoint_signal_found = bool(activity.get("signal_found"))
             checkpoint_work_remaining = activity.get("work_remaining")
-            checkpoint_signal_complete = (
-                checkpoint_signal_found and checkpoint_work_remaining is False
-            )
+            checkpoint_signal_complete = checkpoint_signal_found and checkpoint_work_remaining is False
             checkpoint_advanced = bool(updated_ts > initial_checkpoint_updated_ts + 1e-6)
             if signature_changed:
                 last_signature = signature
@@ -1987,11 +1918,7 @@ async def _run_sync_scrape_on_daemon_thread(
                 # Establish a reliable signature baseline without forcing a reset.
                 last_signature = signature
                 last_signature_mode = signature_mode
-            elif (
-                checkpoint_advanced
-                and updated_ts > last_progress_ts
-                and not checkpoint_signal_complete
-            ):
+            elif checkpoint_advanced and updated_ts > last_progress_ts and not checkpoint_signal_complete:
                 # Treat checkpoint freshness as weak progress, even if
                 # counters are unchanged.
                 last_progress_ts = updated_ts
@@ -2016,9 +1943,7 @@ async def _run_sync_scrape_on_daemon_thread(
                     )
                     if promoted is not None:
                         diagnostics = dict(promoted.get("timeout_diagnostics") or {})
-                        diagnostics["checkpoint_complete_age_seconds"] = round(
-                            checkpoint_age_seconds, 3
-                        )
+                        diagnostics["checkpoint_complete_age_seconds"] = round(checkpoint_age_seconds, 3)
                         diagnostics["checkpoint_signal_stability_age_seconds"] = round(
                             signal_stability_age_seconds,
                             3,
@@ -2035,7 +1960,9 @@ async def _run_sync_scrape_on_daemon_thread(
             if elapsed >= float(timeout_seconds) and since_progress >= progress_grace_seconds:
                 break
 
-        raise asyncio.TimeoutError(f"state scrape timed out after {timeout_seconds} seconds")
+        raise asyncio.TimeoutError(
+            f"state scrape timed out after {timeout_seconds} seconds"
+        )
     return await result_future
 
 
@@ -2078,14 +2005,11 @@ async def _scrape_state_with_retries(
             logger.error(error_msg)
             checkpoint_result = _load_partial_checkpoint_state_result(state_code, error_msg)
             if checkpoint_result is not None:
-                result = (
-                    _promote_timeout_checkpoint_result_if_no_remaining_work(
-                        state_code,
-                        checkpoint_result,
-                        reason="checkpoint_timeout_no_remaining_work",
-                    )
-                    or checkpoint_result
-                )
+                result = _promote_timeout_checkpoint_result_if_no_remaining_work(
+                    state_code,
+                    checkpoint_result,
+                    reason="checkpoint_timeout_no_remaining_work",
+                ) or checkpoint_result
             else:
                 timeout_diagnostics = {
                     "timed_out": True,
@@ -2107,13 +2031,7 @@ async def _scrape_state_with_retries(
                     "statutes_count": 0,
                     "zero_statute": True,
                     "low_quality": False,
-                    "quality_metrics": {
-                        "total": 0,
-                        "nav_like_ratio": 0.0,
-                        "fallback_section_ratio": 0.0,
-                        "numeric_section_name_ratio": 0.0,
-                        "scaffold_ratio": 0.0,
-                    },
+                    "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
                     "warnings": [
                         f"{state_code} timed out while scraping",
                         f"{state_code} timeout_diagnostics={timeout_diagnostics.get('classification')}",
@@ -2136,14 +2054,11 @@ async def _scrape_state_with_retries(
             logger.error(error_msg)
             checkpoint_result = _load_partial_checkpoint_state_result(state_code, error_msg)
             if checkpoint_result is not None:
-                result = (
-                    _promote_timeout_checkpoint_result_if_no_remaining_work(
-                        state_code,
-                        checkpoint_result,
-                        reason="checkpoint_error_no_remaining_work",
-                    )
-                    or checkpoint_result
-                )
+                result = _promote_timeout_checkpoint_result_if_no_remaining_work(
+                    state_code,
+                    checkpoint_result,
+                    reason="checkpoint_error_no_remaining_work",
+                ) or checkpoint_result
             else:
                 timeout_diagnostics = {
                     "timed_out": "timed out" in str(error_msg).lower(),
@@ -2165,13 +2080,7 @@ async def _scrape_state_with_retries(
                     "statutes_count": 0,
                     "zero_statute": True,
                     "low_quality": False,
-                    "quality_metrics": {
-                        "total": 0,
-                        "nav_like_ratio": 0.0,
-                        "fallback_section_ratio": 0.0,
-                        "numeric_section_name_ratio": 0.0,
-                        "scaffold_ratio": 0.0,
-                    },
+                    "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
                     "warnings": [
                         f"{state_code} returned zero statutes",
                         f"{state_code} timeout_diagnostics={timeout_diagnostics.get('classification')}",
@@ -2233,13 +2142,7 @@ async def _scrape_state_with_retries(
         "statutes_count": 0,
         "zero_statute": True,
         "low_quality": False,
-        "quality_metrics": {
-            "total": 0,
-            "nav_like_ratio": 0.0,
-            "fallback_section_ratio": 0.0,
-            "numeric_section_name_ratio": 0.0,
-            "scaffold_ratio": 0.0,
-        },
+        "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
         "warnings": [f"{state_code} returned zero statutes"],
         "statute_data": {
             "state_code": state_code,
@@ -2258,9 +2161,7 @@ def _trim_scraped_statutes_to_max(
     max_statutes: int,
 ) -> tuple[List[Dict[str, Any]], int]:
     if max_statutes <= 0:
-        return scraped_statutes, sum(
-            len((block or {}).get("statutes") or []) for block in scraped_statutes
-        )
+        return scraped_statutes, sum(len((block or {}).get("statutes") or []) for block in scraped_statutes)
 
     trimmed: List[Dict[str, Any]] = []
     per_state_limit = int(max_statutes)
@@ -2306,10 +2207,19 @@ def _compute_coverage_summary(
     scraped_statutes: List[Dict[str, Any]],
     errors: List[str],
 ) -> Dict[str, Any]:
+    """Summarize scrape coverage for the *requested* state set.
+
+    LCR-007: a nonzero, error-free requested subset is **not** full-corpus
+    coverage. ``full_coverage`` means the requested scope closed without gaps;
+    ``full_corpus_coverage`` is true only for the exact 51-jurisdiction set
+    (50 states + DC) with no gaps. Partial success must never promote to a
+    production full-corpus claim.
+    """
     states_targeted = len(selected_states)
     present_states = set()
     zero_states: List[str] = []
     error_states: List[str] = []
+    selected_normalized = [str(code).upper() for code in selected_states]
 
     for block in scraped_statutes:
         if not isinstance(block, dict):
@@ -2325,8 +2235,17 @@ def _compute_coverage_summary(
         if block.get("error"):
             error_states.append(state_code)
 
-    missing_states = [code for code in selected_states if code not in present_states]
+    missing_states = [code for code in selected_normalized if code not in present_states]
     coverage_gap_states = sorted(set(zero_states + error_states + missing_states))
+    requested_closed = len(coverage_gap_states) == 0 and not errors
+
+    canonical_set = frozenset(US_STATES.keys())
+    selected_set = set(selected_normalized)
+    is_exact_51 = selected_set == canonical_set and len(selected_set) == len(US_STATES)
+    includes_dc = "DC" in selected_set
+    # Requested-scope success only — never imply production full-corpus coverage
+    # for a subset or a 50-state run without DC.
+    full_corpus_coverage = bool(requested_closed and is_exact_51 and includes_dc)
 
     return {
         "states_targeted": states_targeted,
@@ -2336,13 +2255,17 @@ def _compute_coverage_summary(
         "error_states": sorted(set(error_states)),
         "missing_states": missing_states,
         "coverage_gap_states": coverage_gap_states,
-        "full_coverage": len(coverage_gap_states) == 0 and not errors,
+        # Backward-compatible: full_coverage == requested scope closed.
+        "full_coverage": requested_closed,
+        "coverage_scope": "full_corpus" if is_exact_51 else "requested_scope",
+        "full_corpus_coverage": full_corpus_coverage,
+        "exact_51_jurisdiction_set": is_exact_51,
+        "includes_dc": includes_dc,
+        "production_release_eligible": full_corpus_coverage,
     }
 
 
-def _aggregate_fetch_analytics(
-    fetch_analytics_by_state: Dict[str, Dict[str, Any]],
-) -> Dict[str, Any]:
+def _aggregate_fetch_analytics(fetch_analytics_by_state: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     if not fetch_analytics_by_state:
         return {
             "states_with_fetch_analytics": 0,
@@ -2368,9 +2291,7 @@ def _aggregate_fetch_analytics(
         provider_counts = state_metrics.get("providers") or {}
         if isinstance(provider_counts, dict):
             for provider, count in provider_counts.items():
-                providers[str(provider)] = int(providers.get(str(provider), 0) or 0) + int(
-                    count or 0
-                )
+                providers[str(provider)] = int(providers.get(str(provider), 0) or 0) + int(count or 0)
 
     return {
         "states_with_fetch_analytics": len(fetch_analytics_by_state),
@@ -2412,9 +2333,7 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
 
             full_text = str(statute.get("full_text") or statute.get("text") or "").strip()
             section_name = str(statute.get("section_name") or statute.get("sectionName") or "")
-            section_number = str(
-                statute.get("section_number") or statute.get("sectionNumber") or ""
-            )
+            section_number = str(statute.get("section_number") or statute.get("sectionNumber") or "")
             if len(full_text) >= 120:
                 statutes_with_text += 1
 
@@ -2471,18 +2390,12 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
     jsonld_legislation_ratio = (
         round((statutes_with_jsonld_legislation / total_statutes), 3) if total_statutes > 0 else 0.0
     )
-    kg_payload_ratio = (
-        round((statutes_with_kg_payload / total_statutes), 3) if total_statutes > 0 else 0.0
-    )
-    citation_ratio = (
-        round((statutes_with_citations / total_statutes), 3) if total_statutes > 0 else 0.0
-    )
+    kg_payload_ratio = round((statutes_with_kg_payload / total_statutes), 3) if total_statutes > 0 else 0.0
+    citation_ratio = round((statutes_with_citations / total_statutes), 3) if total_statutes > 0 else 0.0
     statute_signal_ratio = (
         round((statutes_with_statute_signals / total_statutes), 3) if total_statutes > 0 else 0.0
     )
-    non_scaffold_ratio = (
-        round((non_scaffold_statutes / total_statutes), 3) if total_statutes > 0 else 0.0
-    )
+    non_scaffold_ratio = round((non_scaffold_statutes / total_statutes), 3) if total_statutes > 0 else 0.0
 
     return {
         "states_processed": state_count,
@@ -2508,9 +2421,7 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
     }
 
 
-def _write_state_jsonld_files(
-    scraped_statutes: List[Dict[str, Any]], jsonld_dir: Path
-) -> List[str]:
+def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir: Path) -> List[str]:
     written: List[str] = []
     for state_block in scraped_statutes:
         state_code = str(state_block.get("state_code") or "").strip().upper()
@@ -2568,9 +2479,7 @@ def _write_state_jsonld_files(
     return written
 
 
-def _build_fallback_jsonld_payload(
-    *, state_code: str, state_name: str, statute: Dict[str, Any]
-) -> Optional[Dict[str, Any]]:
+def _build_fallback_jsonld_payload(*, state_code: str, state_name: str, statute: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     full_text = str(statute.get("full_text") or "").strip()
     section_number = str(statute.get("section_number") or "").strip()
     section_name = str(statute.get("section_name") or "").strip()
@@ -2625,7 +2534,9 @@ def _has_sufficient_full_text(statute: Any, *, min_full_text_chars: int) -> bool
         if isinstance(subsections, list) and len(subsections) > 0:
             return True
         if isinstance(citations, dict):
-            total_cites = sum(len(v) for v in citations.values() if isinstance(v, list))
+            total_cites = sum(
+                len(v) for v in citations.values() if isinstance(v, list)
+            )
             if total_cites > 0:
                 return True
 
@@ -2633,9 +2544,7 @@ def _has_sufficient_full_text(statute: Any, *, min_full_text_chars: int) -> bool
     return True
 
 
-def _filter_strict_full_text_statutes(
-    statutes: List[Any], *, min_full_text_chars: int
-) -> tuple[List[Any], int]:
+def _filter_strict_full_text_statutes(statutes: List[Any], *, min_full_text_chars: int) -> tuple[List[Any], int]:
     kept: List[Any] = []
     removed = 0
     for statute in statutes:
@@ -2649,7 +2558,7 @@ def _filter_strict_full_text_statutes(
 def _identify_legal_area(text: str, legal_areas: Optional[List[str]] = None) -> str:
     """Identify the legal area from statute title text."""
     text_lower = text.lower()
-
+    
     # Common legal area keywords
     area_keywords = {
         "criminal": ["criminal", "penal", "crime", "felony", "misdemeanor"],
@@ -2663,19 +2572,19 @@ def _identify_legal_area(text: str, legal_areas: Optional[List[str]] = None) -> 
         "health": ["health", "medical", "healthcare", "insurance"],
         "education": ["education", "school", "university", "student"],
     }
-
+    
     # Check if user specified legal areas
     if legal_areas:
         for area in legal_areas:
             if area.lower() in text_lower:
                 return area
-
+    
     # Auto-detect legal area
     for area, keywords in area_keywords.items():
         for keyword in keywords:
             if keyword in text_lower:
                 return area
-
+    
     return "general"
 
 

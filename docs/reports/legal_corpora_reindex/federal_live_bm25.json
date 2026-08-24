@@ -1,0 +1,29 @@
+{
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "avg_doc_tokens": 2095.366004752206,
+  "complete": true,
+  "documents": 11784,
+  "documents_path": "/var/tmp/lcr-071-fr-bm25/documents.jsonl",
+  "expected_documents": 11784,
+  "goal_id": "LCR-G130",
+  "producer": "build_federal_register_live_bm25.py",
+  "schema": "ipfs_datasets_py/federal-register-live-bm25@1",
+  "status": "passed",
+  "task_id": "LCR-071",
+  "token_total": 24691793,
+  "tokenizer_id": "uscode-bm25-tokenizer/v1",
+  "tokenizer_identity": {
+    "goal_id": "USCIR-G040",
+    "release_profile": "publicus-ir-graphrag/v2",
+    "schema_version": "uscode-tokenizer-v1",
+    "stopword_policy_id": "uscode-legal-stopwords/v1",
+    "task_id": "USCIR-013",
+    "tokenizer_digest": "cd2e8d52fab9cc7d3a7a1f4d853a84e7a3dce95d6828d8edb916bd1dc8f810d6",
+    "tokenizer_id": "uscode-bm25-tokenizer/v1",
+    "tokenizer_version": "v1"
+  },
+  "tokenizer_version": "v1",
+  "triples_path": "/var/tmp/lcr-071-fr-bm25/posting_triples.jsonl",
+  "vocabulary_size": 426851
+}

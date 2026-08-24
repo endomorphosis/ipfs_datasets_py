@@ -1,0 +1,754 @@
+{
+  "acceptance": {
+    "cohort_receipts_read_only": true,
+    "exact_51_passing_receipts": true,
+    "includes_dc": true,
+    "inputs_content_addressed": true,
+    "no_absolute_home_paths": true,
+    "no_hub_upload": true,
+    "no_ready_work_required": true,
+    "no_token_material": true,
+    "zero_remaining_gaps": true,
+    "zero_unresolved_findings": true
+  },
+  "downstream_admission_blocked": false,
+  "goal_id": "LCR-G024",
+  "includes_dc": true,
+  "inputs": {
+    "cohort_receipts": [
+      {
+        "cohort": "A",
+        "content_id": "sha256:63baabdf2cb5e26f2365b706ad7d0a19c8dea5f82ec3e819097f52155fbf5b06",
+        "path": "docs/reports/legal_corpora_reindex/cohort_a.json",
+        "source": "file",
+        "task_id": "LCR-009"
+      },
+      {
+        "cohort": "B",
+        "content_id": "sha256:f5fe77089031c2636f213de7554f09438885b23e4ab33b9f1d68a53c552975cf",
+        "path": "docs/reports/legal_corpora_reindex/cohort_b.json",
+        "source": "file",
+        "task_id": "LCR-010"
+      },
+      {
+        "cohort": "C",
+        "content_id": "sha256:b5fa54683e5a2e84ec44b4e851e0625bc9a71c140f793b066789a391fcbffc8b",
+        "path": "docs/reports/legal_corpora_reindex/cohort_c.json",
+        "source": "file",
+        "task_id": "LCR-011"
+      },
+      {
+        "cohort": "D",
+        "content_id": "sha256:ca67cad6b91a5f5e3c43eb7f04cf3a33118fda8d81746c32d9e222e3c64bba15",
+        "path": "docs/reports/legal_corpora_reindex/cohort_d.json",
+        "source": "file",
+        "task_id": "LCR-012"
+      },
+      {
+        "cohort": "E",
+        "content_id": "sha256:8b11b6f6f67b99f018e7b543943ebfd5ca663396cd3e58492f759f0bb1f5a459",
+        "path": "docs/reports/legal_corpora_reindex/cohort_e.json",
+        "source": "file",
+        "task_id": "LCR-013"
+      },
+      {
+        "cohort": "F",
+        "content_id": "sha256:4f7b16384c97e1e002b809d37fdf209f2c1489045086c39d4f3e25fc5106c8d8",
+        "path": "docs/reports/legal_corpora_reindex/cohort_f.json",
+        "source": "file",
+        "task_id": "LCR-014"
+      },
+      {
+        "cohort": "G",
+        "content_id": "sha256:18a29f4598bb7c955f097261ea5a85e47caa1329db0a4fe3a02de2c485d311b3",
+        "path": "docs/reports/legal_corpora_reindex/cohort_g.json",
+        "source": "file",
+        "task_id": "LCR-015"
+      },
+      {
+        "cohort": "H",
+        "content_id": "sha256:7ecdbe5259db410419f47ff5254f24eaf563460b699a6d47d2a33077d1a40835",
+        "path": "docs/reports/legal_corpora_reindex/cohort_h.json",
+        "source": "file",
+        "task_id": "LCR-016"
+      },
+      {
+        "cohort": "I",
+        "content_id": "sha256:7382e249788530459941f4f7fb3934c1dc2385972a6ba69bbeee5e8fc9c88621",
+        "path": "docs/reports/legal_corpora_reindex/cohort_i.json",
+        "source": "file",
+        "task_id": "LCR-017"
+      },
+      {
+        "cohort": "J",
+        "content_id": "sha256:04c66d51fd57108d1adc04bdb2be634c0d13d901bac433f00c97865d3bc78364",
+        "path": "docs/reports/legal_corpora_reindex/cohort_j.json",
+        "source": "file",
+        "task_id": "LCR-018"
+      },
+      {
+        "cohort": "K",
+        "content_id": "sha256:bd6bb0f672f34248b05b4dbbb73a4a97adfe357bc231aeb8380d824f344b9362",
+        "path": "docs/reports/legal_corpora_reindex/cohort_k.json",
+        "source": "file",
+        "task_id": "LCR-019"
+      },
+      {
+        "cohort": "L",
+        "content_id": "sha256:4aa2066c4029f8073adac1ea97e899732982c325d5b35d87f2dfdb674a79793c",
+        "path": "docs/reports/legal_corpora_reindex/cohort_l.json",
+        "source": "file",
+        "task_id": "LCR-020"
+      },
+      {
+        "cohort": "M",
+        "content_id": "sha256:c919dbaef6128efa30611c96398c45fbd4be5a98e76d3531a0e6e0e6e8027a04",
+        "path": "docs/reports/legal_corpora_reindex/cohort_m.json",
+        "source": "file",
+        "task_id": "LCR-021"
+      }
+    ],
+    "coverage_matrix": {
+      "content_id": "sha256:296979fe3b2c154637a2ac951ddf1f2493ce842f30294d3bdd50a536659cff76",
+      "label": "coverage_matrix",
+      "path": "docs/reports/legal_corpora_reindex/full_scrape_coverage.json",
+      "schema": "ipfs_datasets_py/legal-corpora-reindex-full-scrape-coverage@1",
+      "source": "file",
+      "task_id": "LCR-022"
+    },
+    "official_source_catalog": {
+      "content_id": "sha256:c6cef251435bfa5185543c402e24d14b79acd409f5ec904da058ff805e74499c",
+      "label": "official_source_catalog",
+      "path": "data/legal/state_laws/official_source_catalog.json",
+      "source": "file",
+      "task_id": "LCR-002"
+    }
+  },
+  "observed_jurisdiction_count": 51,
+  "passing_current_receipts": [
+    {
+      "code_family_ids": [
+        "code-of-alabama"
+      ],
+      "cohort": "A",
+      "cohort_task_id": "LCR-009",
+      "complete": true,
+      "content_digest": "sha256:a7c2487b5cfdaf192212665aa593990510b6732046b541d83a262696e4c6df3e",
+      "jurisdiction": "AL",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_a.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "alaska-statutes"
+      ],
+      "cohort": "A",
+      "cohort_task_id": "LCR-009",
+      "complete": true,
+      "content_digest": "sha256:713a6a246428390f57aedc22518eaf200b3fdaaa0d776a78c242fb00b37cc68a",
+      "jurisdiction": "AK",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_a.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "arizona-revised-statutes"
+      ],
+      "cohort": "A",
+      "cohort_task_id": "LCR-009",
+      "complete": true,
+      "content_digest": "sha256:9a1fc8d327794e0c401bff13797fc9ce75a20bda8eb7b4b40c47ad52a2572562",
+      "jurisdiction": "AZ",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_a.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "arkansas-code"
+      ],
+      "cohort": "A",
+      "cohort_task_id": "LCR-009",
+      "complete": true,
+      "content_digest": "sha256:aad8a490611355babb22229c13030ce265c55767afa1a5b4c6dc90fd126b695b",
+      "jurisdiction": "AR",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_a.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "california-codes"
+      ],
+      "cohort": "B",
+      "cohort_task_id": "LCR-010",
+      "complete": true,
+      "content_digest": "sha256:57008226b562675aab9b94d4255406a70209183f17aad8a633e4aa033b08f51e",
+      "jurisdiction": "CA",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_b.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "colorado-revised-statutes"
+      ],
+      "cohort": "B",
+      "cohort_task_id": "LCR-010",
+      "complete": true,
+      "content_digest": "sha256:eb51902f7748c6fb7c7b1305d0e607d18eddb4b62e02d13013fdb24504182f03",
+      "jurisdiction": "CO",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_b.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "connecticut-general-statutes"
+      ],
+      "cohort": "B",
+      "cohort_task_id": "LCR-010",
+      "complete": true,
+      "content_digest": "sha256:d572f2b27184edbfa5ee6b2566c982d683ab8e0f587ff6a5f2a14b9a2b5b8cea",
+      "jurisdiction": "CT",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_b.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "delaware-code"
+      ],
+      "cohort": "B",
+      "cohort_task_id": "LCR-010",
+      "complete": true,
+      "content_digest": "sha256:7d02792d5fb2e1977baa0514e0d9686b4df54c201dd9163d329ca85dfaece131",
+      "jurisdiction": "DE",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_b.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "florida-statutes"
+      ],
+      "cohort": "C",
+      "cohort_task_id": "LCR-011",
+      "complete": true,
+      "content_digest": "sha256:35b01ea700c87b73581285b4f4d5209a32e5494bf13c89b916fdf4d3eeace43d",
+      "jurisdiction": "FL",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_c.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "official-code-of-georgia"
+      ],
+      "cohort": "C",
+      "cohort_task_id": "LCR-011",
+      "complete": true,
+      "content_digest": "sha256:1fc447dd2ff8ac74bbb685a50f1578d8e333c28479e054fcb9573ec377aa1004",
+      "jurisdiction": "GA",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_c.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "hawaii-revised-statutes"
+      ],
+      "cohort": "C",
+      "cohort_task_id": "LCR-011",
+      "complete": true,
+      "content_digest": "sha256:f0536a80b004752f0aecd465c4e20ade0a76a8d4f0ba3818dadfb98ca4285446",
+      "jurisdiction": "HI",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_c.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "idaho-statutes"
+      ],
+      "cohort": "C",
+      "cohort_task_id": "LCR-011",
+      "complete": true,
+      "content_digest": "sha256:6f18cb0ea3946d7e3fd385730eb608d70aaa59e70debfbc6bba5ee3a8895ed20",
+      "jurisdiction": "ID",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_c.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "illinois-compiled-statutes"
+      ],
+      "cohort": "D",
+      "cohort_task_id": "LCR-012",
+      "complete": true,
+      "content_digest": "sha256:733a2c4ada13c981d13f15875724f286d3fa8db0c5bd3631b9c2cb7c8d5ad9c9",
+      "jurisdiction": "IL",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_d.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "indiana-code"
+      ],
+      "cohort": "D",
+      "cohort_task_id": "LCR-012",
+      "complete": true,
+      "content_digest": "sha256:0d5479d657722b2b9227338612e2f682b592d70b28293a7c74a1c8be6b2d6e46",
+      "jurisdiction": "IN",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_d.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "iowa-code"
+      ],
+      "cohort": "D",
+      "cohort_task_id": "LCR-012",
+      "complete": true,
+      "content_digest": "sha256:ca5eac481638c73ef165fbe84c0f1257c35852726b4c3386617b7a6f1b8ed95a",
+      "jurisdiction": "IA",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_d.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "kansas-statutes"
+      ],
+      "cohort": "D",
+      "cohort_task_id": "LCR-012",
+      "complete": true,
+      "content_digest": "sha256:3274cfba46d2e247964b8d5183d0ca3794661b9ac8eed1f608acd9c6df2c566a",
+      "jurisdiction": "KS",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_d.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "kentucky-revised-statutes"
+      ],
+      "cohort": "E",
+      "cohort_task_id": "LCR-013",
+      "complete": true,
+      "content_digest": "sha256:8a8a8300ea8964f10e60d319b8dfa5fa79586be9a7aa1753ec35d19f93081758",
+      "jurisdiction": "KY",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_e.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "louisiana-revised-statutes"
+      ],
+      "cohort": "E",
+      "cohort_task_id": "LCR-013",
+      "complete": true,
+      "content_digest": "sha256:eb81e8006f9414e608971c1ae0273ca7fbf775419013fedfadfb232acaf15b0f",
+      "jurisdiction": "LA",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_e.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "maine-revised-statutes"
+      ],
+      "cohort": "E",
+      "cohort_task_id": "LCR-013",
+      "complete": true,
+      "content_digest": "sha256:a664580ff1d82f218b1c347bc20895db5e7e6144dc2ce636c9cc452b7bf8d975",
+      "jurisdiction": "ME",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_e.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "maryland-code"
+      ],
+      "cohort": "E",
+      "cohort_task_id": "LCR-013",
+      "complete": true,
+      "content_digest": "sha256:104a28070c3009fbe351fe0389509dd7be849b40806c6bacdd5b6e4e0805e40e",
+      "jurisdiction": "MD",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_e.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "massachusetts-general-laws"
+      ],
+      "cohort": "F",
+      "cohort_task_id": "LCR-014",
+      "complete": true,
+      "content_digest": "sha256:b2df4e88439fca0544ec6fbb1060d3ff43a99d802788cb9cde0b00fc121ef105",
+      "jurisdiction": "MA",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_f.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "michigan-compiled-laws"
+      ],
+      "cohort": "F",
+      "cohort_task_id": "LCR-014",
+      "complete": true,
+      "content_digest": "sha256:dd1bc78927afa13d012d8d39fa716def428fa5fb94a3e71ee840289737bd4848",
+      "jurisdiction": "MI",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_f.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "minnesota-statutes"
+      ],
+      "cohort": "F",
+      "cohort_task_id": "LCR-014",
+      "complete": true,
+      "content_digest": "sha256:43cd37a1ae3caea23c2a58151525b71af15dfcb51ab726983d61cae4f485a499",
+      "jurisdiction": "MN",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_f.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "mississippi-code"
+      ],
+      "cohort": "F",
+      "cohort_task_id": "LCR-014",
+      "complete": true,
+      "content_digest": "sha256:5e9667800d9f5467e73b08e78ced3432eb6baac27df57a09e30cf96f420ac376",
+      "jurisdiction": "MS",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_f.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "missouri-revised-statutes"
+      ],
+      "cohort": "G",
+      "cohort_task_id": "LCR-015",
+      "complete": true,
+      "content_digest": "sha256:271bb3443c9280996f84ca333b6d0bad398314b8f33ff89cf29db95cea150097",
+      "jurisdiction": "MO",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_g.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "montana-code-annotated"
+      ],
+      "cohort": "G",
+      "cohort_task_id": "LCR-015",
+      "complete": true,
+      "content_digest": "sha256:8990ce9bdf20a1a119780e9707598cfd4e71f780f91739d62c5f07a75dece28f",
+      "jurisdiction": "MT",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_g.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "nebraska-revised-statutes"
+      ],
+      "cohort": "G",
+      "cohort_task_id": "LCR-015",
+      "complete": true,
+      "content_digest": "sha256:a244c76f27455f7b4375954a2d857040c1f910f5b77bdf68fea9271a1afa00bf",
+      "jurisdiction": "NE",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_g.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "nevada-revised-statutes"
+      ],
+      "cohort": "G",
+      "cohort_task_id": "LCR-015",
+      "complete": true,
+      "content_digest": "sha256:08224c71f3406987a32cbbdcc8ae349a291f3de90d472ca77a665ff30654122f",
+      "jurisdiction": "NV",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_g.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "new-hampshire-revised-statutes"
+      ],
+      "cohort": "H",
+      "cohort_task_id": "LCR-016",
+      "complete": true,
+      "content_digest": "sha256:594b53df9779e10de666d31ee188e550df5fc539cd131d41b197aecfda9f8b93",
+      "jurisdiction": "NH",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_h.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "new-jersey-statutes"
+      ],
+      "cohort": "H",
+      "cohort_task_id": "LCR-016",
+      "complete": true,
+      "content_digest": "sha256:f727f583fdee2503062ecc02cd067ad02b3e483f825d4db604a312edbcf72f67",
+      "jurisdiction": "NJ",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_h.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "new-mexico-statutes-annotated"
+      ],
+      "cohort": "H",
+      "cohort_task_id": "LCR-016",
+      "complete": true,
+      "content_digest": "sha256:68482587fb3ff383623a7b7ddb8f2126837b66ce4ff2dad9b37c2642771e6c0c",
+      "jurisdiction": "NM",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_h.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "new-york-consolidated-laws"
+      ],
+      "cohort": "H",
+      "cohort_task_id": "LCR-016",
+      "complete": true,
+      "content_digest": "sha256:fc12840a88ded538a15f30e295661cfc15d20bda7269a878767d96e4622bfe18",
+      "jurisdiction": "NY",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_h.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "north-carolina-general-statutes"
+      ],
+      "cohort": "I",
+      "cohort_task_id": "LCR-017",
+      "complete": true,
+      "content_digest": "sha256:71c46a70aa43fbf4e472ee1cf1b0bc9894f118def35697e5da1997eba7e51cef",
+      "jurisdiction": "NC",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_i.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "north-dakota-century-code"
+      ],
+      "cohort": "I",
+      "cohort_task_id": "LCR-017",
+      "complete": true,
+      "content_digest": "sha256:1f62e160fee0a7adf297f163d8ddd22f8e021784752f0a31a0a71c35d6374a4f",
+      "jurisdiction": "ND",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_i.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "ohio-revised-code"
+      ],
+      "cohort": "I",
+      "cohort_task_id": "LCR-017",
+      "complete": true,
+      "content_digest": "sha256:2b69c0b87bc3dfd5ab8ff0bfa9a2924d01056fdb8821d606aad1bb81352ed510",
+      "jurisdiction": "OH",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_i.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "oklahoma-statutes"
+      ],
+      "cohort": "I",
+      "cohort_task_id": "LCR-017",
+      "complete": true,
+      "content_digest": "sha256:476efc58fdfd2a2b64f9528134b458cc6d27f1a85909abc2c14777592a28318b",
+      "jurisdiction": "OK",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_i.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "oregon-revised-statutes"
+      ],
+      "cohort": "J",
+      "cohort_task_id": "LCR-018",
+      "complete": true,
+      "content_digest": "sha256:0f440e5e77b1436d494a2c6b01940eb2f92aeb15811a75c1cb86604c174f7f5e",
+      "jurisdiction": "OR",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_j.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "pennsylvania-consolidated-statutes"
+      ],
+      "cohort": "J",
+      "cohort_task_id": "LCR-018",
+      "complete": true,
+      "content_digest": "sha256:b120d700f8e603633976e5bb88f0467e4823bbac17bdfd28495096e6be0bec87",
+      "jurisdiction": "PA",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_j.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "rhode-island-general-laws"
+      ],
+      "cohort": "J",
+      "cohort_task_id": "LCR-018",
+      "complete": true,
+      "content_digest": "sha256:cb54b8a64b6e9c37391682857442753561c474cfa1ab8daba6b473bd759cbedf",
+      "jurisdiction": "RI",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_j.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "south-carolina-code-of-laws"
+      ],
+      "cohort": "J",
+      "cohort_task_id": "LCR-018",
+      "complete": true,
+      "content_digest": "sha256:da4a1daf72b807a8072cc483eedee254af780fc625b7f2c9921f28299273aec3",
+      "jurisdiction": "SC",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_j.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "south-dakota-codified-laws"
+      ],
+      "cohort": "K",
+      "cohort_task_id": "LCR-019",
+      "complete": true,
+      "content_digest": "sha256:b535bbd53c3ef753e9c82b61d68bdccaebe27f34d208c28605b8a7617497d70b",
+      "jurisdiction": "SD",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_k.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "tennessee-code-annotated"
+      ],
+      "cohort": "K",
+      "cohort_task_id": "LCR-019",
+      "complete": true,
+      "content_digest": "sha256:b88dd88cd386166873037d3ab78352481dc6f5a08d1336041aad7e60964b393e",
+      "jurisdiction": "TN",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_k.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "texas-statutes"
+      ],
+      "cohort": "K",
+      "cohort_task_id": "LCR-019",
+      "complete": true,
+      "content_digest": "sha256:a4775a1e57deba6fe68fea13958f368f2b882244026a0bbac40dd30ca772021a",
+      "jurisdiction": "TX",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_k.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "utah-code"
+      ],
+      "cohort": "K",
+      "cohort_task_id": "LCR-019",
+      "complete": true,
+      "content_digest": "sha256:00c0d6d46002e2ad0592170acfa983985ef5d6c8536134a7742b16c988d1bdb2",
+      "jurisdiction": "UT",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_k.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "vermont-statutes"
+      ],
+      "cohort": "L",
+      "cohort_task_id": "LCR-020",
+      "complete": true,
+      "content_digest": "sha256:1f2f1e262cfd5a33764b3dc849dea5e0afa2d6dc3bca326812ce51eb5367dadc",
+      "jurisdiction": "VT",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_l.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "code-of-virginia"
+      ],
+      "cohort": "L",
+      "cohort_task_id": "LCR-020",
+      "complete": true,
+      "content_digest": "sha256:a1374afdfdb5bd0b19ac5e8b4466b5fe446fb658368c13b0105c7e24b52204b5",
+      "jurisdiction": "VA",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_l.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "revised-code-of-washington"
+      ],
+      "cohort": "L",
+      "cohort_task_id": "LCR-020",
+      "complete": true,
+      "content_digest": "sha256:98a1576cd532b46fcbf4812cb3ef61457d14799e4704ff9fbf39958c1a3ffa25",
+      "jurisdiction": "WA",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_l.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "west-virginia-code"
+      ],
+      "cohort": "L",
+      "cohort_task_id": "LCR-020",
+      "complete": true,
+      "content_digest": "sha256:2dde4a476cb65327bb01a8b8dbcf76fc5da2e3f013bc74d70453a4361a3973e0",
+      "jurisdiction": "WV",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_l.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "wisconsin-statutes"
+      ],
+      "cohort": "M",
+      "cohort_task_id": "LCR-021",
+      "complete": true,
+      "content_digest": "sha256:8af635e73fa25f7f6a2e452001e7e9b41452b29cedd06c019b3099e2a8763725",
+      "jurisdiction": "WI",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_m.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "wyoming-statutes"
+      ],
+      "cohort": "M",
+      "cohort_task_id": "LCR-021",
+      "complete": true,
+      "content_digest": "sha256:b4473bd759679ca1b01dddc92671ec3f02353a3d3419777ae887ad11c7e153dd",
+      "jurisdiction": "WY",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_m.json",
+      "status": "success"
+    },
+    {
+      "code_family_ids": [
+        "dc-official-code"
+      ],
+      "cohort": "M",
+      "cohort_task_id": "LCR-021",
+      "complete": true,
+      "content_digest": "sha256:0673e688ec03f86a8e1a4156667387892c983091e62a5faff46e79fceba3de5a",
+      "jurisdiction": "DC",
+      "receipt": "docs/reports/legal_corpora_reindex/cohort_m.json",
+      "status": "success"
+    }
+  ],
+  "passing_receipt_count": 51,
+  "producer": "state_laws_acquisition_gap_refill.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "ready_work": [],
+  "ready_work_count": 0,
+  "remaining_gap_count": 0,
+  "remaining_gaps": [],
+  "required_jurisdictions": 51,
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-full-scrape-acceptance@1",
+  "status": "pass",
+  "task_id": "LCR-023",
+  "unresolved_findings": []
+}

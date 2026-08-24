@@ -1,0 +1,35 @@
+{
+  "acceptance": "Planner gap for corpus substrate had no authorized edit targets. OUL-024 through OUL-026 are already completed.",
+  "authorizing_for_publication": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "canonical_board_task": false,
+  "checks": {
+    "authorizing_for_publication": false,
+    "claims_live_corpus": false,
+    "no_authorized_edit_targets": true,
+    "planner_gap_is_not_new_implementation": true,
+    "producing_tasks_completed": true,
+    "review_only": true
+  },
+  "code_version": "1",
+  "content_digest": "e6025dd1b7c3c6926c7c56e92edd9cc70ab356063437fa97e3b1651db2a6a89a",
+  "digest": "e6025dd1b7c3c6926c7c56e92edd9cc70ab356063437fa97e3b1651db2a6a89a",
+  "discovery": "workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-16-oul-081-objective-gap-5ce9befc2a47.md",
+  "finding": "Planner gap for corpus substrate had no authorized edit targets. OUL-024 through OUL-026 are already completed.",
+  "goal_id": "OUL-G030",
+  "kind": "objective-gap-review",
+  "operator_resolution": null,
+  "producer": "operator_close_uscir_oul_boards.py",
+  "producing_task_status": {
+    "OUL-024": "completed",
+    "OUL-025": "completed",
+    "OUL-026": "completed"
+  },
+  "program_id": "open-us-law-reindex-v1",
+  "report_digest_sha256": "e6025dd1b7c3c6926c7c56e92edd9cc70ab356063437fa97e3b1651db2a6a89a",
+  "review_only": true,
+  "reviewed_at": "2026-08-19T03:36:28Z",
+  "schema": "ipfs_datasets_py/open-us-law-review-receipt@1",
+  "status": "passed",
+  "task_id": "OUL-081"
+}

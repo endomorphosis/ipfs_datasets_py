@@ -1,0 +1,35 @@
+{
+  "acceptance": "Planner gap for sparse remote query had no authorized edit targets. Query-contract producing tasks are already completed.",
+  "authorizing_for_publication": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "canonical_board_task": false,
+  "checks": {
+    "authorizing_for_publication": false,
+    "claims_live_corpus": false,
+    "no_authorized_edit_targets": true,
+    "planner_gap_is_not_new_implementation": true,
+    "producing_tasks_completed": true,
+    "review_only": true
+  },
+  "code_version": "1",
+  "content_digest": "1b9673c3e8580510769ec5d95d9d15d2c362a79d2059fd33dd56055328d82e45",
+  "digest": "1b9673c3e8580510769ec5d95d9d15d2c362a79d2059fd33dd56055328d82e45",
+  "discovery": "workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-16-oul-075-objective-gap-ffccd0780246.md",
+  "finding": "Planner gap for sparse remote query had no authorized edit targets. Query-contract producing tasks are already completed.",
+  "goal_id": "OUL-G000",
+  "kind": "objective-gap-review",
+  "operator_resolution": null,
+  "producer": "operator_close_uscir_oul_boards.py",
+  "producing_task_status": {
+    "OUL-033": "completed",
+    "OUL-034": "completed",
+    "OUL-035": "completed"
+  },
+  "program_id": "open-us-law-reindex-v1",
+  "report_digest_sha256": "1b9673c3e8580510769ec5d95d9d15d2c362a79d2059fd33dd56055328d82e45",
+  "review_only": true,
+  "reviewed_at": "2026-08-19T03:36:28Z",
+  "schema": "ipfs_datasets_py/open-us-law-review-receipt@1",
+  "status": "passed",
+  "task_id": "OUL-075"
+}

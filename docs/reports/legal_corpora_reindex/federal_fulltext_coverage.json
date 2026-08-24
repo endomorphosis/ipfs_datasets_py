@@ -1,0 +1,69 @@
+{
+  "acceptance_contract": {
+    "all_expected_outputs_accounted": true,
+    "classified": 18,
+    "every_inventory_document_classified": true,
+    "excluded": 1,
+    "failed_final": 0,
+    "failed_final_zero": true,
+    "full_text_admitted": 13,
+    "inventory_unmodified": true,
+    "metadata_only": 1,
+    "no_placeholder_admitted": true,
+    "quarantined": 3,
+    "secrets_absent": true
+  },
+  "code_version": "1",
+  "compact_recipe": true,
+  "currentness_disclaimer": "Federal Register completeness is cutoff-relative. Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the daily register is permanently current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "dataset_repo_id": "justicedao/ipfs_federal_register",
+  "expand": true,
+  "fixture": {
+    "generator": "build_fixture_coverage_report",
+    "inventory_documents": 18,
+    "role_sequence": [
+      "html_body",
+      "xml_body",
+      "pdf_body",
+      "govinfo_body",
+      "metadata_only",
+      "excluded",
+      "quarantined_anti_bot",
+      "quarantined_navigation",
+      "quarantined_error"
+    ]
+  },
+  "frontier_closed": true,
+  "goal_id": "LCR-G110",
+  "inventory": {
+    "digest": "20b7ecf2dce23d2f3f9cf9234a97e91035713603fe15fe15b180bb8d9aa0d7bb",
+    "report_relpath": "docs/reports/legal_corpora_reindex/federal_inventory.json",
+    "rewritten": false,
+    "task_id": "LCR-052",
+    "unique_legal_ids": 18
+  },
+  "mode": "fixture",
+  "network_required": false,
+  "notes": "Compact sealed Federal Register full-text coverage recipe for LCR-053. Expand via build_fixture_coverage_report() / expand_coverage_payload(). Does not rewrite the official LCR-052 inventory.",
+  "observation_cutoff": "2026-08-10T00:00:00Z",
+  "previous_public_pin": "720668ae016cc400916dda884c9005e03618edfa",
+  "producer": "federal_register_fulltext.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "range": {
+    "end": "2026-08-10",
+    "inclusive": true,
+    "start": "2026-03-03"
+  },
+  "release_point": "fr/cutoff/2026-08-10",
+  "report_kind": "fixture_recipe",
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-fulltext-coverage@1",
+  "schema_version": "federal-register-fulltext-v1",
+  "secrets_absent": true,
+  "source_precedence": [
+    "html",
+    "xml",
+    "pdf",
+    "govinfo"
+  ],
+  "task_id": "LCR-053"
+}

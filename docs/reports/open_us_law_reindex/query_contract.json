@@ -1,0 +1,148 @@
+{
+  "acceptance": {
+    "bm25_routes_by_lexicographic_term_ranges": true,
+    "dense_retrieval_probes_evaluated_centroids": true,
+    "hybrid_scores_late_fuse_compatible_rankings": true,
+    "semantic_graph_traversal_hydrates_frontier_through_entry_locator": true,
+    "traversal_budgets_include_depth_node_edge_shard_byte_time": true
+  },
+  "adr_path": "docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md",
+  "authorizing_for_publication": false,
+  "authorizing_for_release": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "bounds": {
+    "acceptance_budget_names": [
+      "depth",
+      "node",
+      "edge",
+      "shard",
+      "byte",
+      "time"
+    ],
+    "budget_dimensions": [
+      "bytes",
+      "shards",
+      "rows",
+      "nodes",
+      "edges",
+      "depth",
+      "time"
+    ],
+    "default_beam_width": 16,
+    "default_bm25_weight": 0.5,
+    "default_candidate_centroids": 4,
+    "default_rrf_k": 60,
+    "default_top_k": 10,
+    "default_vector_weight": 0.5,
+    "fusion_methods": [
+      "rrf",
+      "weighted"
+    ],
+    "fusion_stage": "late",
+    "max_top_k": 1000,
+    "traversal_budgets": [
+      "depth",
+      "nodes",
+      "edges",
+      "shards",
+      "bytes",
+      "time"
+    ],
+    "vector_shard_first_last_keys_are_lexical_ranges": false
+  },
+  "bundle": "query-engine",
+  "checks": {
+    "bm25_route_policy": "lexicographic_term_ranges",
+    "component_scores_preserved": true,
+    "entry_locator_index": "vector_entry_locator",
+    "entry_locator_key": "entry_cid",
+    "frontier_hydration_policy": "entry_locator",
+    "fusion_policy": "late_fuse_compatible_rankings",
+    "fusion_stage": "late",
+    "similarity_never_legal_authority": true,
+    "traversal_budgets_present": true,
+    "vector_route_policy": "evaluated_centroid_probe",
+    "vector_shard_keys_are_lexical_ranges": false
+  },
+  "contract_cid": "sha256:c224f3a6f1073a60b2113311120253f80741cf3193286779a41abc9ea566d4ca",
+  "description": "Software-contract for OUL-034 hybrid retrieval and embedding-guided graph traversal. BM25 routes by lexicographic term ranges, dense retrieval probes evaluated centroids, hybrid scores late-fuse compatible rankings, and semantic graph traversal hydrates frontier vectors through the dedicated entry locator under depth, node, edge, shard, byte, and time budgets. Cosine-sorted vector-shard first/last keys are not lexical CID ranges. This contract does not authorize a live exact-51 query or publication.",
+  "fusion": {
+    "methods": [
+      "rrf",
+      "weighted"
+    ],
+    "policy": "late_fuse_compatible_rankings",
+    "preserves_component_scores": true,
+    "stage": "late"
+  },
+  "goal_id": "OUL-G050",
+  "indexes": {
+    "bm25": "bm25_keyword_shards",
+    "entry_locator": "vector_entry_locator",
+    "vectors": "vector_chunks"
+  },
+  "modes": [
+    "bm25",
+    "vector",
+    "hybrid",
+    "neighbors",
+    "graph_walk",
+    "semantic_graph_walk"
+  ],
+  "producer": "open_us_law_query.py",
+  "program_id": "open-us-law-reindex-v1",
+  "proves_software_contract_only": true,
+  "query_schema_version": "open-us-law-query-v1",
+  "release_profile": "open-us-law-sparse-graphrag/v1",
+  "route_families": [
+    "bm25_postings",
+    "control_plane",
+    "corpus",
+    "graph_adjacency",
+    "graph_edges",
+    "graph_nodes",
+    "routing_index",
+    "vectors"
+  ],
+  "route_reasons": [
+    "adjacency_range",
+    "centroid_probe",
+    "control_plane",
+    "exact_vector_score",
+    "graph_node",
+    "hydrate_hit",
+    "manifest",
+    "replay",
+    "routing_index",
+    "term_range"
+  ],
+  "routing": {
+    "bm25": "lexicographic_term_ranges",
+    "frontier_hydration": "entry_locator",
+    "hybrid": "late_fuse_compatible_rankings",
+    "vector": "evaluated_centroid_probe"
+  },
+  "schema_version": "open-us-law-query-contract-v1",
+  "similarity_edge_semantics": {
+    "authority": "non_authoritative",
+    "edge_class": "similarity",
+    "edge_types": [
+      "BM25_NEIGHBOR_OF",
+      "EMBEDDING_NEIGHBOR_OF",
+      "SIMILAR_TO"
+    ],
+    "legal_authority": false,
+    "notes": "Similarity edges (BM25_NEIGHBOR_OF, SIMILAR_TO, EMBEDDING_NEIGHBOR_OF) are retrieval hints only. They must never be labeled as legal citation, authority, amendment, or proof.",
+    "proof_authority": false,
+    "retrieval_hint": true
+  },
+  "task_id": "OUL-034",
+  "traversal_budgets": [
+    "depth",
+    "nodes",
+    "edges",
+    "shards",
+    "bytes",
+    "time"
+  ]
+}

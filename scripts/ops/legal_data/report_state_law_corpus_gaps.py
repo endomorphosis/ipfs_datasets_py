@@ -18,57 +18,49 @@ from typing import Dict, List, Optional, Sequence
 from urllib.parse import urlparse
 
 STATES_50: List[str] = [
-    "AL",
-    "AK",
-    "AZ",
-    "AR",
-    "CA",
-    "CO",
-    "CT",
-    "DE",
-    "FL",
-    "GA",
-    "HI",
-    "ID",
-    "IL",
-    "IN",
-    "IA",
-    "KS",
-    "KY",
-    "LA",
-    "ME",
-    "MD",
-    "MA",
-    "MI",
-    "MN",
-    "MS",
-    "MO",
-    "MT",
-    "NE",
-    "NV",
-    "NH",
-    "NJ",
-    "NM",
-    "NY",
-    "NC",
-    "ND",
-    "OH",
-    "OK",
-    "OR",
-    "PA",
-    "RI",
-    "SC",
-    "SD",
-    "TN",
-    "TX",
-    "UT",
-    "VT",
-    "VA",
-    "WA",
-    "WV",
-    "WI",
-    "WY",
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
 ]
+
+# Exact production set including DC (LCR-007). STATES_50 retained for compatibility.
+STATES_51: List[str] = list(STATES_50) + ["DC"]
+CANONICAL_PRODUCTION_JURISDICTIONS = frozenset(STATES_51)
+EXPECTED_PRODUCTION_JURISDICTION_COUNT = 51
+
+
+class SubsetReleaseError(ValueError):
+    """Raised when gap report is asked to certify a subset as a production release."""
+
+
+def reject_subset_release(
+    states: Sequence[str],
+    *,
+    context: str = "production gap report",
+) -> List[str]:
+    """Fail closed unless ``states`` is exactly the sealed 51-jurisdiction set."""
+    normalized: List[str] = []
+    seen = set()
+    for item in states:
+        code = str(item or "").strip().upper()
+        if not code or code in seen:
+            continue
+        normalized.append(code)
+        seen.add(code)
+    observed = set(normalized)
+    if observed != CANONICAL_PRODUCTION_JURISDICTIONS:
+        missing = sorted(CANONICAL_PRODUCTION_JURISDICTIONS - observed)
+        extra = sorted(observed - CANONICAL_PRODUCTION_JURISDICTIONS)
+        raise SubsetReleaseError(
+            f"subset release rejected for {context}: "
+            f"count={len(observed)} (expected {EXPECTED_PRODUCTION_JURISDICTION_COUNT}); "
+            f"missing={missing}; extra={extra}"
+        )
+    if "DC" not in observed:
+        raise SubsetReleaseError(f"subset release rejected for {context}: DC is required")
+    return normalized
 
 
 @dataclass
@@ -126,6 +118,14 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=15,
         help="How many worst states to list in summary sections",
+    )
+    parser.add_argument(
+        "--production-release",
+        action="store_true",
+        help=(
+            "Production release gate: require exact 51 jurisdictions including DC "
+            "and reject subset success claims (LCR-007)."
+        ),
     )
     return parser.parse_args()
 
@@ -252,25 +252,17 @@ def build_summary(rows: Sequence[StateGapRow]) -> Dict[str, object]:
         "records_total": sum(r.records_total for r in rows),
         "real_rows_total": sum(r.real_rows for r in rows),
         "synthetic_rows_total": sum(r.synthetic_rows for r in rows),
-        "avg_real_ratio": round(sum(r.real_ratio for r in rows) / total_states, 3)
-        if total_states
-        else 0.0,
-        "avg_unique_source_urls": round(sum(r.unique_source_urls for r in rows) / total_states, 2)
-        if total_states
-        else 0.0,
+        "avg_real_ratio": round(sum(r.real_ratio for r in rows) / total_states, 3) if total_states else 0.0,
+        "avg_unique_source_urls": round(sum(r.unique_source_urls for r in rows) / total_states, 2) if total_states else 0.0,
     }
 
 
 def render_markdown(rows: Sequence[StateGapRow], summary: Dict[str, object], top_n: int) -> str:
-    by_real_ratio = sorted(
-        rows, key=lambda r: (r.real_ratio, r.real_rows, r.records_total, r.state)
-    )
-    by_url_depth = sorted(
-        rows, key=lambda r: (r.unique_source_urls, r.real_rows, r.records_total, r.state)
-    )
+    by_real_ratio = sorted(rows, key=lambda r: (r.real_ratio, r.real_rows, r.records_total, r.state))
+    by_url_depth = sorted(rows, key=lambda r: (r.unique_source_urls, r.real_rows, r.records_total, r.state))
 
     lines: List[str] = []
-    lines.append("# State Laws Corpus Gap Report (50 States)")
+    lines.append("# State Laws Corpus Gap Report (50 States + DC)")
     lines.append("")
     lines.append("## Summary")
     lines.append("")
@@ -280,28 +272,16 @@ def render_markdown(rows: Sequence[StateGapRow], summary: Dict[str, object], top
     lines.append(f"- Estimated synthetic rows: **{summary['synthetic_rows_total']}**")
     lines.append(f"- Avg real ratio: **{summary['avg_real_ratio']}**")
     lines.append(f"- Avg unique source URLs/state: **{summary['avg_unique_source_urls']}**")
-    lines.append(
-        f"- Missing files: `{', '.join(summary['missing_files']) if summary['missing_files'] else 'None'}`"
-    )
-    lines.append(
-        f"- Below 40 rows: `{', '.join(summary['below_40_records']) if summary['below_40_records'] else 'None'}`"
-    )
-    lines.append(
-        f"- Real ratio < 0.5: `{', '.join(summary['low_real_ratio_below_0_5']) if summary['low_real_ratio_below_0_5'] else 'None'}`"
-    )
-    lines.append(
-        f"- Unique source URLs < 20: `{', '.join(summary['low_unique_source_urls_below_20']) if summary['low_unique_source_urls_below_20'] else 'None'}`"
-    )
-    lines.append(
-        f"- Web-archiving failed: `{', '.join(summary['webarch_failed']) if summary['webarch_failed'] else 'None'}`"
-    )
+    lines.append(f"- Missing files: `{', '.join(summary['missing_files']) if summary['missing_files'] else 'None'}`")
+    lines.append(f"- Below 40 rows: `{', '.join(summary['below_40_records']) if summary['below_40_records'] else 'None'}`")
+    lines.append(f"- Real ratio < 0.5: `{', '.join(summary['low_real_ratio_below_0_5']) if summary['low_real_ratio_below_0_5'] else 'None'}`")
+    lines.append(f"- Unique source URLs < 20: `{', '.join(summary['low_unique_source_urls_below_20']) if summary['low_unique_source_urls_below_20'] else 'None'}`")
+    lines.append(f"- Web-archiving failed: `{', '.join(summary['webarch_failed']) if summary['webarch_failed'] else 'None'}`")
     lines.append("")
 
     lines.append(f"## Top {top_n} Lowest Real-Ratio States")
     lines.append("")
-    lines.append(
-        "| State | Records | Real | Synthetic | Real Ratio | Unique URLs | Unique Domains | WebArch |"
-    )
+    lines.append("| State | Records | Real | Synthetic | Real Ratio | Unique URLs | Unique Domains | WebArch |")
     lines.append("|---|---:|---:|---:|---:|---:|---:|:---:|")
     for r in by_real_ratio[:top_n]:
         lines.append(
@@ -321,9 +301,7 @@ def render_markdown(rows: Sequence[StateGapRow], summary: Dict[str, object], top
 
     lines.append("## Per-State Table")
     lines.append("")
-    lines.append(
-        "| State | Records | Real | Synthetic | Real Ratio | Unique URLs | Unique Domains | WebArch | Method |"
-    )
+    lines.append("| State | Records | Real | Synthetic | Real Ratio | Unique URLs | Unique Domains | WebArch | Method |")
     lines.append("|---|---:|---:|---:|---:|---:|---:|:---:|---|")
     for r in sorted(rows, key=lambda x: x.state):
         lines.append(
@@ -337,17 +315,52 @@ def main() -> int:
     args = parse_args()
     jsonld_dir = Path(args.jsonld_dir).expanduser().resolve()
     verify_report = Path(args.verify_report).expanduser().resolve() if args.verify_report else None
+    production = bool(getattr(args, "production_release", False))
+
+    # Always audit the exact 51-set including DC (legacy 50-only omitted DC).
+    states = list(STATES_51)
+    if production:
+        try:
+            states = reject_subset_release(states, context="report_state_law_corpus_gaps --production-release")
+        except SubsetReleaseError as exc:
+            print(json.dumps({"status": "fail", "reason": "subset_release_rejected", "detail": str(exc)}, indent=2))
+            return 1
 
     webarch = load_webarch_results(verify_report) if verify_report else {}
     rows = [
-        read_state_row(jsonld_dir / f"STATE-{state}.jsonld", state, webarch) for state in STATES_50
+        read_state_row(jsonld_dir / f"STATE-{state}.jsonld", state, webarch)
+        for state in states
     ]
 
     summary = build_summary(rows)
+    summary["includes_dc"] = any(r.state == "DC" for r in rows)
+    summary["jurisdiction_count"] = len(rows)
+    summary["exact_production_set"] = set(r.state for r in rows) == CANONICAL_PRODUCTION_JURISDICTIONS
     payload = {
         "summary": summary,
         "rows": [r.to_dict() for r in rows],
+        "production_release": production,
     }
+
+    if production:
+        # Production gap reports reject subset / incomplete coverage claims.
+        gaps = list(summary.get("missing_files") or [])
+        if gaps or not summary.get("exact_production_set"):
+            payload["status"] = "fail"
+            payload["reason"] = "subset_or_incomplete_release"
+            print(json.dumps(payload["summary"], indent=2, sort_keys=True))
+            print("RESULT: FAIL")
+            return 1
+        # Also reject obvious one-row false success across the corpus.
+        one_row = [r.state for r in rows if r.file_exists and r.records_total <= 1]
+        if one_row:
+            payload["status"] = "fail"
+            payload["reason"] = "one_row_coverage_rejected"
+            payload["one_row_states"] = one_row
+            print(json.dumps(payload["summary"], indent=2, sort_keys=True))
+            print("one_row_states:", ",".join(one_row))
+            print("RESULT: FAIL")
+            return 1
 
     print(json.dumps(summary, indent=2, sort_keys=True))
 
@@ -363,6 +376,8 @@ def main() -> int:
         out_md.write_text(render_markdown(rows, summary, max(1, int(args.top_n))), encoding="utf-8")
         print(f"wrote_md: {out_md}")
 
+    if production:
+        print("RESULT: PASS")
     return 0
 
 

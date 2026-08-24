@@ -1,0 +1,57 @@
+{
+  "authorizing_for_publication": false,
+  "bridge_task_id": "OUL-049",
+  "checks": {
+    "cohort_complete": false,
+    "declared_cohort_report_consumed": false,
+    "fixture_proves_cohort_completion": false,
+    "placeholders_rejected": true,
+    "raw_bytes_checked_required": true,
+    "samples_rejected": true,
+    "self_asserted_digests_rejected": true,
+    "software_behavior_proven": true,
+    "zero_row_success_rejected": true
+  },
+  "code_version": "1",
+  "cohort": "",
+  "cohort_complete": false,
+  "cohort_evidence_schema": "open-us-law-cohort-evidence-v1",
+  "cohort_evidence_schema_path": "data/legal/open_us_law/cohort_evidence.schema.json",
+  "failure_kind": "validation",
+  "fixture_execution_proves_cohort_completion": false,
+  "goal_id": "OUL-G090",
+  "jurisdictions": [],
+  "producer": "audit_open_us_law_retry_repair.py",
+  "program_id": "open-us-law-reindex-v1",
+  "repair_completed": true,
+  "repairs": [
+    {
+      "detail": "OUL-048 looped on proposal_gate_failed / empty_patch. This receipt is the durable tracked repair so the supervisor can release OUL-048 from strategy blocked_tasks.",
+      "id": "write-tracked-terminal-repair-receipt"
+    },
+    {
+      "detail": "The board validation command does not pass --cohort because OUL-048 is terminal evidence, not a scrape cohort.",
+      "id": "accept-board-validation-without-cohort"
+    }
+  ],
+  "report_digest_sha256": "14a79f4070d66e0d7b35cff58d5c873b78e4826f9f09a17264384cd26c353609",
+  "report_schema": "ipfs_datasets_py/open-us-law-retry-repair@1",
+  "schema_version": "open-us-law-retry-repair-v1",
+  "sealed_at": "2026-08-13T00:00:00Z",
+  "software_behavior_proven": true,
+  "source_digests": {
+    "scripts/ops/legal_data/audit_open_us_law_retry_repair.py": "e13636d129e47004dd3eb2f5d25ca12fdc937474be3dd741c0fece54cf1a29c6",
+    "scripts/ops/legal_data/check_open_us_law_public_release.py": "88694c26521a0754dd90612545e49db7be92074f6d0eed9070b8c0ab11cc860a",
+    "scripts/validate_open_us_law_reindex_board.py": "081e91d1f08654faf97c9731e5988f05e4604cd8877f3bdb8b71ffe0c2bc9d16"
+  },
+  "source_task_id": "OUL-048",
+  "source_task_released_for": "OUL-048",
+  "status": "passed",
+  "task_id": "OUL-085",
+  "validation_commands": [
+    "python scripts/validate_open_us_law_reindex_board.py --check-all",
+    "python scripts/ops/legal_data/check_open_us_law_public_release.py --require-public-pin --check",
+    "python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-085 --source OUL-048 --check"
+  ],
+  "validation_digests": {}
+}

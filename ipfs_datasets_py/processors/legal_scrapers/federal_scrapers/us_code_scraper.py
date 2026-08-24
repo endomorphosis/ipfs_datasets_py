@@ -2,17 +2,28 @@
 
 This module downloads and parses title packages from GovInfo package endpoints,
 producing section-level records suitable for full U.S. Code ingestion.
+
+Official sources (in order):
+1. GovInfo public content ZIP
+2. GovInfo package API ``zipLink`` (same method as Vaquill-AI/open-us-law)
+3. U.S. House OLRC releasepoint HTM ZIP
+
+Recovery-only fallbacks (not legal authority): Wayback CDX raw captures and,
+when enabled, Common Crawl. Archive.is is HTML-oriented and is not used for
+binary ZIP packages.
 """
 
 import json
 import logging
+import os
 import re
 import time
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 from urllib.parse import urljoin
+from xml.etree import ElementTree as ET
 
 import anyio
 
@@ -35,6 +46,14 @@ USER_AGENT = "ipfs-datasets-uscode-scraper/2.0"
 DEFAULT_USCODE_DOWNLOAD_RETRIES = 4
 DEFAULT_USCODE_YEAR_FALLBACKS = 8
 DEFAULT_USHOUSE_RELEASE_MAX_PROBE = 220
+GOVINFO_API_BASE = "https://api.govinfo.gov"
+WAYBACK_CDX_URL = "https://web.archive.org/cdx/search/cdx"
+OFFICIAL_ZIP_SOURCES = (
+    "govinfo-content-zip",
+    "govinfo-api-ziplink",
+    "ushouse-releasepoint-htm-zip",
+)
+RECOVERY_ZIP_SOURCES = ("wayback-cdx", "common_crawl")
 SUBSEC_TOKEN_RE = re.compile(r"\(([0-9]+|[A-Za-z]{1,6})\)")
 ROMAN_LOWER_RE = re.compile(r"^[ivxlcdm]+$")
 ROMAN_UPPER_RE = re.compile(r"^[IVXLCDM]+$")
@@ -200,6 +219,161 @@ def _govinfo_section_url(year: int, title_num: str, html_name: str) -> str:
     )
 
 
+def _govinfo_api_summary_url(year: int, title_num: str) -> str:
+    return f"{GOVINFO_API_BASE}/packages/USCODE-{int(year)}-title{title_num}/summary"
+
+
+def _govinfo_api_key() -> str:
+    return str(os.environ.get("GOVINFO_API_KEY") or "").strip()
+
+
+def _source_authority_class(source: str) -> str:
+    if source in OFFICIAL_ZIP_SOURCES:
+        return "official"
+    return "recovery"
+
+
+def _govinfo_api_zip_link(
+    session: "requests.Session",
+    *,
+    year: int,
+    title_num: str,
+) -> Optional[str]:
+    """Resolve the GovInfo package API zipLink used by Vaquill open-us-law."""
+
+    params: Dict[str, str] = {}
+    api_key = _govinfo_api_key()
+    if api_key:
+        params["api_key"] = api_key
+    try:
+        response = session.get(
+            _govinfo_api_summary_url(year, title_num),
+            params=params or None,
+            timeout=30,
+        )
+        if int(response.status_code) != 200:
+            return None
+        payload = response.json()
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    download = payload.get("download") if isinstance(payload.get("download"), dict) else {}
+    link = str(download.get("zipLink") or "").strip()
+    return link or None
+
+
+def _wayback_raw_capture_url(timestamp: str, original: str) -> str:
+    ts = str(timestamp or "").strip()
+    original_url = str(original or "").strip()
+    return f"https://web.archive.org/web/{ts}id_/{original_url}"
+
+
+def _wayback_cdx_zip_url(
+    session: "requests.Session",
+    original_url: str,
+) -> Optional[str]:
+    """Return a Wayback ``id_`` raw-capture URL for a GovInfo ZIP, if one exists."""
+
+    try:
+        response = session.get(
+            WAYBACK_CDX_URL,
+            params={
+                "url": original_url,
+                "output": "json",
+                "filter": "statuscode:200",
+                "fl": "timestamp,original,mimetype",
+                "limit": "8",
+            },
+            timeout=30,
+        )
+        if int(response.status_code) != 200:
+            return None
+        rows = response.json()
+    except Exception:
+        return None
+    if not isinstance(rows, list) or len(rows) < 2:
+        return None
+    header = [str(item).lower() for item in rows[0]]
+    try:
+        ts_idx = header.index("timestamp")
+        orig_idx = header.index("original")
+        mime_idx = header.index("mimetype") if "mimetype" in header else -1
+    except ValueError:
+        ts_idx, orig_idx, mime_idx = 0, 1, 2 if len(header) > 2 else -1
+    zip_hit: Optional[Tuple[str, str]] = None
+    any_hit: Optional[Tuple[str, str]] = None
+    for row in rows[1:]:
+        if not isinstance(row, list) or len(row) <= max(ts_idx, orig_idx):
+            continue
+        timestamp = str(row[ts_idx] or "").strip()
+        original = str(row[orig_idx] or original_url).strip()
+        if not timestamp or not original:
+            continue
+        mime = str(row[mime_idx] or "").lower() if mime_idx >= 0 and len(row) > mime_idx else ""
+        hit = (timestamp, original)
+        if "zip" in mime:
+            zip_hit = hit
+            break
+        if zip_hit is None and original.lower().endswith(".zip"):
+            zip_hit = hit
+        if any_hit is None:
+            any_hit = hit
+    chosen = zip_hit or any_hit
+    if chosen is None:
+        return None
+    return _wayback_raw_capture_url(chosen[0], chosen[1])
+
+
+def iter_official_title_zip_candidates(
+    session: "requests.Session",
+    *,
+    year: int,
+    title_num: str,
+) -> List[Dict[str, str]]:
+    """Official ZIP locations: public content URL, then GovInfo API zipLink."""
+
+    candidates: List[Dict[str, str]] = [
+        {
+            "source": "govinfo-content-zip",
+            "url": _govinfo_zip_url(year, title_num),
+            "authority": "official",
+        }
+    ]
+    api_link = _govinfo_api_zip_link(session, year=year, title_num=title_num)
+    if api_link and api_link != candidates[0]["url"]:
+        candidates.append(
+            {
+                "source": "govinfo-api-ziplink",
+                "url": api_link,
+                "authority": "official",
+            }
+        )
+    return candidates
+
+
+def iter_recovery_title_zip_candidates(
+    session: "requests.Session",
+    *,
+    year: int,
+    title_num: str,
+) -> List[Dict[str, str]]:
+    """Archive recovery candidates for a title ZIP. Not legal authority."""
+
+    original = _govinfo_zip_url(year, title_num)
+    candidates: List[Dict[str, str]] = []
+    wayback = _wayback_cdx_zip_url(session, original)
+    if wayback:
+        candidates.append(
+            {
+                "source": "wayback-cdx",
+                "url": wayback,
+                "authority": "recovery",
+            }
+        )
+    return candidates
+
+
 def build_uscode_section_url(title_num: str, section: str) -> str:
     """Build the canonical U.S. Code section URL used by recovery fuzzing."""
     title = str(title_num or "").strip()
@@ -353,17 +527,55 @@ def _download_title_zip(
     cache_dir: Path,
     force_download: bool,
     max_attempts: int = DEFAULT_USCODE_DOWNLOAD_RETRIES,
-) -> Path:
-    url = _govinfo_zip_url(year, title_num)
+    include_official: bool = True,
+    include_recovery: bool = False,
+) -> Dict[str, Any]:
     out_path = cache_dir / f"USCODE-{int(year)}-title{title_num}.zip"
-    return _download_zip_from_url(
-        session,
-        url=url,
-        out_path=out_path,
-        force_download=force_download,
-        max_attempts=max_attempts,
-        not_found_hint=f"title {title_num} year {year}",
-    )
+    candidates: List[Dict[str, str]] = []
+    if include_official:
+        candidates.extend(
+            iter_official_title_zip_candidates(session, year=year, title_num=title_num)
+        )
+    if include_recovery:
+        candidates.extend(
+            iter_recovery_title_zip_candidates(session, year=year, title_num=title_num)
+        )
+    last_error: Optional[Exception] = None
+    attempts: List[Dict[str, Any]] = []
+    for candidate in candidates:
+        source = str(candidate.get("source") or "govinfo-content-zip")
+        url = str(candidate.get("url") or "")
+        try:
+            zip_path = _download_zip_from_url(
+                session,
+                url=url,
+                out_path=out_path,
+                force_download=force_download,
+                max_attempts=max_attempts,
+                not_found_hint=f"title {title_num} year {year} via {source}",
+            )
+            attempts.append({"source": source, "url": url, "status": "success"})
+            return {
+                "zip_path": zip_path,
+                "source": source,
+                "source_url": url,
+                "source_authority_class": _source_authority_class(source),
+                "attempts": attempts,
+            }
+        except Exception as exc:
+            last_error = exc if isinstance(exc, Exception) else Exception(str(exc))
+            attempts.append(
+                {
+                    "source": source,
+                    "url": url,
+                    "status": "error",
+                    "error": str(exc),
+                }
+            )
+            continue
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError(f"Failed to download title zip for title {title_num} year {year}")
 
 
 def _download_zip_from_url(
@@ -582,6 +794,76 @@ def _extract_section_heading(text: str, section_number: str, fallback_heading: s
     return _norm_space(fallback_heading)[:500]
 
 
+_MODS_NS = {"mods": "http://www.loc.gov/mods/v3"}
+
+
+def parse_usc_mods_metadata(mods_xml: bytes) -> Dict[str, Dict[str, str]]:
+    """Parse GovInfo ``mods.xml`` granule metadata from a US Code title ZIP.
+
+    Adapted from the Vaquill-AI/open-us-law ``parse_usc_zip`` MODS walk
+    (Apache-2.0). Missing or malformed MODS is a no-op.
+    """
+
+    metadata: Dict[str, Dict[str, str]] = {}
+    if not mods_xml:
+        return metadata
+    try:
+        root = ET.fromstring(mods_xml)
+    except ET.ParseError:
+        return metadata
+    for item in root.iter("{http://www.loc.gov/mods/v3}relatedItem"):
+        rid = str(item.get("ID") or "")
+        if not rid.startswith("id-USCODE"):
+            continue
+        granule_id = rid[len("id-") :]
+        entry: Dict[str, str] = {}
+        title_info = item.find("mods:titleInfo", _MODS_NS)
+        if title_info is not None:
+            title_el = title_info.find("mods:title", _MODS_NS)
+            if title_el is not None and title_el.text:
+                entry["section_title"] = title_el.text.strip()
+            part = title_info.find("mods:partName", _MODS_NS)
+            if part is not None and part.text:
+                entry["part_name"] = part.text.strip()
+        for ident in item.findall("mods:identifier", _MODS_NS):
+            itype = str(ident.get("type") or "")
+            if itype == "Parent Id" and ident.text:
+                entry["parent_id"] = ident.text.strip()
+            elif itype == "uri" and ident.text:
+                entry["details_url"] = ident.text.strip()
+            elif itype == "former granule identifier" and ident.text:
+                entry["former_id"] = ident.text.strip()
+        for related in item.findall("mods:relatedItem", _MODS_NS):
+            href = str(related.get("{http://www.w3.org/1999/xlink}href") or "")
+            if ".htm" in href:
+                entry["html_url"] = href
+            elif ".pdf" in href:
+                entry["pdf_url"] = href
+        origin = item.find("mods:originInfo", _MODS_NS)
+        if origin is not None:
+            issued = origin.find("mods:dateIssued", _MODS_NS)
+            if issued is not None and issued.text:
+                entry["date_issued"] = issued.text.strip()
+        if entry:
+            metadata[granule_id] = entry
+    return metadata
+
+
+def _mods_from_zip(archive: zipfile.ZipFile) -> Dict[str, Dict[str, str]]:
+    for name in archive.namelist():
+        if name.lower().endswith("mods.xml"):
+            try:
+                return parse_usc_mods_metadata(archive.read(name))
+            except Exception:
+                return {}
+    return {}
+
+
+def _granule_id_from_html_name(html_name: str) -> str:
+    stem = Path(html_name).stem
+    return stem
+
+
 def _extract_section_number_and_heading(heading_text: str) -> tuple[str, str]:
     text = _norm_space(heading_text)
     if not text:
@@ -671,8 +953,29 @@ def _extract_sections_from_zip(
             consolidated.append(record)
         return consolidated
 
+    def _apply_mods(record: Dict[str, Any], html_name: str) -> None:
+        granule_id = _granule_id_from_html_name(html_name)
+        meta = mods_meta.get(granule_id) or {}
+        if not meta:
+            return
+        record["granule_id"] = granule_id
+        if meta.get("section_title"):
+            record["heading"] = meta["section_title"][:500]
+        if meta.get("pdf_url"):
+            record["pdf_url"] = meta["pdf_url"]
+        if meta.get("details_url"):
+            record["details_url"] = meta["details_url"]
+        if meta.get("date_issued"):
+            record["date_issued"] = meta["date_issued"]
+        if meta.get("former_id"):
+            record["former_granule_id"] = meta["former_id"]
+        chapter = record.get("chapter")
+        if isinstance(chapter, dict) and meta.get("part_name") and not chapter.get("chapter_name"):
+            chapter["chapter_name"] = meta["part_name"]
+
     sections: List[Dict[str, Any]] = []
     with zipfile.ZipFile(zip_path) as archive:
+        mods_meta = _mods_from_zip(archive)
         names = sorted(archive.namelist())
         html_entries = [
             name
@@ -695,7 +998,9 @@ def _extract_sections_from_zip(
                 and "section-head" in html_text
                 and "-sec" not in html_name.lower()
             ):
-                sections.extend(_extract_consolidated_sections(html_text, html_name))
+                for item in _extract_consolidated_sections(html_text, html_name):
+                    _apply_mods(item, html_name)
+                    sections.append(item)
                 continue
 
             soup = BeautifulSoup(raw, "html.parser")
@@ -740,6 +1045,7 @@ def _extract_sections_from_zip(
                         "source_url": _source_url_for_entry(html_name),
                     }
                 )
+            _apply_mods(record, html_name)
             sections.append(record)
 
     return sections
@@ -1294,14 +1600,17 @@ async def fetch_us_code_title(
         for selected_year in candidate_years:
             tried_years.append(int(selected_year))
             try:
-                zip_path = _download_title_zip(
+                downloaded = _download_title_zip(
                     session,
                     year=selected_year,
                     title_num=title_num,
                     cache_dir=cache_root / str(selected_year),
                     force_download=bool(force_download),
                     max_attempts=download_retries,
+                    include_official=True,
+                    include_recovery=False,
                 )
+                zip_path = Path(str(downloaded["zip_path"]))
                 sections = _extract_sections_from_zip(
                     zip_path,
                     year=selected_year,
@@ -1318,11 +1627,17 @@ async def fetch_us_code_title(
                         pass
 
                 await anyio.sleep(max(0.0, float(rate_limit_delay)))
+                source_attempts.extend(list(downloaded.get("attempts") or []))
+                source_name = str(downloaded.get("source") or "govinfo-content-zip")
                 return {
                     "title_number": title_num,
                     "title_name": title_name,
                     "source": "US Code (GovInfo package ZIP)",
-                    "source_url": _govinfo_zip_url(selected_year, title_num),
+                    "source_url": downloaded.get("source_url")
+                    or _govinfo_zip_url(selected_year, title_num),
+                    "source_authority_class": downloaded.get("source_authority_class")
+                    or "official",
+                    "package_source": source_name,
                     "scraped_at": datetime.now().isoformat(),
                     "year": selected_year,
                     "zip_path": str(zip_path),
@@ -1386,6 +1701,8 @@ async def fetch_us_code_title(
                 "title_name": title_name,
                 "source": "US Code (US House releasepoint HTM ZIP)",
                 "source_url": ushouse.get("source_url"),
+                "source_authority_class": "official",
+                "package_source": "ushouse-releasepoint-htm-zip",
                 "scraped_at": datetime.now().isoformat(),
                 "year": target_year,
                 "zip_path": str(us_zip_path),
@@ -1406,6 +1723,63 @@ async def fetch_us_code_title(
                 f"GovInfo package ZIP attempts failed ({tried_years}); "
                 f"US House fallback also failed: {ushouse_exc}"
             )
+
+        # Recovery-only: Wayback (and optional Common Crawl) of the GovInfo ZIP.
+        for selected_year in tried_years or candidate_years:
+            try:
+                recovered = _download_title_zip(
+                    session,
+                    year=int(selected_year),
+                    title_num=title_num,
+                    cache_dir=cache_root / "recovery" / str(selected_year),
+                    force_download=bool(force_download),
+                    max_attempts=max(1, int(download_retries)),
+                    include_official=False,
+                    include_recovery=True,
+                )
+                if str(recovered.get("source_authority_class") or "") != "recovery":
+                    continue
+                rec_path = Path(str(recovered["zip_path"]))
+                sections = _extract_sections_from_zip(
+                    rec_path,
+                    year=int(selected_year),
+                    title_num=title_num,
+                    title_name=title_name,
+                    include_metadata=include_metadata,
+                    source_package=f"USCODE-{int(selected_year)}-title{title_num}",
+                )
+                if not keep_zip_cache:
+                    try:
+                        rec_path.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+                source_attempts.extend(list(recovered.get("attempts") or []))
+                return {
+                    "title_number": title_num,
+                    "title_name": title_name,
+                    "source": "US Code (archive recovery ZIP)",
+                    "source_url": recovered.get("source_url"),
+                    "source_authority_class": "recovery",
+                    "package_source": recovered.get("source"),
+                    "scraped_at": datetime.now().isoformat(),
+                    "year": int(selected_year),
+                    "zip_path": str(rec_path),
+                    "candidate_years": candidate_years,
+                    "tried_years": tried_years,
+                    "source_attempts": source_attempts,
+                    "sections": sections,
+                }
+            except Exception as recovery_exc:
+                source_attempts.append(
+                    {
+                        "source": "archive-recovery-zip",
+                        "year": int(selected_year),
+                        "status": "error",
+                        "error": str(recovery_exc),
+                    }
+                )
+                last_error = recovery_exc
+                continue
 
         raise RuntimeError(
             f"Failed to fetch title {title_num} after trying years {tried_years}: {last_error}"

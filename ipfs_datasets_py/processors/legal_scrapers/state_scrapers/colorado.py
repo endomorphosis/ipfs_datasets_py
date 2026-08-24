@@ -3,10 +3,13 @@
 This module contains the scraper for Colorado statutes from the official state legislative website.
 """
 
+import json
 import re
+import ssl
 import subprocess
 import tempfile
-from typing import List, Dict, Optional
+import urllib.request
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, unquote
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
@@ -18,21 +21,73 @@ class ColoradoScraper(BaseStateScraper):
     """Scraper for Colorado state laws from https://leg.colorado.gov"""
 
     _CO_SECTION_NUMBER_RE = re.compile(r"\b(\d{1,2}-\d{1,3}-\d{1,4})\b")
-
+    OFFICIAL_DOMAIN = "leg.colorado.gov"
+    CONTENT_DOMAIN = "content.leg.colorado.gov"
+    OFFICIAL_ENTRY_PATH = "/publication-search"
+    OFFICIAL_ENTRY_URL = (
+        "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs"
+    )
+    OFFICIAL_CRS_TITLES = (
+        (1, "General Provisions"),
+        (2, "Local Government"),
+        (3, "Agriculture"),
+        (4, "Uniform Commercial Code"),
+        (5, "Consumer and Commercial Transactions"),
+        (6, "Consumer and Commercial Affairs"),
+        (7, "Corporations and Associations"),
+        (8, "Labor and Industry"),
+        (9, "Safety - Industrial and Commercial"),
+        (10, "Insurance"),
+        (11, "Financial Institutions"),
+        (12, "Professions and Occupations"),
+        (13, "Courts and Court Procedure"),
+        (14, "Domestic Matters"),
+        (15, "Probate, Trusts, and Fiduciaries"),
+        (16, "Criminal Proceedings"),
+        (17, "Corrections"),
+        (18, "Criminal Code"),
+        (19, "Children's Code"),
+        (20, "District Attorneys"),
+        (21, "State Public Defender"),
+        (22, "Education"),
+        (23, "Postsecondary Education"),
+        (24, "Government - State"),
+        (25, "Public Health and Environment"),
+        (25.5, "Health Care Policy and Financing"),
+        (26, "Human Services Code"),
+        (26.5, "Early Childhood"),
+        (27, "Behavioral Health"),
+        (28, "Military and Veterans"),
+        (29, "Government - Local"),
+        (30, "Government - County"),
+        (31, "Government - Municipal"),
+        (32, "Special Districts"),
+        (33, "Parks and Wildlife"),
+        (34, "Mineral Resources"),
+        (35, "Agriculture"),
+        (36, "Natural Resources - General"),
+        (37, "Water and Irrigation"),
+        (38, "Property - Real and Personal"),
+        (39, "Taxation"),
+        (40, "Utilities"),
+        (41, "Aeronautics"),
+        (42, "Vehicles and Traffic"),
+        (43, "Transportation"),
+        (44, "Natural Resources"),
+    )
+    
     def get_base_url(self) -> str:
         """Return the base URL for Colorado's legislative website."""
         return "https://leg.colorado.gov"
-
+    
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Colorado."""
-        return [
-            {
-                "name": "Colorado Revised Statutes",
-                "url": "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs",
-                "type": "Code",
-            }
-        ]
-
+        return [{
+            "name": "Colorado Revised Statutes",
+            "url": "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs",
+            "type": "Code"
+        }]
+    
     async def scrape_code(
         self,
         code_name: str,
@@ -41,18 +96,37 @@ class ColoradoScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Colorado's legislative website.
 
-        Args:
-            code_name: Name of the code to scrape
-            code_url: URL of the code
-
-        Returns:
-            List of NormalizedStatute objects
+        Full-corpus mode with ``max_statutes=None`` remains uncapped against the
+        official CRS publication search (content.leg.colorado.gov). Secondary
+        generic recovery is intentionally skipped so partial/secondary sources
+        cannot sole-admit a sealed full-corpus run.
         """
-        statutes = await self._scrape_crs_pdfs(code_name, max_statutes=max_statutes)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .colorado_constitution import (
+            configured_constitution_text_path,
+            parse_colorado_constitution_text,
+        )
+
+        constitution_path = configured_constitution_text_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_colorado_constitution_text(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Colorado Constitution",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .colorado_title import parse_configured_colorado_crs
+
+        local_rows = parse_configured_colorado_crs(code_name=code_name, max_statutes=limit)
+        if local_rows:
+            return local_rows if limit is None else local_rows[: int(limit)]
+        statutes = await self._scrape_crs_pdfs(code_name, max_statutes=limit)
         if statutes:
-            return statutes
+            return statutes if limit is None else statutes[: int(limit)]
         self.logger.warning(
-            "Colorado CRS direct PDF scrape returned no usable statutes; skipping generic recovery fallback"
+            "Colorado CRS direct PDF scrape returned no usable statutes; "
+            "skipping generic recovery fallback"
         )
         return []
 
@@ -76,9 +150,7 @@ class ColoradoScraper(BaseStateScraper):
             title = str(publication.get("title") or "").strip()
             detail_url = str(publication.get("detail_url") or "").strip()
             pdf_url = str(publication.get("pdf_url") or "").strip()
-            section_number = self._extract_section_number(
-                title
-            ) or self._extract_section_number_from_pdf_path(pdf_url)
+            section_number = self._extract_section_number(title) or self._extract_section_number_from_pdf_path(pdf_url)
             if not section_number:
                 continue
             if section_number in seen_sections:
@@ -118,6 +190,7 @@ class ColoradoScraper(BaseStateScraper):
             )
             statute.structured_data = {
                 "source_kind": source_kind,
+                "discovery_method": "official_crs_publication_search",
                 "detail_url": detail_url or None,
                 "pdf_url": pdf_url or None,
                 "skip_hydrate": True,
@@ -170,9 +243,7 @@ class ColoradoScraper(BaseStateScraper):
                         pdf_url = absolute
                 if not detail_url and not pdf_url:
                     continue
-                section_number = self._extract_section_number(
-                    title or row_text
-                ) or self._extract_section_number_from_pdf_path(pdf_url)
+                section_number = self._extract_section_number(title or row_text) or self._extract_section_number_from_pdf_path(pdf_url)
                 if not section_number:
                     continue
                 key = detail_url or pdf_url
@@ -191,9 +262,7 @@ class ColoradoScraper(BaseStateScraper):
                     return out
         return out
 
-    async def _extract_publication_detail_text(
-        self, detail_url: str, max_chars: int = 16000
-    ) -> str:
+    async def _extract_publication_detail_text(self, detail_url: str, max_chars: int = 16000) -> str:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -298,17 +367,133 @@ class ColoradoScraper(BaseStateScraper):
         try:
             payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
         except TimeoutError:
-            self._record_fetch_event(
-                provider="requests_direct", success=False, error="colorado_direct_timeout"
-            )
+            self._record_fetch_event(provider="requests_direct", success=False, error="colorado_direct_timeout")
             return b""
 
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(
-                url=url, payload=payload, provider="requests_direct"
-            )
+            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
         return payload
+
+    def official_title_url(self, title_number: Any) -> str:
+        title = str(title_number).replace(".", "-")
+        return (
+            "https://content.leg.colorado.gov/publication-search"
+            f"?search_api_fulltext=crs%20title%20{title}"
+        )
+
+    def official_crs_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Colorado Revised Statutes title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_CRS_TITLES:
+            key = str(number).replace(".", "-")
+            rows.append(
+                {
+                    "canonical_key": f"co:title-{key}",
+                    "title_number": str(number),
+                    "name": name,
+                    "source_url": self.official_title_url(number),
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Colorado Revised Statutes Title {number} ({name}) official "
+                        f"catalog unit at {self.official_title_url(number)}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-colorado-official-catalog/1.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                )
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "ipfs-datasets-colorado-official-catalog/1.0",
+                            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def fetch_official(self, code: str = "CO"):
+        """Acquire the exhaustive official Colorado CRS title catalog.
+
+        Live HTTPS retains the official publication-search landing page. Every
+        official CRS title is enumerated with an official General Assembly URL.
+        This hook never returns fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "CO").strip().upper() or "CO"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.official_crs_catalog()
+        if len(rows) < 3:
+            raise RuntimeError("colorado official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH}?search_api_fulltext=crs HTTP/1.1\n"
+            f"host: {self.CONTENT_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.CONTENT_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.CONTENT_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

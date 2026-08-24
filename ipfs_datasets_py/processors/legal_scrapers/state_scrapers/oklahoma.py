@@ -8,12 +8,14 @@ import json
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 import os
 import re
+import ssl
 import time
+import urllib.request
 from dataclasses import fields as dataclass_fields
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
@@ -24,6 +26,93 @@ from .registry import StateScraperRegistry
 class OklahomaScraper(BaseStateScraper):
     """Scraper for Oklahoma state laws from http://www.oklegislature.gov"""
 
+    OFFICIAL_DOMAIN = "www.oscn.net"
+    OFFICIAL_ENTRY_PATH = "/applications/oscn/index.asp"
+    OFFICIAL_ENTRY_URL = "https://www.oscn.net/applications/oscn/index.asp?level=1&ftdb=STOKST"
+    _OK_TITLE_QUERY_RE = re.compile(r"[?&]ftdb=STOKST(?P<title>\d{1,2}[A-Z]?)\b", re.IGNORECASE)
+    _OK_TITLE_LABEL_RE = re.compile(r"\bTitle\s+(?P<title>\d{1,2}[A-Z]?)\b", re.IGNORECASE)
+    OFFICIAL_TITLES = (
+        ("1", "Abstracting"),
+        ("2", "Agriculture"),
+        ("3", "Aircraft and Airports"),
+        ("3A", "Amusements and Sports"),
+        ("4", "Animals"),
+        ("5", "Attorneys and the State Bar"),
+        ("6", "Banks and Trust Companies"),
+        ("7", "Blind Persons"),
+        ("8", "Cemeteries"),
+        ("10", "Children"),
+        ("10A", "Children and Juvenile Code"),
+        ("11", "Cities and Towns"),
+        ("12", "Civil Procedure"),
+        ("12A", "Uniform Commercial Code"),
+        ("13", "Common Carriers"),
+        ("14", "Congressional and Legislative Districts"),
+        ("14A", "Consumer Credit Code"),
+        ("15", "Contracts"),
+        ("16", "Conveyances"),
+        ("17", "Corporation Commission"),
+        ("18", "Corporations"),
+        ("19", "Counties and County Officers"),
+        ("20", "Courts"),
+        ("21", "Crimes and Punishments"),
+        ("22", "Criminal Procedure"),
+        ("23", "Damages"),
+        ("24", "Debtor and Creditor"),
+        ("25", "Definitions and General Provisions"),
+        ("26", "Elections"),
+        ("27", "Eminent Domain"),
+        ("27A", "Environment and Natural Resources"),
+        ("28", "Fees"),
+        ("29", "Game and Fish"),
+        ("30", "Guardian and Ward"),
+        ("31", "Homestead and Exemptions"),
+        ("36", "Insurance"),
+        ("37A", "Alcoholic Beverages"),
+        ("38", "Jurors"),
+        ("40", "Labor"),
+        ("41", "Landlord and Tenant"),
+        ("42", "Liens"),
+        ("43", "Marriage and Family"),
+        ("43A", "Mental Health"),
+        ("44", "Militia"),
+        ("45", "Mines and Mining"),
+        ("46", "Mortgages"),
+        ("47", "Motor Vehicles"),
+        ("49", "Notaries Public"),
+        ("50", "Nuisances"),
+        ("51", "Officers"),
+        ("52", "Oil and Gas"),
+        ("53", "Oklahoma Historical Societies and Associations"),
+        ("54", "Partnership"),
+        ("56", "Poor Persons"),
+        ("57", "Prisons and Reformatories"),
+        ("58", "Probate Procedure"),
+        ("59", "Professions and Occupations"),
+        ("60", "Property"),
+        ("61", "Public Buildings and Public Works"),
+        ("62", "Public Finance"),
+        ("63", "Public Health and Safety"),
+        ("64", "Public Lands"),
+        ("65", "Public Libraries"),
+        ("66", "Railroads"),
+        ("67", "Records"),
+        ("68", "Revenue and Taxation"),
+        ("69", "Roads, Bridges, and Ferries"),
+        ("70", "Schools"),
+        ("71", "Securities"),
+        ("72", "Soldiers and Sailors"),
+        ("73", "State Capital and Capitol Building"),
+        ("74", "State Government"),
+        ("75", "Statutes and Reports"),
+        ("76", "Torts"),
+        ("78", "Trademarks and Labels"),
+        ("80", "United States"),
+        ("82", "Waters and Water Rights"),
+        ("84", "Wills and Succession"),
+        ("85A", "Administrative Workers' Compensation System"),
+    )
+    OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
     _SEED_INDEX_URLS = [
         "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=69380",
         "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=69782&Title=74",
@@ -74,10 +163,42 @@ class OklahomaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._bounded_return_threshold(160)
+        # Full-corpus uses a large practical ceiling so discovery is not
+        # silently truncated to the historical sample default of 160.
+        # Bounded probes honor max_statutes / STATE_SCRAPER_MAX_STATUTES.
         if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+            return_threshold = max(1, int(max_statutes))
+            unbounded_full = False
+        elif self._full_corpus_enabled():
+            return_threshold = 1000000
+            unbounded_full = True
+        else:
+            return_threshold = self._bounded_return_threshold(160)
+            unbounded_full = False
 
+        from .oklahoma_constitution import (
+            configured_constitution_text_path,
+            parse_oklahoma_constitution_text,
+        )
+
+        constitution_path = configured_constitution_text_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_oklahoma_constitution_text(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Oklahoma Constitution",
+                    max_statutes=None if unbounded_full else return_threshold,
+                )
+                return constitution_rows if unbounded_full else constitution_rows[:return_threshold]
+        from .oklahoma_title import parse_configured_oklahoma_title
+
+        local_rows = parse_configured_oklahoma_title(
+            code_name=code_name, max_statutes=return_threshold
+        )
+        if local_rows:
+            return local_rows[: int(return_threshold)]
+
+        # Seed recovery is for bounded probes only — never sole full-corpus path.
         if not self._full_corpus_enabled() and max_statutes is None:
             direct = await self._scrape_direct_seed_sections(
                 code_name, max_statutes=return_threshold
@@ -89,7 +210,7 @@ class OklahomaScraper(BaseStateScraper):
         seed_statutes = checkpoint.load(
             default_state_name=self.state_name,
             default_code_name=code_name,
-            max_statutes=max(10, return_threshold),
+            max_statutes=max(10, min(return_threshold, 1000000)),
         )
         # Bootstrap with a tiny direct OSCN sample even in full-corpus mode so
         # long candidate-discovery phases still show early real progress.
@@ -117,31 +238,49 @@ class OklahomaScraper(BaseStateScraper):
                 len(direct_seed),
                 len(direct_seed),
             )
-        best_archival: List[NormalizedStatute] = []
+        best_official: List[NormalizedStatute] = []
         for attempt in range(3):
             archival = await self._scrape_oscn_documents(
                 code_name=code_name,
                 max_statutes=max(10, return_threshold),
-                seed_statutes=seed_statutes if attempt == 0 else best_archival,
+                seed_statutes=seed_statutes if attempt == 0 else best_official,
                 checkpoint=checkpoint,
             )
-            if len(archival) > len(best_archival):
-                best_archival = archival
-            if best_archival:
+            if len(archival) > len(best_official):
+                best_official = archival
+            if best_official:
                 self.logger.info(
-                    "Oklahoma OSCN archival fallback: scraped %s sections on attempt %s",
-                    len(best_archival),
+                    "Oklahoma OSCN official path: scraped %s sections on attempt %s",
+                    len(best_official),
                     attempt + 1,
                 )
+                # Bounded probes may return early; full-corpus continues retries
+                # then prefers the official OSCN set over secondary mirrors.
                 if not self._full_corpus_enabled() or max_statutes is not None:
-                    return best_archival
+                    return best_official
             await asyncio.sleep(0.4 * (attempt + 1))
 
-        # If OSCN blocks automated access, use a broader fallback index to avoid zero-state output.
-        fallback_urls = [
-            code_url,
-            "https://law.justia.com/codes/oklahoma/",
-        ]
+        if best_official:
+            return list(best_official) if unbounded_full else best_official[:return_threshold]
+
+        # Official OSCN only for recovery of zero-state probes. Justia is never
+        # a sole full-corpus admission path (secondary host; quarantine-only).
+        if self._full_corpus_enabled() and max_statutes is None:
+            self.logger.warning(
+                "Oklahoma full-corpus run found zero official OSCN statutes; "
+                "refusing secondary Justia sole-admission fallback"
+            )
+            return []
+
+        fallback_urls = [code_url]
+        allow_justia = str(os.getenv("STATE_SCRAPER_OK_ALLOW_JUSTIA_FALLBACK", "") or "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        if allow_justia:
+            fallback_urls.append("https://law.justia.com/codes/oklahoma/")
         best: List[NormalizedStatute] = []
         for candidate in fallback_urls:
             try:
@@ -155,10 +294,7 @@ class OklahomaScraper(BaseStateScraper):
                 statutes = []
             if len(statutes) > len(best):
                 best = statutes
-
-        if len(best) > len(best_archival):
-            return best
-        return list(best_archival)
+        return best
 
     async def _scrape_direct_seed_sections(
         self,
@@ -996,6 +1132,170 @@ class OklahomaScraper(BaseStateScraper):
             return ""
         self._record_fetch_event(provider="requests_oscn_direct", success=True)
         return text
+
+    def official_title_url(self, title_number: Any) -> str:
+        number = str(title_number or "").strip().upper()
+        return f"https://www.oscn.net/applications/oscn/Index.asp?ftdb=STOKST{number}"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Oklahoma Statutes title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"ok:title-{number.lower()}",
+                    "title_number": number,
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Oklahoma Statutes Title {number} ({name}) official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return (
+            host == "oscn.net"
+            or host.endswith(".oscn.net")
+            or host == "oklegislature.gov"
+            or host.endswith(".oklegislature.gov")
+        )
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 8) -> bytes:
+        timeout = max(2, min(int(timeout_seconds or 8), 8))
+        headers = {
+            "User-Agent": "ipfs-datasets-oklahoma-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+        try:
+            request = urllib.request.Request(url, headers=headers)
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                return bytes(response.read() or b"")
+        except Exception:
+            return b""
+
+    def _normalize_title_number(self, value: Any) -> str:
+        text = str(value or "").strip().upper()
+        match = re.match(r"0*(\d{1,2}[A-Z]?)$", text)
+        return match.group(1) if match else ""
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._OK_TITLE_QUERY_RE.search(absolute) or self._OK_TITLE_LABEL_RE.search(label)
+            if not match:
+                continue
+            number = self._normalize_title_number(match.group("title"))
+            if number not in known or number in found:
+                continue
+            if self._host_is_official(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Oklahoma Statutes title."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_oscn"
+        return rows
+
+    def fetch_official(self, code: str = "OK"):
+        """Acquire the exhaustive official Oklahoma Statutes catalog.
+
+        Live HTTPS retains the official OSCN title index. Every known
+        Oklahoma Statutes title is enumerated with an official URL. This
+        hook never returns fixture bytes or secondary-mirror hosts.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "OK").strip().upper() or "OK"
+        if normalized != "OK":
+            raise ValueError(f"OklahomaScraper cannot acquire {normalized}")
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) != self.OFFICIAL_TITLE_COUNT:
+            raise RuntimeError(
+                "oklahoma official catalog enumeration rejected incomplete "
+                "title reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

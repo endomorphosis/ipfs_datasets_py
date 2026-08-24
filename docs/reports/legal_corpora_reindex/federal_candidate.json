@@ -1,0 +1,133 @@
+{
+  "acceptance": {
+    "all_advertised_configs_schema_coherent": true,
+    "default_config_excludes_recovery": true,
+    "every_artifact_descriptor_bound": true,
+    "legacy_files_not_deleted": true,
+    "old_pin_rollback_named": true,
+    "publication_not_authorized": true,
+    "secrets_absent": true,
+    "semantic_family_closure": true,
+    "source_rights_bound": true,
+    "verbose_lineage_separate_from_control_plane": true,
+    "viewer_safe_default_v2": true
+  },
+  "artifact_count": 38,
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "board_namespace": "legal-corpora-reindex-v1",
+  "bundle": "federal-release-package",
+  "candidate": {
+    "build_config_cid": "6606d4b2d018e2ef437b06c37f2e09ee042fa38281b72842b2a7ccdcfcc9aac0",
+    "dataset_id": "justicedao/ipfs_federal_register",
+    "default_config": "federal-register-ir-graphrag/v2",
+    "kind": "fixture_descriptor_complete",
+    "manifest_digest": "937828630f35926249b1c506b218e61096582bcb2dcdb3828aa2accddc370fee",
+    "observation_cutoff": "2026-08-10T00:00:00Z",
+    "package_version": "2",
+    "release_point": "federal-register/v2/2026-08-10",
+    "release_profile": "federal-register-ir-graphrag/v2",
+    "release_root_cid": "bafkreiazk6aw3gfnuu7u26k5ndlyi7fy76cf24q7pdfqckom54dromsc5u",
+    "source_revision": "720668ae016cc400916dda884c9005e03618edfa",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "code_version": "1",
+  "configs": [
+    "federal-register-ir-graphrag/v2",
+    "legacy-federal-register-parquet/v1",
+    "recovery",
+    "quarantine"
+  ],
+  "content_digest": "9171b2c6fd862b0b647aa5f1a9e623f42d00378e2a56b74f6b7841043ea4e26e",
+  "currentness_disclaimer": "Federal Register completeness is cutoff-relative. Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the daily register is permanently current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "depends_on": [
+    "LCR-050",
+    "LCR-061",
+    "LCR-079"
+  ],
+  "evidence_root": "docs/reports/legal_corpora_reindex/federal_candidate.json",
+  "fixture_only": true,
+  "goal_id": "LCR-G130",
+  "hub_upload": false,
+  "lcr061_family_outputs": {
+    "adjacency_root": "755f2adf6735c187f142d251ea7453e17fec2cee01a23cb333a10dd20db126b2",
+    "bm25_root": "sha256:55f9f45198ffcee5e0962269ef58b51ab00f7638f1a48233a53ccb9d6309e542",
+    "consumed_as_immutable_input": true,
+    "consumption_digest": "9d28ee975c3785127c9d75bb6621e66b9e45a92e414821d582bf3c3b47869c42",
+    "graph_root": "sha256:9e92662e0d82f2e6be869102face3623191642958593ab920a4ff36ea7be3646",
+    "producer_task_id": "LCR-061",
+    "vector_root": "sha256:9c730f211f61cc8182cad864ac0b730e36a251289b71ccb3eaabd82041da78b3"
+  },
+  "legacy_baseline_end_inclusive": "2026-03-02",
+  "mode": "fixture",
+  "producer": "federal_register_hf_release.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "proves_software_contract_only": true,
+  "rollback": {
+    "additive_only": true,
+    "authorizing_for_publication": false,
+    "dataset_repo_id": "justicedao/ipfs_federal_register",
+    "legacy_files_deleted": false,
+    "previous_public_pin": "720668ae016cc400916dda884c9005e03618edfa",
+    "reason": "restore previous public pin if the additive v2 candidate is rolled back",
+    "to_revision": "720668ae016cc400916dda884c9005e03618edfa"
+  },
+  "route_bounds": {
+    "default_candidate_centroids": 4,
+    "embedding_dimension": 384,
+    "max_adjacency_pointers_per_row": 4096,
+    "max_posting_pointers_per_row": 4096,
+    "max_routing_rows_per_index": 4096,
+    "max_rows_per_physical_shard": 4096,
+    "max_rows_per_vector_centroid": 8192,
+    "max_term_rows_per_shard": 4096,
+    "max_vector_shards_per_centroid": 2,
+    "model_token_ceiling": 512
+  },
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-federal-candidate@1",
+  "schema_version": "federal-register-hf-release/v1",
+  "semantic_family_closure": {
+    "closed": true,
+    "missing": [],
+    "present": [
+      "bm25_documents",
+      "bm25_postings",
+      "centroids",
+      "corpus",
+      "graph_adjacency_in",
+      "graph_adjacency_out",
+      "graph_edges",
+      "graph_nodes",
+      "locator_index",
+      "manifest",
+      "receipt",
+      "recovery",
+      "release_metadata",
+      "report",
+      "routing_index",
+      "source_receipt",
+      "vectors"
+    ],
+    "required": [
+      "bm25_documents",
+      "bm25_postings",
+      "centroids",
+      "corpus",
+      "graph_adjacency_in",
+      "graph_adjacency_out",
+      "graph_edges",
+      "graph_nodes",
+      "locator_index",
+      "manifest",
+      "vectors"
+    ]
+  },
+  "source_rights": {
+    "catalog_digest_sha256": "3ba1d10b30598c2145ee0dfa62db42d69d2d664578fce90d5c4ed756ac742a4b",
+    "receipt_digest": "46ef76257b938dc532311207bcbe97f12bc5b9fdf587b370b4273e1b912969ee",
+    "receipt_path": "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+    "unknown_or_prohibited_excluded_from_default": true
+  },
+  "task_id": "LCR-062",
+  "viewer_safe_default_v2": true
+}

@@ -1,0 +1,475 @@
+{
+  "code_family_cycle": [
+    "civil-code",
+    "penal-code",
+    "revised-statutes",
+    "general-laws",
+    "official-code",
+    "compiled-statutes",
+    "ors",
+    "rcw",
+    "minnesota-statutes",
+    "dc-official-code"
+  ],
+  "description": "Compact recipe for state-law identity collisions and version dispositions. Dash-range pairs share a naive-truncated section token but remain distinguishable under repaired legal_id. Qualifier, code-family, and jurisdiction rows disambiguate shared section numbers. Changed-text pairs share legal_id with different content and receive explicit version dispositions. Content-CID-only and positional-only pairs must not merge.",
+  "disposition_cases": [
+    {
+      "case_id": "logical-duplicate",
+      "expected_disposition": "duplicate",
+      "left": {
+        "code_family": "ors",
+        "entry_cid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "jurisdiction": "OR",
+        "section": "456",
+        "text": "same body",
+        "title": "123"
+      },
+      "right": {
+        "code_family": "ors",
+        "entry_cid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "jurisdiction": "OR",
+        "section": "456",
+        "text": "same body",
+        "title": "123"
+      }
+    },
+    {
+      "case_id": "changed-text-version",
+      "expected_disposition": "changed_text_version",
+      "left": {
+        "code_family": "minnesota-statutes",
+        "entry_cid": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "jurisdiction": "MN",
+        "section": "17",
+        "text": "old body",
+        "title": "518"
+      },
+      "right": {
+        "code_family": "minnesota-statutes",
+        "entry_cid": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "jurisdiction": "MN",
+        "section": "17",
+        "text": "new body",
+        "title": "518"
+      }
+    },
+    {
+      "case_id": "content-cid-only-reject",
+      "expected_disposition": "reject_content_cid_only_merge",
+      "left": {
+        "code_family": "civil-code",
+        "content_cid": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "entry_cid": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "jurisdiction": "CA",
+        "section": "100",
+        "text": "boilerplate",
+        "title": "1"
+      },
+      "right": {
+        "code_family": "penal-code",
+        "content_cid": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "entry_cid": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "jurisdiction": "NY",
+        "section": "200",
+        "text": "boilerplate",
+        "title": "2"
+      }
+    },
+    {
+      "case_id": "positional-only-reject",
+      "expected_disposition": "reject_positional_merge",
+      "left": {
+        "code_family": "revised-statutes",
+        "document_index": 42,
+        "entry_cid": "1111111111111111111111111111111111111111111111111111111111111111",
+        "jurisdiction": "TX",
+        "section": "10",
+        "text": "alpha",
+        "title": "1"
+      },
+      "right": {
+        "code_family": "official-code",
+        "document_index": 42,
+        "entry_cid": "2222222222222222222222222222222222222222222222222222222222222222",
+        "jurisdiction": "FL",
+        "section": "20",
+        "text": "beta",
+        "title": "2"
+      }
+    },
+    {
+      "case_id": "history-vs-current-kind",
+      "expected_disposition": "distinct_identity",
+      "left": {
+        "code_family": "rcw",
+        "entry_cid": "3333333333333333333333333333333333333333333333333333333333333333",
+        "jurisdiction": "WA",
+        "kind": "current",
+        "section": "36.011",
+        "text": "current text",
+        "title": "9A"
+      },
+      "right": {
+        "code_family": "rcw",
+        "entry_cid": "4444444444444444444444444444444444444444444444444444444444444444",
+        "jurisdiction": "WA",
+        "kind": "history",
+        "note": "prior-codification",
+        "section": "36.011",
+        "text": "historical note",
+        "title": "9A"
+      }
+    },
+    {
+      "case_id": "code-family-disambiguation",
+      "expected_disposition": "distinct_identity",
+      "left": {
+        "code_family": "civil-code",
+        "entry_cid": "5555555555555555555555555555555555555555555555555555555555555555",
+        "jurisdiction": "CA",
+        "section": "50",
+        "title": "1"
+      },
+      "right": {
+        "code_family": "penal-code",
+        "entry_cid": "6666666666666666666666666666666666666666666666666666666666666666",
+        "jurisdiction": "CA",
+        "section": "50",
+        "title": "1"
+      }
+    }
+  ],
+  "expected_row_count": 420,
+  "generators": [
+    {
+      "count": 125,
+      "dash_chars": ["–", "—", "−"],
+      "kind": "truncated_dash_pairs",
+      "section_base_start": 100
+    },
+    {
+      "count": 48,
+      "kind": "qualifier_disambiguation",
+      "section_base_start": 5000
+    },
+    {
+      "count": 20,
+      "kind": "code_family_cross"
+    },
+    {
+      "count": 20,
+      "kind": "changed_text_versions"
+    },
+    {
+      "count": 10,
+      "kind": "content_cid_only_pairs"
+    },
+    {
+      "count": 10,
+      "kind": "positional_only_pairs"
+    },
+    {
+      "count": 10,
+      "kind": "unicode_section_variants",
+      "samples": [
+        {
+          "code_family": "civil-code",
+          "expected_section": "61-64",
+          "jurisdiction": "CA",
+          "section": "61–64",
+          "title": "1"
+        },
+        {
+          "code_family": "penal-code",
+          "expected_section": "401-(a)",
+          "jurisdiction": "NY",
+          "section": "401—(a)",
+          "title": "10"
+        },
+        {
+          "code_family": "revised-statutes",
+          "expected_section": "2000e-2",
+          "jurisdiction": "TX",
+          "section": "§ 2000e–2",
+          "title": "2"
+        },
+        {
+          "code_family": "ors",
+          "expected_section": "78j-1",
+          "jurisdiction": "OR",
+          "section": "78j–1",
+          "title": "123"
+        },
+        {
+          "code_family": "minnesota-statutes",
+          "expected_section": "1841-(c)",
+          "jurisdiction": "MN",
+          "section": "1841–(c)",
+          "title": "518"
+        },
+        {
+          "code_family": "rcw",
+          "expected_section": "3729-3731",
+          "jurisdiction": "WA",
+          "section": "3729—3731",
+          "title": "9A"
+        },
+        {
+          "code_family": "official-code",
+          "expected_section": "552a-(b)",
+          "jurisdiction": "FL",
+          "section": "552a–(b)",
+          "title": "775"
+        },
+        {
+          "code_family": "compiled-statutes",
+          "expected_section": "102-(b)",
+          "jurisdiction": "IL",
+          "section": "102—(b)",
+          "title": "720"
+        },
+        {
+          "code_family": "official-code",
+          "expected_section": "106A-106B",
+          "jurisdiction": "GA",
+          "section": "106A–106B",
+          "title": "16"
+        },
+        {
+          "code_family": "dc-official-code",
+          "expected_section": "362-(a)",
+          "jurisdiction": "DC",
+          "section": "362–(a)",
+          "title": "22"
+        }
+      ]
+    }
+  ],
+  "jurisdiction_cycle": [
+    "CA",
+    "NY",
+    "TX",
+    "FL",
+    "OR",
+    "MN",
+    "WA",
+    "IL",
+    "GA",
+    "DC"
+  ],
+  "schema_version": "state-laws-identity-collisions-v1",
+  "seed_rows": [
+    {
+      "code_family": "civil-code",
+      "collision_family": "seed-en-dash",
+      "jurisdiction": "CA",
+      "kind": "section",
+      "row_id": "seed-en-dash-bare",
+      "section": "2001",
+      "source_section": "2001",
+      "title": "1"
+    },
+    {
+      "code_family": "civil-code",
+      "collision_family": "seed-en-dash",
+      "jurisdiction": "CA",
+      "kind": "section",
+      "row_id": "seed-en-dash-range",
+      "section": "2001–2003",
+      "source_section": "2001–2003",
+      "title": "1"
+    },
+    {
+      "code_family": "penal-code",
+      "collision_family": "seed-em-dash",
+      "jurisdiction": "NY",
+      "kind": "section",
+      "row_id": "seed-em-dash-bare",
+      "section": "3001",
+      "source_section": "3001",
+      "title": "10"
+    },
+    {
+      "code_family": "penal-code",
+      "collision_family": "seed-em-dash",
+      "jurisdiction": "NY",
+      "kind": "section",
+      "row_id": "seed-em-dash-range",
+      "section": "3001—3010",
+      "source_section": "3001—3010",
+      "title": "10"
+    },
+    {
+      "code_family": "ors",
+      "collision_family": "seed-appendix",
+      "jurisdiction": "OR",
+      "kind": "section",
+      "row_id": "seed-appendix-main",
+      "section": "456",
+      "source_section": "456",
+      "title": "123"
+    },
+    {
+      "appendix": "A",
+      "code_family": "ors",
+      "collision_family": "seed-appendix",
+      "jurisdiction": "OR",
+      "kind": "appendix",
+      "row_id": "seed-appendix-a",
+      "section": "456",
+      "source_section": "456",
+      "title": "123"
+    },
+    {
+      "code_family": "ors",
+      "collision_family": "seed-appendix",
+      "edition": "2023-official",
+      "jurisdiction": "OR",
+      "kind": "note",
+      "note": "historical",
+      "row_id": "seed-note",
+      "section": "456",
+      "source_section": "456",
+      "title": "123"
+    },
+    {
+      "code_family": "ors",
+      "collision_family": "seed-appendix",
+      "jurisdiction": "OR",
+      "kind": "history",
+      "note": "prior-codification",
+      "row_id": "seed-history-kind",
+      "section": "456",
+      "source_section": "456",
+      "title": "123"
+    },
+    {
+      "code_family": "civil-code",
+      "collision_family": "seed-family",
+      "jurisdiction": "CA",
+      "kind": "section",
+      "row_id": "seed-family-civil",
+      "section": "50",
+      "source_section": "50",
+      "title": "2"
+    },
+    {
+      "code_family": "penal-code",
+      "collision_family": "seed-family",
+      "jurisdiction": "CA",
+      "kind": "section",
+      "row_id": "seed-family-penal",
+      "section": "50",
+      "source_section": "50",
+      "title": "2"
+    },
+    {
+      "code_family": "dc-official-code",
+      "collision_family": "seed-dc",
+      "jurisdiction": "DC",
+      "kind": "section",
+      "row_id": "seed-dc",
+      "section": "3001",
+      "source_section": "3001",
+      "title": "22"
+    },
+    {
+      "code_family": "ors",
+      "collision_family": "seed-appendix",
+      "edition": "2024-supp",
+      "granule": "ors-title123-section456",
+      "jurisdiction": "OR",
+      "kind": "section",
+      "row_id": "seed-granule",
+      "section": "456",
+      "source_section": "456",
+      "title": "123"
+    }
+  ],
+  "task_id": "LCR-006",
+  "unicode_section_fixtures": [
+    {
+      "code_family": "civil-code",
+      "expected_section": "1001-1003",
+      "jurisdiction": "CA",
+      "label": "en-dash range",
+      "section": "1001–1003",
+      "title": "1"
+    },
+    {
+      "code_family": "penal-code",
+      "expected_section": "1001-1003",
+      "jurisdiction": "NY",
+      "label": "em-dash range",
+      "section": "1001—1003",
+      "title": "10"
+    },
+    {
+      "code_family": "revised-statutes",
+      "expected_section": "1961-1968",
+      "jurisdiction": "TX",
+      "label": "minus-sign range",
+      "section": "1961−1968",
+      "title": "2"
+    },
+    {
+      "code_family": "ors",
+      "expected_section": "456",
+      "jurisdiction": "OR",
+      "label": "section symbol",
+      "section": "§ 456",
+      "title": "123"
+    },
+    {
+      "code_family": "minnesota-statutes",
+      "expected_section": "518.17",
+      "jurisdiction": "MN",
+      "label": "full state citation",
+      "section": "Minn. Stat. § 518.17",
+      "title": "518"
+    },
+    {
+      "code_family": "rcw",
+      "expected_section": "101-a",
+      "jurisdiction": "WA",
+      "label": "non-breaking hyphen lettered tail",
+      "section": "101‑a",
+      "title": "9A"
+    },
+    {
+      "code_family": "official-code",
+      "expected_section": "552(a)-(e)",
+      "jurisdiction": "FL",
+      "label": "parenthetical en-dash range",
+      "section": "552(a)–(e)",
+      "title": "775"
+    },
+    {
+      "code_family": "compiled-statutes",
+      "expected_section": "5/12-3",
+      "jurisdiction": "IL",
+      "label": "slash section token",
+      "section": "5/12-3",
+      "title": "720"
+    },
+    {
+      "appendix": "A",
+      "code_family": "dc-official-code",
+      "expected_section": "3001",
+      "jurisdiction": "DC",
+      "label": "appendix-qualified",
+      "section": "3001",
+      "title": "22"
+    },
+    {
+      "code_family": "official-code",
+      "edition": "2024-official",
+      "expected_section": "5-23",
+      "jurisdiction": "GA",
+      "label": "note+edition",
+      "note": "editorial",
+      "section": "5-23",
+      "title": "16"
+    }
+  ]
+}

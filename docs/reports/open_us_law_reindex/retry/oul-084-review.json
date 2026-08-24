@@ -1,0 +1,36 @@
+{
+  "acceptance": "Planner gap for public publication/verify had no authorized edit targets. OUL-043 through OUL-046 are already completed. Isolated public pin remains 40a3fc58dea1e948d7e5446fcb705a2a31f8bfef.",
+  "authorizing_for_publication": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "canonical_board_task": false,
+  "checks": {
+    "authorizing_for_publication": false,
+    "claims_live_corpus": false,
+    "no_authorized_edit_targets": true,
+    "planner_gap_is_not_new_implementation": true,
+    "producing_tasks_completed": true,
+    "review_only": true
+  },
+  "code_version": "1",
+  "content_digest": "d450f50b33af33357d534978ec6a0d6d873a2d84959f06c92e7663591f222f28",
+  "digest": "d450f50b33af33357d534978ec6a0d6d873a2d84959f06c92e7663591f222f28",
+  "discovery": "workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-16-oul-084-objective-gap-d5435de20559.md",
+  "finding": "Planner gap for public publication/verify had no authorized edit targets. OUL-043 through OUL-046 are already completed. Isolated public pin remains 40a3fc58dea1e948d7e5446fcb705a2a31f8bfef.",
+  "goal_id": "OUL-G080",
+  "kind": "objective-gap-review",
+  "operator_resolution": null,
+  "producer": "operator_close_uscir_oul_boards.py",
+  "producing_task_status": {
+    "OUL-043": "completed",
+    "OUL-044": "completed",
+    "OUL-045": "completed",
+    "OUL-046": "completed"
+  },
+  "program_id": "open-us-law-reindex-v1",
+  "report_digest_sha256": "d450f50b33af33357d534978ec6a0d6d873a2d84959f06c92e7663591f222f28",
+  "review_only": true,
+  "reviewed_at": "2026-08-19T03:36:28Z",
+  "schema": "ipfs_datasets_py/open-us-law-review-receipt@1",
+  "status": "passed",
+  "task_id": "OUL-084"
+}

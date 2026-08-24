@@ -1,0 +1,358 @@
+{
+  "acceptance": {
+    "closed_frontier": true,
+    "exact_source_authority": true,
+    "failed_final_zero": true,
+    "non_placeholder_full_text": true,
+    "reconciled_counts_hashes": true,
+    "replay_evidence": true
+  },
+  "cohort": "F",
+  "goal_id": "LCR-G022",
+  "jurisdiction_receipts": {
+    "MA": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "part-i/title-i/chapter-1/section-1",
+        "last_hierarchy_unit": "part-i/title-i/chapter-1/section-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:b2df4e88439fca0544ec6fbb1060d3ff43a99d802788cb9cde0b00fc121ef105",
+        "min_full_text_chars": 559,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section1",
+          "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section2"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "ma:1",
+          "ma:2"
+        ],
+        "derived_keys": [
+          "ma:1",
+          "ma:2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "MA",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:b2df4e88439fca0544ec6fbb1060d3ff43a99d802788cb9cde0b00fc121ef105",
+        "first_frontier_digest": "sha256:cbe030587bd9ee8780c88d099feca270444e08bb1769fc8fcf0d4447ada64ac6",
+        "second_frontier_digest": "sha256:cbe030587bd9ee8780c88d099feca270444e08bb1769fc8fcf0d4447ada64ac6"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "malegislature.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "MI": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "chapter-750/section-750.1",
+        "last_hierarchy_unit": "chapter-750/section-750.2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:dd1bc78927afa13d012d8d39fa716def428fa5fb94a3e71ee840289737bd4848",
+        "min_full_text_chars": 846,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-750-1",
+          "https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-750-2"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "mi:750.1",
+          "mi:750.2"
+        ],
+        "derived_keys": [
+          "mi:750.1",
+          "mi:750.2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "MI",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:dd1bc78927afa13d012d8d39fa716def428fa5fb94a3e71ee840289737bd4848",
+        "first_frontier_digest": "sha256:c47d8374f2f27c4a2bd36ed681237706335ac96b17459107e76007863d63d07a",
+        "second_frontier_digest": "sha256:c47d8374f2f27c4a2bd36ed681237706335ac96b17459107e76007863d63d07a"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.legislature.mi.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "MN": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "chapter-1/section-1.01",
+        "last_hierarchy_unit": "chapter-1/section-1.02",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:43cd37a1ae3caea23c2a58151525b71af15dfcb51ab726983d61cae4f485a499",
+        "min_full_text_chars": 815,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.revisor.mn.gov/statutes/cite/1.01",
+          "https://www.revisor.mn.gov/statutes/cite/1.02"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "mn:1.01",
+          "mn:1.02"
+        ],
+        "derived_keys": [
+          "mn:1.01",
+          "mn:1.02"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "MN",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:43cd37a1ae3caea23c2a58151525b71af15dfcb51ab726983d61cae4f485a499",
+        "first_frontier_digest": "sha256:6c60cd2032ae44e048329692d3b04b1c3b4d05d0e6b86a944de8d2967d90028b",
+        "second_frontier_digest": "sha256:6c60cd2032ae44e048329692d3b04b1c3b4d05d0e6b86a944de8d2967d90028b"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.revisor.mn.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "MS": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-97/section-97-3-7",
+        "last_hierarchy_unit": "title-97/section-97-3-19",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:5e9667800d9f5467e73b08e78ced3432eb6baac27df57a09e30cf96f420ac376",
+        "min_full_text_chars": 831,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://billstatus.ls.state.ms.us/documents/2024/html/code_sections/097/00030007.htm",
+          "https://billstatus.ls.state.ms.us/documents/2024/html/code_sections/097/00030019.htm"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "ms:97-3-7",
+          "ms:97-3-19"
+        ],
+        "derived_keys": [
+          "ms:97-3-7",
+          "ms:97-3-19"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "MS",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:5e9667800d9f5467e73b08e78ced3432eb6baac27df57a09e30cf96f420ac376",
+        "first_frontier_digest": "sha256:98132c9c74ded34d07c47eec3295593b540489cede4cd89a8043c7f5870b988a",
+        "second_frontier_digest": "sha256:98132c9c74ded34d07c47eec3295593b540489cede4cd89a8043c7f5870b988a"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.legislature.ms.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "official_domains": {
+    "MA": "malegislature.gov",
+    "MI": "www.legislature.mi.gov",
+    "MN": "www.revisor.mn.gov",
+    "MS": "www.legislature.ms.gov"
+  },
+  "production_upload": false,
+  "program_id": "legal-corpora-reindex-v1",
+  "receipt_schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-receipt@1",
+  "repair_work": [],
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-f-report@1",
+  "shared_combined_write": false,
+  "state_results": {
+    "MA": {
+      "content_digest": "sha256:b2df4e88439fca0544ec6fbb1060d3ff43a99d802788cb9cde0b00fc121ef105",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "malegislature.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "MI": {
+      "content_digest": "sha256:dd1bc78927afa13d012d8d39fa716def428fa5fb94a3e71ee840289737bd4848",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.legislature.mi.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "MN": {
+      "content_digest": "sha256:43cd37a1ae3caea23c2a58151525b71af15dfcb51ab726983d61cae4f485a499",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.revisor.mn.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "MS": {
+      "content_digest": "sha256:5e9667800d9f5467e73b08e78ced3432eb6baac27df57a09e30cf96f420ac376",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.legislature.ms.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "states": [
+    "MA",
+    "MI",
+    "MN",
+    "MS"
+  ],
+  "status": "success",
+  "statutes_sample_counts": {
+    "MA": 2,
+    "MI": 2,
+    "MN": 2,
+    "MS": 2
+  },
+  "task_id": "LCR-014"
+}

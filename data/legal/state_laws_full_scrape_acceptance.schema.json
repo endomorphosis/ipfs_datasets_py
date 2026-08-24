@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ipfs_datasets_py/state-laws-full-scrape-acceptance@2",
+  "title": "State laws full-scrape acceptance (LCR-084)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema",
+    "producer",
+    "program_id",
+    "task_id",
+    "goal_id",
+    "mode",
+    "status",
+    "authorizing_for_publication",
+    "authorizing_hub_upload"
+  ],
+  "properties": {
+    "schema": { "const": "ipfs_datasets_py/state-laws-full-scrape-acceptance@2" },
+    "producer": { "type": "string" },
+    "program_id": { "const": "legal-corpora-reindex-v1" },
+    "task_id": { "const": "LCR-084" },
+    "goal_id": { "const": "LCR-G146" },
+    "mode": { "enum": ["inspect", "live_official"] },
+    "status": { "enum": ["passed", "blocked"] },
+    "authorizing_for_publication": { "const": false },
+    "authorizing_hub_upload": { "const": false },
+    "reasons": { "type": "array", "items": { "type": "string" } }
+  }
+}

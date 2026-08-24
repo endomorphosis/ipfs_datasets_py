@@ -1,0 +1,680 @@
+{
+  "acceptance": {
+    "admitted_rows_have_complete_official_provenance": true,
+    "admitted_rows_non_placeholder_text": true,
+    "authorizes_hub_upload": false,
+    "authorizes_publication": false,
+    "combined_count_equals_deduped_union": true,
+    "every_row_has_one_disposition": true,
+    "every_source_item_has_one_disposition": true,
+    "exact_51": true,
+    "includes_dc": true,
+    "no_absolute_home_paths": true,
+    "no_hub_upload": true,
+    "no_token_material": true,
+    "recovery_quarantine_isolated": true
+  },
+  "adr_path": "docs/architecture/legal_corpora_reindex_schema.md",
+  "combined": {
+    "admitted_row_count": 102,
+    "deduped_union": 102,
+    "duplicate_row_count": 0,
+    "excluded_row_count": 0,
+    "history_row_count": 0,
+    "jurisdiction_count": 51,
+    "quarantine_row_count": 0,
+    "recovery_row_count": 0,
+    "shard_sum_before_dedup": 102,
+    "source_item_count": 102
+  },
+  "content_id": "sha256:8395f80b8f383cdfe2d1f0f81a63c809949ba2ca0b9c02d21dc6c6375cbc750d",
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "dataset_repo_id": "justicedao/ipfs_state_laws",
+  "disposition_counts": {
+    "admitted": 102,
+    "duplicate": 0,
+    "excluded": 0,
+    "failed_final": 0,
+    "history": 0,
+    "quarantined": 0,
+    "recovery": 0
+  },
+  "family_counts": {
+    "bm25": 102,
+    "corpus": 102,
+    "graph": 102,
+    "quarantine": 0,
+    "recovery": 0,
+    "vector": 102
+  },
+  "goal_id": "LCR-G030",
+  "includes_dc": true,
+  "inputs": {
+    "cohort_receipts": [
+      {
+        "cohort": "A",
+        "content_id": "sha256:63baabdf2cb5e26f2365b706ad7d0a19c8dea5f82ec3e819097f52155fbf5b06",
+        "path": "docs/reports/legal_corpora_reindex/cohort_a.json",
+        "source": "file"
+      },
+      {
+        "cohort": "B",
+        "content_id": "sha256:f5fe77089031c2636f213de7554f09438885b23e4ab33b9f1d68a53c552975cf",
+        "path": "docs/reports/legal_corpora_reindex/cohort_b.json",
+        "source": "file"
+      },
+      {
+        "cohort": "C",
+        "content_id": "sha256:b5fa54683e5a2e84ec44b4e851e0625bc9a71c140f793b066789a391fcbffc8b",
+        "path": "docs/reports/legal_corpora_reindex/cohort_c.json",
+        "source": "file"
+      },
+      {
+        "cohort": "D",
+        "content_id": "sha256:ca67cad6b91a5f5e3c43eb7f04cf3a33118fda8d81746c32d9e222e3c64bba15",
+        "path": "docs/reports/legal_corpora_reindex/cohort_d.json",
+        "source": "file"
+      },
+      {
+        "cohort": "E",
+        "content_id": "sha256:8b11b6f6f67b99f018e7b543943ebfd5ca663396cd3e58492f759f0bb1f5a459",
+        "path": "docs/reports/legal_corpora_reindex/cohort_e.json",
+        "source": "file"
+      },
+      {
+        "cohort": "F",
+        "content_id": "sha256:4f7b16384c97e1e002b809d37fdf209f2c1489045086c39d4f3e25fc5106c8d8",
+        "path": "docs/reports/legal_corpora_reindex/cohort_f.json",
+        "source": "file"
+      },
+      {
+        "cohort": "G",
+        "content_id": "sha256:18a29f4598bb7c955f097261ea5a85e47caa1329db0a4fe3a02de2c485d311b3",
+        "path": "docs/reports/legal_corpora_reindex/cohort_g.json",
+        "source": "file"
+      },
+      {
+        "cohort": "H",
+        "content_id": "sha256:7ecdbe5259db410419f47ff5254f24eaf563460b699a6d47d2a33077d1a40835",
+        "path": "docs/reports/legal_corpora_reindex/cohort_h.json",
+        "source": "file"
+      },
+      {
+        "cohort": "I",
+        "content_id": "sha256:7382e249788530459941f4f7fb3934c1dc2385972a6ba69bbeee5e8fc9c88621",
+        "path": "docs/reports/legal_corpora_reindex/cohort_i.json",
+        "source": "file"
+      },
+      {
+        "cohort": "J",
+        "content_id": "sha256:04c66d51fd57108d1adc04bdb2be634c0d13d901bac433f00c97865d3bc78364",
+        "path": "docs/reports/legal_corpora_reindex/cohort_j.json",
+        "source": "file"
+      },
+      {
+        "cohort": "K",
+        "content_id": "sha256:bd6bb0f672f34248b05b4dbbb73a4a97adfe357bc231aeb8380d824f344b9362",
+        "path": "docs/reports/legal_corpora_reindex/cohort_k.json",
+        "source": "file"
+      },
+      {
+        "cohort": "L",
+        "content_id": "sha256:4aa2066c4029f8073adac1ea97e899732982c325d5b35d87f2dfdb674a79793c",
+        "path": "docs/reports/legal_corpora_reindex/cohort_l.json",
+        "source": "file"
+      },
+      {
+        "cohort": "M",
+        "content_id": "sha256:c919dbaef6128efa30611c96398c45fbd4be5a98e76d3531a0e6e0e6e8027a04",
+        "path": "docs/reports/legal_corpora_reindex/cohort_m.json",
+        "source": "file"
+      }
+    ]
+  },
+  "jurisdictions": [
+    "AK",
+    "AL",
+    "AR",
+    "AZ",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "IA",
+    "ID",
+    "IL",
+    "IN",
+    "KS",
+    "KY",
+    "LA",
+    "MA",
+    "MD",
+    "ME",
+    "MI",
+    "MN",
+    "MO",
+    "MS",
+    "MT",
+    "NC",
+    "ND",
+    "NE",
+    "NH",
+    "NJ",
+    "NM",
+    "NV",
+    "NY",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VA",
+    "VT",
+    "WA",
+    "WI",
+    "WV",
+    "WY",
+    "DC"
+  ],
+  "notes": "Canonical 51-jurisdiction corpus projection from compact cohort receipts. History, duplicates, recovery, and quarantine are isolated from default retrieval counts. Fixture materialization does not authorize Hub upload or publication.",
+  "parser_version": "state-laws-parser/v2",
+  "per_jurisdiction": [
+    {
+      "admitted_count": 2,
+      "jurisdiction": "AK",
+      "legal_ids": [
+        "state:AK:alaska-statutes:1:5:1.05.006",
+        "state:AK:alaska-statutes:1:5:1.05.011"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "AL",
+      "legal_ids": [
+        "state:AL:code-of-alabama:1:1:1-1-1",
+        "state:AL:code-of-alabama:1:1:1-1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "AR",
+      "legal_ids": [
+        "state:AR:arkansas-code:1:1:1-1-101",
+        "state:AR:arkansas-code:1:1:1-1-102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "AZ",
+      "legal_ids": [
+        "state:AZ:arizona-revised-statutes:13:13-101",
+        "state:AZ:arizona-revised-statutes:13:13-102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "CA",
+      "legal_ids": [
+        "state:CA:california-codes:187",
+        "state:CA:california-codes:188"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "CO",
+      "legal_ids": [
+        "state:CO:colorado-revised-statutes:18:18-1-101",
+        "state:CO:colorado-revised-statutes:18:18-1-102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "CT",
+      "legal_ids": [
+        "state:CT:connecticut-general-statutes:1:1:1-1",
+        "state:CT:connecticut-general-statutes:1:1:1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "DE",
+      "legal_ids": [
+        "state:DE:delaware-code:1:1:101",
+        "state:DE:delaware-code:1:1:102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "FL",
+      "legal_ids": [
+        "state:FL:florida-statutes:xlvi:775:775.01",
+        "state:FL:florida-statutes:xlvi:775:775.011"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "GA",
+      "legal_ids": [
+        "state:GA:official-code-of-georgia:16:1:16-1-1",
+        "state:GA:official-code-of-georgia:16:1:16-1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "HI",
+      "legal_ids": [
+        "state:HI:hawaii-revised-statutes:1-1",
+        "state:HI:hawaii-revised-statutes:1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "IA",
+      "legal_ids": [
+        "state:IA:iowa-code:1.1",
+        "state:IA:iowa-code:1.2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "ID",
+      "legal_ids": [
+        "state:ID:idaho-statutes:18:1:18-101",
+        "state:ID:idaho-statutes:18:1:18-102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "IL",
+      "legal_ids": [
+        "state:IL:illinois-compiled-statutes:720:1-1",
+        "state:IL:illinois-compiled-statutes:720:1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "IN",
+      "legal_ids": [
+        "state:IN:indiana-code:6:15:1.1:15",
+        "state:IN:indiana-code:32:3:28:3"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "KS",
+      "legal_ids": [
+        "state:KS:kansas-statutes:21:51:21-5101",
+        "state:KS:kansas-statutes:21:51:21-5102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "KY",
+      "legal_ids": [
+        "state:KY:kentucky-revised-statutes:1:1.010",
+        "state:KY:kentucky-revised-statutes:1:1.020"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "LA",
+      "legal_ids": [
+        "state:LA:louisiana-revised-statutes:1",
+        "state:LA:louisiana-revised-statutes:2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "MA",
+      "legal_ids": [
+        "state:MA:massachusetts-general-laws:i:1:i:1",
+        "state:MA:massachusetts-general-laws:i:1:i:2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "MD",
+      "legal_ids": [
+        "state:MD:maryland-code:gsg:1-101",
+        "state:MD:maryland-code:gsg:1-102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "ME",
+      "legal_ids": [
+        "state:ME:maine-revised-statutes:1:1",
+        "state:ME:maine-revised-statutes:1:2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "MI",
+      "legal_ids": [
+        "state:MI:michigan-compiled-laws:750:750.1",
+        "state:MI:michigan-compiled-laws:750:750.2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "MN",
+      "legal_ids": [
+        "state:MN:minnesota-statutes:1:1.01",
+        "state:MN:minnesota-statutes:1:1.02"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "MO",
+      "legal_ids": [
+        "state:MO:missouri-revised-statutes:1:1.010",
+        "state:MO:missouri-revised-statutes:1:1.020"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "MS",
+      "legal_ids": [
+        "state:MS:mississippi-code:97:97-3-7",
+        "state:MS:mississippi-code:97:97-3-19"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "MT",
+      "legal_ids": [
+        "state:MT:montana-code-annotated:1:1:1-1-101",
+        "state:MT:montana-code-annotated:1:1:1-1-102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "NC",
+      "legal_ids": [
+        "state:NC:north-carolina-general-statutes:1:1-1",
+        "state:NC:north-carolina-general-statutes:1:1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "ND",
+      "legal_ids": [
+        "state:ND:north-dakota-century-code:1:1:1-1",
+        "state:ND:north-dakota-century-code:1:2:1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "NE",
+      "legal_ids": [
+        "state:NE:nebraska-revised-statutes:1:1-101",
+        "state:NE:nebraska-revised-statutes:1:1-102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "NH",
+      "legal_ids": [
+        "state:NH:new-hampshire-revised-statutes:i:1:1",
+        "state:NH:new-hampshire-revised-statutes:i:1:2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "NJ",
+      "legal_ids": [
+        "state:NJ:new-jersey-statutes:1:1-1",
+        "state:NJ:new-jersey-statutes:1:1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "NM",
+      "legal_ids": [
+        "state:NM:new-mexico-statutes-annotated:1:1-1-1",
+        "state:NM:new-mexico-statutes-annotated:1:1-1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "NV",
+      "legal_ids": [
+        "state:NV:nevada-revised-statutes:1:1.010",
+        "state:NV:nevada-revised-statutes:1:1.020"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "NY",
+      "legal_ids": [
+        "state:NY:new-york-consolidated-laws:125.25",
+        "state:NY:new-york-consolidated-laws:125.27"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "OH",
+      "legal_ids": [
+        "state:OH:ohio-revised-code:1:101:101.01",
+        "state:OH:ohio-revised-code:1:101:101.02"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "OK",
+      "legal_ids": [
+        "state:OK:oklahoma-statutes:12:1",
+        "state:OK:oklahoma-statutes:12:2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "OR",
+      "legal_ids": [
+        "state:OR:oregon-revised-statutes:1:1.010",
+        "state:OR:oregon-revised-statutes:1:1.020"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "PA",
+      "legal_ids": [
+        "state:PA:pennsylvania-consolidated-statutes:1:101",
+        "state:PA:pennsylvania-consolidated-statutes:1:102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "RI",
+      "legal_ids": [
+        "state:RI:rhode-island-general-laws:1:1-1:1-1-1",
+        "state:RI:rhode-island-general-laws:1:1-1:1-1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "SC",
+      "legal_ids": [
+        "state:SC:south-carolina-code-of-laws:16:3:16-3-10",
+        "state:SC:south-carolina-code-of-laws:16:3:16-3-20"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "SD",
+      "legal_ids": [
+        "state:SD:south-dakota-codified-laws:1:1:1-1-1",
+        "state:SD:south-dakota-codified-laws:1:1:1-1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "TN",
+      "legal_ids": [
+        "state:TN:tennessee-code-annotated:1:1:1-1-101",
+        "state:TN:tennessee-code-annotated:1:1:1-1-102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "TX",
+      "legal_ids": [
+        "state:TX:texas-statutes:1:1:1.01",
+        "state:TX:texas-statutes:1:1:1.02"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "UT",
+      "legal_ids": [
+        "state:UT:utah-code:1:1:1-1-101",
+        "state:UT:utah-code:1:1:1-1-102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "VA",
+      "legal_ids": [
+        "state:VA:code-of-virginia:1:1:1-1",
+        "state:VA:code-of-virginia:1:1:1-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "VT",
+      "legal_ids": [
+        "state:VT:vermont-statutes:1:1:1",
+        "state:VT:vermont-statutes:1:1:2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "WA",
+      "legal_ids": [
+        "state:WA:revised-code-of-washington:9a:9a.32:9a.32.010",
+        "state:WA:revised-code-of-washington:9a:9a.32:9a.32.030"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "WI",
+      "legal_ids": [
+        "state:WI:wisconsin-statutes:939:939.50",
+        "state:WI:wisconsin-statutes:939:939.51"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "WV",
+      "legal_ids": [
+        "state:WV:west-virginia-code:61:2:61-2-1",
+        "state:WV:west-virginia-code:61:2:61-2-2"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "WY",
+      "legal_ids": [
+        "state:WY:wyoming-statutes:1:1:1-1-101",
+        "state:WY:wyoming-statutes:1:1:1-1-102"
+      ],
+      "shard_count_before_dedup": 2
+    },
+    {
+      "admitted_count": 2,
+      "jurisdiction": "DC",
+      "legal_ids": [
+        "state:DC:dc-official-code:1:1:1-101",
+        "state:DC:dc-official-code:1:1:1-102"
+      ],
+      "shard_count_before_dedup": 2
+    }
+  ],
+  "producer": "state_laws_corpus.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "recovery_excluded_from_families": [
+    "bm25",
+    "bm25_documents",
+    "bm25_postings",
+    "corpus",
+    "graph",
+    "graph_adjacency_in",
+    "graph_adjacency_out",
+    "graph_edges",
+    "graph_nodes",
+    "vector",
+    "vectors"
+  ],
+  "release_point": "3b73593e9cfa5d810ba430a2724221bc87685b86182ad10e10c64bb28d53f5fd",
+  "release_profile": "state-laws-ir-graphrag/v2",
+  "release_schema_version": "state-laws-sparse-graphrag-release-schema-v2",
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-admission@1",
+  "schema_version": "state-laws-corpus-v1",
+  "source_disposition_counts": {
+    "duplicate": 0,
+    "excluded": 0,
+    "failed_final": 0,
+    "fetched": 102,
+    "quarantined": 0
+  },
+  "status": "pass",
+  "task_id": "LCR-024",
+  "transformation_version": "state-laws-corpus-transform-v1"
+}

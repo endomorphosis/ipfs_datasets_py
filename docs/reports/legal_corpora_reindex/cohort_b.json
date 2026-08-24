@@ -1,0 +1,358 @@
+{
+  "acceptance": {
+    "closed_frontier": true,
+    "exact_source_authority": true,
+    "failed_final_zero": true,
+    "non_placeholder_full_text": true,
+    "reconciled_counts_hashes": true,
+    "replay_evidence": true
+  },
+  "cohort": "B",
+  "goal_id": "LCR-G021",
+  "jurisdiction_receipts": {
+    "CA": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "penal/section-187",
+        "last_hierarchy_unit": "penal/section-188",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:57008226b562675aab9b94d4255406a70209183f17aad8a633e4aa033b08f51e",
+        "min_full_text_chars": 748,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=PEN&sectionNum=187.",
+          "https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=PEN&sectionNum=188."
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "ca:187",
+          "ca:188"
+        ],
+        "derived_keys": [
+          "ca:187",
+          "ca:188"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "CA",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:57008226b562675aab9b94d4255406a70209183f17aad8a633e4aa033b08f51e",
+        "first_frontier_digest": "sha256:0ff67cec9964cad7cb491a8fd29ab3917d72544ddbb2589e1bf8bba31aa80b85",
+        "second_frontier_digest": "sha256:0ff67cec9964cad7cb491a8fd29ab3917d72544ddbb2589e1bf8bba31aa80b85"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "leginfo.legislature.ca.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "CO": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-18/section-18-1-101",
+        "last_hierarchy_unit": "title-18/section-18-1-102",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:eb51902f7748c6fb7c7b1305d0e607d18eddb4b62e02d13013fdb24504182f03",
+        "min_full_text_chars": 1079,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://content.leg.colorado.gov/publications/18-1-101",
+          "https://content.leg.colorado.gov/publications/18-1-102"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "co:18-1-101",
+          "co:18-1-102"
+        ],
+        "derived_keys": [
+          "co:18-1-101",
+          "co:18-1-102"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "CO",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:eb51902f7748c6fb7c7b1305d0e607d18eddb4b62e02d13013fdb24504182f03",
+        "first_frontier_digest": "sha256:082d372b7c1f12d2dc72d44a0aba047aedf0d89ea6995186d46c28daa1db8855",
+        "second_frontier_digest": "sha256:082d372b7c1f12d2dc72d44a0aba047aedf0d89ea6995186d46c28daa1db8855"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "leg.colorado.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "CT": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-1/chapter-1/section-1-1",
+        "last_hierarchy_unit": "title-1/chapter-1/section-1-2",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:d572f2b27184edbfa5ee6b2566c982d683ab8e0f587ff6a5f2a14b9a2b5b8cea",
+        "min_full_text_chars": 776,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://www.cga.ct.gov/current/pub/chap_001.htm#sec_1-1",
+          "https://www.cga.ct.gov/current/pub/chap_001.htm#sec_1-2"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "ct:1-1",
+          "ct:1-2"
+        ],
+        "derived_keys": [
+          "ct:1-1",
+          "ct:1-2"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "CT",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:d572f2b27184edbfa5ee6b2566c982d683ab8e0f587ff6a5f2a14b9a2b5b8cea",
+        "first_frontier_digest": "sha256:5a15c1924b0f9dad224989e048295b20712fe24685de73a086a7a0e0ccbe4377",
+        "second_frontier_digest": "sha256:5a15c1924b0f9dad224989e048295b20712fe24685de73a086a7a0e0ccbe4377"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "www.cga.ct.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "DE": {
+      "boundary_probes": {
+        "bundle_total": 1,
+        "first_hierarchy_unit": "title-1/chapter-1/section-101",
+        "last_hierarchy_unit": "title-1/chapter-1/section-102",
+        "pagination_total": 2
+      },
+      "checkpoint": {
+        "completion_basis": "source_frontier",
+        "partial": false,
+        "promoted_success": false
+      },
+      "content": {
+        "content_digest": "sha256:7d02792d5fb2e1977baa0514e0d9686b4df54c201dd9163d329ca85dfaece131",
+        "min_full_text_chars": 764,
+        "non_placeholder_full_text": true,
+        "official_urls": [
+          "https://delcode.delaware.gov/title1/c01/index.html#101",
+          "https://delcode.delaware.gov/title1/c01/index.html#102"
+        ]
+      },
+      "disposition": {
+        "discovered": 2,
+        "duplicates": 0,
+        "excluded": 0,
+        "failed_final": 0,
+        "fetched": 2,
+        "quarantined": 0
+      },
+      "failed_final": 0,
+      "frontier": {
+        "closed": true,
+        "enumerator_closed": true,
+        "expected_index_units": 2,
+        "unvisited_continuation_links": [],
+        "visited_index_units": 2
+      },
+      "index_keys": {
+        "canonical_keys": [
+          "de:101",
+          "de:102"
+        ],
+        "derived_keys": [
+          "de:101",
+          "de:102"
+        ],
+        "parity_ok": true,
+        "stale_keys": []
+      },
+      "jurisdiction": "DE",
+      "mode": "full",
+      "official_source": true,
+      "partial_checkpoint_promoted": false,
+      "replay": {
+        "closed": true,
+        "content_digest": "sha256:7d02792d5fb2e1977baa0514e0d9686b4df54c201dd9163d329ca85dfaece131",
+        "first_frontier_digest": "sha256:ce223aa0b318122de49c309433bc40d6b6cba5540613c62eb03f083dae07ecee",
+        "second_frontier_digest": "sha256:ce223aa0b318122de49c309433bc40d6b6cba5540613c62eb03f083dae07ecee"
+      },
+      "row_count": 2,
+      "runtime_caps": null,
+      "sample_cap": null,
+      "source_authority_class": "official",
+      "source_domain": "delcode.delaware.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "official_domains": {
+    "CA": "leginfo.legislature.ca.gov",
+    "CO": "leg.colorado.gov",
+    "CT": "www.cga.ct.gov",
+    "DE": "delcode.delaware.gov"
+  },
+  "production_upload": false,
+  "program_id": "legal-corpora-reindex-v1",
+  "receipt_schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-receipt@1",
+  "repair_work": [],
+  "schema": "ipfs_datasets_py/legal-corpora-reindex-cohort-b-report@1",
+  "shared_combined_write": false,
+  "state_results": {
+    "CA": {
+      "content_digest": "sha256:57008226b562675aab9b94d4255406a70209183f17aad8a633e4aa033b08f51e",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "leginfo.legislature.ca.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "CO": {
+      "content_digest": "sha256:eb51902f7748c6fb7c7b1305d0e607d18eddb4b62e02d13013fdb24504182f03",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "leg.colorado.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "CT": {
+      "content_digest": "sha256:d572f2b27184edbfa5ee6b2566c982d683ab8e0f587ff6a5f2a14b9a2b5b8cea",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "www.cga.ct.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    },
+    "DE": {
+      "content_digest": "sha256:7d02792d5fb2e1977baa0514e0d9686b4df54c201dd9163d329ca85dfaece131",
+      "failed_final": 0,
+      "frontier_closed": true,
+      "partial_checkpoint_promoted": false,
+      "replay_closed": true,
+      "source_domain": "delcode.delaware.gov",
+      "status": "success",
+      "statutes_count": 2,
+      "timeout_promoted_to_success": false
+    }
+  },
+  "states": [
+    "CA",
+    "CO",
+    "CT",
+    "DE"
+  ],
+  "status": "success",
+  "statutes_sample_counts": {
+    "CA": 2,
+    "CO": 2,
+    "CT": 2,
+    "DE": 2
+  },
+  "task_id": "LCR-010"
+}

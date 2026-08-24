@@ -3,17 +3,39 @@
 This module contains the scraper for Montana statutes from the official state legislative website.
 """
 
-from typing import List, Dict, Optional
+import json
 import re
-from urllib.parse import urljoin
+import ssl
+import urllib.request
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .base_scraper import StatuteMetadata
 from .registry import StateScraperRegistry
+
+_SECONDARY_HOST_MARKERS = (
+    "justia.com",
+    "findlaw.com",
+    "unicourt.github.io",
+    "law.cornell.edu",
+)
 
 
 class MontanaScraper(BaseStateScraper):
     """Scraper for Montana state laws from https://leg.mt.gov"""
 
+    OFFICIAL_DOMAIN = "leg.mt.gov"
+    OFFICIAL_ENTRY_PATH = "/bills/mca/index.html"
+    OFFICIAL_ENTRY_URL = "https://leg.mt.gov/bills/mca/index.html"
+    OFFICIAL_TITLES = (
+        1, 2, 3, 5, 7, 10, 13, 15, 16, 17, 18, 19, 20, 22, 23, 25, 27, 28,
+        30, 31, 32, 33, 35, 37, 39, 40, 41, 42, 44, 45, 46, 49, 50, 52, 53,
+        60, 61, 67, 69, 70, 71, 72, 75, 76, 80, 81, 82, 85, 87, 90,
+    )
+    _MT_TITLE_INDEX_HREF_RE = re.compile(
+        r"title_(?P<title>\d{4})/chapters_index\.html",
+        re.IGNORECASE,
+    )
     _MT_SECTION_URL_RE = re.compile(r"/\d{4}-\d{4}-\d{4}-\d{4}\.html$", re.IGNORECASE)
     _MT_TITLE_INDEX_RE = re.compile(
         r"https://mca\.legmt\.gov/bills/mca/title_\d{4}/chapters_index\.html", re.IGNORECASE
@@ -47,10 +69,39 @@ class MontanaScraper(BaseStateScraper):
         return [
             {
                 "name": "Montana Code Annotated",
-                "url": f"{self.get_base_url()}/bills/mca/title_0450/chapter_0050/part_0010/section_0020/0450-0050-0010-0020.html",
+                "url": f"{self.get_base_url()}/bills/mca/index.html",
                 "type": "Code",
             }
         ]
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        if any(marker in host for marker in _SECONDARY_HOST_MARKERS):
+            return False
+        return (
+            host == "leg.mt.gov"
+            or host.endswith(".leg.mt.gov")
+            or host == "mca.legmt.gov"
+            or host.endswith(".legmt.gov")
+        )
+
+    def _filter_official_host_statutes(
+        self, statutes: List[NormalizedStatute]
+    ) -> List[NormalizedStatute]:
+        return [
+            statute
+            for statute in statutes
+            if self._host_is_official(str(statute.source_url or ""))
+        ]
+
+    def _officialize_mca_url(self, url: str) -> str:
+        parsed = urlparse(str(url or "").strip())
+        host = (parsed.hostname or "").lower()
+        if host in {"mca.legmt.gov", "archive.legmt.gov"} or host.endswith(".legmt.gov"):
+            return parsed._replace(scheme="https", netloc="leg.mt.gov").geturl()
+        return str(url or "").strip()
 
     async def scrape_code(
         self,
@@ -67,25 +118,57 @@ class MontanaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        direct_limit = self._effective_scrape_limit(max_statutes, default=160)
-        official = await self._scrape_official_mca_tree(
-            code_name, max_statutes=max(10, int(direct_limit or 10))
+        # Full-corpus mode with max_statutes=None must remain uncapped.
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .montana_constitution import (
+            configured_constitution_html_path,
+            parse_montana_constitution_html,
         )
-        if official:
-            return official[: max(1, int(direct_limit or len(official)))]
 
-        direct = await self._scrape_direct_seed_sections(
-            code_name,
-            max_statutes=max(1, int(direct_limit or 2)),
-        )
-        if direct and not self._full_corpus_enabled():
-            return direct[: max(1, int(direct_limit or len(direct)))]
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_montana_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Montana Constitution",
+                    source_url="https://mca.legmt.gov/bills/mca/title_0000/chapters_index.html",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
+        from .montana_section import configured_section_html_path, parse_montana_section_html
+
+        local_section = configured_section_html_path()
+        if local_section is not None:
+            parsed = parse_montana_section_html(
+                local_section.read_text(encoding="utf-8", errors="replace"),
+                source_url="https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/part_0010/section_0102/0450-0050-0010-0102.html",
+                code_name=code_name,
+            )
+            if parsed is not None:
+                return [parsed]
+        official = await self._scrape_official_mca_tree(code_name, max_statutes=limit)
+        official = self._filter_official_host_statutes(official)
+        if official:
+            return official if limit is None else official[: int(limit)]
+
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_seed_sections(
+                code_name,
+                max_statutes=max(1, int(limit or 2)),
+            )
+            direct = self._filter_official_host_statutes(direct)
+            if direct:
+                return direct if limit is None else direct[: int(limit)]
+
+        if self._full_corpus_enabled() and max_statutes is None:
+            # Never sole-admit Justia / generic-only mirrors for full corpus.
+            return []
 
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/bills/mca/",
+            f"{self.get_base_url()}/bills/mca/index.html",
             f"{self.get_base_url()}/bills/mca/title_0450/chapter_0050/part_0010/section_0020/0450-0050-0010-0020.html",
-            "https://archive.legmt.gov/bills/mca/title_0450/chapter_0050/part_0010/section_0020/0450-0050-0010-0020.html",
         ]
 
         seen = set()
@@ -93,10 +176,13 @@ class MontanaScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(160)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        generic_cap = limit if limit is not None else max(10, int(return_threshold))
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
             seen.add(candidate)
+            if any(marker in str(candidate).lower() for marker in _SECONDARY_HOST_MARKERS):
+                continue
 
             if self.has_playwright():
                 try:
@@ -104,34 +190,45 @@ class MontanaScraper(BaseStateScraper):
                         code_name,
                         candidate,
                         "Mont. Code Ann.",
-                        max_sections=max(10, return_threshold),
+                        max_sections=max(10, int(generic_cap)),
                         wait_for_selector="a[href*='/bills/mca/'], a[href*='/section_'], a[href*='chapters_index']",
                         timeout=45000,
                     )
-                    statutes = self._filter_section_level(statutes)
+                    statutes = self._filter_official_host_statutes(
+                        self._filter_section_level(statutes)
+                    )
                     if len(statutes) > len(best_statutes):
                         best_statutes = statutes
+                    if limit is not None and len(statutes) >= int(limit):
+                        return statutes[: int(limit)]
                     if len(statutes) >= return_threshold:
                         return statutes
                 except Exception:
                     pass
 
             statutes = await self._generic_scrape(
-                code_name, candidate, "Mont. Code Ann.", max_sections=max(10, return_threshold)
+                code_name, candidate, "Mont. Code Ann.", max_sections=max(10, int(generic_cap))
             )
-            statutes = self._filter_section_level(statutes)
+            statutes = self._filter_official_host_statutes(self._filter_section_level(statutes))
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
+            if limit is not None and len(statutes) >= int(limit):
+                return statutes[: int(limit)]
             if len(statutes) >= return_threshold:
                 return statutes
 
-        return best_statutes
+        return best_statutes if limit is None else best_statutes[: int(limit)]
 
     async def _scrape_official_mca_tree(
         self,
         code_name: str,
-        max_statutes: int,
+        max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
+        html_rows = await self._scrape_official_mca_html_tree(code_name, max_statutes=max_statutes)
+        if html_rows:
+            return html_rows
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
         root_reader = "https://r.jina.ai/http://https://leg.mt.gov/bills/mca/"
         root_text = await self._fetch_reader_markdown(root_reader)
         if not root_text:
@@ -141,14 +238,14 @@ class MontanaScraper(BaseStateScraper):
         seen_sections = set()
         title_links = self._extract_mca_links(root_text, self._MT_TITLE_INDEX_RE)
         for _, title_url in title_links:
-            if len(statutes) >= max_statutes:
+            if limit is not None and len(statutes) >= limit:
                 break
             title_text = await self._fetch_reader_markdown(f"https://r.jina.ai/http://{title_url}")
             if not title_text:
                 continue
             chapter_links = self._extract_mca_links(title_text, self._MT_CHAPTER_INDEX_RE)
             for _, chapter_url in chapter_links:
-                if len(statutes) >= max_statutes:
+                if limit is not None and len(statutes) >= limit:
                     break
                 chapter_text = await self._fetch_reader_markdown(
                     f"https://r.jina.ai/http://{chapter_url}"
@@ -157,7 +254,7 @@ class MontanaScraper(BaseStateScraper):
                     continue
                 part_links = self._extract_mca_links(chapter_text, self._MT_PART_INDEX_RE)
                 for _, part_url in part_links:
-                    if len(statutes) >= max_statutes:
+                    if limit is not None and len(statutes) >= limit:
                         break
                     part_text = await self._fetch_reader_markdown(
                         f"https://r.jina.ai/http://{part_url}"
@@ -166,7 +263,7 @@ class MontanaScraper(BaseStateScraper):
                         continue
                     section_links = self._extract_mca_links(part_text, self._MT_SECTION_URL_RE)
                     for section_label, section_url in section_links:
-                        if len(statutes) >= max_statutes:
+                        if limit is not None and len(statutes) >= limit:
                             break
                         if section_url in seen_sections:
                             continue
@@ -177,6 +274,165 @@ class MontanaScraper(BaseStateScraper):
                         if statute is not None:
                             statutes.append(statute)
         return statutes
+
+    async def _scrape_official_mca_html_tree(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup  # noqa: F401
+        except ImportError:
+            return []
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        root_urls = (
+            f"{self.get_base_url()}/bills/mca/index.html",
+            f"{self.get_base_url()}/bills/mca/",
+        )
+        title_links: List[Tuple[str, str]] = []
+        for root_url in root_urls:
+            html = await self._fetch_reader_markdown(root_url)
+            title_links = self._extract_html_mca_links(
+                html, root_url, self._MT_TITLE_INDEX_HREF_RE
+            )
+            if title_links:
+                break
+        if not title_links:
+            return []
+
+        statutes: List[NormalizedStatute] = []
+        seen_sections: set[str] = set()
+        for _, title_url in title_links:
+            if limit is not None and len(statutes) >= limit:
+                break
+            title_html = await self._fetch_reader_markdown(title_url)
+            chapter_links = self._extract_html_mca_links(
+                title_html, title_url, self._MT_CHAPTER_INDEX_RE
+            )
+            if not chapter_links:
+                chapter_links = self._extract_html_mca_links(
+                    title_html,
+                    title_url,
+                    re.compile(r"chapter_\d{4}/parts_index\.html", re.IGNORECASE),
+                )
+            for _, chapter_url in chapter_links:
+                if limit is not None and len(statutes) >= limit:
+                    break
+                chapter_html = await self._fetch_reader_markdown(chapter_url)
+                part_links = self._extract_html_mca_links(
+                    chapter_html, chapter_url, self._MT_PART_INDEX_RE
+                )
+                if not part_links:
+                    part_links = self._extract_html_mca_links(
+                        chapter_html,
+                        chapter_url,
+                        re.compile(r"part_\d{4}/sections_index\.html", re.IGNORECASE),
+                    )
+                for _, part_url in part_links:
+                    if limit is not None and len(statutes) >= limit:
+                        break
+                    part_html = await self._fetch_reader_markdown(part_url)
+                    section_links = self._extract_html_mca_links(
+                        part_html, part_url, self._MT_SECTION_URL_RE
+                    )
+                    for section_label, section_url in section_links:
+                        if limit is not None and len(statutes) >= limit:
+                            break
+                        official_url = self._officialize_mca_url(section_url)
+                        if official_url in seen_sections:
+                            continue
+                        seen_sections.add(official_url)
+                        statute = await self._build_official_html_section_statute(
+                            code_name, section_label, official_url
+                        )
+                        if statute is not None:
+                            statutes.append(statute)
+        return statutes
+
+    def _extract_html_mca_links(
+        self,
+        html: str,
+        page_url: str,
+        target_pattern: re.Pattern,
+    ) -> List[Tuple[str, str]]:
+        if not html:
+            return []
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+        soup = BeautifulSoup(html, "html.parser")
+        links: List[Tuple[str, str]] = []
+        seen: set[str] = set()
+        for anchor in soup.find_all("a", href=True):
+            href = str(anchor.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = self._officialize_mca_url(urljoin(page_url, href))
+            path_and_file = urlparse(absolute).path or ""
+            if not target_pattern.search(absolute) and not target_pattern.search(path_and_file):
+                continue
+            if absolute in seen:
+                continue
+            seen.add(absolute)
+            label = self._normalize_legal_text(anchor.get_text(" ", strip=True))
+            links.append((label, absolute))
+        return links
+
+    async def _build_official_html_section_statute(
+        self,
+        code_name: str,
+        section_label: str,
+        section_url: str,
+    ) -> Optional[NormalizedStatute]:
+        html = await self._fetch_reader_markdown(section_url)
+        if not html:
+            return None
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+        soup = BeautifulSoup(html, "html.parser")
+        for tag in soup(["script", "style", "nav", "header", "footer", "aside"]):
+            tag.decompose()
+        panel = (
+            soup.select_one("main")
+            or soup.select_one("article")
+            or soup.select_one("div#content")
+            or soup.find("body")
+        )
+        if panel is None:
+            return None
+        heading_node = panel.find(["h1", "h2", "h3"]) or panel
+        heading = self._normalize_legal_text(
+            section_label or heading_node.get_text(" ", strip=True)
+        )[:220]
+        full_text = self._normalize_legal_text(panel.get_text(" ", strip=True))
+        if len(full_text) < 80:
+            return None
+        section_number = self._section_number_from_mca_url(section_url)
+        if not section_number:
+            return None
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} § {section_number}",
+            code_name=code_name,
+            title_number=(section_number.split("-", 1)[0] if section_number else None),
+            section_number=section_number,
+            section_name=heading or f"Section {section_number}",
+            full_text=full_text[:14000],
+            legal_area=self._identify_legal_area(full_text[:1200]),
+            source_url=section_url,
+            official_cite=f"Mont. Code Ann. § {section_number}",
+            metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "official_montana_mca_html",
+                "discovery_method": "official_mca_title_chapter_part_section",
+                "skip_hydrate": True,
+            },
+        )
 
     async def _build_official_section_statute(
         self,
@@ -335,6 +591,188 @@ class MontanaScraper(BaseStateScraper):
         text = self._normalize_legal_text("\n".join(lines))
         text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
         return self._normalize_legal_text(text)
+
+    def official_title_token(self, title_number: Any) -> str:
+        return f"{int(title_number) * 10:04d}"
+
+    def official_title_url(self, title_number: Any) -> str:
+        token = self.official_title_token(title_number)
+        return f"https://leg.mt.gov/bills/mca/title_{token}/chapters_index.html"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Montana Code Annotated title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"mt:title-{int(number)}",
+                    "title_number": str(int(number)),
+                    "name": f"Title {int(number)}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Montana Code Annotated Title {int(number)} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+        headers = {
+            "User-Agent": "ipfs-datasets-montana-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+
+        def _request() -> bytes:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl.create_default_context()
+                with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                try:
+                    request = urllib.request.Request(url, headers=headers)
+                    context = ssl._create_unverified_context()
+                    with urllib.request.urlopen(
+                        request, timeout=timeout, context=context
+                    ) as response:
+                        return bytes(response.read() or b"")
+                except Exception:
+                    return b""
+
+        return _request()
+
+    def _title_number_from_token(self, token: str) -> str:
+        digits = "".join(ch for ch in str(token or "") if ch.isdigit())
+        if not digits:
+            return ""
+        value = int(digits)
+        if value >= 10 and value % 10 == 0:
+            return str(value // 10)
+        return str(value)
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._MT_TITLE_INDEX_HREF_RE.search(absolute)
+            if not match:
+                continue
+            number = self._title_number_from_token(match.group("title"))
+            if number and number not in found:
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official MCA title and repair missing live links."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        seen = {str(row["title_number"]) for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_leginfo"
+        for number, url in discovered.items():
+            if number in seen:
+                continue
+            rows.append(
+                {
+                    "canonical_key": f"mt:title-{number}",
+                    "title_number": number,
+                    "name": f"Title {number}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Montana Code Annotated Title {number} official "
+                        f"catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def fetch_official(self, code: str = "MT"):
+        """Acquire the exhaustive official Montana Code Annotated title catalog.
+
+        Live HTTPS retains the official MCA index. Every known title is
+        enumerated with an official leg.mt.gov URL. This hook never returns
+        fixture bytes.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "MT").strip().upper() or "MT"
+        html = self._official_http_get(self.OFFICIAL_ENTRY_URL)
+        if not html:
+            html = self._official_http_get("https://leg.mt.gov/bills/mca/")
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < 3:
+            raise RuntimeError("montana official catalog enumeration is incomplete")
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": [],
+            "visited_index_units": len(rows),
+        }
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry

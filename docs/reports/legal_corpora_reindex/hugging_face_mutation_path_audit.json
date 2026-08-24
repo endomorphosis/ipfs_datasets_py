@@ -1,0 +1,334 @@
+{
+  "authorizing_hub_upload": false,
+  "callsite_count": 29,
+  "callsites": [
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/huggingface/protected_repo_guard.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register",
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_data/canonical_legal_corpora.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register",
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_data/federal_register_release_schema.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_data/federal_register_source_policy.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_data/legal_corpora_publication_gate.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register",
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_data/legal_source_recovery_promotion.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register"
+      ],
+      "write_methods": [
+        "HfApi",
+        "upload_file"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_data/legal_source_rights_policy.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register",
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_data/state_laws_publication_policy.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_data/state_laws_release_schema.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_data/state_laws_sparse_graphrag.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/huggingface_pipeline_engine.py",
+      "protected_repo_literals": [],
+      "write_methods": [
+        "HfApi",
+        "upload_file",
+        "upload_folder"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/justicedao_dataset_inventory.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register",
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": [
+        "HfApi",
+        "upload_file"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/legal_scraper_daemon.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": [
+        "HfApi"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/municipal_law_database_scrapers/hugging_face_pipeline.py",
+      "protected_repo_literals": [],
+      "write_methods": [
+        "HfApi",
+        "upload_file",
+        "upload_folder"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/upload.py",
+      "protected_repo_literals": [],
+      "write_methods": [
+        "HfApi",
+        "create_repo",
+        "upload_folder"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/domains/patent/hf_publisher_v2.py",
+      "protected_repo_literals": [],
+      "write_methods": [
+        "create_branch",
+        "create_commit",
+        "create_repo",
+        "merge_pull_request"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/audit_federal_register_hf_baseline.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/audit_legal_source_rights.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register",
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/audit_state_laws_hf_baseline.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/merge_state_admin_recovered_rows.py",
+      "protected_repo_literals": [],
+      "write_methods": [
+        "HfApi",
+        "upload_folder"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/publish_oregon_admin_rules_to_hf.py",
+      "protected_repo_literals": [],
+      "write_methods": [
+        "create_repo"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/publish_patent_legal_hub_indexes_live.py",
+      "protected_repo_literals": [],
+      "write_methods": [
+        "create_repo"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/query_federal_register_hf.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/rebuild_state_laws_metadata_from_existing_embeddings.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": [
+        "HfApi",
+        "create_commit"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/refresh_state_laws_corpus.py",
+      "protected_repo_literals": [],
+      "write_methods": [
+        "HfApi",
+        "create_repo",
+        "upload_file"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/seal_federal_register_prepublication.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/seal_state_laws_prepublication.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": []
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/repair/publish_parquet_to_hf.py",
+      "protected_repo_literals": [],
+      "write_methods": [
+        "HfApi",
+        "create_repo",
+        "upload_folder"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/security_ir/publish_cvefixes_security_ir.py",
+      "protected_repo_literals": [],
+      "write_methods": [
+        "HfApi",
+        "upload_folder"
+      ]
+    }
+  ],
+  "goal_id": "LCR-G146",
+  "producer": "audit_legal_corpora_hugging_face_mutation_paths.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "protected_repos": [
+    "justicedao/ipfs_federal_register",
+    "justicedao/ipfs_state_laws"
+  ],
+  "reasons": [
+    "ipfs_datasets_py/processors/legal_data/legal_source_recovery_promotion.py mutates ['justicedao/ipfs_federal_register'] via ['HfApi', 'upload_file'] without importing ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime",
+    "ipfs_datasets_py/processors/legal_scrapers/justicedao_dataset_inventory.py mutates ['justicedao/ipfs_federal_register', 'justicedao/ipfs_state_laws'] via ['HfApi', 'upload_file'] without importing ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime",
+    "ipfs_datasets_py/processors/legal_scrapers/legal_scraper_daemon.py mutates ['justicedao/ipfs_state_laws'] via ['HfApi'] without importing ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime",
+    "scripts/ops/legal_data/rebuild_state_laws_metadata_from_existing_embeddings.py mutates ['justicedao/ipfs_state_laws'] via ['HfApi', 'create_commit'] without importing ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime"
+  ],
+  "required_runtime": "ipfs_datasets_py.processors.legal_data.legal_corpora_publication_runtime",
+  "schema": "ipfs_datasets_py/legal-corpora-hugging-face-mutation-path-audit@1",
+  "status": "blocked",
+  "task_id": "LCR-084",
+  "unprotected_callsites": [
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_data/legal_source_recovery_promotion.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register"
+      ],
+      "write_methods": [
+        "HfApi",
+        "upload_file"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/justicedao_dataset_inventory.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_federal_register",
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": [
+        "HfApi",
+        "upload_file"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "ipfs_datasets_py/processors/legal_scrapers/legal_scraper_daemon.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": [
+        "HfApi"
+      ]
+    },
+    {
+      "imports_canonical_runtime": false,
+      "path": "scripts/ops/legal_data/rebuild_state_laws_metadata_from_existing_embeddings.py",
+      "protected_repo_literals": [
+        "justicedao/ipfs_state_laws"
+      ],
+      "write_methods": [
+        "HfApi",
+        "create_commit"
+      ]
+    }
+  ],
+  "unprotected_count": 4
+}

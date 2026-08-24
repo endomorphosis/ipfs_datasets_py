@@ -1,0 +1,95 @@
+{
+  "schema": "ipfs_datasets_py/open-us-law-reindex-lane-matrix@1",
+  "algorithm": "int(sha256(full_task_id)[0:8],16) % 4",
+  "lanes": [
+    {
+      "index": 0,
+      "strict_shard_remainder": 0,
+      "initial_ready_task_ids": [
+        "OUL-002"
+      ],
+      "all_initial_board_task_ids": [
+        "OUL-002",
+        "OUL-011",
+        "OUL-022",
+        "OUL-023",
+        "OUL-025",
+        "OUL-031",
+        "OUL-034",
+        "OUL-042",
+        "OUL-046",
+        "OUL-047"
+      ]
+    },
+    {
+      "index": 1,
+      "strict_shard_remainder": 1,
+      "initial_ready_task_ids": [
+        "OUL-001",
+        "OUL-003",
+        "OUL-006",
+        "OUL-007"
+      ],
+      "all_initial_board_task_ids": [
+        "OUL-000",
+        "OUL-001",
+        "OUL-003",
+        "OUL-006",
+        "OUL-007",
+        "OUL-010",
+        "OUL-014",
+        "OUL-015",
+        "OUL-016",
+        "OUL-017",
+        "OUL-018",
+        "OUL-019",
+        "OUL-026",
+        "OUL-030",
+        "OUL-033",
+        "OUL-038",
+        "OUL-040",
+        "OUL-041",
+        "OUL-045"
+      ]
+    },
+    {
+      "index": 2,
+      "strict_shard_remainder": 2,
+      "initial_ready_task_ids": [
+        "OUL-005",
+        "OUL-008"
+      ],
+      "all_initial_board_task_ids": [
+        "OUL-005",
+        "OUL-008",
+        "OUL-009",
+        "OUL-012",
+        "OUL-013",
+        "OUL-021",
+        "OUL-028",
+        "OUL-032",
+        "OUL-035",
+        "OUL-037",
+        "OUL-044",
+        "OUL-048"
+      ]
+    },
+    {
+      "index": 3,
+      "strict_shard_remainder": 3,
+      "initial_ready_task_ids": [
+        "OUL-004"
+      ],
+      "all_initial_board_task_ids": [
+        "OUL-004",
+        "OUL-020",
+        "OUL-024",
+        "OUL-027",
+        "OUL-029",
+        "OUL-036",
+        "OUL-039",
+        "OUL-043"
+      ]
+    }
+  ]
+}

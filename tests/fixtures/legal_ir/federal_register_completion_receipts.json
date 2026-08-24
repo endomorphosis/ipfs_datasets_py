@@ -1,0 +1,961 @@
+{
+  "schema_version": "federal-register-completion-receipts-v1",
+  "policy_schema_version": "federal-register-source-policy-v1",
+  "completeness_schema_version": "federal-register-completeness-v1",
+  "task_id": "LCR-049",
+  "goal_id": "LCR-G100",
+  "observation_cutoff": "2026-08-10T00:00:00Z",
+  "legacy_delta_start_inclusive": "2026-03-03",
+  "legacy_baseline_end_inclusive": "2026-03-02",
+  "previous_public_pin": "720668ae016cc400916dda884c9005e03618edfa",
+  "currentness_disclaimer": "Federal Register completeness is cutoff-relative. Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the daily register is permanently current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "notes": "Compact adversarial completion-receipt recipes for LCR-049. Cases encode open pages, overlapping/gapped partitions, mutable cutoffs, metadata-as-body, failed-final items, unexplained count drift, and stale success registries. Expand via expand_completion_fixture_cases().",
+  "cases": [
+    {
+      "case_id": "closed_ok",
+      "expected_status": "pass",
+      "expected_kinds": [],
+      "notes": "Fully closed cutoff-bound delta receipt.",
+      "receipt": {
+        "receipt_id": "fr-complete-closed-ok",
+        "observation_cutoff": "2026-08-10T00:00:00Z",
+        "range_start": "2026-03-03",
+        "range_end": "2026-04-30",
+        "official_total": 7,
+        "enumerated": 7,
+        "fetched": 7,
+        "duplicate": 0,
+        "excluded": 0,
+        "quarantined": 0,
+        "failed_final": 0,
+        "frontier_closed": true,
+        "inventory_authority": "federal_register_api",
+        "release_point": "fr/cutoff/2026-08-10",
+        "delta_start_inclusive": "2026-03-03",
+        "legacy_baseline_end_inclusive": "2026-03-02",
+        "previous_public_pin": "720668ae016cc400916dda884c9005e03618edfa",
+        "unexplained_count_drift": 0,
+        "schema_version": "federal-register-completeness-v1",
+        "task_id": "LCR-049",
+        "notes": "Sealed closed delta cohort for oracle unit tests.",
+        "partitions": [
+          {
+            "partition_id": "p-2026-03",
+            "start_date": "2026-03-03",
+            "end_date": "2026-03-31",
+            "status": "closed",
+            "api_total": 4,
+            "enumerated": 4,
+            "fetched": 4,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-45000", "2026-45001", "2026-45002", "2026-45003"],
+            "body_text_dispositions": {"full_text": 4},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "response_hashes": ["8f3c0c5e0c1f6a2b9d4e7a1c3b5d8e0f2a4c6b8d0e1f3a5c7b9d1e3f5a7c9b0d"],
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+                "result_count": 2,
+                "document_numbers": ["2026-45000", "2026-45001"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a",
+                "result_count": 2,
+                "document_numbers": ["2026-45002", "2026-45003"]
+              }
+            ]
+          },
+          {
+            "partition_id": "p-2026-04",
+            "start_date": "2026-04-01",
+            "end_date": "2026-04-30",
+            "status": "closed",
+            "api_total": 3,
+            "enumerated": 3,
+            "fetched": 3,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-05001", "2026-05002", "2026-05003"],
+            "body_text_dispositions": {"full_text": 3},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "response_hashes": ["c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b"],
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c",
+                "result_count": 2,
+                "document_numbers": ["2026-05001", "2026-05002"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c4d",
+                "result_count": 1,
+                "document_numbers": ["2026-05003"]
+              }
+            ]
+          }
+        ],
+        "documents": [
+          {
+            "document_number": "2026-45000",
+            "publication_date": "2026-03-10",
+            "disposition": "full_text",
+            "text": "Official full text of the example Federal Register document."
+          },
+          {
+            "document_number": "2026-05001",
+            "publication_date": "2026-04-05",
+            "disposition": "metadata_only",
+            "text": "",
+            "abstract": "Short abstract only; body exhausted as unavailable."
+          }
+        ],
+        "success_registry": [
+          {
+            "entry_id": "reg-p-2026-03",
+            "status": "success",
+            "partition_id": "p-2026-03",
+            "frontier_closed": true,
+            "failed_final": 0,
+            "open_pages": 0
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "open_page",
+      "expected_status": "fail",
+      "expected_kinds": ["open_page"],
+      "notes": "Unresolved API result page.",
+      "receipt": {
+        "receipt_id": "fr-fail-open-page",
+        "observation_cutoff": "2026-08-10T00:00:00Z",
+        "range_start": "2026-03-03",
+        "range_end": "2026-04-30",
+        "official_total": 7,
+        "enumerated": 7,
+        "fetched": 7,
+        "duplicate": 0,
+        "excluded": 0,
+        "quarantined": 0,
+        "failed_final": 0,
+        "frontier_closed": false,
+        "inventory_authority": "federal_register_api",
+        "release_point": "fr/cutoff/2026-08-10",
+        "unexplained_count_drift": 0,
+        "partitions": [
+          {
+            "partition_id": "p-2026-03",
+            "start_date": "2026-03-03",
+            "end_date": "2026-03-31",
+            "status": "in_progress",
+            "api_total": 4,
+            "enumerated": 4,
+            "fetched": 4,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-45000", "2026-45001", "2026-45002", "2026-45003"],
+            "body_text_dispositions": {"full_text": 4},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "open",
+                "cursor": "cursor-1",
+                "result_count": 2,
+                "document_numbers": ["2026-45000", "2026-45001"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a",
+                "result_count": 2,
+                "document_numbers": ["2026-45002", "2026-45003"]
+              }
+            ]
+          },
+          {
+            "partition_id": "p-2026-04",
+            "start_date": "2026-04-01",
+            "end_date": "2026-04-30",
+            "status": "closed",
+            "api_total": 3,
+            "enumerated": 3,
+            "fetched": 3,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-05001", "2026-05002", "2026-05003"],
+            "body_text_dispositions": {"full_text": 3},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c",
+                "result_count": 2,
+                "document_numbers": ["2026-05001", "2026-05002"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c4d",
+                "result_count": 1,
+                "document_numbers": ["2026-05003"]
+              }
+            ]
+          }
+        ],
+        "documents": [],
+        "success_registry": []
+      }
+    },
+    {
+      "case_id": "overlapping_partition",
+      "expected_status": "fail",
+      "expected_kinds": ["overlapping_partition"],
+      "notes": "Date partitions overlap.",
+      "receipt": {
+        "receipt_id": "fr-fail-overlapping-partition",
+        "observation_cutoff": "2026-08-10T00:00:00Z",
+        "range_start": "2026-03-03",
+        "range_end": "2026-04-30",
+        "official_total": 7,
+        "enumerated": 7,
+        "fetched": 7,
+        "duplicate": 0,
+        "excluded": 0,
+        "quarantined": 0,
+        "failed_final": 0,
+        "frontier_closed": true,
+        "inventory_authority": "federal_register_api",
+        "release_point": "fr/cutoff/2026-08-10",
+        "unexplained_count_drift": 0,
+        "partitions": [
+          {
+            "partition_id": "p-2026-03",
+            "start_date": "2026-03-03",
+            "end_date": "2026-03-31",
+            "status": "closed",
+            "api_total": 4,
+            "enumerated": 4,
+            "fetched": 4,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-45000", "2026-45001", "2026-45002", "2026-45003"],
+            "body_text_dispositions": {"full_text": 4},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+                "result_count": 2,
+                "document_numbers": ["2026-45000", "2026-45001"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a",
+                "result_count": 2,
+                "document_numbers": ["2026-45002", "2026-45003"]
+              }
+            ]
+          },
+          {
+            "partition_id": "p-2026-04",
+            "start_date": "2026-03-15",
+            "end_date": "2026-04-30",
+            "status": "closed",
+            "api_total": 3,
+            "enumerated": 3,
+            "fetched": 3,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-05001", "2026-05002", "2026-05003"],
+            "body_text_dispositions": {"full_text": 3},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c",
+                "result_count": 2,
+                "document_numbers": ["2026-05001", "2026-05002"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c4d",
+                "result_count": 1,
+                "document_numbers": ["2026-05003"]
+              }
+            ]
+          }
+        ],
+        "documents": [],
+        "success_registry": []
+      }
+    },
+    {
+      "case_id": "gapped_partition",
+      "expected_status": "fail",
+      "expected_kinds": ["gapped_partition"],
+      "notes": "Date partitions leave a coverage gap.",
+      "receipt": {
+        "receipt_id": "fr-fail-gapped-partition",
+        "observation_cutoff": "2026-08-10T00:00:00Z",
+        "range_start": "2026-03-03",
+        "range_end": "2026-04-30",
+        "official_total": 7,
+        "enumerated": 7,
+        "fetched": 7,
+        "duplicate": 0,
+        "excluded": 0,
+        "quarantined": 0,
+        "failed_final": 0,
+        "frontier_closed": true,
+        "inventory_authority": "federal_register_api",
+        "release_point": "fr/cutoff/2026-08-10",
+        "unexplained_count_drift": 0,
+        "partitions": [
+          {
+            "partition_id": "p-2026-03",
+            "start_date": "2026-03-03",
+            "end_date": "2026-03-31",
+            "status": "closed",
+            "api_total": 4,
+            "enumerated": 4,
+            "fetched": 4,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-45000", "2026-45001", "2026-45002", "2026-45003"],
+            "body_text_dispositions": {"full_text": 4},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+                "result_count": 2,
+                "document_numbers": ["2026-45000", "2026-45001"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a",
+                "result_count": 2,
+                "document_numbers": ["2026-45002", "2026-45003"]
+              }
+            ]
+          },
+          {
+            "partition_id": "p-2026-04",
+            "start_date": "2026-04-05",
+            "end_date": "2026-04-30",
+            "status": "closed",
+            "api_total": 3,
+            "enumerated": 3,
+            "fetched": 3,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-05001", "2026-05002", "2026-05003"],
+            "body_text_dispositions": {"full_text": 3},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c",
+                "result_count": 2,
+                "document_numbers": ["2026-05001", "2026-05002"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c4d",
+                "result_count": 1,
+                "document_numbers": ["2026-05003"]
+              }
+            ]
+          }
+        ],
+        "documents": [],
+        "success_registry": []
+      }
+    },
+    {
+      "case_id": "mutable_cutoff",
+      "expected_status": "fail",
+      "expected_kinds": ["mutable_cutoff"],
+      "notes": "Observation cutoff uses mutable token 'latest'.",
+      "receipt": {
+        "receipt_id": "fr-fail-mutable-cutoff",
+        "observation_cutoff": "latest",
+        "range_start": "2026-03-03",
+        "range_end": "2026-04-30",
+        "official_total": 7,
+        "enumerated": 7,
+        "fetched": 7,
+        "duplicate": 0,
+        "excluded": 0,
+        "quarantined": 0,
+        "failed_final": 0,
+        "frontier_closed": true,
+        "inventory_authority": "federal_register_api",
+        "release_point": "fr/cutoff/2026-08-10",
+        "unexplained_count_drift": 0,
+        "partitions": [
+          {
+            "partition_id": "p-2026-03",
+            "start_date": "2026-03-03",
+            "end_date": "2026-03-31",
+            "status": "closed",
+            "api_total": 4,
+            "enumerated": 4,
+            "fetched": 4,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-45000", "2026-45001", "2026-45002", "2026-45003"],
+            "body_text_dispositions": {"full_text": 4},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+                "result_count": 2,
+                "document_numbers": ["2026-45000", "2026-45001"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a",
+                "result_count": 2,
+                "document_numbers": ["2026-45002", "2026-45003"]
+              }
+            ]
+          },
+          {
+            "partition_id": "p-2026-04",
+            "start_date": "2026-04-01",
+            "end_date": "2026-04-30",
+            "status": "closed",
+            "api_total": 3,
+            "enumerated": 3,
+            "fetched": 3,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-05001", "2026-05002", "2026-05003"],
+            "body_text_dispositions": {"full_text": 3},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c",
+                "result_count": 2,
+                "document_numbers": ["2026-05001", "2026-05002"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c4d",
+                "result_count": 1,
+                "document_numbers": ["2026-05003"]
+              }
+            ]
+          }
+        ],
+        "documents": [],
+        "success_registry": []
+      }
+    },
+    {
+      "case_id": "metadata_as_body",
+      "expected_status": "fail",
+      "expected_kinds": ["metadata_as_body"],
+      "notes": "Metadata disposition carries long body text.",
+      "receipt": {
+        "receipt_id": "fr-fail-metadata-as-body",
+        "observation_cutoff": "2026-08-10T00:00:00Z",
+        "range_start": "2026-03-03",
+        "range_end": "2026-04-30",
+        "official_total": 7,
+        "enumerated": 7,
+        "fetched": 7,
+        "duplicate": 0,
+        "excluded": 0,
+        "quarantined": 0,
+        "failed_final": 0,
+        "frontier_closed": true,
+        "inventory_authority": "federal_register_api",
+        "release_point": "fr/cutoff/2026-08-10",
+        "unexplained_count_drift": 0,
+        "partitions": [
+          {
+            "partition_id": "p-2026-03",
+            "start_date": "2026-03-03",
+            "end_date": "2026-03-31",
+            "status": "closed",
+            "api_total": 4,
+            "enumerated": 4,
+            "fetched": 4,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-45000", "2026-45001", "2026-45002", "2026-45003"],
+            "body_text_dispositions": {"full_text": 4},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+                "result_count": 2,
+                "document_numbers": ["2026-45000", "2026-45001"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a",
+                "result_count": 2,
+                "document_numbers": ["2026-45002", "2026-45003"]
+              }
+            ]
+          },
+          {
+            "partition_id": "p-2026-04",
+            "start_date": "2026-04-01",
+            "end_date": "2026-04-30",
+            "status": "closed",
+            "api_total": 3,
+            "enumerated": 3,
+            "fetched": 3,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-05001", "2026-05002", "2026-05003"],
+            "body_text_dispositions": {"full_text": 3},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c",
+                "result_count": 2,
+                "document_numbers": ["2026-05001", "2026-05002"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c4d",
+                "result_count": 1,
+                "document_numbers": ["2026-05003"]
+              }
+            ]
+          }
+        ],
+        "documents": [
+          {
+            "document_number": "2026-45000",
+            "publication_date": "2026-03-10",
+            "disposition": "metadata_only",
+            "text": "This metadata-only row incorrectly embeds a long body-shaped payload that exceeds the sealed metadata-as-body threshold used by the Federal Register completeness oracle. padding=0000000000111111111122222222223333333333444444444455555555556666666666777777777788888888889999999999aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffff0000000000111111111122222222223333333333444444444455555555556666666666777777777788888888889999999999aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffff0000000000111111111122222222223333333333444444444455555555556666666666777777777788888888889999999999END"
+          }
+        ],
+        "success_registry": []
+      }
+    },
+    {
+      "case_id": "failed_final",
+      "expected_status": "fail",
+      "expected_kinds": ["failed_final"],
+      "notes": "Failed-final items remain in the cohort.",
+      "receipt": {
+        "receipt_id": "fr-fail-failed-final",
+        "observation_cutoff": "2026-08-10T00:00:00Z",
+        "range_start": "2026-03-03",
+        "range_end": "2026-04-30",
+        "official_total": 7,
+        "enumerated": 7,
+        "fetched": 6,
+        "duplicate": 0,
+        "excluded": 0,
+        "quarantined": 0,
+        "failed_final": 1,
+        "frontier_closed": true,
+        "inventory_authority": "federal_register_api",
+        "release_point": "fr/cutoff/2026-08-10",
+        "unexplained_count_drift": 0,
+        "partitions": [
+          {
+            "partition_id": "p-2026-03",
+            "start_date": "2026-03-03",
+            "end_date": "2026-03-31",
+            "status": "closed",
+            "api_total": 4,
+            "enumerated": 4,
+            "fetched": 3,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 1,
+            "document_numbers": ["2026-45000", "2026-45001", "2026-45002", "2026-45003"],
+            "body_text_dispositions": {"full_text": 3, "failed_final": 1},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+                "result_count": 2,
+                "document_numbers": ["2026-45000", "2026-45001"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a",
+                "result_count": 2,
+                "document_numbers": ["2026-45002", "2026-45003"]
+              }
+            ]
+          },
+          {
+            "partition_id": "p-2026-04",
+            "start_date": "2026-04-01",
+            "end_date": "2026-04-30",
+            "status": "closed",
+            "api_total": 3,
+            "enumerated": 3,
+            "fetched": 3,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-05001", "2026-05002", "2026-05003"],
+            "body_text_dispositions": {"full_text": 3},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c",
+                "result_count": 2,
+                "document_numbers": ["2026-05001", "2026-05002"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c4d",
+                "result_count": 1,
+                "document_numbers": ["2026-05003"]
+              }
+            ]
+          }
+        ],
+        "documents": [
+          {
+            "document_number": "2026-45000",
+            "publication_date": "2026-03-10",
+            "disposition": "failed_final",
+            "text": ""
+          }
+        ],
+        "success_registry": []
+      }
+    },
+    {
+      "case_id": "count_drift",
+      "expected_status": "fail",
+      "expected_kinds": ["count_drift"],
+      "notes": "Official total drifts from enumerated without explanation.",
+      "receipt": {
+        "receipt_id": "fr-fail-count-drift",
+        "observation_cutoff": "2026-08-10T00:00:00Z",
+        "range_start": "2026-03-03",
+        "range_end": "2026-04-30",
+        "official_total": 12,
+        "enumerated": 7,
+        "fetched": 7,
+        "duplicate": 0,
+        "excluded": 0,
+        "quarantined": 0,
+        "failed_final": 0,
+        "frontier_closed": true,
+        "inventory_authority": "federal_register_api",
+        "release_point": "fr/cutoff/2026-08-10",
+        "unexplained_count_drift": 5,
+        "count_drift_explanation": null,
+        "partitions": [
+          {
+            "partition_id": "p-2026-03",
+            "start_date": "2026-03-03",
+            "end_date": "2026-03-31",
+            "status": "closed",
+            "api_total": 4,
+            "enumerated": 4,
+            "fetched": 4,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-45000", "2026-45001", "2026-45002", "2026-45003"],
+            "body_text_dispositions": {"full_text": 4},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+                "result_count": 2,
+                "document_numbers": ["2026-45000", "2026-45001"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a",
+                "result_count": 2,
+                "document_numbers": ["2026-45002", "2026-45003"]
+              }
+            ]
+          },
+          {
+            "partition_id": "p-2026-04",
+            "start_date": "2026-04-01",
+            "end_date": "2026-04-30",
+            "status": "closed",
+            "api_total": 3,
+            "enumerated": 3,
+            "fetched": 3,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-05001", "2026-05002", "2026-05003"],
+            "body_text_dispositions": {"full_text": 3},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c",
+                "result_count": 2,
+                "document_numbers": ["2026-05001", "2026-05002"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c4d",
+                "result_count": 1,
+                "document_numbers": ["2026-05003"]
+              }
+            ]
+          }
+        ],
+        "documents": [],
+        "success_registry": []
+      }
+    },
+    {
+      "case_id": "stale_success_registry",
+      "expected_status": "fail",
+      "expected_kinds": ["stale_success_registry"],
+      "notes": "Success registry marks incomplete frontier as success.",
+      "receipt": {
+        "receipt_id": "fr-fail-stale-success-registry",
+        "observation_cutoff": "2026-08-10T00:00:00Z",
+        "range_start": "2026-03-03",
+        "range_end": "2026-04-30",
+        "official_total": 7,
+        "enumerated": 7,
+        "fetched": 7,
+        "duplicate": 0,
+        "excluded": 0,
+        "quarantined": 0,
+        "failed_final": 0,
+        "frontier_closed": true,
+        "inventory_authority": "federal_register_api",
+        "release_point": "fr/cutoff/2026-08-10",
+        "unexplained_count_drift": 0,
+        "partitions": [
+          {
+            "partition_id": "p-2026-03",
+            "start_date": "2026-03-03",
+            "end_date": "2026-03-31",
+            "status": "closed",
+            "api_total": 4,
+            "enumerated": 4,
+            "fetched": 4,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-45000", "2026-45001", "2026-45002", "2026-45003"],
+            "body_text_dispositions": {"full_text": 4},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+                "result_count": 2,
+                "document_numbers": ["2026-45000", "2026-45001"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a",
+                "result_count": 2,
+                "document_numbers": ["2026-45002", "2026-45003"]
+              }
+            ]
+          },
+          {
+            "partition_id": "p-2026-04",
+            "start_date": "2026-04-01",
+            "end_date": "2026-04-30",
+            "status": "closed",
+            "api_total": 3,
+            "enumerated": 3,
+            "fetched": 3,
+            "duplicate": 0,
+            "excluded": 0,
+            "quarantined": 0,
+            "failed_final": 0,
+            "document_numbers": ["2026-05001", "2026-05002", "2026-05003"],
+            "body_text_dispositions": {"full_text": 3},
+            "official_source_url": "https://www.federalregister.gov/api/v1/documents.json",
+            "pages": [
+              {
+                "page_id": "page-1",
+                "page_number": 1,
+                "status": "verified",
+                "cursor": "cursor-1",
+                "response_hash": "d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c",
+                "result_count": 2,
+                "document_numbers": ["2026-05001", "2026-05002"]
+              },
+              {
+                "page_id": "page-2",
+                "page_number": 2,
+                "status": "verified",
+                "cursor": "cursor-2",
+                "response_hash": "e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef01a2b3c4d",
+                "result_count": 1,
+                "document_numbers": ["2026-05003"]
+              }
+            ]
+          }
+        ],
+        "documents": [],
+        "success_registry": [
+          {
+            "entry_id": "reg-stale-open",
+            "status": "success",
+            "partition_id": "p-2026-03",
+            "frontier_closed": false,
+            "failed_final": 0,
+            "open_pages": 2,
+            "notes": "Legacy registry marked success despite open pages."
+          }
+        ]
+      }
+    }
+  ]
+}

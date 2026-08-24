@@ -1,0 +1,726 @@
+{
+  "acceptance": {
+    "additive_upload": true,
+    "all_expected_outputs_required": true,
+    "criteria": "The identical candidate is uploaded additively to an explicit non-default dataset revision and a unique bucket staging prefix after a reviewed dry-run plan; raw bucket root objects are untouched and every remote object identity is recorded.",
+    "every_remote_object_identity_recorded": true,
+    "explicit_non_default_dataset_revision": true,
+    "identical_candidate_uploaded": true,
+    "no_secret_or_path_leak": true,
+    "pointer_not_updated": true,
+    "public_mutation_not_authorized": true,
+    "raw_bucket_root_untouched": true,
+    "reviewed_dry_run_plan": true,
+    "unique_bucket_staging_prefix": true
+  },
+  "adr_path": "docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md",
+  "board_namespace": "open-us-law-reindex-v1",
+  "bucket_id": "justicedao/open-us-law-bucket",
+  "bucket_pointer_path": "LATEST.json",
+  "bucket_pointer_updated": false,
+  "bucket_staging_prefix": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+  "bundle": "staging-upload",
+  "candidate": {
+    "dataset_id": "justicedao/open-us-law-sparse-graphrag",
+    "kind": "fixture_local",
+    "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "receipt_sha256": "3f34ea121c9773ac0d407859831ad71e7852dd0a53fa9b5e1bb435dc00047e8e",
+    "release_root_cid": "sha256:99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "source_revision": "a99db3e9f7e34508242760dc9b6a75740abce3ee",
+    "staging_branch": "stage/open-us-law-sparse-graphrag-v1"
+  },
+  "code_version": "1",
+  "dataset_id": "justicedao/open-us-law-sparse-graphrag",
+  "dataset_revision": "7600bf397a749996b7157b45a738a1856d728905",
+  "depends_on": [
+    "OUL-007",
+    "OUL-040"
+  ],
+  "dry_run": false,
+  "fixture_id": "open-us-law-staging-upload-v1",
+  "goal_id": "OUL-G070",
+  "identities_digest": "c1fccd04c9424614093a6e6f144075c40498aa19ab52b240fdbea52b1cd1d747",
+  "isolated_transport": true,
+  "live_network": false,
+  "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+  "mutation_authorized": false,
+  "mutation_executed": true,
+  "network_required": false,
+  "notes": "Isolated additive staging upload of the sealed Open US Law release candidate (OUL-041). Identical candidate bytes were uploaded to an explicit non-default 40-hex Dataset revision and the unique content-addressed Bucket prefix after a reviewed dry-run plan. Raw bucket-root objects and LATEST.json were not touched. Live Hub mutation is not authorized by this receipt.",
+  "plan_digest": "03f7b41b42e9faaf123eec593b588aacde06419d4097c52539d3eb0c934b264b",
+  "pointer_updated": false,
+  "producer": "stage_open_us_law_hf_release.py",
+  "program_id": "open-us-law-reindex-v1",
+  "public_mutation_authorized": false,
+  "publication_authorized": false,
+  "raw_bucket_root_object_count": 107,
+  "raw_bucket_root_untouched": true,
+  "receipt_sha256": "35795cf5681448fd81ee6d5114da360289953d66e6d2c01584707e4f1784cbee",
+  "remote_default_branches_mutated": false,
+  "remote_object_count": 50,
+  "remote_objects": [
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/bm25/index_root#f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/bm25/index_root",
+        "sha256": "f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+        "size_bytes": 196
+      },
+      "content_cid": "sha256:f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+      "dataset_object": {
+        "content_cid": "sha256:f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:bm25/index_root#f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+        "operation": "add_only_upload",
+        "path": "bm25/index_root",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+        "size_bytes": 196
+      },
+      "operation": "add_only_upload",
+      "relative_path": "bm25/index_root",
+      "sha256": "f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+      "size_bytes": 196
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/build/config#071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/build/config",
+        "sha256": "071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+      "dataset_object": {
+        "content_cid": "sha256:071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:build/config#071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+        "operation": "add_only_upload",
+        "path": "build/config",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "build/config",
+      "sha256": "071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/corpus/root#f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/corpus/root",
+        "sha256": "f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+      "dataset_object": {
+        "content_cid": "sha256:f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:corpus/root#f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+        "operation": "add_only_upload",
+        "path": "corpus/root",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "corpus/root",
+      "sha256": "f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/acquisition_closure#f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/acquisition_closure",
+        "sha256": "f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+      "dataset_object": {
+        "content_cid": "sha256:f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/acquisition_closure#f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+        "operation": "add_only_upload",
+        "path": "evidence/acquisition_closure",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/acquisition_closure",
+      "sha256": "f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/adjacency#6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/adjacency",
+        "sha256": "6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+      "dataset_object": {
+        "content_cid": "sha256:6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/adjacency#6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+        "operation": "add_only_upload",
+        "path": "evidence/adjacency",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/adjacency",
+      "sha256": "6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/bm25#6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/bm25",
+        "sha256": "6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+      "dataset_object": {
+        "content_cid": "sha256:6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/bm25#6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+        "operation": "add_only_upload",
+        "path": "evidence/bm25",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/bm25",
+      "sha256": "6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/bucket_inventory#17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/bucket_inventory",
+        "sha256": "17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+      "dataset_object": {
+        "content_cid": "sha256:17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/bucket_inventory#17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+        "operation": "add_only_upload",
+        "path": "evidence/bucket_inventory",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/bucket_inventory",
+      "sha256": "17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/corpus_admission#f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/corpus_admission",
+        "sha256": "f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+      "dataset_object": {
+        "content_cid": "sha256:f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/corpus_admission#f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+        "operation": "add_only_upload",
+        "path": "evidence/corpus_admission",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/corpus_admission",
+      "sha256": "f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/embeddings#02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/embeddings",
+        "sha256": "02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+      "dataset_object": {
+        "content_cid": "sha256:02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/embeddings#02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+        "operation": "add_only_upload",
+        "path": "evidence/embeddings",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/embeddings",
+      "sha256": "02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/evaluation#60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/evaluation",
+        "sha256": "60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+      "dataset_object": {
+        "content_cid": "sha256:60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/evaluation#60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+        "operation": "add_only_upload",
+        "path": "evidence/evaluation",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/evaluation",
+      "sha256": "60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/exact_51_coverage#afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/exact_51_coverage",
+        "sha256": "afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+      "dataset_object": {
+        "content_cid": "sha256:afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/exact_51_coverage#afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+        "operation": "add_only_upload",
+        "path": "evidence/exact_51_coverage",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/exact_51_coverage",
+      "sha256": "afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/full_build#c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/full_build",
+        "sha256": "c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+      "dataset_object": {
+        "content_cid": "sha256:c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/full_build#c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+        "operation": "add_only_upload",
+        "path": "evidence/full_build",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/full_build",
+      "sha256": "c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/goldset#e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/goldset",
+        "sha256": "e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+      "dataset_object": {
+        "content_cid": "sha256:e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/goldset#e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+        "operation": "add_only_upload",
+        "path": "evidence/goldset",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/goldset",
+      "sha256": "e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/identity_schema#8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/identity_schema",
+        "sha256": "8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+      "dataset_object": {
+        "content_cid": "sha256:8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/identity_schema#8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+        "operation": "add_only_upload",
+        "path": "evidence/identity_schema",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/identity_schema",
+      "sha256": "8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/legal_graph#0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/legal_graph",
+        "sha256": "0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+      "dataset_object": {
+        "content_cid": "sha256:0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/legal_graph#0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+        "operation": "add_only_upload",
+        "path": "evidence/legal_graph",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/legal_graph",
+      "sha256": "0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/publication_policy_schema#237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/publication_policy_schema",
+        "sha256": "237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+      "dataset_object": {
+        "content_cid": "sha256:237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/publication_policy_schema#237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+        "operation": "add_only_upload",
+        "path": "evidence/publication_policy_schema",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/publication_policy_schema",
+      "sha256": "237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/query_contract#a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/query_contract",
+        "sha256": "a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+      "dataset_object": {
+        "content_cid": "sha256:a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/query_contract#a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+        "operation": "add_only_upload",
+        "path": "evidence/query_contract",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/query_contract",
+      "sha256": "a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/release_policy#f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/release_policy",
+        "sha256": "f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+      "dataset_object": {
+        "content_cid": "sha256:f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/release_policy#f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+        "operation": "add_only_upload",
+        "path": "evidence/release_policy",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/release_policy",
+      "sha256": "f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/reproducibility#f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/reproducibility",
+        "sha256": "f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+      "dataset_object": {
+        "content_cid": "sha256:f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/reproducibility#f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+        "operation": "add_only_upload",
+        "path": "evidence/reproducibility",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/reproducibility",
+      "sha256": "f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/rights_matrix#660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/rights_matrix",
+        "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+      "dataset_object": {
+        "content_cid": "sha256:660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/rights_matrix#660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "operation": "add_only_upload",
+        "path": "evidence/rights_matrix",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/rights_matrix",
+      "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/source_admission#660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/source_admission",
+        "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+      "dataset_object": {
+        "content_cid": "sha256:660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/source_admission#660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "operation": "add_only_upload",
+        "path": "evidence/source_admission",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/source_admission",
+      "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/vectors#fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/evidence/vectors",
+        "sha256": "fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+      "dataset_object": {
+        "content_cid": "sha256:fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:evidence/vectors#fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+        "operation": "add_only_upload",
+        "path": "evidence/vectors",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "evidence/vectors",
+      "sha256": "fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/graph/projection#8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/graph/projection",
+        "sha256": "8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+        "size_bytes": 73
+      },
+      "content_cid": "sha256:8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+      "dataset_object": {
+        "content_cid": "sha256:8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:graph/projection#8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+        "operation": "add_only_upload",
+        "path": "graph/projection",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+        "size_bytes": 73
+      },
+      "operation": "add_only_upload",
+      "relative_path": "graph/projection",
+      "sha256": "8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+      "size_bytes": 73
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/vectors/membership#c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/vectors/membership",
+        "sha256": "c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+        "size_bytes": null
+      },
+      "content_cid": "sha256:c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+      "dataset_object": {
+        "content_cid": "sha256:c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:vectors/membership#c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+        "operation": "add_only_upload",
+        "path": "vectors/membership",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+        "size_bytes": null
+      },
+      "operation": "add_only_upload",
+      "relative_path": "vectors/membership",
+      "sha256": "c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+      "size_bytes": null
+    },
+    {
+      "bucket_object": {
+        "bucket_id": "justicedao/open-us-law-bucket",
+        "content_cid": "sha256:fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+        "object_id": "bucket:justicedao/open-us-law-bucket:releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/vectors/root#fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+        "operation": "add_only_upload",
+        "path": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/vectors/root",
+        "sha256": "fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+        "size_bytes": 5
+      },
+      "content_cid": "sha256:fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+      "dataset_object": {
+        "content_cid": "sha256:fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+        "object_id": "dataset:justicedao/open-us-law-sparse-graphrag@7600bf397a749996b7157b45a738a1856d728905:vectors/root#fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+        "operation": "add_only_upload",
+        "path": "vectors/root",
+        "repo_id": "justicedao/open-us-law-sparse-graphrag",
+        "revision": "7600bf397a749996b7157b45a738a1856d728905",
+        "sha256": "fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+        "size_bytes": 5
+      },
+      "operation": "add_only_upload",
+      "relative_path": "vectors/root",
+      "sha256": "fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+      "size_bytes": 5
+    }
+  ],
+  "remote_write_contacted": false,
+  "reviewed_plan_digest": "03f7b41b42e9faaf123eec593b588aacde06419d4097c52539d3eb0c934b264b",
+  "schema": "ipfs_datasets_py/open-us-law-staging-upload@1",
+  "schema_version": "open-us-law-staging-upload/v1",
+  "staging_branch": "stage/open-us-law-sparse-graphrag-v1",
+  "status": "staged_isolated",
+  "target_repo": "justicedao/open-us-law-sparse-graphrag",
+  "task_id": "OUL-041",
+  "tokens_used": false,
+  "transport": "isolated_recorded_staging_store",
+  "upload_bytes": 274,
+  "upload_file_count": 25,
+  "visibility_changed": false
+}

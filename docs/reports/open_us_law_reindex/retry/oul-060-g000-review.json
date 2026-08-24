@@ -1,0 +1,29 @@
+{
+  "acceptance": "The receipt binds to OUL-048 sealed evidence and never marks OUL-G000 verified from planner diagnostics alone.",
+  "authorizing_for_publication": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "bundle": "root-review",
+  "canonical_board_task": false,
+  "checks": {
+    "binds_oul_048_evidence": true,
+    "claims_g000_verified_complete": false,
+    "planner_diagnostics_are_not_root_proof": true,
+    "publication_and_rehearsal_evidence_exist": true
+  },
+  "code_version": "1",
+  "content_digest": "8154361fb8a8de46a3fd605937bcd7ead3933379e34d27a61908436e449f10fa",
+  "depends_on": [
+    "OUL-048"
+  ],
+  "digest": "8154361fb8a8de46a3fd605937bcd7ead3933379e34d27a61908436e449f10fa",
+  "evidence_path": "docs/reports/open_us_law_reindex/final_release_evidence.json",
+  "g000_verified_complete": false,
+  "goal_id": "OUL-G000",
+  "producer": "oul_060_root_review.py",
+  "program_id": "open-us-law-reindex-v1",
+  "report_digest_sha256": "8154361fb8a8de46a3fd605937bcd7ead3933379e34d27a61908436e449f10fa",
+  "reviewed_at": "2026-08-19T03:40:05Z",
+  "schema": "ipfs_datasets_py/open-us-law-root-review@1",
+  "status": "passed",
+  "task_id": "OUL-060"
+}

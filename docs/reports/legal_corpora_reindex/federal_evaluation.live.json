@@ -1,0 +1,403 @@
+{
+  "acceptance": {
+    "bm25_meets_declared_gates": true,
+    "gold_meets_declared_gates": true,
+    "graph_meets_declared_gates": true,
+    "hub_upload": false,
+    "live_canary": false,
+    "local_query_canary": true,
+    "no_fixture_result_called_live_canary": true,
+    "production_searchable": false,
+    "secrets_absent": true,
+    "vector_meets_declared_gates": true
+  },
+  "authorizing_for_publication": false,
+  "authorizing_hub_upload": false,
+  "bm25": {
+    "available": true,
+    "b": 0.75,
+    "hits_at_1": 32,
+    "k1": 1.2,
+    "meets_declared_gates": true,
+    "mrr": 1.0,
+    "mrr_gate": 0.9,
+    "recall_at_1": 1.0,
+    "recall_at_1_gate": 0.9
+  },
+  "cases": [
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-13990:2026-07-10",
+      "query_terms": [
+        "2026-13990"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-13990:2026-07-10",
+      "top_score": 14.338680694756937
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-04439:2026-03-06",
+      "query_terms": [
+        "2026-04439"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-04439:2026-03-06",
+      "top_score": 14.680032895029251
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-10249:2026-05-22",
+      "query_terms": [
+        "2026-10249"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-10249:2026-05-22",
+      "top_score": 13.079294595759038
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-10081:2026-05-20",
+      "query_terms": [
+        "2026-10081"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-10081:2026-05-20",
+      "top_score": 15.252726850913662
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-05289:2026-03-18",
+      "query_terms": [
+        "2026-05289"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-05289:2026-03-18",
+      "top_score": 11.422395985750104
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-15385:2026-07-30",
+      "query_terms": [
+        "2026-15385"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-15385:2026-07-30",
+      "top_score": 15.164616448774266
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-12787:2026-06-25",
+      "query_terms": [
+        "2026-12787"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-12787:2026-06-25",
+      "top_score": 4.02701847195661
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-12515:2026-06-22",
+      "query_terms": [
+        "2026-12515"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-12515:2026-06-22",
+      "top_score": 16.227940296522913
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-08644:2026-05-04",
+      "query_terms": [
+        "2026-08644"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-08644:2026-05-04",
+      "top_score": 14.826908456618392
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-12865:2026-06-26",
+      "query_terms": [
+        "2026-12865"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-12865:2026-06-26",
+      "top_score": 15.98513487857771
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-09386:2026-05-12",
+      "query_terms": [
+        "2026-09386"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-09386:2026-05-12",
+      "top_score": 7.679797349477978
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-08867:2026-05-06",
+      "query_terms": [
+        "2026-08867"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-08867:2026-05-06",
+      "top_score": 16.410542963776777
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:C1-2026-13124:2026-07-29",
+      "query_terms": [
+        "c1-2026-13124"
+      ],
+      "rank": 1,
+      "top_hit": "fr:C1-2026-13124:2026-07-29",
+      "top_score": 16.779162681677196
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-11683:2026-06-11",
+      "query_terms": [
+        "2026-11683"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-11683:2026-06-11",
+      "top_score": 8.879136672960014
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-13002:2026-06-29",
+      "query_terms": [
+        "2026-13002"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-13002:2026-06-29",
+      "top_score": 15.949062479044702
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-04934:2026-03-13",
+      "query_terms": [
+        "2026-04934"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-04934:2026-03-13",
+      "top_score": 16.23654346546283
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-09126:2026-05-08",
+      "query_terms": [
+        "2026-09126"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-09126:2026-05-08",
+      "top_score": 16.213621923810635
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-10769:2026-05-29",
+      "query_terms": [
+        "2026-10769"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-10769:2026-05-29",
+      "top_score": 11.652732250421465
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-07714:2026-04-21",
+      "query_terms": [
+        "2026-07714"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-07714:2026-04-21",
+      "top_score": 14.124862153735771
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-15901:2026-08-05",
+      "query_terms": [
+        "2026-15901"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-15901:2026-08-05",
+      "top_score": 15.393273790119899
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-14721:2026-07-22",
+      "query_terms": [
+        "2026-14721"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-14721:2026-07-22",
+      "top_score": 15.69567892136233
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-13537:2026-07-06",
+      "query_terms": [
+        "2026-13537"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-13537:2026-07-06",
+      "top_score": 3.797025086008301
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-06615:2026-04-06",
+      "query_terms": [
+        "2026-06615"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-06615:2026-04-06",
+      "top_score": 16.035351502342298
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-12573:2026-06-23",
+      "query_terms": [
+        "2026-12573"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-12573:2026-06-23",
+      "top_score": 15.740165053621723
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-15366:2026-07-30",
+      "query_terms": [
+        "2026-15366"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-15366:2026-07-30",
+      "top_score": 15.583867834652072
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-08429:2026-04-30",
+      "query_terms": [
+        "2026-08429"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-08429:2026-04-30",
+      "top_score": 14.455992213866567
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-09746:2026-05-15",
+      "query_terms": [
+        "2026-09746"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-09746:2026-05-15",
+      "top_score": 15.773822856767959
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-12372:2026-06-22",
+      "query_terms": [
+        "2026-12372"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-12372:2026-06-22",
+      "top_score": 16.202185405058707
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-10721:2026-05-29",
+      "query_terms": [
+        "2026-10721"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-10721:2026-05-29",
+      "top_score": 16.434025072712203
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-11352:2026-06-05",
+      "query_terms": [
+        "2026-11352"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-11352:2026-06-05",
+      "top_score": 16.018577608114928
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-11836:2026-06-12",
+      "query_terms": [
+        "2026-11836"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-11836:2026-06-12",
+      "top_score": 16.431086134651217
+    },
+    {
+      "hit_at_1": true,
+      "legal_id": "fr:2026-15240:2026-07-29",
+      "query_terms": [
+        "2026-15240"
+      ],
+      "rank": 1,
+      "top_hit": "fr:2026-15240:2026-07-29",
+      "top_score": 11.551643956088153
+    }
+  ],
+  "content_digest": "4f28bf9864252a3270b5d7e463e72dd775f4002aca33f9f658e00f4f6dabd090",
+  "currentness_disclaimer": "Federal Register completeness is cutoff-relative. Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the daily register is permanently current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "documents": 11784,
+  "fixture_only": false,
+  "goal_id": "LCR-G130",
+  "gold": {
+    "available": true,
+    "citation_recall_at_10": 0.625,
+    "citation_recall_at_10_gate": 0.4,
+    "deferred": false,
+    "exact_recall_at_1": 1.0,
+    "exact_recall_at_1_gate": 0.9,
+    "fixture_only": false,
+    "ground_truth_policy": "official_publication_identity_and_extracted_citations",
+    "human_authored": false,
+    "meets_declared_gates": true,
+    "query_count": 48
+  },
+  "graph": {
+    "available": true,
+    "edge_count": 134108,
+    "fixture_only": false,
+    "inversion_holds": true,
+    "meets_declared_gates": true,
+    "node_count": 75257
+  },
+  "live_canary": false,
+  "mode": "live",
+  "observation_cutoff": "2026-08-10T00:00:00Z",
+  "producer": "evaluate_federal_register_live.py",
+  "production_searchable": false,
+  "program_id": "legal-corpora-reindex-v1",
+  "query_kind": "document_number_self_retrieval",
+  "sample_size": 32,
+  "schema": "ipfs_datasets_py/federal-register-live-evaluation@1",
+  "status": "passed",
+  "task_id": "LCR-071",
+  "tokenizer_id": "uscode-bm25-tokenizer/v1",
+  "vector": {
+    "available": true,
+    "backend": "sentence_transformers",
+    "centroid_bounds_hold": true,
+    "cluster_count": 6,
+    "deferred": false,
+    "fixture_only": false,
+    "meets_declared_gates": true,
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "mrr": 0.6158100467486523,
+    "recall_at_10": 0.8125,
+    "recall_at_10_gate": 0.8,
+    "sample_size": 32,
+    "vector_count": 11784
+  }
+}

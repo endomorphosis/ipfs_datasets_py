@@ -1,0 +1,28 @@
+{
+  "schema": "ipfs_datasets_py/legal-source-rights-publication-gate@1",
+  "task_id": "LCR-083",
+  "goal_id": "LCR-G145",
+  "program_id": "legal-corpora-reindex-v1",
+  "producer": "legal_corpora_publication_gate.py",
+  "rights_receipt_path": "docs/reports/legal_corpora_reindex/legal_source_rights_compliance.json",
+  "required_gate": "source_rights_binding",
+  "notes": "LCR-083 reseals the live source-rights compliance receipt into candidate manifests, dataset cards, and all four mutation phases after LCR-082 hardening. Missing, stale, unknown, prohibited, target-mismatched, source-mismatched, or digest-mismatched rights evidence must fail before the first network callback.",
+  "phases": [
+    "state_staging",
+    "state_main",
+    "federal_staging",
+    "federal_main"
+  ],
+  "inadmissible_conditions": [
+    "absent_receipt",
+    "fixture_only",
+    "not_authorizing",
+    "prohibited",
+    "unknown_status",
+    "digest_mismatch",
+    "catalog_mismatch",
+    "target_mismatch",
+    "source_not_admitted",
+    "dataset_card_unbound"
+  ]
+}

@@ -1,0 +1,946 @@
+{
+  "acceptance": {
+    "criteria": "Two builds have identical logical CIDs/routes/counts/manifest digest; all attacks fail closed; memory stays within declared class; allowable Parquet byte drift is explained/bound.",
+    "decompression_fail_closed": true,
+    "digest_fail_closed": true,
+    "hub_upload": false,
+    "memory_within_declared_class": true,
+    "mutable_pin_fail_closed": true,
+    "parquet_byte_drift_bounded": true,
+    "partial_checkpoint_fail_closed": true,
+    "resource_fail_closed": true,
+    "row_fail_closed": true,
+    "secret_fail_closed": true,
+    "secrets_absent": true,
+    "symlink_fail_closed": true,
+    "traversal_fail_closed": true,
+    "two_clean_builds_logical_identical": true
+  },
+  "adr_path": "docs/architecture/legal_corpora_reindex_schema.md",
+  "authorizing_for_publication": false,
+  "authorizing_for_release": false,
+  "authorizing_hub_upload": false,
+  "board_namespace": "legal-corpora-reindex-v1",
+  "bounds": {
+    "declared_max_resident_records": 256,
+    "max_decompressed_bytes": 262144,
+    "max_parquet_columns": 64,
+    "max_parquet_expand_ratio": 32,
+    "max_parquet_footer_bytes": 262144,
+    "max_parquet_kv_metadata_bytes": 16384,
+    "max_parquet_row_groups": 16,
+    "max_rows_per_physical_shard": 4096,
+    "max_rows_per_route_page": 4096,
+    "resource_class": "memory-large"
+  },
+  "builds": {
+    "artifact_count": 34,
+    "artifact_inventory": {
+      "README.md": {
+        "content_cid": "bafkreidvkiuqhh32xyk744r3ch7cmzx4rytvblrxzxte3jbmirrv74ir3q",
+        "family": "receipt",
+        "first_key": null,
+        "last_key": null,
+        "row_count": 0,
+        "sha256": "755229039f7abe15fe723b11fe2666fc8e2750ae37cde64da42c44635ff111dc",
+        "size_bytes": 5624
+      },
+      "STATE-DC.parquet": {
+        "content_cid": "bafkreiax7lv6y2acww5ych4lmjgp3b23vjjo26lcxwc4esqqdlpl3y2zd4",
+        "family": "legacy_state_parquet/v1",
+        "first_key": null,
+        "last_key": null,
+        "row_count": 0,
+        "sha256": "17faebec6802b5bb811f8b624cfd875baa52ed7962bd85c24a101adebde3591f",
+        "size_bytes": 36
+      },
+      "STATE-OR.parquet": {
+        "content_cid": "bafkreiawp3ftw3nir55qnlm7eruatc7dtuuyhlf2i7xi5qhk42g4ds353u",
+        "family": "legacy_state_parquet/v1",
+        "first_key": null,
+        "last_key": null,
+        "row_count": 0,
+        "sha256": "167ecb3b6da88f7b06ad9f2468098be39d2983acba47ee8ec0eae68dc1cb7ddd",
+        "size_bytes": 36
+      },
+      "data/bm25/documents/part-000000.parquet": {
+        "content_cid": "bafkreidrjcz6lwztusm2qmo6r6o4v4t7mvihbserdahgmfz2i26eearfjy",
+        "family": "bm25_documents",
+        "first_key": "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:state:wa:rcw:42:56",
+        "last_key": "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:state:or:ors:123:456",
+        "row_count": 3,
+        "sha256": "7148b3e5db33a499a831de8f9dcaf27f655070c891180e66173a46bc4202254e",
+        "size_bytes": 4086
+      },
+      "data/bm25/postings/part-000000.parquet": {
+        "content_cid": "bafkreidg7znby2rd3nxm5njfef2wibpjcmulsezpr5fpflaivvr3sjtwoy",
+        "family": "bm25_postings",
+        "first_key": "council:9cc6ba96e0c01809393082bfd41c94229b4fe8ccaddd52bf87c1a0d345f09c33",
+        "last_key": "records:7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e",
+        "row_count": 3,
+        "sha256": "66fe5a1c6a23db6eceb52521756405e91328b9132f8f4af2ac08ad63b9267676",
+        "size_bytes": 3612
+      },
+      "data/corpus/part-000000.parquet": {
+        "content_cid": "bafkreib7yrqq7rngrakgsvrqsfdacmgpf6dfjiz2jjyw2omapspmq5ujri",
+        "family": "corpus",
+        "first_key": "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:state:wa:rcw:42:56",
+        "last_key": "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:state:or:ors:123:456",
+        "row_count": 3,
+        "sha256": "3fc4610fc5a6881469563091460130cf2f8654a33a4a716d39807c9ec876898a",
+        "size_bytes": 7175
+      },
+      "data/graph/adjacency/in/part-000000.parquet": {
+        "content_cid": "bafkreidrz6gqcsiynh7k42mgajhe7q2xflj5bddt433e4bcq7xokkjhi6m",
+        "family": "graph_adjacency_in",
+        "first_key": "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:00000000",
+        "last_key": "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:00000000",
+        "row_count": 1,
+        "sha256": "71cf8d01491869feae6986024e4fc3572ad3d08c73e6f64e0450fddca524e8f3",
+        "size_bytes": 3954
+      },
+      "data/graph/adjacency/out/part-000000.parquet": {
+        "content_cid": "bafkreibd2mipjtogkjpddflpmh574ru6mrbz6shkooouro34yq4veohfxm",
+        "family": "graph_adjacency_out",
+        "first_key": "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:00000000",
+        "last_key": "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:00000000",
+        "row_count": 1,
+        "sha256": "23d310f4cdc6525e31956f61fbfe469e64439f48ea739d48bb7cc4395238e5bb",
+        "size_bytes": 3970
+      },
+      "data/graph/edges/part-000000.parquet": {
+        "content_cid": "bafkreicmi2lsaxycagm7f6gpjjd5kd5yolwgmqbohmsw6ozxxafnfwnb4i",
+        "family": "graph_edges",
+        "first_key": "d21b01cade22ebcc9a6c18159c07e12f3da5311b800c2dec838474155e219a2c:ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e",
+        "last_key": "d21b01cade22ebcc9a6c18159c07e12f3da5311b800c2dec838474155e219a2c:ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e",
+        "row_count": 1,
+        "sha256": "4c4697205f020199f2f8cf4a47d50fb872ec66402e3b256f3b37b80ad2d9a1e2",
+        "size_bytes": 3391
+      },
+      "data/graph/nodes/part-000000.parquet": {
+        "content_cid": "bafkreidmg27vwufphnqocyqf5i57ts6xaaai4h3nldcvpjaodmg5dsvz2y",
+        "family": "graph_nodes",
+        "first_key": "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e",
+        "last_key": "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4",
+        "row_count": 3,
+        "sha256": "6c36bf5b50af3b60e16205ea3bf9cbd700008e1f6d58c557a40e1b0dd1cab9d6",
+        "size_bytes": 3950
+      },
+      "data/vectors/centroid-000-part-000000.parquet": {
+        "content_cid": "bafkreianpkshv7jpbadrt632qmwgaxn6kxjmzjcbwyig3dl3hdh7wtic7i",
+        "family": "vectors",
+        "first_key": "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:state:wa:rcw:42:56",
+        "last_key": "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:state:or:ors:123:456",
+        "row_count": 3,
+        "sha256": "0d7aa47afd2f080719fb7a832c605dbe55d2cca441b6106d8d7b38cffb4d02fa",
+        "size_bytes": 4615
+      },
+      "data/vectors/centroids/part-000000.parquet": {
+        "content_cid": "bafkreickcntoaleqqgok2dfhc2al2myqgcaymqjnil5owimvf2blsydmbm",
+        "family": "centroids",
+        "first_key": "cluster-000000",
+        "last_key": "cluster-000000",
+        "row_count": 1,
+        "sha256": "4a1366e02c90819cad0ca71680bd3310308186412d42faeb21952e82b9606c0b",
+        "size_bytes": 3458
+      },
+      "data/vectors/locator/part-000000.parquet": {
+        "content_cid": "bafkreigcretppcbxzk7m2nw53hzf3b7qjmi5bluyaa2k6eqfjouiw57kxi",
+        "family": "vector_locator",
+        "first_key": "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:00000001",
+        "last_key": "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:00000000",
+        "row_count": 3,
+        "sha256": "c28926f78837cabecd36ddd9f25d87f04b11d0ae980034af12054ba88b77eaba",
+        "size_bytes": 4309
+      },
+      "dataset_configs.json": {
+        "content_cid": "bafkreih4ckuwvztqslr33naxgjwbb2cy4pmhh4tybrw5tp5qr2mpid6boe",
+        "family": "receipt",
+        "first_key": null,
+        "last_key": null,
+        "row_count": 0,
+        "sha256": "fc12a96ae67092e3bdb417326c10e858e3d873f2780c6dd9bfb08e98f40fc171",
+        "size_bytes": 2382
+      },
+      "dataset_infos.json": {
+        "content_cid": "bafkreib7ycucx2kacphe5erhvnp5bvbvpv3u4upig77bray5zv4iaz6pze",
+        "family": "receipt",
+        "first_key": null,
+        "last_key": null,
+        "row_count": 0,
+        "sha256": "3fc0a82be94013ce4e9227ab5fd0d4357d774e51e837fe18831dcd788067cfc9",
+        "size_bytes": 982
+      },
+      "indexes/bm25_documents_chunks-000000.parquet": {
+        "content_cid": "bafkreiclls73uyksuipktamu7bnvjmbljhk66v6qcplowccpgcuqnmry2q",
+        "family": "routing_index",
+        "first_key": "data/bm25/documents/part-000000.parquet",
+        "last_key": "data/bm25/documents/part-000000.parquet",
+        "row_count": 1,
+        "sha256": "4b5cbfba6152a21ea98194f85b54b02b49d5ef57d013d6eb084f30a906b238d4",
+        "size_bytes": 4418
+      },
+      "indexes/bm25_postings_chunks-000000.parquet": {
+        "content_cid": "bafkreig2quiendg6cele7a7mpnjz5ru5ppbk2ni2fpvovmz7tytosqkifu",
+        "family": "routing_index",
+        "first_key": "data/bm25/postings/part-000000.parquet",
+        "last_key": "data/bm25/postings/part-000000.parquet",
+        "row_count": 1,
+        "sha256": "da8510468cde11164f83ec7b539ec69d7bc2ad351a2beaeab33f9e26e941482d",
+        "size_bytes": 4304
+      },
+      "indexes/centroids_chunks-000000.parquet": {
+        "content_cid": "bafkreig543hf75jhr4giaxpagqkvhz6dgt26532w6a7xoxwvtnj6ca3554",
+        "family": "routing_index",
+        "first_key": "data/vectors/centroids/part-000000.parquet",
+        "last_key": "data/vectors/centroids/part-000000.parquet",
+        "row_count": 1,
+        "sha256": "dde6ce5ff5278f0c805de0341553e7c334f5eeef56f03f775ed59b53e1037def",
+        "size_bytes": 3741
+      },
+      "indexes/corpus_chunks-000000.parquet": {
+        "content_cid": "bafkreihshab45pwvnaeok43g2xytc33grw3xds5g55jy7elkhbtxpwd52q",
+        "family": "routing_index",
+        "first_key": "data/corpus/part-000000.parquet",
+        "last_key": "data/corpus/part-000000.parquet",
+        "row_count": 1,
+        "sha256": "f23803cebed56808e57366d5f1316f668db771cba6ef538f916a386777d87dd4",
+        "size_bytes": 4336
+      },
+      "indexes/graph_adjacency_in_chunks-000000.parquet": {
+        "content_cid": "bafkreidzdpmvc2e5idtv2e5hakmgfg524wthx4myo2yycyjk3hyai7ngie",
+        "family": "routing_index",
+        "first_key": "data/graph/adjacency/in/part-000000.parquet",
+        "last_key": "data/graph/adjacency/in/part-000000.parquet",
+        "row_count": 1,
+        "sha256": "791bd951689d40e75d13a70298629bbae5a67bf19876b181612ad9f0047da641",
+        "size_bytes": 4332
+      },
+      "indexes/graph_adjacency_out_chunks-000000.parquet": {
+        "content_cid": "bafkreiaiejeobzuvmyigighm3ynr6xiiufzy7ydt4su7u2l2jb3i2othwy",
+        "family": "routing_index",
+        "first_key": "data/graph/adjacency/out/part-000000.parquet",
+        "last_key": "data/graph/adjacency/out/part-000000.parquet",
+        "row_count": 1,
+        "sha256": "082248e0e69566106418ecde1b1f5d08a1738fe073e4a9fa697a48768d3a67b6",
+        "size_bytes": 4347
+      },
+      "indexes/graph_edges_chunks-000000.parquet": {
+        "content_cid": "bafkreichy3ewaeno24pomqqba3snu36ef3cxzvqo3ovrotmidy4ixqix4e",
+        "family": "routing_index",
+        "first_key": "data/graph/edges/part-000000.parquet",
+        "last_key": "data/graph/edges/part-000000.parquet",
+        "row_count": 1,
+        "sha256": "47c6c96011aed71ee6420106e4da6fc42ec57cd60edbab174d881e388bc117e1",
+        "size_bytes": 5278
+      },
+      "indexes/graph_nodes_chunks-000000.parquet": {
+        "content_cid": "bafkreic3kt2zwj3yhjoo4flfd5n6hcd74e34nh3nmvhl2nrn4i43ooggyy",
+        "family": "routing_index",
+        "first_key": "data/graph/nodes/part-000000.parquet",
+        "last_key": "data/graph/nodes/part-000000.parquet",
+        "row_count": 1,
+        "sha256": "5b54f59b27783a5cee15651f5be3887fe137c69f6d654ebd362de239b738c6c6",
+        "size_bytes": 4201
+      },
+      "indexes/vector_locator_chunks-000000.parquet": {
+        "content_cid": "bafkreiexwnagcub32rbgy6dsduycnnuwj6qmll4yavdjyrqmxqbslumu2a",
+        "family": "routing_index",
+        "first_key": "data/vectors/locator/part-000000.parquet",
+        "last_key": "data/vectors/locator/part-000000.parquet",
+        "row_count": 1,
+        "sha256": "97b34061503bd4426c78721d3026b6964fa0c5af9805469c460cbc0325d194d0",
+        "size_bytes": 4846
+      },
+      "indexes/vectors_chunks-000000.parquet": {
+        "content_cid": "bafkreicclj4uom7zirlyodbuy56xpqnui6qvfktub6xhkryqq6q5uo5n44",
+        "family": "routing_index",
+        "first_key": "data/vectors/centroid-000-part-000000.parquet",
+        "last_key": "data/vectors/centroid-000-part-000000.parquet",
+        "row_count": 1,
+        "sha256": "425a794733f94457870c34c77d77c1b447a152aa740fae75471087a1da3bade7",
+        "size_bytes": 4407
+      },
+      "manifest.json": {
+        "content_cid": "bafkreicerm7f52gzlci32ahqxrvxy55vljeyv2y46c4oaauya7r26amuly",
+        "family": "manifest",
+        "first_key": null,
+        "last_key": null,
+        "row_count": 0,
+        "sha256": "448b3e5ee8d95891bd00f0bc6b7c77b55a498aeb1cf0b8e0029807e3af01945e",
+        "size_bytes": 45266
+      },
+      "quarantine/part-000000.json": {
+        "content_cid": "bafkreigcno66yzmuyf72s6cyij6sgdfjrfxfqp32m5ncfsgw4bs7htlxeq",
+        "family": "quarantine",
+        "first_key": "9fdf7e38d73db91f38d38013bd11647f56324475b014f378bdaf2b5585ffa27a:628a071e420ca611d80172644600fbacb831e9e912364aa056d9eb9f74c188c2",
+        "last_key": "9fdf7e38d73db91f38d38013bd11647f56324475b014f378bdaf2b5585ffa27a:628a071e420ca611d80172644600fbacb831e9e912364aa056d9eb9f74c188c2",
+        "row_count": 1,
+        "sha256": "c26bbdec6594c17fa97858427d230ca9896e583f7a675a22c8d6e065f3cd7724",
+        "size_bytes": 480
+      },
+      "receipts/source/part-000000.json": {
+        "content_cid": "bafkreibjlxway3k6oee6vgxqeet3r5l4jwig6ylz6tdjjdevqe6wpgxk7m",
+        "family": "source_receipts",
+        "first_key": "DC:scrape-dc-2026-08-10",
+        "last_key": "WA:scrape-wa-2026-08-10",
+        "row_count": 3,
+        "sha256": "295dec0c6d5e7109ea9af02127b8f57c4d906f6179f4c6948c95813d679aeafb",
+        "size_bytes": 3136
+      },
+      "recovery/part-000000.json": {
+        "content_cid": "bafkreidwx3lhg3xys6ewofypa53g6n3lcu5arbrh5ntujuvs47lww4somm",
+        "family": "recovery",
+        "first_key": "04b06226b554713c2cc858edfe81a1797210fc61aa127ec934f31b3a9f482bc4:b2541f0b9fe9e2af729482bc237b618596de0c7fab386294903d0345ecdf121c",
+        "last_key": "04b06226b554713c2cc858edfe81a1797210fc61aa127ec934f31b3a9f482bc4:b2541f0b9fe9e2af729482bc237b618596de0c7fab386294903d0345ecdf121c",
+        "row_count": 1,
+        "sha256": "76bed6736ef8978967170f07766f376b153a088627eb6744d2b2e7d76b724e63",
+        "size_bytes": 425
+      },
+      "release_metadata.json": {
+        "content_cid": "bafkreicnm4i2zp2zc4daynar7spbqlzna7eb5cqzenm7vndzwmydng3bqq",
+        "family": "release_metadata",
+        "first_key": null,
+        "last_key": null,
+        "row_count": 0,
+        "sha256": "4d6711acbf5917060c3411fc9e182f2d07c81e8a192359fab479b330369b6184",
+        "size_bytes": 2009
+      },
+      "reports/admission.json": {
+        "content_cid": "bafkreicjvp7awgwdlfqm2zneojo3dn6vxqvk3izyrp3uup2yca36f3c3qy",
+        "family": "report",
+        "first_key": null,
+        "last_key": null,
+        "row_count": 0,
+        "sha256": "49abfe0b1ac35960cd65a4725db1b7d5bc2aada3388bf74a3f581037e2ec5b86",
+        "size_bytes": 1003
+      },
+      "reports/lineage.json": {
+        "content_cid": "bafkreigbf7tw7ns6pw3fjohu5wst2ewj2q25h5ajmnofy65urirmkpfjia",
+        "family": "report",
+        "first_key": null,
+        "last_key": null,
+        "row_count": 0,
+        "sha256": "c12fe76fb65e7db654b8f4eda53d12c9d435d3f409635c5c7bb48a22c53ca940",
+        "size_bytes": 7079
+      },
+      "reports/quality.json": {
+        "content_cid": "bafkreigmntztyzqd66r5exv47fa625qxseu75qq35dpnznxd2rwyej565q",
+        "family": "report",
+        "first_key": null,
+        "last_key": null,
+        "row_count": 0,
+        "sha256": "cc6cf33c6603f7a3d25ebcf941ed76179129fec21be8dedcb6e3d46d8227beec",
+        "size_bytes": 1056
+      },
+      "reports/reproducibility.json": {
+        "content_cid": "bafkreiajqxuaryy5o5ghuvzq6l6v6zba5kjl47vwnhmzb7onnsc2mier5u",
+        "family": "report",
+        "first_key": null,
+        "last_key": null,
+        "row_count": 0,
+        "sha256": "0985e808e31d774c7a5730f2fd5f6420ea92be7eb669d990fdcd6c85a62091ed",
+        "size_bytes": 608
+      }
+    },
+    "build_config_cid": "c133e03fd759b90eab028741c7a26096429e9f576a50f520d09e507de1055519",
+    "counts": {
+      "README.md": 0,
+      "STATE-DC.parquet": 0,
+      "STATE-OR.parquet": 0,
+      "data/bm25/documents/part-000000.parquet": 3,
+      "data/bm25/postings/part-000000.parquet": 3,
+      "data/corpus/part-000000.parquet": 3,
+      "data/graph/adjacency/in/part-000000.parquet": 1,
+      "data/graph/adjacency/out/part-000000.parquet": 1,
+      "data/graph/edges/part-000000.parquet": 1,
+      "data/graph/nodes/part-000000.parquet": 3,
+      "data/vectors/centroid-000-part-000000.parquet": 3,
+      "data/vectors/centroids/part-000000.parquet": 1,
+      "data/vectors/locator/part-000000.parquet": 3,
+      "dataset_configs.json": 0,
+      "dataset_infos.json": 0,
+      "indexes/bm25_documents_chunks-000000.parquet": 1,
+      "indexes/bm25_postings_chunks-000000.parquet": 1,
+      "indexes/centroids_chunks-000000.parquet": 1,
+      "indexes/corpus_chunks-000000.parquet": 1,
+      "indexes/graph_adjacency_in_chunks-000000.parquet": 1,
+      "indexes/graph_adjacency_out_chunks-000000.parquet": 1,
+      "indexes/graph_edges_chunks-000000.parquet": 1,
+      "indexes/graph_nodes_chunks-000000.parquet": 1,
+      "indexes/vector_locator_chunks-000000.parquet": 1,
+      "indexes/vectors_chunks-000000.parquet": 1,
+      "manifest.json": 0,
+      "quarantine/part-000000.json": 1,
+      "receipts/source/part-000000.json": 3,
+      "recovery/part-000000.json": 1,
+      "release_metadata.json": 0,
+      "reports/admission.json": 0,
+      "reports/lineage.json": 0,
+      "reports/quality.json": 0,
+      "reports/reproducibility.json": 0
+    },
+    "dataset_id": "justicedao/ipfs_state_laws",
+    "in_memory_identical": true,
+    "logical_cids": {
+      "README.md": "bafkreidvkiuqhh32xyk744r3ch7cmzx4rytvblrxzxte3jbmirrv74ir3q",
+      "STATE-DC.parquet": "bafkreiax7lv6y2acww5ych4lmjgp3b23vjjo26lcxwc4esqqdlpl3y2zd4",
+      "STATE-OR.parquet": "bafkreiawp3ftw3nir55qnlm7eruatc7dtuuyhlf2i7xi5qhk42g4ds353u",
+      "data/bm25/documents/part-000000.parquet": "bafkreidrjcz6lwztusm2qmo6r6o4v4t7mvihbserdahgmfz2i26eearfjy",
+      "data/bm25/postings/part-000000.parquet": "bafkreidg7znby2rd3nxm5njfef2wibpjcmulsezpr5fpflaivvr3sjtwoy",
+      "data/corpus/part-000000.parquet": "bafkreib7yrqq7rngrakgsvrqsfdacmgpf6dfjiz2jjyw2omapspmq5ujri",
+      "data/graph/adjacency/in/part-000000.parquet": "bafkreidrz6gqcsiynh7k42mgajhe7q2xflj5bddt433e4bcq7xokkjhi6m",
+      "data/graph/adjacency/out/part-000000.parquet": "bafkreibd2mipjtogkjpddflpmh574ru6mrbz6shkooouro34yq4veohfxm",
+      "data/graph/edges/part-000000.parquet": "bafkreicmi2lsaxycagm7f6gpjjd5kd5yolwgmqbohmsw6ozxxafnfwnb4i",
+      "data/graph/nodes/part-000000.parquet": "bafkreidmg27vwufphnqocyqf5i57ts6xaaai4h3nldcvpjaodmg5dsvz2y",
+      "data/vectors/centroid-000-part-000000.parquet": "bafkreianpkshv7jpbadrt632qmwgaxn6kxjmzjcbwyig3dl3hdh7wtic7i",
+      "data/vectors/centroids/part-000000.parquet": "bafkreickcntoaleqqgok2dfhc2al2myqgcaymqjnil5owimvf2blsydmbm",
+      "data/vectors/locator/part-000000.parquet": "bafkreigcretppcbxzk7m2nw53hzf3b7qjmi5bluyaa2k6eqfjouiw57kxi",
+      "dataset_configs.json": "bafkreih4ckuwvztqslr33naxgjwbb2cy4pmhh4tybrw5tp5qr2mpid6boe",
+      "dataset_infos.json": "bafkreib7ycucx2kacphe5erhvnp5bvbvpv3u4upig77bray5zv4iaz6pze",
+      "indexes/bm25_documents_chunks-000000.parquet": "bafkreiclls73uyksuipktamu7bnvjmbljhk66v6qcplowccpgcuqnmry2q",
+      "indexes/bm25_postings_chunks-000000.parquet": "bafkreig2quiendg6cele7a7mpnjz5ru5ppbk2ni2fpvovmz7tytosqkifu",
+      "indexes/centroids_chunks-000000.parquet": "bafkreig543hf75jhr4giaxpagqkvhz6dgt26532w6a7xoxwvtnj6ca3554",
+      "indexes/corpus_chunks-000000.parquet": "bafkreihshab45pwvnaeok43g2xytc33grw3xds5g55jy7elkhbtxpwd52q",
+      "indexes/graph_adjacency_in_chunks-000000.parquet": "bafkreidzdpmvc2e5idtv2e5hakmgfg524wthx4myo2yycyjk3hyai7ngie",
+      "indexes/graph_adjacency_out_chunks-000000.parquet": "bafkreiaiejeobzuvmyigighm3ynr6xiiufzy7ydt4su7u2l2jb3i2othwy",
+      "indexes/graph_edges_chunks-000000.parquet": "bafkreichy3ewaeno24pomqqba3snu36ef3cxzvqo3ovrotmidy4ixqix4e",
+      "indexes/graph_nodes_chunks-000000.parquet": "bafkreic3kt2zwj3yhjoo4flfd5n6hcd74e34nh3nmvhl2nrn4i43ooggyy",
+      "indexes/vector_locator_chunks-000000.parquet": "bafkreiexwnagcub32rbgy6dsduycnnuwj6qmll4yavdjyrqmxqbslumu2a",
+      "indexes/vectors_chunks-000000.parquet": "bafkreicclj4uom7zirlyodbuy56xpqnui6qvfktub6xhkryqq6q5uo5n44",
+      "manifest.json": "bafkreicerm7f52gzlci32ahqxrvxy55vljeyv2y46c4oaauya7r26amuly",
+      "quarantine/part-000000.json": "bafkreigcno66yzmuyf72s6cyij6sgdfjrfxfqp32m5ncfsgw4bs7htlxeq",
+      "receipts/source/part-000000.json": "bafkreibjlxway3k6oee6vgxqeet3r5l4jwig6ylz6tdjjdevqe6wpgxk7m",
+      "recovery/part-000000.json": "bafkreidwx3lhg3xys6ewofypa53g6n3lcu5arbrh5ntujuvs47lww4somm",
+      "release_metadata.json": "bafkreicnm4i2zp2zc4daynar7spbqlzna7eb5cqzenm7vndzwmydng3bqq",
+      "reports/admission.json": "bafkreicjvp7awgwdlfqm2zneojo3dn6vxqvk3izyrp3uup2yca36f3c3qy",
+      "reports/lineage.json": "bafkreigbf7tw7ns6pw3fjohu5wst2ewj2q25h5ajmnofy65urirmkpfjia",
+      "reports/quality.json": "bafkreigmntztyzqd66r5exv47fa625qxseu75qq35dpnznxd2rwyej565q",
+      "reports/reproducibility.json": "bafkreiajqxuaryy5o5ghuvzq6l6v6zba5kjl47vwnhmzb7onnsc2mier5u"
+    },
+    "logical_identity_identical": true,
+    "manifest_digest": "3ad6da7634a4ae26824596d8f381a8bc349b230801f4713bcddd914e6b8cdb11",
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "parquet_byte_drift": {
+      "bound_bytes": 262144,
+      "byte_identical": true,
+      "drifted_parquet_paths": [],
+      "explanation": "Byte identity is required when the Parquet writer and runtime versions are pinned (this fixture uses one process and sealed encode settings). If writer versions later diverge, encoder footer metadata may drift by at most max_parquet_footer_bytes; logical record CIDs, routes, counts, and the manifest digest remain identical.",
+      "max_abs_delta_bytes": 0,
+      "parquet_artifact_count": 22,
+      "within_bound": true
+    },
+    "release_profile": "state-laws-ir-graphrag/v2",
+    "release_root_cid": "bafkreicbjsoar5ub35mieicc7m6rk5kue53rm5j2a7yc4gpsu5pib2ummu",
+    "routes": {
+      "README.md": [
+        null,
+        null
+      ],
+      "STATE-DC.parquet": [
+        null,
+        null
+      ],
+      "STATE-OR.parquet": [
+        null,
+        null
+      ],
+      "data/bm25/documents/part-000000.parquet": [
+        "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:state:wa:rcw:42:56",
+        "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:state:or:ors:123:456"
+      ],
+      "data/bm25/postings/part-000000.parquet": [
+        "council:9cc6ba96e0c01809393082bfd41c94229b4fe8ccaddd52bf87c1a0d345f09c33",
+        "records:7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e"
+      ],
+      "data/corpus/part-000000.parquet": [
+        "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:state:wa:rcw:42:56",
+        "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:state:or:ors:123:456"
+      ],
+      "data/graph/adjacency/in/part-000000.parquet": [
+        "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:00000000",
+        "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:00000000"
+      ],
+      "data/graph/adjacency/out/part-000000.parquet": [
+        "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:00000000",
+        "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:00000000"
+      ],
+      "data/graph/edges/part-000000.parquet": [
+        "d21b01cade22ebcc9a6c18159c07e12f3da5311b800c2dec838474155e219a2c:ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e",
+        "d21b01cade22ebcc9a6c18159c07e12f3da5311b800c2dec838474155e219a2c:ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e"
+      ],
+      "data/graph/nodes/part-000000.parquet": [
+        "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e",
+        "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4"
+      ],
+      "data/vectors/centroid-000-part-000000.parquet": [
+        "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:state:wa:rcw:42:56",
+        "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:state:or:ors:123:456"
+      ],
+      "data/vectors/centroids/part-000000.parquet": [
+        "cluster-000000",
+        "cluster-000000"
+      ],
+      "data/vectors/locator/part-000000.parquet": [
+        "7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:7e865246a43f7cf0c84af1c915cae63a80f32390d420e141f0d2654aa6299f4e:00000001",
+        "ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:ccce42c77dab004790133e44104a7bb886484c63382528ba66efcd0cf2e02ae4:00000000"
+      ],
+      "dataset_configs.json": [
+        null,
+        null
+      ],
+      "dataset_infos.json": [
+        null,
+        null
+      ],
+      "indexes/bm25_documents_chunks-000000.parquet": [
+        "data/bm25/documents/part-000000.parquet",
+        "data/bm25/documents/part-000000.parquet"
+      ],
+      "indexes/bm25_postings_chunks-000000.parquet": [
+        "data/bm25/postings/part-000000.parquet",
+        "data/bm25/postings/part-000000.parquet"
+      ],
+      "indexes/centroids_chunks-000000.parquet": [
+        "data/vectors/centroids/part-000000.parquet",
+        "data/vectors/centroids/part-000000.parquet"
+      ],
+      "indexes/corpus_chunks-000000.parquet": [
+        "data/corpus/part-000000.parquet",
+        "data/corpus/part-000000.parquet"
+      ],
+      "indexes/graph_adjacency_in_chunks-000000.parquet": [
+        "data/graph/adjacency/in/part-000000.parquet",
+        "data/graph/adjacency/in/part-000000.parquet"
+      ],
+      "indexes/graph_adjacency_out_chunks-000000.parquet": [
+        "data/graph/adjacency/out/part-000000.parquet",
+        "data/graph/adjacency/out/part-000000.parquet"
+      ],
+      "indexes/graph_edges_chunks-000000.parquet": [
+        "data/graph/edges/part-000000.parquet",
+        "data/graph/edges/part-000000.parquet"
+      ],
+      "indexes/graph_nodes_chunks-000000.parquet": [
+        "data/graph/nodes/part-000000.parquet",
+        "data/graph/nodes/part-000000.parquet"
+      ],
+      "indexes/vector_locator_chunks-000000.parquet": [
+        "data/vectors/locator/part-000000.parquet",
+        "data/vectors/locator/part-000000.parquet"
+      ],
+      "indexes/vectors_chunks-000000.parquet": [
+        "data/vectors/centroid-000-part-000000.parquet",
+        "data/vectors/centroid-000-part-000000.parquet"
+      ],
+      "manifest.json": [
+        null,
+        null
+      ],
+      "quarantine/part-000000.json": [
+        "9fdf7e38d73db91f38d38013bd11647f56324475b014f378bdaf2b5585ffa27a:628a071e420ca611d80172644600fbacb831e9e912364aa056d9eb9f74c188c2",
+        "9fdf7e38d73db91f38d38013bd11647f56324475b014f378bdaf2b5585ffa27a:628a071e420ca611d80172644600fbacb831e9e912364aa056d9eb9f74c188c2"
+      ],
+      "receipts/source/part-000000.json": [
+        "DC:scrape-dc-2026-08-10",
+        "WA:scrape-wa-2026-08-10"
+      ],
+      "recovery/part-000000.json": [
+        "04b06226b554713c2cc858edfe81a1797210fc61aa127ec934f31b3a9f482bc4:b2541f0b9fe9e2af729482bc237b618596de0c7fab386294903d0345ecdf121c",
+        "04b06226b554713c2cc858edfe81a1797210fc61aa127ec934f31b3a9f482bc4:b2541f0b9fe9e2af729482bc237b618596de0c7fab386294903d0345ecdf121c"
+      ],
+      "release_metadata.json": [
+        null,
+        null
+      ],
+      "reports/admission.json": [
+        null,
+        null
+      ],
+      "reports/lineage.json": [
+        null,
+        null
+      ],
+      "reports/quality.json": [
+        null,
+        null
+      ],
+      "reports/reproducibility.json": [
+        null,
+        null
+      ]
+    },
+    "schema_version": "state-laws-reproducibility/v1",
+    "source_revision": "42f0546acc7c6cd55627eaf51fb820d5613b9021",
+    "staged_file_count": 34,
+    "staged_identical": true,
+    "streaming": {
+      "external_sort_digest": "7f17c23b2815fff15ff83ae5c364a02c12d0b47455f76871147db410a6a04eeb",
+      "external_sort_row_count": 3,
+      "memory_within_declared_class": true,
+      "partition_count": 1,
+      "peak_resident_records": 3,
+      "resource_class": "memory-large",
+      "shard_count": 2,
+      "two_sorts_identical": true
+    },
+    "two_clean_builds_logical_identical": true,
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "bundle": "evaluation-security",
+  "checks": {
+    "authorizing_for_publication": false,
+    "authorizing_for_release": false,
+    "every_fail_closed_category_covered": true,
+    "fail_closed_case_count": 47,
+    "fail_closed_cases_by_category": {
+      "decompression": 3,
+      "digest": 3,
+      "mutable-pin": 10,
+      "partial-checkpoint": 3,
+      "resource": 5,
+      "row": 3,
+      "secret": 4,
+      "symlink": 3,
+      "traversal": 13
+    },
+    "fixture_only": true,
+    "hub_upload": false,
+    "in_memory_builds_logical_identical": true,
+    "memory_within_declared_class": true,
+    "parquet_byte_drift_bounded": true,
+    "production_page_bound": 4096,
+    "production_shard_bound": 4096,
+    "proves_software_contract_only": true,
+    "publication_not_authorized": true,
+    "resource_class": "memory-large",
+    "secrets_absent": true,
+    "staged_builds_logical_identical": true,
+    "two_clean_builds_logical_identical": true
+  },
+  "code_version": "1",
+  "dataset_repo_id": "justicedao/ipfs_state_laws",
+  "depends_on": [
+    "LCR-026",
+    "LCR-032",
+    "LCR-033"
+  ],
+  "description": "LCR-037 fixture-only proof that two isolated clean descriptor-complete state-law builds share logical CIDs, routes, counts, and the manifest digest, and that hostile resource inputs fail closed. This receipt does not authorize publication.",
+  "fail_closed": {
+    "by_category": {
+      "decompression": 3,
+      "digest": 3,
+      "mutable-pin": 10,
+      "partial-checkpoint": 3,
+      "resource": 5,
+      "row": 3,
+      "secret": 4,
+      "symlink": 3,
+      "traversal": 13
+    },
+    "case_count": 47,
+    "cases": {
+      "decompression": [
+        {
+          "error_type": "DecompressionBombError",
+          "fail_closed": true,
+          "id": "gzip_zeros_bomb"
+        },
+        {
+          "error_type": null,
+          "fail_closed": true,
+          "id": "honest_gzip_admitted"
+        },
+        {
+          "error_type": "DecompressionBombError",
+          "fail_closed": true,
+          "id": "gzip_trailing_hostile"
+        }
+      ],
+      "digest": [
+        {
+          "error_type": "DigestDriftError",
+          "fail_closed": true,
+          "id": "forged_corpus_bytes"
+        },
+        {
+          "error_type": "DescriptorDriftError",
+          "fail_closed": true,
+          "id": "adapter_descriptor_drift"
+        },
+        {
+          "error_type": "StateLawsReleaseSchemaError",
+          "fail_closed": true,
+          "id": "state_descriptor_missing_digest"
+        }
+      ],
+      "mutable-pin": [
+        {
+          "error_type": "ImmutablePinError",
+          "fail_closed": true,
+          "id": "query_pin:main"
+        },
+        {
+          "error_type": "AdapterPinError",
+          "fail_closed": true,
+          "id": "adapter_pin:main"
+        },
+        {
+          "error_type": "ImmutablePinError",
+          "fail_closed": true,
+          "id": "query_pin:latest"
+        },
+        {
+          "error_type": "AdapterPinError",
+          "fail_closed": true,
+          "id": "adapter_pin:latest"
+        },
+        {
+          "error_type": "ImmutablePinError",
+          "fail_closed": true,
+          "id": "query_pin:HEAD"
+        },
+        {
+          "error_type": "AdapterPinError",
+          "fail_closed": true,
+          "id": "adapter_pin:HEAD"
+        },
+        {
+          "error_type": "ImmutablePinError",
+          "fail_closed": true,
+          "id": "query_pin:master"
+        },
+        {
+          "error_type": "AdapterPinError",
+          "fail_closed": true,
+          "id": "adapter_pin:master"
+        },
+        {
+          "error_type": "ImmutablePinError",
+          "fail_closed": true,
+          "id": "query_pin:releases/latest"
+        },
+        {
+          "error_type": "AdapterPinError",
+          "fail_closed": true,
+          "id": "adapter_pin:releases/latest"
+        }
+      ],
+      "partial-checkpoint": [
+        {
+          "error_type": "SealError",
+          "fail_closed": true,
+          "id": "uscode_partial_seal"
+        },
+        {
+          "error_type": "PromotionError",
+          "fail_closed": true,
+          "id": "federal_partial_promote"
+        },
+        {
+          "error_type": "PartialCheckpointPromotionError",
+          "fail_closed": true,
+          "id": "streaming_sealed_incomplete"
+        }
+      ],
+      "resource": [
+        {
+          "error_type": "MemoryBudgetError",
+          "fail_closed": true,
+          "id": "memory_budget_records"
+        },
+        {
+          "error_type": "MemoryBudgetError",
+          "fail_closed": true,
+          "id": "memory_budget_bytes"
+        },
+        {
+          "error_type": "OversizedArtifactError",
+          "fail_closed": true,
+          "id": "oversized_artifact"
+        },
+        {
+          "error_type": "ResourceLimitError",
+          "fail_closed": true,
+          "id": "uscode_resource_limits"
+        },
+        {
+          "error_type": "QueryLimits",
+          "fail_closed": true,
+          "id": "query_limits_declared"
+        }
+      ],
+      "row": [
+        {
+          "error_type": "PhysicalBoundError",
+          "fail_closed": true,
+          "id": "physical_row_bound"
+        },
+        {
+          "error_type": "PhysicalBoundError",
+          "fail_closed": true,
+          "id": "parquet_too_many_rows"
+        },
+        {
+          "error_type": "OversizedArtifactError",
+          "fail_closed": true,
+          "id": "resolver_row_bound"
+        }
+      ],
+      "secret": [
+        {
+          "error_type": "AdmissionLedgerError",
+          "fail_closed": true,
+          "id": "query_hub_token"
+        },
+        {
+          "error_type": "AdmissionLedgerError",
+          "fail_closed": true,
+          "id": "query_home_path"
+        },
+        {
+          "error_type": "StateLawsGraphragAdapterError",
+          "fail_closed": true,
+          "id": "adapter_home_or_token"
+        },
+        {
+          "error_type": "StateLawsGraphragAdapterError",
+          "fail_closed": true,
+          "id": "adapter_absolute_home_path"
+        }
+      ],
+      "symlink": [
+        {
+          "error_type": "SymlinkRejectedError",
+          "fail_closed": true,
+          "id": "mapping_transport_symlink"
+        },
+        {
+          "error_type": "SymlinkRejectedError",
+          "fail_closed": true,
+          "id": "file_sha256_symlink"
+        },
+        {
+          "error_type": "SymlinkRejectedError",
+          "fail_closed": true,
+          "id": "local_root_symlink"
+        }
+      ],
+      "traversal": [
+        {
+          "error_type": "UnsafePathError",
+          "fail_closed": true,
+          "id": "safe_relative:../secrets/token"
+        },
+        {
+          "error_type": "AbsolutePathError",
+          "fail_closed": true,
+          "id": "adapter_path:../secrets/token"
+        },
+        {
+          "error_type": "UnsafePathError",
+          "fail_closed": true,
+          "id": "safe_relative:../../etc/passwd"
+        },
+        {
+          "error_type": "AbsolutePathError",
+          "fail_closed": true,
+          "id": "adapter_path:../../etc/passwd"
+        },
+        {
+          "error_type": "UnsafePathError",
+          "fail_closed": true,
+          "id": "safe_relative:/etc/passwd"
+        },
+        {
+          "error_type": "AbsolutePathError",
+          "fail_closed": true,
+          "id": "adapter_path:/etc/passwd"
+        },
+        {
+          "error_type": "UnsafePathError",
+          "fail_closed": true,
+          "id": "safe_relative:~/.ssh/id_rsa"
+        },
+        {
+          "error_type": "AbsolutePathError",
+          "fail_closed": true,
+          "id": "adapter_path:~/.ssh/id_rsa"
+        },
+        {
+          "error_type": "UnsafePathError",
+          "fail_closed": true,
+          "id": "safe_relative:data/../../../LATEST.json"
+        },
+        {
+          "error_type": "AbsolutePathError",
+          "fail_closed": true,
+          "id": "adapter_path:data/../../../LATEST.json"
+        },
+        {
+          "error_type": "UnsafePathError",
+          "fail_closed": true,
+          "id": "safe_relative:data\\..\\secret"
+        },
+        {
+          "error_type": "AbsolutePathError",
+          "fail_closed": true,
+          "id": "adapter_path:data\\..\\secret"
+        },
+        {
+          "error_type": "UnsafePathError",
+          "fail_closed": true,
+          "id": "resolver_escape"
+        }
+      ]
+    },
+    "categories": [
+      "traversal",
+      "symlink",
+      "digest",
+      "decompression",
+      "row",
+      "resource",
+      "mutable-pin",
+      "secret",
+      "partial-checkpoint"
+    ],
+    "every_category_fail_closed": true
+  },
+  "fixture_only": true,
+  "goal_id": "LCR-G060",
+  "hub_upload": false,
+  "memory": {
+    "declared_max_resident_records": 256,
+    "memory_within_declared_class": true,
+    "peak_resident_records": 3,
+    "resource_class": "memory-large"
+  },
+  "notes": "Fixture materialization proves the software contract only. Live exact-51 evidence and publication remain gated on later tasks. Byte identity is required when the Parquet writer and runtime versions are pinned (this fixture uses one process and sealed encode settings). If writer versions later diverge, encoder footer metadata may drift by at most max_parquet_footer_bytes; logical record CIDs, routes, counts, and the manifest digest remain identical.",
+  "parquet_byte_drift": {
+    "bound_bytes": 262144,
+    "byte_identical": true,
+    "drifted_parquet_paths": [],
+    "explanation": "Byte identity is required when the Parquet writer and runtime versions are pinned (this fixture uses one process and sealed encode settings). If writer versions later diverge, encoder footer metadata may drift by at most max_parquet_footer_bytes; logical record CIDs, routes, counts, and the manifest digest remain identical.",
+    "max_abs_delta_bytes": 0,
+    "parquet_artifact_count": 22,
+    "within_bound": true
+  },
+  "producer": "check_state_laws_reproducibility.py",
+  "program_id": "legal-corpora-reindex-v1",
+  "proves_software_contract_only": true,
+  "release_profile": "state-laws-ir-graphrag/v2",
+  "report_digest_sha256": "3d1b891cf7093c6c619c5b48f9665ed283f0f574317085a11b75cd6337861fc1",
+  "resource_class": "memory-large",
+  "schema_version": "state-laws-reproducibility/v1",
+  "secrets_absent": true,
+  "task_id": "LCR-037",
+  "validation": {
+    "commands": [
+      "python -m pytest tests/integration/legal_scrapers/test_legal_corpora_reindex_security.py -q",
+      "python scripts/ops/legal_data/check_state_laws_reproducibility.py --fixture-only --check"
+    ],
+    "network": false
+  }
+}

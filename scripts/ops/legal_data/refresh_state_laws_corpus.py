@@ -46,61 +46,57 @@ from ipfs_datasets_py.utils.cid_utils import canonical_json_bytes
 
 
 STATE_CODES_50: List[str] = [
-    "AL",
-    "AK",
-    "AZ",
-    "AR",
-    "CA",
-    "CO",
-    "CT",
-    "DE",
-    "FL",
-    "GA",
-    "HI",
-    "ID",
-    "IL",
-    "IN",
-    "IA",
-    "KS",
-    "KY",
-    "LA",
-    "ME",
-    "MD",
-    "MA",
-    "MI",
-    "MN",
-    "MS",
-    "MO",
-    "MT",
-    "NE",
-    "NV",
-    "NH",
-    "NJ",
-    "NM",
-    "NY",
-    "NC",
-    "ND",
-    "OH",
-    "OK",
-    "OR",
-    "PA",
-    "RI",
-    "SC",
-    "SD",
-    "TN",
-    "TX",
-    "UT",
-    "VT",
-    "VA",
-    "WA",
-    "WV",
-    "WI",
-    "WY",
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
 ]
+
+# Exact production jurisdiction set: 50 postal codes + DC (LCR-007).
+STATE_CODES_51: List[str] = list(STATE_CODES_50) + ["DC"]
+CANONICAL_PRODUCTION_JURISDICTIONS = frozenset(STATE_CODES_51)
+EXPECTED_PRODUCTION_JURISDICTION_COUNT = 51
 
 _CORPUS = get_canonical_legal_corpus("state_laws")
 _COMPLETED_STATES_SCHEMA = "ipfs_datasets_py.state_laws_refresh.completed_states.v1"
 _REGISTRY_RECORDABLE_STATE_STATUSES = {"success", "zero_statutes"}
+
+
+class SubsetReleaseError(ValueError):
+    """Raised when a production release path is asked to publish a subset corpus."""
+
+
+def reject_subset_release(
+    states: Sequence[str],
+    *,
+    context: str = "production release",
+) -> List[str]:
+    """Fail closed unless ``states`` is exactly the sealed 51-jurisdiction set.
+
+    Legacy production entry points must never promote a requested-scope subset
+    (including the historical 50-state ``all`` without DC) to a combined release.
+    """
+    normalized: List[str] = []
+    seen = set()
+    for item in states:
+        code = str(item or "").strip().upper()
+        if not code or code in seen:
+            continue
+        normalized.append(code)
+        seen.add(code)
+    observed = set(normalized)
+    if observed != CANONICAL_PRODUCTION_JURISDICTIONS:
+        missing = sorted(CANONICAL_PRODUCTION_JURISDICTIONS - observed)
+        extra = sorted(observed - CANONICAL_PRODUCTION_JURISDICTIONS)
+        raise SubsetReleaseError(
+            f"subset release rejected for {context}: "
+            f"count={len(observed)} (expected {EXPECTED_PRODUCTION_JURISDICTION_COUNT}); "
+            f"missing={missing}; extra={extra}"
+        )
+    if "DC" not in observed:
+        raise SubsetReleaseError(f"subset release rejected for {context}: DC is required")
+    return normalized
 
 
 def _complete_state_statuses() -> set[str]:
@@ -212,12 +208,7 @@ def _normalize_completed_states_registry(payload: Any) -> Dict[str, Any]:
             value = str(raw_entry.get(key) or "").strip()
             if value:
                 entry[key] = value
-        for key in (
-            "completion_mode",
-            "timeout_classification",
-            "timeout_signal_kind",
-            "timeout_original_error",
-        ):
+        for key in ("completion_mode", "timeout_classification", "timeout_signal_kind", "timeout_original_error"):
             value = str(raw_entry.get(key) or "").strip()
             if value:
                 entry[key] = value
@@ -338,21 +329,14 @@ def _prefill_state_results_from_registry(
             "completed_at": str(entry.get("completed_at") or ""),
             "skip_reason": "already_completed_registry",
         }
-        for key in (
-            "completion_mode",
-            "timeout_classification",
-            "timeout_signal_kind",
-            "timeout_original_error",
-        ):
+        for key in ("completion_mode", "timeout_classification", "timeout_signal_kind", "timeout_original_error"):
             value = str(entry.get(key) or "").strip()
             if value:
                 prefilled[state][key] = value
         if isinstance(entry.get("timeout_work_remaining"), bool):
             prefilled[state]["timeout_work_remaining"] = bool(entry.get("timeout_work_remaining"))
         if isinstance(entry.get("timeout_promoted_to_success"), bool):
-            prefilled[state]["timeout_promoted_to_success"] = bool(
-                entry.get("timeout_promoted_to_success")
-            )
+            prefilled[state]["timeout_promoted_to_success"] = bool(entry.get("timeout_promoted_to_success"))
     return prefilled
 
 
@@ -388,12 +372,7 @@ def _merge_completed_states_registry(
             "output_root": str(output_root),
             "source_progress_path": str(progress_path),
         }
-        for key in (
-            "completion_mode",
-            "timeout_classification",
-            "timeout_signal_kind",
-            "timeout_original_error",
-        ):
+        for key in ("completion_mode", "timeout_classification", "timeout_signal_kind", "timeout_original_error"):
             value = str(raw_entry.get(key) or "").strip()
             if value:
                 entry[key] = value
@@ -483,9 +462,7 @@ def _reconcile_state_results_from_partial_checkpoints(
         stage_label_lower = stage_label.lower()
         progress = payload.get("progress") if isinstance(payload.get("progress"), Mapping) else {}
         try:
-            checkpoint_statutes_count = int(
-                payload.get("statutes_count") or len(list(payload.get("statutes") or []))
-            )
+            checkpoint_statutes_count = int(payload.get("statutes_count") or len(list(payload.get("statutes") or [])))
         except Exception:
             checkpoint_statutes_count = 0
         try:
@@ -494,9 +471,7 @@ def _reconcile_state_results_from_partial_checkpoints(
             prior_count = 0
 
         try:
-            codes_completed = int(
-                progress.get("codes_completed") or payload.get("codes_completed") or 0
-            )
+            codes_completed = int(progress.get("codes_completed") or payload.get("codes_completed") or 0)
         except Exception:
             codes_completed = 0
         try:
@@ -568,18 +543,14 @@ def _eligible_timeout_recovery_states(
 
         timeout_classification = str(entry.get("timeout_classification") or "").strip().lower()
         if not timeout_classification and isinstance(entry.get("timeout_diagnostics"), Mapping):
-            timeout_classification = (
-                str((entry.get("timeout_diagnostics") or {}).get("classification") or "")
-                .strip()
-                .lower()
-            )
+            timeout_classification = str(
+                (entry.get("timeout_diagnostics") or {}).get("classification") or ""
+            ).strip().lower()
         if not timeout_classification.startswith("timeout_"):
             continue
 
         timeout_work_remaining = entry.get("timeout_work_remaining")
-        if not isinstance(timeout_work_remaining, bool) and isinstance(
-            entry.get("timeout_diagnostics"), Mapping
-        ):
+        if not isinstance(timeout_work_remaining, bool) and isinstance(entry.get("timeout_diagnostics"), Mapping):
             timeout_work_remaining = (entry.get("timeout_diagnostics") or {}).get("work_remaining")
         if timeout_work_remaining is False:
             # Already classified as timeout with no remaining work.
@@ -597,13 +568,18 @@ def _eligible_timeout_recovery_states(
     return deduped
 
 
-def _normalize_states(value: str, *, include_dc: bool = False) -> List[str]:
+def _normalize_states(value: str, *, include_dc: bool = True) -> List[str]:
+    """Normalize a states token.
+
+    Production ``all`` is exactly 51 jurisdictions (50 states + DC). The legacy
+    50-only ``all`` with opt-in DC is removed (LCR-007). Explicit subset lists
+    remain allowed for non-release operations; production publish/combined paths
+    call :func:`reject_subset_release`.
+    """
     raw = str(value or "all").strip()
     if not raw or raw.lower() == "all":
-        states = list(STATE_CODES_50)
-        if include_dc:
-            states.append("DC")
-        return states
+        # DC is always part of the canonical ``all`` set.
+        return list(STATE_CODES_51)
 
     states: List[str] = []
     for item in raw.split(","):
@@ -612,8 +588,7 @@ def _normalize_states(value: str, *, include_dc: bool = False) -> List[str]:
             continue
         if code not in US_STATES:
             raise ValueError(f"Unknown state code: {code}")
-        if code == "DC" and not include_dc:
-            raise ValueError("DC requested but --include-dc was not set")
+        # DC no longer requires --include-dc; flag retained for CLI compatibility.
         states.append(code)
 
     deduped: List[str] = []
@@ -652,15 +627,9 @@ def _safe_cid_for_obj(payload: Mapping[str, Any]) -> str:
         return f"sha256:{digest}"
 
 
-def jsonld_payload_to_canonical_row(
-    payload: Mapping[str, Any], *, state_code: str
-) -> Dict[str, Any]:
+def jsonld_payload_to_canonical_row(payload: Mapping[str, Any], *, state_code: str) -> Dict[str, Any]:
     """Convert one state-law JSON-LD object into the canonical parquet schema."""
-    state = (
-        str(state_code or payload.get("stateCode") or payload.get("state_code") or "")
-        .strip()
-        .upper()
-    )
+    state = str(state_code or payload.get("stateCode") or payload.get("state_code") or "").strip().upper()
     identifier = _first_text(
         payload,
         ("identifier", "legislationIdentifier", "sectionNumber", "source_id", "@id"),
@@ -687,25 +656,79 @@ def jsonld_payload_to_canonical_row(
     }
 
 
-def _row_key(row: Mapping[str, Any]) -> tuple[str, ...]:
-    for field in ("ipfs_cid", "source_id", "identifier", "source_url"):
+def _logical_row_key(row: Mapping[str, Any]) -> tuple[str, ...]:
+    """Stable logical identity (not content CID).
+
+    CID-first merge was a production hazard: content edits under the same
+    citation created duplicate logical rows. Logical-key merge keeps one
+    *current* row per citation and records prior content CIDs as history.
+    """
+    state = str(row.get("state_code") or row.get("jurisdiction") or "").strip().upper()
+    for field in (
+        "legal_id",
+        "identifier",
+        "legislationIdentifier",
+        "section_number",
+        "sectionNumber",
+        "source_id",
+        "source_url",
+        "sourceUrl",
+    ):
         value = str(row.get(field) or "").strip()
         if value:
-            return (field, value)
-    return ("row", json.dumps(dict(row), ensure_ascii=True, sort_keys=True, default=str))
+            return ("logical", state, field, value)
+    # Last resort: content cid (only when no logical identity exists).
+    cid = str(row.get("ipfs_cid") or row.get("entry_cid") or "").strip()
+    if cid:
+        return ("cid", state, cid)
+    return ("row", state, json.dumps(dict(row), ensure_ascii=True, sort_keys=True, default=str))
+
+
+def _row_key(row: Mapping[str, Any]) -> tuple[str, ...]:
+    """Backward-compatible alias used by tests; prefers logical identity."""
+    return _logical_row_key(row)
 
 
 def merge_canonical_rows(
-    existing_rows: Sequence[Mapping[str, Any]], new_rows: Sequence[Mapping[str, Any]]
+    existing_rows: Sequence[Mapping[str, Any]],
+    new_rows: Sequence[Mapping[str, Any]],
+    *,
+    retain_history: bool = True,
 ) -> List[Dict[str, Any]]:
-    """Merge rows by stable identity, preferring the refreshed scraped row."""
+    """Merge rows by logical identity, preferring the refreshed scraped row.
+
+    When content CID changes under the same logical key, the prior CID is
+    recorded on ``logical_history`` of the current row (current/history handling).
+    """
     merged: Dict[tuple[str, ...], Dict[str, Any]] = {}
     order: List[tuple[str, ...]] = []
     for row in list(existing_rows) + list(new_rows):
         normalized = dict(row)
-        key = _row_key(normalized)
+        key = _logical_row_key(normalized)
         if key not in merged:
             order.append(key)
+            merged[key] = normalized
+            continue
+        prior = merged[key]
+        prior_cid = str(prior.get("ipfs_cid") or prior.get("entry_cid") or "").strip()
+        new_cid = str(normalized.get("ipfs_cid") or normalized.get("entry_cid") or "").strip()
+        if retain_history and prior_cid and new_cid and prior_cid != new_cid:
+            history = list(prior.get("logical_history") or [])
+            if isinstance(normalized.get("logical_history"), list):
+                history.extend(list(normalized.get("logical_history") or []))
+            history.append({"ipfs_cid": prior_cid, "replaced": True})
+            # Deduplicate history cids while preserving order.
+            seen_cids = set()
+            deduped_history = []
+            for item in history:
+                cid = str((item or {}).get("ipfs_cid") or "").strip()
+                if not cid or cid in seen_cids or cid == new_cid:
+                    continue
+                seen_cids.add(cid)
+                deduped_history.append({"ipfs_cid": cid, "replaced": True})
+            normalized = dict(normalized)
+            normalized["logical_history"] = deduped_history
+            normalized["logical_key"] = ":".join(str(p) for p in key)
         merged[key] = normalized
     return [merged[key] for key in order]
 
@@ -736,9 +759,7 @@ def _write_parquet_rows(rows: Sequence[Mapping[str, Any]], path: Path) -> None:
     import pyarrow.parquet as pq
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    pq.write_table(
-        pa.Table.from_pylist(_normalize_rows_for_parquet(rows)), path, compression="snappy"
-    )
+    pq.write_table(pa.Table.from_pylist(_normalize_rows_for_parquet(rows)), path, compression="snappy")
 
 
 def _iter_jsonld_payloads(path: Path) -> Iterable[Dict[str, Any]]:
@@ -831,11 +852,7 @@ def _publish_state_parquet_file(
         )
     except Exception as exc:
         msg = str(exc)
-        if (
-            "no files have been modified" in msg.lower()
-            or "nothing to commit" in msg.lower()
-            or "empty commit" in msg.lower()
-        ):
+        if "no files have been modified" in msg.lower() or "nothing to commit" in msg.lower() or "empty commit" in msg.lower():
             upload_info = "no_change_already_current"
         else:
             raise
@@ -907,9 +924,7 @@ def _sync_stale_local_state_shards_to_hf(
                 remote_hash = ""
 
         if repo_path in repo_files and remote_hash == local_hash:
-            skipped.append(
-                {"state": state, "reason": "remote_already_current", "sha256": local_hash}
-            )
+            skipped.append({"state": state, "reason": "remote_already_current", "sha256": local_hash})
             continue
 
         uploaded.append(
@@ -1016,9 +1031,7 @@ def build_state_laws_parquet_artifacts(
         try:
             from huggingface_hub import HfApi
 
-            repo_files = set(
-                HfApi(token=token).list_repo_files(repo_id=repo_id, repo_type="dataset")
-            )
+            repo_files = set(HfApi(token=token).list_repo_files(repo_id=repo_id, repo_type="dataset"))
         except Exception:
             repo_files = set()
 
@@ -1070,8 +1083,29 @@ def build_state_laws_parquet_artifacts(
 
     combined_rows = merge_canonical_rows([], combined_rows)
     combined_path = parquet_dir / _CORPUS.combined_parquet_filename
-    if combined_rows:
+    state_set = {str(s).strip().upper() for s in states}
+    is_exact_production_set = state_set == CANONICAL_PRODUCTION_JURISDICTIONS
+    combined_written = False
+    # Never overwrite a shared combined parquet from a subset scrape (LCR-007).
+    if combined_rows and is_exact_production_set:
         _write_parquet_rows(combined_rows, combined_path)
+        combined_written = True
+    elif combined_rows and not is_exact_production_set:
+        # Isolated non-production builds may still emit a *local* combined only
+        # when the caller opts in via env; default is skip (fail-closed).
+        if str(os.getenv("STATE_LAWS_ALLOW_SUBSET_COMBINED", "")).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            subset_combined = parquet_dir / "state_laws_subset_combined.parquet"
+            _write_parquet_rows(combined_rows, subset_combined)
+            combined_path = subset_combined
+            combined_written = True
+        else:
+            combined_path = parquet_dir / "state_laws_subset_combined.skipped"
+            combined_rows = []
 
     manifest = {
         "status": "success",
@@ -1083,6 +1117,9 @@ def build_state_laws_parquet_artifacts(
         "parquet_dir": str(parquet_dir),
         "combined_parquet_path": str(combined_path),
         "combined_row_count": len(combined_rows),
+        "combined_written": bool(combined_written),
+        "exact_production_jurisdiction_set": bool(is_exact_production_set),
+        "shared_combined_overwrite": bool(combined_written and is_exact_production_set),
         "merge_existing_local": bool(merge_existing_local),
         "merge_hf_existing": bool(merge_hf_existing),
         "state_reports": state_reports,
@@ -1120,9 +1157,7 @@ def _publish_parquet_dir(
 def _run_full_corpus_guard_audit(*, states: Sequence[str]) -> Dict[str, Any]:
     """Run the static full-corpus truncation audit before uncapped scrapes."""
     script_path = Path(__file__).with_name("audit_state_scraper_full_corpus_guards.py")
-    spec = importlib.util.spec_from_file_location(
-        "audit_state_scraper_full_corpus_guards", script_path
-    )
+    spec = importlib.util.spec_from_file_location("audit_state_scraper_full_corpus_guards", script_path)
     if spec is None or spec.loader is None:
         return {
             "status": "fail",
@@ -1138,9 +1173,7 @@ def _run_full_corpus_guard_audit(*, states: Sequence[str]) -> Dict[str, Any]:
     spec.loader.exec_module(module)
 
     repo_root = Path(__file__).resolve().parents[3]
-    scraper_root = (
-        repo_root / "ipfs_datasets_py" / "processors" / "legal_scrapers" / "state_scrapers"
-    )
+    scraper_root = repo_root / "ipfs_datasets_py" / "processors" / "legal_scrapers" / "state_scrapers"
     findings: List[Any] = []
     missing: List[str] = []
     for state in states:
@@ -1163,29 +1196,15 @@ def _run_full_corpus_guard_audit(*, states: Sequence[str]) -> Dict[str, Any]:
         "missing_states": missing,
         "error_count": error_count,
         "warning_count": warning_count,
-        "findings": [
-            item.to_dict() if hasattr(item, "to_dict") else dict(item) for item in findings
-        ],
+        "findings": [item.to_dict() if hasattr(item, "to_dict") else dict(item) for item in findings],
     }
 
 
 async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     requested_states = _normalize_states(args.states, include_dc=bool(args.include_dc))
-    output_root = (
-        Path(args.output_root).expanduser().resolve()
-        if args.output_root
-        else _CORPUS.default_local_root()
-    )
-    jsonld_dir = (
-        Path(args.jsonld_dir).expanduser().resolve()
-        if args.jsonld_dir
-        else _CORPUS.jsonld_dir(str(output_root))
-    )
-    parquet_dir = (
-        Path(args.parquet_dir).expanduser().resolve()
-        if args.parquet_dir
-        else _CORPUS.parquet_dir(str(output_root))
-    )
+    output_root = Path(args.output_root).expanduser().resolve() if args.output_root else _CORPUS.default_local_root()
+    jsonld_dir = Path(args.jsonld_dir).expanduser().resolve() if args.jsonld_dir else _CORPUS.jsonld_dir(str(output_root))
+    parquet_dir = Path(args.parquet_dir).expanduser().resolve() if args.parquet_dir else _CORPUS.parquet_dir(str(output_root))
     repo_id = str(args.repo_id or _CORPUS.hf_dataset_id).strip()
     completed_registry_raw = str(getattr(args, "completed_states_registry", "") or "").strip()
     completed_states_registry_path = (
@@ -1200,9 +1219,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         else _default_completed_states_baseline_path()
     )
     skip_completed_states = bool(getattr(args, "skip_completed_states", True))
-    persist_completed_states_registry = bool(
-        getattr(args, "persist_completed_states_registry", True)
-    )
+    persist_completed_states_registry = bool(getattr(args, "persist_completed_states_registry", True))
     if hasattr(args, "load_completed_states_baseline"):
         load_completed_states_baseline = bool(getattr(args, "load_completed_states_baseline", True))
     elif completed_baseline_raw:
@@ -1294,11 +1311,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     }
 
     def _recompute_progress_counts() -> None:
-        results = (
-            progress_state.get("state_results")
-            if isinstance(progress_state.get("state_results"), dict)
-            else {}
-        )
+        results = progress_state.get("state_results") if isinstance(progress_state.get("state_results"), dict) else {}
         completed_states = [state for state in requested_states if state in results]
         success_count = 0
         error_count = 0
@@ -1398,9 +1411,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     if isinstance(timeout_diagnostics_raw, Mapping)
                     else {}
                 )
-                timeout_classification = str(
-                    timeout_diagnostics.get("classification") or ""
-                ).strip()
+                timeout_classification = str(timeout_diagnostics.get("classification") or "").strip()
                 timeout_signal_kind = str(timeout_diagnostics.get("signal_kind") or "").strip()
                 timeout_work_remaining_value = timeout_diagnostics.get("work_remaining")
                 timeout_work_remaining = (
@@ -1409,9 +1420,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     else None
                 )
                 low_quality = bool((state_result or {}).get("low_quality"))
-                timed_out = bool(timeout_diagnostics.get("timed_out")) or (
-                    "timed out" in error_text.lower()
-                )
+                timed_out = bool(timeout_diagnostics.get("timed_out")) or ("timed out" in error_text.lower())
                 no_remaining_work_signal = timeout_classification in {
                     "timeout_with_no_detectable_remaining_work",
                     "timeout_without_progress_signal_no_remaining_work",
@@ -1424,18 +1433,10 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     and timeout_work_remaining is False
                     and (statutes_count > 0 or no_remaining_work_signal)
                 )
-                state_status = (
-                    "error"
-                    if error_text
-                    else ("zero_statutes" if statutes_count <= 0 else "success")
-                )
+                state_status = "error" if error_text else ("zero_statutes" if statutes_count <= 0 else "success")
                 if timeout_promoted_to_success:
                     state_status = "success"
-                state_name = str(
-                    (state_result or {}).get("state_name")
-                    or (statute_data.get("state_name") if isinstance(statute_data, dict) else "")
-                    or ""
-                ).strip()
+                state_name = str((state_result or {}).get("state_name") or (statute_data.get("state_name") if isinstance(statute_data, dict) else "") or "").strip()
                 state_entry = {
                     "state_code": state_code,
                     "state_name": state_name,
@@ -1501,17 +1502,10 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
             state_jsonld_path = jsonld_dir / f"STATE-{state_code}.jsonld"
             if not state_jsonld_path.exists():
                 incremental_publish_results.append(
-                    {
-                        "status": "skipped",
-                        "state": state_code,
-                        "reason": "missing_state_jsonld_after_scrape",
-                    }
+                    {"status": "skipped", "state": state_code, "reason": "missing_state_jsonld_after_scrape"}
                 )
                 return
-            print(
-                f"[state_laws_refresh] incremental_publish state={state_code} stage=build",
-                flush=True,
-            )
+            print(f"[state_laws_refresh] incremental_publish state={state_code} stage=build", flush=True)
             build = build_state_laws_parquet_artifacts(
                 states=[state_code],
                 jsonld_dir=jsonld_dir,
@@ -1523,10 +1517,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
             )
             state_parquet_path = parquet_dir / _CORPUS.state_parquet_filename(state_code)
             try:
-                print(
-                    f"[state_laws_refresh] incremental_publish state={state_code} stage=upload",
-                    flush=True,
-                )
+                print(f"[state_laws_refresh] incremental_publish state={state_code} stage=upload", flush=True)
                 publish = _publish_state_parquet_file(
                     state_code=state_code,
                     state_parquet_path=state_parquet_path,
@@ -1544,21 +1535,14 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                         "publish": publish,
                     }
                 )
-                state_result_entry = (
-                    progress_state.get("state_results", {}).get(state_code)
-                    if isinstance(progress_state.get("state_results"), dict)
-                    else None
-                )
+                state_result_entry = progress_state.get("state_results", {}).get(state_code) if isinstance(progress_state.get("state_results"), dict) else None
                 if isinstance(state_result_entry, dict):
                     state_result_entry["incremental_publish_status"] = "success"
                     state_result_entry["incremental_publish_at"] = _utc_now_iso()
                     _recompute_progress_counts()
                     _write_progress_state()
                     _write_completed_states_registry_snapshot()
-                print(
-                    f"[state_laws_refresh] incremental_publish state={state_code} stage=done",
-                    flush=True,
-                )
+                print(f"[state_laws_refresh] incremental_publish state={state_code} stage=done", flush=True)
             except Exception as exc:
                 incremental_publish_results.append(
                     {
@@ -1569,11 +1553,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                         "error": str(exc),
                     }
                 )
-                state_result_entry = (
-                    progress_state.get("state_results", {}).get(state_code)
-                    if isinstance(progress_state.get("state_results"), dict)
-                    else None
-                )
+                state_result_entry = progress_state.get("state_results", {}).get(state_code) if isinstance(progress_state.get("state_results"), dict) else None
                 if isinstance(state_result_entry, dict):
                     state_result_entry["incremental_publish_status"] = "error"
                     state_result_entry["incremental_publish_error"] = str(exc)
@@ -1598,13 +1578,9 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 "skipped_completed_states": skipped_completed_states,
             }
         else:
-            scrape_max_statutes = (
-                int(args.max_statutes) if int(args.max_statutes or 0) > 0 else None
-            )
+            scrape_max_statutes = int(args.max_statutes) if int(args.max_statutes or 0) > 0 else None
             scrape_max_statutes_for_run = scrape_max_statutes
-            if scrape_max_statutes is None and not bool(
-                getattr(args, "skip_full_corpus_guard_audit", False)
-            ):
+            if scrape_max_statutes is None and not bool(getattr(args, "skip_full_corpus_guard_audit", False)):
                 full_corpus_guard_audit = _run_full_corpus_guard_audit(states=states)
                 if str(full_corpus_guard_audit.get("status")) != "pass":
                     return {
@@ -1615,9 +1591,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     }
             previous_full_corpus_env = os.environ.get("STATE_SCRAPER_FULL_CORPUS")
             previous_checkpoint_dir_env = os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR")
-            os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = str(
-                output_root / "partial_checkpoints"
-            )
+            os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = str(output_root / "partial_checkpoints")
             if scrape_max_statutes is None:
                 # Several state scrapers intentionally keep normal probes bounded
                 # unless this flag is set.  Treat an uncapped refresh as an
@@ -1625,9 +1599,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 # sample-sized state shards.
                 os.environ["STATE_SCRAPER_FULL_CORPUS"] = "1"
             progress_heartbeat_stop = asyncio.Event()
-            progress_heartbeat_task = asyncio.create_task(
-                _progress_heartbeat_loop(progress_heartbeat_stop)
-            )
+            progress_heartbeat_task = asyncio.create_task(_progress_heartbeat_loop(progress_heartbeat_stop))
             try:
                 scrape_result = await scrape_state_laws(
                     states=states,
@@ -1678,19 +1650,13 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         _write_completed_states_registry_snapshot()
 
         timeout_recovery_rounds = max(0, int(getattr(args, "timeout_recovery_rounds", 0) or 0))
-        timeout_recovery_multiplier = max(
-            1.0, float(getattr(args, "timeout_recovery_timeout_multiplier", 1.5) or 1.5)
-        )
-        timeout_recovery_timeout_cap = max(
-            0.0, float(getattr(args, "timeout_recovery_timeout_cap_seconds", 0.0) or 0.0)
-        )
+        timeout_recovery_multiplier = max(1.0, float(getattr(args, "timeout_recovery_timeout_multiplier", 1.5) or 1.5))
+        timeout_recovery_timeout_cap = max(0.0, float(getattr(args, "timeout_recovery_timeout_cap_seconds", 0.0) or 0.0))
         timeout_recovery_retry_attempts = max(
             int(args.per_state_retry_attempts or 0),
             int(getattr(args, "timeout_recovery_retry_attempts", 0) or 0),
         )
-        timeout_recovery_parallel_workers = int(
-            getattr(args, "timeout_recovery_parallel_workers", 0) or 0
-        )
+        timeout_recovery_parallel_workers = int(getattr(args, "timeout_recovery_parallel_workers", 0) or 0)
         if timeout_recovery_parallel_workers <= 0:
             timeout_recovery_parallel_workers = max(1, int(args.parallel_workers or 1))
 
@@ -1705,9 +1671,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
 
             round_timeout_seconds = base_timeout_seconds
             if round_idx >= 0:
-                round_timeout_seconds = base_timeout_seconds * (
-                    timeout_recovery_multiplier ** float(round_idx + 1)
-                )
+                round_timeout_seconds = base_timeout_seconds * (timeout_recovery_multiplier ** float(round_idx + 1))
             if timeout_recovery_timeout_cap > 0:
                 round_timeout_seconds = min(round_timeout_seconds, timeout_recovery_timeout_cap)
             round_timeout_seconds = max(base_timeout_seconds, round_timeout_seconds)
@@ -1777,27 +1741,66 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     is_complete = not scrape_gaps and not build_gaps
 
     publish_result: Dict[str, Any] | None = None
-    if args.publish_to_hf and (is_complete or bool(args.allow_incomplete_publish)):
-        publish_result = _publish_parquet_dir(
-            parquet_dir=parquet_dir,
-            repo_id=repo_id,
-            token=hf_token,
-            create_repo=bool(args.create_repo),
-            verify=bool(args.verify),
-            commit_message=str(args.commit_message or "Refresh canonical state laws corpus"),
-        )
-    elif args.publish_to_hf:
-        publish_result = {
-            "status": "skipped",
-            "reason": "final_combined_publish_waits_for_complete_corpus",
-            "detail": "Per-state startup sync and incremental completed-state publishes do not require complete all-state coverage.",
-        }
+    production_set_ok = set(requested_states) == CANONICAL_PRODUCTION_JURISDICTIONS
+    if args.publish_to_hf:
+        # Production final publish requires the exact 51-set (including DC).
+        # Requested-scope completeness is not sufficient (LCR-007).
+        if not production_set_ok:
+            publish_result = {
+                "status": "rejected",
+                "reason": "subset_release_rejected",
+                "detail": (
+                    "final combined production publish requires the exact "
+                    f"{EXPECTED_PRODUCTION_JURISDICTION_COUNT}-jurisdiction set including DC; "
+                    f"requested={len(requested_states)}"
+                ),
+                "requested_states": list(requested_states),
+            }
+        elif not is_complete and not bool(args.allow_incomplete_publish):
+            publish_result = {
+                "status": "skipped",
+                "reason": "final_combined_publish_waits_for_complete_corpus",
+                "detail": "Per-state startup sync and incremental completed-state publishes do not require complete all-state coverage.",
+            }
+        elif not is_complete and bool(args.allow_incomplete_publish):
+            # Even with the flag, never promote a partial corpus to production.
+            publish_result = {
+                "status": "rejected",
+                "reason": "partial_success_promotion_rejected",
+                "detail": "allow_incomplete_publish cannot authorize a production combined release",
+                "scrape_gap_states": list(scrape_gaps),
+                "build_gap_states": list(build_gaps),
+            }
+        else:
+            # Exact 51 and complete — still enforce the gate explicitly.
+            try:
+                reject_subset_release(requested_states, context="refresh_state_laws_corpus publish")
+            except SubsetReleaseError as exc:
+                publish_result = {
+                    "status": "rejected",
+                    "reason": "subset_release_rejected",
+                    "detail": str(exc),
+                }
+            else:
+                publish_result = _publish_parquet_dir(
+                    parquet_dir=parquet_dir,
+                    repo_id=repo_id,
+                    token=hf_token,
+                    create_repo=bool(args.create_repo),
+                    verify=bool(args.verify),
+                    commit_message=str(args.commit_message or "Refresh canonical state laws corpus"),
+                )
 
-    progress_state["status"] = "success" if is_complete else "partial_success"
+    # Partial runs stay partial; never promote to production success.
+    run_status = "success" if (is_complete and production_set_ok) else "partial_success"
+    if is_complete and not production_set_ok:
+        run_status = "partial_success"
+    progress_state["status"] = run_status
     progress_state["finished_at"] = _utc_now_iso()
     progress_state["scrape_gap_states"] = list(scrape_gaps)
     progress_state["build_gap_states"] = list(build_gaps)
-    progress_state["is_complete"] = bool(is_complete)
+    progress_state["is_complete"] = bool(is_complete and production_set_ok)
+    progress_state["exact_production_jurisdiction_set"] = bool(production_set_ok)
     _recompute_progress_counts()
     _write_progress_state()
     _write_completed_states_registry_snapshot()
@@ -1809,7 +1812,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     )
 
     return {
-        "status": "success" if is_complete else "partial_success",
+        "status": run_status,
         "plan": plan,
         "scrape": scrape_result,
         "build": build_result,
@@ -1817,9 +1820,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "full_corpus_guard_audit": full_corpus_guard_audit,
         "checkpoint_reconciliation": checkpoint_reconciliation,
         "timeout_recovery": {
-            "enabled": bool(
-                args.scrape and int(getattr(args, "timeout_recovery_rounds", 0) or 0) > 0
-            ),
+            "enabled": bool(args.scrape and int(getattr(args, "timeout_recovery_rounds", 0) or 0) > 0),
             "round_count": len(timeout_recovery_history),
             "rounds": timeout_recovery_history,
         },
@@ -1827,12 +1828,8 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "incremental_state_publish": {
             "enabled": bool(publish_to_hf and incremental_state_publish),
             "results": incremental_publish_results,
-            "success_count": sum(
-                1 for item in incremental_publish_results if str(item.get("status")) == "success"
-            ),
-            "error_count": sum(
-                1 for item in incremental_publish_results if str(item.get("status")) == "error"
-            ),
+            "success_count": sum(1 for item in incremental_publish_results if str(item.get("status")) == "success"),
+            "error_count": sum(1 for item in incremental_publish_results if str(item.get("status")) == "error"),
         },
         "publish": publish_result,
         "scrape_gap_states": scrape_gaps,
@@ -1843,37 +1840,28 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
             "completed_state_count": len(completed_registry_states),
             "skipped_completed_states": skipped_completed_states,
             "baseline_path": str(completed_states_baseline_path),
-            "baseline_loaded": bool(
-                load_completed_states_baseline and completed_states_baseline_path.exists()
-            ),
+            "baseline_loaded": bool(load_completed_states_baseline and completed_states_baseline_path.exists()),
         },
     }
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Refresh and publish the canonical state-laws corpus"
-    )
-    parser.add_argument("--states", default="all", help="Comma-separated state codes, or all")
+    parser = argparse.ArgumentParser(description="Refresh and publish the canonical state-laws corpus")
     parser.add_argument(
-        "--include-dc", action="store_true", help="Include District of Columbia when --states=all"
+        "--states",
+        default="all",
+        help="Comma-separated state codes, or all (exactly 51 jurisdictions including DC)",
     )
     parser.add_argument(
-        "--output-root",
-        default="",
-        help="Corpus output root; defaults to ~/.ipfs_datasets/state_laws",
+        "--include-dc",
+        action="store_true",
+        help="Deprecated no-op: DC is always included in --states=all (LCR-007)",
     )
+    parser.add_argument("--output-root", default="", help="Corpus output root; defaults to ~/.ipfs_datasets/state_laws")
     parser.add_argument("--jsonld-dir", default="", help="Override source JSON-LD directory")
     parser.add_argument("--parquet-dir", default="", help="Override destination parquet directory")
-    parser.add_argument(
-        "--scrape", action="store_true", help="Run state scrapers before building parquet"
-    )
-    parser.add_argument(
-        "--max-statutes",
-        type=int,
-        default=0,
-        help="Optional cap across the scrape run; 0 means all",
-    )
+    parser.add_argument("--scrape", action="store_true", help="Run state scrapers before building parquet")
+    parser.add_argument("--max-statutes", type=int, default=0, help="Optional cap across the scrape run; 0 means all")
     parser.add_argument("--rate-limit-delay", type=float, default=1.0)
     parser.add_argument("--parallel-workers", type=int, default=4)
     parser.add_argument("--per-state-retry-attempts", type=int, default=1)
@@ -1914,11 +1902,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--progress-heartbeat-seconds", type=float, default=60.0)
     parser.add_argument("--allow-justia-fallback", action="store_true")
     parser.add_argument("--no-merge-existing-local", action="store_true")
-    parser.add_argument(
-        "--merge-hf-existing",
-        action="store_true",
-        help="Download and merge existing HF state parquet shards",
-    )
+    parser.add_argument("--merge-hf-existing", action="store_true", help="Download and merge existing HF state parquet shards")
     parser.add_argument("--publish-to-hf", action="store_true")
     parser.add_argument(
         "--completed-states-registry",
@@ -1995,9 +1979,7 @@ def main() -> int:
         build = result.get("build") or {}
         if build:
             print(f"Combined rows: {build.get('combined_row_count')}")
-            print(
-                f"Missing JSON-LD states: {','.join(build.get('missing_jsonld_states') or []) or 'None'}"
-            )
+            print(f"Missing JSON-LD states: {','.join(build.get('missing_jsonld_states') or []) or 'None'}")
         if result.get("publish"):
             print(f"Publish: {(result.get('publish') or {}).get('upload_commit')}")
     return 0

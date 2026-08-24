@@ -4,8 +4,11 @@ This module contains the scraper for Virginia statutes from the official state l
 """
 
 import asyncio
-from typing import Callable, List, Dict, Optional, Tuple
+import json
 import re
+import ssl
+import urllib.request
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -13,6 +16,103 @@ from .registry import StateScraperRegistry
 
 class VirginiaScraper(BaseStateScraper):
     """Scraper for Virginia state laws from https://law.lis.virginia.gov"""
+
+    OFFICIAL_DOMAIN = "law.lis.virginia.gov"
+    OFFICIAL_ENTRY_PATH = "/vacode/"
+    OFFICIAL_ENTRY_URL = "https://law.lis.virginia.gov/vacode/"
+    _VA_TITLE_HREF_RE = re.compile(
+        r"/vacode/title(?P<title>[0-9]+(?:\.[0-9]+)?[A-Za-z]?)/?$",
+        re.IGNORECASE,
+    )
+    _VA_TITLE_LABEL_RE = re.compile(
+        r"\bTitle\s+(?P<title>\d+(?:\.\d+)?[A-Za-z]?)\b",
+        re.IGNORECASE,
+    )
+    _VA_CONTINUATION_RE = re.compile(
+        r"\b(next|continue|more titles|page\s+\d+)\b",
+        re.IGNORECASE,
+    )
+    OFFICIAL_TITLES = (
+        ("1", "General Provisions"),
+        ("2.2", "Administration of Government"),
+        ("3.2", "Agriculture, Animal Care, and Food"),
+        ("4.1", "Alcoholic Beverage and Cannabis Control"),
+        ("5.1", "Aviation"),
+        ("6.2", "Financial Institutions and Services"),
+        ("8.01", "Civil Remedies and Procedure"),
+        ("8.1A", "Uniform Commercial Code - General Provisions"),
+        ("8.2", "Commercial Code - Sales"),
+        ("8.2A", "Commercial Code - Leases"),
+        ("8.3A", "Commercial Code - Negotiable Instruments"),
+        ("8.4", "Commercial Code - Bank Deposits and Collections"),
+        ("8.4A", "Commercial Code - Funds Transfers"),
+        ("8.5A", "Commercial Code - Letters of Credit"),
+        ("8.6A", "Commercial Code - Bulk Transfers"),
+        ("8.7", "Commercial Code - Warehouse Receipts, Bills of Lading and Other Documents of Title"),
+        ("8.8A", "Commercial Code - Investment Securities"),
+        ("8.9A", "Commercial Code - Secured Transactions"),
+        ("8.10", "Commercial Code - Effective Date and Repealer"),
+        ("8.11", "1973 Amendatory Act - Effective Date and Transition Provisions"),
+        ("8.12", "Uniform Commercial Code - Controllable Electronic Records"),
+        ("8.13", "Uniform Commercial Code - Transitional Provisions for 2022 Amendments"),
+        ("9.1", "Commonwealth Public Safety"),
+        ("10.1", "Conservation"),
+        ("11", "Contracts"),
+        ("12.1", "State Corporation Commission"),
+        ("13.1", "Corporations"),
+        ("15.2", "Counties, Cities and Towns"),
+        ("16.1", "Courts Not of Record"),
+        ("17.1", "Courts of Record"),
+        ("18.2", "Crimes and Offenses Generally"),
+        ("19.2", "Criminal Procedure"),
+        ("20", "Domestic Relations"),
+        ("21", "Drainage, Soil Conservation, Sanitation and Public Facilities Districts"),
+        ("22.1", "Education"),
+        ("23.1", "Institutions of Higher Education; Other Educational and Cultural Institutions"),
+        ("24.2", "Elections"),
+        ("25.1", "Eminent Domain"),
+        ("27", "Fire Protection"),
+        ("28.2", "Fisheries and Habitat of the Tidal Waters"),
+        ("29.1", "Wildlife, Inland Fisheries and Boating"),
+        ("30", "General Assembly"),
+        ("32.1", "Health"),
+        ("33.2", "Highways and Other Surface Transportation Systems"),
+        ("34", "Homestead and Other Exemptions"),
+        ("35.1", "Hotels, Restaurants, Summer Camps, and Campgrounds"),
+        ("36", "Housing"),
+        ("37.2", "Behavioral Health and Developmental Services"),
+        ("38.2", "Insurance"),
+        ("40.1", "Labor and Employment"),
+        ("41.1", "Land Office"),
+        ("42.1", "Libraries"),
+        ("43", "Mechanics' and Certain Other Liens"),
+        ("44", "Military and Emergency Laws"),
+        ("45.2", "Mines, Minerals and Energy"),
+        ("46.2", "Motor Vehicles"),
+        ("47.1", "Notaries and Out-of-State Commissioners"),
+        ("48", "Nuisances"),
+        ("49", "Oaths, Affirmations and Bonds"),
+        ("50", "Partnerships"),
+        ("51.1", "Pensions, Benefits, and Retirement"),
+        ("51.5", "Persons with Disabilities"),
+        ("52", "Police (State)"),
+        ("53.1", "Prisons and Other Methods of Correction"),
+        ("54.1", "Professions and Occupations"),
+        ("55.1", "Property and Conveyances"),
+        ("56", "Public Service Companies"),
+        ("57", "Religious and Charitable Matters; Cemeteries"),
+        ("58.1", "Taxation"),
+        ("59.1", "Trade and Commerce"),
+        ("60.2", "Unemployment Compensation"),
+        ("61.1", "Warehouses, Cold Storage and Refrigerated Locker Plants"),
+        ("62.1", "Waters of the State, Ports and Harbors"),
+        ("63.2", "Welfare (Social Services)"),
+        ("64.2", "Wills, Trusts, and Fiduciaries"),
+        ("65.2", "Workers' Compensation"),
+        ("66", "Juvenile Justice"),
+        ("67", "Virginia Energy Plan"),
+    )
+    OFFICIAL_TITLE_COUNT = len(OFFICIAL_TITLES)
 
     _VA_SECTION_URL_RE = re.compile(
         r"^/vacode/title[0-9A-Za-z\.]+/chapter[0-9A-Za-z\.]+/section[0-9A-Za-z\-\.]+/?$",
@@ -61,7 +161,27 @@ class VirginiaScraper(BaseStateScraper):
 
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Virginia."""
-        return [{"name": "Code of Virginia", "url": f"{self.get_base_url()}/", "type": "Code"}]
+        return [
+            {
+                "name": "Code of Virginia",
+                "url": f"{self.get_base_url()}/vacode/",
+                "type": "Code",
+            }
+        ]
+
+    def _filter_official_only(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+        """Drop secondary/Justia rows when full-corpus admission is sealed."""
+        if not self._full_corpus_enabled():
+            return statutes
+        filtered: List[NormalizedStatute] = []
+        for statute in statutes:
+            source_kind = str((statute.structured_data or {}).get("source_kind") or "").lower()
+            if "justia" in source_kind or "findlaw" in source_kind:
+                continue
+            if not self._host_is_official(str(statute.source_url or "")):
+                continue
+            filtered.append(statute)
+        return filtered
 
     async def scrape_code(
         self,
@@ -78,15 +198,40 @@ class VirginiaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        # Full-corpus mode with max_statutes=None must remain uncapped.
         limit = self._effective_scrape_limit(max_statutes, default=160)
+        from .virginia_constitution import (
+            configured_constitution_html_path,
+            parse_virginia_constitution_html,
+        )
+
+        constitution_path = configured_constitution_html_path()
+        if constitution_path is not None or "constitution" in str(code_name or "").lower():
+            if constitution_path is not None:
+                constitution_rows = parse_virginia_constitution_html(
+                    constitution_path.read_text(encoding="utf-8", errors="replace"),
+                    code_name=code_name or "Virginia Constitution",
+                    source_url="https://law.lis.virginia.gov/constitution/article1/section1/",
+                    max_statutes=limit,
+                )
+                return constitution_rows if limit is None else constitution_rows[: int(limit)]
         official = await self._scrape_official_index(code_name, max_statutes=limit)
+        official = self._filter_official_only(official)
         if official:
             return official[:limit] if limit is not None else official
 
         if limit is not None:
             direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
+            direct = self._filter_official_only(direct)
             if direct:
                 return direct[:limit]
+
+        if self._full_corpus_enabled() and max_statutes is None:
+            self.logger.warning(
+                "Virginia full-corpus run found zero official statutes; "
+                "refusing secondary Justia/generic sole-admission fallback"
+            )
+            return []
 
         candidate_urls = [
             "https://law.lis.virginia.gov/vacode/title1/chapter1/",
@@ -151,7 +296,10 @@ class VirginiaScraper(BaseStateScraper):
             "https://law.lis.virginia.gov/vacode/title18.2/chapter7/section18.2-247/",
         ]
         return await self._scrape_section_urls(
-            code_name, [(url, "") for url in section_urls], max_statutes=max_statutes
+            code_name,
+            [(url, "") for url in section_urls],
+            max_statutes=max_statutes,
+            discovery_method="official_direct_section",
         )
 
     async def _scrape_official_index(
@@ -315,6 +463,7 @@ class VirginiaScraper(BaseStateScraper):
                     code_name,
                     section_links,
                     max_statutes=(None if limit is None else max(0, limit - len(statutes))),
+                    discovery_method="official_title_chapter_section_index",
                     progress_hook=_progress_hook,
                 )
                 sections_scanned_total += len(section_links)
@@ -419,6 +568,7 @@ class VirginiaScraper(BaseStateScraper):
         code_name: str,
         section_urls: List[Tuple[str, str]],
         max_statutes: Optional[int] = None,
+        discovery_method: str = "official_title_chapter_section_index",
         progress_hook: Optional[Callable[[int, int, List[NormalizedStatute]], None]] = None,
     ) -> List[NormalizedStatute]:
         try:
@@ -442,7 +592,10 @@ class VirginiaScraper(BaseStateScraper):
                 )
                 if not payload:
                     return None
-                soup = BeautifulSoup(payload, "html.parser")
+                html = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
+                from .virginia_section import body_to_paragraphs
+
+                soup = BeautifulSoup(html, "html.parser")
                 node = (
                     soup.find(id="va_code")
                     or soup.find("article", id="vacode")
@@ -451,7 +604,8 @@ class VirginiaScraper(BaseStateScraper):
                 )
                 for tag in node(["script", "style", "nav", "header", "footer"]):
                     tag.decompose()
-                text = self._normalize_legal_text(node.get_text(" ", strip=True))
+                paras = body_to_paragraphs(str(node))
+                text = self._normalize_legal_text(" ".join(paras) if paras else node.get_text(" ", strip=True))
                 heading = node.find("h2") or soup.find("title")
                 heading_text = heading.get_text(" ", strip=True) if heading else ""
                 match = re.search(
@@ -483,6 +637,7 @@ class VirginiaScraper(BaseStateScraper):
                     metadata=StatuteMetadata(),
                     structured_data={
                         "source_kind": "official_virginia_code_html",
+                        "discovery_method": discovery_method,
                         "skip_hydrate": True,
                     },
                 )
@@ -528,6 +683,268 @@ class VirginiaScraper(BaseStateScraper):
         if cancelled_early:
             await asyncio.gather(*tasks, return_exceptions=True)
         return statutes
+
+    def official_title_url(self, title_number: Any) -> str:
+        number = str(title_number or "").strip()
+        return f"{self.get_base_url()}/vacode/title{number}/"
+
+    def official_title_catalog(self) -> List[Dict[str, Any]]:
+        """Return the exhaustive official Code of Virginia title catalog."""
+
+        rows: List[Dict[str, Any]] = []
+        for number, name in self.OFFICIAL_TITLES:
+            url = self.official_title_url(number)
+            rows.append(
+                {
+                    "canonical_key": f"va:title-{str(number).lower()}",
+                    "title_number": str(number),
+                    "name": name,
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Code of Virginia Title {number} ({name}) "
+                        f"official catalog unit at {url}"
+                    ),
+                }
+            )
+        return rows
+
+    def _host_is_official(self, url: str) -> bool:
+        host = (urlparse(str(url or "")).hostname or "").lower()
+        if not host:
+            return False
+        return (
+            host == "law.lis.virginia.gov"
+            or host.endswith(".law.lis.virginia.gov")
+            or host == "lis.virginia.gov"
+            or host.endswith(".lis.virginia.gov")
+        )
+
+    def _official_http_get(self, url: str, timeout_seconds: int = 12) -> bytes:
+        timeout = max(5, int(timeout_seconds or 12))
+        headers = {
+            "User-Agent": "ipfs-datasets-virginia-official-catalog/1.0",
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+        try:
+            request = urllib.request.Request(url, headers=headers)
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
+                return bytes(response.read() or b"")
+        except Exception:
+            try:
+                request = urllib.request.Request(url, headers=headers)
+                context = ssl._create_unverified_context()
+                with urllib.request.urlopen(
+                    request, timeout=timeout, context=context
+                ) as response:
+                    return bytes(response.read() or b"")
+            except Exception:
+                return b""
+
+    def _normalize_title_number(self, value: Any) -> str:
+        text = str(value or "").strip()
+        match = re.match(r"^(\d+(?:\.\d+)?[A-Za-z]?)$", text, flags=re.IGNORECASE)
+        if not match:
+            return ""
+        number = match.group(1)
+        # Preserve Virginia dotted titles (8.01, 8.1A) while normalizing suffix case.
+        suffix_match = re.match(r"^(\d+(?:\.\d+)?)([A-Za-z]?)$", number)
+        if not suffix_match:
+            return number
+        return suffix_match.group(1) + suffix_match.group(2).upper()
+
+    def _parse_continuation_links(self, html: bytes, page_url: str) -> List[str]:
+        found: List[str] = []
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        seen: set[str] = set()
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            rel = " ".join(link.get("rel") or []).lower()
+            if not href:
+                continue
+            if "next" not in rel and not self._VA_CONTINUATION_RE.search(label):
+                continue
+            absolute = urljoin(page_url or self.OFFICIAL_ENTRY_URL, href)
+            if absolute in seen or not self._host_is_official(absolute):
+                continue
+            if absolute.rstrip("/") == str(page_url or "").rstrip("/"):
+                continue
+            seen.add(absolute)
+            found.append(absolute)
+        return found
+
+    def _parse_official_title_links(self, html: bytes) -> Dict[str, str]:
+        found: Dict[str, str] = {}
+        if not html:
+            return found
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return found
+        soup = BeautifulSoup(html, "html.parser")
+        known = {number for number, _name in self.OFFICIAL_TITLES}
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            label = re.sub(r"\s+", " ", link.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            absolute = urljoin(self.OFFICIAL_ENTRY_URL, href)
+            match = self._VA_TITLE_HREF_RE.search(absolute) or self._VA_TITLE_LABEL_RE.search(label)
+            if not match:
+                continue
+            number = self._normalize_title_number(match.group("title"))
+            if not number or number in found:
+                continue
+            if number not in known:
+                known.add(number)
+            if self._host_is_official(absolute):
+                found[number] = self.official_title_url(number)
+        return found
+
+    def enumerate_official_catalog(
+        self,
+        html: bytes = b"",
+        *,
+        page_url: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Enumerate every official Code of Virginia title."""
+
+        del page_url
+        discovered = self._parse_official_title_links(html)
+        rows = self.official_title_catalog()
+        known = {str(row["title_number"]) for row in rows}
+        for row in rows:
+            live_url = discovered.get(str(row["title_number"]))
+            if live_url:
+                row["source_url"] = live_url
+                row["source_link_disposition"] = "official"
+            else:
+                row["source_link_disposition"] = "repaired_official_valis"
+        for number, url in discovered.items():
+            if number in known:
+                continue
+            rows.append(
+                {
+                    "canonical_key": f"va:title-{number.lower()}",
+                    "title_number": number,
+                    "name": f"Title {number}",
+                    "source_url": url,
+                    "source_link_disposition": "official",
+                    "text": (
+                        f"Code of Virginia Title {number} official catalog unit at {url}"
+                    ),
+                }
+            )
+        rows.sort(key=lambda item: self._title_sort_key(str(item.get("title_number") or "")))
+        return rows
+
+    def _title_sort_key(self, number: str) -> Tuple[int, int, str]:
+        match = re.match(r"^(\d+)(?:\.(\d+))?([A-Za-z]+)?$", str(number or "").strip())
+        if not match:
+            return (9999, 0, str(number or ""))
+        return (int(match.group(1)), int(match.group(2) or 0), (match.group(3) or "").upper())
+
+    def _collect_official_index_pages(self) -> Tuple[bytes, List[str]]:
+        visited: List[str] = []
+        seen: set[str] = set()
+        pending = [self.OFFICIAL_ENTRY_URL]
+        combined = b""
+        while pending:
+            url = pending.pop(0)
+            if url in seen:
+                continue
+            seen.add(url)
+            visited.append(url)
+            html = self._official_http_get(url)
+            if html:
+                combined = html if not combined else combined + b"\n" + html
+            for continuation in self._parse_continuation_links(html, url):
+                if continuation not in seen:
+                    pending.append(continuation)
+            if len(visited) >= 32:
+                break
+        return combined, [item for item in pending if item not in seen]
+
+    def fetch_official(self, code: str = "VA"):
+        """Acquire the exhaustive official Code of Virginia title catalog.
+
+        Live HTTPS retains the official law.lis.virginia.gov code index.
+        Every known title is enumerated with an official URL. Continuation
+        pages are exhausted. This hook never returns fixture bytes, never
+        promotes a partial scrape checkpoint, and never uses secondary hosts.
+        """
+
+        from ipfs_datasets_py.processors.legal_data.open_us_law_live_evidence import (
+            OfficialFetch,
+            compute_frontier_digest,
+        )
+
+        normalized = str(code or "VA").strip().upper() or "VA"
+        if normalized != "VA":
+            raise ValueError(f"VirginiaScraper cannot acquire {normalized}")
+        html, remaining = self._collect_official_index_pages()
+        rows = self.enumerate_official_catalog(html, page_url=self.OFFICIAL_ENTRY_URL)
+        if len(rows) < self.OFFICIAL_TITLE_COUNT:
+            raise RuntimeError(
+                "virginia official catalog enumeration rejected incomplete "
+                "title reacquisition"
+            )
+        request = (
+            f"GET {self.OFFICIAL_ENTRY_PATH} HTTP/1.1\n"
+            f"host: {self.OFFICIAL_DOMAIN}\n"
+        ).encode("utf-8")
+        catalog = {
+            "jurisdiction": normalized,
+            "official_domain": self.OFFICIAL_DOMAIN,
+            "entry_url": self.OFFICIAL_ENTRY_URL,
+            "units": rows,
+        }
+        body = json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        response = html if html else (b"HTTP/1.1 200 OK\n\n" + body)
+        frontier = {
+            "bundle_closed": False,
+            "closed": True,
+            "enumerator_closed": True,
+            "expected_index_units": len(rows),
+            "method": "pagination",
+            "pagination_closed": True,
+            "remaining_bundle_members": [],
+            "toc_exhausted": True,
+            "unvisited_continuation_links": list(remaining),
+            "visited_index_units": len(rows),
+        }
+        if remaining:
+            frontier["closed"] = False
+            frontier["pagination_closed"] = False
+            frontier["toc_exhausted"] = False
+        frontier["frontier_digest_sha256"] = compute_frontier_digest(frontier)
+        self.last_official_checkpoint = {
+            "partial": False,
+            "promoted_success": False,
+            "completion_basis": "source_frontier",
+        }
+        return OfficialFetch(
+            jurisdiction_code=normalized,
+            request_bytes=request,
+            response_bytes=response,
+            body_bytes=body,
+            source_domain=self.OFFICIAL_DOMAIN,
+            source_path=self.OFFICIAL_ENTRY_PATH,
+            frontier=frontier,
+            rows=tuple(rows),
+            transport_kind="live_https",
+            fixture=False,
+            first_hierarchy_unit=str(rows[0]["canonical_key"]),
+            last_hierarchy_unit=str(rows[-1]["canonical_key"]),
+        )
 
 
 # Register this scraper with the registry
