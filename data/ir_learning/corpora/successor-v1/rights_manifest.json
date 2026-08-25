@@ -1,0 +1,20 @@
+{
+  "admitted_source_record_ids": [],
+  "admission_decision": "permanent_zero_for_jdao_pinset_1",
+  "decision_scope": "Only the 21 exact JusticeDAO releases and revisions named by JDAO-PINSET-1. This decision does not decide rights for a later release revision.",
+  "fresh_reviewed_at": "2026-08-25T00:00:00Z",
+  "kind": "successor_rights_manifest",
+  "permanent_no_go": {
+    "applies_to": "training, fine-tuning, and any other learned use of these source rows",
+    "reason_code": "missing_exact_source_and_transformation_rights_authority",
+    "reason": "No cited release establishes both an authoritative upstream source-rights grant and authority to create or use the retained transformations. Dataset-card declarations, public visibility, and an exact revision match are not legal authority. The immutable pinset is therefore permanently ineligible for learned training.",
+    "supersession_rule": "Only a new exact release revision with a cited, authoritative upstream source-rights grant, transformation-rights grant, complete lineage, and a new rights review may be considered by a future task; it cannot change this pinset decision."
+  },
+  "pinset_id": "JDAO-PINSET-1",
+  "quarantined_source_record_count": 7173,
+  "row_disposition_artifact": "quarantine_manifest.json#row_dispositions",
+  "schema": "proof-grounded-ir-learning/successor-rights-manifest/v1",
+  "source_release_artifact": "source_releases.json",
+  "training_admitted_rows": 0,
+  "training_eligible": false
+}
