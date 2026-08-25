@@ -1,0 +1,32 @@
+{
+  "admission_rule": "Evaluate only source rows that are rights-admitted and materialized by RESULT(PGIR-201), and only the declared non-hidden partitions of RESULT(PGIR-202).",
+  "current_input_result_identities": [
+    "RESULT(PGIR-200)",
+    "RESULT(PGIR-201)",
+    "RESULT(PGIR-202)"
+  ],
+  "evaluation_id": "R1-successor-v1",
+  "historical_baseline": {
+    "artifact_path": "ipfs_datasets_py/data/ir_learning/evaluations/deterministic/r1_baseline.json",
+    "experiment_id": "R1",
+    "report_cid": "baguqeerau73uowpiy22d7rohi7gvbtfkwivyldlivxnxqw4zzc7zeyzavasq",
+    "task_id": "PGIR-023",
+    "use_as_current_measurement": false
+  },
+  "hidden_test_policy": {
+    "commitment": "sha256:6a801b51b980e666b4010da9a679ad8e11a233078f988165565481b98d4b9ded",
+    "labels_opened": false,
+    "selection_performed": false
+  },
+  "interface": "IRDeterministicBaselineRetirementRecipe@1",
+  "metrics_policy": {
+    "current_metrics_emitted": false,
+    "missing_metric_as_zero": false,
+    "reason": "There are no current rights-admitted, materialized rows in any declared non-hidden denominator."
+  },
+  "outcome": "retire_historical_baseline",
+  "replay_contract": "Read the cited successor corpus and split artifacts. Require zero admitted and materialized source rows, the inherited hidden-test commitment, leakage_passed=true, and a permanent_no_go status for every listed non-hidden partition. Do not load historical fixture cases or hidden-test contents.",
+  "result_identity": "RESULT(PGIR-204)",
+  "schema": "proof-grounded-ir-learning/successor-r1-retirement-recipe/v1",
+  "task_id": "PGIR-204"
+}
