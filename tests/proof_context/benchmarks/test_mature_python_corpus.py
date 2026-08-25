@@ -23,6 +23,7 @@ VISIBLE_PATH = SHARD_ROOT / "visible_manifest.json"
 EVALUATOR_PATH = SHARD_ROOT / "evaluator_manifest.json"
 SHARD_PATH = SHARD_ROOT / "shard_manifest.json"
 SOURCE_VERIFICATION_PATH = SHARD_ROOT / "source_verification.json"
+BASELINE_REPLAY_PATH = SHARD_ROOT / "baseline_replay.json"
 SOURCE_ARCHIVE_PATH = SHARD_ROOT / "source/django-5.2.5-a3b1107.tar.gz"
 LICENSE_PATH = SHARD_ROOT / "LICENSE.django-5.2.5"
 ASGIREF_WHEEL_PATH = SHARD_ROOT / "dependencies/asgiref-3.8.1-py3-none-any.whl"
@@ -35,6 +36,21 @@ ARCHIVE_SHA256 = "600a460db656899969c7dd4b1c70ce268eada7c49fa0b57e942da79030faa7
 LICENSE_SHA256 = "b846415d1b514e9c1dff14a22deb906d794bc546ca6129f950a18cd091e2a669"
 ASGIREF_SHA256 = "3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47"
 SQLPARSE_SHA256 = "cf2196ed3418f3ba5de6af7e82c694a9fbdbfecccdfc72e281548517081f16ca"
+EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+SNAPSHOT_ROOT = (
+    "/home/barberb/.local/share/docker/containerd/daemon/"
+    "io.containerd.snapshotter.v1.overlayfs/snapshots/1743/fs"
+)
+SNAPSHOT_LIB = f"{SNAPSHOT_ROOT}/usr/local/lib"
+VENV_ROOT = "/tmp/pcce063-django.1yGMMk/venv-historical"
+AUDIT_TRANSCRIPT = (
+    "/home/barberb/.codex/sessions/2026/08/24/"
+    "rollout-2026-08-24T23-30-40-01a0361c-9e1f-7850-8535-bbbf9197d5b4.jsonl"
+)
+SETUP_TRANSCRIPT = (
+    "/home/barberb/.codex/sessions/2026/08/24/"
+    "rollout-2026-08-24T00-22-16-01a03125-7ee8-7450-91db-592e9277813f.jsonl"
+)
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -70,6 +86,65 @@ def _raw_cid_from_sha256(value: str) -> str:
     return "b" + base64.b32encode(binary).decode().lower().rstrip("=")
 
 
+def _expected_runtime() -> dict[str, Any]:
+    return {
+        "execution_boundary": {
+            "chroot": False,
+            "container_rootfs_isolated": False,
+            "host_filesystem_visible": True,
+            "host_system_libraries": [
+                {
+                    "name": "libgdal.so.34",
+                    "path": "/lib/aarch64-linux-gnu/libgdal.so.34",
+                },
+                {
+                    "name": "libgeos.so.3.12.1",
+                    "path": "/lib/aarch64-linux-gnu/libgeos.so.3.12.1",
+                },
+                {
+                    "name": "libgeos_c.so.1",
+                    "path": "/lib/aarch64-linux-gnu/libgeos_c.so.1",
+                },
+                {
+                    "name": "libspatialite.so.8",
+                    "path": "/lib/aarch64-linux-gnu/libspatialite.so.8",
+                },
+            ],
+            "host_visible_paths": ["/dev", "/etc", "/lib", "/proc"],
+            "network_namespace_isolated": False,
+        },
+        "html_parser": {
+            "path": f"{SNAPSHOT_LIB}/python3.12/html/parser.py",
+            "sha256": "ab5a0a2fce2bec75d969dbe057b490ef574f9ac57cce9e0eaaf7a220b301e838",
+        },
+        "libpython": {
+            "path": f"{SNAPSHOT_LIB}/libpython3.12.so.1.0",
+            "sha256": "cd8768ab1575197cbefcda5ddd3ed16ef3c3baa1de8739e060feeef124a540fd",
+        },
+        "path_namespace": {
+            "container_logical_ld_library_path": "/usr/local/lib",
+            "execution_ld_library_path": SNAPSHOT_LIB,
+            "execution_namespace": "host-physical-paths",
+            "host_path_suffix": "/usr/bin:/bin",
+            "note": (
+                "No container rootfs was mounted; every execution path is a host-physical "
+                "path and unresolved absolute paths use the host filesystem."
+            ),
+        },
+        "python_binary": {
+            "path": f"{VENV_ROOT}/bin/python3.12",
+            "resolved_path": f"{SNAPSHOT_ROOT}/usr/local/bin/python3.12",
+            "sha256": "01546f67998cb9e41d014fee4e1df67c86273b3cf40cb692fe435f4027ec7c2d",
+        },
+        "python_build": "Python 3.12.3 (main, May 14 2024, 05:51:03) [GCC 12.2.0]",
+        "python_runtime_origin_manifest": (
+            "python:3.12.3-slim-bookworm@"
+            "sha256:c27c26153fdf6863da2a1d85b474d1be004c42cc8ea2fd647004a8d4007a34d5"
+        ),
+        "python_runtime_snapshot_root": SNAPSHOT_ROOT,
+    }
+
+
 def test_frozen_pcce060_manifest_remains_exact_and_bound() -> None:
     payload = CORPUS_MANIFEST_PATH.read_bytes()
     assert hashlib.sha256(payload).hexdigest() == FROZEN_MANIFEST_SHA256
@@ -85,7 +160,9 @@ def test_all_json_is_canonical_and_partition_identities_recompute() -> None:
     evaluator = _load(EVALUATOR_PATH)
     shard = _load(SHARD_PATH)
     source_verification = _load(SOURCE_VERIFICATION_PATH)
+    baseline_replay = _load(BASELINE_REPLAY_PATH)
     for path, value in (
+        (BASELINE_REPLAY_PATH, baseline_replay),
         (VISIBLE_PATH, visible),
         (EVALUATOR_PATH, evaluator),
         (SHARD_PATH, shard),
@@ -94,6 +171,7 @@ def test_all_json_is_canonical_and_partition_identities_recompute() -> None:
         assert path.read_bytes() == _canonical_bytes(value)
 
     for name, path, value in (
+        ("baseline_replay", BASELINE_REPLAY_PATH, baseline_replay),
         ("visible", VISIBLE_PATH, visible),
         ("evaluator", EVALUATOR_PATH, evaluator),
         ("source_verification", SOURCE_VERIFICATION_PATH, source_verification),
@@ -167,12 +245,19 @@ def test_source_license_and_full_baseline_are_materialized_and_verified() -> Non
         "state": "license_materialization_verified",
     }
     assert shard["baseline_full_test"] == {
-        "command": "python3.12 -P tests/runtests.py --parallel 4 --verbosity 1",
+        "command": (
+            "env -i <baseline_replay.json environment> python3.12 -P "
+            "tests/runtests.py --parallel 4 --verbosity 1"
+        ),
         "discovered_tests": 18098,
+        "duration_milliseconds_by_seed": {"0": 91819, "777": 92038},
+        "execution_boundary": "host-filesystem-visible-not-chroot-or-container-rootfs-isolated",
         "expected_failures": 5,
         "passed": True,
         "ran_tests": 18096,
         "receipt_path": "source_verification.json",
+        "replay_profile_path": "baseline_replay.json",
+        "reproduction_count": 2,
         "skipped": 1912,
         "state": "baseline_full_test_passed",
         "tests_executed": True,
@@ -245,15 +330,46 @@ def test_materialized_archive_dependencies_license_and_tree_are_exact(tmp_path: 
 def test_baseline_receipt_is_exact_and_does_not_upgrade_live_qualification() -> None:
     verification = _load(SOURCE_VERIFICATION_PATH)
     assert verification["baseline_full_test"] == {
-        "command": "python3.12 -P tests/runtests.py --parallel 4 --verbosity 1",
+        "command": (
+            "env -i <baseline_replay.json environment> python3.12 -P "
+            "tests/runtests.py --parallel 4 --verbosity 1"
+        ),
         "discovered_tests": 18098,
-        "duration_milliseconds": 98182,
         "errors": 0,
         "expected_failures": 5,
         "failures": 0,
         "network_used": False,
+        "observations": [
+            {
+                "command_execution_id": "exec-e81cb2f7-21f5-44e3-be58-b8494e77cede",
+                "duration_milliseconds": 91819,
+                "python_hash_seed": 0,
+                "stderr_bytes": 0,
+                "stderr_sha256": EMPTY_SHA256,
+                "stdout_bytes": 19284,
+                "stdout_sha256": (
+                    "645323ce6173c2d8f7287ac6683b9722731fbf0a7ae306bbbb25362dbec0d03d"
+                ),
+                "wall_duration_nanoseconds": 103376432838,
+            },
+            {
+                "command_execution_id": "exec-0476ce8d-4990-48ed-92e2-b9c14d41f2d6",
+                "duration_milliseconds": 92038,
+                "python_hash_seed": 777,
+                "stderr_bytes": 0,
+                "stderr_sha256": EMPTY_SHA256,
+                "stdout_bytes": 19372,
+                "stdout_sha256": (
+                    "8e881b644f8980c673cdf4e2fe56a15fc41ccc57c91501264e2fa78b126b9fb2"
+                ),
+                "wall_duration_nanoseconds": 103718371241,
+            },
+        ],
         "passed": True,
+        "profile": "host-filesystem-visible-isolated-venv",
         "ran_tests": 18096,
+        "replay_profile_path": "baseline_replay.json",
+        "reproduction_count": 2,
         "skipped": 1912,
         "source_edits": False,
     }
@@ -264,10 +380,215 @@ def test_baseline_receipt_is_exact_and_does_not_upgrade_live_qualification() -> 
     assert verification["limitations"] == {
         "historical_answer_materialized": False,
         "historical_task_disposition": "unavailable-no-future-patch-access",
+        "host_system_libraries_visible": True,
         "live_provider_qualification": False,
+        "optional_python_distributions": "absent-beyond-pinned-inventory",
     }
-    assert verification["runtime"]["purpose"] == "isolated-historical-replay-baseline-only"
+    assert verification["runtime"] == {
+        **_expected_runtime(),
+        "purpose": "host-filesystem-visible-isolated-venv-historical-replay-baseline-only",
+    }
     assert verification["verification_result"] == "passed"
+
+
+def test_baseline_replay_profile_discloses_exact_host_visible_environment() -> None:
+    verification = _load(SOURCE_VERIFICATION_PATH)
+    replay = _load(BASELINE_REPLAY_PATH)
+    payload = BASELINE_REPLAY_PATH.read_bytes()
+    assert verification["baseline_replay"] == {
+        "bytes_cid": spec.raw_bytes_cid(payload),
+        "path": "baseline_replay.json",
+        "sha256": hashlib.sha256(payload).hexdigest(),
+        "size": len(payload),
+        "structured_cid": spec.structured_cid(replay),
+    }
+    assert replay["command"] == {
+        "argv": [
+            "python3.12",
+            "-P",
+            "tests/runtests.py",
+            "--parallel",
+            "4",
+            "--verbosity",
+            "1",
+        ],
+        "environment": {
+            "HOME": "<fresh-home-directory>",
+            "LANG": "C.UTF-8",
+            "LD_LIBRARY_PATH": SNAPSHOT_LIB,
+            "PATH": f"{VENV_ROOT}/bin:/usr/bin:/bin",
+            "PYTHONHASHSEED": "<observation-seed>",
+            "PYTHONNOUSERSITE": "1",
+            "PYTHONPATH": "<extracted-source-root>:<extracted-source-root>/tests",
+            "PYTHONPYCACHEPREFIX": "<fresh-pycache-directory>",
+            "TZ": "UTC",
+        },
+        "environment_inheritance": "none",
+        "path_placeholders": {
+            "<extracted-source-root>": (
+                "fresh top-level django-a3b1107a4955bdd994908efb4c6e1d03c281e69f "
+                "directory produced from the exact materialized archive for one observation"
+            ),
+            "<fresh-home-directory>": ("newly created empty directory unique to one observation"),
+            "<fresh-pycache-directory>": (
+                "newly created empty directory unique to one observation"
+            ),
+            "<observation-seed>": (
+                "exact decimal PYTHONHASHSEED recorded by the matching observation"
+            ),
+        },
+        "working_directory": "<extracted-source-root>",
+    }
+    assert replay["profile"] == {
+        "black_executable_available": False,
+        "external_network_required": False,
+        "filesystem_isolation": "host-filesystem-visible-not-chroot-or-container-rootfs-isolated",
+        "host_filesystem_visible": True,
+        "host_system_libraries_visible": True,
+        "network_namespace_isolated": False,
+        "optional_python_distributions": "absent-beyond-pinned-inventory",
+        "site_packages": "isolated-venv-only",
+        "system_site_packages": False,
+        "user_site_packages": False,
+    }
+    assert replay["runtime"] == _expected_runtime()
+
+
+def test_baseline_replay_setup_and_observation_receipts_are_exact() -> None:
+    replay = _load(BASELINE_REPLAY_PATH)
+    assert replay["environment_setup"] == {
+        "source_extraction": {
+            "archive_path": (
+                "benchmarks/proof_context/corpus/mature_python/source/django-5.2.5-a3b1107.tar.gz"
+            ),
+            "archive_sha256": ARCHIVE_SHA256,
+            "command_argv_template": [
+                "tar",
+                "--extract",
+                "--gzip",
+                "--file",
+                "<archive-path>",
+                "--directory",
+                "<fresh-extraction-parent>",
+                "--no-same-owner",
+            ],
+            "command_execution_id": "exec-b6ae32d7-3b15-478b-a8aa-35a31f9f3f04",
+            "observed_runs": [
+                {
+                    "extraction_parent": "/tmp/pcce063-audit-seed0.euGN7x",
+                    "python_hash_seed": 0,
+                    "source_root": (
+                        "/tmp/pcce063-audit-seed0.euGN7x/"
+                        "django-a3b1107a4955bdd994908efb4c6e1d03c281e69f"
+                    ),
+                },
+                {
+                    "extraction_parent": "/tmp/pcce063-audit-seed777.ovMkdZ",
+                    "python_hash_seed": 777,
+                    "source_root": (
+                        "/tmp/pcce063-audit-seed777.ovMkdZ/"
+                        "django-a3b1107a4955bdd994908efb4c6e1d03c281e69f"
+                    ),
+                },
+            ],
+        },
+        "venv": {
+            "create": {
+                "argv_template": [
+                    f"{SNAPSHOT_ROOT}/usr/local/bin/python3.12",
+                    "-m",
+                    "venv",
+                    "<isolated-venv>",
+                ],
+                "command_execution_id": "exec-62554a3c-b5f8-46d8-bcf1-290b2a97527d",
+                "environment": {
+                    "LD_LIBRARY_PATH": SNAPSHOT_LIB,
+                    "PATH": "/usr/bin:/bin",
+                    "PYTHONDONTWRITEBYTECODE": "1",
+                    "PYTHONHOME": f"{SNAPSHOT_ROOT}/usr/local",
+                },
+                "environment_inheritance": "none",
+            },
+            "include_system_site_packages": False,
+            "install": {
+                "argv_template": [
+                    "<isolated-venv>/bin/python",
+                    "-m",
+                    "pip",
+                    "install",
+                    "--no-index",
+                    "/tmp/pcce063-django.1yGMMk/pinned-deps/asgiref-3.8.1-py3-none-any.whl",
+                    "/tmp/pcce063-django.1yGMMk/pinned-deps/sqlparse-0.5.3-py3-none-any.whl",
+                ],
+                "command_execution_id": "exec-62554a3c-b5f8-46d8-bcf1-290b2a97527d",
+                "environment": {
+                    "LD_LIBRARY_PATH": SNAPSHOT_LIB,
+                    "PATH": "/usr/bin:/bin",
+                    "PYTHONDONTWRITEBYTECODE": "1",
+                },
+                "environment_inheritance": "none",
+            },
+            "inventory": [
+                {"name": "asgiref", "version": "3.8.1"},
+                {"name": "pip", "version": "24.0"},
+                {"name": "sqlparse", "version": "0.5.3"},
+            ],
+            "path": VENV_ROOT,
+            "transcript_path": SETUP_TRANSCRIPT,
+        },
+    }
+    assert replay["observations"] == [
+        {
+            "command_execution_id": "exec-e81cb2f7-21f5-44e3-be58-b8494e77cede",
+            "completed_at": "2026-08-25T00:19:05.807Z",
+            "discovered_tests": 18098,
+            "duration_milliseconds": 91819,
+            "errors": 0,
+            "expected_failures": 5,
+            "failures": 0,
+            "fresh_home": "/tmp/pcce063-audit-seed0.euGN7x/home",
+            "fresh_pycache": "/tmp/pcce063-audit-seed0.euGN7x/pycache",
+            "observer": "independent-read-only-audit",
+            "python_hash_seed": 0,
+            "ran_tests": 18096,
+            "source_root": (
+                "/tmp/pcce063-audit-seed0.euGN7x/django-a3b1107a4955bdd994908efb4c6e1d03c281e69f"
+            ),
+            "status": "passed",
+            "stderr_bytes": 0,
+            "stderr_sha256": EMPTY_SHA256,
+            "stdout_bytes": 19284,
+            "stdout_sha256": ("645323ce6173c2d8f7287ac6683b9722731fbf0a7ae306bbbb25362dbec0d03d"),
+            "transcript_path": AUDIT_TRANSCRIPT,
+            "wall_duration_nanoseconds": 103376432838,
+            "skipped": 1912,
+        },
+        {
+            "command_execution_id": "exec-0476ce8d-4990-48ed-92e2-b9c14d41f2d6",
+            "completed_at": "2026-08-25T00:19:18.124Z",
+            "discovered_tests": 18098,
+            "duration_milliseconds": 92038,
+            "errors": 0,
+            "expected_failures": 5,
+            "failures": 0,
+            "fresh_home": "/tmp/pcce063-audit-seed777.ovMkdZ/home",
+            "fresh_pycache": "/tmp/pcce063-audit-seed777.ovMkdZ/pycache",
+            "observer": "independent-read-only-audit",
+            "python_hash_seed": 777,
+            "ran_tests": 18096,
+            "source_root": (
+                "/tmp/pcce063-audit-seed777.ovMkdZ/django-a3b1107a4955bdd994908efb4c6e1d03c281e69f"
+            ),
+            "status": "passed",
+            "stderr_bytes": 0,
+            "stderr_sha256": EMPTY_SHA256,
+            "stdout_bytes": 19372,
+            "stdout_sha256": ("8e881b644f8980c673cdf4e2fe56a15fc41ccc57c91501264e2fa78b126b9fb2"),
+            "transcript_path": AUDIT_TRANSCRIPT,
+            "wall_duration_nanoseconds": 103718371241,
+            "skipped": 1912,
+        },
+    ]
 
 
 def test_task_population_covers_mature_synthetic_assurance_and_policy_cases() -> None:
@@ -405,7 +726,11 @@ def test_access_policy_denies_network_and_evaluator_before_terminal_patch() -> N
             "visible_manifest.json",
             "source/django-5.2.5-a3b1107.tar.gz",
         ],
-        "control_mounts": ["shard_manifest.json", "source_verification.json"],
+        "control_mounts": [
+            "baseline_replay.json",
+            "shard_manifest.json",
+            "source_verification.json",
+        ],
         "evaluator_mounts_after_terminal_patch": ["evaluator_manifest.json"],
         "hardlinks": "denied",
         "network_during_task_execution": "denied",
@@ -414,6 +739,7 @@ def test_access_policy_denies_network_and_evaluator_before_terminal_patch() -> N
     }
     assert {path.name for path in SHARD_ROOT.iterdir()} == {
         "LICENSE.django-5.2.5",
+        "baseline_replay.json",
         "dependencies",
         "evaluator_manifest.json",
         "shard_manifest.json",

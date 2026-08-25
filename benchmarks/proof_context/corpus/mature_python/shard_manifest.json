@@ -5,6 +5,7 @@
       "source/django-5.2.5-a3b1107.tar.gz"
     ],
     "control_mounts": [
+      "baseline_replay.json",
       "shard_manifest.json",
       "source_verification.json"
     ],
@@ -17,12 +18,19 @@
     "symlinks": "denied"
   },
   "baseline_full_test": {
-    "command": "python3.12 -P tests/runtests.py --parallel 4 --verbosity 1",
+    "command": "env -i <baseline_replay.json environment> python3.12 -P tests/runtests.py --parallel 4 --verbosity 1",
     "discovered_tests": 18098,
+    "duration_milliseconds_by_seed": {
+      "0": 91819,
+      "777": 92038
+    },
+    "execution_boundary": "host-filesystem-visible-not-chroot-or-container-rootfs-isolated",
     "expected_failures": 5,
     "passed": true,
     "ran_tests": 18096,
     "receipt_path": "source_verification.json",
+    "replay_profile_path": "baseline_replay.json",
+    "reproduction_count": 2,
     "skipped": 1912,
     "state": "baseline_full_test_passed",
     "tests_executed": true
@@ -56,6 +64,13 @@
     "state": "license_materialization_verified"
   },
   "partitions": {
+    "baseline_replay": {
+      "bytes_cid": "bafkreigeeljnvjdyqlsigr23jvcgnoit67iz4vm674ons5s2gsdppkpgam",
+      "path": "baseline_replay.json",
+      "sha256": "c422d2daa47882e483475b4d4466b913f7d19e559eff1cd9765a3486f7a9e603",
+      "size": 10551,
+      "structured_cid": "baguqeeraekkxhc5fhgyvirryn35blbaq3lmpmdzpinuxi3jeelvgozv2ycfa"
+    },
     "evaluator": {
       "bytes_cid": "bafkreign5mtdpq6mnqnxl7qyrykioxwuywess7zkfwgm2qbk4ppwqienxy",
       "path": "evaluator_manifest.json",
@@ -64,11 +79,11 @@
       "structured_cid": "baguqeeraa3b5a46e27piufmnmfdw3wo7txygzpmu2rl6gva2o55f57lm6qrq"
     },
     "source_verification": {
-      "bytes_cid": "bafkreicutiix3xvpx5znuq4ieql7qwkv3jthrqj2rkmstmvzqgmkue2lum",
+      "bytes_cid": "bafkreicfavand4p7tcn5xg4vekmwzpmrrirs7oj2yrrkkyzirw2u6hvpcu",
       "path": "source_verification.json",
-      "sha256": "549a117ddeafbf72da43882417f85955da6678c13a8a9929b2b98198aa134ba3",
-      "size": 3155,
-      "structured_cid": "baguqeerahuyku6nombp6ph72x2w37bkrhswkhdd43h4nkzvmvxul2mf4i7oa"
+      "sha256": "450540d1f1ff989bdb9b9522996cbd918a232fb93ac462a563288db54f1eaf15",
+      "size": 6793,
+      "structured_cid": "baguqeerapb32avsobnjpf5hqaijquuhpgetgt27bvagnyjxw6rcdb2s7yema"
     },
     "visible": {
       "bytes_cid": "bafkreifiyxm5jj3tsexhktj4isturcknmqpi2edxayd2tub3gclskevzy4",
