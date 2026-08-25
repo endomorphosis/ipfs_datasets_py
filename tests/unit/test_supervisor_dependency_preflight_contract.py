@@ -120,7 +120,7 @@ TARGETS = {
         "baseline": {
             "state": "present",
             "sha256": (
-                "c448f673e209a047779496907a6dfdb7f50157bfafc4d2235999ee18aadb0afd"
+                "ba35600a11a8d11e2a9c28bb03f0c258eedffdd0e7cfea011bbde166c62bf00e"
             ),
         },
     },
@@ -135,7 +135,7 @@ TARGETS = {
         "baseline": {
             "state": "present",
             "sha256": (
-                "7e722c8e5068222185cd74f5cbc78480cf86044c5b0d97f0c86a62c3ab548413"
+                "67ad17496543a9731c5f91a2298986be5389e6597a82073c1e1151b41277648d"
             ),
         },
     },
@@ -147,7 +147,12 @@ TARGETS = {
             "baguqeeraqopotj43fgxcfptvziv3g3kna4wcwhtzarcobv2obvs32njoggjq"
         ),
         "requirements": SOLVER_REQUIREMENTS,
-        "baseline": {"state": "declared-output-absent"},
+        "baseline": {
+            "state": "present",
+            "sha256": (
+                "e94e091d30e928219b090133f1f85bedad975028c767480982ec59ff58c4cfd9"
+            ),
+        },
     },
     "tests/unit/logic/formalization/test_translation_receipts.py": {
         "repository-root": "ipfs_datasets_py",
@@ -157,7 +162,12 @@ TARGETS = {
             "baguqeeraej2zz7zlrd2l5p6adjnzinnitzuqmxx4agfhfzekixdqm2mnqyda"
         ),
         "requirements": PYTEST_REQUIREMENTS,
-        "baseline": {"state": "declared-output-absent"},
+        "baseline": {
+            "state": "present",
+            "sha256": (
+                "1a321b9bced0237ee9dd28b796947d6a5e68ca419dad8e81a934b380f06e7548"
+            ),
+        },
     },
     "tests/unit/logic/software_verification/test_obligation_slicing.py": {
         "repository-root": "ipfs_datasets_py",
@@ -167,7 +177,12 @@ TARGETS = {
             "baguqeerar3vmbqw7f2qk6mjyhsx3hq7gpbnqcydt7cecm6og5xejbd2vz6cq"
         ),
         "requirements": PYTEST_REQUIREMENTS,
-        "baseline": {"state": "declared-output-absent"},
+        "baseline": {
+            "state": "present",
+            "sha256": (
+                "487194ddf108167e647f5fe2cdce624854a7162f45d46b6a88f28395a608d65e"
+            ),
+        },
     },
     "tests/unit/logic/software_verification/test_proof_carrying_artifact.py": {
         "repository-root": "ipfs_datasets_py",
@@ -177,7 +192,12 @@ TARGETS = {
             "baguqeeraompdkd4vtnb7z4sd5evmsx2jsucobyahrzqxyicwmwqdcwcvq3iq"
         ),
         "requirements": PYTEST_REQUIREMENTS,
-        "baseline": {"state": "declared-output-absent"},
+        "baseline": {
+            "state": "present",
+            "sha256": (
+                "d9b9c3d4391cbecc811059f81108989fa3b01dd5642469cc108bf9ed12fc6829"
+            ),
+        },
     },
 }
 
