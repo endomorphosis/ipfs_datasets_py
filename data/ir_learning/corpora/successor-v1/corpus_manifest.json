@@ -1,0 +1,26 @@
+{
+  "admitted_source_record_ids": [],
+  "counts": {
+    "admitted_source_rows": 0,
+    "candidate_source_rows_excluded_by_rights": 7173,
+    "materialized_derived_artifacts": 0,
+    "materialized_source_rows": 0,
+    "observed_historical_derived_artifacts": 38690
+  },
+  "input_rights_result_identity": "RESULT(PGIR-200)",
+  "kind": "successor_sealed_corpus_manifest",
+  "lineage_graph_id": "lin:successor-v1:jdao-pinset-1:admitted",
+  "manifest_id": "corp:successor-v1:jdao-pinset-1",
+  "materialization_status": "not_materialized_permanent_no_go",
+  "materialized_derived_artifact_ids": [],
+  "materialized_source_record_ids": [],
+  "materialized_source_rows": [],
+  "permanent_no_go_reason_code": "missing_exact_source_and_transformation_rights_authority",
+  "pinset_id": "JDAO-PINSET-1",
+  "result_identity": "RESULT(PGIR-201)",
+  "schema": "proof-grounded-ir-learning/successor-sealed-corpus-manifest/v1",
+  "source_and_derived_separation": {
+    "derived_artifacts_are_not_source_rows": true,
+    "source_count_includes_only_admitted_source_rows": true
+  }
+}

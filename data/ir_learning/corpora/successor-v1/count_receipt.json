@@ -1,0 +1,23 @@
+{
+  "counts": {
+    "admitted_source_rows": 0,
+    "candidate_source_rows_excluded_by_rights": 7173,
+    "materialized_derived_artifacts": 0,
+    "materialized_source_rows": 0,
+    "observed_historical_derived_artifacts": 38690
+  },
+  "kind": "successor_corpus_count_receipt",
+  "pinset_id": "JDAO-PINSET-1",
+  "population_candidate_source_rows_excluded_by_rights": {
+    "dutch-law": 4999,
+    "patent": 2174
+  },
+  "result_identity": "RESULT(PGIR-201)",
+  "schema": "proof-grounded-ir-learning/successor-corpus-count-receipt/v1",
+  "validation": {
+    "admitted_rows_equal_materialized_source_rows": true,
+    "derived_artifacts_are_not_counted_as_source_rows": true,
+    "historical_derived_count_is_observational_only": true,
+    "materialized_rows_are_a_subset_of_admitted_rows": true
+  }
+}
